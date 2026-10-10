@@ -1,5 +1,15 @@
 # @lacrous/kimi-code
 
+## 3.7.0
+
+### Minor Changes
+
+- [`d23befa`](https://github.com/lacrous/kimi-code-by-lacrous/commit/d23befa5c747747cecb8b16e561fabc9bd0d9215) Thanks [@tpoisonooo](https://github.com/tpoisonooo)! - Tower mode: deterministic orchestration with TowerRebase and LLM-free status, goal/tower mutual exclusion, and workspace protection.
+
+### Patch Changes
+
+- Make provider model discovery degrade gracefully when the endpoint returns an error, a timeout, malformed JSON, or an unexpected shape; the provider is still saved and models can be configured manually.
+
 ## 3.6.0
 
 ### Minor Changes
