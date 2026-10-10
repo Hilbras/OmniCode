@@ -511,6 +511,86 @@ describe('providerCatalog', () => {
     expect(byId(catalog.models('openai')).get('gpt-mini')?.maxContextSize).toBe(32000);
     expect(changes).toHaveLength(1);
 
+    const failingProvider = (error: unknown): Provider => ({
+      ...provider,
+      listModels: () => Promise.reject(error),
+    });
+
+    const runFailing = async (error: unknown) => {
+      const failures2: ProviderCatalogRefreshFailed[] = [];
+      catalog.onRefreshFailed((event) => failures2.push(event));
+      catalog.refresh(failingProvider(error));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      return failures2;
+    };
+
+    const httpError = (status: number, message: string) =>
+      Object.assign(new Error(message), { status, name: 'HttpError' });
+
+    const codes = [401, 403, 404, 429, 500];
+      for (const status of codes) {
+        const failures = await runFailing(httpError(status, `HTTP ${status}`));
+        expect(failures).toHaveLength(1);
+        expect(failures[0]?.providerId).toBe('openai');
+        expect((failures[0]?.error as { status: number }).status).toBe(status);
+      }
+      const timeout = await runFailing(Object.assign(new Error('Request timed out'), { name: 'TimeoutError' }));
+      expect(timeout).toHaveLength(1);
+      expect((timeout[0]?.error as Error).message).toBe('Request timed out');
+      const malformed = await runFailing(new Error('Unexpected token < in JSON at position 0'));
+      expect(malformed).toHaveLength(1);
+      expect((malformed[0]?.error as Error).message).toContain('JSON');
+
+      const emptyFailures = await runFailing([]);
+      expect(emptyFailures).toHaveLength(1);
+      expect(catalog.models('openai')).toHaveLength(3);
+
+      const objectFailures = await runFailing({ not: 'an array' });
+      expect(objectFailures).toHaveLength(1);
+      expect(catalog.models('openai')).toHaveLength(3);
+
+      const dedupeProvider: Provider = {
+        ...provider,
+        listModels: async () => [
+          { provider: 'openai', model: 'gpt-5', maxContextSize: 100000 },
+          { provider: 'openai', model: 'gpt-5', maxContextSize: 999999 },
+          { provider: 'openai', model: '', maxContextSize: 1 },
+          { provider: 'openai', maxContextSize: 2 },
+        ],
+      };
+      catalog.refresh(dedupeProvider);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      const deduped = byId(catalog.models('openai'));
+      expect(deduped.has('gpt-5')).toBe(true);
+      expect(deduped.has('')).toBe(false);
+      expect(catalog.models('openai').map((model) => model.model)).toEqual(['gpt-5', 'gpt-5-wire']);
+
+      const largeProvider: Provider = {
+        ...provider,
+        listModels: async () => [
+          {
+            provider: 'openai',
+            model: 'giant',
+            maxContextSize: 1000000000,
+            maxInputSize: 999999999,
+            maxOutputSize: 8192,
+            extras: { custom_field: 'ok', nested: { a: 1 } },
+          },
+        ],
+      };
+      catalog.refresh(largeProvider);
+      await new Promise((resolve) => {
+        setTimeout(resolve, 0);
+      });
+      const giant = byId(catalog.models('openai')).get('giant');
+      expect(giant?.maxContextSize).toBe(1000000000);
+      expect(giant?.maxInputSize).toBe(999999999);
+      expect(giant?.extras).toEqual({ custom_field: 'ok', nested: { a: 1 } });
+
     catalog.upsert({
       provider: stubProvider('anthropic', ['anthropic']),
       info: { defaultModel: 'claude-fable-5' },
@@ -520,12 +600,25 @@ describe('providerCatalog', () => {
     });
     expect(catalog.models('anthropic')).toEqual([]);
     expect(catalog.providerInfo('anthropic')?.defaultModel).toBe('claude-fable-5');
-    expect(changes).toEqual([['google', 'openai'], ['anthropic'], ['anthropic']]);
+    expect(changes).toEqual([
+      ['google', 'openai'],
+      ['openai'],
+      ['openai'],
+      ['anthropic'],
+      ['anthropic'],
+    ]);
 
     catalog.remove('anthropic');
     expect(catalog.providers()).toEqual(['google', 'openai']);
     expect(catalog.models('anthropic')).toEqual([]);
-    expect(changes).toEqual([['google', 'openai'], ['anthropic'], ['anthropic'], ['anthropic']]);
+    expect(changes).toEqual([
+      ['google', 'openai'],
+      ['openai'],
+      ['openai'],
+      ['anthropic'],
+      ['anthropic'],
+      ['anthropic'],
+    ]);
 
     const reopened = await createProviderCatalog({ store });
     expect(reopened.providers()).toEqual(['google', 'openai']);

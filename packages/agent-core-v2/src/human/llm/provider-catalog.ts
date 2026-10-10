@@ -146,7 +146,11 @@ function applyPullResults(
       [result.providerId]: {
         info: entry?.info,
         override: entry?.override ?? {},
-        discovered: Object.fromEntries(result.models.map((model) => [model.model, model])),
+        discovered: Object.fromEntries(
+          result.models
+            .filter((model) => model.model !== undefined && model.model !== '')
+            .map((model) => [model.model, model]),
+        ),
         pingErrors: entry?.pingErrors,
       },
     };
