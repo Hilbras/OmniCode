@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 3.8.0
+
+### Minor Changes
+
+- [`0115196`](https://github.com/Hilbras/omnicode/commit/01151969dfe7d194d9792251c317771fc77b9846) Thanks [@hilbras](https://github.com/hilbras)! - Rename the product, CLI command, npm package, and project to Omnicode. The command is now `omnicode`, the npm package is `@hilbras/omnicode`, and on first run the data home is copied from the previous data home into `~/.omnicode`.
+
 ## 3.7.0
 
 ### Minor Changes
