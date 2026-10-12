@@ -1,11 +1,11 @@
 ---
 name: gen-changesets
-description: Use when generating changesets in the kimi-code repository — deciding whether to write one, which package to list, the bump level, the wording, and the confirmation workflow.
+description: Use when generating changesets in the omnicode repository — deciding whether to write one, which package to list, the bump level, the wording, and the confirmation workflow.
 ---
 
 # Generate Changesets
 
-The only user-facing published package is the CLI: `@moonshot-ai/kimi-code`. All other `@moonshot-ai/*` packages (sdk, kosong, kaos, oauth, telemetry, and so on) are internal.
+The only user-facing published package is the CLI: `@hilbras/omnicode`. All other `@hilbras/*` packages (sdk, kosong, kaos, oauth, telemetry, and so on) are internal.
 
 ## 1. Whether to Write
 
@@ -16,7 +16,7 @@ Do not write:
 - Changes internal to core/server packages — architecture, protocols, refactors, config/journal/wire mechanics — unless they fix a bug users care about.
 - When you are unsure whether users can perceive a change, ask first.
 
-Do write: user-perceivable new features or behavior changes, and internal-package changes that fix a user-useful bug or change CLI output/behavior (list `@moonshot-ai/kimi-code` for those).
+Do write: user-perceivable new features or behavior changes, and internal-package changes that fix a user-useful bug or change CLI output/behavior (list `@hilbras/omnicode` for those).
 
 ## 2. What to Write
 
@@ -24,7 +24,7 @@ Create a short kebab-case file under `.changeset/`:
 
 ```markdown
 ---
-"@moonshot-ai/kimi-code": patch
+"@hilbras/omnicode": patch
 ---
 
 Fix occasional loss of tool call results in long conversations.
@@ -32,7 +32,7 @@ Fix occasional loss of tool call results in long conversations.
 
 Wording:
 - One short, user-facing English sentence that states only what changed. Drop trailing clauses that explain the cause, the benefit, or the mechanism.
-- When a default flips or an existing behavior is removed, name the behavior users lose, not only the new default. State the escape hatch if one exists, e.g. `Stop hot-reloading config, skills, and AGENTS.md by default; set [watch] enabled = true or KIMI_CODE_WATCH=1 to turn it back on.`; if there is none, say plainly that the old behavior is no longer available.
+- When a default flips or an existing behavior is removed, name the behavior users lose, not only the new default. State the escape hatch if one exists, e.g. `Stop hot-reloading config, skills, and AGENTS.md by default; set [watch] enabled = true or OMNICODE_WATCH=1 to turn it back on.`; if there is none, say plainly that the old behavior is no longer available.
 - New features: say plainly what it is plus one line on how to use it, e.g. `Add the /foo slash command to list active sessions. Run /foo to see them.`
 - Experimental features: also state how to enable them (the flag, config key, or env var).
 - No file, class, or function names, and no PR numbers. No vague words like refactor, optimize, or improve. No real internal identifiers — use neutral placeholders such as `example.com` or `YOUR_API_KEY`.
@@ -47,11 +47,11 @@ Wording:
 
 ## 4. Which Package
 
-- An internal change enters the CLI bundle and is user-perceivable → list `@moonshot-ai/kimi-code`.
+- An internal change enters the CLI bundle and is user-perceivable → list `@hilbras/omnicode`.
 - An internal change does not enter the CLI or is not user-perceivable → write nothing; if it is written, list only that internal package.
 - Never mix packages ignored in `.changeset/config.json` with non-ignored packages in one frontmatter.
-- pi-tui exception: pi-tui-only changes list `@moonshot-ai/pi-tui`; if the same change is also visible to CLI users, write a separate CLI changeset (two files, never mixed).
-- kimi-inspect and the vis packages never appear in a changeset.
+- pi-tui exception: pi-tui-only changes list `@hilbras/omnicode-tui`; if the same change is also visible to CLI users, write a separate CLI changeset (two files, never mixed).
+- omnicode-inspect and the vis packages never appear in a changeset.
 
 ## 5. Workflow
 

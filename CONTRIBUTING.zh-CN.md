@@ -1,4 +1,4 @@
-# 为 kimi-code 贡献代码
+# 为 omnicode 贡献代码
 
 [English version](CONTRIBUTING.md)
 
@@ -6,7 +6,7 @@
 
 ## 开始之前
 
-Lacrous Kimi Code 对 CLI/TUI 行为、agent 工作流和公开 API 已有自己的主张。如果你的改动会改变这些方向，请先开 issue 对齐，再投入时间写 PR。
+Omnicode 对 CLI/TUI 行为、agent 工作流和公开 API 已有自己的主张。如果你的改动会改变这些方向，请先开 issue 对齐，再投入时间写 PR。
 
 我们对 AI 辅助贡献与手写代码一视同仁。**你应该理解自己提交的内容**——改了什么、边界情况下表现如何、为什么适合这个代码库。如果你解释不清楚，这个 PR 就还没准备好接受评审。
 
@@ -25,10 +25,10 @@ Lacrous Kimi Code 对 CLI/TUI 行为、agent 工作流和公开 API 已有自己
 
 本仓库是 pnpm monorepo，最常用的入口：
 
-- `apps/kimi-code` — CLI / TUI
+- `apps/omnicode` — CLI / TUI
 - `apps/vscode` — VS Code 插件
 - `apps/vis` — 会话调试可视化工具
-- `packages/node-sdk` — 公开 TypeScript SDK（`@moonshot-ai/kimi-code-sdk`）
+- `packages/node-sdk` — 公开 TypeScript SDK（`@hilbras/omnicode-sdk`）
 - `packages/agent-core-v2` — 当前的 agent 引擎（v2，DI Scope 架构）；`packages/agent-core` 为 v1，正在逐步废弃
 - `packages/klient`、`kap-server`、`protocol`、`transcript`、`kosong`、`kaos`、`oauth`、`telemetry` — 内部引擎包
 - `docs/` — VitePress 双语文档站
@@ -40,8 +40,8 @@ Lacrous Kimi Code 对 CLI/TUI 行为、agent 工作流和公开 API 已有自己
 前置要求：Node.js >= 24.15.0、pnpm 10.33.0、Git。
 
 ```sh
-git clone https://github.com/MoonshotAI/kimi-code.git
-cd kimi-code
+git clone https://github.com/Hilbras/omnicode.git
+cd omnicode
 pnpm install
 ```
 

@@ -1,16 +1,16 @@
-# Lacrous Kimi Code CLI
+# Omnicode CLI
 
-[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://moonshotai.github.io/kimi-code/zh/)
+[![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE) [![Docs](https://img.shields.io/badge/docs-online-blue)](https://hilbras.github.io/omnicode/zh/)
 
-[Documentation](https://moonshotai.github.io/kimi-code/zh/) · [Issues](https://github.com/MoonshotAI/kimi-code/issues) · [English](README.md)
-
-
-![Lacrous Kimi Code 的使用演示](./docs/media/intro.gif)
+[Documentation](https://hilbras.github.io/omnicode/zh/) · [Issues](https://github.com/Hilbras/omnicode/issues) · [English](README.md)
 
 
-## 什么是 Lacrous Kimi Code CLI
+![Omnicode 的使用演示](./docs/media/intro.gif)
 
-Lacrous Kimi Code CLI 是一个运行在终端里的 AI 编程 agent，可以帮你读写代码、执行 shell 命令、检索文件、抓取网页，并根据反馈自主决定下一步动作。开箱即用对接 Moonshot AI 的 Kimi 模型，也可指向其他兼容厂商。
+
+## 什么是 Omnicode CLI
+
+Omnicode CLI 是一个运行在终端里的 AI 编程 agent，可以帮你读写代码、执行 shell 命令、检索文件、抓取网页，并根据反馈自主决定下一步动作。开箱即用对接 Hilbras 的 Omnicode 模型，也可指向其他兼容厂商。
 
 ## 安装
 
@@ -19,24 +19,24 @@ Lacrous Kimi Code CLI 是一个运行在终端里的 AI 编程 agent，可以帮
 - **macOS / Linux**：
 
 ```sh
-curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash
+curl -fsSL https://code.omnicode.com/omnicode/install.sh | bash
 ```
 
 - **Windows（PowerShell）**：
 
 ```powershell
-irm https://code.kimi.com/kimi-code/install.ps1 | iex
+irm https://code.omnicode.com/omnicode/install.ps1 | iex
 ```
 
-> Windows 用户首次启动前还需要安装 [Git for Windows](https://gitforwindows.org/)，Lacrous Kimi Code CLI 会使用其中的 Git Bash 作为 Shell 环境。如果 Git Bash 安装在非标准路径，请把 `KIMI_SHELL_PATH` 设为 `bash.exe` 的绝对路径。
+> Windows 用户首次启动前还需要安装 [Git for Windows](https://gitforwindows.org/)，Omnicode CLI 会使用其中的 Git Bash 作为 Shell 环境。如果 Git Bash 安装在非标准路径，请把 `OMNICODE_SHELL_PATH` 设为 `bash.exe` 的绝对路径。
 
 随后在新的终端会话中运行：
 
 ```sh
-kimi --version
+omnicode --version
 ```
 
-npm 安装、升级、卸载方式，见[快速上手](https://moonshotai.github.io/kimi-code/zh/guides/getting-started)。
+npm 安装、升级、卸载方式，见[快速上手](https://hilbras.github.io/omnicode/zh/guides/getting-started)。
 
 ## 快速开始
 
@@ -44,10 +44,10 @@ npm 安装、升级、卸载方式，见[快速上手](https://moonshotai.github
 
 ```sh
 cd your-project
-kimi
+omnicode
 ```
 
-首次启动时，在 Lacrous Kimi Code CLI 里输入 `/login`，选择 Lacrous Kimi Code OAuth 或 Moonshot AI Open Platform API 密钥登录。登录完成后，可以先让它熟悉项目：
+首次启动时，在 Omnicode CLI 里输入 `/login`，选择 Omnicode OAuth 或 Hilbras Open Platform API 密钥登录。登录完成后，可以先让它熟悉项目：
 
 ```
 帮我看一下这个项目的目录结构，简单介绍一下每个目录是做什么的
@@ -63,21 +63,21 @@ kimi
 - **丰富的插件生态** 从插件市场或任意 GitHub 仓库安装 skills、MCP 服务器和数据源，每次安装都会标明来源的信任级别。
 - **子 Agent 聚焦并行工作** 内置 `coder`、`explore`、`plan` 子 Agent 在隔离上下文中处理子任务，主对话保持清爽。
 - **生命周期 hooks** 在关键节点执行本地命令：拦截高风险工具调用、审计决策、发送桌面通知，或对接你自己的自动化脚本。
-- **编辑器 / IDE 集成（ACP）** 用 `kimi acp` 让 Zed、JetBrains 等任意 [Agent Client Protocol](https://agentclientprotocol.com/) 客户端直接驱动会话。
+- **编辑器 / IDE 集成（ACP）** 用 `omnicode acp` 让 Zed、JetBrains 等任意 [Agent Client Protocol](https://agentclientprotocol.com/) 客户端直接驱动会话。
 
 
 ## 在编辑器里使用（ACP）
 
-Lacrous Kimi Code CLI 支持 [Agent Client Protocol](https://agentclientprotocol.com/)，ACP 兼容的编辑器 / IDE（Zed、JetBrains……）可以通过 stdio 直接驱动会话。登录一次后，把编辑器指向 `kimi acp` 子命令即可，无需重复登录。
+Omnicode CLI 支持 [Agent Client Protocol](https://agentclientprotocol.com/)，ACP 兼容的编辑器 / IDE（Zed、JetBrains……）可以通过 stdio 直接驱动会话。登录一次后，把编辑器指向 `omnicode acp` 子命令即可，无需重复登录。
 
 以 Zed 为例，在 `~/.config/zed/settings.json` 中加入：
 
 ```json
 {
   "agent_servers": {
-    "Lacrous Kimi Code CLI": {
+    "Omnicode CLI": {
       "type": "custom",
-      "command": "kimi",
+      "command": "omnicode",
       "args": ["acp"],
       "env": {}
     }
@@ -85,24 +85,24 @@ Lacrous Kimi Code CLI 支持 [Agent Client Protocol](https://agentclientprotocol
 }
 ```
 
-随后在 Zed 的 Agent 面板新建对话即可。JetBrains 配置与排障见[在 IDE 中使用](https://moonshotai.github.io/kimi-code/zh/guides/ides)，完整能力矩阵见 [`kimi acp` 参考](https://moonshotai.github.io/kimi-code/zh/reference/kimi-acp)。
+随后在 Zed 的 Agent 面板新建对话即可。JetBrains 配置与排障见[在 IDE 中使用](https://hilbras.github.io/omnicode/zh/guides/ides)，完整能力矩阵见 [`omnicode acp` 参考](https://hilbras.github.io/omnicode/zh/reference/omnicode-acp)。
 
 ## 文档
 
-- [快速上手](https://moonshotai.github.io/kimi-code/zh/guides/getting-started)
-- [交互与审批](https://moonshotai.github.io/kimi-code/zh/guides/interaction)
-- [会话](https://moonshotai.github.io/kimi-code/zh/guides/sessions)
-- [在 IDE 中使用（ACP）](https://moonshotai.github.io/kimi-code/zh/guides/ides)
-- [配置](https://moonshotai.github.io/kimi-code/zh/configuration/config-files)
-- [命令参考](https://moonshotai.github.io/kimi-code/zh/reference/kimi-command)
+- [快速上手](https://hilbras.github.io/omnicode/zh/guides/getting-started)
+- [交互与审批](https://hilbras.github.io/omnicode/zh/guides/interaction)
+- [会话](https://hilbras.github.io/omnicode/zh/guides/sessions)
+- [在 IDE 中使用（ACP）](https://hilbras.github.io/omnicode/zh/guides/ides)
+- [配置](https://hilbras.github.io/omnicode/zh/configuration/config-files)
+- [命令参考](https://hilbras.github.io/omnicode/zh/reference/omnicode)
 
 ## 本地开发
 
 环境要求：Node.js ≥ 24.15.0，pnpm 10.33.0。
 
 ```sh
-git clone https://github.com/MoonshotAI/kimi-code.git
-cd kimi-code
+git clone https://github.com/Hilbras/omnicode.git
+cd omnicode
 pnpm install
 ```
 
@@ -118,7 +118,7 @@ pnpm build      # 构建所有包
 
 ## 社区
 
-- [Issues](https://github.com/MoonshotAI/kimi-code/issues)
+- [Issues](https://github.com/Hilbras/omnicode/issues)
 - 安全漏洞反馈，请见 [SECURITY.md](SECURITY.md)。
 
 ## 致谢

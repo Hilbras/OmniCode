@@ -1,6 +1,6 @@
 # Migrating from V3 to V4
 
-Lacrous Kimi Code V4 introduces a composable provider architecture. In V3, a provider was a single opaque unit: one API protocol, one authentication method, and one model list. In V4, a provider is composed from three independent parts — an API adapter, an auth strategy, and a model definition — which can be mixed and matched freely.
+Omnicode V4 introduces a composable provider architecture. In V3, a provider was a single opaque unit: one API protocol, one authentication method, and one model list. In V4, a provider is composed from three independent parts — an API adapter, an auth strategy, and a model definition — which can be mixed and matched freely.
 
 This page explains how existing V3 provider configurations keep working in V4, what changes you may see, and how to update deprecated settings.
 
@@ -9,7 +9,7 @@ This page explains how existing V3 provider configurations keep working in V4, w
 - **Authentication is separate from the API protocol.** A provider can use any API adapter with any auth strategy, including combinations that were not possible before.
 - **Credentials are stored separately from provider definitions.** Raw secrets are no longer written inline into provider configuration files.
 - **Model discovery is provider-independent.** Discovery runs through a shared pipeline that normalizes and validates results from any API adapter.
-- **A new `kimi auth` command** manages authentication state for providers that support it.
+- **A new `omnicode auth` command** manages authentication state for providers that support it.
 
 Existing V3 providers continue to work without any action from you. Your configuration is read, converted to the V4 format automatically, and saved on next startup.
 
@@ -23,7 +23,7 @@ This configuration uses the V3 authentication format.
 It will be migrated to the V4 authentication system.
 ```
 
-Migration is automatic and safe. It never deletes your old configuration; it writes a new V4 configuration alongside it. You can inspect the result with `kimi provider list` and roll back by restoring the previous file if needed.
+Migration is automatic and safe. It never deletes your old configuration; it writes a new V4 configuration alongside it. You can inspect the result with `omnicode provider list` and roll back by restoring the previous file if needed.
 
 ## What gets migrated
 
@@ -37,7 +37,7 @@ Migration is automatic and safe. It never deletes your old configuration; it wri
 
 ## Manual providers
 
-`kimi provider add-manual` continues to work in V4. The interactive questions now cover the new architecture:
+`omnicode provider add-manual` continues to work in V4. The interactive questions now cover the new architecture:
 
 ```text
 Provider ID: my-gateway
@@ -62,34 +62,34 @@ The following V3 fields are deprecated in V4 and will be removed in a future maj
 All existing commands continue to work:
 
 ```sh
-kimi provider list
-kimi provider add
-kimi provider add-manual
-kimi provider add-builtin
-kimi provider edit
-kimi provider remove
+omnicode provider list
+omnicode provider add
+omnicode provider add-manual
+omnicode provider add-builtin
+omnicode provider edit
+omnicode provider remove
 ```
 
 New commands extend the existing ones rather than replacing them:
 
 ```sh
-kimi auth list
-kimi auth status
-kimi auth login <provider>
-kimi auth logout <provider>
-kimi auth refresh <provider>
-kimi provider auth <id>
-kimi provider models <id>
-kimi provider test <id>
+omnicode auth list
+omnicode auth status
+omnicode auth login <provider>
+omnicode auth logout <provider>
+omnicode auth refresh <provider>
+omnicode provider auth <id>
+omnicode provider models <id>
+omnicode provider test <id>
 ```
 
 ## Troubleshooting
 
 **A provider that worked in V3 fails to authenticate in V4.**
-Check that your credential source is still configured. In V3 the API key was stored inline; in V4 it is resolved through environment variables, the credential store, or interactive authentication. Run `kimi auth status <provider>` to see the current state.
+Check that your credential source is still configured. In V3 the API key was stored inline; in V4 it is resolved through environment variables, the credential store, or interactive authentication. Run `omnicode auth status <provider>` to see the current state.
 
 **Model discovery returns no models.**
-V4 discovery is best-effort. If it fails, the provider is still saved and you can configure models manually with `kimi provider models <id>`.
+V4 discovery is best-effort. If it fails, the provider is still saved and you can configure models manually with `omnicode provider models <id>`.
 
 **A custom header is not sent.**
 Custom headers now live under `providers.<id>.api.defaultHeaders` rather than the top-level provider config.

@@ -1,6 +1,6 @@
 # Server API
 
-The local server started by `kimi web` exposes two programmatic surfaces: a REST API (`/api/v1`, plus `/api/v2/sessions` and `/api/v2/mcp`) and a WebSocket event stream (`/api/v1/ws`). This page is the protocol reference for both. For how to start the server and its command-line options, see the [kimi command](./kimi-command.md#kimi-web) reference; for an end-to-end walkthrough, see [Drive a session over the API](#drive-a-session-over-the-api) below.
+The local server started by `omnicode web` exposes two programmatic surfaces: a REST API (`/api/v1`, plus `/api/v2/sessions` and `/api/v2/mcp`) and a WebSocket event stream (`/api/v1/ws`). This page is the protocol reference for both. For how to start the server and its command-line options, see the [omnicode command](./omnicode-command.md#omnicode-web) reference; for an end-to-end walkthrough, see [Drive a session over the API](#drive-a-session-over-the-api) below.
 
 This page is a curated, human-readable reference: it documents every endpoint's parameters, request bodies, and response shapes below. The precise machine-readable schema of every endpoint is owned by the server's live specification documents: `GET /openapi.json` (OpenAPI) and `GET /asyncapi.json` (AsyncAPI), both generated from the same validation schemas the server enforces at runtime. Both require authentication; when this page and the live spec ever disagree, the live spec wins.
 
@@ -12,7 +12,7 @@ The REST and WebSocket APIs described on this page are experimental: interface s
 
 ### Address
 
-The default address is `http://127.0.0.1:58627`. When the port is taken, the server retries with the next port (up to 100 times); use `--port` / `--host` to change the bind. Multiple instances can coexist under the same home directory; running instances register under `~/.kimi-code/server/instances/`.
+The default address is `http://127.0.0.1:58627`. When the port is taken, the server retries with the next port (up to 100 times); use `--port` / `--host` to change the bind. Multiple instances can coexist under the same home directory; running instances register under `~/.omnicode/server/instances/`.
 
 ### Authentication
 
@@ -22,7 +22,7 @@ All `/api/*` paths (including `/openapi.json` and `/asyncapi.json`) require the 
 - `GET /api/v1/healthz` (liveness probe)
 - Static web assets (non-`/api/` paths)
 
-How to carry it: REST uses the `Authorization: Bearer <token>` header; the WebSocket upgrade accepts the same header or the subprotocol `kimi-code.bearer.<token>`. Token generation and rotation are covered in [Using Lacrous Kimi Code in the browser: Getting started](../guides/web.md#getting-started).
+How to carry it: REST uses the `Authorization: Bearer <token>` header; the WebSocket upgrade accepts the same header or the subprotocol `omnicode.bearer.<token>`. Token generation and rotation are covered in [Using Omnicode in the browser: Getting started](../guides/web.md#getting-started).
 
 Failed authentication returns HTTP 401 with envelope code `40101`. On non-loopback binds, a source that fails authentication 10 times within 60 seconds is banned for 60 seconds, during which every request gets HTTP 429 (code `42901`).
 
@@ -107,7 +107,7 @@ The returned `data.id` (shaped like `session_...`) is the session id used by eve
 ```js
 // subscribe.mjs — usage: TOKEN=... node subscribe.mjs session_...
 const ws = new WebSocket('ws://127.0.0.1:58627/api/v1/ws', [
-  `kimi-code.bearer.${process.env.TOKEN}`,
+  `omnicode.bearer.${process.env.TOKEN}`,
 ]);
 ws.onmessage = (e) => console.log(e.data);
 ws.onopen = () =>
@@ -183,7 +183,7 @@ On success, `data` is `{ "ok": true }`.
 
 ### Login and usage
 
-These endpoints drive the managed Kimi OAuth login lifecycle and expose account-level information. The managed provider is named `managed:kimi-code`; the optional `provider` parameter on every endpoint below defaults to it.
+These endpoints drive the managed Omnicode OAuth login lifecycle and expose account-level information. The managed provider is named `managed:omnicode`; the optional `provider` parameter on every endpoint below defaults to it.
 
 | Method and path | Description |
 | --- | --- |
@@ -198,7 +198,7 @@ These endpoints drive the managed Kimi OAuth login lifecycle and expose account-
 
 #### `GET /api/v1/auth`
 
-Auth snapshot: whether the default model resolves to a usable provider configuration, plus the managed provider's login state. `models_ready` is `true` when the global `default_model` alias exists in the model table and resolves to a configured provider — including providerless flat models carrying their own `base_url` and models injected through `KIMI_MODEL_*` environment variables. It does not verify credentials, so a prompt can still fail afterwards with `40111` / `40112`.
+Auth snapshot: whether the default model resolves to a usable provider configuration, plus the managed provider's login state. `models_ready` is `true` when the global `default_model` alias exists in the model table and resolves to a configured provider — including providerless flat models carrying their own `base_url` and models injected through `OMNICODE_MODEL_*` environment variables. It does not verify credentials, so a prompt can still fail afterwards with `40111` / `40112`.
 
 On success, `data` carries `models_ready` (boolean), `providers_count` (number of configured providers), and `managed_provider` (`null`, or `{ name, status }` with `status` one of `authenticated` / `expired` / `revoked` / `unauthenticated`). The global default model alias itself is read from `GET /api/v1/config` (`default_model`), not from this endpoint.
 
@@ -208,7 +208,7 @@ Starts an OAuth device-code login flow for the managed provider; starting a new 
 
 | Parameter | In | Type | Description |
 | --- | --- | --- | --- |
-| `provider` | body | string | Managed provider name. Default `managed:kimi-code` |
+| `provider` | body | string | Managed provider name. Default `managed:omnicode` |
 | `region` | body | string | `mainland-cn` or `global`; overrides the region resolution described under `GET /api/v1/oauth/region` for this flow |
 
 On success, `data` has one of two shapes. A pending flow — `{ flow_id, provider, status: "pending", verification_uri, verification_uri_complete, user_code, expires_in, interval, expires_at }`: open `verification_uri_complete` (or `verification_uri` and enter `user_code`), then poll `GET /api/v1/oauth/login` every `interval` seconds until the flow resolves or `expires_at` passes (`expires_in` is the same deadline in seconds). The already-authenticated fast path — `{ flow_id, provider, status: "authenticated" }`.
@@ -219,7 +219,7 @@ Polls the login flow state for a provider. Returns `null` when no flow has been 
 
 | Parameter | In | Type | Description |
 | --- | --- | --- | --- |
-| `provider` | query | string | Managed provider name. Default `managed:kimi-code` |
+| `provider` | query | string | Managed provider name. Default `managed:omnicode` |
 
 On success, `data` is `null` or a flow snapshot: `{ flow_id, provider, status, verification_uri, verification_uri_complete, user_code, expires_in, expires_at, interval }`, where `status` is `pending` / `authenticated` / `denied` / `expired` / `cancelled`. Once the flow leaves `pending`, `resolved_at` records when it reached its terminal state and `error_message` describes a failed flow.
 
@@ -229,7 +229,7 @@ Cancels the pending login flow for a provider. When no flow is pending, the call
 
 | Parameter | In | Type | Description |
 | --- | --- | --- | --- |
-| `provider` | query | string | Managed provider name. Default `managed:kimi-code` |
+| `provider` | query | string | Managed provider name. Default `managed:omnicode` |
 
 On success, `data` is `{ cancelled, status }`: `cancelled` is `true` only when a `pending` flow was actually aborted, and `status` is the flow state after the call.
 
@@ -239,7 +239,7 @@ Logs out the managed provider: discards the stored OAuth credential, aborts any 
 
 | Parameter | In | Type | Description |
 | --- | --- | --- | --- |
-| `provider` | body | string | Managed provider name. Default `managed:kimi-code` |
+| `provider` | body | string | Managed provider name. Default `managed:omnicode` |
 
 On success, `data` is `{ logged_out: true, provider }`.
 
@@ -249,7 +249,7 @@ Plan quota and booster wallet of the managed account, fetched live from the acco
 
 | Parameter | In | Type | Description |
 | --- | --- | --- | --- |
-| `provider` | query | string | Managed provider name. Default `managed:kimi-code` |
+| `provider` | query | string | Managed provider name. Default `managed:omnicode` |
 
 On success, `data` is `{ kind: "ok", quota }` or `{ kind: "error", message, status? }`, where `status` is the upstream HTTP status when one exists. In the `ok` shape, `quota` is `{ usages, extraUsage }`: `usages` carries one `{ usedRatio, resetAt? }` entry per quota window the account has — `limit5h`, `limit7d`, `monthTotal`, `monthCode` — with `usedRatio` as a 0–1 float and `resetAt` as an RFC3339 reset timestamp, and clients render whichever entries are present; `extraUsage` (nullable) is the pay-as-you-go wallet: `{ balanceCents, totalCents, monthlyChargeLimitEnabled, monthlyChargeLimitCents, monthlyUsedCents, currency }`.
 
@@ -259,13 +259,13 @@ Profile of the managed account, with the same in-band `kind: "error"` convention
 
 | Parameter | In | Type | Description |
 | --- | --- | --- | --- |
-| `provider` | query | string | Managed provider name. Default `managed:kimi-code` |
+| `provider` | query | string | Managed provider name. Default `managed:omnicode` |
 
 On success, `data` is `{ kind: "ok", userInfo }` or `{ kind: "error", message, status? }`. `userInfo` always carries `userId`, `nickname`, `status`, `region`, `userLevel`, `userLevelName`, `domain`, and `domainName`, and may add `globalId`, `bio`, `avatar`, `username`, `email`, `phone` (`{ countryCode, number }`), `createdTime`, and `lastLoginTime`.
 
 #### `GET /api/v1/oauth/region`
 
-Resolves which Kimi region this client belongs to. The answer is derived locally, not probed over the network: an OAuth host pinned by environment or config wins first, then the configured OAuth key, then the region marker file in the home directory; the default is `mainland-cn`.
+Resolves which Omnicode region this client belongs to. The answer is derived locally, not probed over the network: an OAuth host pinned by environment or config wins first, then the configured OAuth key, then the region marker file in the home directory; the default is `mainland-cn`.
 
 On success, `data` is `{ region }` with `region` one of `mainland-cn` / `global`.
 
@@ -343,7 +343,7 @@ On success, `data` is the full updated config in the same shape as `GET /api/v1/
 
 ### Models and providers
 
-These endpoints manage the two halves of model configuration — the [providers](../configuration/providers.md) table and the model-alias table of `config.toml` — plus a server-proxied models.dev directory for one-shot imports. A model alias id is the exact configured alias key: aliases created through the provider-management endpoints take the form `provider_id/model` (for example `my-provider/kimi-for-coding`), while a bare model-table key such as `turbo` is used as-is; anywhere the API takes a `model_id`, including the global `default_model`, it means this alias id. An unsupported action on a `:{action}` route returns `40001`.
+These endpoints manage the two halves of model configuration — the [providers](../configuration/providers.md) table and the model-alias table of `config.toml` — plus a server-proxied models.dev directory for one-shot imports. A model alias id is the exact configured alias key: aliases created through the provider-management endpoints take the form `provider_id/model` (for example `my-provider/omnicode-for-coding`), while a bare model-table key such as `turbo` is used as-is; anywhere the API takes a `model_id`, including the global `default_model`, it means this alias id. An unsupported action on a `:{action}` route returns `40001`.
 
 | Method and path | Description |
 | --- | --- |
@@ -367,7 +367,7 @@ On success, `data.items` is an array of `{ provider, model, display_name?, max_c
 
 #### `POST /api/v1/models/{model_id}:set_default`
 
-Sets the global `default_model` to an existing alias. `model_id` is the exact configured alias key — for a bare key like `turbo` the call is `POST /api/v1/models/turbo:set_default`; URL-encode the id when it contains `/`, as in `POST /api/v1/models/my-provider%2Fkimi-for-coding:set_default`.
+Sets the global `default_model` to an existing alias. `model_id` is the exact configured alias key — for a bare key like `turbo` the call is `POST /api/v1/models/turbo:set_default`; URL-encode the id when it contains `/`, as in `POST /api/v1/models/my-provider%2Fomnicode-for-coding:set_default`.
 
 | Parameter | In | Type | Description |
 | --- | --- | --- | --- |
@@ -387,7 +387,7 @@ On success, `data.items` is an array of:
 | Field | Type | Description |
 | --- | --- | --- |
 | `id` | string | Provider id |
-| `type` | string | Wire protocol: `kimi` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
+| `type` | string | Wire protocol: `omnicode` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
 | `base_url` | string | API base URL, when set |
 | `default_model` | string | The provider's default model alias, when set |
 | `has_api_key` | boolean | Whether a credential is stored |
@@ -401,7 +401,7 @@ Creates a provider and its model aliases in one save; the reply is HTTP 201 with
 | Parameter | In | Type | Description |
 | --- | --- | --- | --- |
 | `id` | body | string | **Required.** Provider id — letters, digits, `-`, `_`, and spaces; must start with a letter or digit |
-| `type` | body | string | **Required.** Wire protocol: `kimi` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
+| `type` | body | string | **Required.** Wire protocol: `omnicode` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
 | `api_key` | body | string | API key, stored in `config.toml` |
 | `base_url` | body | string | API base URL; must not contain an environment variable placeholder (`${...}`) |
 | `default_model` | body | string | The provider's default model; must be one of `models[].model` |
@@ -443,7 +443,7 @@ Replaces a provider in one save: `type`, `base_url`, and the model list are rewr
 | --- | --- | --- | --- |
 | `provider_id` | path | string | **Required.** Current provider id |
 | `new_id` | body | string | Rename the provider; the providers key, model aliases, `default_provider`, a `default_model` pointing at an old alias, and the subagent secondary-model pool all migrate. Same id rules as `POST /api/v1/providers` |
-| `type` | body | string | **Required.** Wire protocol: `kimi` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
+| `type` | body | string | **Required.** Wire protocol: `omnicode` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
 | `api_key` | body | string | Tri-state, see above |
 | `base_url` | body | string | API base URL; must not contain an environment variable placeholder (`${...}`) |
 | `default_model` | body | string | The provider's default model; must be one of `models[].model` |
@@ -863,7 +863,7 @@ On success, `data` is the new binding `{ workspace_id, runtime_id }`.
 
 #### `POST /api/v1/sessions/{session_id}/export`
 
-Exports the session together with diagnostic logs as a zip attachment (`kimi-session-<id>.zip`). The response is a binary stream, not a JSON envelope — capabilities and failure semantics are covered under [Binary and streaming endpoints](#binary-and-streaming-endpoints).
+Exports the session together with diagnostic logs as a zip attachment (`omnicode-session-<id>.zip`). The response is a binary stream, not a JSON envelope — capabilities and failure semantics are covered under [Binary and streaming endpoints](#binary-and-streaming-endpoints).
 
 | Parameter | In | Type | Description |
 | --- | --- | --- | --- |
@@ -1371,7 +1371,7 @@ On success, `data` is `{ restarting: true }`.
 
 ### Capabilities and plugins
 
-Capabilities are built-in features with layered readiness — detection steps plus a background install; the current build registers `kimi-cu` (Kimi Computer Use) and `kimi-webbridge` (Kimi Browser Extension). Plugins are installed packages of skills, MCP servers, hooks, and commands. These endpoints report capability status and drive capability installs, and manage the plugin lifecycle from marketplace listing to removal.
+Capabilities are built-in features with layered readiness — detection steps plus a background install; the current build registers `omnicode-cu` (Omnicode Computer Use) and `omnicode-webbridge` (Omnicode Browser Extension). Plugins are installed packages of skills, MCP servers, hooks, and commands. These endpoints report capability status and drive capability installs, and manage the plugin lifecycle from marketplace listing to removal.
 
 | Method and path | Description |
 | --- | --- |
@@ -1671,7 +1671,7 @@ Adds an additional directory to the workspace, with the same semantics as the CL
 | --- | --- | --- | --- |
 | `workspace_id` | path | string | **Required.** Workspace id |
 | `path` | body | string | **Required.** Directory to add |
-| `persist` | body | boolean | Defaults to `true`: appends to `workspace.additional_dir` in `<project root>/.kimi-code/local.toml`. With `false`, the directory only joins the in-memory ephemeral set shared by all sessions of the workspace |
+| `persist` | body | boolean | Defaults to `true`: appends to `workspace.additional_dir` in `<project root>/.omnicode/local.toml`. With `false`, the directory only joins the in-memory ephemeral set shared by all sessions of the workspace |
 
 On success, `data` is `{ project_root, config_path, additional_dirs, persisted }`, where `additional_dirs` lists every additional directory (existing ones included) and `persisted` reports whether this call wrote to disk.
 
@@ -2199,7 +2199,7 @@ With `view=by_workspace` the same filtered, sorted set is re-projected into per-
     "groups": [
       {
         "workspace": { "id": "wd_my-app_a1b2c3d4e5f6", "cwd": "/Users/dev/my-app" },
-        "sessions": [ { "id": "session_...", "workspace": { "id": "wd_my-app_a1b2c3d4e5f6", "cwd": "/Users/dev/my-app" }, "meta": { "title": "Fix the login page", "last_prompt": "adjust the button spacing", "created_at": 1787000000000, "updated_at": 1787000100000, "archived": false, "archived_at": null }, "activity": { "status": "idle", "model": "kimi-for-coding" } } ],
+        "sessions": [ { "id": "session_...", "workspace": { "id": "wd_my-app_a1b2c3d4e5f6", "cwd": "/Users/dev/my-app" }, "meta": { "title": "Fix the login page", "last_prompt": "adjust the button spacing", "created_at": 1787000000000, "updated_at": 1787000100000, "archived": false, "archived_at": null }, "activity": { "status": "idle", "model": "omnicode-for-coding" } } ],
         "total": 42
       }
     ],
@@ -2414,5 +2414,5 @@ Error semantics differ as well: `GET /api/v1/files/{file_id}` answers lookup and
 
 ## Next steps
 
-- [Using Lacrous Kimi Code in the browser](../guides/web.md) — start the server and use Lacrous Kimi Code in a browser
-- [kimi command](./kimi-command.md#kimi-web) — all `kimi web` command-line options
+- [Using Omnicode in the browser](../guides/web.md) — start the server and use Omnicode in a browser
+- [omnicode command](./omnicode-command.md#omnicode-web) — all `omnicode web` command-line options

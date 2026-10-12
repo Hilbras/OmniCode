@@ -1,6 +1,6 @@
 # 平台与模型
 
-Lacrous Kimi Code CLI 支持同时接入多家模型供应商服务，模型在供应商之上声明自己的名称、上下文长度和能力。本页介绍如何在 `config.toml` 里配置各种供应商。
+Omnicode CLI 支持同时接入多家模型供应商服务，模型在供应商之上声明自己的名称、上下文长度和能力。本页介绍如何在 `config.toml` 里配置各种供应商。
 
 ## 支持的供应商类型
 
@@ -8,7 +8,7 @@ Lacrous Kimi Code CLI 支持同时接入多家模型供应商服务，模型在�
 
 | 类型 | 协议 | 典型用途 |
 | --- | --- | --- |
-| [`kimi`](#kimi) | OpenAI 兼容 | Lacrous Kimi Code 托管服务、Kimi Platform API 密钥 |
+| [`omnicode`](#omnicode) | OpenAI 兼容 | Omnicode 托管服务、Omnicode Platform API 密钥 |
 | [`anthropic`](#anthropic) | Anthropic Messages | Claude 系列模型 |
 | [`openai`](#openai) | OpenAI Chat Completions | OpenAI 及兼容服务、DeepSeek、Qwen 等 |
 | [`openai_responses`](#openai_responses) | OpenAI Responses API | OpenAI 较新的 Responses 接口 |
@@ -17,7 +17,7 @@ Lacrous Kimi Code CLI 支持同时接入多家模型供应商服务，模型在�
 
 所有供应商默认以流式方式与模型交互。thinking、视觉、工具调用等能力按模型名前缀自动匹配，通常不需要手动声明。
 
-**端点规则**：`base_url` 必须是 http(s)，且不得内嵌用户名或密码——密钥请写进 `api_key` / `api_key_env`，这样它才不会出现在配置文件、备份或调试输出里。明文 `http://` 只对密钥无法离开本机所在链路的主机放行，因为明文请求头会把凭证暴露给监听网络的人：`localhost` 与 `*.localhost`、任意 `*.local`（mDNS）名称、`127.0.0.0/8`、`::1`、`0.0.0.0`、`::`，以及私有网段 `10.0.0.0/8`、`172.16.0.0/12`、`192.168.0.0/16`、`169.254.0.0/16`，还有 IPv6 的 `fc00::/7`、`fe80::/10`。部署在公网主机上的网关必须使用 `https`；如果某个公网主机确实只提供明文服务，并且你愿意承担暴露风险，可以设置 `KIMI_CODE_ALLOW_INSECURE_PROVIDER_HTTP=1`，在本次运行中恢复旧行为。
+**端点规则**：`base_url` 必须是 http(s)，且不得内嵌用户名或密码——密钥请写进 `api_key` / `api_key_env`，这样它才不会出现在配置文件、备份或调试输出里。明文 `http://` 只对密钥无法离开本机所在链路的主机放行，因为明文请求头会把凭证暴露给监听网络的人：`localhost` 与 `*.localhost`、任意 `*.local`（mDNS）名称、`127.0.0.0/8`、`::1`、`0.0.0.0`、`::`，以及私有网段 `10.0.0.0/8`、`172.16.0.0/12`、`192.168.0.0/16`、`169.254.0.0/16`，还有 IPv6 的 `fc00::/7`、`fe80::/10`。部署在公网主机上的网关必须使用 `https`；如果某个公网主机确实只提供明文服务，并且你愿意承担暴露风险，可以设置 `OMNICODE_ALLOW_INSECURE_PROVIDER_HTTP=1`，在本次运行中恢复旧行为。
 
 **凭证优先级**：`api_key` 或 `api_key_env`（互斥替代项，只能设置其中一个）> `[providers.<name>.env]` 子表键（两者都不存在时才读）> 全部缺失时启动报错。除显式声明的 `api_key_env` 外，CLI 不会从 shell 环境变量自动取凭证，详见[配置覆盖：供应商凭证](./overrides.md#供应商凭证)。
 
@@ -34,7 +34,7 @@ Lacrous Kimi Code CLI 支持同时接入多家模型供应商服务，模型在�
 - `d` 键删除当前供应商（有 `[y/N]` 确认）
 - 在 `[ Add New Platform ]` 行按 Enter 添加新供应商
 
-用账号而非 API 密钥认证的条目——`/login` 登录的 OAuth 平台——会拒绝该操作并提示改用 `/login`。它们的凭证来自登录会话，在这里手填的密钥会在下次会话刷新时被覆盖。Kimi 平台条目保存的是真实的 API 密钥，因此它的密钥在这里和其他供应商一样可以修改。
+用账号而非 API 密钥认证的条目——`/login` 登录的 OAuth 平台——会拒绝该操作并提示改用 `/login`。它们的凭证来自登录会话，在这里手填的密钥会在下次会话刷新时被覆盖。Omnicode 平台条目保存的是真实的 API 密钥，因此它的密钥在这里和其他供应商一样可以修改。
 
 添加时有两条路径：
 
@@ -42,17 +42,17 @@ Lacrous Kimi Code CLI 支持同时接入多家模型供应商服务，模型在�
 - **Custom registry (api.json)**：粘贴自定义 registry 地址，私有 registry 再附上 Bearer token，CLI 自动创建 `providers` / `models` 条目。当 registry 条目声明了 `env` 字段（存放 API 密钥的环境变量名）时，CLI 会把它作为提示打印出来——想用就在 `config.toml` 里自己设置 `api_key_env`。绑定永远不会自动发生：registry 既决定变量名、又决定凭证发往的端点，不能由它来选择读取你的哪份密钥。对私有 registry，Bearer token 本身仍会存为 `source.apiKey`，供刷新时重新拉取。后续启动时，同一个 registry 地址下的供应商会一起刷新，因此上游新增、删除供应商以及模型元数据变化都会同步。
 
 ::: warning
-通过 `/login` 登录的 Lacrous Kimi Code OAuth 托管账号不会在 `/provider` 里显示，请用 `/login` 和 `/logout` 管理。
+通过 `/login` 登录的 Omnicode OAuth 托管账号不会在 `/provider` 里显示，请用 `/login` 和 `/logout` 管理。
 :::
 
-非交互环境下也可以用 shell 命令完成同样操作：[`kimi provider`](../reference/kimi-command.md#kimi-provider)。
+非交互环境下也可以用 shell 命令完成同样操作：[`omnicode provider`](../reference/omnicode-command.md#omnicode-provider)。
 
 ## 内置供应商
 
 `/provider` 管理器的 "Known third-party provider" 路径会拉取公共模型目录再做适配，适用于目录中已经收录的厂商。对于下面这些厂商，CLI 已把端点、协议和密钥前缀都内置为数据，即使拉不到目录，你也能直接按 id 添加：
 
 ```sh
-kimi provider add-builtin <providerId>
+omnicode provider add-builtin <providerId>
 ```
 
 这条命令会替你写好一整条供应商配置——协议、`base_url` 以及你在提示中输入的 API 密钥——随后刷新它的模型列表。完成之后它就是一个普通供应商：可以像其他供应商一样修改、更换密钥或删除。
@@ -83,22 +83,22 @@ kimi provider add-builtin <providerId>
 
 这些端点具体如何接收密钥，详见 [身份验证与凭证](./authentication.md)。
 
-## `kimi`
+## `omnicode`
 
-用于对接 Moonshot AI 的 OpenAI 兼容接口，包括 Lacrous Kimi Code 托管服务和 Kimi Platform API 密钥。
+用于对接 Hilbras 的 OpenAI 兼容接口，包括 Omnicode 托管服务和 Omnicode Platform API 密钥。
 
-- 默认 `base_url`：`https://api.moonshot.ai/v1`
-- 凭证键名：`KIMI_API_KEY`、`KIMI_BASE_URL`
+- 默认 `base_url`：`https://api.hilbras.ai/v1`
+- 凭证键名：`OMNICODE_API_KEY`、`OMNICODE_BASE_URL`
 - 额外能力：支持视频上传
 
 ```toml
-[providers.kimi]
-type = "kimi"
-base_url = "https://api.moonshot.ai/v1"
+[providers.omnicode]
+type = "omnicode"
+base_url = "https://api.hilbras.ai/v1"
 api_key = "sk-xxxxx"
 ```
 
-> 使用 Lacrous Kimi Code 托管服务时，`/login` 登录后会自动配置 `base_url` 和凭证，无需手动填写。
+> 使用 Omnicode 托管服务时，`/login` 登录后会自动配置 `base_url` 和凭证，无需手动填写。
 
 ## `anthropic`
 
@@ -203,7 +203,7 @@ base_url = "https://your-gateway.example"
 
 与 `google-genai` 共用实现，`type = "vertexai"` 时切换到 Vertex AI 访问路径。
 
-认证走 Google Cloud 标准 ADC 流程（`gcloud auth application-default login` 或 `GOOGLE_APPLICATION_CREDENTIALS` 服务账号 JSON），这部分与 Lacrous Kimi Code 无关。**项目 ID 和区域必须写在 `[providers.vertexai.env]` 子表里**。直接在 shell 里 `export GOOGLE_CLOUD_PROJECT` 不会被 CLI 读取。
+认证走 Google Cloud 标准 ADC 流程（`gcloud auth application-default login` 或 `GOOGLE_APPLICATION_CREDENTIALS` 服务账号 JSON），这部分与 Omnicode 无关。**项目 ID 和区域必须写在 `[providers.vertexai.env]` 子表里**。直接在 shell 里 `export GOOGLE_CLOUD_PROJECT` 不会被 CLI 读取。
 
 ```toml
 [providers.vertexai]
@@ -216,14 +216,14 @@ GOOGLE_CLOUD_LOCATION = "us-central1"
 
 ```sh
 gcloud auth application-default login   # 一次性完成认证
-kimi
+omnicode
 ```
 
 如需让 Vertex 请求走自定义（如代理）端点，可设置 `base_url`（或 `GOOGLE_VERTEX_BASE_URL` 环境变量）；不填时使用 SDK 默认的区域化 `*-aiplatform.googleapis.com` 地址。与 `google-genai` 一样，只填主机根地址。SDK 会自行追加 `/v1beta1/publishers/google/models/…`。
 
 ## OAuth 与凭证注入
 
-Lacrous Kimi Code 托管服务使用 OAuth 而不是静态 API 密钥。执行 `/login` 之后，内置的认证工具链会自动写入并刷新凭证，因此这一部分无需在 `config.toml` 里做任何手动配置。
+Omnicode 托管服务使用 OAuth 而不是静态 API 密钥。执行 `/login` 之后，内置的认证工具链会自动写入并刷新凭证，因此这一部分无需在 `config.toml` 里做任何手动配置。
 
 ## 下一步
 

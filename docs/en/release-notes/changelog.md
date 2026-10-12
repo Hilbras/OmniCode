@@ -4,13 +4,13 @@ outline: 2
 
 # Changelog
 
-This page documents the changes in each Lacrous Kimi Code CLI release.
+This page documents the changes in each Omnicode release.
 
 ## 2.1.1 (2026-09-24)
 
 ### Polish
 
-- Revert filesystem watchers for config and workspace files to on by default. Set `[watch] enabled` to `false` or `KIMI_CODE_WATCH=0` to keep them off. See [`watch`](../configuration/config-files.md#watch) for details.
+- Revert filesystem watchers for config and workspace files to on by default. Set `[watch] enabled` to `false` or `OMNICODE_WATCH=0` to keep them off. See [`watch`](../configuration/config-files.md#watch) for details.
 
 ### Bug Fixes
 
@@ -20,19 +20,19 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Add an experimental fullscreen mode toggle for the TUI. Enable it via the TUI mode setting in `/settings`, or set `tui_mode = "fullscreen"` in `~/.kimi-code/tui.toml`; it takes effect after restarting Lacrous Kimi Code.
+- Add an experimental fullscreen mode toggle for the TUI. Enable it via the TUI mode setting in `/settings`, or set `tui_mode = "fullscreen"` in `~/.omnicode/tui.toml`; it takes effect after restarting Omnicode.
 - In fullscreen, click a folded block to open or close it.
 - Add a clickable "Jump to bottom" indicator to the fullscreen TUI.
 
 ### Polish
 
 - Reduce the CLI's startup time and memory usage.
-- Turn off filesystem watchers for config and workspace files by default. Set `[watch] enabled` to `true` or `KIMI_CODE_WATCH=1` to turn them back on. See [`watch`](../configuration/config-files.md#watch) for details.
+- Turn off filesystem watchers for config and workspace files by default. Set `[watch] enabled` to `true` or `OMNICODE_WATCH=1` to turn them back on. See [`watch`](../configuration/config-files.md#watch) for details.
 
 ### Bug Fixes
 
 - Harden workspace security: block file tools from accessing files outside the working directory through symlinks, apply project-local configuration only after the workspace is trusted, block repository git configuration from executing commands during background git operations, and reject additional directories that resolve to the home directory or filesystem root.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 2.0.2 (2026-09-19)
 
@@ -53,28 +53,28 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 - Remove the system-prompt rule that forbade all file access outside the working directory.
 - Providers can read their API key from a named environment variable via [`api_key_env`](../configuration/providers.md) in `config.toml`.
-- Stop workspace file watchers from scanning an unbounded project root, and add `[watch] enabled` / `KIMI_CODE_WATCH` to disable watching entirely. See [`watch`](../configuration/config-files.md#watch) for details.
+- Stop workspace file watchers from scanning an unbounded project root, and add `[watch] enabled` / `OMNICODE_WATCH` to disable watching entirely. See [`watch`](../configuration/config-files.md#watch) for details.
 - Stop asking for approval of bash commands that cannot be statically analyzed in Ask When Needed permission mode.
-- Rename the `kimi install-app` subcommand to `kimi install-desktop`; the old name keeps working as a hidden alias.
+- Rename the `omnicode install-app` subcommand to `omnicode install-desktop`; the old name keeps working as a hidden alias.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 2.0.0 (2026-09-17)
 
 ### Features
 
-- Add the `/desktop` slash command (alias `/install-desktop`) and the `kimi install-app` subcommand.
+- Add the `/desktop` slash command (alias `/install-desktop`) and the `omnicode install-app` subcommand.
 - Render mermaid code blocks as diagrams in the terminal; turn it off under `/settings` → Mermaid diagrams, or set `mermaid = "off"` in the `[markdown]` section of tui.toml.
 
 ### Polish
 
-- The built-in browser plugin now appears as "Kimi Browser Extension" in the plugins panel, marketplace catalog, and docs, matching the product rename.
+- The built-in browser plugin now appears as "Omnicode Browser Extension" in the plugins panel, marketplace catalog, and docs, matching the product rename.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.43.1 (2026-09-15)
 
@@ -101,7 +101,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 - web: AI session titles are now always on — a title is generated after the first turn and can be regenerated from the rename field, with no experimental flag required.
 - Delete sessions from the session picker: press Ctrl+X on a session, then y to confirm.
-- Add `-y, --yes` to `kimi upgrade` (alias `kimi update`) to skip the confirmation prompt and install the update directly.
+- Add `-y, --yes` to `omnicode upgrade` (alias `omnicode update`) to skip the confirmation prompt and install the update directly.
 - Add the `loop_control.compaction_max_attempts` config option to set the maximum total attempts for a failing compaction request (default 5). See [`loop_control`](../configuration/config-files.md#loop_control) for details.
 
 ### Polish
@@ -109,33 +109,33 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Skip the confirmation prompt for rm -rf commands that target only /tmp or /temp paths.
 - Allow steering messages to interrupt waits for background tasks.
 - Goal time budgets no longer count time spent with the session closed, and the 24-hour limit is removed.
-- Add the `KIMI_CODE_PERMISSION_MODE_REMINDER` environment variable: set it to `0` to stop injecting the auto permission-mode reminders into the model context.
+- Add the `OMNICODE_PERMISSION_MODE_REMINDER` environment variable: set it to `0` to stop injecting the auto permission-mode reminders into the model context.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.42.0 (2026-09-09)
 
 ### Features
 
-- Remote Control is now always on; the experimental `KIMI_CODE_EXPERIMENTAL_REMOTE_CONTROL` flag has been removed. See [Remote Control](https://moonshotai.github.io/kimi-code/guides/remote-control.html) for details.
+- Remote Control is now always on; the experimental `OMNICODE_EXPERIMENTAL_REMOTE_CONTROL` flag has been removed. See [Remote Control](https://hilbras.github.io/omnicode/guides/remote-control.html) for details.
 - web: Support permanently deleting sessions from the session row context menu, with a confirmation prompt.
 - Add read-only tools to the `/btw` side agent.
 - web: Preview images and videos in a reorderable media rail in the composer, mention them in the text on demand, and keep the previews after queueing and sending.
-- Accept HEIC, HEIF, and BMP images in prompt attachments and `ReadMediaFile` when the model is served by Kimi.
+- Accept HEIC, HEIF, and BMP images in prompt attachments and `ReadMediaFile` when the model is served by Omnicode.
 
 ### Polish
 
 - Collapse finished tool calls in the transcript to a header plus one marked outcome row: short output is shown whole, hidden output is counted (`N more lines`, `+N more`) and revealed by `Ctrl-O`, which the footer advertises while it is available.
 - Upgrade the default thinking effort to the recommended level for eligible users.
-- The subagent model pool (`[secondary_model]`) is now always on; the experimental secondary-model flag and the `KIMI_CODE_EXPERIMENTAL_SECONDARY_MODEL` opt-out have been removed.
-- Add configurable character limits and resumable long-line file reads without repeated output truncation; see [`read`](https://moonshotai.github.io/kimi-code/configuration/config-files.html#read) for details.
-- The minidb session-index read model and global search worker are now always on; the experimental flags have been replaced by the `[database]` config section and the `KIMI_CODE_PERSISTENCE_MINIDB_READMODEL` / `KIMI_CODE_SEARCH_WORKER` env vars; see [`database`](https://moonshotai.github.io/kimi-code/configuration/config-files.html#database) for details.
+- The subagent model pool (`[secondary_model]`) is now always on; the experimental secondary-model flag and the `OMNICODE_EXPERIMENTAL_SECONDARY_MODEL` opt-out have been removed.
+- Add configurable character limits and resumable long-line file reads without repeated output truncation; see [`read`](https://hilbras.github.io/omnicode/configuration/config-files.html#read) for details.
+- The minidb session-index read model and global search worker are now always on; the experimental flags have been replaced by the `[database]` config section and the `OMNICODE_PERSISTENCE_MINIDB_READMODEL` / `OMNICODE_SEARCH_WORKER` env vars; see [`database`](https://hilbras.github.io/omnicode/configuration/config-files.html#database) for details.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.41.0 (2026-09-04)
 
@@ -157,20 +157,20 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Bug Fixes
 
-- Fix print mode (`kimi -p`) losing session records when the run exits on an error or a termination signal.
-- Fix print mode (`kimi -p`) ignoring the `KIMI_DISABLE_TELEMETRY` environment variable.
+- Fix print mode (`omnicode -p`) losing session records when the run exits on an error or a termination signal.
+- Fix print mode (`omnicode -p`) ignoring the `OMNICODE_DISABLE_TELEMETRY` environment variable.
 - Tower mode (experimental): fix tower mode never starting when enabled through `[experimental] tower = true` in config.toml instead of the environment variable, and make `/tower` work in directories that are not git repositories; enablement errors now name the actual blocker.
 - Fix background questions being cancelled as soon as the agent finishes its turn.
 - Fix resuming a subagent by its agent id after the session is reopened in a new process; the resumed subagent follows the current permission mode and is matched by its own profile in permission rules.
 - web: Fix per-turn file change previews showing added/removed lines that never existed and inaccurate line counts when the same file is edited multiple times in one turn; change cards now show only exact line statistics.
 - web: Fix the default thinking effort in settings not being settable to the highest level (Max).
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.40.1 (2026-09-02)
 
 ### Bug Fixes
 
-- Fix the condition for showing the kimi-cli migration prompt.
+- Fix the condition for showing the omnicode-cli migration prompt.
 
 ## 0.40.0 (2026-09-02)
 
@@ -178,23 +178,23 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 - web: Add a Plugins panel to Settings for browsing the plugin marketplace and installing, enabling, disabling, and removing plugins.
 - web: Support activating multiple skills from a single message.
-- Add the `kimi session list` command to list sessions from the command line.
-- Tower mode (experimental, `KIMI_CODE_EXPERIMENTAL_TOWER=1`): the agent no longer enters tower mode on its own — turn it on with `/tower on` or `/tower <base-branch>`.
+- Add the `omnicode session list` command to list sessions from the command line.
+- Tower mode (experimental, `OMNICODE_EXPERIMENTAL_TOWER=1`): the agent no longer enters tower mode on its own — turn it on with `/tower on` or `/tower <base-branch>`.
 - The subagent model setting (`[secondary_model]`) graduates from experimental to stable.
-- Block dangerous shell commands such as shutdown, reboot, or rm -rf in Auto mode, and always ask before running them in Manual and YOLO modes; disable the guard with `[permission] dangerous_command_guard = false` or `KIMI_CODE_DANGEROUS_COMMAND_GUARD=false`.
+- Block dangerous shell commands such as shutdown, reboot, or rm -rf in Auto mode, and always ask before running them in Manual and YOLO modes; disable the guard with `[permission] dangerous_command_guard = false` or `OMNICODE_DANGEROUS_COMMAND_GUARD=false`.
 
 ### Polish
 
 - Preserve comments, key order, and formatting in config.toml when configuration values are updated.
 - Remove the workspace restriction on the Bash tool's cwd parameter.
 - Default the workspace trust prompt selection to "Trust this folder" instead of "Don't trust".
-- The `kimi acp` subcommand no longer honors `KIMI_CODE_LEGACY_FLAG`; it always runs on the default agent engine.
+- The `omnicode acp` subcommand no longer honors `OMNICODE_LEGACY_FLAG`; it always runs on the default agent engine.
 - web: Add a code wrap toggle to the diff panel and streamline its header.
 
 ### Bug Fixes
 
-- Honor explicit `[experimental]` config entries over the `KIMI_CODE_EXPERIMENTAL_FLAG` master switch, so a flag set to `false` in config.toml stays off; per-feature `KIMI_CODE_EXPERIMENTAL_<NAME>` variables still override both.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Honor explicit `[experimental]` config entries over the `OMNICODE_EXPERIMENTAL_FLAG` master switch, so a flag set to `false` in config.toml stays off; per-feature `OMNICODE_EXPERIMENTAL_<NAME>` variables still override both.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.39.1 (2026-08-28)
 
@@ -204,19 +204,19 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - web: Fix signed-in users without a usable model being wrongly asked to sign in (and getting stuck there on web); the send gate now offers picking or configuring a model instead.
 - web: Fix the first IME (or keyboard) character being silently swallowed after clicking the composer placeholder.
 - web: Fix attachments in a newly created session still showing as uploading after the upload has finished.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.39.0 (2026-08-27)
 
 ### Features
 
-- Add Remote Control as an experimental feature for accessing a local web session remotely. Enable it with `KIMI_CODE_EXPERIMENTAL_REMOTE_CONTROL=1`, then run `kimi rc`, `kimi web --remote-control`, or `/remote-control` to start it.
-- Add experimental tower mode for multi-agent orchestration; set `KIMI_CODE_EXPERIMENTAL_TOWER=1`, then run `/tower on` and `/tower <objective>` to start.
-- Add an optional `fork` parameter to subagent and swarm tools that starts the subagent with a snapshot of the calling agent's conversation history; set `KIMI_CODE_EXPERIMENTAL_SUBAGENT_FORK=1` or `subagent_fork = true` under `[experimental]` in config.toml to enable it.
+- Add Remote Control as an experimental feature for accessing a local web session remotely. Enable it with `OMNICODE_EXPERIMENTAL_REMOTE_CONTROL=1`, then run `omnicode rc`, `omnicode web --remote-control`, or `/remote-control` to start it.
+- Add experimental tower mode for multi-agent orchestration; set `OMNICODE_EXPERIMENTAL_TOWER=1`, then run `/tower on` and `/tower <objective>` to start.
+- Add an optional `fork` parameter to subagent and swarm tools that starts the subagent with a snapshot of the calling agent's conversation history; set `OMNICODE_EXPERIMENTAL_SUBAGENT_FORK=1` or `subagent_fork = true` under `[experimental]` in config.toml to enable it.
 - web: Allow moving a running foreground Bash command or subagent to the background via the "Move to background" button on the running card.
 - web: Add a flat/by-workspace tab to the mobile session list.
 - Add the Tencent CloudBase plugin to the curated marketplace.
-- Add a dedicated `[swarm] timeout_ms` config option (or the `KIMI_CODE_SWARM_TIMEOUT_MS` env var) for AgentSwarm subagent timeouts, which no longer follow `[subagent] timeout_ms`.
+- Add a dedicated `[swarm] timeout_ms` config option (or the `OMNICODE_SWARM_TIMEOUT_MS` env var) for AgentSwarm subagent timeouts, which no longer follow `[subagent] timeout_ms`.
 
 ### Polish
 
@@ -227,15 +227,15 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Bug Fixes
 
 - Fix file tools and shell working directories failing to resolve Git Bash paths such as /c/Users or /tmp on Windows.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.38.0 (2026-08-20)
 
 ### Features
 
-- Support two OAuth login methods — kimi.ai and kimi.com.
+- Support two OAuth login methods — omnicode.ai and omnicode.com.
 - Add the WaitFor tool: the agent can now wait for a background task to finish within the current turn instead of ending the turn and being re-invoked.
-- Add 13 data sources to the official Kimi Datasource plugin — Chinese government data (NDA/NBS) and standards (GB/HB/DB/TT), eight international organization datasets (WHO, FAO, UNSD, ECB, Eurostat, UNICEF, OECD, FRED), Xinhua Finance, and Caixin. Update the plugin from the Official tab in /plugins.
+- Add 13 data sources to the official Omnicode Datasource plugin — Chinese government data (NDA/NBS) and standards (GB/HB/DB/TT), eight international organization datasets (WHO, FAO, UNSD, ECB, Eurostat, UNICEF, OECD, FRED), Xinhua Finance, and Caixin. Update the plugin from the Official tab in /plugins.
 - web: Add a Pin action to the chat header more-menu.
 
 ### Polish
@@ -247,14 +247,14 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Bug Fixes
 
 - Fix config.toml entries being lost when the file had a syntax error or was edited outside the app.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.37.2 (2026-08-19)
 
 ### Polish
 
 - web: Settings gains a Lab tab with a new multi-tab sidebar toggle; when enabled, the sidebar shows the Open / Done / Workspaces tabs.
-- Make several refinements and internal improvements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Make several refinements and internal improvements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.37.1 (2026-08-18)
 
@@ -286,13 +286,13 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - web: Fix Ctrl+K in the composer opening session search on macOS — session search now only answers to Cmd+K.
 - web: Fix the Background Agent panel showing incorrect task counts and statuses.
 - web: Fix pasting a copied folder into the composer failing the upload with a connection error — folders are now skipped instead.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.36.1 (2026-08-14)
 
 ### Features
 
-- web: Generate session titles with AI (experimental). Off by default — set `KIMI_CODE_EXPERIMENTAL_AUTO_SESSION_TITLE=1` (or the master flag `KIMI_CODE_EXPERIMENTAL_FLAG=1`) to turn it on.
+- web: Generate session titles with AI (experimental). Off by default — set `OMNICODE_EXPERIMENTAL_AUTO_SESSION_TITLE=1` (or the master flag `OMNICODE_EXPERIMENTAL_FLAG=1`) to turn it on.
 
 ### Polish
 
@@ -300,7 +300,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Bug Fixes
 
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.36.0 (2026-08-13)
 
@@ -308,7 +308,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 - Upgrade the experimental subagent model setting to a model pool: the `[secondary_model]` section can now hold a set of candidate models with descriptions, and the main agent picks from them per spawn based on the task.
 
-  Set `KIMI_CODE_EXPERIMENTAL_SECONDARY_MODEL=1` (or the master flag `KIMI_CODE_EXPERIMENTAL_FLAG=1`) before starting Kimi to enable it.
+  Set `OMNICODE_EXPERIMENTAL_SECONDARY_MODEL=1` (or the master flag `OMNICODE_EXPERIMENTAL_FLAG=1`) before starting Omnicode to enable it.
 
   Recommended setups:
 
@@ -317,14 +317,14 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
     ```toml
     [secondary_model]
-    default_model = "kimi-code/kimi-for-coding-highspeed"
+    default_model = "omnicode/omnicode-for-coding-highspeed"
     [secondary_model.models]
-    "kimi-code/kimi-for-coding-highspeed" = "Fast and cheap — good for daily refactoring, code explanation, and small edits."
-    "kimi-code/k3" = "Strong at complex reasoning and deep debugging — pick it for hard problems."
+    "omnicode/omnicode-for-coding-highspeed" = "Fast and cheap — good for daily refactoring, code explanation, and small edits."
+    "omnicode/k3" = "Strong at complex reasoning and deep debugging — pick it for hard problems."
     ```
 
-  See the [subagent model pool docs](https://moonshotai.github.io/kimi-code/en/configuration/config-files.html#subagent-model-pool) for details.
-- Add an experimental fullscreen TUI mode. Set the `KIMI_CODE_TUI_FULL_SCREEN=1` environment variable to enable it.
+  See the [subagent model pool docs](https://hilbras.github.io/omnicode/en/configuration/config-files.html#subagent-model-pool) for details.
+- Add an experimental fullscreen TUI mode. Set the `OMNICODE_TUI_FULL_SCREEN=1` environment variable to enable it.
 - Support rendering LaTeX math formulas (`$…$` / `$$…$$`) in TUI messages as Unicode formulas.
 
 ### Bug Fixes
@@ -332,7 +332,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Show project MCP launch targets in the workspace trust prompt, default to declining trust, and resolve `fd` and `stty` binaries to absolute paths so untrusted workspaces cannot plant bare-name executables before confirmation.
 - Fix sessions failing with a provider 400 error on every follow-up request after a turn is interrupted while the model is still thinking, on strict OpenAI-compatible providers (e.g. DeepSeek).
 - Fix Ctrl+C being ignored during automatic retries of failed API requests.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.35.0 (2026-08-12)
 
@@ -346,22 +346,22 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Fix coder subagents spawning further subagents by default.
 - Fix the token counts reported after compaction reading far below the real context size; they now match the numbers shown while the session runs.
 - Fix two binary-planting risks on Windows.
-- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md) for more technical entries.
+- Fix several known issues and make various refinements. See the [changelog on GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md) for more technical entries.
 
 ## 0.34.0 (2026-08-06)
 
 ### Features
 
 - web: Add a flat view to the sidebar session list.
-- The Kimi Computer Use plugin now supports Windows x64 — install it from `/plugins`.
-- Show a cache-expiry reminder when resuming or sending after a long idle. Set [`cache_expiry_hint`](https://moonshotai.github.io/kimi-code/en/configuration/config-files.html#tui-toml) to `false` to disable it.
+- The Omnicode Computer Use plugin now supports Windows x64 — install it from `/plugins`.
+- Show a cache-expiry reminder when resuming or sending after a long idle. Set [`cache_expiry_hint`](https://hilbras.github.io/omnicode/en/configuration/config-files.html#tui-toml) to `false` to disable it.
 
 ### Polish
 
 - web: Subagent tasks show their model and thinking level.
 - web: Show a failure card with one-click resume when a model request fails.
 - web: Show retry progress (attempt N of M) in the working status during automatic retries.
-- Show browser extension links and activation steps after installing Kimi WebBridge.
+- Show browser extension links and activation steps after installing Omnicode WebBridge.
 
 ### Bug Fixes
 
@@ -375,7 +375,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - web: Fix dragging to select text while renaming moving the whole list item.
 - web: Fix the background-tasks and todos pills jumping to the top when the plan approval dialog expands.
 - web: Fix the chevron direction on the "show less" button of the changed-files summary card.
-- Fix `kimi -p` exiting before background tasks and subagents finish.
+- Fix `omnicode -p` exiting before background tasks and subagents finish.
 - `/feedback` now works for signed-in users on any model; signed-out users see the sign-up page and GitHub Issues links.
 - Fix removing an MCP server breaking open sessions: its tools stay visible but calls fail with a removal notice.
 - Fix the last turn's outcome being lost across server restarts — failed turns now stay flagged in session lists and resumed sessions.
@@ -385,7 +385,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Add Kimi Computer Use and Kimi WebBridge as built-in official marketplace entries in the v2 CLI. Installing from `/plugins` sets up the latest managed runtime and plugin together, reports incomplete manual steps, and supports retrying interrupted setup.
+- Add Omnicode Computer Use and Omnicode WebBridge as built-in official marketplace entries in the v2 CLI. Installing from `/plugins` sets up the latest managed runtime and plugin together, reports incomplete manual steps, and supports retrying interrupted setup.
 - web: Add and manage custom providers in settings.
 - web: Pin sessions to the top of the sidebar.
 - web: Set an emoji for the session title.
@@ -398,7 +398,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - `/fork` no longer switches to the forked session: the current session stays active and its background tasks keep running. Find the fork in `/sessions`.
 - web: Overhaul the UI/UX and fix known issues.
 - Start the interactive TUI without creating a session.
-- Rename the partner plugin marketplace tab to Curated and clarify that it contains third-party plugins from Kimi partners.
+- Rename the partner plugin marketplace tab to Curated and clarify that it contains third-party plugins from Omnicode partners.
 
 ### Bug Fixes
 
@@ -410,18 +410,18 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Refactors
 
-- Run the CLI surfaces (interactive TUI, `kimi -p`, `kimi acp`, `kimi export`, `kimi provider`) on the agent-core-v2 engine by default. Set `KIMI_CODE_LEGACY_FLAG=1` to fall back to the legacy engine.
+- Run the CLI surfaces (interactive TUI, `omnicode -p`, `omnicode acp`, `omnicode export`, `omnicode provider`) on the agent-core-v2 engine by default. Set `OMNICODE_LEGACY_FLAG=1` to fall back to the legacy engine.
 
 ## 0.32.0 (2026-08-04)
 
 ### Features
 
-- Add four hook events: `TurnStarted`, `UserPromptQueued`, `TaskStarted`, and `SessionHeartbeat`. Configure them under `[[hooks]]` in `config.toml` — see [Hooks](https://moonshotai.github.io/kimi-code/en/customization/hooks.html) for details.
+- Add four hook events: `TurnStarted`, `UserPromptQueued`, `TaskStarted`, and `SessionHeartbeat`. Configure them under `[[hooks]]` in `config.toml` — see [Hooks](https://hilbras.github.io/omnicode/en/customization/hooks.html) for details.
 
 ### Polish
 
-- Rename two `[loop_control]` keys: `max_retries_per_step` → `max_attempts_per_step` and `max_steps_per_run` → `max_steps_per_turn`; the old keys stop working with a rename warning at startup — see [loop_control](https://moonshotai.github.io/kimi-code/en/configuration/config-files.html#loop-control).
-- Add a `[token_counting]` config section: when a provider doesn't report token usage, switch the context-size display to local estimates — see [token_counting](https://moonshotai.github.io/kimi-code/en/configuration/config-files.html#token-counting).
+- Rename two `[loop_control]` keys: `max_retries_per_step` → `max_attempts_per_step` and `max_steps_per_run` → `max_steps_per_turn`; the old keys stop working with a rename warning at startup — see [loop_control](https://hilbras.github.io/omnicode/en/configuration/config-files.html#loop-control).
+- Add a `[token_counting]` config section: when a provider doesn't report token usage, switch the context-size display to local estimates — see [token_counting](https://hilbras.github.io/omnicode/en/configuration/config-files.html#token-counting).
 
 ### Bug Fixes
 
@@ -443,7 +443,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Bug Fixes
 
-- Fix sporadic "model is not configured" errors when starting kimi web, caused by the background provider-model refresh transiently clearing the model catalog while the first session was being created.
+- Fix sporadic "model is not configured" errors when starting omnicode web, caused by the background provider-model refresh transiently clearing the model catalog while the first session was being created.
 - web: Fix new sessions showing the thinking level (e.g. Max) while the first message actually ran with thinking off.
 - web: Make the @ file mention work in a new-session draft, before the first prompt creates the session.
 - web: Fix chat code blocks rendering in the proportional UI font at the wrong size after the markdown renderer upgrade, and align the loading fallback with the highlighted block.
@@ -455,7 +455,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Support Markdown-defined custom agents on agent-core.
 - Add the /secondary_model slash command to configure the secondary model used by subagents (experimental; enable it in /experiments first).
 - Plugins can contribute custom agents, discovered automatically and available for sub-agent delegation.
-- Plugins can contribute system prompt instructions through `systemPrompt` or `systemPromptPath` in `kimi.plugin.json`.
+- Plugins can contribute system prompt instructions through `systemPrompt` or `systemPromptPath` in `omnicode.plugin.json`.
 
 ### Bug Fixes
 
@@ -471,7 +471,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Polish
 
-- Show a quota note after installing official plugins that bill against plan quota (such as Kimi Datasource).
+- Show a quota note after installing official plugins that bill against plan quota (such as Omnicode Datasource).
 - Show a notice when an official plugin used in the session has an update available — run /plugins to update.
 - Remove the 50 MB size limit on file uploads to the built-in server.
 
@@ -506,9 +506,9 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- web: Support defining agents in Markdown files, declaring system prompt, name, description, and tool permissions. [Details](https://moonshotai.github.io/kimi-code/en/customization/agents.html#agent-file-format)
-- web: Permanently override the main agent's system prompt with SYSTEM.md. [Details](https://moonshotai.github.io/kimi-code/en/customization/agents.html#overriding-the-main-agent-s-system-prompt-with-system-md)
-- web: Globally enable or disable tools across all sessions via config.toml. [Details](https://moonshotai.github.io/kimi-code/en/configuration/config-files.html#tools)
+- web: Support defining agents in Markdown files, declaring system prompt, name, description, and tool permissions. [Details](https://hilbras.github.io/omnicode/en/customization/agents.html#agent-file-format)
+- web: Permanently override the main agent's system prompt with SYSTEM.md. [Details](https://hilbras.github.io/omnicode/en/customization/agents.html#overriding-the-main-agent-s-system-prompt-with-system-md)
+- web: Globally enable or disable tools across all sessions via config.toml. [Details](https://hilbras.github.io/omnicode/en/configuration/config-files.html#tools)
 - Videos attached to a prompt now reach the model together with the prompt, with no extra tool round trip.
 - Support selecting a thinking effort level from ACP clients.
 - Add environment variable overrides for agent loop and background task limits.
@@ -531,7 +531,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Fix ReadMediaFile failing on videos when the provider has no file upload channel.
 - Fix goal mode continuation prompts leaking into the transcript when resuming a session.
 - web: Show transparent images over a checkerboard canvas.
-- Remove references to the non-existent `kimi resume` command from the scheduled-task tool descriptions.
+- Remove references to the non-existent `omnicode resume` command from the scheduled-task tool descriptions.
 
 ## 0.28.1 (2026-07-20)
 
@@ -541,7 +541,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Polish
 
-- Run web servers foreground-only end to end: the /web slash command now always starts a new server, and the `kimi web kill` / `kimi web ps` subcommands are removed — foreground servers stop with Ctrl+C. `kimi server kill` remains as a deprecated fallback that only stops servers started by a version before 0.28.0.
+- Run web servers foreground-only end to end: the /web slash command now always starts a new server, and the `omnicode web kill` / `omnicode web ps` subcommands are removed — foreground servers stop with Ctrl+C. `omnicode server kill` remains as a deprecated fallback that only stops servers started by a version before 0.28.0.
 
 ### Bug Fixes
 
@@ -552,8 +552,8 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Features
 
 - **Breaking:**
-  - The `kimi server` command tree is deprecated; use `kimi web` instead.
-  - `kimi web` now runs in the foreground of the current terminal and opens the browser; stop it with Ctrl+C.
+  - The `omnicode server` command tree is deprecated; use `omnicode web` instead.
+  - `omnicode web` now runs in the foreground of the current terminal and opens the browser; stop it with Ctrl+C.
 
 ### Polish
 
@@ -570,7 +570,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Features
 
 - Add the /copy slash command to copy the last assistant message to the clipboard.
-- Using an API key for Kimi coding models now also fetches the latest model list automatically.
+- Using an API key for Omnicode coding models now also fetches the latest model list automatically.
 
 ### Polish
 
@@ -587,7 +587,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Fix AGENTS.md files installed as symbolic links being ignored by the web backend.
 - Fix Esc and Ctrl+C cancelling compaction instead of closing an open /btw panel.
 - Fix whitespace-only thinking content rendering as a blank line in the transcript.
-- Fix `/export-debug-zip` and `kimi export` overwriting the previous ZIP on repeated runs for the same session; the default filename now includes a timestamp.
+- Fix `/export-debug-zip` and `omnicode export` overwriting the previous ZIP on repeated runs for the same session; the default filename now includes a timestamp.
 
 ## 0.26.0 (2026-07-16) Say hi to the BIIIG DAY!
 
@@ -602,12 +602,12 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 - Fix a resumed session being marked as just updated and jumping to the top of the session list without any new activity.
 - Fix the context size indicator under-reporting the model's actual context usage.
-- Fix Kimi-provider models routed through the Anthropic protocol incorrectly showing reasoning effort options.
+- Fix Omnicode-provider models routed through the Anthropic protocol incorrectly showing reasoning effort options.
 - Honor an explicit thinking "off" on OpenAI-compatible (chat completions) providers.
 - Report when users stop tasks and preserve other stop reasons in model context.
 - Fix a race where resuming a background subagent right after it was manually stopped could fail with an "already running" error.
-- Replay empty thinking content verbatim instead of substituting a placeholder space on Anthropic-compatible and Kimi preserved-thinking endpoints.
-- Keep legacy migrations idempotent across multiple Kimi homes and report damaged or unmapped sessions instead of silently skipping them.
+- Replay empty thinking content verbatim instead of substituting a placeholder space on Anthropic-compatible and Omnicode preserved-thinking endpoints.
+- Keep legacy migrations idempotent across multiple Omnicode homes and report damaged or unmapped sessions instead of silently skipping them.
 - web: Fix the sidebar resize handle being covered by the chat composer background.
 
 ## 0.25.0 (2026-07-16)
@@ -640,17 +640,17 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Add a builtin `/check-kimi-code-docs` skill that automatically answers Lacrous Kimi Code product questions with official-docs sources.
+- Add a builtin `/check-omnicode-docs` skill that automatically answers Omnicode product questions with official-docs sources.
 
 ### Polish
 
-- Align `kimi -p` behavior across engines: `print_background_mode` and `print_max_turns` now apply, and `/goal` runs stay alive until the goal finishes.
-- `kimi -p` now stays alive by default while background tasks are pending, with no effective wait or turn limit, and feeds each completion back to the agent. Set `print_background_mode = "exit"` or `"drain"` to restore the old exit-after-one-turn behavior.
-- `kimi -p` background tasks and subagents no longer time out by default (interactive mode is unchanged); restore limits with `[background] bash_task_timeout_s` or `[subagent] timeout_ms`.
-- Subagent timeout now defaults to 2 hours everywhere; override with `[subagent] timeout_ms` or `KIMI_SUBAGENT_TIMEOUT_MS`.
+- Align `omnicode -p` behavior across engines: `print_background_mode` and `print_max_turns` now apply, and `/goal` runs stay alive until the goal finishes.
+- `omnicode -p` now stays alive by default while background tasks are pending, with no effective wait or turn limit, and feeds each completion back to the agent. Set `print_background_mode = "exit"` or `"drain"` to restore the old exit-after-one-turn behavior.
+- `omnicode -p` background tasks and subagents no longer time out by default (interactive mode is unchanged); restore limits with `[background] bash_task_timeout_s` or `[subagent] timeout_ms`.
+- Subagent timeout now defaults to 2 hours everywhere; override with `[subagent] timeout_ms` or `OMNICODE_SUBAGENT_TIMEOUT_MS`.
 - The per-step LLM retry limit is raised from 3 to 10 attempts, so transient provider failures (429 / overload) are retried before a turn fails; tune with `loop_control.max_retries_per_step`.
 - Workspaces now stay in sync: new sessions register automatically, missing workspaces are restored at startup, and removed ones stay removed.
-- `kimi web` now logs failed requests and key operations so daemon issues are easier to diagnose.
+- `omnicode web` now logs failed requests and key operations so daemon issues are easier to diagnose.
 - web: AgentSwarm cards now stay expanded while subagents are still running.
 - web: Minimized plan review and question cards now use an upward chevron for expand.
 
@@ -680,9 +680,9 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Bug Fixes
 
-- Fix Kimi sessions getting stuck when preserved-thinking history contains an empty reasoning step.
+- Fix Omnicode sessions getting stuck when preserved-thinking history contains an empty reasoning step.
 - Fix built-in tools being unavailable when the model provider becomes ready after the session starts.
-- Fix Thinking effort routing: non-Kimi providers now preserve configured values, while Kimi models validate runtime selections and fall back safely during model resolution.
+- Fix Thinking effort routing: non-Omnicode providers now preserve configured values, while Omnicode models validate runtime selections and fall back safely during model resolution.
 - web: Align thinking-level handling with the CLI: submit the selected level verbatim instead of silently downgrading it, fall back to the model's own default when nothing was chosen or the model switches, and persist explicit picks as the default for new sessions.
 - Preserve goal completion summaries and show untyped LLM errors without an internal error-code prefix in step interruption events.
 
@@ -703,7 +703,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - On session close, background tasks are now asked to stop and given a grace period before being force-stopped.
 - Rewrite repeated-tool-call reminders to redirect the agent toward a different action instead of prohibiting the call.
 - Optimize the TaskOutput tool prompts to discourage blocking waits on background tasks.
-- Send the kimi-code-cli User-Agent on provider registry (api.json) and model catalog fetches, so registries can identify the client version.
+- Send the omnicode-cli User-Agent on provider registry (api.json) and model catalog fetches, so registries can identify the client version.
 - Log a warning when a skill fails to parse instead of silently dropping it, and fix skill scan results not being reported.
 
 ### Bug Fixes
@@ -730,7 +730,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Refactors
 
-- `kimi web` now runs on the reworked agent engine by default.
+- `omnicode web` now runs on the reworked agent engine by default.
 
 ## 0.23.6 (2026-07-12)
 
@@ -742,14 +742,14 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - web: Auto-enable the default thinking effort when switching to a model that supports effort levels in the web UI.
 - Recognize the `support_efforts` and `default_effort` fields when importing a custom registry, so thinking effort levels are available for those models.
 - Update the WebBridge install page link opened from the `/plugins` panel.
-- Add a `subagent.timeout_ms` config option (or the `KIMI_SUBAGENT_TIMEOUT_MS` env var) to control how long a single subagent may run before timing out; the default is raised from 30 minutes to 2 hours.
-- Add a print-mode background policy: set `[background].print_background_mode = "steer"` to keep `kimi -p` alive across background-task completions, so the main agent can be steered into follow-up turns.
+- Add a `subagent.timeout_ms` config option (or the `OMNICODE_SUBAGENT_TIMEOUT_MS` env var) to control how long a single subagent may run before timing out; the default is raised from 30 minutes to 2 hours.
+- Add a print-mode background policy: set `[background].print_background_mode = "steer"` to keep `omnicode -p` alive across background-task completions, so the main agent can be steered into follow-up turns.
 
 ### Bug Fixes
 
 - web: Fix sessions getting stuck in a sending state after a reconnect; turns that finish while the connection is down now stop the spinner and let the next message send normally.
 - web: Fix the first visit after starting or updating the web UI bouncing to the login page when the initial auth check fails; the connecting screen now stays up, shows the connection error, and retries.
-- Keep `kimi -p` runs alive after a turn ends while a goal is still active or a cron task is pending, so goal continuations and cron fires run their turns instead of being cut off when the main turn finishes.
+- Keep `omnicode -p` runs alive after a turn ends while a goal is still active or a cron task is pending, so goal continuations and cron fires run their turns instead of being cut off when the main turn finishes.
 - Treat a dismissed question prompt as the user choosing not to answer, instead of implicitly selecting the recommended option.
 - web: Fix ReadMediaFile results rendering as plain tool cards instead of images after resuming or reloading a session.
 - web: Fix the chat view jumping downward while scrolling through conversation history.
@@ -783,11 +783,11 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - web: Polish the chat UI with Inter typography, localized labels, and tighter composer and menu styling.
 - web: Polish the session sidebar layout, colors, icons, and typography.
 - Display the Extra Usage (fuel pack) balance in the `/usage` and `/status` commands.
-- Add a Kimi WebBridge entry to the Official tab of the `/plugins` panel that opens the WebBridge install page in your browser.
+- Add a Omnicode WebBridge entry to the Official tab of the `/plugins` panel that opens the WebBridge install page in your browser.
 
 ### Bug Fixes
 
-- Keep image-heavy sessions within provider request-size limits: oversized images (model-read and pasted, including WebP) are downscaled and compressed, HEIC/HEIF reads are refused with a platform-matched conversion command instead of poisoning the session, and an HTTP 413 request-too-large now recovers automatically — the request and `/compact` retry with older media replaced by text markers. The limits are configurable via `[image]` in `config.toml` (or `KIMI_IMAGE_*` env vars), and each core keeps its own settings so reloading one client's config no longer changes another client's compression.
+- Keep image-heavy sessions within provider request-size limits: oversized images (model-read and pasted, including WebP) are downscaled and compressed, HEIC/HEIF reads are refused with a platform-matched conversion command instead of poisoning the session, and an HTTP 413 request-too-large now recovers automatically — the request and `/compact` retry with older media replaced by text markers. The limits are configurable via `[image]` in `config.toml` (or `OMNICODE_IMAGE_*` env vars), and each core keeps its own settings so reloading one client's config no longer changes another client's compression.
 - Fix resuming sessions whose original working directory no longer exists.
 - Fix prompt-mode goals so they run until completion and report invalid goal commands before sending prompts.
 - web: Fix an occasional "another turn is active" error when sending the first message of a new conversation, and show a starting state while it is being sent.
@@ -806,7 +806,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Bug Fixes
 
-- Fix `kimi -p` runs exiting with code 0 when a turn fails.
+- Fix `omnicode -p` runs exiting with code 0 when a turn fails.
 - Prevent autonomous goals from being paused by model-reported status updates.
 - Count the turn that starts an autonomous goal toward its turn budget.
 - Raise the image downscale cap from 2000px to 3000px, and fix swapped width/height for EXIF-rotated (portrait) photos in compression captions and media read notes so region readback coordinates map correctly.
@@ -830,7 +830,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Bug Fixes
 
-- Fix `kimi -p` abandoning background subagents that start late or run long, so their results reach the main agent.
+- Fix `omnicode -p` abandoning background subagents that start late or run long, so their results reach the main agent.
 - web: Recover chat streaming after a stale background-tab WebSocket instead of requiring a page refresh.
 - Fix some third-party models (e.g. Opus 4.8) falling back to the family default max output tokens; an unrecognized minor now reuses the nearest earlier known version's limit.
 - Honor explicit Anthropic `max_output_size` settings instead of clamping them to built-in ceilings.
@@ -844,7 +844,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Polish
 
-- Preserve prior turns' thinking by default on the Anthropic provider (Claude and Kimi's Anthropic-compatible mode), matching the Kimi default. Disable with `[thinking] keep = "off"` or `KIMI_MODEL_THINKING_KEEP=off`.
+- Preserve prior turns' thinking by default on the Anthropic provider (Claude and Omnicode's Anthropic-compatible mode), matching the Omnicode default. Disable with `[thinking] keep = "off"` or `OMNICODE_MODEL_THINKING_KEEP=off`.
 - Clarify the permission mode descriptions shown by `/permission`, `/auto`, and `/yolo`, and reorder `/auto` and `/yolo` in the command list.
 - Show long-running goal wall-clock budget reminders in hours.
 - Tighten goal-mode guidance so agents continue reasonable work across turns instead of ending goals prematurely.
@@ -884,24 +884,24 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - web: Render AskUserQuestion answers as a readable option list with the chosen option(s) highlighted, instead of raw JSON.
 - web: Show available skills in the composer before a session is created.
 - web: Add an Archived sessions entry to the mobile settings sheet and clarify the archive confirmation to mention restoring from Settings.
-- web: Show the Kimi icon and clearer titles in desktop notifications.
+- web: Show the Omnicode icon and clearer titles in desktop notifications.
 - web: Align the markdown diff code block with the design system: code text keeps the normal ink colour while the sign and a soft row background carry the change, matching the `~/diff` panel.
 - web: Prevent chat text from hyphenating at line breaks and render code without font ligatures.
 - web: Drop the stray left indent in the tool-call card body so expanded content aligns with the header.
 - Feed AskUserQuestion answers back to the model as question text and option labels instead of positional ids, so the model no longer has to map them back. Question texts must now be unique per call and option labels unique per question; existing clients keep answering with option ids, so no client change is required.
-- Keep prior reasoning across turns for Kimi models by default when Thinking is on. Set `[thinking] keep = "off"` to disable.
+- Keep prior reasoning across turns for Omnicode models by default when Thinking is on. Set `[thinking] keep = "off"` to disable.
 
 ## 0.22.3 (2026-07-04)
 
 ### Bug Fixes
 
-- Wait for background subagents to finish and respond to their results before exiting in `kimi -p`, instead of ending the turn early.
+- Wait for background subagents to finish and respond to their results before exiting in `omnicode -p`, instead of ending the turn early.
 - web: Fix uploaded videos failing to play in the web chat.
 - Revert the recent TUI transcript rendering changes to the original upstream behavior and fix related rendering issues.
 
 ### Polish
 
-- Add `--dangerous-bypass-auth` and `--keep-alive` flags to `kimi server run`, so the server can run without a token on trusted networks and stay alive past the idle timeout.
+- Add `--dangerous-bypass-auth` and `--keep-alive` flags to `omnicode server run`, so the server can run without a token on trusted networks and stay alive past the idle timeout.
 - web: Add click-to-enlarge for images uploaded in the web chat. Click an image in a message to open it.
 
 ## 0.22.2 (2026-07-03)
@@ -910,7 +910,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 - Fix sessions silently dropping later user messages after a turn was interrupted between a tool call and its result.
 - Fix requests being rejected by strict providers when the model emits duplicate tool call ids.
-- Fix `kimi upgrade` failing on Windows with a spawn error when installing the new version.
+- Fix `omnicode upgrade` failing on Windows with a spawn error when installing the new version.
 - Fix duplicated transcript content appearing in scrollback during streaming.
 - Fix compressed-image prompts leaking an internal `<system>` compression note into the visible message and the session title.
 - Keep automatic background updates from flashing a console window on Windows.
@@ -918,11 +918,11 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Polish
 
 - Have context-compaction notes capture a forward plan for the remaining work — upcoming steps, settled decisions, and foreseeable obstacles — instead of only the immediate next step, so the agent continues more coherently after auto-compaction.
-- Enrich PATH from the user's login shell at startup, so shell commands find user-installed tools (e.g. Homebrew's `gh`) even when kimi-code was launched without the full profile PATH.
+- Enrich PATH from the user's login shell at startup, so shell commands find user-installed tools (e.g. Homebrew's `gh`) even when omnicode was launched without the full profile PATH.
 - Promote the language-matching rule to a dedicated section in the system prompt, so replies and reasoning consistently follow the user's language through long English tool output, while repository artifacts keep project conventions.
 - Add a TUI preference to keep rapid multi-line pastes from submitting line by line when bracketed paste is unavailable. Set `disable_paste_burst = true` in `tui.toml` to turn it off.
 - Keep subagent cards at a stable height and show a live status spinner with a compact two-row activity window.
-- In `kimi -p` runs, wait for background subagents to finish before exiting when `background.keep_alive_on_exit` is enabled. Set `keep_alive_on_exit = true` to let concurrent background subagents complete.
+- In `omnicode -p` runs, wait for background subagents to finish before exiting when `background.keep_alive_on_exit` is enabled. Set `keep_alive_on_exit = true` to let concurrent background subagents complete.
 
 ### Refactors
 
@@ -1006,7 +1006,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Bug Fixes
 
 - Stop a malformed message history from permanently bricking a session on strict providers (Anthropic). The request is repaired before sending — orphaned tool calls are closed and empty/whitespace-only text blocks dropped — and if the provider still rejects its structure, it is resent once with a wire-compliant rebuild.
-- Force-exit headless runs (`kimi -p`) so a stray ref'd handle left over from the run can't keep a completed run alive until an external timeout, and bound prompt cleanup so a wedged shutdown step can't hang shutdown.
+- Force-exit headless runs (`omnicode -p`) so a stray ref'd handle left over from the run can't keep a completed run alive until an external timeout, and bound prompt cleanup so a wedged shutdown step can't hang shutdown.
 - Fix @ file mentions not opening when typed inside a slash command argument.
 - Fix adding a workspace by path in the web UI failing silently when the daemon rejects the path; it now shows an error instead of a broken workspace.
 - Fix duplicate workspaces showing in the web sidebar when the same folder is registered more than once.
@@ -1048,9 +1048,9 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Support the Anthropic-compatible protocol for Lacrous Kimi Code, including video input.
+- Support the Anthropic-compatible protocol for Omnicode, including video input.
 - Add a completion sound and question notifications to the web UI, with separate Settings toggles for completion notifications, question notifications, and sound. Question notifications default off so question text only reaches your desktop after you opt in.
-- Add `KIMI_CODE_CUSTOM_HEADERS` for custom outbound LLM request headers, and send the `User-Agent` header to non-Kimi providers. Set `KIMI_CODE_CUSTOM_HEADERS` to newline-separated `Name: Value` lines.
+- Add `OMNICODE_CUSTOM_HEADERS` for custom outbound LLM request headers, and send the `User-Agent` header to non-Omnicode providers. Set `OMNICODE_CUSTOM_HEADERS` to newline-separated `Name: Value` lines.
 - Add an optional `exclude_empty` parameter to the session list API to omit sessions that have no messages.
 
 ### Bug Fixes
@@ -1079,7 +1079,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Refactors
 
-- Route Lacrous Kimi Code models on the Anthropic-compatible protocol through the beta Messages API.
+- Route Omnicode models on the Anthropic-compatible protocol through the beta Messages API.
 - Upgrade web markdown renderer dependencies (katex, markstream-vue, shiki) for bug fixes and performance improvements.
 - Add provider type and protocol attributes to turn and API error telemetry.
 
@@ -1087,14 +1087,14 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Plugins now support declaring lifecycle hooks in `kimi.plugin.json` to run scripts at specific stages. See [Hooks in Plugins](../customization/plugins.md#hooks-in-plugins).
+- Plugins now support declaring lifecycle hooks in `omnicode.plugin.json` to run scripts at specific stages. See [Hooks in Plugins](../customization/plugins.md#hooks-in-plugins).
 - `/feedback` now supports attaching diagnostic logs and codebase context.
-- Add the `kimi update` command, equivalent to `kimi upgrade`, for upgrading to the latest version.
-- `kimi web` adds the `--allowed-host <host>` option to add a specified Host to the DNS-rebinding allowlist; 403 errors now explain how to allow it via `--allowed-host` or `KIMI_CODE_ALLOWED_HOSTS`, e.g. `kimi web --allowed-host example.com`.
+- Add the `omnicode update` command, equivalent to `omnicode upgrade`, for upgrading to the latest version.
+- `omnicode web` adds the `--allowed-host <host>` option to add a specified Host to the DNS-rebinding allowlist; 403 errors now explain how to allow it via `--allowed-host` or `OMNICODE_ALLOWED_HOSTS`, e.g. `omnicode web --allowed-host example.com`.
 
 ### Bug Fixes
 
-- Fix kimi server failing to start on Windows after the first run.
+- Fix omnicode server failing to start on Windows after the first run.
 - Fix the Web UI opened by the `/web` command not signing in automatically; the terminal now prints the access token.
 - Cap chat-completions providers' `max_tokens` to the remaining context window, avoiding context overflow and invalid parameter errors.
 
@@ -1111,13 +1111,13 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Features
 
 - Add shell mode to the TUI. Type `!` in the input box to enable it. For long-running commands, press Ctrl+B to move them to the background. For example, you can run `!gh auth login` to sign in to the GitHub CLI without opening a new terminal.
-- Add a `--host` CLI option so `kimi web --host` can expose the server to the internet, with hardened token authentication, rate limiting, and other security measures.
+- Add a `--host` CLI option so `omnicode web --host` can expose the server to the internet, with hardened token authentication, rate limiting, and other security measures.
 - Render LaTeX display math (`$$…$$`) in the web UI.
 
 ### Bug Fixes
 
 - Fix a startup crash on Linux caused by an unhandled native clipboard error.
-- Fix `kimi web` and `/web` failing to start the background server daemon on Windows with `spawn EFTYPE` when the CLI is installed via npm/pnpm or run from source. The official single-binary install script was not affected.
+- Fix `omnicode web` and `/web` failing to start the background server daemon on Windows with `spawn EFTYPE` when the CLI is installed via npm/pnpm or run from source. The official single-binary install script was not affected.
 - Fix the terminal window repeatedly losing focus on Linux Wayland, which broke IME input.
 - Stop auto-dismissing questions in the web UI after 60 seconds so they wait for the user's answer.
 - Fix explore subagents silently losing git context when git commands time out or the directory is not a repository.
@@ -1128,7 +1128,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Polish
 
-- Redesign `/plugins` as a single tabbed panel: **Installed** (manage installed plugins — toggle, remove, MCP, details, reload), **Official** (Kimi-maintained marketplace plugins), **Third-party** (marketplace plugins from other publishers), and **Custom** (install straight from a GitHub URL, zip URL, or local path). Use `Tab` / `Shift-Tab` to switch tabs.
+- Redesign `/plugins` as a single tabbed panel: **Installed** (manage installed plugins — toggle, remove, MCP, details, reload), **Official** (Omnicode-maintained marketplace plugins), **Third-party** (marketplace plugins from other publishers), and **Custom** (install straight from a GitHub URL, zip URL, or local path). Use `Tab` / `Shift-Tab` to switch tabs.
 - Show a line-by-line diff when the agent edits or writes a file in the web chat.
 - Show the plan body and approach choices in the plan review card when exiting plan mode in the web UI.
 - Show the full accumulated progress of a subagent in its detail panel, with concise tool-call summaries instead of raw JSON.
@@ -1206,8 +1206,8 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 - Added the ability to add extra workspace directories:
   - Use the `/add-dir <path>` command to add extra working directories to the current session, or remember them for the project.
-  - Use `kimi --add-dir <path>` to add them on startup.
-  - Project-level local config is now managed in `.kimi-code/local.toml`; we recommend adding it to your `.gitignore`.
+  - Use `omnicode --add-dir <path>` to add them on startup.
+  - Project-level local config is now managed in `.omnicode/local.toml`; we recommend adding it to your `.gitignore`.
 - Allow long-running foreground commands and subagents to be moved into background tasks with `Ctrl+B`, and inspect them via the `/tasks` panel.
 
 ### Bug Fixes
@@ -1257,7 +1257,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Bug Fixes
 
-- Fix the `kimi web` command failing to start in the background.
+- Fix the `omnicode web` command failing to start in the background.
 - Stop the background local server from locking the directory it was started in.
 - Prevent the web login dialog from closing when clicking the backdrop.
 
@@ -1269,7 +1269,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Add Lacrous Kimi Code Web mode, which you can start with `kimi web` or `/web` in the CLI, and continue sessions in a browser chat interface.
+- Add Omnicode Web mode, which you can start with `omnicode web` or `/web` in the CLI, and continue sessions in a browser chat interface.
 
 ### Bug Fixes
 
@@ -1284,7 +1284,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Add a built-in `kimi vis` command that launches the session visualizer in your browser, pointed at your local sessions. Supports `--port`/`--host`, `--no-open`, and `kimi vis <sessionId>` deep-links.
+- Add a built-in `omnicode vis` command that launches the session visualizer in your browser, pointed at your local sessions. Supports `--port`/`--host`, `--no-open`, and `omnicode vis <sessionId>` deep-links.
 
 ### Bug Fixes
 
@@ -1316,7 +1316,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Recover resumed sessions when an interrupted tool call result was not recorded.
 - Stop writing resume version markers into persisted agent metadata.
 - Do not carry obsolete legacy loop, background, plan, yolo, or unknown experimental flags into migrated config files.
-- Repair mismatched JSON Schema types emitted by Xcode 26.5 MCP server for Moonshot compatibility.
+- Repair mismatched JSON Schema types emitted by Xcode 26.5 MCP server for Hilbras compatibility.
 
 ### Polish
 
@@ -1396,7 +1396,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Bug Fixes
 
 - Prevent forking sessions during active turns and consolidate wire protocol definitions into a shared internal package.
-- Fix Kimi Datasource to use the matching OAuth credentials and service endpoint for the active Lacrous Kimi Code environment.
+- Fix Omnicode Datasource to use the matching OAuth credentials and service endpoint for the active Omnicode environment.
 - Fix goal marker text overflowing terminal width.
 
 ### Polish
@@ -1411,7 +1411,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Add custom color themes. Define your own palette as a JSON file in `~/.kimi-code/themes/`, or generate one with the built-in `/custom-theme` skill command.
+- Add custom color themes. Define your own palette as a JSON file in `~/.omnicode/themes/`, or generate one with the built-in `/custom-theme` skill command.
 - Add `/import-from-cc-codex` to import selected Claude Code and Codex instructions, Skills, and MCP settings.
 - Show available plugin updates in the marketplace.
 
@@ -1460,18 +1460,18 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Show full plan cards directly and remove the Plan card keyboard shortcut.
 - Wrap long single-line shell commands in approval prompts so the full command remains visible.
 - Rework file reference completion in the TUI.
-- Load Kimi-specific user Skills and global agent instructions from `KIMI_CODE_HOME` when it is set.
+- Load Omnicode-specific user Skills and global agent instructions from `OMNICODE_HOME` when it is set.
 
 ## 0.11.0 (2026-06-05)
 
 ### Features
 
-- Add experimental sub-skill discovery gated by the `KIMI_CODE_EXPERIMENTAL_SUB_SKILL` environment variable. Ships the `sub-skill` builtin bundle (`sub-skill.review`, `sub-skill.consolidate`) for inventorying and consolidating skills into hierarchical groups.
+- Add experimental sub-skill discovery gated by the `OMNICODE_EXPERIMENTAL_SUB_SKILL` environment variable. Ships the `sub-skill` builtin bundle (`sub-skill.review`, `sub-skill.consolidate`) for inventorying and consolidating skills into hierarchical groups.
 - Add the following environment variables:
 
-  - `KIMI_MODEL_TEMPERATURE`, `KIMI_MODEL_TOP_P` — sampling parameters applied globally to any `kimi` provider (not tied to `KIMI_MODEL_NAME`).
-  - `KIMI_MODEL_THINKING_KEEP` — Moonshot preserved-thinking passthrough (`thinking.keep`), injected only while Thinking is on.
-  - `KIMI_CODE_NO_AUTO_UPDATE` (legacy alias `KIMI_CLI_NO_AUTO_UPDATE`) — fully disables the update preflight (no check, background install, or prompt).
+  - `OMNICODE_MODEL_TEMPERATURE`, `OMNICODE_MODEL_TOP_P` — sampling parameters applied globally to any `omnicode` provider (not tied to `OMNICODE_MODEL_NAME`).
+  - `OMNICODE_MODEL_THINKING_KEEP` — Hilbras preserved-thinking passthrough (`thinking.keep`), injected only while Thinking is on.
+  - `OMNICODE_NO_AUTO_UPDATE` (legacy alias `OMNICODE_CLI_NO_AUTO_UPDATE`) — fully disables the update preflight (no check, background install, or prompt).
 - Show built-in skills as direct slash commands and group them ahead of external skill commands.
 
 ### Bug Fixes
@@ -1505,10 +1505,10 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Features
 
 - Users now can prepare several goals for the agent to work on sequentially. The agent will pick up the next goal from the queue once the current goal is completed. Use `/goal next <objective>` to queue a goal and `/goal next manage` to review and change the queue interactively.
-- Add the built-in `update-config` skill — you can now have Kimi edit its own config files.
+- Add the built-in `update-config` skill — you can now have Omnicode edit its own config files.
 - Add persistent experimental feature toggles and a TUI panel that applies confirmed changes by reloading the current session.
 - Add `/reload` to reload the current session and apply updated config files, plus `/reload-tui` to reload only TUI preferences.
-- Add a doctor command for validating Lacrous Kimi Code configuration files.
+- Add a doctor command for validating Omnicode configuration files.
 
 ### Bug Fixes
 
@@ -1523,7 +1523,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 ### Polish
 
 - Start automatic background updates as soon as startup's fresh update check finds a newer version.
-- Set the CLI process title to kimi-code during startup.
+- Set the CLI process title to omnicode during startup.
 - Lowercase the stale file content message in edit tool errors.
 
 ### Refactors
@@ -1538,7 +1538,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Add the `kimi acp` subcommand: kimi-code now speaks [Agent Client Protocol 0.23](https://agentclientprotocol.com/) over stdio so IDEs (Zed, JetBrains AI Chat, custom clients) can drive sessions directly — coverage matrix, Zed configuration and breaking pre-release notes are in [kimi acp Subcommand Page](https://moonshotai.github.io/kimi-code/en/reference/kimi-acp.html).
+- Add the `omnicode acp` subcommand: omnicode now speaks [Agent Client Protocol 0.23](https://agentclientprotocol.com/) over stdio so IDEs (Zed, JetBrains AI Chat, custom clients) can drive sessions directly — coverage matrix, Zed configuration and breaking pre-release notes are in [omnicode acp Subcommand Page](https://hilbras.github.io/omnicode/en/reference/omnicode-acp.html).
 - Add `/btw` for side-channel conversations without steering the active main turn, and allow `/btw` to open the side-channel panel before entering a question.
 
 ### Bug Fixes
@@ -1562,20 +1562,20 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Features
 
-- Add experimental goal mode for longer tasks that need more than one turn. Turn it on with `KIMI_CODE_EXPERIMENTAL_GOAL_COMMAND=1` before you start Kimi.
+- Add experimental goal mode for longer tasks that need more than one turn. Turn it on with `OMNICODE_EXPERIMENTAL_GOAL_COMMAND=1` before you start Omnicode.
 
-  Use `/goal <objective>` in the TUI when you want Kimi to keep working on one task across turns. For example:
+  Use `/goal <objective>` in the TUI when you want Omnicode to keep working on one task across turns. For example:
 
   ```text
   /goal Fix the failing checkout test
   ```
 
-  Kimi shows the goal in the TUI and keeps progress visible while it works. Use `/goal status`, `/goal pause`, `/goal resume`, `/goal cancel`, and `/goal replace <objective>` to manage the goal. This feature is still experimental. Try it and tell us what would make it more useful.
-- Add `kimi provider` CLI subcommand with `add`, `remove`, `list`, and `catalog list` / `catalog add` actions, so providers from a custom registry (api.json) or the public models.dev catalog can be imported and managed without launching the TUI.
+  Omnicode shows the goal in the TUI and keeps progress visible while it works. Use `/goal status`, `/goal pause`, `/goal resume`, `/goal cancel`, and `/goal replace <objective>` to manage the goal. This feature is still experimental. Try it and tell us what would make it more useful.
+- Add `omnicode provider` CLI subcommand with `add`, `remove`, `list`, and `catalog list` / `catalog add` actions, so providers from a custom registry (api.json) or the public models.dev catalog can be imported and managed without launching the TUI.
 - Add background structured questions so agents can continue while waiting for user answers.
 - Add background automatic upgrades, which can be disabled in tui.toml.
 - Add `/undo` slash command to withdraw the last prompt from conversation history, and keep replay records in sync when a prompt is undone.
-- Add a `kimi upgrade` command for manually checking and upgrade Lacrous Kimi Code CLI.
+- Add a `omnicode upgrade` command for manually checking and upgrade Omnicode.
 - Add approval lifecycle hook events for observing pending and completed permission prompts.
 - Allow subagents to use custom tools registered on their parent agent.
 - Allow glob searches to target explicit absolute paths outside the workspace.
@@ -1610,7 +1610,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 - Add `/provider` command for managing AI providers, support custom registry imports, and introduce a tabbed model selector. It replaces the deprecated `/connect` command — use `/provider` instead.
 - Render scheduled reminders distinctly in the TUI, expose cron fired events to SDK clients, and report cron fire times with local timezone offsets.
-- Add `KIMI_MODEL_ADAPTIVE_THINKING` (and a matching `adaptive_thinking` model-alias field) to force adaptive thinking (`thinking: { type: 'adaptive' }`) on or off, overriding the Anthropic model-name version inference. This lets custom-named compatible endpoints that back an adaptive-capable model opt in even when the model name does not encode a parseable Claude version.
+- Add `OMNICODE_MODEL_ADAPTIVE_THINKING` (and a matching `adaptive_thinking` model-alias field) to force adaptive thinking (`thinking: { type: 'adaptive' }`) on or off, overriding the Anthropic model-name version inference. This lets custom-named compatible endpoints that back an adaptive-capable model opt in even when the model name does not encode a parseable Claude version.
 
 ### Bug Fixes
 
@@ -1619,15 +1619,15 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Polish
 
-- Clarify Kimi Platform API key login labels and prompt details.
+- Clarify Omnicode Platform API key login labels and prompt details.
 - Polish a small TUI visual interaction.
 
 ## 0.6.0 (2026-05-29)
 
 ### Features
 
-- Add a `KIMI_MODEL_*` environment-variable channel that lets you run Lacrous Kimi Code against a specific model (provider type, base URL, API key, context size, capabilities, and thinking settings) without editing `config.toml`.
-- Install plugins directly from GitHub repository URLs, and surface each install's origin and trust level (kimi-official, curated, third-party) in the plugin manager.
+- Add a `OMNICODE_MODEL_*` environment-variable channel that lets you run Omnicode against a specific model (provider type, base URL, API key, context size, capabilities, and thinking settings) without editing `config.toml`.
+- Install plugins directly from GitHub repository URLs, and surface each install's origin and trust level (omnicode-official, curated, third-party) in the plugin manager.
 
 ### Bug Fixes
 
@@ -1648,7 +1648,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Support querying sessions by sessionId or workDir in listSessions, and show a helpful cd command when resuming a session from a different working directory.
 - Expand the footer's rotating tips to surface more commands and shortcuts, featuring newer and important ones more prominently.
 - Improve the usage information display in the TUI.
-- Restrict plugin trust badges to Kimi-hosted plugin CDN URL patterns.
+- Restrict plugin trust badges to Omnicode-hosted plugin CDN URL patterns.
 - Clarify subagent and background task stop messages as user-initiated.
 - Align the datasource plugin with the generic two-tool workflow.
 
@@ -1718,7 +1718,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Other
 
-- Enhance `kimi export` to include more diagnostic information in the manifest.
+- Enhance `omnicode export` to include more diagnostic information in the manifest.
 
 ## 0.3.0 (2026-05-26)
 
@@ -1737,7 +1737,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Hide the todo panel on resume when all todos are already completed.
 - Always emit a paired tool result when a tool returns a malformed or missing result, preventing the next request from failing with a missing tool_call_id error.
 - Fix Plan mode session resets so new sessions no longer fail after plan review rejection and continue receiving events after setup errors.
-- Exit promptly when the controlling terminal goes away. The TUI now handles `SIGHUP` / `SIGTERM` and stdout/stderr `EIO` / `EPIPE` / `ENOTCONN` errors, preventing leftover `kimi` processes that pin a CPU core after the parent shell or multiplexer dies unexpectedly.
+- Exit promptly when the controlling terminal goes away. The TUI now handles `SIGHUP` / `SIGTERM` and stdout/stderr `EIO` / `EPIPE` / `ENOTCONN` errors, preventing leftover `omnicode` processes that pin a CPU core after the parent shell or multiplexer dies unexpectedly.
 - Avoid overly small local completion caps that can truncate reasoning before summaries are produced.
 
 ### Refactors
@@ -1756,13 +1756,13 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - The `/connect` provider and model pickers now support type-to-search filtering, and long lists are paginated. The `/model` picker is also paginated when many models are configured.
 - Add `Ctrl-J` as an additional shortcut for inserting new lines in the TUI prompt.
 - Add wire record migration handling during session replay.
-- Migrate user skills from `~/.kimi/skills/` to `~/.kimi-code/skills/` during the first-launch migration; existing target skills are kept.
+- Migrate user skills from `~/.omnicode/skills/` to `~/.omnicode/skills/` during the first-launch migration; existing target skills are kept.
 - Emit session resume hint as a structured meta message in stream-json output format.
 
 ### Bug Fixes
 
 - Report the macOS product version in OAuth device information instead of the Darwin kernel version.
-- Correct the `X-Msh-Platform` header value to `kimi_code_cli`.
+- Correct the `X-Msh-Platform` header value to `omnicode_code_cli`.
 - Clarify the prompt-mode error when no model is configured by pointing users to the login flow.
 - Hide the empty current session from the sessions picker while keeping other empty sessions visible.
 - Stop mentioning OAuth credentials in the migration UI — they are never migrated, so the previous "needs /login" notice misread as a failure. OAuth-only installs no longer trigger the migration screen.
@@ -1772,7 +1772,7 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 - Avoid CPU spikes from large streamed tool arguments and coalesce high-frequency streaming UI updates.
 - Resume sessions with a newer wire protocol version instead of failing. A warning is now shown in the TUI and records are replayed without migration.
 - Warn tmux users when extended key settings may prevent modified Enter shortcuts from working.
-- Let Kimi requests use the remaining context window for completion tokens by default while keeping explicit environment limits as hard caps.
+- Let Omnicode requests use the remaining context window for completion tokens by default while keeping explicit environment limits as hard caps.
 
 ### Refactors
 
@@ -1781,4 +1781,4 @@ This page documents the changes in each Lacrous Kimi Code CLI release.
 
 ### Other
 
-- When no models are configured, `/model` and the welcome panel now point users to `/login` (for Kimi) and `/connect` (for other providers).
+- When no models are configured, `/model` and the welcome panel now point users to `/login` (for Omnicode) and `/connect` (for other providers).

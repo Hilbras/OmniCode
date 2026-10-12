@@ -1,16 +1,16 @@
 <div align="center">
 
-<img src="assets/logo-256.png" alt="Lacrous Kimi Code by lacrous" width="128" />
+<img src="assets/logo-256.png" alt="Omnicode" width="128" />
 
-# Lacrous Kimi Code CLI — lacrous fork
+# Omnicode CLI
 
-**Bring-your-own-provider builds for Lacrous Kimi Code CLI.**
+**Bring-your-own-provider builds for Omnicode CLI.**
 
-[![Upstream](https://img.shields.io/badge/upstream-MoonshotAI%2Fkimi--code-8A8A8A?style=flat-square)](https://github.com/MoonshotAI/kimi-code)
+[![Upstream](https://img.shields.io/badge/upstream-Hilbras%2Fomnicode--code-8A8A8A?style=flat-square)](https://github.com/Hilbras/omnicode)
 [![License](https://img.shields.io/badge/license-MIT-C06014?style=flat-square)](LICENSE)
-[![Fork of](https://img.shields.io/badge/fork%20of-21406fb4c-8250DF?style=flat-square)](#provenance)
+[![Based on](https://img.shields.io/badge/based%20on-21406fb4c-8250DF?style=flat-square)](#provenance)
 
-A fork of [MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code) focused on making
+Built on [Hilbras/omnicode](https://github.com/Hilbras/omnicode), focused on making
 **any OpenAI-compatible endpoint a first-class provider**, without a registry, without a
 catalog entry, and without hand-writing model metadata.
 
@@ -18,28 +18,28 @@ catalog entry, and without hand-writing model metadata.
 
 ---
 
-## What this fork changes
+## What this project changes
 
 Upstream already supports importing providers from a **custom registry** (`api.json`) and from
 the public **models.dev catalog**. Both require a registry document to exist somewhere. This
-fork adds the missing third path: **you type the endpoint, it discovers the models itself.**
+project adds the missing third path: **you type the endpoint, it discovers the models itself.**
 
-| | Upstream | This fork |
+| | Upstream | This project |
 |---|---|---|
 | Import from `api.json` registry | ✅ | ✅ |
 | Import from models.dev catalog | ✅ | ✅ |
-| **Add a provider by hand** (`--type` + `--base-url` + key) | ❌ | ✅ `kimi provider add-manual` |
+| **Add a provider by hand** (`--type` + `--base-url` + key) | ❌ | ✅ `omnicode provider add-manual` |
 | **Models auto-discovered from the endpoint** | ❌ | ✅ `GET {baseUrl}/models` |
-| **Built-in vendors** (17 — see the table below) | ❌ | ✅ `kimi provider add-builtin <id>` |
-| **Change a provider's endpoint, protocol or key later** | ❌ | ✅ `kimi provider edit <id>` |
+| **Built-in vendors** (17 — see the table below) | ❌ | ✅ `omnicode provider add-builtin <id>` |
+| **Change a provider's endpoint, protocol or key later** | ❌ | ✅ `omnicode provider edit <id>` |
 | **Pick a provider in the TUI** (`/provider` → Add provider) | ❌ | ✅ asks for the key, discovers models, picks a default |
 
 The same flow is available in both places — `/provider` → **Add provider** → pick a
-vendor, or from the command line with `kimi provider add-builtin <id>`.
+vendor, or from the command line with `omnicode provider add-builtin <id>`.
 
 ### Built-in providers
 
-All 17 are configured the same way — `kimi provider add-builtin <id> --api-key "$KEY"`, or
+All 17 are configured the same way — `omnicode provider add-builtin <id> --api-key "$KEY"`, or
 `--api-key-env VAR` to read the key from the environment instead of storing it.
 
 | Id | Vendor | Endpoint | Wire |
@@ -93,12 +93,12 @@ protocolOverrides = { "claude-*" = "anthropic" }
 Only `anthropic`, `openai`, `openai_responses` and `google-genai` are accepted; an unknown wire
 is dropped with a warning rather than failing the whole refresh.
 
-### `kimi provider add-manual`
+### `omnicode provider add-manual`
 
 Configure any OpenAI-compatible endpoint and discover its models in one step:
 
 ```sh
-kimi provider add-manual my-gateway \
+omnicode provider add-manual my-gateway \
   --type openai \
   --base-url https://gateway.example.com/v1 \
   --api-key "$MY_GATEWAY_KEY"
@@ -111,13 +111,13 @@ Discovering models from the endpoint…
   - my-gateway/qwen3-max
   - my-gateway/mistral-large-2
 
-Set a default with: kimi --model my-gateway/llama-4-70b
+Set a default with: omnicode --model my-gateway/llama-4-70b
 ```
 
 To keep the key out of `config.toml`, bind it to an environment variable instead:
 
 ```sh
-kimi provider add-manual my-gateway \
+omnicode provider add-manual my-gateway \
   --type openai \
   --base-url https://gateway.example.com/v1 \
   --api-key-env MY_GATEWAY_KEY
@@ -127,9 +127,9 @@ kimi provider add-manual my-gateway \
 
 | Flag | Required | Description |
 |---|---|---|
-| `--type <type>` | yes | Wire protocol: `openai`, `openai_responses`, or `kimi` |
+| `--type <type>` | yes | Wire protocol: `openai`, `openai_responses`, or `omnicode` |
 | `--base-url <url>` | yes | Base URL, e.g. `https://gateway.example.com/v1` |
-| `--api-key <key>` | one of | Inline key. Falls back to `KIMI_REGISTRY_API_KEY` |
+| `--api-key <key>` | one of | Inline key. Falls back to `OMNICODE_REGISTRY_API_KEY` |
 | `--api-key-env <VAR>` | one of | Read the key from this environment variable |
 
 `anthropic` and `google-genai` are accepted: both vendors do expose a model-list route
@@ -141,14 +141,14 @@ kimi provider add-manual my-gateway \
 declaring models manually. You are never left with a provider that looks configured but
 cannot resolve a model.
 
-### `kimi provider add-builtin <id>`
+### `omnicode provider add-builtin <id>`
 
 Configure any built-in vendor non-interactively — endpoint and protocol already set:
 
 ```sh
-kimi provider add-builtin cline --api-key "$CLINE_API_KEY"
-kimi provider add-builtin openrouter --api-key "$OPENROUTER_API_KEY"
-kimi provider add-builtin nvidia --api-key-env NVIDIA_API_KEY
+omnicode provider add-builtin cline --api-key "$CLINE_API_KEY"
+omnicode provider add-builtin openrouter --api-key "$OPENROUTER_API_KEY"
+omnicode provider add-builtin nvidia --api-key-env NVIDIA_API_KEY
 ```
 
 `--api-key-env` keeps the key out of `config.toml`; the value is read from that environment
@@ -156,27 +156,27 @@ variable at request time.
 
 Models are always read live from the vendor's `/models` route, never from a hardcoded list, so
 a built-in tracks the vendor's current catalog. Several of these vendors are also importable
-from the models.dev catalog (`kimi provider catalog add openrouter`, `... add nvidia`), which is
+from the models.dev catalog (`omnicode provider catalog add openrouter`, `... add nvidia`), which is
 worth preferring when you want the catalog's richer per-model metadata.
 
-### `kimi provider edit <id>`
+### `omnicode provider edit <id>`
 
 Change a provider that is already configured — a rotated key, a moved endpoint, a different
 protocol:
 
 ```sh
-kimi provider edit openai --api-key "$OPENAI_API_KEY"
-kimi provider edit mygw --base-url https://gateway.example.com/v1
-kimi provider edit mygw --type openai_responses
-kimi provider edit mygw --api-key-env GATEWAY_KEY   # stop storing the key inline
-kimi provider edit mygw --base-url https://x.test/v1 --no-refresh
+omnicode provider edit openai --api-key "$OPENAI_API_KEY"
+omnicode provider edit mygw --base-url https://gateway.example.com/v1
+omnicode provider edit mygw --type openai_responses
+omnicode provider edit mygw --api-key-env GATEWAY_KEY   # stop storing the key inline
+omnicode provider edit mygw --base-url https://x.test/v1 --no-refresh
 ```
 
 | Flag | Effect |
 |---|---|
-| `--type <type>` | New wire protocol (`openai`, `openai_responses`, `anthropic`, `google-genai`, `kimi`) |
+| `--type <type>` | New wire protocol (`openai`, `openai_responses`, `anthropic`, `google-genai`, `omnicode`) |
 | `--base-url <url>` | New endpoint. Must be `http(s)` |
-| `--api-key <key>` | New inline key. Falls back to `KIMI_REGISTRY_API_KEY` |
+| `--api-key <key>` | New inline key. Falls back to `OMNICODE_REGISTRY_API_KEY` |
 | `--api-key-env <VAR>` | Read the key from this variable instead of storing it inline |
 | `--no-refresh` | Apply the change without re-reading the model list |
 
@@ -200,7 +200,7 @@ managed OAuth, first-party platforms, managed-endpoint API keys, and custom regi
 provider you typed in by hand matched none of them — `model_source = "discover"` existed in
 the config schema but no code path ever acted on it.
 
-This fork adds a fifth branch. For any provider with a declared `base_url`, no `oauth`
+This project adds a fifth branch. For any provider with a declared `base_url`, no `oauth`
 reference, and no registry `source`, it fetches `{base_url}/models` and writes one alias per
 model.
 
@@ -214,8 +214,8 @@ model.
 - **Declared-but-absent metadata gets conservative defaults.** Many OpenAI-compatible servers
   return bare `{ id }` rows. Those models still become usable aliases rather than being
   rejected.
-- **Providers that other branches already own are excluded.** The managed Kimi endpoint and
-  the synthetic `__kimi_env__` provider (injected by the `KIMI_MODEL_*` env overlay) are
+- **Providers that other branches already own are excluded.** The managed Omnicode endpoint and
+  the synthetic `__omnicode_env__` provider (injected by the `OMNICODE_MODEL_*` env overlay) are
   explicitly skipped, so discovery never double-fetches or clobbers them.
 - **Embedding entries are dropped.** Endpoints routinely mix embedding and fine-tune models
   into `/models`; those cannot drive a chat turn and are skipped rather than offered.
@@ -233,25 +233,24 @@ model.
 
 ## Install
 
-This fork **publishes its CLI to npm** as
-[`@lacrous/kimi-code`](https://www.npmjs.com/package/@lacrous/kimi-code); the VS Code marketplace
-is not used. Upstream's publishing pipelines were intentionally removed from this repository so
-that nothing publishes under your account automatically. You can also build and run it from source:
+This project **publishes its CLI to npm** as
+[`@hilbras/omnicode`](https://www.npmjs.com/package/@hilbras/omnicode); the VS Code marketplace
+is not used. Publishing is done manually by the maintainers, not by an automated workflow. You can also build and run it from source:
 
 ```sh
-git clone https://github.com/lacrous/kimi-code-by-lacrous.git
-cd kimi-code-by-lacrous
+git clone https://github.com/hilbras/omnicode.git
+cd omnicode
 pnpm install
 pnpm build
-node apps/kimi-code/dist/main.mjs --version
+node apps/omnicode/dist/main.mjs --version
 ```
 
-> **Clone tip:** this is a GitHub fork, so a default clone also pulls upstream's inherited
+> **Clone tip:** a default clone also pulls upstream's inherited
 > history (~90 MB). If you only want the code, not the 4,000-odd upstream commits, clone the
 > `lite` branch instead — same 4,426 files, single squashed commit, **~27 MB**:
 >
 > ```sh
-> git clone --branch lite --single-branch https://github.com/lacrous/kimi-code-by-lacrous.git
+> git clone --branch lite --single-branch https://github.com/hilbras/omnicode.git
 > ```
 
 ### One-shot install
@@ -271,8 +270,8 @@ CLI from this checkout:
 | `--vm` | Also create a disposable VM for the autonomous-agent work (see below) |
 
 It installs into this checkout and a user-local prefix
-(`~/.local/opt/kimi-computer-tools`) — it never touches an already installed
-`kimi`, and never writes outside those paths. Without passwordless `sudo` it
+(`~/.local/opt/omnicode-computer-tools`) — it never touches an already installed
+`omnicode`, and never writes outside those paths. Without passwordless `sudo` it
 falls back to `apt-get download` plus `dpkg-deb -x`, so it works unprivileged;
 it will not prompt for a password.
 
@@ -313,10 +312,10 @@ hardcoding one.
 The tools stay **off by default**. Enable them per shell:
 
 ```sh
-export KIMI_CODE_EXPERIMENTAL_COMPUTER_USE=1
-export PATH="$HOME/.local/opt/kimi-computer-tools/bin:$PATH"
-export LD_LIBRARY_PATH="$HOME/.local/opt/kimi-computer-tools/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
-pnpm run kimi
+export OMNICODE_EXPERIMENTAL_COMPUTER_USE=1
+export PATH="$HOME/.local/opt/omnicode-computer-tools/bin:$PATH"
+export LD_LIBRARY_PATH="$HOME/.local/opt/omnicode-computer-tools/lib/x86_64-linux-gnu:$LD_LIBRARY_PATH"
+pnpm run omnicode
 ```
 
 A test asserts the feature contributes zero tools when the flag is off, so a
@@ -370,51 +369,48 @@ the compositor, can hand out a frame of its own output, so `capture.ts` tries
 GNOME's D-Bus API first and ImageMagick second. If both are blocked, switch the
 session to X11; that is the one configuration where capture is guaranteed.
 
-### Running this fork
+### Running from source
 
 ```sh
-pnpm run kimi              # the CLI from this checkout
-pnpm run kimi -- --version
+pnpm run omnicode              # the CLI from this checkout
+pnpm run omnicode -- --version
 ```
 
-`pnpm run kimi` uses `scripts/kimi-dev.mjs`, which runs against an isolated
-`KIMI_CODE_HOME` so a development run never touches an installed `kimi`'s
+`pnpm run omnicode` uses `scripts/omnicode-dev.mjs`, which runs against an isolated
+`OMNICODE_HOME` so a development run never touches an installed `omnicode`'s
 configuration.
 >
 > Both branches have byte-identical content; only the history differs.
 
-For the **official, signed release**, use upstream's installer — it is the maintained
-distribution channel and is unaffected by this fork:
+For the **official, signed release**, use upstream's installer:
 
 ```sh
-curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash
+curl -fsSL https://code.omnicode.com/omnicode/install.sh | bash
 ```
 
 Requires Node.js ≥ 24.15.0 and pnpm 10.33.0.
 
-### Install the fork as `lacrous-kimi`
+### Install the CLI
 
-The fork never claims the `kimi` command: since 3.0.0 the npm package itself installs a
-`lacrous-kimi` global, so `npm install -g @lacrous/kimi-code` cannot collide with an existing
-`kimi` (upstream's CLI or a prebuilt native binary). It also keeps its own data home at
-`~/.lacrous-kimi` (`KIMI_CODE_HOME` overrides it); on first run it copies your config,
-sessions, and history out of a legacy `~/.kimi-code` and leaves that original home untouched.
+The npm package installs an `omnicode` command. Its data home is `~/.omnicode`
+(`OMNICODE_HOME` overrides it); on first run it copies your config, sessions, and history out of a
+legacy `~/.lacrous-omnicode` (or `~/.lacrous-kimi`) and leaves that original home untouched.
 
-`install.sh` is the one-shot alternative: it installs the published `@lacrous/kimi-code` npm
-package into an isolated prefix (default `~/.local/share/lacrous-kimi/lib`) and exposes the
-same `lacrous-kimi` command. It needs only Node.js ≥ 22.19.0 and `npm` (or `pnpm`); no build
+`install.sh` is the one-shot alternative: it installs the published `@hilbras/omnicode` npm
+package into an isolated prefix (default `~/.local/share/omnicode/lib`) and exposes the
+same `omnicode` command. It needs only Node.js ≥ 24.15.0 and `npm` (or `pnpm`); no build
 step or pnpm workspace.
 
 ```sh
-npm install -g @lacrous/kimi-code                # or:
+npm install -g @hilbras/omnicode                # or:
 ./install.sh                                     # latest published version
 ./install.sh --version 3.0.0                     # pin a version
 ./install.sh --bin-dir "$HOME/.local/bin"        # where the launcher goes (default ~/.local/bin)
 ```
 
-`KIMI_VERSION`, `LACROUS_PREFIX`, `LACROUS_BIN_DIR`, and `LACROUS_NO_MODIFY_PATH` mirror the
+`OMNICODE_VERSION`, `OMNICODE_PREFIX`, `OMNICODE_BIN_DIR`, and `OMNICODE_NO_MODIFY_PATH` mirror the
 flags. The script adds `~/.local/bin` to your shell rc when it is not already on `PATH`
-(skipped when `LACROUS_NO_MODIFY_PATH` is set) and verifies the launcher with `--version`.
+(skipped when `OMNICODE_NO_MODIFY_PATH` is set) and verifies the launcher with `--version`.
 Upgrade by re-running the script.
 
 ---
@@ -422,7 +418,7 @@ Upgrade by re-running the script.
 ## Develop
 
 ```sh
-pnpm kimi          # run THIS checkout's CLI (not an installed binary)
+pnpm omnicode          # run THIS checkout's CLI (not an installed binary)
 pnpm dev:cli       # run the CLI in dev mode
 pnpm test          # run tests
 pnpm typecheck     # TypeScript check
@@ -430,64 +426,61 @@ pnpm lint          # oxlint (includes the no-comments guard)
 pnpm build         # build all packages
 ```
 
-`pnpm run kimi -- provider list` and `pnpm run kimi` (interactive) run the code in this
-checkout. It sets `KIMI_CODE_HOME` to a repo-local `.kimi-dev-home/`, so a dev run never reads
-or writes an installed `kimi`'s config at `~/.kimi-code/`. Override it to share that config
+`pnpm run omnicode -- provider list` and `pnpm run omnicode` (interactive) run the code in this
+checkout. It sets `OMNICODE_HOME` to a repo-local `.omnicode-dev-home/`, so a dev run never reads
+or writes an installed `omnicode`'s config at `~/.omnicode/`. Override it to share that config
 instead:
 
 ```sh
-KIMI_CODE_HOME="$HOME/.kimi-code" pnpm run kimi -- provider list
+OMNICODE_HOME="$HOME/.omnicode" pnpm run omnicode -- provider list
 ```
 
 Run the provider tests specifically:
 
 ```sh
-npx vitest run apps/kimi-code/test/cli/provider.test.ts
+npx vitest run apps/omnicode/test/cli/provider.test.ts
 npx vitest run packages/agent-core-v2/test/app/kosongConfig/discovery.test.ts
 ```
 
 Architecture, coding rules, and contribution guidance live in [AGENTS.md](AGENTS.md) and
-[CONTRIBUTING.md](CONTRIBUTING.md) — both inherited from upstream and still accurate for this
-fork.
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
 ## Provenance
 
-This repository is a fork of **[MoonshotAI/kimi-code](https://github.com/MoonshotAI/kimi-code)**,
+This repository is built on **[Hilbras/omnicode](https://github.com/Hilbras/omnicode)**,
 an AI coding agent that runs in your terminal.
 
-- **Upstream:** Moonshot AI · MIT License · [upstream repo](https://github.com/MoonshotAI/kimi-code) ·
-  [upstream issues](https://github.com/MoonshotAI/kimi-code/issues)
-- **Fork maintained by:** lacrous · <https://github.com/lacrous/kimi-code-by-lacrous>
-- **Fork base commit:** `21406fb4c`
+- **Upstream:** Hilbras · MIT License · [upstream repo](https://github.com/Hilbras/omnicode) ·
+  [upstream issues](https://github.com/Hilbras/omnicode/issues)
+- **Maintained by:** Hilbras · <https://github.com/hilbras/omnicode>
+- **Upstream base commit:** `21406fb4c`
 - **Branches:** `main` (canonical, full history) · `lite` (same content, squashed to one commit,
   ~70% smaller clone)
-- **Changes in this fork:** model discovery for hand-written providers, 17 built-in vendors,
-  per-model wire overrides (`providers.<id>.protocolOverrides`), `kimi provider add-manual`,
-  `kimi provider add-builtin`, the `/provider` built-in flow, model-id search in the picker,
-  `pnpm run kimi`, and removal of upstream's release/publish workflows. See
+- **Changes in this project:** model discovery for hand-written providers, 17 built-in vendors,
+  per-model wire overrides (`providers.<id>.protocolOverrides`), `omnicode provider add-manual`,
+  `omnicode provider add-builtin`, the `/provider` built-in flow, model-id search in the picker,
+  `pnpm run omnicode`, and removal of upstream's release/publish workflows. See
   [CREDITS.md](CREDITS.md) for the per-file breakdown.
-- **This fork is not affiliated with or endorsed by Moonshot AI.** Kimi, Lacrous Kimi Code, and
-  related names and marks are the property of their respective owner.
 
 All upstream code remains under the MIT License; see [LICENSE](LICENSE). Upstream
 documentation is at
-[moonshotai.github.io/kimi-code](https://moonshotai.github.io/kimi-code/en/).
+[hilbras.github.io/omnicode](https://hilbras.github.io/omnicode/en/).
 
 To pull upstream changes in, add the upstream remote and merge:
 
 ```sh
-git remote add upstream https://github.com/MoonshotAI/kimi-code.git
+git remote add upstream https://github.com/Hilbras/omnicode.git
 git fetch upstream && git merge upstream/main
 ```
 
 ## Acknowledgements
 
-- **Moonshot AI** for Lacrous Kimi Code CLI, the foundation of this fork.
+- **Hilbras** for Omnicode CLI, the foundation of this project.
 - [`pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui) — upstream's
   TUI layer, used under its original license.
 
 ## License
 
-MIT, unchanged from upstream. Copyright (c) 2026 Moonshot AI. See [LICENSE](LICENSE).
+MIT, unchanged from upstream. Copyright (c) 2026 Hilbras. See [LICENSE](LICENSE).

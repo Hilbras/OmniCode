@@ -12,13 +12,13 @@ const { frontmatter } = useData()
 <template>
   <Layout>
     <template v-if="frontmatter.layout === 'home'" #home-hero-before>
-      <div class="KimiHome">
+      <div class="OmnicodeHome">
         <HomeHero />
       </div>
     </template>
 
     <template v-if="frontmatter.layout === 'home'" #home-features-after>
-      <div class="KimiHome">
+      <div class="OmnicodeHome">
         <HomeQuickStart />
         <HomeFeatures />
       </div>

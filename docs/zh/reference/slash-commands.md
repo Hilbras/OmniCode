@@ -1,6 +1,6 @@
 # 斜杠命令
 
-斜杠命令是 Lacrous Kimi Code CLI 在交互式 TUI 中提供的内置控制命令，涵盖账号配置、会话管理、模式切换、信息查询等操作。在输入框中输入 `/` 即可触发命令补全，候选列表随后续字符实时过滤；命令的别名也会一并参与匹配。
+斜杠命令是 Omnicode CLI 在交互式 TUI 中提供的内置控制命令，涵盖账号配置、会话管理、模式切换、信息查询等操作。在输入框中输入 `/` 即可触发命令补全，候选列表随后续字符实时过滤；命令的别名也会一并参与匹配。
 
 输入完整命令名后按 `Enter` 执行。如果输入的 `/` 开头内容不匹配任何内置或 Skill 命令，则按普通消息发送给 Agent。
 
@@ -9,14 +9,14 @@
 :::
 
 ::: warning 注意
-`/tower` 和 `/restore` 受默认关闭的实验开关控制。可在 TUI 中用 `/experiments` 启用，也可设置环境变量 `KIMI_CODE_EXPERIMENTAL_TOWER=1` 和 `KIMI_CODE_EXPERIMENTAL_FILE_RESTORE=1`，或在 `config.toml` 的 `[experimental]` 下写 `tower = true` 和 `file_restore = true`。总开关 `KIMI_CODE_EXPERIMENTAL_FLAG=1` 会一次启用全部实验功能。详见[环境变量](../configuration/env-vars.md#运行时开关)。
+`/tower` 和 `/restore` 受默认关闭的实验开关控制。可在 TUI 中用 `/experiments` 启用，也可设置环境变量 `OMNICODE_EXPERIMENTAL_TOWER=1` 和 `OMNICODE_EXPERIMENTAL_FILE_RESTORE=1`，或在 `config.toml` 的 `[experimental]` 下写 `tower = true` 和 `file_restore = true`。总开关 `OMNICODE_EXPERIMENTAL_FLAG=1` 会一次启用全部实验功能。详见[环境变量](../configuration/env-vars.md#运行时开关)。
 :::
 
 ## 账号与配置
 
 | 命令 | 别名 | 说明 | 随时可用 |
 | --- | --- | --- | --- |
-| `/login` | — | 选择账号或平台并登录：Lacrous Kimi Code 走 OAuth 验证码流程，Kimi Platform 通过 API 密钥登录 | 否 |
+| `/login` | — | 选择账号或平台并登录：Omnicode 走 OAuth 验证码流程，Omnicode Platform 通过 API 密钥登录 | 否 |
 | `/logout` | `/disconnect` | 清除当前所选账号的凭据 | 否 |
 | `/provider` | `/providers` | 打开交互式供应商管理器，查看、添加、编辑和删除已配置的供应商。详见[平台与模型 — `/provider`](../configuration/providers.md#provider-—-交互式供应商管理) | 是 |
 | `/model` | — | 切换当前会话使用的 LLM 模型 | 是 |
@@ -45,12 +45,12 @@
 | `/reload-tui` | — | 只重新加载 `tui.toml` 界面偏好（主题、编辑器、通知等），不重建会话 | 是 |
 | `/init` | — | 分析当前代码库并生成 `AGENTS.md` | 否 |
 | `/export-md [<path>]` | `/export` | 将当前会话导出为 Markdown 文件 | 否 |
-| `/export-debug-zip` | — | 将当前会话导出为调试用 ZIP 压缩包（与 [`kimi export`](./kimi-command.md#kimi-export) 行为一致） | 否 |
+| `/export-debug-zip` | — | 将当前会话导出为调试用 ZIP 压缩包（与 [`omnicode export`](./omnicode-command.md#omnicode-export) 行为一致） | 否 |
 | `/copy` | — | 将最后一条 AI 回复复制到剪贴板 | 否 |
-| `/add-dir [<path>]` | — | 为当前会话添加额外的工作目录。不带路径（或传入 `list`）运行时列出已配置的目录。添加时可选择是否将目录记入项目的 `.kimi-code/local.toml` | 否 |
-| `/web` | — | 在 web UI 中打开当前会话：选择一个运行中的实例进行连接，或在 TUI 退出后新开一个前台服务器。参见 [`kimi web`](./kimi-command.md#kimi-web) | 是 |
-| `/remote-control` | `/rc` | 通过 Kimi Remote Control 打开当前会话。详见 [Remote Control](../guides/remote-control.md) | 是 |
-| `/desktop` | `/install-desktop` | 在浏览器中打开 Lacrous Kimi Code 桌面端页面（地址随当前区域而定：`https://www.kimi.com/code` 或 `https://www.kimi.ai/code`）。参见 [`kimi install-desktop`](./kimi-command.md#kimi-install-desktop) | 是 |
+| `/add-dir [<path>]` | — | 为当前会话添加额外的工作目录。不带路径（或传入 `list`）运行时列出已配置的目录。添加时可选择是否将目录记入项目的 `.omnicode/local.toml` | 否 |
+| `/web` | — | 在 web UI 中打开当前会话：选择一个运行中的实例进行连接，或在 TUI 退出后新开一个前台服务器。参见 [`omnicode web`](./omnicode-command.md#omnicode-web) | 是 |
+| `/remote-control` | `/rc` | 通过 Omnicode Remote Control 打开当前会话。详见 [Remote Control](../guides/remote-control.md) | 是 |
+| `/desktop` | `/install-desktop` | 在浏览器中打开 Omnicode 桌面端页面（地址随当前区域而定：`https://www.omnicode.com/code` 或 `https://www.omnicode.ai/code`）。参见 [`omnicode install-desktop`](./omnicode-command.md#omnicode-install-desktop) | 是 |
 
 ## 模式与运行控制
 
@@ -71,7 +71,7 @@
 
 ## 目标模式
 
-`/goal` 用于开始或管理目标模式：Lacrous Kimi Code 会在自动续跑的轮次中持续朝一个持久目标工作。使用指导和示例见[交互与输入：目标模式](../guides/interaction.md#目标模式)。
+`/goal` 用于开始或管理目标模式：Omnicode 会在自动续跑的轮次中持续朝一个持久目标工作。使用指导和示例见[交互与输入：目标模式](../guides/interaction.md#目标模式)。
 
 ```sh
 /goal 更新 checkout 文档，运行 docs build，如果 20 轮后仍被阻塞就停止
@@ -102,10 +102,10 @@
 在非交互式 prompt 模式中，只有创建形式会启动目标模式：
 
 ```sh
-kimi -p "/goal 修复 checkout 测试失败"
+omnicode -p "/goal 修复 checkout 测试失败"
 ```
 
-Prompt 模式在目标完成时以退出码 `0` 退出，在目标阻塞时以 `3` 退出，在目标暂停时以 `6` 退出。其它 `/goal` 子命令，包括 `next`，都是 TUI 控制命令，不由 `kimi -p` 处理。
+Prompt 模式在目标完成时以退出码 `0` 退出，在目标阻塞时以 `3` 退出，在目标暂停时以 `6` 退出。其它 `/goal` 子命令，包括 `next`，都是 TUI 控制命令，不由 `omnicode -p` 处理。
 
 ## 信息与状态
 
@@ -117,25 +117,25 @@ Prompt 模式在目标完成时以退出码 `0` 退出，在目标阻塞时以 `
 | `/status` | — | 显示当前会话运行时状态：版本、模型、工作目录、权限模式等 | 是 |
 | `/mcp` | — | 列出当前会话中的 MCP server 及连接状态 | 是 |
 | `/plugins` | — | 打开交互式 plugin 管理器 | 是 |
-| `/version` | — | 显示 Lacrous Kimi Code CLI 版本号 | 是 |
+| `/version` | — | 显示 Omnicode CLI 版本号 | 是 |
 | `/feedback` | `/bug` | 提交反馈，可附加诊断日志和代码库上下文 | 是 |
 
 ## 退出
 
 | 命令 | 别名 | 说明 | 随时可用 |
 | --- | --- | --- | --- |
-| `/exit` | `/quit`、`/q` | 退出 Lacrous Kimi Code CLI | 否 |
+| `/exit` | `/quit`、`/q` | 退出 Omnicode CLI | 否 |
 
 ## 内置 Skill 命令
 
-Lacrous Kimi Code CLI 随包内置了一组 Skill，直接以 `/<name>` 形式出现在斜杠命令面板中。与外部 Skill 不同，它们不需要 `skill:` 前缀，开箱即用。
+Omnicode CLI 随包内置了一组 Skill，直接以 `/<name>` 形式出现在斜杠命令面板中。与外部 Skill 不同，它们不需要 `skill:` 前缀，开箱即用。
 
 | 命令 | 说明 |
 | --- | --- |
 | `/mcp-config` | 配置 MCP server 并处理 MCP OAuth 登录。详见 [MCP](../customization/mcp.md) |
 | `/custom-theme [<text>]` | 创建或编辑自定义 TUI 配色主题。详见 [主题](../customization/themes.md) |
 | `/update-config` | 查看或编辑 `config.toml`（模型、供应商、权限、hooks）和 `tui.toml`（主题、编辑器、通知、自动更新） |
-| `/check-kimi-code-docs` | 依据官方文档回答 Lacrous Kimi Code 产品问题（CLI 用法、配置、会员、错误码） |
+| `/check-omnicode-docs` | 依据官方文档回答 Omnicode 产品问题（CLI 用法、配置、会员、错误码） |
 | `/import-from-cc-codex` | 从 Claude Code 和 Codex 导入 instructions、skills 和 MCP 设置 |
 | `/sub-skill` | 发现并将本地 skill 库存重组为分层子 skill 包。包含 `/sub-skill.review`（只读提案）和 `/sub-skill.consolidate`（执行重组） |
 
@@ -161,7 +161,7 @@ Lacrous Kimi Code CLI 随包内置了一组 Skill，直接以 `/<name>` 形式�
 
 为方便输入，外部 Skill 命令同时支持省略 `skill:` 前缀的简写形式 `/<name>`，前提是该名称未被系统斜杠命令占用——即 `/code-style` 会回退匹配到 `/skill:code-style`。
 
-Lacrous Kimi Code CLI 随包内置的 Skill 会直接以 `/<name>` 形式出现在斜杠命令面板中。例如，`/mcp-config` 用于配置 MCP server 和处理 MCP OAuth 登录，`/custom-theme [附加文本]` 用于进入自定义主题流程，创建或编辑 TUI 主题。
+Omnicode CLI 随包内置的 Skill 会直接以 `/<name>` 形式出现在斜杠命令面板中。例如，`/mcp-config` 用于配置 MCP server 和处理 MCP OAuth 登录，`/custom-theme [附加文本]` 用于进入自定义主题流程，创建或编辑 TUI 主题。
 
 ::: info 说明
 Agent 忙碌时输入的外部 Skill 命令不会被拒绝，而是排队等待当前轮次结束——按 `Ctrl-S` 可让排队的命令立即插入正在运行的轮次。`flow` 类型的 Skill 同样通过 `/skill:<name>` 暴露，没有独立的 `/flow:` 命名空间。

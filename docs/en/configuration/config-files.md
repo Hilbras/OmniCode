@@ -1,16 +1,16 @@
 # Configuration files
 
-Lacrous Kimi Code CLI writes all long-term preferences into TOML (plain-text configuration) files under `~/.kimi-code/`: runtime settings live in `config.toml`, and terminal-UI preferences live in a companion `tui.toml`.
+Omnicode CLI writes all long-term preferences into TOML (plain-text configuration) files under `~/.omnicode/`: runtime settings live in `config.toml`, and terminal-UI preferences live in a companion `tui.toml`.
 
 ## Config file location
 
-The CLI reads configuration from `~/.kimi-code/config.toml`, created automatically on first run. To relocate the data directory, override it with the `KIMI_CODE_HOME` environment variable:
+The CLI reads configuration from `~/.omnicode/config.toml`, created automatically on first run. To relocate the data directory, override it with the `OMNICODE_HOME` environment variable:
 
 ```sh
-export KIMI_CODE_HOME=/path/to/kimi-home
+export OMNICODE_HOME=/path/to/omnicode-home
 ```
 
-The config file path then becomes `$KIMI_CODE_HOME/config.toml`. Regardless of where the directory lives, the file name is always `config.toml`.
+The config file path then becomes `$OMNICODE_HOME/config.toml`. Regardless of where the directory lives, the file name is always `config.toml`.
 
 ::: tip
 TOML field names always use snake_case, for example `default_model` and `max_context_size`. If a key contains `.`, you must quote it (for example `[models."gpt-4.1"]`); otherwise TOML treats `.` as a nested table separator.
@@ -21,19 +21,19 @@ TOML field names always use snake_case, for example `default_model` and `max_con
 The following example covers the most commonly used configuration fields. You can copy it and adjust as needed:
 
 ```toml
-default_model = "kimi-code/k3"
+default_model = "omnicode/k3"
 default_permission_mode = "manual"
 default_plan_mode = false
 merge_all_available_skills = true
 telemetry = true
 
-[providers."managed:kimi-code"]
-type = "kimi"
-base_url = "https://api.kimi.com/coding/v1"
+[providers."managed:omnicode"]
+type = "omnicode"
+base_url = "https://api.omnicode.com/coding/v1"
 api_key = ""
 
-[models."kimi-code/k3"]
-provider = "managed:kimi-code"
+[models."omnicode/k3"]
+provider = "managed:omnicode"
 model = "k3"
 max_context_size = 1048576
 capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
@@ -41,15 +41,15 @@ display_name = "K3"
 support_efforts = [ "low", "high", "max" ]
 default_effort = "max"
 
-[models."kimi-code/kimi-for-coding"]
-provider = "managed:kimi-code"
-model = "kimi-for-coding"
+[models."omnicode/omnicode-for-coding"]
+provider = "managed:omnicode"
+model = "omnicode-for-coding"
 max_context_size = 262144
 capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
 
-[models."kimi-code/kimi-for-coding-highspeed"]
-provider = "managed:kimi-code"
-model = "kimi-for-coding-highspeed"
+[models."omnicode/omnicode-for-coding-highspeed"]
+provider = "managed:omnicode"
+model = "omnicode-for-coding-highspeed"
 max_context_size = 262144
 capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
 
@@ -66,12 +66,12 @@ reserved_context_size = 50000
 max_running_tasks = 4
 keep_alive_on_exit = false
 
-[services.moonshot_search]
-base_url = "https://api.kimi.com/coding/v1/search"
+[services.hilbras_search]
+base_url = "https://api.omnicode.com/coding/v1/search"
 api_key = ""
 
-[services.moonshot_fetch]
-base_url = "https://api.kimi.com/coding/v1/fetch"
+[services.hilbras_fetch]
+base_url = "https://api.omnicode.com/coding/v1/fetch"
 api_key = ""
 
 [[permission.rules]]
@@ -85,7 +85,7 @@ pattern = "Bash(rm -rf*)"
 [[hooks]]
 event = "PreToolUse"
 matcher = "Bash"
-command = "node ~/.kimi-code/hooks/check-bash.mjs"
+command = "node ~/.omnicode/hooks/check-bash.mjs"
 timeout = 5
 ```
 
@@ -101,7 +101,7 @@ Fields in the config file fall into two categories: **top-level scalars** that d
 | `merge_all_available_skills` | `boolean` | `true` | Whether to merge Agent Skills from all available directories |
 | `extra_skill_dirs` | `array<string>` | — | Extra skill search directories, layered on top of the default directories |
 | `extra_agent_dirs` | `array<string>` | — | Extra custom agent search directories, layered on top of the default directories |
-| `builtin_product_skills` | `boolean` | `true` | Whether the built-in skills that document Lacrous Kimi Code itself are offered to the model |
+| `builtin_product_skills` | `boolean` | `true` | Whether the built-in skills that document Omnicode itself are offered to the model |
 | `telemetry` | `boolean` | `true` | Whether anonymous telemetry is enabled; disabled only when explicitly set to `false` |
 | `auto_session_title` | `boolean` | `true` | Whether clients may automatically generate session titles; disabled only when explicitly set to `false` |
 | [`providers`](#providers) | `table` | `{}` | API provider table |
@@ -118,11 +118,11 @@ Fields in the config file fall into two categories: **top-level scalars** that d
 
 ## `providers`
 
-Each entry in the `providers` table defines an API provider, keyed by a unique name. The CLI reads credentials only from here. It does **not** fall back to shell environment variables automatically: running `export KIMI_API_KEY` in the terminal does not give any provider its key; you must write it explicitly in the config file, or point `api_key_env` at a variable name yourself (see [Config overrides](./overrides.md#provider-credentials)).
+Each entry in the `providers` table defines an API provider, keyed by a unique name. The CLI reads credentials only from here. It does **not** fall back to shell environment variables automatically: running `export OMNICODE_API_KEY` in the terminal does not give any provider its key; you must write it explicitly in the config file, or point `api_key_env` at a variable name yourself (see [Config overrides](./overrides.md#provider-credentials)).
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
-| `type` | `string` | Yes | Provider type: `kimi`, `anthropic`, `openai`, `openai_responses`, `google-genai`, `vertexai` |
+| `type` | `string` | Yes | Provider type: `omnicode`, `anthropic`, `openai`, `openai_responses`, `google-genai`, `vertexai` |
 | `api_key` | `string` | No | API key, written in plain text in the config file |
 | `api_key_env` | `string` | No | Name of a shell environment variable to read the API key from instead of storing it in the config file; re-read on every request. Mutually exclusive with `api_key` and `oauth`; an unset or empty variable fails the request with an error naming the variable |
 | `base_url` | `string` | No | API base URL |
@@ -131,12 +131,12 @@ Each entry in the `providers` table defines an API provider, keyed by a unique n
 | `env` | `table<string, string>` | No | Fallback source for provider credentials; see the `env` sub-table |
 | `custom_headers` | `table<string, string>` | No | Custom HTTP headers attached to each request |
 
-**`env` sub-table**: You can write provider-conventional key names (such as `KIMI_API_KEY`) inside `[providers.<name>.env]` as a fallback source for `api_key` / `base_url`. This sub-table is **read only from the config file** and does not modify the shell environment:
+**`env` sub-table**: You can write provider-conventional key names (such as `OMNICODE_API_KEY`) inside `[providers.<name>.env]` as a fallback source for `api_key` / `base_url`. This sub-table is **read only from the config file** and does not modify the shell environment:
 
 ```toml
-[providers.kimi.env]
-KIMI_API_KEY = "sk-xxx"
-KIMI_BASE_URL = "https://api.moonshot.ai/v1"
+[providers.omnicode.env]
+OMNICODE_API_KEY = "sk-xxx"
+OMNICODE_BASE_URL = "https://api.hilbras.ai/v1"
 ```
 
 Priority: `api_key` or `api_key_env` (mutually exclusive alternatives — set exactly one) > `env` sub-table key (only when neither is present) > if all are absent, startup fails with an error. During a `/models` refresh, a provider whose declared variable is unset or empty is reported as failed without affecting other providers.
@@ -176,19 +176,19 @@ max_context_size = 1047576
 Use `[models."<alias>".overrides]` for user overrides that must survive provider-model refreshes. Runtime consumers read the effective value: the override when present, otherwise the top-level field.
 
 ```toml
-[models."kimi-code/kimi-for-coding"]
-provider = "managed:kimi-code"
-model = "kimi-for-coding"
+[models."omnicode/omnicode-for-coding"]
+provider = "managed:omnicode"
+model = "omnicode-for-coding"
 max_context_size = 262144
 
-[models."kimi-code/kimi-for-coding".overrides]
+[models."omnicode/omnicode-for-coding".overrides]
 max_context_size = 131072
-display_name = "Kimi for Coding (custom)"
+display_name = "Omnicode for Coding (custom)"
 ```
 
 `[models."<alias>".overrides]` accepts ordinary model fields such as `max_context_size`, `max_input_size`, `max_output_size`, `capabilities`, `display_name`, `reasoning_key`, `adaptive_thinking`, `support_efforts`, `default_effort`, `off_effort`, and `prompt_cache_key`. It does not accept identity / routing fields: `provider`, `model`, `protocol`, `beta_api`, and `base_url`.
 
-You can also switch models temporarily without touching the config file: setting `KIMI_MODEL_*` environment variables synthesizes a temporary provider in memory that does not persist after restart. See [Define a model from environment variables](./env-vars.md#define-a-model-from-environment-variables-kimi_model_).
+You can also switch models temporarily without touching the config file: setting `OMNICODE_MODEL_*` environment variables synthesizes a temporary provider in memory that does not persist after restart. See [Define a model from environment variables](./env-vars.md#define-a-model-from-environment-variables-omnicode_model_).
 
 ## `secondary_model`
 
@@ -202,7 +202,7 @@ The minimal configuration is one line. A lone `default_model` is a pool with a s
 
 ```toml
 [secondary_model]
-default_model = "kimi-code/kimi-for-coding-highspeed"
+default_model = "omnicode/omnicode-for-coding-highspeed"
 ```
 
 | Field | Type | Default | Description |
@@ -224,15 +224,15 @@ Pool aliases reference the current `[models]` table: if a provider is later dele
 
 In the interactive TUI, the [`/secondary-model`](../reference/slash-commands.md) command (alias `/subagent-model`) opens a model selector: the choice is written to `default_model` (when a models table exists and the picked alias is not in it, an entry with an empty description is added), and newly spawned subagents pick up the new default immediately, no session restart needed.
 
-A configured pool (an explicit `models` table or a lone `default_model`) enables model selection: the `Agent` / `AgentSwarm` tools gain a `model` parameter, and the tool description lists the pool (the default marked `[default]`) so the main agent can choose per spawn. Pool keys can only reference configured [`[models]`](#models) entries. The `kimi-code/*` aliases below are provisioned by `/login`:
+A configured pool (an explicit `models` table or a lone `default_model`) enables model selection: the `Agent` / `AgentSwarm` tools gain a `model` parameter, and the tool description lists the pool (the default marked `[default]`) so the main agent can choose per spawn. Pool keys can only reference configured [`[models]`](#models) entries. The `omnicode/*` aliases below are provisioned by `/login`:
 
 ```toml
 [secondary_model]
-default_model = "kimi-code/kimi-for-coding-highspeed"
+default_model = "omnicode/omnicode-for-coding-highspeed"
 [secondary_model.models]
-"kimi-code/k3" = "Pick this for hard problems. Strong at complex reasoning, algorithm design, deep debugging, math, and systematic challenges."
-"kimi-code/kimi-for-coding-highspeed" = "Fast but priced higher. Good for latency-sensitive tasks: daily refactoring, code explanation, small edits, and summaries."
-"kimi-code/kimi-for-coding" = "A balanced coding workhorse. Good for most feature development and code-change tasks."
+"omnicode/k3" = "Pick this for hard problems. Strong at complex reasoning, algorithm design, deep debugging, math, and systematic challenges."
+"omnicode/omnicode-for-coding-highspeed" = "Fast but priced higher. Good for latency-sensitive tasks: daily refactoring, code explanation, small edits, and summaries."
+"omnicode/omnicode-for-coding" = "A balanced coding workhorse. Good for most feature development and code-change tasks."
 ```
 
 A spawn resolves the subagent's model in this order:
@@ -252,7 +252,7 @@ To take the choice away from the main agent and run every subagent on one fixed 
 
 ```toml
 [secondary_model]
-default_model = "kimi-code/kimi-for-coding-highspeed"
+default_model = "omnicode/omnicode-for-coding-highspeed"
 force = true
 ```
 
@@ -266,10 +266,10 @@ Binding a pool alias lands the subagent on the bound model's default effort. You
 2. List both the original alias and the variant alias in the pool.
 
 ```toml
-# "kimi-code/k3" is provisioned by /login (default: high); this registers
+# "omnicode/k3" is provisioned by /login (default: high); this registers
 # a max-effort variant of the same model
 [models.k3-max]
-provider = "managed:kimi-code"
+provider = "managed:omnicode"
 model = "k3"
 max_context_size = 1048576
 capabilities = [ "thinking", "always_thinking", "image_in", "video_in", "tool_use" ]
@@ -279,15 +279,15 @@ support_efforts = [ "low", "high", "max" ]
 default_effort = "max"
 
 [secondary_model]
-default_model = "kimi-code/k3"
+default_model = "omnicode/k3"
 [secondary_model.models]
-"kimi-code/k3" = "Default high effort. Good for most implementation, analysis, and multi-turn interaction tasks."
+"omnicode/k3" = "Default high effort. Good for most implementation, analysis, and multi-turn interaction tasks."
 k3-max = "The same model at max thinking effort. Good for the hardest subtasks."
 ```
 
 Two prerequisites:
 
-- The underlying model must declare `support_efforts` (under `managed:kimi-code` only the k3 family currently declares effort levels).
+- The underlying model must declare `support_efforts` (under `managed:omnicode` only the k3 family currently declares effort levels).
 - The variant is a standalone entry and does not inherit fields from the entry it points at: copy `capabilities`, `support_efforts`, and the other metadata over in full, otherwise `default_effort` has no effect (it must be a member of `support_efforts`).
 
 Note the asymmetry between the main agent and pool-bound subagents: for the main agent, a configured global `[thinking].effort` overrides the variant's `default_effort`; for subagents the variant's `default_effort` wins over the global value, and only `[secondary_model].default_effort` outranks it. Value and fallback rules follow the [`[models]` entry's `default_effort`](#models).
@@ -307,7 +307,7 @@ Configuration errors fail loudly instead of falling back silently. Session creat
 | --- | --- | --- | --- |
 | `enabled` | `boolean` | `true` | Whether Thinking is enabled by default for new sessions; set to `false` to force Thinking off |
 | `effort` | `string` | — | Thinking effort: `low` / `medium` / `high` / `xhigh` / `max`; falls back to the model default when not in its supported list |
-| `keep` | `string` | `"all"` | Preserved Thinking passthrough: `kimi` sends it as `thinking.keep`, `anthropic` as a `clear_thinking_20251015` edit (routes to the beta Messages API). An off-value disables it; overridden by `KIMI_MODEL_THINKING_KEEP`; injected only while Thinking is on |
+| `keep` | `string` | `"all"` | Preserved Thinking passthrough: `omnicode` sends it as `thinking.keep`, `anthropic` as a `clear_thinking_20251015` edit (routes to the beta Messages API). An off-value disables it; overridden by `OMNICODE_MODEL_THINKING_KEEP`; injected only while Thinking is on |
 
 <details><summary>Deprecated fields</summary>
 
@@ -331,7 +331,7 @@ Configuration errors fail loudly instead of falling back silently. Session creat
 | `reserved_context_size` | `integer` | — | Number of tokens reserved for model output; automatic compaction is triggered when the remaining context window falls below this value |
 | `compaction_max_attempts` | `integer` | `5` | Maximum total attempts for a failing compaction request, including the initial attempt |
 
-`max_steps_per_turn` can be overridden by the `KIMI_LOOP_MAX_STEPS_PER_TURN` environment variable, and `max_attempts_per_step` by `KIMI_LOOP_MAX_ATTEMPTS_PER_STEP`; both take higher priority than the config file. The former `KIMI_LOOP_MAX_RETRIES_PER_STEP` variable is deprecated but still honored (with a startup warning) when the new one is unset.
+`max_steps_per_turn` can be overridden by the `OMNICODE_LOOP_MAX_STEPS_PER_TURN` environment variable, and `max_attempts_per_step` by `OMNICODE_LOOP_MAX_ATTEMPTS_PER_STEP`; both take higher priority than the config file. The former `OMNICODE_LOOP_MAX_RETRIES_PER_STEP` variable is deprecated but still honored (with a startup warning) when the new one is unset.
 
 Retries only apply to transient failures: connection errors, timeouts, HTTP 429 rate limits, and 5xx server errors. A 429 caused by an exhausted quota or insufficient account balance is not retried and fails immediately, since it cannot succeed until the account is recharged.
 
@@ -343,7 +343,7 @@ Retries only apply to transient failures: connection errors, timeouts, HTTP 429 
 | --- | --- | --- | --- |
 | `strategy` | `"measured+estimated" \| "measured" \| "estimated"` | `"measured+estimated"` | `measured+estimated` combines measured usage with an estimate of the unmeasured tail; `measured` reports provider usage alone, updated when a request completes; `estimated` is a pure estimate, for providers that do not report usage |
 
-`strategy` can be overridden by the `KIMI_TOKEN_COUNTING_STRATEGY` environment variable, which takes higher priority than `config.toml`.
+`strategy` can be overridden by the `OMNICODE_TOKEN_COUNTING_STRATEGY` environment variable, which takes higher priority than `config.toml`.
 
 ## `background`
 
@@ -360,9 +360,9 @@ Retries only apply to transient failures: connection errors, timeouts, HTTP 429 
 | `print_wait_ceiling_s` | `integer` | `2147483` | Wall-clock ceiling (seconds) for the print-mode wait/steer loop; no effect outside print mode or with `"exit"` |
 | `print_max_turns` | `integer` | `100000` | Maximum number of new turns triggered by background-task completions in `"steer"` mode; keeps the steering loop bounded |
 
-`keep_alive_on_exit` can be overridden by the `KIMI_CODE_BACKGROUND_KEEP_ALIVE_ON_EXIT` environment variable, `max_running_tasks` by `KIMI_CODE_BACKGROUND_MAX_RUNNING_TASKS`, `bash_task_timeout_s` by `KIMI_CODE_BACKGROUND_BASH_TASK_TIMEOUT_S`, and `print_background_mode`, `print_wait_ceiling_s`, and `print_max_turns` by `KIMI_CODE_BACKGROUND_PRINT_BACKGROUND_MODE`, `KIMI_CODE_BACKGROUND_PRINT_WAIT_CEILING_S`, and `KIMI_CODE_BACKGROUND_PRINT_MAX_TURNS`; all take higher priority than `config.toml`.
+`keep_alive_on_exit` can be overridden by the `OMNICODE_BACKGROUND_KEEP_ALIVE_ON_EXIT` environment variable, `max_running_tasks` by `OMNICODE_BACKGROUND_MAX_RUNNING_TASKS`, `bash_task_timeout_s` by `OMNICODE_BACKGROUND_BASH_TASK_TIMEOUT_S`, and `print_background_mode`, `print_wait_ceiling_s`, and `print_max_turns` by `OMNICODE_BACKGROUND_PRINT_BACKGROUND_MODE`, `OMNICODE_BACKGROUND_PRINT_WAIT_CEILING_S`, and `OMNICODE_BACKGROUND_PRINT_MAX_TURNS`; all take higher priority than `config.toml`.
 
-In print mode (`kimi -p "<prompt>"`), Lacrous Kimi Code stays alive after the main agent's turn as long as background tasks are still pending: each completion is fed back to the main agent as a synthetic user message, steering it into a new turn (`print_background_mode = "steer"` by default), and the run exits once a turn ends with nothing pending. The loop is bounded by `print_wait_ceiling_s` and `print_max_turns`, both effectively unbounded by default. Background work is never killed by a wall-clock cap in print mode either: background `Bash` tasks default to no timeout (`bash_task_timeout_s = 0`), and subagents run without a timeout (`[subagent] timeout_ms` and `[swarm] timeout_ms` both default to `0` unless explicitly set), so only the model itself stops a task. Set `print_background_mode` to `"drain"` to wait for tasks without feeding results back, or `"exit"` to end the run as soon as the main agent finishes.
+In print mode (`omnicode -p "<prompt>"`), Omnicode stays alive after the main agent's turn as long as background tasks are still pending: each completion is fed back to the main agent as a synthetic user message, steering it into a new turn (`print_background_mode = "steer"` by default), and the run exits once a turn ends with nothing pending. The loop is bounded by `print_wait_ceiling_s` and `print_max_turns`, both effectively unbounded by default. Background work is never killed by a wall-clock cap in print mode either: background `Bash` tasks default to no timeout (`bash_task_timeout_s = 0`), and subagents run without a timeout (`[subagent] timeout_ms` and `[swarm] timeout_ms` both default to `0` unless explicitly set), so only the model itself stops a task. Set `print_background_mode` to `"drain"` to wait for tasks without feeding results back, or `"exit"` to end the run as soon as the main agent finishes.
 
 ## `subagent`
 
@@ -372,7 +372,7 @@ In print mode (`kimi -p "<prompt>"`), Lacrous Kimi Code stays alive after the ma
 | --- | --- | --- | --- |
 | `timeout_ms` | `integer` | `7200000` (2 hours) | Maximum wall-clock time (milliseconds) a single `Agent` subagent may run before it is settled as `timed_out`; `0` means no timeout |
 
-`timeout_ms` can be overridden by the `KIMI_SUBAGENT_TIMEOUT_MS` environment variable, which takes higher priority than `config.toml`.
+`timeout_ms` can be overridden by the `OMNICODE_SUBAGENT_TIMEOUT_MS` environment variable, which takes higher priority than `config.toml`.
 
 ## `swarm`
 
@@ -382,7 +382,7 @@ In print mode (`kimi -p "<prompt>"`), Lacrous Kimi Code stays alive after the ma
 | --- | --- | --- | --- |
 | `timeout_ms` | `integer` | `7200000` (2 hours) | Maximum wall-clock time (milliseconds) a single `AgentSwarm` subagent may run; on timeout it is aborted and the aggregated report marks `Subagent timed out.`; `0` means no timeout |
 
-`timeout_ms` can be overridden by the `KIMI_CODE_SWARM_TIMEOUT_MS` environment variable, which takes higher priority than `config.toml`.
+`timeout_ms` can be overridden by the `OMNICODE_SWARM_TIMEOUT_MS` environment variable, which takes higher priority than `config.toml`.
 
 ## `mcp`
 
@@ -391,7 +391,7 @@ In print mode (`kimi -p "<prompt>"`), Lacrous Kimi Code stays alive after the ma
 | `startup_timeout_ms` | `integer` | `30000` (30 seconds) | Global default connection (startup + tool discovery) timeout in milliseconds for all MCP servers; a per-server `startupTimeoutMs` in `mcp.json` wins |
 | `tool_timeout_ms` | `integer` | `60000` (60 seconds) | Global default single tool-call timeout in milliseconds for all MCP servers; a per-server `toolTimeoutMs` in `mcp.json` wins |
 
-`startup_timeout_ms` and `tool_timeout_ms` can be overridden by the `KIMI_MCP_STARTUP_TIMEOUT_MS` and `KIMI_MCP_TOOL_TIMEOUT_MS` environment variables respectively, which take higher priority than `config.toml`. See [MCP](../customization/mcp.md) for the full MCP server configuration.
+`startup_timeout_ms` and `tool_timeout_ms` can be overridden by the `OMNICODE_MCP_STARTUP_TIMEOUT_MS` and `OMNICODE_MCP_TOOL_TIMEOUT_MS` environment variables respectively, which take higher priority than `config.toml`. See [MCP](../customization/mcp.md) for the full MCP server configuration.
 
 ## `identity`
 
@@ -408,13 +408,13 @@ name = "Acme Dev Agent"
 slug = "acme-dev"        # optional
 ```
 
-Both fields can be set through the `KIMI_CODE_IDENTITY_NAME` and `KIMI_CODE_IDENTITY_SLUG` environment variables, which take higher priority than `config.toml` and are never written back to it, making them convenient for containers and CI, where writing a config file is awkward.
+Both fields can be set through the `OMNICODE_IDENTITY_NAME` and `OMNICODE_IDENTITY_SLUG` environment variables, which take higher priority than `config.toml` and are never written back to it, making them convenient for containers and CI, where writing a config file is awkward.
 
 A name that contains no ASCII letters or digits (for example a purely Chinese name) leaves nothing to derive a slug from and falls back to `agent`; write `slug` explicitly if you need a specific protocol token.
 
 The identity is resolved once at startup and holds for the life of the process: it is announced to MCP servers and providers when connections are made, so it cannot change midway. Edits to this section take effect on the next start, for new sessions: a resumed session keeps the system prompt it was recorded with, since its past turns already speak under that identity. Likewise, an MCP OAuth authorization keeps the client registration it was granted under; reset that server's authentication to register under the new identity.
 
-This section is read by the `agent-core-v2` engine, which powers every Lacrous Kimi Code surface.
+This section is read by the `agent-core-v2` engine, which powers every Omnicode surface.
 
 ## `tools`
 
@@ -462,7 +462,7 @@ Both values must be positive integers. A call's `max_chars` overrides the defaul
 | `max_edge_px` | `integer` | `2000` | Longest-edge ceiling in pixels; larger images scale down proportionally. Raising it preserves more detail at the cost of larger request bodies |
 | `read_byte_budget` | `integer` | `262144` (256 KB) | Per-image byte budget for images the model reads for itself (`ReadMediaFile` default reads); `region` and `full_resolution` read-backs are exempt |
 
-`max_edge_px` can be overridden by the `KIMI_IMAGE_MAX_EDGE_PX` environment variable and `read_byte_budget` by `KIMI_IMAGE_READ_BYTE_BUDGET`; both take higher priority than `config.toml`.
+`max_edge_px` can be overridden by the `OMNICODE_IMAGE_MAX_EDGE_PX` environment variable and `read_byte_budget` by `OMNICODE_IMAGE_READ_BYTE_BUDGET`; both take higher priority than `config.toml`.
 
 ## `database`
 
@@ -473,7 +473,7 @@ Both values must be positive integers. A call's `max_chars` overrides the defaul
 | `base` | `boolean` | `true` | Use the minidb-backed read model for session indexing; `false` falls back to reading session metadata directly |
 | `search` | `boolean` | `true` | Run the global search index in a dedicated worker thread; `false` runs it in the server process |
 
-`base` can be overridden by the `KIMI_CODE_PERSISTENCE_MINIDB_READMODEL` environment variable and `search` by `KIMI_CODE_SEARCH_WORKER`; both take higher priority than `config.toml`.
+`base` can be overridden by the `OMNICODE_PERSISTENCE_MINIDB_READMODEL` environment variable and `search` by `OMNICODE_SEARCH_WORKER`; both take higher priority than `config.toml`.
 
 ## `watch`
 
@@ -483,7 +483,7 @@ Both values must be positive integers. A call's `max_chars` overrides the defaul
 | --- | --- | --- | --- |
 | `enabled` | `boolean` | `true` | Attach filesystem watchers; `false` disables every `watch()` for the process |
 
-`enabled` can be overridden by the `KIMI_CODE_WATCH` environment variable, which takes higher priority than `config.toml`.
+`enabled` can be overridden by the `OMNICODE_WATCH` environment variable, which takes higher priority than `config.toml`.
 
 <!--
 ## `experimental`
@@ -497,7 +497,7 @@ Both values must be positive integers. A call's `max_chars` overrides the defaul
 
 ## `services`
 
-`services` configures two built-in services: web search (`moonshot_search`) and web fetch (`moonshot_fetch`). Only these two fixed keys are recognized; other keys are ignored. Both entries share the same fields:
+`services` configures two built-in services: web search (`hilbras_search`) and web fetch (`hilbras_fetch`). Only these two fixed keys are recognized; other keys are ignored. Both entries share the same fields:
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -506,15 +506,15 @@ Both values must be positive integers. A call's `max_chars` overrides the defaul
 | `oauth` | `table` | No | OAuth credential reference, same structure as `providers.*.oauth` |
 | `custom_headers` | `table<string, string>` | No | Custom HTTP headers attached to each request |
 
-`base_url` and `api_key` can also come from environment variables, which take priority over the config file: `KIMI_WEB_SEARCH_BASE_URL` / `KIMI_WEB_SEARCH_API_KEY` for `moonshot_search`, and `KIMI_WEB_FETCH_BASE_URL` / `KIMI_WEB_FETCH_API_KEY` for `moonshot_fetch`. An env base URL defines a separate service endpoint, so the persisted API key, OAuth reference, and custom headers are not forwarded to it; set the matching env API key when that endpoint requires authentication. An env API key without an env base URL keeps the configured endpoint and custom headers but replaces both configured credential forms. Setting the base URL and API key through env without any config section also enables the service.
+`base_url` and `api_key` can also come from environment variables, which take priority over the config file: `OMNICODE_WEB_SEARCH_BASE_URL` / `OMNICODE_WEB_SEARCH_API_KEY` for `hilbras_search`, and `OMNICODE_WEB_FETCH_BASE_URL` / `OMNICODE_WEB_FETCH_API_KEY` for `hilbras_fetch`. An env base URL defines a separate service endpoint, so the persisted API key, OAuth reference, and custom headers are not forwarded to it; set the matching env API key when that endpoint requires authentication. An env API key without an env base URL keeps the configured endpoint and custom headers but replaces both configured credential forms. Setting the base URL and API key through env without any config section also enables the service.
 
 ```toml
-[services.moonshot_search]
-base_url = "https://api.moonshot.cn/v1/search"
+[services.hilbras_search]
+base_url = "https://api.hilbras.ai/v1/search"
 api_key = "sk-xxx"
 
-[services.moonshot_fetch]
-base_url = "https://api.moonshot.cn/v1/fetch"
+[services.hilbras_fetch]
+base_url = "https://api.hilbras.ai/v1/fetch"
 api_key = "sk-xxx"
 ```
 
@@ -522,7 +522,7 @@ api_key = "sk-xxx"
 
 `permission` sets permission rules that are automatically loaded when a session starts, controlling whether the Agent needs user confirmation before calling a tool. Rules are written as a `[[permission.rules]]` array of tables, matched in order; the first matching rule takes effect.
 
-You can also set `dangerous_command_guard = false` under `[permission]` to turn off the built-in dangerous-command policy entirely (no dangerous-command confirmation in Always Ask and Ask When Needed mode; the policy is never active in Never Ask mode); the default is `true`. An environment variable `KIMI_CODE_DANGEROUS_COMMAND_GUARD=false` overrides the file setting and restores the behavior before the policy was introduced. Use this switch only for environments that already gate commands outside the agent.
+You can also set `dangerous_command_guard = false` under `[permission]` to turn off the built-in dangerous-command policy entirely (no dangerous-command confirmation in Always Ask and Ask When Needed mode; the policy is never active in Never Ask mode); the default is `true`. An environment variable `OMNICODE_DANGEROUS_COMMAND_GUARD=false` overrides the file setting and restores the behavior before the policy was introduced. Use this switch only for environments that already gate commands outside the agent.
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -552,12 +552,12 @@ pattern = "Bash"
 ```
 
 ::: tip
-MCP server declarations are configured in `~/.kimi-code/mcp.json` or the project-local `.kimi-code/mcp.json`, not in `config.toml`. The interactive configuration entry point is `/mcp-config`; see [Model Context Protocol](../customization/mcp.md).
+MCP server declarations are configured in `~/.omnicode/mcp.json` or the project-local `.omnicode/mcp.json`, not in `config.toml`. The interactive configuration entry point is `/mcp-config`; see [Model Context Protocol](../customization/mcp.md).
 :::
 
 ## `tui.toml`
 
-Alongside `config.toml`, the CLI keeps terminal-UI and client preferences in a companion `tui.toml` in the same directory (`~/.kimi-code/tui.toml`, or `$KIMI_CODE_HOME/tui.toml` when overridden). It is created with defaults on first run, and the interactive commands `/config`, `/theme`, and `/editor` write to it for you, so you rarely need to edit it by hand. If the file is malformed, the CLI falls back to defaults and shows a notice instead of failing to start.
+Alongside `config.toml`, the CLI keeps terminal-UI and client preferences in a companion `tui.toml` in the same directory (`~/.omnicode/tui.toml`, or `$OMNICODE_HOME/tui.toml` when overridden). It is created with defaults on first run, and the interactive commands `/config`, `/theme`, and `/editor` write to it for you, so you rarely need to edit it by hand. If the file is malformed, the CLI falls back to defaults and shows a notice instead of failing to start.
 
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -582,7 +582,7 @@ Model, cwd, git branch, permission mode, plan mode, context usage, session id, v
 </details>
 
 ```toml
-# ~/.kimi-code/tui.toml
+# ~/.omnicode/tui.toml
 theme = "auto" # "auto" | "dark" | "light" | custom theme name
 tui_mode = "regular" # "regular" | "fullscreen" ("fullscreen" is experimental)
 render_latex = true # false keeps LaTeX math in messages as raw source
@@ -602,14 +602,14 @@ auto_install = true
 
 # [status_line]
 # items = ["mode", "goal", "model", "tasks", "cwd", "git", "tips"]
-# command = "~/.kimi-code/statusline.sh"
+# command = "~/.omnicode/statusline.sh"
 ```
 
 Changes apply on the next start, or immediately with `/reload-tui` (which reloads only `tui.toml`); `/reload` reloads both `config.toml` and `tui.toml`.
 
 ## Project-local configuration
 
-In addition to the user-level files under `~/.kimi-code`, Lacrous Kimi Code reads a project-local configuration file at `<project-root>/.kimi-code/local.toml`. It holds settings that are specific to one project checkout and typically should not be shared with teammates.
+In addition to the user-level files under `~/.omnicode`, Omnicode reads a project-local configuration file at `<project-root>/.omnicode/local.toml`. It holds settings that are specific to one project checkout and typically should not be shared with teammates.
 
 The file is created automatically when you add an extra workspace directory with [`/add-dir`](../reference/slash-commands.md) and choose to remember it for the project. You rarely need to edit it by hand.
 
@@ -626,10 +626,10 @@ The `[workspace]` table groups project-level workspace settings:
 additional_dir = ["/absolute/path/to/shared"]
 ```
 
-Because directories are stored as absolute paths, which are specific to your machine, we recommend adding `.kimi-code/local.toml` to your project's `.gitignore` so it is not committed.
+Because directories are stored as absolute paths, which are specific to your machine, we recommend adding `.omnicode/local.toml` to your project's `.gitignore` so it is not committed.
 
 ## Next steps
 
-- [Providers and models](./providers.md) — connection examples for each provider type (Kimi, Claude, OpenAI, Gemini)
+- [Providers and models](./providers.md) — connection examples for each provider type (Omnicode, Claude, OpenAI, Gemini)
 - [Config overrides](./overrides.md) — priority rules for CLI options, config file, and environment variables
-- [Environment variables](./env-vars.md) — complete list of runtime variables like `KIMI_CODE_HOME`
+- [Environment variables](./env-vars.md) — complete list of runtime variables like `OMNICODE_HOME`

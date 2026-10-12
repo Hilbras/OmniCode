@@ -1,6 +1,6 @@
 ---
 name: review-pr
-description: 在 kimi-code 仓库里 review 一个 PR 时使用：按 PR 模板逐节核对描述与 diff，并单独做一轮"回归与用户影响"评审，给出影响等级与评审摘要，评审摘要用用户当前使用的语言。
+description: 在 omnicode 仓库里 review 一个 PR 时使用：按 PR 模板逐节核对描述与 diff，并单独做一轮"回归与用户影响"评审，给出影响等级与评审摘要，评审摘要用用户当前使用的语言。
 disable-model-invocation: true
 ---
 

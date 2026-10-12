@@ -1,6 +1,6 @@
 # The completion gate
 
-Author: lacrous.
+Author: Hilbras.
 
 `completionGate.ts` decides whether a completion claim may be accepted. It is
 the answer to a question this plan asked and I deliberately did not answer
@@ -78,11 +78,11 @@ Because the turn stays open, the existing goal budget remains the backstop for a
 model that cannot satisfy the criteria: it retries, reaches `max_steps_per_turn`
 or a budget limit, and the run ends through the path that already handles that.
 
-**It is opt-in.** `KIMI_CODE_EXPERIMENTAL_GOAL_VERIFICATION` must be set, so no
+**It is opt-in.** `OMNICODE_EXPERIMENTAL_GOAL_VERIFICATION` must be set, so no
 existing goal flow changes behaviour by default.
 
 **Criteria come from the goal, not the model.** `CompletionCriteriaService`
-reads `<workspace>/.kimi/goals/<goalId>/criteria.json`. A goal that declares
+reads `<workspace>/.omnicode/goals/<goalId>/criteria.json`. A goal that declares
 nothing yields one undecidable criterion, which the gate allows — a goal nobody
 defined checks for is not one the machine can adjudicate.
 

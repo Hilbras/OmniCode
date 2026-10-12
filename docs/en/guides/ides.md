@@ -1,18 +1,18 @@
-# Using Lacrous Kimi Code CLI in IDEs
+# Using Omnicode CLI in IDEs
 
-Lacrous Kimi Code CLI supports integration into IDEs via the [Agent Client Protocol (ACP)](https://agentclientprotocol.com/), letting you use AI-assisted coding directly inside your editor.
+Omnicode CLI supports integration into IDEs via the [Agent Client Protocol (ACP)](https://agentclientprotocol.com/), letting you use AI-assisted coding directly inside your editor.
 
 ## Prerequisites
 
-Before configuring your IDE, make sure Lacrous Kimi Code CLI is installed and you have completed the login setup.
+Before configuring your IDE, make sure Omnicode CLI is installed and you have completed the login setup.
 
-The ACP server is exposed as the `kimi acp` subcommand. The IDE launches it as a child process and communicates over stdin/stdout using JSON-RPC. Each time the IDE creates a session, the CLI reuses its existing authentication state — no need to log in again.
+The ACP server is exposed as the `omnicode acp` subcommand. The IDE launches it as a child process and communicates over stdin/stdout using JSON-RPC. Each time the IDE creates a session, the CLI reuses its existing authentication state — no need to log in again.
 
 ::: tip Path note
-Child processes launched from an IDE GUI on macOS typically do **not** inherit the terminal shell's `PATH`. If `kimi` is not in a system directory like `/usr/local/bin`, use the absolute path in your IDE configuration. Run `which kimi` in a terminal to find the active path.
+Child processes launched from an IDE GUI on macOS typically do **not** inherit the terminal shell's `PATH`. If `omnicode` is not in a system directory like `/usr/local/bin`, use the absolute path in your IDE configuration. Run `which omnicode` in a terminal to find the active path.
 :::
 
-## Using Lacrous Kimi Code CLI in Zed
+## Using Omnicode CLI in Zed
 
 [Zed](https://zed.dev/) is a modern editor with native ACP support.
 
@@ -21,9 +21,9 @@ Add the following to Zed's config file at `~/.config/zed/settings.json`:
 ```json
 {
   "agent_servers": {
-    "Lacrous Kimi Code CLI": {
+    "Omnicode CLI": {
       "type": "custom",
-      "command": "kimi",
+      "command": "omnicode",
       "args": ["acp"],
       "env": {}
     }
@@ -34,13 +34,13 @@ Add the following to Zed's config file at `~/.config/zed/settings.json`:
 Configuration fields:
 
 - `type`: fixed value `"custom"`
-- `command`: path to the Lacrous Kimi Code CLI executable. If `kimi` is not on `PATH`, use the full path (e.g. `/Users/you/.local/bin/kimi`).
+- `command`: path to the Omnicode CLI executable. If `omnicode` is not on `PATH`, use the full path (e.g. `/Users/you/.local/bin/omnicode`).
 - `args`: startup arguments. The `acp` subcommand switches the CLI into ACP mode.
 - `env`: additional environment variables; usually leave this empty. Zed injects a default environment automatically.
 
-After saving, open a new conversation in Zed's Agent panel and it will launch a `Lacrous Kimi Code CLI` ACP subprocess using the configuration above. MCP servers declared in Zed's `agent_servers` section are also forwarded to the kimi side via the ACP protocol.
+After saving, open a new conversation in Zed's Agent panel and it will launch a `Omnicode CLI` ACP subprocess using the configuration above. MCP servers declared in Zed's `agent_servers` section are also forwarded to the omnicode side via the ACP protocol.
 
-## Using Lacrous Kimi Code CLI in JetBrains IDEs
+## Using Omnicode CLI in JetBrains IDEs
 
 JetBrains IDEs (IntelliJ IDEA, PyCharm, WebStorm, etc.) support ACP through the AI chat plugin.
 
@@ -51,8 +51,8 @@ In the AI chat panel menu, click **Configure ACP agents** and add the following 
 ```json
 {
   "agent_servers": {
-    "Lacrous Kimi Code CLI": {
-      "command": "~/.local/bin/kimi",
+    "Omnicode CLI": {
+      "command": "~/.local/bin/omnicode",
       "args": ["acp"],
       "env": {}
     }
@@ -60,22 +60,22 @@ In the AI chat panel menu, click **Configure ACP agents** and add the following 
 }
 ```
 
-JetBrains is strict about the `command` field — always use an **absolute path**, which you can get by running `which kimi` in a terminal. After saving, `Lacrous Kimi Code CLI` will appear in the AI chat's agent selector.
+JetBrains is strict about the `command` field — always use an **absolute path**, which you can get by running `which omnicode` in a terminal. After saving, `Omnicode CLI` will appear in the AI chat's agent selector.
 
-## Using Lacrous Kimi Code CLI in Paseo
+## Using Omnicode CLI in Paseo
 
-[Paseo](https://paseo.sh/) is a self-hosted orchestrator that runs and supervises agent CLIs from your desktop, web, and mobile. It connects to Lacrous Kimi Code CLI over ACP, the same way an IDE does.
+[Paseo](https://paseo.sh/) is a self-hosted orchestrator that runs and supervises agent CLIs from your desktop, web, and mobile. It connects to Omnicode CLI over ACP, the same way an IDE does.
 
-Pick **Lacrous Kimi Code CLI** from Paseo's built-in ACP provider catalog, or add a custom provider in `~/.paseo/config.json`:
+Pick **Omnicode CLI** from Paseo's built-in ACP provider catalog, or add a custom provider in `~/.paseo/config.json`:
 
 ```json
 {
   "agents": {
     "providers": {
-      "kimi": {
+      "omnicode": {
         "extends": "acp",
-        "label": "Lacrous Kimi Code CLI",
-        "command": ["kimi", "acp"]
+        "label": "Omnicode CLI",
+        "command": ["omnicode", "acp"]
       }
     }
   }
@@ -86,11 +86,11 @@ Paseo's generic ACP adapter does not drive the login flow, so complete the termi
 
 ## Troubleshooting
 
-- **Session disconnects immediately / IDE shows "agent exited"**: usually a wrong `command` path or a missing login. Run `kimi acp` in a terminal first to verify — if it blocks waiting for stdin, the CLI itself is fine and the problem is in the IDE configuration; if it exits immediately with an error, follow the error message (most commonly you need to run `/login`).
-- **IDE shows "auth required"**: the CLI has no usable authentication token. Exit the IDE, run `kimi` in a terminal to complete login, then restart the IDE.
-- **MCP tools not visible**: check the [`kimi acp` reference](../reference/kimi-acp.md) capability table to confirm that the MCP transport type configured in your IDE is supported. The Lacrous Kimi Code CLI ACP server currently supports `http`, `stdio`, and `sse` transports; `acp` transport MCP servers are silently dropped and a warning is written to the log.
+- **Session disconnects immediately / IDE shows "agent exited"**: usually a wrong `command` path or a missing login. Run `omnicode acp` in a terminal first to verify — if it blocks waiting for stdin, the CLI itself is fine and the problem is in the IDE configuration; if it exits immediately with an error, follow the error message (most commonly you need to run `/login`).
+- **IDE shows "auth required"**: the CLI has no usable authentication token. Exit the IDE, run `omnicode` in a terminal to complete login, then restart the IDE.
+- **MCP tools not visible**: check the [`omnicode acp` reference](../reference/omnicode-acp.md) capability table to confirm that the MCP transport type configured in your IDE is supported. The Omnicode CLI ACP server currently supports `http`, `stdio`, and `sse` transports; `acp` transport MCP servers are silently dropped and a warning is written to the log.
 
 ## Next steps
 
-- [kimi acp reference](../reference/kimi-acp.md) — ACP capability matrix and method coverage details
-- [kimi command reference](../reference/kimi-command.md) — full subcommand list
+- [omnicode acp reference](../reference/omnicode-acp.md) — ACP capability matrix and method coverage details
+- [omnicode command reference](../reference/omnicode-command.md) — full subcommand list

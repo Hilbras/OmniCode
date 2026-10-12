@@ -1,6 +1,6 @@
 # Browser control
 
-Author: lacrous.
+Author: Hilbras.
 
 `packages/agent-core-v2/src/features/computerUse/browser/` is the DOM-mode half
 of computer control. The plan it implements is explicit: **DOM mode whenever
@@ -80,7 +80,7 @@ never touched. That is a real guard, not ceremony — a
 | `browserController.test.ts` | selector rendering, URL rejection, page-change detection, action records, loop detection |
 | `cdpBackend.test.ts` | request/response correlation, out-of-order replies, close and error propagation, AX-tree parsing, selector expressions, missing target id, empty screenshot |
 
-## Launching a browser Kimi owns
+## Launching a browser Omnicode owns
 
 `launchBrowser` starts Chromium and waits for its CDP endpoint to answer,
 returning the endpoint plus a `close()` that tears the process down and removes
@@ -106,7 +106,7 @@ namespaces under AppArmor, and Chromium's zygote sandbox aborts at startup with
 this machine. Pass `sandbox: true` to keep it.
 
 This is not the isolation story. The isolation is the disposable profile plus
-the fact that Kimi owns the lifecycle; the namespace sandbox would be defence
+the fact that Omnicode owns the lifecycle; the namespace sandbox would be defence
 in depth on top of that. On a host where a real sandbox is available, prefer
 `sandbox: true` — it is one option away.
 

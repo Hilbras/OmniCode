@@ -1,4 +1,4 @@
-# Contributing to kimi-code
+# Contributing to omnicode
 
 [中文版](CONTRIBUTING.zh-CN.md)
 
@@ -6,7 +6,7 @@ Thanks for taking the time to contribute! This project moves quickly, and though
 
 ## Before You Start
 
-Lacrous Kimi Code already has opinions on CLI/TUI behavior, agent workflows, and public APIs. If your change shifts that direction, open an issue first so we can align before you invest time in a PR.
+Omnicode already has opinions on CLI/TUI behavior, agent workflows, and public APIs. If your change shifts that direction, open an issue first so we can align before you invest time in a PR.
 
 We hold AI-assisted contributions to the same standard as hand-written ones. **You should understand what you submit** — what changed, how it behaves at the edges, and why it fits this codebase. If you cannot explain that, the PR is not ready for review.
 
@@ -25,10 +25,10 @@ We only merge PRs aligned with the roadmap. Drive-by refactors without context a
 
 This is a pnpm monorepo. The most relevant entry points are:
 
-- `apps/kimi-code` — CLI / TUI
+- `apps/omnicode` — CLI / TUI
 - `apps/vscode` — VS Code extension
 - `apps/vis` — session debug visualizer
-- `packages/node-sdk` — public TypeScript SDK (`@moonshot-ai/kimi-code-sdk`)
+- `packages/node-sdk` — public TypeScript SDK (`@hilbras/omnicode-sdk`)
 - `packages/agent-core-v2` — the agent engine (v2, DI Scope architecture); `packages/agent-core` is v1 and being phased out
 - `packages/klient`, `kap-server`, `protocol`, `transcript`, `kosong`, `kaos`, `oauth`, `telemetry` — internal engine packages
 - `docs/` — VitePress bilingual docs site
@@ -40,8 +40,8 @@ For the full project map, see [AGENTS.md](AGENTS.md).
 Prerequisites: Node.js >= 24.15.0, pnpm 10.33.0, Git.
 
 ```sh
-git clone https://github.com/MoonshotAI/kimi-code.git
-cd kimi-code
+git clone https://github.com/Hilbras/omnicode.git
+cd omnicode
 pnpm install
 ```
 

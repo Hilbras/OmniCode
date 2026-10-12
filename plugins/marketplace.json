@@ -2,22 +2,22 @@
   "version": "1",
   "plugins": [
     {
-      "id": "kimi-datasource",
+      "id": "omnicode-datasource",
       "tier": "official",
-      "displayName": "Kimi Datasource",
+      "displayName": "Omnicode Datasource",
       "version": "3.4.0",
       "description": "Stocks and financials from Wind, S&P Capital IQ, SEC EDGAR, etc.; news from Caixin, Xinhua Finance; macro from World Bank, IMF, FRED, NBS; corporate, academic, legal data, and more",
       "keywords": ["data", "mcp"],
-      "source": "./official/kimi-datasource"
+      "source": "./official/omnicode-datasource"
     },
     {
-      "id": "kimi-webbridge",
+      "id": "omnicode-webbridge",
       "tier": "official",
-      "displayName": "Kimi Browser Extension",
+      "displayName": "Omnicode Browser Extension",
       "version": "2.0.11",
-      "description": "Control your real browser from Lacrous Kimi Code.",
+      "description": "Control your real browser from Omnicode.",
       "keywords": ["browser", "automation", "webbridge"],
-      "source": "./official/kimi-webbridge"
+      "source": "./official/omnicode-webbridge"
     },
     {
       "id": "superpowers",
@@ -54,7 +54,7 @@
       "description": "Build, deploy, and manage Tencent CloudBase apps — databases, cloud functions, storage, auth, and hosting, powered by cloudbase-mcp.",
       "homepage": "https://github.com/TencentCloudBase/CloudBase-AI-Toolkit",
       "keywords": ["cloudbase", "tencent-cloud", "baas", "database", "cloud-function", "mcp"],
-      "source": "https://github.com/TencentCloudBase/CloudBase-AI-Toolkit/releases/latest/download/cloudbase-kimi.zip"
+      "source": "https://github.com/TencentCloudBase/CloudBase-AI-Toolkit/releases/latest/download/cloudbase-omnicode.zip"
     }
   ]
 }

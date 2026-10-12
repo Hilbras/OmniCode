@@ -1,6 +1,6 @@
 # Agent Skills
 
-Agent Skills 是 Lacrous Kimi Code CLI 扩展模型能力的轻量机制。一个 Skill 就是一份带 YAML frontmatter 的 Markdown 文档，描述某项专业知识或工作流程：项目的代码风格规范、PR review 流程、提交消息格式。
+Agent Skills 是 Omnicode CLI 扩展模型能力的轻量机制。一个 Skill 就是一份带 YAML frontmatter 的 Markdown 文档，描述某项专业知识或工作流程：项目的代码风格规范、PR review 流程、提交消息格式。
 
 与每次把同样的指引粘到提示词里相比，Skill 把内容沉淀在文件里，可以跨项目和团队复用，既可以通过斜杠命令一键加载，也可以让模型在需要时自动调用。
 
@@ -17,7 +17,7 @@ Skill 文件需放在[已知的扫描目录](#skill-存放位置)中。支持两
 skills/
 ├── review-pr/              # 目录形式 → Skill 名 review-pr
 │   ├── SKILL.md            # 主文件
-│   └── checklist.md        # 辅助文件，正文用 ${KIMI_SKILL_DIR} 引用
+│   └── checklist.md        # 辅助文件，正文用 ${OMNICODE_SKILL_DIR} 引用
 └── commit.md               # 扁平形式 → Skill 名 commit
 ```
 
@@ -30,7 +30,7 @@ Skill 名的推导规则：
 扁平形式还有两点限制：
 
 - 只有直接放在 Skills 目录顶层的 `.md` 文件会被识别；子目录里散放的 `.md`（`SKILL.md` 除外）不会被当作 Skill。
-- 扁平 Skill 没有自己的目录，`${KIMI_SKILL_DIR}` 指向 Skills 目录本身，不便携带辅助文件——需要辅助文件时请改用目录形式。
+- 扁平 Skill 没有自己的目录，`${OMNICODE_SKILL_DIR}` 指向 Skills 目录本身，不便携带辅助文件——需要辅助文件时请改用目录形式。
 
 ### 文件格式
 
@@ -78,22 +78,22 @@ arguments:
 - `$ARGUMENTS`：调用时附带的完整原始参数字符串
 - `$ARGUMENTS[0]`、`$ARGUMENTS[1]` 及简写 `$0`、`$1`：按空白分词后的位置参数（从 0 开始）
 - `$<name>`：`arguments` 中声明的命名参数
-- `${KIMI_SKILL_DIR}`：当前 Skill 文件所在目录
+- `${OMNICODE_SKILL_DIR}`：当前 Skill 文件所在目录
 
 位置参数支持单双引号包裹：在 `/skill:commit "fix login" patch` 中，`$0` 展开为 `fix login`。若正文不含任何参数占位符，调用时附带的文本会以 `\n\nARGUMENTS: <文本>` 的形式追加到正文末尾。
 
 ## Skill 存放位置
 
-Lacrous Kimi Code CLI 按作用域分四档扫描，越具体的作用域优先级越高：**Project > User > Extra > Built-in**。
+Omnicode CLI 按作用域分四档扫描，越具体的作用域优先级越高：**Project > User > Extra > Built-in**。
 
 **用户级**（对所有项目生效）：
-- `$KIMI_CODE_HOME/skills/`（默认：`~/.kimi-code/skills/`）
+- `$OMNICODE_HOME/skills/`（默认：`~/.omnicode/skills/`）
 - `~/.agents/skills/`
 
-Kimi 专属用户级 Skill 目录会随 `KIMI_CODE_HOME` 移动，隔离数据根时也会隔离 Kimi 专属 Skills。通用 `~/.agents/skills/` 目录仍放在真实 OS home 下，以便跨工具共享。
+Omnicode 专属用户级 Skill 目录会随 `OMNICODE_HOME` 移动，隔离数据根时也会隔离 Omnicode 专属 Skills。通用 `~/.agents/skills/` 目录仍放在真实 OS home 下，以便跨工具共享。
 
 **项目级**（项目根 = 工作目录向上最近的含 `.git` 的目录）：
-- `.kimi-code/skills/`
+- `.omnicode/skills/`
 - `.agents/skills/`
 
 **额外目录**：通过 `config.toml` 顶层的 `extra_skill_dirs` 声明：
@@ -102,7 +102,7 @@ Kimi 专属用户级 Skill 目录会随 `KIMI_CODE_HOME` 移动，隔离数据�
 extra_skill_dirs = ["~/team-skills", ".agents/team-skills"]
 ```
 
-**内置 Skills** 随 CLI 一起分发，优先级最低，为常见任务提供开箱即用的工作流，例如配置 MCP server、定制 TUI 主题和编辑配置文件。完整列表详见[内置 Skill 命令](../reference/slash-commands.md#内置-skill-命令)。其中介绍 Lacrous Kimi Code 自身的部分可以通过顶层 [`builtin_product_skills`](../configuration/config-files.md#顶层字段) 字段关闭。
+**内置 Skills** 随 CLI 一起分发，优先级最低，为常见任务提供开箱即用的工作流，例如配置 MCP server、定制 TUI 主题和编辑配置文件。完整列表详见[内置 Skill 命令](../reference/slash-commands.md#内置-skill-命令)。其中介绍 Omnicode 自身的部分可以通过顶层 [`builtin_product_skills`](../configuration/config-files.md#顶层字段) 字段关闭。
 
 ## 调用 Skill
 
@@ -143,7 +143,7 @@ arguments:
    - 值得肯定的地方
 ```
 
-将文件保存为 `$KIMI_CODE_HOME/skills/review-pr/SKILL.md`，未设置 `KIMI_CODE_HOME` 时为 `~/.kimi-code/skills/review-pr/SKILL.md`。检查清单放在同目录的 `references/checklist.md`。重开会话后即可调用，例如 `/skill:review-pr #1234`，其中的参数会展开到 `$pr_ref`。
+将文件保存为 `$OMNICODE_HOME/skills/review-pr/SKILL.md`，未设置 `OMNICODE_HOME` 时为 `~/.omnicode/skills/review-pr/SKILL.md`。检查清单放在同目录的 `references/checklist.md`。重开会话后即可调用，例如 `/skill:review-pr #1234`，其中的参数会展开到 `$pr_ref`。
 
 ## 下一步
 

@@ -1,6 +1,6 @@
 # 服务 API
 
-`kimi web` 启动的本地服务暴露两组程序化接口：REST API（`/api/v1`，另有 `/api/v2/sessions` 和 `/api/v2/mcp`）和 WebSocket 事件流（`/api/v1/ws`）。本页是这两组接口的协议参考。如何启动服务及其命令行选项见 [kimi 命令](./kimi-command.md#kimi-web) 参考；端到端的上手流程见下文「[用 API 驱动一个会话](#用-api-驱动一个会话)」。
+`omnicode web` 启动的本地服务暴露两组程序化接口：REST API（`/api/v1`，另有 `/api/v2/sessions` 和 `/api/v2/mcp`）和 WebSocket 事件流（`/api/v1/ws`）。本页是这两组接口的协议参考。如何启动服务及其命令行选项见 [omnicode 命令](./omnicode-command.md#omnicode-web) 参考；端到端的上手流程见下文「[用 API 驱动一个会话](#用-api-驱动一个会话)」。
 
 本页是一份经过整理、面向人阅读的参考：下文逐一记录每个端点的参数、请求体与响应结构。每个端点精确的机器可读 schema 以服务的在线规范文档为准：`GET /openapi.json`（OpenAPI）与 `GET /asyncapi.json`（AsyncAPI），两者都由服务运行时实际执行的校验 schema 生成。两者都需要鉴权；当本页与在线规范不一致时，以在线规范为准。
 
@@ -12,7 +12,7 @@
 
 ### 地址
 
-默认地址为 `http://127.0.0.1:58627`。端口被占用时，服务会用下一个端口重试（至多 100 次）；可用 `--port` / `--host` 修改绑定。同一 home 目录下可并存多个实例，运行中的实例登记在 `~/.kimi-code/server/instances/`。
+默认地址为 `http://127.0.0.1:58627`。端口被占用时，服务会用下一个端口重试（至多 100 次）；可用 `--port` / `--host` 修改绑定。同一 home 目录下可并存多个实例，运行中的实例登记在 `~/.omnicode/server/instances/`。
 
 ### 鉴权
 
@@ -22,7 +22,7 @@
 - `GET /api/v1/healthz`（探活）
 - 静态 web 资源（非 `/api/` 路径）
 
-携带方式：REST 用 `Authorization: Bearer <token>` 请求头；WebSocket 升级请求接受同一请求头，或子协议 `kimi-code.bearer.<token>`。token 的生成与轮换见 [在网页中使用：开始使用](../guides/web.md#开始使用)。
+携带方式：REST 用 `Authorization: Bearer <token>` 请求头；WebSocket 升级请求接受同一请求头，或子协议 `omnicode.bearer.<token>`。token 的生成与轮换见 [在网页中使用：开始使用](../guides/web.md#开始使用)。
 
 鉴权失败返回 HTTP 401，信封 `code` 为 `40101`。在非 loopback 绑定上，同一来源 60 秒内鉴权失败 10 次会被封禁 60 秒，期间每个请求都返回 HTTP 429（`code` 为 `42901`）。
 
@@ -107,7 +107,7 @@ curl -s -X POST http://127.0.0.1:58627/api/v1/sessions \
 ```js
 // subscribe.mjs —— 用法：TOKEN=... node subscribe.mjs session_...
 const ws = new WebSocket('ws://127.0.0.1:58627/api/v1/ws', [
-  `kimi-code.bearer.${process.env.TOKEN}`,
+  `omnicode.bearer.${process.env.TOKEN}`,
 ]);
 ws.onmessage = (e) => console.log(e.data);
 ws.onopen = () =>
@@ -183,7 +183,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 ### 登录与用量
 
-这组端点驱动托管 Kimi OAuth 登录的生命周期，并暴露账号级信息。托管供应商名为 `managed:kimi-code`；下面每个端点上可选的 `provider` 参数都默认取它。
+这组端点驱动托管 Omnicode OAuth 登录的生命周期，并暴露账号级信息。托管供应商名为 `managed:omnicode`；下面每个端点上可选的 `provider` 参数都默认取它。
 
 | 方法与路径 | 说明 |
 | --- | --- |
@@ -198,7 +198,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 #### `GET /api/v1/auth`
 
-鉴权状态快照：默认模型能否解析到可用的供应商配置，以及托管供应商的登录状态。当全局 `default_model` 别名存在于模型表中且能解析到已配置的供应商时，`models_ready` 为 `true`——包括自带 `base_url` 的平铺（providerless）模型，以及通过 `KIMI_MODEL_*` 环境变量注入的模型。它不做凭据校验，因此此后的对话请求仍可能以 `40111` / `40112` 失败。
+鉴权状态快照：默认模型能否解析到可用的供应商配置，以及托管供应商的登录状态。当全局 `default_model` 别名存在于模型表中且能解析到已配置的供应商时，`models_ready` 为 `true`——包括自带 `base_url` 的平铺（providerless）模型，以及通过 `OMNICODE_MODEL_*` 环境变量注入的模型。它不做凭据校验，因此此后的对话请求仍可能以 `40111` / `40112` 失败。
 
 成功时 `data` 携带 `models_ready`（布尔值）、`providers_count`（已配置供应商数量）与 `managed_provider`（`null`，或 `{ name, status }`，其中 `status` 为 `authenticated` / `expired` / `revoked` / `unauthenticated` 之一）。全局默认模型别名本身改从 `GET /api/v1/config` 的 `default_model` 读取，本端点不再携带。
 
@@ -208,7 +208,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | 参数 | 位置 | 类型 | 说明 |
 | --- | --- | --- | --- |
-| `provider` | body | string | 托管供应商名称。默认 `managed:kimi-code` |
+| `provider` | body | string | 托管供应商名称。默认 `managed:omnicode` |
 | `region` | body | string | `mainland-cn` 或 `global`；覆盖 `GET /api/v1/oauth/region` 一节描述的区域解析结果，仅对本次流程生效 |
 
 成功时 `data` 有两种形态。进行中的流程——`{ flow_id, provider, status: "pending", verification_uri, verification_uri_complete, user_code, expires_in, interval, expires_at }`：打开 `verification_uri_complete`（或打开 `verification_uri` 并输入 `user_code`），然后每隔 `interval` 秒轮询 `GET /api/v1/oauth/login`，直到流程完结或超过 `expires_at`（`expires_in` 是以秒表示的同一时限）。已登录的快速路径——`{ flow_id, provider, status: "authenticated" }`。
@@ -219,7 +219,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | 参数 | 位置 | 类型 | 说明 |
 | --- | --- | --- | --- |
-| `provider` | query | string | 托管供应商名称。默认 `managed:kimi-code` |
+| `provider` | query | string | 托管供应商名称。默认 `managed:omnicode` |
 
 成功时 `data` 为 `null` 或流程快照：`{ flow_id, provider, status, verification_uri, verification_uri_complete, user_code, expires_in, expires_at, interval }`，其中 `status` 为 `pending` / `authenticated` / `denied` / `expired` / `cancelled`。流程离开 `pending` 后，`resolved_at` 记录其到达终态的时间，`error_message` 描述失败的流程。
 
@@ -229,7 +229,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | 参数 | 位置 | 类型 | 说明 |
 | --- | --- | --- | --- |
-| `provider` | query | string | 托管供应商名称。默认 `managed:kimi-code` |
+| `provider` | query | string | 托管供应商名称。默认 `managed:omnicode` |
 
 成功时 `data` 为 `{ cancelled, status }`：只有确实中止了一个 `pending` 流程时 `cancelled` 才为 `true`，`status` 为调用后的流程状态。
 
@@ -239,7 +239,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | 参数 | 位置 | 类型 | 说明 |
 | --- | --- | --- | --- |
-| `provider` | body | string | 托管供应商名称。默认 `managed:kimi-code` |
+| `provider` | body | string | 托管供应商名称。默认 `managed:omnicode` |
 
 成功时 `data` 为 `{ logged_out: true, provider }`。
 
@@ -249,7 +249,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | 参数 | 位置 | 类型 | 说明 |
 | --- | --- | --- | --- |
-| `provider` | query | string | 托管供应商名称。默认 `managed:kimi-code` |
+| `provider` | query | string | 托管供应商名称。默认 `managed:omnicode` |
 
 成功时 `data` 为 `{ kind: "ok", quota }` 或 `{ kind: "error", message, status? }`，其中 `status` 为上游 HTTP 状态码（如存在）。在 `ok` 形态中，`quota` 为 `{ usages, extraUsage }`：`usages` 按窗口携带 `{ usedRatio, resetAt? }` 条目——`limit5h`、`limit7d`、`monthTotal`、`monthCode`——其中 `usedRatio` 为 0–1 浮点数，`resetAt` 为 RFC3339 重置时间，客户端按实际下发的条目渲染；`extraUsage`（可空）是按量付费钱包：`{ balanceCents, totalCents, monthlyChargeLimitEnabled, monthlyChargeLimitCents, monthlyUsedCents, currency }`。
 
@@ -259,13 +259,13 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 | 参数 | 位置 | 类型 | 说明 |
 | --- | --- | --- | --- |
-| `provider` | query | string | 托管供应商名称。默认 `managed:kimi-code` |
+| `provider` | query | string | 托管供应商名称。默认 `managed:omnicode` |
 
 成功时 `data` 为 `{ kind: "ok", userInfo }` 或 `{ kind: "error", message, status? }`。`userInfo` 始终携带 `userId`、`nickname`、`status`、`region`、`userLevel`、`userLevelName`、`domain`、`domainName`，并可能附加 `globalId`、`bio`、`avatar`、`username`、`email`、`phone`（`{ countryCode, number }`）、`createdTime` 与 `lastLoginTime`。
 
 #### `GET /api/v1/oauth/region`
 
-解析该客户端所属的 Kimi 区域。结果在本地推导，不经网络探测：优先取环境变量或配置固定的 OAuth host，其次是已配置的 OAuth key，再次是 home 目录中的区域标记文件；默认为 `mainland-cn`。
+解析该客户端所属的 Omnicode 区域。结果在本地推导，不经网络探测：优先取环境变量或配置固定的 OAuth host，其次是已配置的 OAuth key，再次是 home 目录中的区域标记文件；默认为 `mainland-cn`。
 
 成功时 `data` 为 `{ region }`，`region` 为 `mainland-cn` / `global` 之一。
 
@@ -343,7 +343,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 ### 模型与供应商
 
-这组端点管理模型配置的两半——`config.toml` 的 [供应商](../configuration/providers.md) 表与模型别名表——外加一个由服务端代理的 models.dev 目录，用于一次性导入。模型别名 id 就是配置中的别名键：通过供应商管理端点创建的别名形如 `provider_id/model`（例如 `my-provider/kimi-for-coding`），而模型别名表中的裸键（如 `turbo`）原样使用；API 中任何接收 `model_id` 的地方（包括全局 `default_model`）指的都是这个别名 id。`:{action}` 路由上不支持的动作返回 `40001`。
+这组端点管理模型配置的两半——`config.toml` 的 [供应商](../configuration/providers.md) 表与模型别名表——外加一个由服务端代理的 models.dev 目录，用于一次性导入。模型别名 id 就是配置中的别名键：通过供应商管理端点创建的别名形如 `provider_id/model`（例如 `my-provider/omnicode-for-coding`），而模型别名表中的裸键（如 `turbo`）原样使用；API 中任何接收 `model_id` 的地方（包括全局 `default_model`）指的都是这个别名 id。`:{action}` 路由上不支持的动作返回 `40001`。
 
 | 方法与路径 | 说明 |
 | --- | --- |
@@ -367,7 +367,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 
 #### `POST /api/v1/models/{model_id}:set_default`
 
-把全局 `default_model` 设为一个已存在的别名。`model_id` 是配置中的别名键原样——裸键如 `POST /api/v1/models/turbo:set_default`；当 id 含 `/` 时需做 URL 编码，如 `POST /api/v1/models/my-provider%2Fkimi-for-coding:set_default`。
+把全局 `default_model` 设为一个已存在的别名。`model_id` 是配置中的别名键原样——裸键如 `POST /api/v1/models/turbo:set_default`；当 id 含 `/` 时需做 URL 编码，如 `POST /api/v1/models/my-provider%2Fomnicode-for-coding:set_default`。
 
 | 参数 | 位置 | 类型 | 说明 |
 | --- | --- | --- | --- |
@@ -387,7 +387,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
 | `id` | string | 供应商 id |
-| `type` | string | 通信协议：`kimi` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
+| `type` | string | 通信协议：`omnicode` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
 | `base_url` | string | API 基础 URL，如已设置 |
 | `default_model` | string | 该供应商的默认模型别名，如已设置 |
 | `has_api_key` | boolean | 是否已存储凭据 |
@@ -401,7 +401,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | 参数 | 位置 | 类型 | 说明 |
 | --- | --- | --- | --- |
 | `id` | body | string | **必填。** 供应商 id——字母、数字、`-`、`_` 与空格；必须以字母或数字开头 |
-| `type` | body | string | **必填。** 通信协议：`kimi` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
+| `type` | body | string | **必填。** 通信协议：`omnicode` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
 | `api_key` | body | string | API 密钥，存储于 `config.toml` |
 | `base_url` | body | string | API 基础 URL；不得包含环境变量占位符（`${...}`） |
 | `default_model` | body | string | 该供应商的默认模型；必须是 `models[].model` 之一 |
@@ -443,7 +443,7 @@ curl -s -H "Authorization: Bearer $TOKEN" \
 | --- | --- | --- | --- |
 | `provider_id` | path | string | **必填。** 当前供应商 id |
 | `new_id` | body | string | 重命名供应商；providers 键、模型别名、`default_provider`、指向旧别名的 `default_model` 以及 subagent 次级模型池都会随之迁移。id 规则与 `POST /api/v1/providers` 相同 |
-| `type` | body | string | **必填。** 通信协议：`kimi` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
+| `type` | body | string | **必填。** 通信协议：`omnicode` / `openai` / `openai_responses` / `anthropic` / `google-genai` / `vertexai` |
 | `api_key` | body | string | 三态，见上文 |
 | `base_url` | body | string | API 基础 URL；不得包含环境变量占位符（`${...}`） |
 | `default_model` | body | string | 该供应商的默认模型；必须是 `models[].model` 之一 |
@@ -863,7 +863,7 @@ main agent 的实时状态汇总；读取它会在会话为冷态时将其恢复
 
 #### `POST /api/v1/sessions/{session_id}/export`
 
-将会话连同诊断日志一起导出为 zip 附件（`kimi-session-<id>.zip`）。响应是二进制流，不是 JSON 信封——能力与失败语义见 [二进制与流式端点](#二进制与流式端点)。
+将会话连同诊断日志一起导出为 zip 附件（`omnicode-session-<id>.zip`）。响应是二进制流，不是 JSON 信封——能力与失败语义见 [二进制与流式端点](#二进制与流式端点)。
 
 | 参数 | 位置 | 类型 | 说明 |
 | --- | --- | --- | --- |
@@ -1371,7 +1371,7 @@ schema 还接受共享消息格式中的 `tool_use`、`tool_result` 和 `thinkin
 
 ### 能力与插件
 
-能力是带有分层就绪状态的内置特性——由检测步骤加后台安装组成；当前版本注册了 `kimi-cu`（Kimi Computer Use）与 `kimi-webbridge`（Kimi Browser Extension）。插件是已安装的技能、MCP 服务、hook 与命令的打包集合。这组端点报告能力状态、驱动能力安装，并管理插件从市场列表到移除的整个生命周期。
+能力是带有分层就绪状态的内置特性——由检测步骤加后台安装组成；当前版本注册了 `omnicode-cu`（Omnicode Computer Use）与 `omnicode-webbridge`（Omnicode Browser Extension）。插件是已安装的技能、MCP 服务、hook 与命令的打包集合。这组端点报告能力状态、驱动能力安装，并管理插件从市场列表到移除的整个生命周期。
 
 | 方法与路径 | 说明 |
 | --- | --- |
@@ -1671,7 +1671,7 @@ PTY 终端接口；仅在 loopback 绑定时挂载（非 loopback 绑定会跳�
 | --- | --- | --- | --- |
 | `workspace_id` | path | string | **必填。** 工作区 id |
 | `path` | body | string | **必填。** 要添加的目录 |
-| `persist` | body | boolean | 缺省 `true`：追加到 `<项目根>/.kimi-code/local.toml` 的 `workspace.additional_dir`；为 `false` 时仅加入内存中的临时集合（同一工作区所有会话共享），不写盘 |
+| `persist` | body | boolean | 缺省 `true`：追加到 `<项目根>/.omnicode/local.toml` 的 `workspace.additional_dir`；为 `false` 时仅加入内存中的临时集合（同一工作区所有会话共享），不写盘 |
 
 成功时 `data` 为 `{ project_root, config_path, additional_dirs, persisted }`，其中 `additional_dirs` 是全部附加目录（含既有目录），`persisted` 表示本次是否写盘。
 
@@ -2199,7 +2199,7 @@ PTY 终端接口；仅在 loopback 绑定时挂载（非 loopback 绑定会跳�
     "groups": [
       {
         "workspace": { "id": "wd_my-app_a1b2c3d4e5f6", "cwd": "/Users/dev/my-app" },
-        "sessions": [ { "id": "session_...", "workspace": { "id": "wd_my-app_a1b2c3d4e5f6", "cwd": "/Users/dev/my-app" }, "meta": { "title": "Fix the login page", "last_prompt": "adjust the button spacing", "created_at": 1787000000000, "updated_at": 1787000100000, "archived": false, "archived_at": null }, "activity": { "status": "idle", "model": "kimi-for-coding" } } ],
+        "sessions": [ { "id": "session_...", "workspace": { "id": "wd_my-app_a1b2c3d4e5f6", "cwd": "/Users/dev/my-app" }, "meta": { "title": "Fix the login page", "last_prompt": "adjust the button spacing", "created_at": 1787000000000, "updated_at": 1787000100000, "archived": false, "archived_at": null }, "activity": { "status": "idle", "model": "omnicode-for-coding" } } ],
         "total": 42
       }
     ],
@@ -2414,5 +2414,5 @@ locator 寻址的目录（脱敏配置），外加对每个 OAuth 候选的批�
 
 ## 下一步
 
-- [在网页中使用](../guides/web.md) — 启动服务并在浏览器中使用 Lacrous Kimi Code
-- [kimi 命令](./kimi-command.md#kimi-web) — `kimi web` 的全部命令行选项
+- [在网页中使用](../guides/web.md) — 启动服务并在浏览器中使用 Omnicode
+- [omnicode 命令](./omnicode-command.md#omnicode-web) — `omnicode web` 的全部命令行选项

@@ -1,23 +1,16 @@
-<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Lacrous Kimi Code">
-  <title>Lacrous Kimi Code</title>
+<svg width="128" height="128" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Omnicode">
+  <title>Omnicode</title>
   <!--
-    Fork mark derived from the upstream Kimi Code CLI icon (rounded body with
-    two eyes). The fork's additions: an accent gradient in place of a single
-    currentColor, a "lacrous" wordmark bar beneath the mark, and a small
-    provider-plug notch on the right edge standing for the built-in providers.
+    Mark derived from the upstream icon (rounded body with two eyes), with an
+    accent gradient and a small provider-plug notch on the right edge standing
+    for the built-in providers.
 
-    Upstream icon: Copyright (c) 2026 Moonshot AI, MIT License.
-    This derivative: lacrous. Not endorsed by Moonshot AI.
+    Copyright (c) 2026 Hilbras, MIT License.
   -->
   <defs>
     <linearGradient id="lcBody" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#7C6BFF"/>
       <stop offset="1" stop-color="#39D0C8"/>
-    </linearGradient>
-    <linearGradient id="lcBar" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#7C6BFF"/>
-      <stop offset="0.55" stop-color="#39D0C8"/>
-      <stop offset="1" stop-color="#FFB86B"/>
     </linearGradient>
   </defs>
 
@@ -44,6 +37,4 @@
     <rect x="103" y="66" width="6.5" height="6.5" rx="2"/>
   </g>
 
-  <!-- lacrous wordmark bar -->
-  <rect x="30" y="96" width="68" height="5" rx="2.5" fill="url(#lcBar)"/>
 </svg>

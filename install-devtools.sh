@@ -2,10 +2,10 @@
 #
 # Installs everything needed to run this fork with computer control.
 #
-# Author: lacrous. Forks MoonshotAI/kimi-code; see CREDITS.md.
+# Author: Hilbras.
 #
 # This installs into the current checkout. It does not touch an already
-# installed kimi (e.g. ~/.kimi-code) and does not write outside the machine
+# installed omnicode (e.g. ~/.omnicode) and does not write outside the machine
 # paths named here.
 #
 #   ./install.sh              install tools + build the CLI from this checkout
@@ -16,13 +16,13 @@
 #   ./install.sh --vm         also create the disposable VM (needs KVM)
 #
 # Computer control stays behind an experimental flag and is off by default:
-#   export KIMI_CODE_EXPERIMENTAL_COMPUTER_USE=1
-#   pnpm run kimi
+#   export OMNICODE_EXPERIMENTAL_COMPUTER_USE=1
+#   pnpm run omnicode
 
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-TOOL_PREFIX="${KIMI_TOOL_PREFIX:-$HOME/.local/opt/kimi-computer-tools}"
+TOOL_PREFIX="${OMNICODE_TOOL_PREFIX:-$HOME/.local/opt/omnicode-computer-tools}"
 
 MIN_NODE_MAJOR=24
 MIN_NODE_MINOR=15
@@ -92,7 +92,7 @@ report() {
   log "environment"
   printf '  node         %s\n' "$(node -v 2>/dev/null || echo MISSING)"
   printf '  pnpm         %s\n' "$(pnpm -v 2>/dev/null || echo MISSING)"
-  printf '  kimi (this)  %s\n' "$(cd "$REPO_ROOT" && node ./scripts/kimi-dev.mjs --version 2>/dev/null | tail -1 || echo 'not built')"
+  printf '  omnicode (this)  %s\n' "$(cd "$REPO_ROOT" && node ./scripts/omnicode-dev.mjs --version 2>/dev/null | tail -1 || echo 'not built')"
 
   log "computer-use tools"
   local missing=0
@@ -296,7 +296,7 @@ install_node() {
     || warn "pnpm ${pnpm_version:-unknown} differs from the pinned ${REQUIRED_PNPM}"
 }
 
-build_kimi() {
+build_omnicode() {
   log "installing dependencies"
   (cd "$REPO_ROOT" && pnpm install)
 
@@ -304,7 +304,7 @@ build_kimi() {
   (cd "$REPO_ROOT" && pnpm run build:packages)
 
   log "building the CLI"
-  (cd "$REPO_ROOT" && pnpm --filter @moonshot-ai/kimi-code run build)
+  (cd "$REPO_ROOT" && pnpm --filter @hilbras/omnicode run build)
 }
 
 create_vm() {
@@ -329,7 +329,7 @@ create_vm() {
   local vm_dir="$REPO_ROOT/.vm"
   mkdir -p "$vm_dir"
 
-  if [ -z "${KIMI_VM_ISO:-}" ]; then
+  if [ -z "${OMNICODE_VM_ISO:-}" ]; then
     have curl || die "curl is required to download the ISO"
 
     # Ubuntu publishes point releases (24.04.3, 24.04.4, ...), so a hardcoded
@@ -341,23 +341,23 @@ create_vm() {
     filename="$(printf '%s' "$index" \
       | grep -oE 'ubuntu-24\.04(\.[0-9]+)*-desktop-amd64\.iso' \
       | sort -uV | tail -1)"
-    [ -n "$filename" ] || die "could not find a desktop ISO in the release index; set KIMI_VM_ISO to override"
+    [ -n "$filename" ] || die "could not find a desktop ISO in the release index; set OMNICODE_VM_ISO to override"
     url="https://releases.ubuntu.com/24.04/$filename"
     filename="${url##*/}"
     log "downloading $filename"
-    KIMI_VM_ISO="$vm_dir/$filename"
+    OMNICODE_VM_ISO="$vm_dir/$filename"
 
-    if [ ! -f "$KIMI_VM_ISO" ]; then
-      curl -fL --retry 3 --progress-bar -o "$KIMI_VM_ISO.part" "$url" \
+    if [ ! -f "$OMNICODE_VM_ISO" ]; then
+      curl -fL --retry 3 --progress-bar -o "$OMNICODE_VM_ISO.part" "$url" \
         || die "ISO download failed: $url"
-      mv "$KIMI_VM_ISO.part" "$KIMI_VM_ISO"
+      mv "$OMNICODE_VM_ISO.part" "$OMNICODE_VM_ISO"
     fi
   fi
 
-  [ -f "$KIMI_VM_ISO" ] || die "ISO not found at $KIMI_VM_ISO (set KIMI_VM_ISO to override)"
+  [ -f "$OMNICODE_VM_ISO" ] || die "ISO not found at $OMNICODE_VM_ISO (set OMNICODE_VM_ISO to override)"
 
   log "creating the VM disk (40G sparse)"
-  local disk="$vm_dir/kimi-vm.qcow2"
+  local disk="$vm_dir/omnicode-vm.qcow2"
   [ -f "$disk" ] || qemu-img create -f qcow2 "$disk" 40G
 
   cat > "$vm_dir/run-vm.sh" <<EOF
@@ -366,14 +366,14 @@ create_vm() {
 set -euo pipefail
 VM_DIR="\$(cd "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 exec qemu-system-x86_64 \\
-  -name kimi-agent-vm \\
+  -name omnicode-agent-vm \\
   -machine q35 \\
   -accel ${KVM_ACCEL:-kvm} \\
   -cpu max \\
   -smp 4 \\
   -m 8192 \\
-  -drive "file=\$VM_DIR/kimi-vm.qcow2,if=virtio,format=qcow2" \\
-  -drive "file=$KIMI_VM_ISO,media=cdrom,readonly=on" \\
+  -drive "file=\$VM_DIR/omnicode-vm.qcow2,if=virtio,format=qcow2" \\
+  -drive "file=$OMNICODE_VM_ISO,media=cdrom,readonly=on" \\
   -netdev user,id=net0,hostfwd=tcp::2222-:22 \\
   -device virtio-net-pci,netdev=net0 \\
   -display gtk \\
@@ -384,7 +384,7 @@ EOF
 
   log "VM created in $vm_dir"
   printf '  disk         %s\n' "$disk"
-  printf '  iso          %s\n' "$KIMI_VM_ISO"
+  printf '  iso          %s\n' "$OMNICODE_VM_ISO"
   printf '  launcher     %s\n' "$vm_dir/run-vm.sh"
   printf '\n  Next: boot it once and install Ubuntu, then create a dedicated user:\n'
   printf '    %s\n' "$vm_dir/run-vm.sh"
@@ -444,7 +444,7 @@ check_screen() {
 }
 
 main() {
-  printf '\nLacrous Kimi Code installer\n'
+  printf '\nOmnicode installer\n'
   printf 'repository: %s\n\n' "$REPO_ROOT"
 
   install_tools_system
@@ -456,7 +456,7 @@ main() {
   else
     install_node
     if [ "$DO_BUILD" -eq 1 ]; then
-      build_kimi
+      build_omnicode
     else
       log "skipping the build (--no-build)"
     fi
@@ -469,9 +469,9 @@ main() {
   log "done"
   printf '\nRun this fork with:\n'
   printf '  cd %s\n' "$REPO_ROOT"
-  printf '  pnpm run kimi -- --version\n\n'
+  printf '  pnpm run omnicode -- --version\n\n'
   printf 'Enable computer control (off by default):\n'
-  printf '  export KIMI_CODE_EXPERIMENTAL_COMPUTER_USE=1\n\n'
+  printf '  export OMNICODE_EXPERIMENTAL_COMPUTER_USE=1\n\n'
   printf 'Check the installation at any time:\n'
   printf '  %s --check\n\n' "$0"
 }

@@ -1,6 +1,6 @@
 ---
 name: write-pr
-description: 在 kimi-code 仓库里创建或更新 PR 时使用：如何把 PR 模板的每一节写得简洁、便于 reviewer 理解，包括"行为变化与受影响人群"表。
+description: 在 omnicode 仓库里创建或更新 PR 时使用：如何把 PR 模板的每一节写得简洁、便于 reviewer 理解，包括"行为变化与受影响人群"表。
 ---
 
 # 写 PR 描述

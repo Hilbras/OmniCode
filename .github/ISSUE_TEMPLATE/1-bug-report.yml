@@ -7,9 +7,9 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thank you for submitting a bug report! It helps make Lacrous Kimi Code better for everyone.
+        Thank you for submitting a bug report! It helps make Omnicode better for everyone.
 
-        Make sure you are running the latest version of Lacrous Kimi Code CLI. The bug you are experiencing may already have been fixed.
+        Make sure you are running the latest version of Omnicode CLI. The bug you are experiencing may already have been fixed.
 
         Please try to include as much information as possible.
 
@@ -18,8 +18,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: What version of Lacrous Kimi Code is running?
-      description: Copy the output of `kimi --version` or `/version`
+      label: What version of Omnicode is running?
+      description: Copy the output of `omnicode --version` or `/version`
     validations:
       required: true
   - type: input
@@ -33,7 +33,7 @@ body:
     id: model
     attributes:
       label: Which model were you using?
-      description: The one you can see on the bottom status line, like `kimi-k2.6`, `kimi-for-coding`, etc.
+      description: The one you can see on the bottom status line, like `omnicode-k2.6`, `omnicode-for-coding`, etc.
   - type: input
     id: platform
     attributes:

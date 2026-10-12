@@ -1,6 +1,6 @@
 # Supervising an autonomous run
 
-Author: lacrous.
+Author: Hilbras.
 
 `packages/agent-core-v2/src/features/computerUse/supervisor.ts` is the layer that
 decides whether a long autonomous run should take another action. It exists

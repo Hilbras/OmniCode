@@ -1,7 +1,7 @@
 ---
 layout: home
 hero:
-  name: Lacrous Kimi Code CLI
+  name: Omnicode CLI
   text: ' '
   actions:
     - theme: brand

@@ -13,13 +13,13 @@ coverage/
 .playwright-mcp/
 .claude
 .conductor
-.kimi-stash-dir
+.omnicode-stash-dir
 plugins/cdn/
 .worktrees/
-.kimi-code/local.toml
-.kimi-sandbox/
-# Isolated config home used by scripts/kimi-dev.mjs (the `pnpm run kimi` wrapper).
-.kimi-dev-home/
+.omnicode/local.toml
+.omnicode-sandbox/
+# Isolated config home used by scripts/omnicode-dev.mjs (the `pnpm run omnicode` wrapper).
+.omnicode-dev-home/
 .vscode/
 !apps/vscode/.vscode/
 !apps/vscode/.vscode/*.json

@@ -8,19 +8,19 @@
 
 | 人群 | 说明 | 契约位置 |
 |---|---|---|
-| TUI 交互用户 | `kimi` 默认入口 | `apps/kimi-code/src/tui/` |
-| print 模式用户 | `kimi -p`，含解析 `--output-format stream-json` 输出的脚本。脚本解析者算二等人群，但输出格式变化必须写进 changeset（#3146） | `apps/kimi-code/src/cli/options.ts` |
+| TUI 交互用户 | `omnicode` 默认入口 | `apps/omnicode/src/tui/` |
+| print 模式用户 | `omnicode -p`，含解析 `--output-format stream-json` 输出的脚本。脚本解析者算二等人群，但输出格式变化必须写进 changeset（#3146） | `apps/omnicode/src/cli/options.ts` |
 | desktop 与 web 用户 | 源码在 code-app 仓库，只消费 kap-server 的 `/api/v1` REST 与 `/api/v1/ws`。本仓 diff 看不到它们的用法，改契约时必须点名让作者去对方仓库核对 | `packages/kap-server/src/routes/`、`packages/kap-server/src/transport/ws/`、`docs/en/reference/server-api.md` |
 | VS Code 扩展用户 | 走 SDK 事件适配层，webview 有自己的渲染契约（#3250：v2 不再发 `display` 字段导致卡片空白） | `apps/vscode/` |
-| ACP 客户端用户 | Zed 等，`kimi acp`。stdio MCP 是 ACP 的默认传输，客户端会无条件发（#3167）；能力矩阵是公开承诺（#3081） | `packages/acp-server/`、`docs/en/reference/kimi-acp.md` |
-| SDK 调用方 | `@moonshot-ai/kimi-code-sdk` 的导出面；其中 `KimiForCodingProvider` 走 kosong 的 provider 实现，CLI 与服务端不用 kosong | `packages/node-sdk/src/index.ts`、`packages/node-sdk/package.json` 的 `exports`、`packages/kosong/src/providers/` |
-| 远程控制用户 | `kimi web --remote-control`，凭据槽位与 relay 按登录区域选择（#3969） | `packages/remote-control/` |
+| ACP 客户端用户 | Zed 等，`omnicode acp`。stdio MCP 是 ACP 的默认传输，客户端会无条件发（#3167）；能力矩阵是公开承诺（#3081） | `packages/acp-server/`、`docs/en/reference/omnicode-acp.md` |
+| SDK 调用方 | `@hilbras/omnicode-sdk` 的导出面；其中 `OmnicodeForCodingProvider` 走 kosong 的 provider 实现，CLI 与服务端不用 kosong | `packages/node-sdk/src/index.ts`、`packages/node-sdk/package.json` 的 `exports`、`packages/kosong/src/providers/` |
+| 远程控制用户 | `omnicode web --remote-control`，凭据槽位与 relay 按登录区域选择（#3969） | `packages/remote-control/` |
 
 ### provider 方言
 
 | 人群 | 说明 |
 |---|---|
-| Kimi 官方 | 默认路径，OAuth 托管登录，区域与 relay 差异 |
+| Omnicode 官方 | 默认路径，OAuth 托管登录，区域与 relay 差异 |
 | `openai` Chat Completions 兼容网关 | 最杂的一群：new-api 等中转、OpenRouter 形态（`reasoning` 字符串与 `reasoning_details` 数组并存，#3900）、只发 `reasoning_content` 的、严格校验历史消息的（#2819）、第三方模型对 `anyOf` 参数的处理（#3383） |
 | `anthropic`、`openai_responses`、`google-genai`、`vertexai` | 各自的 thinking、工具调用、usage 字段形态 |
 | 自定义模型配置 | `api_key_env`、models.dev catalog 导入、手动配置的 thinking 参数（#3448）、`[secondary_model]` 与 subagent model pool（#3192、#3903） |
@@ -44,7 +44,7 @@
 |---|---|---|
 | 子模块或 worktree 内启动的用户 | `core.worktree` 已设置；路径含符号链接时（macOS `/tmp`、链接的 home、Windows 映射盘）realpath 与字面路径不一致。#3964 的 git 探针在这里整体失败，已随 #4013 回滚 | `packages/agent-core-v2/src/app/git/gitService.ts` |
 | git-lfs、git-crypt 用户 | `.git/config` 里的 filter 驱动带 `required = true`；任何"清空 filter 命令"的加固都会让 `git status` 对已修改的被过滤文件直接 fatal，除非同时清 `required`。#3964 踩过，已随 #4013 回滚 | 同上 |
-| 大仓库用户 | 依赖 `core.fsmonitor`；footer 的后台 git 有超时预算，超时后静默当作 clean | `apps/kimi-code/src/utils/git/` |
+| 大仓库用户 | 依赖 `core.fsmonitor`；footer 的后台 git 有超时预算，超时后静默当作 clean | `apps/omnicode/src/utils/git/` |
 | 要求签名提交或 husky hooks 的仓库 | 任何自动提交路径（Tower 等）关闭 hooks 或签名都会改变提交结果 | `packages/agent-core-v2/src/features/tower/` |
 
 ### 配置状态
@@ -52,8 +52,8 @@
 | 人群 | 说明 | 契约位置 |
 |---|---|---|
 | 默认配置用户 | 任何默认值翻转对他们都是行为变更 | `packages/agent-core-v2/docs/config-manifest.toml` |
-| experimental flag 用户 | `[experimental]` 与 `KIMI_CODE_EXPERIMENTAL_*`；flag 的 `default` 翻成 true 等于面向全体发布 | `packages/agent-core-v2/src/app/flag/flagRegistry.ts`、各域的 `flag.ts` |
-| legacy flag 用户 | `KIMI_CODE_LEGACY_FLAG`（#3820：TUI 与 print 模式静默忽略） | |
+| experimental flag 用户 | `[experimental]` 与 `OMNICODE_EXPERIMENTAL_*`；flag 的 `default` 翻成 true 等于面向全体发布 | `packages/agent-core-v2/src/app/flag/flagRegistry.ts`、各域的 `flag.ts` |
+| legacy flag 用户 | `OMNICODE_LEGACY_FLAG`（#3820：TUI 与 print 模式静默忽略） | |
 | 自定义 agent 用户 | `--agent` 的 `disallowedTools` 等策略（#3417） | |
 | 配了 hooks 的用户 | 事件名与载荷是外部脚本的契约；配了 hook 时审批面板不渲染并被静默批准（#3888）、v2 不触发 PreToolUse（#3431） | `packages/agent-core-v2/src/features/externalHooks/internal/types.ts`、`docs/en/customization/hooks.md` |
 | skills、plugins、MCP 用户 | 含 stdio MCP、用户级 skill 根目录、`[watch]` 热加载（#3931 关掉默认，#4015 翻回；关掉时连带 AGENTS.md 变更提醒失效，`/reload` 只覆盖 config 与 skills） | `docs/en/customization/` |
@@ -65,10 +65,10 @@
 | 人群 | 说明 | 契约位置 |
 |---|---|---|
 | 旧版本写的会话 | wire 日志、turn 编号、压缩后的 transcript（#3561、#3866、#3922）；新版本能否读、回滚后能否读 | `packages/agent-core-v2/docs/wire-manifest.d.ts`、`packages/agent-core-v2/docs/state-manifest.d.ts` |
-| `kimi migrate` 迁来的会话 | 从 `~/.kimi/` 迁到 `~/.kimi-code/` | `packages/migration-legacy/` |
+| `omnicode migrate` 迁来的会话 | 从 `~/.omnicode/` 迁到 `~/.omnicode/` | `packages/migration-legacy/` |
 | 搜索索引 | minidb 快照与 WAL | `packages/minidb/` |
 | 后台任务与 cron 持久化 | 非正常退出后的恢复（#3924） | |
-| 目录布局 | 任何读写 `~/.kimi-code/` 的代码 | `docs/en/configuration/data-locations.md` |
+| 目录布局 | 任何读写 `~/.omnicode/` 的代码 | `docs/en/configuration/data-locations.md` |
 
 ### 外部自动化
 
@@ -76,8 +76,8 @@
 |---|---|
 | 解析 `stream-json` 的脚本 | 事件形态与顺序 |
 | hook 脚本 | 事件名、载荷字段、返回值语义 |
-| `kimi export` 的消费者 | 导出格式 |
-| 关闭遥测的用户 | `KIMI_DISABLE_TELEMETRY` 在所有入口生效 |
+| `omnicode export` 的消费者 | 导出格式 |
+| 关闭遥测的用户 | `OMNICODE_DISABLE_TELEMETRY` 在所有入口生效 |
 
 ### 模型行为人群
 
@@ -102,14 +102,14 @@ prompt 文本改动影响全体用户，且没有测试能证明"无影响"。�
 | `packages/node-sdk/src/index.ts`、`packages/node-sdk/package.json` | SDK 导出面 | 删除或改签名即破坏性变更 |
 | `packages/klient/src/` | SDK 与 ACP 下面的客户端门面契约 | 只改 klient 的 PR 碰不到 node-sdk 导出面，按 SDK 调用方与 ACP 客户端两个人群核行为变化 |
 | `packages/transcript/src/contract/` | kap-server 发给 desktop、web、VS Code 的 transcript 载荷契约 | 消费方在 code-app，点名让作者去核；上一版客户端能否解析新载荷 |
-| `.github/workflows/release.yml`、`_native-build.yml`、`manual-native-bundle.yml`、`vscode-publish.yml`，`apps/kimi-code/scripts/native/`、`apps/kimi-code/scripts/check-web-assets.mjs` | 发布产物 | 按安装方式与平台核：npm 包内容、各平台 native 二进制、VS Code 市场包、内置 web 产物是否仍齐全 |
-| `packages/acp-server/` | ACP 客户端 | 对照 `docs/en/reference/kimi-acp.md` 的能力矩阵逐项核对 |
-| `apps/kimi-code/src/cli/` | 命令行参数、子命令、`--output-format` | 对照 `docs/en/reference/kimi-command.md` |
+| `.github/workflows/release.yml`、`_native-build.yml`、`manual-native-bundle.yml`、`vscode-publish.yml`，`apps/omnicode/scripts/native/`、`apps/omnicode/scripts/check-web-assets.mjs` | 发布产物 | 按安装方式与平台核：npm 包内容、各平台 native 二进制、VS Code 市场包、内置 web 产物是否仍齐全 |
+| `packages/acp-server/` | ACP 客户端 | 对照 `docs/en/reference/omnicode-acp.md` 的能力矩阵逐项核对 |
+| `apps/omnicode/src/cli/` | 命令行参数、子命令、`--output-format` | 对照 `docs/en/reference/omnicode-command.md` |
 | `packages/agent-core-v2/src/features/externalHooks/` | hook 事件与载荷 | 对照 `docs/en/customization/hooks.md` 的事件参考 |
 | `packages/agent-core-v2/src/human/llm/requester/bases/` | provider 方言分支 | 枚举每种上游载荷形态改动前后各走哪条分支，尤其是多个字段并存的网关 |
-| `packages/agent-core-v2/src/app/git/`、`apps/kimi-code/src/utils/git/` | 后台 git 的调用方式、config 覆盖、超时 | 对照"git 仓库形态"人群逐行核：前置探针失败是否让整个后台 git 静默不可用；覆盖的 config 键是否有 `required`、`gpgSign`、`hooksPath` 这类会把"禁用"变成"失败"的键；Windows 用例是否全部 skip |
-| `packages/migration-legacy/`、`packages/minidb/`、任何读写 `~/.kimi-code/` 布局的代码 | 数据年代 | 老数据是否仍可读、可迁移 |
-| 任何环境变量读取点的新增、删除或语义变化，不限写法（`process.env.X`、`process.env['X']`、动态键、helper）也不限 `KIMI_` 前缀 | 环境变量 | 对照 `docs/en/configuration/env-vars.md` 的全部条目；TUI、print 模式、kap-server 三个入口是否一致 |
+| `packages/agent-core-v2/src/app/git/`、`apps/omnicode/src/utils/git/` | 后台 git 的调用方式、config 覆盖、超时 | 对照"git 仓库形态"人群逐行核：前置探针失败是否让整个后台 git 静默不可用；覆盖的 config 键是否有 `required`、`gpgSign`、`hooksPath` 这类会把"禁用"变成"失败"的键；Windows 用例是否全部 skip |
+| `packages/migration-legacy/`、`packages/minidb/`、任何读写 `~/.omnicode/` 布局的代码 | 数据年代 | 老数据是否仍可读、可迁移 |
+| 任何环境变量读取点的新增、删除或语义变化，不限写法（`process.env.X`、`process.env['X']`、动态键、helper）也不限 `OMNICODE_` 前缀 | 环境变量 | 对照 `docs/en/configuration/env-vars.md` 的全部条目；TUI、print 模式、kap-server 三个入口是否一致 |
 | `packages/agent-core-v2/src/app/scopes.ts`、`packages/agent-core-v2/src/features/featureAssemblyService.ts`、config ready 相关 | 启动顺序与生命周期 | 谁依赖原来的顺序；#3471 在合入 34 分钟后被 #3486 整体 revert |
 | `docs/en/**`、`docs/zh/**` 的 reference、configuration、customization 页 | 公开承诺 | 改了行为没改文档，或改了文档没改行为，都要指出 |
 | 测试里把旧断言改成新行为 | 行为变化的直接证据 | 逐条对应到行为变化清单 |

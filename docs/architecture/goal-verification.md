@@ -1,6 +1,6 @@
 # Goal verification
 
-Author: lacrous.
+Author: Hilbras.
 
 `packages/agent-core-v2/src/features/computerUse/goalVerifier.ts` answers the
 question the computer-control plan puts plainly: **never trust the model's claim

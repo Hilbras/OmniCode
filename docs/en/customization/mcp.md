@@ -1,16 +1,16 @@
 # Model Context Protocol
 
-[Model Context Protocol (MCP)](https://modelcontextprotocol.io/) is an open protocol that lets models safely call tools exposed by external processes or services: reading GitHub issues, querying databases, or operating the local file system. Lacrous Kimi Code CLI acts as an MCP client to connect these external tools and exposes them to the Agent alongside built-in tools (`Read`, `Bash`, `Grep`, etc.) with no behavioral difference.
+[Model Context Protocol (MCP)](https://modelcontextprotocol.io/) is an open protocol that lets models safely call tools exposed by external processes or services: reading GitHub issues, querying databases, or operating the local file system. Omnicode CLI acts as an MCP client to connect these external tools and exposes them to the Agent alongside built-in tools (`Read`, `Bash`, `Grep`, etc.) with no behavioral difference.
 
-MCP tool results can include text (`content`) and structured data (`structuredContent`). Lacrous Kimi Code CLI makes both available to the agent and omits the structured copy only when it can confirm that a text block already contains the same complete JSON value. Text summaries and media do not replace structured records.
+MCP tool results can include text (`content`) and structured data (`structuredContent`). Omnicode CLI makes both available to the agent and omits the structured copy only when it can confirm that a text block already contains the same complete JSON value. Text summaries and media do not replace structured records.
 
-Lacrous Kimi Code CLI preserves embedded MCP attachments that cannot be delivered directly because of format or size limits. Embedded images, audio, and video are saved even when they can be delivered unchanged, because provider conversion or later history reduction may omit them. Session-attachment readers remain available without workspace filesystem access when the model supports the corresponding content. Originals are retained in the session's media storage instead of an evictable image cache. Saved originals, including images preserved during compression, have absolute paths and stable `kimi-file://` references. Pass a reference as the `path` to `Read` or `ReadMediaFile`; bytes are read from the current session's storage even when the workspace runtime cannot access it. Pagination keeps the reference, including after a fork. For binary formats that `Read` cannot open, its error includes a server-local path when available; an external converter must have access to that filesystem. Text attachments such as CSV, HTML, JSON, and plain SVG use readable extensions.
+Omnicode CLI preserves embedded MCP attachments that cannot be delivered directly because of format or size limits. Embedded images, audio, and video are saved even when they can be delivered unchanged, because provider conversion or later history reduction may omit them. Session-attachment readers remain available without workspace filesystem access when the model supports the corresponding content. Originals are retained in the session's media storage instead of an evictable image cache. Saved originals, including images preserved during compression, have absolute paths and stable `omnicode-file://` references. Pass a reference as the `path` to `Read` or `ReadMediaFile`; bytes are read from the current session's storage even when the workspace runtime cannot access it. Pagination keeps the reference, including after a fork. For binary formats that `Read` cannot open, its error includes a server-local path when available; an external converter must have access to that filesystem. Text attachments such as CSV, HTML, JSON, and plain SVG use readable extensions.
 
-Attachment paths and compression details share the tool-output budget. Large lists are saved to a text file, with a short pointer that remains visible when accompanying text is shortened; the agent can pass the list’s `kimi-file://` reference to `Read` and page through it. Canceling the tool stops subsequent attachment processing and signals active writes. If decoding or saving fails, the result explicitly reports that the original could not be preserved while retaining other usable output. Resource links are not automatically downloaded.
+Attachment paths and compression details share the tool-output budget. Large lists are saved to a text file, with a short pointer that remains visible when accompanying text is shortened; the agent can pass the list’s `omnicode-file://` reference to `Read` and page through it. Canceling the tool stops subsequent attachment processing and signals active writes. If decoding or saving fails, the result explicitly reports that the original could not be preserved while retaining other usable output. Resource links are not automatically downloaded.
 
 ## Connection Methods
 
-Lacrous Kimi Code CLI supports three MCP server connection methods:
+Omnicode CLI supports three MCP server connection methods:
 
 - **stdio**: The CLI starts the local MCP server as a child process and communicates via standard input/output. Suitable for local command-line tools.
 - **HTTP**: The CLI connects to an already-running HTTP endpoint. Suitable for remote services or processes that need to run persistently.
@@ -20,8 +20,8 @@ Lacrous Kimi Code CLI supports three MCP server connection methods:
 
 MCP server configuration is written in `mcp.json`, at two levels:
 
-- **User level**: `~/.kimi-code/mcp.json` (or `$KIMI_CODE_HOME/mcp.json`), shared across projects
-- **Project level**: `.kimi-code/mcp.json` in the working directory, effective only for the current repository
+- **User level**: `~/.omnicode/mcp.json` (or `$OMNICODE_HOME/mcp.json`), shared across projects
+- **Project level**: `.omnicode/mcp.json` in the working directory, effective only for the current repository
 
 Entries with the same name: the project-level entry takes precedence and overrides the user-level entry.
 
@@ -29,9 +29,9 @@ Run `/mcp-config` in the TUI to interactively add, edit, or delete servers witho
 
 Deleting a server from the configuration does not interrupt open sessions: the server stays listed in `/mcp` as `removed`, its tools remain visible there, and calls to them fail with a removal notice, while new sessions do not register the tools at all. Conversely, a server added mid-session by editing `mcp.json` or installing a plugin is not registered in already-open sessions; it only joins sessions created later.
 
-When Lacrous Kimi Code finds project-level MCP servers in an untrusted folder, it shows each server's transport and launch target in the workspace trust prompt. The prompt defaults to `Trust this folder`; review the listed command and arguments or remote URL before confirming. Trusting the folder enables the project-level MCP servers for that workspace.
+When Omnicode finds project-level MCP servers in an untrusted folder, it shows each server's transport and launch target in the workspace trust prompt. The prompt defaults to `Trust this folder`; review the listed command and arguments or remote URL before confirming. Trusting the folder enables the project-level MCP servers for that workspace.
 
-Headless runs (for example `kimi -p` in CI) cannot show the trust prompt, so project-level MCP servers stay disabled there unless the workspace is already trusted. Set [`KIMI_CODE_TRUST_WORKSPACE`](../configuration/env-vars.md#runtime-switches) to `1` to trust the workspace for that process.
+Headless runs (for example `omnicode -p` in CI) cannot show the trust prompt, so project-level MCP servers stay disabled there unless the workspace is already trusted. Set [`OMNICODE_TRUST_WORKSPACE`](../configuration/env-vars.md#runtime-switches) to `1` to trust the workspace for that process.
 
 Structure of `mcp.json`:
 
@@ -70,14 +70,14 @@ Optional fields:
 | `enabledTools` | `string[]` | All | Tool allowlist |
 | `disabledTools` | `string[]` | All | Tool blocklist |
 
-You do not have to set the connection timeout or the single tool-call timeout per server: `[mcp] startup_timeout_ms` / `[mcp] tool_timeout_ms` in `config.toml` or the `KIMI_MCP_STARTUP_TIMEOUT_MS` / `KIMI_MCP_TOOL_TIMEOUT_MS` environment variables change the global defaults. Precedence is: per-server field > environment variable > `config.toml` > built-in default. See [Configuration files](../configuration/config-files.md#mcp).
+You do not have to set the connection timeout or the single tool-call timeout per server: `[mcp] startup_timeout_ms` / `[mcp] tool_timeout_ms` in `config.toml` or the `OMNICODE_MCP_STARTUP_TIMEOUT_MS` / `OMNICODE_MCP_TOOL_TIMEOUT_MS` environment variables change the global defaults. Precedence is: per-server field > environment variable > `config.toml` > built-in default. See [Configuration files](../configuration/config-files.md#mcp).
 
 HTTP and SSE servers support providing static credentials via `headers` or `bearerTokenEnvVar`. When OAuth is needed, run `/mcp-config login <server-name>` to complete browser-based authorization.
 
 Plugins can also declare MCP servers in their manifest. Servers declared by a plugin are enabled by default and can be disabled or re-enabled in `/plugins`: disabling or removing one makes calls from open sessions fail with a removal notice, and adding or enabling a server connects it in open sessions right away. See [Plugins](./plugins.md#mcp-servers-in-plugins) for details.
 
 ::: warning Note
-stdio entries in a project-level `.kimi-code/mcp.json` execute local commands when a session starts. Only enable these in repositories you trust.
+stdio entries in a project-level `.omnicode/mcp.json` execute local commands when a session starts. Only enable these in repositories you trust.
 :::
 
 ## Loading tools on demand
@@ -86,7 +86,7 @@ By default, every tool of a server goes straight into the model's top-level tool
 
 Loading tools on demand is experimental and takes effect only when both prerequisites are met:
 
-- The `tool-select` experimental flag is on: set `KIMI_CODE_EXPERIMENTAL_TOOL_SELECT=1`, or write `tool-select = true` under `[experimental]` in `config.toml`; the master switch `KIMI_CODE_EXPERIMENTAL_FLAG=1` enables it too.
+- The `tool-select` experimental flag is on: set `OMNICODE_EXPERIMENTAL_TOOL_SELECT=1`, or write `tool-select = true` under `[experimental]` in `config.toml`; the master switch `OMNICODE_EXPERIMENTAL_FLAG=1` enables it too.
 - The current model declares the `dynamically_loaded_tools` capability: official models declare it automatically; for other models, add it to `capabilities` in `config.toml` — see [Configuration files](../configuration/config-files.md#models).
 
 With both prerequisites met, set `deferred: true` on the server entry in `mcp.json`:

@@ -9,7 +9,7 @@ This repository uses VitePress for the documentation site. Most user-facing page
   - Guides: getting-started, migration, use-cases, interaction, sessions
   - Customization: mcp, skills, plugins, datasource, agents, hooks
   - Configuration: config-files, providers, overrides, env-vars, data-locations
-  - Reference: kimi-command, tools, slash-commands, keyboard
+  - Reference: omnicode, tools, slash-commands, keyboard
   - Release notes: changelog
 - Navigation and sidebar are defined in `docs/.vitepress/config.ts`. Any new or renamed page must be wired there for both locales.
 
@@ -29,7 +29,7 @@ Before rewriting a page, always: (1) understand why the original is structured t
 
 ## Readers
 
-Lacrous Kimi Code documentation serves two overlapping audiences. Write for both simultaneously.
+Omnicode documentation serves two overlapping audiences. Write for both simultaneously.
 
 **Technical users** — familiar with the terminal, config files, API keys, and environment variables. Give them commands and paths directly; do not explain basics.
 
@@ -76,7 +76,7 @@ Term mapping (Chinese <-> English, and proper noun handling):
 | 完全自动 | Never Ask | yes | yes |
 | Thinking 模式 | Thinking mode | yes | yes (Thinking mode) |
 | MCP | MCP | yes | yes |
-| Lacrous Kimi Code CLI | Lacrous Kimi Code CLI | yes | yes |
+| Omnicode | Omnicode | yes | yes |
 | Agent Skills | Agent Skills | yes | yes |
 | Skill | skill | yes | no |
 | 系统提示词 | system prompt | no | no |
@@ -92,7 +92,7 @@ Term mapping (Chinese <-> English, and proper noun handling):
 | Node.js | Node.js | yes | yes |
 | npm | npm | yes | yes |
 | pnpm | pnpm | yes | yes |
-| kimi | kimi | yes | yes |
+| omnicode | omnicode | yes | yes |
 | 审批请求 | approval request | no | no |
 | 斜杠命令 | slash command | no | no |
 | 工具调用 | tool call | no | no |
@@ -105,22 +105,22 @@ Term mapping (Chinese <-> English, and proper noun handling):
 | Prompt Flow | Prompt Flow | yes | yes |
 | Diff | diff | yes | no |
 
-### Kimi platform rules
+### Omnicode platform rules
 
 Two distinct platforms exist and must never be mixed:
 
-| | Lacrous Kimi Code platform | Kimi Open Platform |
+| | Omnicode platform | Omnicode Open Platform |
 |---|---|---|
 | Audience | Individual developers, subscription-based | Enterprise / product integration, pay-per-token |
-| OpenAI-compatible base URL | `https://api.kimi.com/coding/v1` | `https://api.moonshot.cn/v1` |
-| Anthropic-compatible base URL | `https://api.kimi.com/coding/` | Not supported |
-| API key entry | [Lacrous Kimi Code console](https://www.kimi.com/code/console) | [platform.kimi.com](https://platform.kimi.com) |
+| OpenAI-compatible base URL | `https://api.omnicode.com/coding/v1` | `https://api.omnicode.com/v1` |
+| Anthropic-compatible base URL | `https://api.omnicode.com/coding/` | Not supported |
+| API key entry | [Omnicode console](https://www.omnicode.com/code/console) | [platform.omnicode.com](https://platform.omnicode.com) |
 
 Rules:
-- When documenting Lacrous Kimi Code CLI or VS Code: always use `api.kimi.com/coding/…`. Never write `api.moonshot.cn` in this context.
-- When documenting Open Platform integration: use `api.moonshot.cn/v1`.
-- Distinguish context explicitly: "in Lacrous Kimi Code CLI / VS Code" vs "in third-party tools / your own product".
-- Product full names: **Lacrous Kimi Code CLI** and **Lacrous Kimi Code for VS Code**. Do not abbreviate to "Kimi CLI".
+- When documenting the Omnicode CLI: always use `api.omnicode.com/coding/...`.
+- When documenting Open Platform integration: use `api.omnicode.com/v1`.
+- Distinguish context explicitly: "in the Omnicode CLI" vs "in third-party tools / your own product".
+- Product name: **Omnicode**. Do not append "Code" or "CLI" to it.
 
 ## Typography
 
@@ -136,9 +136,9 @@ Rules:
   - Chinese: use `提示` for tip, `注意` for warning, `说明` for info, `警告` for danger.
   - English: use no title or short words like `Note` for warning.
   - ✓ `::: tip 提示` + content starting with the key point
-  - ✓ `::: warning 注意` + content `部分 \`.agents\` 资源不受 \`KIMI_CODE_HOME\` 影响。...`
+  - ✓ `::: warning 注意` + content `部分 \`.agents\` 资源不受 \`OMNICODE_HOME\` 影响。...`
   - ✗ `::: warning 不影响 .agents` (title too long, should be in content)
-  - ✗ `::: tip .agents 路径独立于 KIMI_CODE_HOME` (title too long)
+  - ✗ `::: tip .agents 路径独立于 OMNICODE_HOME` (title too long)
 - **Version info blocks**: For version change callouts, use `::: info` with a category title (Added/Changed/Removed in English; 新增/变更/移除 in Chinese). The content should be a complete sentence.
   - ✓ `::: info 新增` + content `新增于 0.2.0。`
   - ✗ `::: info 新增于 0.2.0` (title too long)
@@ -199,9 +199,9 @@ Outline prompt:
 ```markdown
 ## Install and upgrade
 
-Lacrous Kimi Code CLI requires Node.js 24.15.0 or later. We recommend using pnpm for installation and management.
+Omnicode requires Node.js 24.15.0 or later. We recommend using pnpm for installation and management.
 
-If you haven't installed pnpm yet, please refer to the pnpm installation docs first. Install Lacrous Kimi Code CLI:
+If you haven't installed pnpm yet, please refer to the pnpm installation docs first. Install Omnicode:
 
 (code block)
 
@@ -302,16 +302,16 @@ Run through this before marking any doc change ready for review.
 | Changed zh without changing en (or vice versa) | Update both locales |
 | Code block has no language tag | Add language (e.g., `sh`, `toml`, `json`); exception: natural-language prompt examples may omit the tag |
 
-### Kimi-specific consistency
+### Omnicode-specific consistency
 
 Before shipping, verify these values match the rest of the docs:
 
-- **Base URL**: matches the [Kimi platform rules](#kimi-platform-rules) table above
+- **Base URL**: matches the [Omnicode platform rules](#omnicode-platform-rules) table above
 - **Upgrade command**: matches `guides/getting-started.md`
-- **Model ID**: use `kimi-for-coding`, not a versioned model name
+- **Model ID**: use `omnicode-for-coding`, not a versioned model name
 - **Login command**: `/login`, not `/setup`
-- **Product full name**: **Lacrous Kimi Code CLI** or **Lacrous Kimi Code for VS Code** — never "Kimi CLI"
-- **Platform URLs**: `api.kimi.com/coding/…` for Lacrous Kimi Code platform; `api.moonshot.cn/v1` for Open Platform — never mix the two
+- **Product name**: **Omnicode** — never "Omnicode Code" or "Omnicode CLI"
+- **Platform URLs**: `api.omnicode.com/coding/...` for the Omnicode platform; `api.omnicode.com/v1` for Open Platform — never mix the two
 
 ## Build and preview
 

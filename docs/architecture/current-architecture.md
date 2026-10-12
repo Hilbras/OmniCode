@@ -1,6 +1,6 @@
 # Current architecture
 
-Author: lacrous. Written for the computer-control work, as Phase 0 of that
+Author: Hilbras. Written for the computer-control work, as Phase 0 of that
 plan requires — understand the existing seams before adding a subsystem that
 sits beside them.
 
@@ -13,7 +13,7 @@ anchored to a file that exists in this tree.
 User
   |
   v
-CLI / TUI  (apps/kimi-code)
+CLI / TUI  (apps/omnicode)
   |
   v
 HumanTurn (packages/agent-core-v2/src/human/agent/turn.ts)

@@ -4,13 +4,13 @@ outline: 2
 
 # 变更记录
 
-本页记录 Lacrous Kimi Code CLI 每个版本的变更内容。
+本页记录 Omnicode 每个版本的变更内容。
 
 ## 2.1.1（2026-09-24）
 
 ### 优化
 
-- 配置文件与工作区文件的监听默认恢复为开启。如需保持关闭，可将 `[watch] enabled` 设为 `false` 或设置 `KIMI_CODE_WATCH=0`，详见 [`watch`](../configuration/config-files.md#watch)。
+- 配置文件与工作区文件的监听默认恢复为开启。如需保持关闭，可将 `[watch] enabled` 设为 `false` 或设置 `OMNICODE_WATCH=0`，详见 [`watch`](../configuration/config-files.md#watch)。
 
 ### 修复
 
@@ -20,19 +20,19 @@ outline: 2
 
 ### 新功能
 
-- 新增实验性全屏模式开关，可在 `/settings` 的 TUI mode 设置中开启，或在 `~/.kimi-code/tui.toml` 中设置 `tui_mode = "fullscreen"`，重启 Lacrous Kimi Code 后生效。
+- 新增实验性全屏模式开关，可在 `/settings` 的 TUI mode 设置中开启，或在 `~/.omnicode/tui.toml` 中设置 `tui_mode = "fullscreen"`，重启 Omnicode 后生效。
 - 全屏模式下，点击折叠块即可展开或收起。
 - 全屏界面新增可点击的 "Jump to bottom" 指示器。
 
 ### 优化
 
 - 缩短 CLI 启动时间并降低内存占用。
-- 默认关闭对配置文件和工作区文件的监听，如需开启可将 `[watch] enabled` 设为 `true` 或设置 `KIMI_CODE_WATCH=1`，详见 [`watch`](../configuration/config-files.md#watch)。
+- 默认关闭对配置文件和工作区文件的监听，如需开启可将 `[watch] enabled` 设为 `true` 或设置 `OMNICODE_WATCH=1`，详见 [`watch`](../configuration/config-files.md#watch)。
 
 ### 修复
 
 - 加强工作区安全限制：文件工具无法再通过符号链接访问工作目录外的文件，项目本地配置仅在工作区受信任后生效，后台 git 操作不再执行仓库 git 配置中的命令，并拒绝解析结果为 home 目录或文件系统根目录的附加目录。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 2.0.2（2026-09-19）
 
@@ -53,28 +53,28 @@ outline: 2
 
 - 移除系统提示词中禁止访问工作目录以外所有文件的规则。
 - 供应商可通过 `config.toml` 中的 [`api_key_env`](../configuration/providers.md) 从指定的环境变量读取 API 密钥。
-- 工作区文件监听不再无上限地扫描项目根目录，并新增 `[watch] enabled` 配置与 `KIMI_CODE_WATCH` 环境变量，可完全关闭文件监听，详见 [`watch`](../configuration/config-files.md#watch)。
+- 工作区文件监听不再无上限地扫描项目根目录，并新增 `[watch] enabled` 配置与 `OMNICODE_WATCH` 环境变量，可完全关闭文件监听，详见 [`watch`](../configuration/config-files.md#watch)。
 - 「必要时询问」权限模式下，无法静态分析的 bash 命令不再触发审批请求。
-- `kimi install-app` 子命令更名为 `kimi install-desktop`，旧名称仍作为隐藏别名可用。
+- `omnicode install-app` 子命令更名为 `omnicode install-desktop`，旧名称仍作为隐藏别名可用。
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 2.0.0（2026-09-17）
 
 ### 新功能
 
-- 新增 `/desktop` 斜杠命令（别名 `/install-desktop`）与 `kimi install-app` 子命令。
+- 新增 `/desktop` 斜杠命令（别名 `/install-desktop`）与 `omnicode install-app` 子命令。
 - Mermaid 代码块现在会在终端中渲染为图表；可在 `/settings` → Mermaid diagrams 中关闭，或在 tui.toml 的 `[markdown]` 配置段中设置 `mermaid = "off"`。
 
 ### 优化
 
-- 内置浏览器插件更名为 "Kimi Browser Extension"，插件面板、插件市场与文档中的名称同步更新。
+- 内置浏览器插件更名为 "Omnicode Browser Extension"，插件面板、插件市场与文档中的名称同步更新。
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.43.1（2026-09-15）
 
@@ -101,7 +101,7 @@ outline: 2
 
 - Web 版会话的 AI 标题功能默认开启：首轮对话后自动生成标题，并可在重命名输入框中重新生成。
 - 会话选择器中可删除会话：在目标会话上按 `Ctrl-X`，再按 `y` 确认。
-- `kimi upgrade`（别名 `kimi update`）新增 `-y, --yes` 选项，跳过确认提示直接安装更新。
+- `omnicode upgrade`（别名 `omnicode update`）新增 `-y, --yes` 选项，跳过确认提示直接安装更新。
 - 新增 `loop_control.compaction_max_attempts` 配置项，可设置压缩请求失败后的最大总尝试次数（默认 5 次），详见 [`loop_control`](../configuration/config-files.md#loop_control)。
 
 ### 优化
@@ -109,33 +109,33 @@ outline: 2
 - 仅作用于 `/tmp` 或 `/temp` 路径的 `rm -rf` 命令不再弹出确认提示。
 - 引导消息现在可以打断对后台任务的等待。
 - 目标模式的时间预算不再计入会话关闭期间的时间，并取消 24 小时上限。
-- 新增 `KIMI_CODE_PERMISSION_MODE_REMINDER` 环境变量：设为 `0` 后不再向模型上下文注入自动权限模式提醒。
+- 新增 `OMNICODE_PERMISSION_MODE_REMINDER` 环境变量：设为 `0` 后不再向模型上下文注入自动权限模式提醒。
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.42.0（2026-09-09）
 
 ### 新功能
 
-- Remote Control 由实验性转为正式，无需再设置 `KIMI_CODE_EXPERIMENTAL_REMOTE_CONTROL` 实验开关。详见 [Remote Control](https://moonshotai.github.io/kimi-code/zh/guides/remote-control.html)。
+- Remote Control 由实验性转为正式，无需再设置 `OMNICODE_EXPERIMENTAL_REMOTE_CONTROL` 实验开关。详见 [Remote Control](https://hilbras.github.io/omnicode/zh/guides/remote-control.html)。
 - Web 版支持从会话行的右键菜单永久删除会话，删除前会要求确认。
 - `/btw` 侧边聊天的 subagent 新增只读工具。
 - Web 版输入框新增可排序的媒体预览栏，可在文本中按需引用图片和视频，排队与发送后预览仍然保留。
-- 模型由 Kimi 提供时，支持在提示词附件与 `ReadMediaFile` 中使用 HEIC、HEIF 和 BMP 图片。
+- 模型由 Omnicode 提供时，支持在提示词附件与 `ReadMediaFile` 中使用 HEIC、HEIF 和 BMP 图片。
 
 ### 优化
 
 - 消息记录中已完成的工具调用现折叠为标题加一行结果摘要：短输出完整展示，隐藏内容以 `N more lines`、`+N more` 计数并按 `Ctrl-O` 展开，页脚会在可用时提示。
 - 符合条件的用户的默认思考强度升级为推荐级别。
-- 子 Agent 模型池（`[secondary_model]`）现已始终开启，实验开关与 `KIMI_CODE_EXPERIMENTAL_SECONDARY_MODEL` 退出选项已移除。
-- `Read` 新增可配置的字符上限，长行文件可续读，输出不再被反复截断。详见 [`read`](https://moonshotai.github.io/kimi-code/zh/configuration/config-files.html#read)。
-- minidb 会话索引读模型与全局搜索 worker 现已始终开启，实验开关由 `[database]` 配置段与 `KIMI_CODE_PERSISTENCE_MINIDB_READMODEL` / `KIMI_CODE_SEARCH_WORKER` 环境变量取代。详见 [`database`](https://moonshotai.github.io/kimi-code/zh/configuration/config-files.html#database)。
+- 子 Agent 模型池（`[secondary_model]`）现已始终开启，实验开关与 `OMNICODE_EXPERIMENTAL_SECONDARY_MODEL` 退出选项已移除。
+- `Read` 新增可配置的字符上限，长行文件可续读，输出不再被反复截断。详见 [`read`](https://hilbras.github.io/omnicode/zh/configuration/config-files.html#read)。
+- minidb 会话索引读模型与全局搜索 worker 现已始终开启，实验开关由 `[database]` 配置段与 `OMNICODE_PERSISTENCE_MINIDB_READMODEL` / `OMNICODE_SEARCH_WORKER` 环境变量取代。详见 [`database`](https://hilbras.github.io/omnicode/zh/configuration/config-files.html#database)。
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.41.0（2026-09-04）
 
@@ -157,20 +157,20 @@ outline: 2
 
 ### 修复
 
-- 修复 `kimi -p` 在出错或收到终止信号退出时丢失会话记录的问题。
-- 修复 `kimi -p` 忽略 `KIMI_DISABLE_TELEMETRY` 环境变量的问题。
+- 修复 `omnicode -p` 在出错或收到终止信号退出时丢失会话记录的问题。
+- 修复 `omnicode -p` 忽略 `OMNICODE_DISABLE_TELEMETRY` 环境变量的问题。
 - 修复 tower 模式（实验）在 config.toml 中通过 `[experimental] tower = true` 启用时不生效的问题；`/tower` 现可在非 git 仓库目录使用；启用失败时报错会指明具体原因。
 - 修复后台提问在 Agent 回合结束即被取消的问题。
 - 修复会话在新进程重开后无法按 agent id 恢复子 Agent 的问题；恢复的子 Agent 遵循当前权限模式。
 - 修复一轮中多次编辑同一文件时，每轮改动预览出现从未真实存在的增删行且行数统计不准的问题；改动卡片现只展示精确统计。
 - 修复设置中默认思考强度无法设为最高档（Max）的问题。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.40.1（2026-09-02）
 
 ### 修复
 
-- 修复 kimi-cli 迁移完成或关闭后仍重复弹出迁移提示的问题。
+- 修复 omnicode-cli 迁移完成或关闭后仍重复弹出迁移提示的问题。
 
 ## 0.40.0（2026-09-02）
 
@@ -178,23 +178,23 @@ outline: 2
 
 - Web 版设置新增「插件」面板：可浏览插件市场并安装、启停、移除插件。
 - 支持在一条消息中同时激活多个技能。
-- 新增 `kimi session list` 命令，可在命令行直接列出会话。
+- 新增 `omnicode session list` 命令，可在命令行直接列出会话。
 - Tower 模式（实验性）行为调整：agent 不再自行进入，需用 `/tower on` 或 `/tower <base-branch>` 显式开启。
 - 子代理设置（`[secondary_model]`）功能由实验性转为正式。
-- 新增危险命令护栏：Auto 模式直接拦截 shutdown、reboot、rm -rf 等危险命令，Manual 与 YOLO 模式执行前必定询问；可用 `[permission] dangerous_command_guard = false` 或 `KIMI_CODE_DANGEROUS_COMMAND_GUARD=false` 关闭。
+- 新增危险命令护栏：Auto 模式直接拦截 shutdown、reboot、rm -rf 等危险命令，Manual 与 YOLO 模式执行前必定询问；可用 `[permission] dangerous_command_guard = false` 或 `OMNICODE_DANGEROUS_COMMAND_GUARD=false` 关闭。
 
 ### 优化
 
 - 更新配置时完整保留 config.toml 的注释、键顺序与格式。
 - Bash 工具的 cwd 参数不再限制在工作区内。
 - 工作区信任弹窗默认选中「Trust this folder」。
-- `kimi acp` 子命令不再识别 `KIMI_CODE_LEGACY_FLAG`，始终运行在默认 agent 引擎。
+- `omnicode acp` 子命令不再识别 `OMNICODE_LEGACY_FLAG`，始终运行在默认 agent 引擎。
 - Web 版 Diff 面板新增代码折行开关，并精简了面板头部。
 
 ### 修复
 
-- 修复实验开关优先级：config.toml 中显式设为 `false` 的 `[experimental]` 条目现在稳定优先于 `KIMI_CODE_EXPERIMENTAL_FLAG` 总开关（单项 `KIMI_CODE_EXPERIMENTAL_<NAME>` 变量仍覆盖两者）。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复实验开关优先级：config.toml 中显式设为 `false` 的 `[experimental]` 条目现在稳定优先于 `OMNICODE_EXPERIMENTAL_FLAG` 总开关（单项 `OMNICODE_EXPERIMENTAL_<NAME>` 变量仍覆盖两者）。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.39.1（2026-08-28）
 
@@ -204,19 +204,19 @@ outline: 2
 - 修复登录相关问题
 - 修复点击输入框占位提示后，输入法或键盘首个字符被吞的问题
 - 修复新会话中附件上传完成后仍显示"上传中"的问题
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.39.0（2026-08-27）
 
 ### 新功能
 
-- 新增实验性远程控制功能：可远程访问本地的 web 会话，设置 `KIMI_CODE_EXPERIMENTAL_REMOTE_CONTROL=1` 后运行 `kimi rc`、`kimi web --remote-control` 或 `/remote-control` 启动。
-- 新增实验性 tower 多 Agent 编排模式：设置 `KIMI_CODE_EXPERIMENTAL_TOWER=1` 后运行 `/tower on` 和 `/tower <objective>` 启动。
-- subagent 与 swarm 工具新增可选 `fork` 参数，子 Agent 以调用方当前对话历史的快照启动；设置 `KIMI_CODE_EXPERIMENTAL_SUBAGENT_FORK=1` 或在 `config.toml` 的 `[experimental]` 下写 `subagent_fork = true` 启用。
+- 新增实验性远程控制功能：可远程访问本地的 web 会话，设置 `OMNICODE_EXPERIMENTAL_REMOTE_CONTROL=1` 后运行 `omnicode rc`、`omnicode web --remote-control` 或 `/remote-control` 启动。
+- 新增实验性 tower 多 Agent 编排模式：设置 `OMNICODE_EXPERIMENTAL_TOWER=1` 后运行 `/tower on` 和 `/tower <objective>` 启动。
+- subagent 与 swarm 工具新增可选 `fork` 参数，子 Agent 以调用方当前对话历史的快照启动；设置 `OMNICODE_EXPERIMENTAL_SUBAGENT_FORK=1` 或在 `config.toml` 的 `[experimental]` 下写 `subagent_fork = true` 启用。
 - web: 运行卡片新增 "转到后台" 按钮，可把正在前台运行的 Bash 命令或子 Agent 转为后台运行。
 - web: 移动端会话列表新增平铺/按工作区分组的切换标签。
 - 内置插件市场新增 Tencent CloudBase 插件，通过 `/plugins` 安装。
-- 新增 `[swarm] timeout_ms` 配置项（或环境变量 `KIMI_CODE_SWARM_TIMEOUT_MS`）。
+- 新增 `[swarm] timeout_ms` 配置项（或环境变量 `OMNICODE_SWARM_TIMEOUT_MS`）。
 
 ### 优化
 
@@ -227,15 +227,15 @@ outline: 2
 ### 修复
 
 - 修复 Windows 上文件工具与 Shell 工作目录无法解析 Git Bash 路径（如 /c/Users、/tmp）的问题。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.38.0（2026-08-20）
 
 ### 新功能
 
-- 支持 kimi.ai 与 kimi.com 两种 OAuth 登录方式。
+- 支持 omnicode.ai 与 omnicode.com 两种 OAuth 登录方式。
 - 新增 WaitFor 工具：Agent 可以在当前轮次内等待后台任务完成，无需结束轮次后再次被唤起。
-- 官方 Kimi Datasource 插件新增 13 个数据源：中国政府数据（NDA/NBS）与标准（GB/HB/DB/TT）、八个国际组织数据集（WHO、FAO、UNSD、ECB、Eurostat、UNICEF、OECD、FRED）、新华财经和财新。在 /plugins 的 Official 标签页中更新插件。
+- 官方 Omnicode Datasource 插件新增 13 个数据源：中国政府数据（NDA/NBS）与标准（GB/HB/DB/TT）、八个国际组织数据集（WHO、FAO、UNSD、ECB、Eurostat、UNICEF、OECD、FRED）、新华财经和财新。在 /plugins 的 Official 标签页中更新插件。
 - web: 聊天头部的更多菜单新增置顶操作。
 
 ### 优化
@@ -247,14 +247,14 @@ outline: 2
 ### 修复
 
 - 修复 config.toml 在存在语法错误或在应用外被编辑时条目丢失的问题。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.37.2（2026-08-19）
 
 ### 优化
 
 - web: 设置页新增 「实验室」标签页，上线「多标签侧边栏开关」功能；开启后侧边栏显示 Open / Done / Workspaces 标签页。
-- 做了若干细节优化和内部改进。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 做了若干细节优化和内部改进。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.37.1（2026-08-18）
 
@@ -286,13 +286,13 @@ outline: 2
 - web: 修复 macOS 上输入框中 Ctrl+K 误打开会话搜索的问题，会话搜索现仅响应 Cmd+K。
 - web: 修复 Background Agent 面板显示数量和状态不对的问题。
 - web: 修复把复制的文件夹粘贴进输入框会导致上传报连接错误的问题，现在文件夹会被直接跳过。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.36.1（2026-08-14）
 
 ### 新功能
 
-- web: AI 自动生成会话标题（实验性）。默认关闭，设置 `KIMI_CODE_EXPERIMENTAL_AUTO_SESSION_TITLE=1`（或实验总开关 `KIMI_CODE_EXPERIMENTAL_FLAG=1`）开启。
+- web: AI 自动生成会话标题（实验性）。默认关闭，设置 `OMNICODE_EXPERIMENTAL_AUTO_SESSION_TITLE=1`（或实验总开关 `OMNICODE_EXPERIMENTAL_FLAG=1`）开启。
 
 ### 优化
 
@@ -300,7 +300,7 @@ outline: 2
 
 ### 修复
 
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.36.0（2026-08-13）
 
@@ -308,7 +308,7 @@ outline: 2
 
 - 实验性的子 Agent 模型配置升级为模型池：现在可以在 `[secondary_model]` 中配置一组带描述的候选模型，由主 Agent 每次派生时按任务挑选。
 
-  启动前设置 `KIMI_CODE_EXPERIMENTAL_SECONDARY_MODEL=1`（或实验总开关 `KIMI_CODE_EXPERIMENTAL_FLAG=1`）即可启用。
+  启动前设置 `OMNICODE_EXPERIMENTAL_SECONDARY_MODEL=1`（或实验总开关 `OMNICODE_EXPERIMENTAL_FLAG=1`）即可启用。
 
   推荐用法：
 
@@ -317,14 +317,14 @@ outline: 2
 
     ```toml
     [secondary_model]
-    default_model = "kimi-code/kimi-for-coding-highspeed"
+    default_model = "omnicode/omnicode-for-coding-highspeed"
     [secondary_model.models]
-    "kimi-code/kimi-for-coding-highspeed" = "快速、便宜，适合日常重构、代码解释和小改动。"
-    "kimi-code/k3" = "擅长复杂推理与深度调试，难题选它。"
+    "omnicode/omnicode-for-coding-highspeed" = "快速、便宜，适合日常重构、代码解释和小改动。"
+    "omnicode/k3" = "擅长复杂推理与深度调试，难题选它。"
     ```
 
-  详见 [子 Agent 模型池文档](https://moonshotai.github.io/kimi-code/zh/configuration/config-files.html#subagent-模型池)。
-- 新增实验性全屏 TUI 模式，设置 `KIMI_CODE_TUI_FULL_SCREEN=1` 环境变量即可启用。
+  详见 [子 Agent 模型池文档](https://hilbras.github.io/omnicode/zh/configuration/config-files.html#subagent-模型池)。
+- 新增实验性全屏 TUI 模式，设置 `OMNICODE_TUI_FULL_SCREEN=1` 环境变量即可启用。
 - TUI 支持渲染 LaTeX 数学公式（`$…$` 与 `$$…$$`），消息中的公式会显示为 Unicode 公式。
 
 ### 修复
@@ -332,7 +332,7 @@ outline: 2
 - 修复未信任工作区可在信任确认前植入同名 `fd`/`stty` 可执行文件的风险；信任提示现在展示项目 MCP 的启动目标，并默认拒绝信任。
 - 修复在严格的 OpenAI 兼容供应商（如 DeepSeek）下，模型思考阶段打断轮次后，后续每轮请求都报 400 错误的问题。
 - 修复 API 请求失败自动重试期间按 Ctrl+C 无反应的问题。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.35.0（2026-08-12）
 
@@ -346,22 +346,22 @@ outline: 2
 - 修复 coder 子 Agent 默认可继续派生子 Agent 的问题。
 - 修复压缩后 token 数显示偏低的问题，现在与会话中看到的数字一致。
 - 修复 Windows 上的两处二进制植入风险。
-- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/MoonshotAI/kimi-code/blob/main/apps/kimi-code/CHANGELOG.md)。
+- 修复了一些已知问题，并做了若干细节优化。更详细的变更记录见 [GitHub](https://github.com/Hilbras/omnicode/blob/main/apps/omnicode/CHANGELOG.md)。
 
 ## 0.34.0（2026-08-06）
 
 ### 新功能
 
 - web: 侧边栏会话列表新增平铺视图。
-- Kimi Computer Use 插件新增 Windows x64 支持，通过 `/plugins` 安装。
-- 会话空闲过久后恢复或发送消息时，现将会弹出缓存过期提醒。将 [cache_expiry_hint](https://moonshotai.github.io/kimi-code/zh/configuration/config-files.html#tui-toml) 设为 `false` 可关闭。
+- Omnicode Computer Use 插件新增 Windows x64 支持，通过 `/plugins` 安装。
+- 会话空闲过久后恢复或发送消息时，现将会弹出缓存过期提醒。将 [cache_expiry_hint](https://hilbras.github.io/omnicode/zh/configuration/config-files.html#tui-toml) 设为 `false` 可关闭。
 
 ### 优化
 
 - web: 子 Agent 任务显示所用模型与思考等级。
 - web: 模型请求失败时会话内保留失败卡片，可一键恢复。
 - web: 自动重试期间工作状态显示重试进度（第 N/M 次）。
-- 安装 Kimi WebBridge 后现在会显示浏览器扩展链接与激活步骤。
+- 安装 Omnicode WebBridge 后现在会显示浏览器扩展链接与激活步骤。
 
 ### 修复
 
@@ -375,7 +375,7 @@ outline: 2
 - web: 修复重命名时拖动选择文本会移动整个列表项的问题。
 - web: 修复计划审批对话框展开时后台任务与待办标签跳到窗口顶部的问题。
 - web: 修复变更文件摘要卡片 "show less" 按钮箭头方向错误。
-- 修复 `kimi -p` 未等待后台任务与子 Agent 完成就退出的问题。
+- 修复 `omnicode -p` 未等待后台任务与子 Agent 完成就退出的问题。
 - `/feedback` 不再受当前模型限制，所有已登录用户可用；未登录用户显示注册页与 GitHub Issues 链接。
 - 修复移除 MCP 服务会破坏进行中会话的问题：工具保留但调用返回移除提示。
 - 修复服务器重启后丢失回合结束状态的问题，会话列表与恢复的会话现在能正确标记失败的回合。
@@ -385,7 +385,7 @@ outline: 2
 
 ### 新功能
 
-- `/plugins` 市场新增 Kimi Computer Use 与 Kimi WebBridge 官方内置插件，安装时自动配置托管运行时，中断后可重试。
+- `/plugins` 市场新增 Omnicode Computer Use 与 Omnicode WebBridge 官方内置插件，安装时自动配置托管运行时，中断后可重试。
 - web: 支持在设置中添加和管理自定义供应商。
 - web: 侧边栏支持将会话置顶。
 - web: 会话标题支持设置 emoji。
@@ -398,7 +398,7 @@ outline: 2
 - `/fork` 不再切换到分叉会话，当前会话与后台任务保持运行，分叉结果可在 `/sessions` 中查看。
 - web: 深度优化界面 UI/UX 并修复已知问题。
 - 交互式 TUI 启动时不再立即创建会话。
-- 插件市场的合作伙伴标签页更名为 Curated，并说明其内容为 Kimi 合作伙伴提供的第三方插件。
+- 插件市场的合作伙伴标签页更名为 Curated，并说明其内容为 Omnicode 合作伙伴提供的第三方插件。
 
 ### 修复
 
@@ -410,18 +410,18 @@ outline: 2
 
 ### 重构
 
-- CLI 各界面（交互式 TUI、`kimi -p`、`kimi acp` 等）默认运行在 agent-core-v2 引擎上；设置 `KIMI_CODE_LEGACY_FLAG=1` 可回退旧引擎。
+- CLI 各界面（交互式 TUI、`omnicode -p`、`omnicode acp` 等）默认运行在 agent-core-v2 引擎上；设置 `OMNICODE_LEGACY_FLAG=1` 可回退旧引擎。
 
 ## 0.32.0（2026-08-04）
 
 ### 新功能
 
-- 新增四个 hook 事件：`TurnStarted`、`UserPromptQueued`、`TaskStarted` 和 `SessionHeartbeat`。在 `config.toml` 的 `[[hooks]]` 下配置，详见 [Hooks](https://moonshotai.github.io/kimi-code/zh/customization/hooks.html)。
+- 新增四个 hook 事件：`TurnStarted`、`UserPromptQueued`、`TaskStarted` 和 `SessionHeartbeat`。在 `config.toml` 的 `[[hooks]]` 下配置，详见 [Hooks](https://hilbras.github.io/omnicode/zh/customization/hooks.html)。
 
 ### 优化
 
-- `[loop_control]` 两个配置键改名：`max_retries_per_step` → `max_attempts_per_step`、`max_steps_per_run` → `max_steps_per_turn`；旧键不再生效，启动时会有改名警告，详见 [loop_control](https://moonshotai.github.io/kimi-code/zh/configuration/config-files.html#loop-control)。
-- 新增 `[token_counting]` 配置节：供应商不上报 token 用量时，可将上下文大小显示切换为本地估算，详见 [token_counting](https://moonshotai.github.io/kimi-code/zh/configuration/config-files.html#token-counting)。
+- `[loop_control]` 两个配置键改名：`max_retries_per_step` → `max_attempts_per_step`、`max_steps_per_run` → `max_steps_per_turn`；旧键不再生效，启动时会有改名警告，详见 [loop_control](https://hilbras.github.io/omnicode/zh/configuration/config-files.html#loop-control)。
+- 新增 `[token_counting]` 配置节：供应商不上报 token 用量时，可将上下文大小显示切换为本地估算，详见 [token_counting](https://hilbras.github.io/omnicode/zh/configuration/config-files.html#token-counting)。
 
 ### 修复
 
@@ -443,7 +443,7 @@ outline: 2
 
 ### 修复
 
-- 修复启动 kimi web 时偶发的 “model is not configured” 错误。
+- 修复启动 omnicode web 时偶发的 “model is not configured” 错误。
 - web: 修复新会话显示思考等级（如 Max）但首条消息实际未开启思考的问题。
 - web: 修复新会话草稿状态下（发送首条消息前）@ 文件提及不可用的问题。
 - web: 修复 Markdown 渲染器升级后聊天代码块以 UI 字体、错误字号渲染的问题，加载回退与高亮块对齐。
@@ -455,7 +455,7 @@ outline: 2
 - TUI 支持 Markdown 定义的自定义 Agent。
 - 新增 /secondary_model 斜杠命令，用于配置子 Agent 使用的辅助模型（实验性功能，需先在 /experiments 中开启）。
 - 插件可贡献自定义 Agent，自动发现并可用于子 Agent 委派。
-- 插件可贡献系统提示词，通过 `kimi.plugin.json` 中的 `systemPrompt` 或 `systemPromptPath` 声明。
+- 插件可贡献系统提示词，通过 `omnicode.plugin.json` 中的 `systemPrompt` 或 `systemPromptPath` 声明。
 
 ### 修复
 
@@ -471,7 +471,7 @@ outline: 2
 
 ### 优化
 
-- 安装会计入套餐额度的官方插件（如 Kimi Datasource）后，显示额度说明。
+- 安装会计入套餐额度的官方插件（如 Omnicode Datasource）后，显示额度说明。
 - 会话中使用的官方插件有可用更新时显示提示，可运行 /plugins 更新。
 - 移除内置服务器文件上传的 50 MB 大小限制。
 
@@ -506,12 +506,12 @@ outline: 2
 
 ### 新功能
 
-- web: 支持 Markdown 文件定义 agent，声明 system prompt、名称、描述和工具权限。[查看文档](https://moonshotai.github.io/kimi-code/en/customization/agents.html#agent-file-format)
-- web: 可通过 SYSTEM.md 永久覆盖主 agent 的系统提示。[查看文档](https://moonshotai.github.io/kimi-code/en/customization/agents.html#overriding-the-main-agent-s-system-prompt-with-system-md)
-- web: 可通过 config.toml 在所有会话中统一启用/禁用工具。[查看文档](https://moonshotai.github.io/kimi-code/en/configuration/config-files.html#tools)
+- web: 支持 Markdown 文件定义 agent，声明 system prompt、名称、描述和工具权限。[查看文档](https://hilbras.github.io/omnicode/en/customization/agents.html#agent-file-format)
+- web: 可通过 SYSTEM.md 永久覆盖主 agent 的系统提示。[查看文档](https://hilbras.github.io/omnicode/en/customization/agents.html#overriding-the-main-agent-s-system-prompt-with-system-md)
+- web: 可通过 config.toml 在所有会话中统一启用/禁用工具。[查看文档](https://hilbras.github.io/omnicode/en/configuration/config-files.html#tools)
 - 附加到提示词的视频现在会随提示词一起送达模型，无需额外的工具轮次。
 - ACP 客户端现支持选择思考强度。
-- 新增 Agent 循环与后台任务限制的环境变量覆盖：`KIMI_LOOP_MAX_STEPS_PER_TURN`、`KIMI_LOOP_MAX_RETRIES_PER_STEP` 和 `KIMI_CODE_BACKGROUND_MAX_RUNNING_TASKS`。
+- 新增 Agent 循环与后台任务限制的环境变量覆盖：`OMNICODE_LOOP_MAX_STEPS_PER_TURN`、`OMNICODE_LOOP_MAX_RETRIES_PER_STEP` 和 `OMNICODE_BACKGROUND_MAX_RUNNING_TASKS`。
 
 ### 优化
 
@@ -531,7 +531,7 @@ outline: 2
 - 修复当供应商没有文件上传通道时 `ReadMediaFile` 处理视频失败的问题。
 - 修复恢复会话时目标模式续行提示词泄漏到对话记录中的问题。
 - web: 在透明图片下方显示棋盘格画布。
-- 移除定时任务工具描述中对不存在的 `kimi resume` 命令的引用。
+- 移除定时任务工具描述中对不存在的 `omnicode resume` 命令的引用。
 
 ## 0.28.1（2026-07-20）
 
@@ -541,7 +541,7 @@ outline: 2
 
 ### 优化
 
-- `kimi web` 服务器改为全程前台运行：`/web` 斜杠命令现在总是启动新服务器，`kimi web kill` 与 `kimi web ps` 子命令已移除，前台服务器按 Ctrl+C 即可停止。`kimi server kill` 保留为废弃回退，仅能停止 0.28.0 之前版本启动的服务器。
+- `omnicode web` 服务器改为全程前台运行：`/web` 斜杠命令现在总是启动新服务器，`omnicode web kill` 与 `omnicode web ps` 子命令已移除，前台服务器按 Ctrl+C 即可停止。`omnicode server kill` 保留为废弃回退，仅能停止 0.28.0 之前版本启动的服务器。
 
 ### 修复
 
@@ -552,8 +552,8 @@ outline: 2
 ### 新功能
 
 - **破坏性变更：** 
-  - `kimi server` 命令树已被废弃，请使用 `kimi web` 代替。
-  - `kimi web` 现在在当前终端前台运行并打开浏览器，按 Ctrl+C 停止。
+  - `omnicode server` 命令树已被废弃，请使用 `omnicode web` 代替。
+  - `omnicode web` 现在在当前终端前台运行并打开浏览器，按 Ctrl+C 停止。
 
 ### 优化
 
@@ -570,7 +570,7 @@ outline: 2
 ### 新功能
 
 - 新增 `/copy` 斜杠命令，可将上一条助手消息复制到剪贴板。
-- 使用 API key 调用 Kimi 编程模型时，现在会自动拉取最新模型列表。
+- 使用 API key 调用 Omnicode 编程模型时，现在会自动拉取最新模型列表。
 
 ### 优化
 
@@ -587,7 +587,7 @@ outline: 2
 - 修复 web 后端忽略以符号链接形式安装的 AGENTS.md 文件的问题。
 - 修复 /btw 面板打开时，按 Esc 或 Ctrl+C 会取消 compaction 而不是关闭面板的问题。
 - 修复纯空白思考内容在对话记录中渲染成空行的问题。
-- 修复对同一会话重复执行 /export-debug-zip 或 kimi export 会覆盖上一份压缩包的问题；文件名现包含时间戳。
+- 修复对同一会话重复执行 /export-debug-zip 或 omnicode export 会覆盖上一份压缩包的问题；文件名现包含时间戳。
 
 ## 0.26.0（2026-07-16）Say hi to the BIIIG DAY!
 
@@ -602,12 +602,12 @@ outline: 2
 
 - 修复恢复的会话没有新活动却被标记为刚更新、跳到会话列表顶部的问题。
 - 修复上下文大小指示器低估模型实际上下文用量的问题。
-- 修复经 Anthropic 协议接入的 Kimi 供应商模型错误显示思考强度选项的问题。
+- 修复经 Anthropic 协议接入的 Omnicode 供应商模型错误显示思考强度选项的问题。
 - 修复 OpenAI 兼容（chat completions）供应商上显式关闭思考不生效的问题。
 - 用户停止任务时现在会向模型报告，其他停止原因也会保留在模型上下文中。
 - 修复后台子 Agent 被手动停止后立即恢复时可能因竞争报 `"already running"` 错误的问题。
-- Anthropic 兼容与 Kimi 的 preserved-thinking 端点现在原样回放空思考内容，不再替换为占位空格。
-- 旧版迁移在多个 Kimi 主目录之间保持幂等，损坏或无法映射的会话现在会明确报告，不再静默跳过。
+- Anthropic 兼容与 Omnicode 的 preserved-thinking 端点现在原样回放空思考内容，不再替换为占位空格。
+- 旧版迁移在多个 Omnicode 主目录之间保持幂等，损坏或无法映射的会话现在会明确报告，不再静默跳过。
 - web: 修复侧边栏调整宽度的拖拽手柄被聊天输入框背景遮挡的问题。
 
 ## 0.25.0（2026-07-16）
@@ -640,17 +640,17 @@ outline: 2
 
 ### 新功能
 
-- 新增内置 `/check-kimi-code-docs` Skill，自动基于官方文档回答 Lacrous Kimi Code 产品问题并附来源链接。
+- 新增内置 `/check-omnicode-docs` Skill，自动基于官方文档回答 Omnicode 产品问题并附来源链接。
 
 ### 优化
 
-- 对齐 `kimi -p` 在各引擎的行为：`print_background_mode` 与 `print_max_turns` 生效，`/goal` 会运行到目标结束。
-- `kimi -p` 默认在后台任务未完成时保持运行，等待与轮次实际上不设上限，并把完成结果反馈给主 Agent。如需恢复旧的一轮后退出，可设置 `print_background_mode = "exit"` 或 `"drain"`。
-- `kimi -p` 后台任务和子 Agent 默认不再超时（交互模式不变）；如需恢复限制，可设置 `[background] bash_task_timeout_s` 或 `[subagent] timeout_ms`。
-- 子 Agent 超时统一默认为 2 小时，可通过 `[subagent] timeout_ms` 或 `KIMI_SUBAGENT_TIMEOUT_MS` 覆盖。
+- 对齐 `omnicode -p` 在各引擎的行为：`print_background_mode` 与 `print_max_turns` 生效，`/goal` 会运行到目标结束。
+- `omnicode -p` 默认在后台任务未完成时保持运行，等待与轮次实际上不设上限，并把完成结果反馈给主 Agent。如需恢复旧的一轮后退出，可设置 `print_background_mode = "exit"` 或 `"drain"`。
+- `omnicode -p` 后台任务和子 Agent 默认不再超时（交互模式不变）；如需恢复限制，可设置 `[background] bash_task_timeout_s` 或 `[subagent] timeout_ms`。
+- 子 Agent 超时统一默认为 2 小时，可通过 `[subagent] timeout_ms` 或 `OMNICODE_SUBAGENT_TIMEOUT_MS` 覆盖。
 - 每步 LLM 重试上限从 3 次提高到 10 次，供应商临时失败（429 / 过载）会在轮次失败前自动重试；可通过 `loop_control.max_retries_per_step` 调整。
 - 工作区现在自动保持同步：新会话自动注册，缺失工作区启动时补全，已移除的不再重现。
-- `kimi web` 现在会记录失败请求和关键操作，便于诊断服务问题。
+- `omnicode web` 现在会记录失败请求和关键操作，便于诊断服务问题。
 - web: AgentSwarm 卡片在子 Agent 运行时保持展开。
 - web: 最小化的计划审阅与问题卡片改用向上的 chevron 作为展开图标。
 
@@ -680,9 +680,9 @@ outline: 2
 
 ### 修复
 
-- 修复 preserved-thinking 历史包含空推理步骤时，Kimi 会话卡住的问题。
+- 修复 preserved-thinking 历史包含空推理步骤时，Omnicode 会话卡住的问题。
 - 修复模型供应商在会话启动后才就绪时，内置工具不可用的问题。
-- 修复思考强度（thinking effort）路由问题：非 Kimi 供应商现在保留配置值，Kimi 模型会校验运行时选择，并在模型解析时安全回退。
+- 修复思考强度（thinking effort）路由问题：非 Omnicode 供应商现在保留配置值，Omnicode 模型会校验运行时选择，并在模型解析时安全回退。
 - web: 对齐 Web 端与 CLI 的思考级别处理：所选级别原样提交，不再被静默降级；未选择或切换模型时回退到模型自身的默认级别；显式选择会保存为默认值并被新会话继承。
 - 修复目标完成摘要丢失的问题；步骤中断事件中的无类型 LLM 错误不再显示内部错误码前缀。
 
@@ -703,7 +703,7 @@ outline: 2
 - 优化会话关闭流程：先请求后台任务停止并留出宽限时间，再强制停止仍未退出的任务。
 - 重写重复工具调用提醒，引导 Agent 采取其他动作，而不是禁止调用。
 - 优化 `TaskOutput` 的工具提示词，避免 Agent 阻塞等待后台任务。
-- 请求供应商 registry（api.json）和模型目录时携带 kimi-code-cli 的 User-Agent，便于 registry 识别客户端版本。
+- 请求供应商 registry（api.json）和模型目录时携带 omnicode-cli 的 User-Agent，便于 registry 识别客户端版本。
 - Skill 解析失败时输出警告，不再静默丢弃；并修复 Skill 扫描结果的报告遗漏。
 
 ### 修复
@@ -730,7 +730,7 @@ outline: 2
 
 ### 重构
 
-- `kimi web` 默认切换到重构后的 Agent 引擎。
+- `omnicode web` 默认切换到重构后的 Agent 引擎。
 
 ## 0.23.6（2026-07-12）
 
@@ -742,14 +742,14 @@ outline: 2
 - web: 切换到支持思考强度级别的模型时，自动启用默认思考强度。
 - 导入自定义 registry 时识别 `support_efforts` 和 `default_effort` 字段，这些模型可设置思考强度（thinking effort）级别。
 - 更新 `/plugins` 面板中打开的 WebBridge 安装页链接。
-- 新增 `subagent.timeout_ms` 配置项（或 `KIMI_SUBAGENT_TIMEOUT_MS` 环境变量），控制单个子代理的超时时间，默认从 30 分钟提高到 2 小时。
-- 新增 print 模式后台策略：设置 `[background].print_background_mode = "steer"` 后，`kimi -p` 在后台任务完成后保持运行，继续引导主 Agent 进入后续轮次。
+- 新增 `subagent.timeout_ms` 配置项（或 `OMNICODE_SUBAGENT_TIMEOUT_MS` 环境变量），控制单个子代理的超时时间，默认从 30 分钟提高到 2 小时。
+- 新增 print 模式后台策略：设置 `[background].print_background_mode = "steer"` 后，`omnicode -p` 在后台任务完成后保持运行，继续引导主 Agent 进入后续轮次。
 
 ### 修复
 
 - web: 修复断线重连后会话卡在发送状态的问题，断线期间完成的轮次现在能正常结束加载状态并发送下一条消息。
 - web: 修复启动或更新 web UI 后首次访问时，初始鉴权检查失败跳转到登录页的问题；现在停留在连接界面，显示连接错误并持续重试。
-- 修复 `kimi -p` 在目标仍活跃或有定时任务待触发时主轮次结束即退出的问题，目标续跑与定时任务触发现在能正常执行对应轮次。
+- 修复 `omnicode -p` 在目标仍活跃或有定时任务待触发时主轮次结束即退出的问题，目标续跑与定时任务触发现在能正常执行对应轮次。
 - 修复关闭问题提示时默认选中推荐选项的问题，现在视为用户选择不回答。
 - web: 修复恢复或重新加载会话后，ReadMediaFile 结果显示为普通工具卡片而非图片的问题。
 - web: 修复滚动浏览对话历史时聊天视图向下跳动的问题。
@@ -783,11 +783,11 @@ outline: 2
 - web: 优化聊天界面，采用 Inter 字体、本地化标签与更紧凑的输入框和菜单样式。
 - web: 优化会话侧边栏的布局、配色、图标与字体。
 - `/usage` 和 `/status` 命令现显示 Extra Usage（加油包）余额。
-- `/plugins` 面板的 Official 标签页新增 Kimi WebBridge 入口，可在浏览器中打开 WebBridge 安装页。
+- `/plugins` 面板的 Official 标签页新增 Omnicode WebBridge 入口，可在浏览器中打开 WebBridge 安装页。
 
 ### 修复
 
-- 控制图片较多会话的请求体积：超大体量的模型读取与粘贴图片（含 WebP）会自动压缩、缩小；HEIC/HEIF 图片会给出对应平台的转换命令，而非污染会话；HTTP 413 请求过大现可自动恢复——请求和 `/compact` 会用文本标记替换旧媒体后重试。相关限制可通过 `config.toml` 的 `[image]`（或 `KIMI_IMAGE_*` 环境变量）配置，且每个 core 独立保存设置，重新加载某客户端的配置不再影响其他客户端的图片压缩。
+- 控制图片较多会话的请求体积：超大体量的模型读取与粘贴图片（含 WebP）会自动压缩、缩小；HEIC/HEIF 图片会给出对应平台的转换命令，而非污染会话；HTTP 413 请求过大现可自动恢复——请求和 `/compact` 会用文本标记替换旧媒体后重试。相关限制可通过 `config.toml` 的 `[image]`（或 `OMNICODE_IMAGE_*` 环境变量）配置，且每个 core 独立保存设置，重新加载某客户端的配置不再影响其他客户端的图片压缩。
 - 修复原工作目录已不存在的会话无法恢复的问题。
 - 修复 prompt 模式目标未运行至完成的问题，并在发送 prompt 前校验并提示无效的目标命令。
 - web: 修复新对话发送首条消息时偶发的 “another turn is active” 错误，并在发送过程中显示启动状态。
@@ -806,7 +806,7 @@ outline: 2
 
 ### 修复
 
-- 修复 `kimi -p` 在轮次失败时仍以退出码 0 退出的问题。
+- 修复 `omnicode -p` 在轮次失败时仍以退出码 0 退出的问题。
 - 修复自主目标会被模型上报的状态更新暂停的问题。
 - 修复启动自主目标的轮次未计入其轮次预算的问题。
 - 将图片降采样上限从 2000px 提高到 3000px，并修复 EXIF 旋转（竖拍）照片在压缩说明与媒体读取备注中宽高互换的问题，使区域回读坐标正确对应。
@@ -830,7 +830,7 @@ outline: 2
 
 ### 修复
 
-- 修复 `kimi -p` 会丢弃启动较晚或运行时间较长的后台子 Agent、导致结果无法返回主 Agent 的问题。
+- 修复 `omnicode -p` 会丢弃启动较晚或运行时间较长的后台子 Agent、导致结果无法返回主 Agent 的问题。
 - web: 修复后台标签页 WebSocket 失效后聊天流中断、必须刷新页面的问题，现在会自动恢复。
 - 修复一些第三方模型如 Opus 4.8 错误回退到系列默认最大输出 token 数的问题，未收录的次要版本现在会沿用最近的已知较早版本的限制。
 - 修复显式设置的 Anthropic `max_output_size` 被裁剪到内置上限的问题，现在会尊重用户配置。
@@ -844,7 +844,7 @@ outline: 2
 
 ### 优化
 
-- Anthropic 供应商（Claude 与 Kimi 的 Anthropic 兼容模式）现在默认保留历史轮次的思考内容，与 Kimi 默认行为一致；可通过 `[thinking] keep = "off"` 或 `KIMI_MODEL_THINKING_KEEP=off` 关闭。
+- Anthropic 供应商（Claude 与 Omnicode 的 Anthropic 兼容模式）现在默认保留历史轮次的思考内容，与 Omnicode 默认行为一致；可通过 `[thinking] keep = "off"` 或 `OMNICODE_MODEL_THINKING_KEEP=off` 关闭。
 - 优化 `/permission`、`/auto`、`/yolo` 显示的权限模式描述，并在命令列表中调整 `/auto` 与 `/yolo` 的顺序。
 - 长时间运行目标的运行时长预算提醒现在以小时为单位显示。
 - 优化目标模式指引，使 Agent 在合理范围内跨轮次继续工作，避免过早结束目标。
@@ -884,24 +884,24 @@ outline: 2
 - web: 将 AskUserQuestion 的回答渲染为可读的选项列表并高亮已选项，替代原始 JSON。
 - web: 在会话创建前，于输入框中显示可用的 skills。
 - web: 在移动端设置面板新增「已归档会话」入口，并在归档确认提示中说明可从设置中恢复。
-- web: 在桌面通知中显示 Kimi 图标与更清晰的标题。
+- web: 在桌面通知中显示 Omnicode 图标与更清晰的标题。
 - web: 让 markdown diff 代码块与设计系统对齐：代码文本保持正常文本颜色，由符号与柔和的行背景标识变更，与 `~/diff` 面板一致。
 - web: 避免聊天文本在换行处断字，并渲染代码时不使用字体连字。
 - web: 移除工具调用卡片正文多余的左缩进，使展开内容与标题对齐。
 - AskUserQuestion 的回答现在以问题文本与选项标签的形式回传给模型，而非位置 id，模型无需再将其映射回原选项；每次调用的问题文本须唯一，每个问题的选项标签须唯一，现有客户端仍以选项 id 作答，无需修改。
-- Kimi 模型开启 Thinking 时默认跨轮次保留推理，可设置 `[thinking] keep = "off"` 关闭。
+- Omnicode 模型开启 Thinking 时默认跨轮次保留推理，可设置 `[thinking] keep = "off"` 关闭。
 
 ## 0.22.3（2026-07-04）
 
 ### 修复
 
-- `kimi -p` 会在后台子 Agent 完成并返回结果后再退出，避免提前结束本轮。
+- `omnicode -p` 会在后台子 Agent 完成并返回结果后再退出，避免提前结束本轮。
 - web: 修复 web 聊天中已上传视频无法播放的问题。
 - 回退近期 TUI 对话渲染改动，恢复上游原始行为，修复相关渲染问题。
 
 ### 优化
 
-- `kimi server run` 新增 `--dangerous-bypass-auth` 与 `--keep-alive` 选项，可在可信网络中跳过 token 校验运行服务器，并突破空闲超时保持存活。
+- `omnicode server run` 新增 `--dangerous-bypass-auth` 与 `--keep-alive` 选项，可在可信网络中跳过 token 校验运行服务器，并突破空闲超时保持存活。
 - web: web 聊天中已上传的图片支持点击放大，点击消息中的图片即可在预览面板打开。
 
 ## 0.22.2（2026-07-03）
@@ -910,7 +910,7 @@ outline: 2
 
 - 修复在一轮对话于工具调用与其结果之间被打断后，后续用户消息被静默丢弃的问题。
 - 修复模型输出重复的工具调用 id 时，请求被严格供应商拒绝的问题。
-- 修复 Windows 上 `kimi upgrade` 在安装新版本时因 spawn 错误而失败的问题。
+- 修复 Windows 上 `omnicode upgrade` 在安装新版本时因 spawn 错误而失败的问题。
 - 修复流式输出期间滚动历史中对话内容重复出现的问题。
 - 修复压缩图片的提示词会把内部 `<system>` 压缩说明泄露到可见消息和会话标题中的问题。
 - 修复 Windows 上自动后台更新会弹出控制台窗口的问题。
@@ -918,11 +918,11 @@ outline: 2
 ### 优化
 
 - 优化 compaction 笔记：现在会记录剩余工作的后续计划（后续步骤、已确定的决策、可预见的障碍），而不仅是下一步，让 Agent 在自动压缩后更连贯地继续。
-- 启动时从用户登录 shell 补充 PATH，使 shell 命令能找到用户自行安装的工具（如 Homebrew 的 `gh`），即使 kimi-code 启动时未继承完整的 profile PATH。
+- 启动时从用户登录 shell 补充 PATH，使 shell 命令能找到用户自行安装的工具（如 Homebrew 的 `gh`），即使 omnicode 启动时未继承完整的 profile PATH。
 - 将语言匹配规则提升为系统提示词中的独立小节，使回复与推理在面对长篇英文工具输出时仍一致使用用户的语言，同时仓库产物仍遵循项目约定。
 - TUI 新增一项偏好设置：当 bracketed paste 不可用时，避免快速多行粘贴被逐行提交。可在 `tui.toml` 中设置 `disable_paste_burst = true` 关闭该行为。
 - 优化子 Agent 卡片，使其保持固定高度，并在紧凑的双行活动窗口内显示实时状态 spinner。
-- `kimi -p` 运行时，若启用了 `background.keep_alive_on_exit`，退出前会等待后台子 Agent 完成。设置 `keep_alive_on_exit = true` 可让并发的后台子 Agent 执行完毕。
+- `omnicode -p` 运行时，若启用了 `background.keep_alive_on_exit`，退出前会等待后台子 Agent 完成。设置 `keep_alive_on_exit = true` 可让并发的后台子 Agent 执行完毕。
 
 ### 重构
 
@@ -1006,7 +1006,7 @@ outline: 2
 ### 修复
 
 - 修复格式异常的消息历史会在严格供应商（Anthropic）上永久卡死会话的问题。发送前会修复请求：关闭孤立的工具调用、丢弃空白或纯空白文本块；若供应商仍拒绝其结构，则按 wire 协议合规格式重建并重发一次。
-- 强制退出无头运行（`kimi -p`），以免运行残留的引用句柄让已完成的运行一直存活到外部超时；同时为 prompt 清理加上时限，避免某个卡住的关闭步骤拖挂整个关闭流程。
+- 强制退出无头运行（`omnicode -p`），以免运行残留的引用句柄让已完成的运行一直存活到外部超时；同时为 prompt 清理加上时限，避免某个卡住的关闭步骤拖挂整个关闭流程。
 - 修复在斜杠命令参数中输入 `@` 文件提及时无法打开的问题。
 - 修复 web UI 中通过路径添加工作区时，daemon 拒绝路径会静默失败的问题；现在会显示错误，而不是生成一个无法使用的工作区。
 - 修复同一文件夹被重复注册时，web 侧边栏显示重复工作区的问题。
@@ -1048,9 +1048,9 @@ outline: 2
 
 ### 新功能
 
-- Lacrous Kimi Code 现支持 Anthropic 兼容协议，并支持视频输入。
+- Omnicode 现支持 Anthropic 兼容协议，并支持视频输入。
 - web UI 新增完成提示音与问题通知，并在设置中分别提供完成通知、问题通知和提示音的开关。问题通知默认关闭，仅在用户主动开启后才会将问题文本发送到桌面。
-- 新增 `KIMI_CODE_CUSTOM_HEADERS` 环境变量，用于自定义出站 LLM 请求头，并向非 Kimi 供应商发送 `User-Agent` 请求头。将 `KIMI_CODE_CUSTOM_HEADERS` 设为由换行分隔的 `Name: Value` 行。
+- 新增 `OMNICODE_CUSTOM_HEADERS` 环境变量，用于自定义出站 LLM 请求头，并向非 Omnicode 供应商发送 `User-Agent` 请求头。将 `OMNICODE_CUSTOM_HEADERS` 设为由换行分隔的 `Name: Value` 行。
 - 会话列表 API 新增可选的 `exclude_empty` 参数，用于省略没有任何消息的会话。
 
 ### 修复
@@ -1079,7 +1079,7 @@ outline: 2
 
 ### 重构
 
-- 将 Anthropic 兼容协议上的 Lacrous Kimi Code 模型改走 beta Messages API。
+- 将 Anthropic 兼容协议上的 Omnicode 模型改走 beta Messages API。
 - 升级 web Markdown 渲染器依赖（katex、markstream-vue、shiki），以修复问题并改进性能。
 - 在轮次和 API 错误遥测中新增供应商类型与协议属性。
 
@@ -1087,14 +1087,14 @@ outline: 2
 
 ### 新功能
 
-- 插件现支持在 `kimi.plugin.json` 中声明生命周期 hooks，在指定阶段运行脚本。详见[插件 Hooks](../customization/plugins.md#插件中的-hooks)。
+- 插件现支持在 `omnicode.plugin.json` 中声明生命周期 hooks，在指定阶段运行脚本。详见[插件 Hooks](../customization/plugins.md#插件中的-hooks)。
 - `/feedback` 现支持附加诊断日志与代码库上下文。
-- 新增 `kimi update` 命令，等价于 `kimi upgrade`，可用于升级到最新版本。
-- `kimi web` 新增 `--allowed-host <host>` 选项，可将指定 Host 加入 DNS 重绑定白名单；403 错误会提示如何通过 `--allowed-host` 或 `KIMI_CODE_ALLOWED_HOSTS` 放行，例如 `kimi web --allowed-host example.com`。
+- 新增 `omnicode update` 命令，等价于 `omnicode upgrade`，可用于升级到最新版本。
+- `omnicode web` 新增 `--allowed-host <host>` 选项，可将指定 Host 加入 DNS 重绑定白名单；403 错误会提示如何通过 `--allowed-host` 或 `OMNICODE_ALLOWED_HOSTS` 放行，例如 `omnicode web --allowed-host example.com`。
 
 ### 修复
 
-- 修复 Windows 上 kimi server 首次运行后无法启动的问题。
+- 修复 Windows 上 omnicode server 首次运行后无法启动的问题。
 - 修复 `/web` 命令打开的 Web UI 不会自动登录的问题，现在终端会打印访问 token。
 - chat-completions 供应商的 `max_tokens` 现在不超过剩余上下文窗口，避免上下文溢出与无效参数错误。
 
@@ -1111,13 +1111,13 @@ outline: 2
 ### 新功能
 
 - TUI 新增 shell 模式。在输入框中键入 `!` 即可启用。对于长时间运行的命令，按 `Ctrl+B` 可将其移至后台。例如，你可以运行 `!gh auth login` 登录 GitHub CLI，无需打开新的终端。
-- CLI 新增 `--host` 选项，可通过 `kimi web --host` 将服务器暴露到互联网，并加固 token 鉴权、限流等安全措施。
+- CLI 新增 `--host` 选项，可通过 `omnicode web --host` 将服务器暴露到互联网，并加固 token 鉴权、限流等安全措施。
 - Web UI 支持渲染 LaTeX 行间公式（`$$…$$`）。
 
 ### 修复
 
 - 修复 Linux 上由未处理的原生剪贴板错误导致的启动崩溃。
-- 修复当 CLI 通过 npm/pnpm 安装或从源码运行时，`kimi web` 和 `/web` 在 Windows 上因 `spawn EFTYPE` 无法启动后台服务器守护进程的问题。官方单二进制安装脚本不受影响。
+- 修复当 CLI 通过 npm/pnpm 安装或从源码运行时，`omnicode web` 和 `/web` 在 Windows 上因 `spawn EFTYPE` 无法启动后台服务器守护进程的问题。官方单二进制安装脚本不受影响。
 - 修复终端窗口在 Linux Wayland 上反复失去焦点、导致输入法（IME）输入失效的问题。
 - 不再在 60 秒后自动关闭 web UI 中的问题，使其等待用户的回答。
 - 修复 explore 子 Agent 在 git 命令超时或目录不是仓库时静默丢失 git 上下文的问题。
@@ -1128,7 +1128,7 @@ outline: 2
 
 ### 优化
 
-- 将 `/plugins` 重新设计为单个标签页面板：**Installed**（管理已安装插件——切换、移除、MCP、详情、重新加载）、**Official**（Kimi 维护的 marketplace 插件）、**Third-party**（来自其他发布者的 marketplace 插件）以及 **Custom**（直接从 GitHub URL、zip URL 或本地路径安装）。使用 `Tab` / `Shift-Tab` 切换标签页。
+- 将 `/plugins` 重新设计为单个标签页面板：**Installed**（管理已安装插件——切换、移除、MCP、详情、重新加载）、**Official**（Omnicode 维护的 marketplace 插件）、**Third-party**（来自其他发布者的 marketplace 插件）以及 **Custom**（直接从 GitHub URL、zip URL 或本地路径安装）。使用 `Tab` / `Shift-Tab` 切换标签页。
 - 当 Agent 在 web 聊天中编辑或写入文件时，显示逐行 diff。
 - 在 web UI 中退出 Plan 模式时，在计划审查卡片中显示计划正文和方案选项。
 - 在子 Agent 的详情面板中显示其完整的累积进度，并以简洁的工具调用摘要替代原始 JSON。
@@ -1206,8 +1206,8 @@ outline: 2
 
 - 新增添加额外工作区目录的能力：
   - 使用 `/add-dir <path>` 命令将额外工作目录添加到当前会话，或将其记住到项目中。
-  - 使用 `kimi --add-dir <path>` 在启动时添加它们。
-  - 项目级本地配置现在由 `.kimi-code/local.toml` 管理；我们建议将其添加到你的 `.gitignore` 中。
+  - 使用 `omnicode --add-dir <path>` 在启动时添加它们。
+  - 项目级本地配置现在由 `.omnicode/local.toml` 管理；我们建议将其添加到你的 `.gitignore` 中。
 - 允许使用 `Ctrl+B` 将长时间运行的前台命令和子 Agent 移动到后台任务，并通过 `/tasks` 面板查看它们。
 
 ### 修复
@@ -1257,7 +1257,7 @@ outline: 2
 
 ### 修复
 
-- 修复 `kimi web` 命令无法在后台启动的问题。
+- 修复 `omnicode web` 命令无法在后台启动的问题。
 - 阻止后台本地服务器锁定启动时所在的目录。
 - 防止点击背景时关闭 web 登录对话框。
 
@@ -1269,7 +1269,7 @@ outline: 2
 
 ### 新功能
 
-- 新增 Lacrous Kimi Code Web 模式，可通过 `kimi web` 或 CLI 内的 `/web` 启动，在浏览器中的聊天界面继续会话。
+- 新增 Omnicode Web 模式，可通过 `omnicode web` 或 CLI 内的 `/web` 启动，在浏览器中的聊天界面继续会话。
 
 ### 修复
 
@@ -1284,7 +1284,7 @@ outline: 2
 
 ### 新功能
 
-- 新增内置的 `kimi vis` 命令，可在浏览器中启动会话可视化工具，并指向本地会话。支持 `--port`/`--host`、`--no-open` 以及 `kimi vis <sessionId>` 深度链接。
+- 新增内置的 `omnicode vis` 命令，可在浏览器中启动会话可视化工具，并指向本地会话。支持 `--port`/`--host`、`--no-open` 以及 `omnicode vis <sessionId>` 深度链接。
 
 ### 修复
 
@@ -1316,7 +1316,7 @@ outline: 2
 - 修复中断的工具调用结果未被记录时，已恢复会话无法继续使用的问题。
 - 停止将恢复版本标记写入持久化的 agent 元数据。
 - 迁移后的配置文件中不再包含已废弃的 legacy loop、background、plan、yolo 或未知的实验性 flag。
-- 修复 Xcode 26.5 MCP server 发出的 JSON Schema 类型与 Moonshot 不兼容的问题。
+- 修复 Xcode 26.5 MCP server 发出的 JSON Schema 类型与 Hilbras 不兼容的问题。
 
 ### 优化
 
@@ -1396,7 +1396,7 @@ outline: 2
 ### 修复
 
 - 阻止在活跃 turn 期间 fork 会话，并将 wire protocol 定义整合到共享的内部包中。
-- 修复 Kimi Datasource，使其在当前 Lacrous Kimi Code 环境中使用匹配的 OAuth 凭证和服务端点。
+- 修复 Omnicode Datasource，使其在当前 Omnicode 环境中使用匹配的 OAuth 凭证和服务端点。
 - 修复 goal 标记文本超出终端宽度的问题。
 
 ### 优化
@@ -1411,7 +1411,7 @@ outline: 2
 
 ### 新功能
 
-- 新增自定义颜色主题。在 `~/.kimi-code/themes/` 中以 JSON 文件定义自己的调色板，或使用内置的 `/custom-theme` Skill 命令生成。
+- 新增自定义颜色主题。在 `~/.omnicode/themes/` 中以 JSON 文件定义自己的调色板，或使用内置的 `/custom-theme` Skill 命令生成。
 - 新增 `/import-from-cc-codex` 命令，用于导入选定的 Claude Code 和 Codex 指令、Skills 以及 MCP 设置。
 - 在 marketplace 中显示可用的 plugin 更新。
 
@@ -1460,17 +1460,17 @@ outline: 2
 - 直接展示完整 plan 卡片，并移除 Plan 卡片键盘快捷键。
 - 在审批提示中换行显示过长的单行 shell 命令，以便完整命令始终可见。
 - 重构 TUI 中的文件引用补全。
-- 当设置了 `KIMI_CODE_HOME` 时，从该路径加载 Kimi 特定的用户 Skills 和全局 Agent 指令。
+- 当设置了 `OMNICODE_HOME` 时，从该路径加载 Omnicode 特定的用户 Skills 和全局 Agent 指令。
 
 ## 0.11.0（2026-06-05）
 
 ### 新功能
 
-- 新增由环境变量 `KIMI_CODE_EXPERIMENTAL_SUB_SKILL` 控制的实验性子 Skill 发现能力。随附 `sub-skill` 内置包（`sub-skill.review`、`sub-skill.consolidate`），用于盘点 Skill 并将其整理为分层分组。
+- 新增由环境变量 `OMNICODE_EXPERIMENTAL_SUB_SKILL` 控制的实验性子 Skill 发现能力。随附 `sub-skill` 内置包（`sub-skill.review`、`sub-skill.consolidate`），用于盘点 Skill 并将其整理为分层分组。
 - 新增以下环境变量：
-  - `KIMI_MODEL_TEMPERATURE`、`KIMI_MODEL_TOP_P` —— 全局应用于任意 `kimi` 供应商的采样参数（不绑定到 `KIMI_MODEL_NAME`）。
-  - `KIMI_MODEL_THINKING_KEEP` —— Moonshot 的 preserved-thinking 透传（`thinking.keep`），仅在开启 Thinking 时注入。
-  - `KIMI_CODE_NO_AUTO_UPDATE`（旧别名 `KIMI_CLI_NO_AUTO_UPDATE`）—— 完全禁用更新预检（不检查、不后台安装、不提示）。
+  - `OMNICODE_MODEL_TEMPERATURE`、`OMNICODE_MODEL_TOP_P` —— 全局应用于任意 `omnicode` 供应商的采样参数（不绑定到 `OMNICODE_MODEL_NAME`）。
+  - `OMNICODE_MODEL_THINKING_KEEP` —— Hilbras 的 preserved-thinking 透传（`thinking.keep`），仅在开启 Thinking 时注入。
+  - `OMNICODE_NO_AUTO_UPDATE`（旧别名 `OMNICODE_CLI_NO_AUTO_UPDATE`）—— 完全禁用更新预检（不检查、不后台安装、不提示）。
 - 将内置 Skill 显示为直接斜杠命令，并将其分组排在外部 Skill 命令之前。
 
 ### 修复
@@ -1504,10 +1504,10 @@ outline: 2
 ### 新功能
 
 - 用户现在可以为 Agent 准备多个目标，让它按顺序逐一处理。当前目标完成后，Agent 会自动从队列中取出下一个目标。使用 `/goal next <objective>` 将目标加入队列，使用 `/goal next manage` 交互式查看和修改队列。
-- 新增内置的 `update-config` Skill —— 你现在可以让 Kimi 编辑它自己的配置文件。
+- 新增内置的 `update-config` Skill —— 你现在可以让 Omnicode 编辑它自己的配置文件。
 - 新增持久化的实验性功能开关，以及一个 TUI 面板，确认后会通过重载当前会话来应用变更。
 - 新增 `/reload` 以重载当前会话并应用更新后的配置文件，以及 `/reload-tui` 以仅重载 TUI 偏好设置。
-- 新增 doctor 命令，用于校验 Lacrous Kimi Code 的配置文件。
+- 新增 doctor 命令，用于校验 Omnicode 的配置文件。
 
 ### 修复
 
@@ -1522,7 +1522,7 @@ outline: 2
 ### 优化
 
 - 启动时的更新检查一旦发现新版本，立即开始自动后台更新。
-- 在启动期间将 CLI 进程标题设置为 `kimi-code`。
+- 在启动期间将 CLI 进程标题设置为 `omnicode`。
 - 将编辑工具错误中的过期文件内容提示改为小写。
 
 ### 重构
@@ -1537,7 +1537,7 @@ outline: 2
 
 ### 新功能
 
-- 支持 `kimi acp` 子命令：kimi-code 现在可通过 stdio 使用 [Agent Client Protocol 0.23](https://agentclientprotocol.com/)，因此 IDE（Zed、JetBrains AI Chat、自定义客户端）可以直接驱动会话；覆盖矩阵、Zed 配置和破坏性预发布说明见 [kimi acp 子命令页面](https://moonshotai.github.io/kimi-code/zh/reference/kimi-acp.html)。
+- 支持 `omnicode acp` 子命令：omnicode 现在可通过 stdio 使用 [Agent Client Protocol 0.23](https://agentclientprotocol.com/)，因此 IDE（Zed、JetBrains AI Chat、自定义客户端）可以直接驱动会话；覆盖矩阵、Zed 配置和破坏性预发布说明见 [omnicode acp 子命令页面](https://hilbras.github.io/omnicode/zh/reference/omnicode-acp.html)。
 - 新增 `/btw`，用于进行不会引导当前主轮次的侧通道对话，并允许 `/btw` 在输入问题前打开侧通道面板。
 
 ### 修复
@@ -1561,17 +1561,17 @@ outline: 2
 
 ### 新功能
 
-- 新增实验性 goal 模式，用于需要多轮处理的较长任务。在启动 Kimi 前设置 `KIMI_CODE_EXPERIMENTAL_GOAL_COMMAND=1` 即可开启。
-  在终端界面中使用 `/goal <objective>` 让 Kimi 跨轮次持续专注于同一任务。例如：
+- 新增实验性 goal 模式，用于需要多轮处理的较长任务。在启动 Omnicode 前设置 `OMNICODE_EXPERIMENTAL_GOAL_COMMAND=1` 即可开启。
+  在终端界面中使用 `/goal <objective>` 让 Omnicode 跨轮次持续专注于同一任务。例如：
   ```text
   /goal Fix the failing checkout test
   ```
-  Kimi 会在终端界面中显示目标，并在工作过程中保持进度可见。使用 `/goal status`、`/goal pause`、`/goal resume`、`/goal cancel` 和 `/goal replace <objective>` 来管理该目标。该功能仍处于实验阶段，欢迎试用并反馈改进建议。
-- 新增 `kimi provider` CLI 子命令，支持 `add`、`remove`、`list` 以及 `catalog list` / `catalog add` 操作，可在不启动终端界面的情况下导入和管理来自自定义 registry（api.json）或公开 models.dev 目录的供应商。
+  Omnicode 会在终端界面中显示目标，并在工作过程中保持进度可见。使用 `/goal status`、`/goal pause`、`/goal resume`、`/goal cancel` 和 `/goal replace <objective>` 来管理该目标。该功能仍处于实验阶段，欢迎试用并反馈改进建议。
+- 新增 `omnicode provider` CLI 子命令，支持 `add`、`remove`、`list` 以及 `catalog list` / `catalog add` 操作，可在不启动终端界面的情况下导入和管理来自自定义 registry（api.json）或公开 models.dev 目录的供应商。
 - 新增后台结构化提问，让 Agent 在等待用户回答时也能继续工作。
 - 新增后台自动更新，可在 tui.toml 中关闭。
 - 新增 `/undo` 斜杠命令，用于从对话历史中撤回上一条提示词，并在撤回时保持回放记录同步。
-- 新增 `kimi upgrade` 命令，用于手动检查并升级 Lacrous Kimi Code CLI。
+- 新增 `omnicode upgrade` 命令，用于手动检查并升级 Omnicode。
 - 新增审批生命周期 hook 事件，用于观察待处理和已完成的权限提示。
 - 允许子 Agent 使用在其父 Agent 上注册的自定义工具。
 - 支持用 glob 搜索显式的绝对路径（工作空间之外）。
@@ -1606,7 +1606,7 @@ outline: 2
 
 - 新增用于管理 AI 供应商的 `/provider` 命令，支持自定义 registry 导入，并引入标签页式模型选择器。该命令替代了已废弃的 `/connect`，请改用 `/provider`。
 - 在终端界面中以独立样式渲染定时提醒，向 SDK 客户端暴露 cron 触发事件，并在报告 cron 触发时间时附带本地时区偏移。
-- 新增 `KIMI_MODEL_ADAPTIVE_THINKING`（以及对应的 `adaptive_thinking` 模型别名字段），用于强制开启或关闭自适应 thinking（`thinking: { type: 'adaptive' }`），覆盖基于 Anthropic 模型名的版本推断。这样一来，背后由支持自适应能力的模型驱动、且使用自定义名称的兼容端点，即使模型名没有编码出可解析的 Claude 版本，也能选择启用该能力。
+- 新增 `OMNICODE_MODEL_ADAPTIVE_THINKING`（以及对应的 `adaptive_thinking` 模型别名字段），用于强制开启或关闭自适应 thinking（`thinking: { type: 'adaptive' }`），覆盖基于 Anthropic 模型名的版本推断。这样一来，背后由支持自适应能力的模型驱动、且使用自定义名称的兼容端点，即使模型名没有编码出可解析的 Claude 版本，也能选择启用该能力。
 
 ### 修复
 
@@ -1615,15 +1615,15 @@ outline: 2
 
 ### 优化
 
-- 明确 Kimi Platform API 密钥登录的标签和提示细节。
+- 明确 Omnicode Platform API 密钥登录的标签和提示细节。
 - 优化终端界面中的一处细微视觉交互。
 
 ## 0.6.0（2026-05-29）
 
 ### 新功能
 
-- 新增 `KIMI_MODEL_*` 环境变量通道，让你无需编辑 `config.toml` 即可让 Lacrous Kimi Code 使用指定模型（供应商类型、base URL、API 密钥、上下文大小、能力以及 thinking 设置）。
-- 支持直接从 GitHub 仓库 URL 安装 plugin，并在 plugin 管理器中展示每次安装的来源和信任级别（kimi-official、curated、third-party）。
+- 新增 `OMNICODE_MODEL_*` 环境变量通道，让你无需编辑 `config.toml` 即可让 Omnicode 使用指定模型（供应商类型、base URL、API 密钥、上下文大小、能力以及 thinking 设置）。
+- 支持直接从 GitHub 仓库 URL 安装 plugin，并在 plugin 管理器中展示每次安装的来源和信任级别（omnicode-official、curated、third-party）。
 
 ### 修复
 
@@ -1644,7 +1644,7 @@ outline: 2
 - 支持在 listSessions 中通过 sessionId 或 workDir 查询会话，并在从其他工作目录恢复会话时显示一条便捷的 cd 命令。
 - 扩充页脚轮换提示，展示更多命令和快捷键，并更突出地呈现较新和重要的内容。
 - 改进终端界面中的用量信息展示。
-- 将 plugin 信任徽章限制为仅匹配 Kimi 托管的 plugin CDN URL 模式。
+- 将 plugin 信任徽章限制为仅匹配 Omnicode 托管的 plugin CDN URL 模式。
 - 明确子 Agent 和后台任务的停止消息为用户主动发起。
 - 将数据源 plugin 对齐到通用的双工具工作流。
 
@@ -1711,7 +1711,7 @@ outline: 2
 
 ### 其他
 
-- 增强 `kimi export`，在 manifest 中记录更多诊断信息。
+- 增强 `omnicode export`，在 manifest 中记录更多诊断信息。
 
 ## 0.3.0（2026-05-26）
 
@@ -1730,7 +1730,7 @@ outline: 2
 - 在会话恢复时，若所有待办均已完成则隐藏待办面板。
 - 在工具返回结果格式错误或缺失时，始终发出配对的工具结果，避免下一次请求因缺少 `tool_call_id` 而失败。
 - 修复 Plan 模式下的会话重置：新会话在 Plan 评审被拒后不再失败，并能在初始化错误后继续接收事件。
-- 在控制终端消失时及时退出。终端界面现在会处理 `SIGHUP` / `SIGTERM` 信号以及 stdout/stderr 的 `EIO` / `EPIPE` / `ENOTCONN` 错误，避免父 shell 或终端复用器异常退出后残留占用 CPU 核心的 `kimi` 进程。
+- 在控制终端消失时及时退出。终端界面现在会处理 `SIGHUP` / `SIGTERM` 信号以及 stdout/stderr 的 `EIO` / `EPIPE` / `ENOTCONN` 错误，避免父 shell 或终端复用器异常退出后残留占用 CPU 核心的 `omnicode` 进程。
 - 避免本地补全上限过小，导致摘要生成前推理被截断。
 
 ### 重构
@@ -1749,13 +1749,13 @@ outline: 2
 - `/connect` 的供应商和模型选择器现支持键入即搜索过滤，长列表会自动分页；配置了较多模型时，`/model` 选择器同样支持分页。
 - 在终端界面输入框中新增 `Ctrl-J` 作为插入换行的额外快捷键。
 - 在会话回放过程中新增 wire 记录迁移处理。
-- 在首次启动迁移期间，将用户 Skill 从 `~/.kimi/skills/` 迁移到 `~/.kimi-code/skills/`；已存在的目标 Skill 会被保留。
+- 在首次启动迁移期间，将用户 Skill 从 `~/.omnicode/skills/` 迁移到 `~/.omnicode/skills/`；已存在的目标 Skill 会被保留。
 - 在 stream-json 输出格式中以结构化 meta 消息形式发出会话恢复提示。
 
 ### 修复
 
 - 在 OAuth 设备信息中改为上报 macOS 产品版本，而不是 Darwin 内核版本。
-- 将 `X-Msh-Platform` 请求头的取值修正为 `kimi_code_cli`。
+- 将 `X-Msh-Platform` 请求头的取值修正为 `omnicode_code_cli`。
 - 在未配置模型时，澄清提示词模式下的错误提示，引导用户走登录流程。
 - 在会话选择器中隐藏空的当前会话，同时保留其他空会话可见。
 - 不再在迁移界面中提及 OAuth 凭据 —— 它们从不会被迁移，此前的 "needs /login" 提示会被误读为失败。仅使用 OAuth 的安装不再触发迁移界面。
@@ -1765,7 +1765,7 @@ outline: 2
 - 避免大体量流式工具参数导致的 CPU 峰值，并合并高频的流式 UI 更新。
 - 在 wire 协议版本较新时改为继续恢复会话而不是失败。终端界面会显示一条警告，并在不进行迁移的情况下回放记录。
 - 当 tmux 的扩展按键设置可能导致带修饰键的 Enter 快捷键无法工作时，向 tmux 用户发出提示。
-- 默认让 Kimi 请求使用剩余的上下文窗口作为补全 token 的额度，同时将显式设置的环境变量上限作为硬上限保留。
+- 默认让 Omnicode 请求使用剩余的上下文窗口作为补全 token 的额度，同时将显式设置的环境变量上限作为硬上限保留。
 
 ### 重构
 
@@ -1774,4 +1774,4 @@ outline: 2
 
 ### 其他
 
-- 当未配置模型时，`/model` 和欢迎面板现在会引导用户使用 `/login`（针对 Kimi）和 `/connect`（针对其他供应商）。
+- 当未配置模型时，`/model` 和欢迎面板现在会引导用户使用 `/login`（针对 Omnicode）和 `/connect`（针对其他供应商）。

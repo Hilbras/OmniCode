@@ -1,0 +1,57 @@
+{
+  "name": "@hilbras/omnicode-auth",
+  "version": "0.4.0",
+  "private": true,
+  "description": "Omnicode OAuth toolkit for managed Omnicode authentication",
+  "license": "MIT",
+  "author": "Hilbras",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/oauth#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hilbras/omnicode.git",
+    "directory": "packages/oauth"
+  },
+  "bugs": {
+    "url": "https://github.com/Hilbras/omnicode/issues"
+  },
+  "keywords": [
+    "omnicode",
+    "oauth",
+    "authentication",
+    "auth",
+    "cli"
+  ],
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./device": {
+      "types": "./src/device.ts",
+      "default": "./src/device.ts"
+    },
+    "./provider-credential": {
+      "types": "./src/provider-credential.ts",
+      "default": "./src/provider-credential.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "proper-lockfile": "^4.1.2",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/proper-lockfile": "^4.1.4"
+  }
+}

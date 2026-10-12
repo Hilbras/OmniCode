@@ -1,0 +1,43 @@
+{
+  "name": "@hilbras/omnicode-telemetry",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Shared telemetry infrastructure for Omnicode",
+  "license": "MIT",
+  "author": "Hilbras",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/telemetry#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hilbras/omnicode.git",
+    "directory": "packages/telemetry"
+  },
+  "bugs": {
+    "url": "https://github.com/Hilbras/omnicode/issues"
+  },
+  "keywords": [
+    "omnicode",
+    "telemetry",
+    "analytics",
+    "events",
+    "client"
+  ],
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  }
+}

@@ -1,14 +1,14 @@
 # Plugins
 
-Plugins package reusable Lacrous Kimi Code CLI capabilities into installable units: they can add [Agent Skills](./skills.md), custom [agents](./agents.md), automatically load a specified Skill at session start, contribute system-prompt instructions, and declare MCP servers to provide real tool capabilities. They are ideal for sharing workflows with a team, connecting to external services, or installing extensions from the [official plugins](#official-plugins).
+Plugins package reusable Omnicode CLI capabilities into installable units: they can add [Agent Skills](./skills.md), custom [agents](./agents.md), automatically load a specified Skill at session start, contribute system-prompt instructions, and declare MCP servers to provide real tool capabilities. They are ideal for sharing workflows with a team, connecting to external services, or installing extensions from the [official plugins](#official-plugins).
 
 ## Installation and Management
 
 Run `/plugins` in the TUI to open the plugin manager. It is a single panel with four tabs, switched with `Tab` / `Shift-Tab`:
 
 - **Installed**: Manage installed plugins
-- **Official**: Kimi-maintained marketplace plugins
-- **Curated**: Third-party plugins from Kimi partners in the default marketplace
+- **Official**: Omnicode-maintained marketplace plugins
+- **Curated**: Third-party plugins from Omnicode partners in the default marketplace
 - **Custom**: Install from a URL
 
 Common keys:
@@ -54,13 +54,13 @@ Network requests only go through `github.com` redirects and `codeload.github.com
 ### Notes
 
 - Plugin changes apply after `/reload` or in new sessions. After installing, enabling/disabling, or removing a plugin, run `/reload` or `/new`; the current session will not update.
-- Local installations are copied to `$KIMI_CODE_HOME/plugins/managed/<id>/`, and the CLI always runs from this managed copy. Editing the original source directory after installation has no effect; you must reinstall.
+- Local installations are copied to `$OMNICODE_HOME/plugins/managed/<id>/`, and the CLI always runs from this managed copy. Editing the original source directory after installation has no effect; you must reinstall.
 - Removing a plugin only deletes the installation record; the managed copy and original source files remain on disk.
 - Plugins are currently installed per-user and apply to all projects; project-level installation scope is not yet supported.
 
 ### Custom marketplace JSON
 
-Pass a custom marketplace JSON path or URL to `/plugins marketplace <source>`, or set [`KIMI_CODE_PLUGIN_MARKETPLACE_URL`](../configuration/env-vars.md) to override the default catalog. Each entry in the `plugins` array needs an `id` and a `source` (local path, zip URL, or GitHub URL):
+Pass a custom marketplace JSON path or URL to `/plugins marketplace <source>`, or set [`OMNICODE_PLUGIN_MARKETPLACE_URL`](../configuration/env-vars.md) to override the default catalog. Each entry in the `plugins` array needs an `id` and a `source` (local path, zip URL, or GitHub URL):
 
 ```json
 {
@@ -77,11 +77,11 @@ Pass a custom marketplace JSON path or URL to `/plugins marketplace <source>`, o
 
 ## Official Plugins
 
-Official plugins are plugins and built-in product capabilities maintained by Kimi. There are currently three:
+Official plugins are plugins and built-in product capabilities maintained by Omnicode. There are currently three:
 
-- **[Kimi Datasource](#kimi-datasource)**: Query financial market data, financial news, macroeconomic indicators, corporate registration records, academic literature, Chinese laws and regulations, and official data from intergovernmental organizations in natural language
-- **[Kimi Browser Extension](#kimi-browser-extension)**: Let AI drive your own browser to get web tasks done
-- **[Kimi Computer Use](#kimi-computer-use)**: Let AI operate your desktop apps (macOS and Windows)
+- **[Omnicode Datasource](#omnicode-datasource)**: Query financial market data, financial news, macroeconomic indicators, corporate registration records, academic literature, Chinese laws and regulations, and official data from intergovernmental organizations in natural language
+- **[Omnicode Browser Extension](#omnicode-browser-extension)**: Let AI drive your own browser to get web tasks done
+- **[Omnicode Computer Use](#omnicode-computer-use)**: Let AI operate your desktop apps (macOS and Windows)
 
 ### Installation and Upgrade
 
@@ -92,23 +92,23 @@ All official plugins share the same installation and upgrade flow:
 3. After installation completes, run `/reload` or `/new` to activate it
 
 ::: info Note
-Kimi Browser Extension installs in two parts: after the steps above, you also need to [install the browser extension](#install-the-browser-extension) before it works.
+Omnicode Browser Extension installs in two parts: after the steps above, you also need to [install the browser extension](#install-the-browser-extension) before it works.
 :::
 
 Official plugins do not update automatically. When an update is available, you'll be prompted the next time you use the old version. To upgrade, repeat the installation steps above.
 
-### Kimi Datasource <Badge type="tip" text="v3.4.0" />
+### Omnicode Datasource <Badge type="tip" text="v3.4.0" />
 
-Kimi Datasource is the official Lacrous Kimi Code data plugin, letting you query financial market data, financial news, macroeconomic indicators, corporate registration records, academic literature, Chinese laws and regulations, and official data from intergovernmental organizations in natural language. No manual API calls or data accounts required.
+Omnicode Datasource is the official Omnicode data plugin, letting you query financial market data, financial news, macroeconomic indicators, corporate registration records, academic literature, Chinese laws and regulations, and official data from intergovernmental organizations in natural language. No manual API calls or data accounts required.
 
 Sources include authoritative institutions and leading databases such as the World Bank, IMF, OECD, FRED, WHO, FAO, the National Bureau of Statistics of China, Wind, S&P Capital IQ, SEC EDGAR, Caixin, Xinhua Finance, and Hundsun Juyuan, all traceable to their original publishers.
 
-You must first complete OAuth login with a Lacrous Kimi Code account via `/login`; data queries consume your Lacrous Kimi Code plan quota.
+You must first complete OAuth login with a Omnicode account via `/login`; data queries consume your Omnicode plan quota.
 
 #### How to use
 
-1. Describe your need in natural language, and Lacrous Kimi Code will automatically invoke the data capabilities
-2. Explicitly trigger the data query skill with `/skill:kimi-datasource`
+1. Describe your need in natural language, and Omnicode will automatically invoke the data capabilities
+2. Explicitly trigger the data query skill with `/skill:omnicode-datasource`
 
 #### What you can do
 
@@ -159,41 +159,41 @@ Look up national (GB), industry, local, and association standards by number or t
 
 #### Billing and limitations
 
-- Data queries are billed per call and consume Lacrous Kimi Code account credits
+- Data queries are billed per call and consume Omnicode account credits
 - The plugin provides read-only queries; no write or trading functionality is available
 - Technical indicators and real-time prices are only available during active trading hours
 - AI-generated output is for reference only and does not constitute investment or business advice
 
-<a id="kimi-webbridge"></a>
+<a id="omnicode-webbridge"></a>
 
-### Kimi Browser Extension <Badge type="tip" text="v2.0.11" />
+### Omnicode Browser Extension <Badge type="tip" text="v2.0.11" />
 
-Kimi Browser Extension lets AI drive your browser directly: not an emulator, not a crawler, but the browser you use every day, with your login sessions and cookies. AI can open pages, read content, click buttons, fill in forms, and take screenshots just like you do, taking repetitive web operations off your hands. See the [Kimi Browser Extension site](https://www.kimi.com/en/products/kimi-browser-extension) for a product overview.
+Omnicode Browser Extension lets AI drive your browser directly: not an emulator, not a crawler, but the browser you use every day, with your login sessions and cookies. AI can open pages, read content, click buttons, fill in forms, and take screenshots just like you do, taking repetitive web operations off your hands. See the [Omnicode Browser Extension site](https://www.omnicode.com/en/products/omnicode-browser-extension) for a product overview.
 
 #### Install the browser extension
 
-After installing via `/plugins`, you also need the Kimi Browser Extension in your browser before AI can drive it. There are two ways to install it:
+After installing via `/plugins`, you also need the Omnicode Browser Extension in your browser before AI can drive it. There are two ways to install it:
 
 **Option 1: Install from a store (recommended)**
 
-Open the [Chrome Web Store](https://chromewebstore.google.com/detail/kimi-webbridge/fldmhceldgbpfpkbgopacenieobmligc) or [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/kimi-webbridge/bnlffdbcfnanfbknnlaflhlhkocccckg) page and click Add.
+Open the [Chrome Web Store](https://chromewebstore.google.com/detail/omnicode-webbridge/fldmhceldgbpfpkbgopacenieobmligc) or [Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/omnicode-webbridge/bnlffdbcfnanfbknnlaflhlhkocccckg) page and click Add.
 
 **Option 2: Install manually**
 
 Use this when you can't reach the stores:
 
-1. [Download the extension package](https://kimi-web-img.moonshot.cn/webbridge/latest/extension/kimi-webbridge-extension.zip) and unzip it
+1. [Download the extension package](https://omnicode-web-img.hilbras.ai/webbridge/latest/extension/omnicode-webbridge-extension.zip) and unzip it
 2. Type `chrome://extensions/` in the address bar to open the extensions page, then turn on **Developer mode** in the top-right corner
 
    ![Turn on Developer mode](../../media/webbridge-dev-mode.jpeg)
 
-3. Click **Load unpacked** in the top-left corner and select the unzipped `kimi-webbridge-extension` folder
+3. Click **Load unpacked** in the top-left corner and select the unzipped `omnicode-webbridge-extension` folder
 
    ![Load the unpacked extension](../../media/webbridge-load-unpacked.jpeg)
 
-4. Once installed, the Kimi Browser Extension icon appears in the browser toolbar. Seeing the icon means the installation succeeded, and AI can start working on web pages for you.
+4. Once installed, the Omnicode Browser Extension icon appears in the browser toolbar. Seeing the icon means the installation succeeded, and AI can start working on web pages for you.
 
-   ![The Kimi Browser Extension icon in the browser toolbar](../../media/webbridge-install-success.jpeg)
+   ![The Omnicode Browser Extension icon in the browser toolbar](../../media/webbridge-install-success.jpeg)
 
 #### What you can do
 
@@ -203,31 +203,31 @@ Use this when you can't reach the stores:
 - **Competitive analysis**: Batch-question multiple AI products and collect their answers to build side-by-side comparison reports
 - **Flight price comparison**: Query the same itinerary across multiple travel platforms, record airlines, departure/arrival times, and links sorted by price, and get recommended options
 
-### Kimi Computer Use <Badge type="tip" text="v0.5.4" />
+### Omnicode Computer Use <Badge type="tip" text="v0.5.4" />
 
-Kimi Computer Use lets AI operate your desktop apps directly, clicking, dragging, scrolling, and typing. The macOS version works silently in the background without taking over your mouse (a few popup actions may still bring an app to the foreground); see [the notes below](#notes-for-the-windows-version) for how the Windows version differs.
+Omnicode Computer Use lets AI operate your desktop apps directly, clicking, dragging, scrolling, and typing. The macOS version works silently in the background without taking over your mouse (a few popup actions may still bring an app to the foreground); see [the notes below](#notes-for-the-windows-version) for how the Windows version differs.
 
 #### Authorization (macOS)
 
-The first time you use Kimi Computer Use after installation, it shows an authorization window. Just follow the prompts:
+The first time you use Omnicode Computer Use after installation, it shows an authorization window. Just follow the prompts:
 
 1. Click **Authorize** next to **Accessibility** and **Screen Recording**, and enable both permissions in System Settings: the former lets it perform clicks, typing, and scrolling; the latter lets it read screen content and locate UI elements
-2. Turn on the **Lacrous Kimi Code** switch under "Connect local agents", then restart Lacrous Kimi Code for it to take effect
+2. Turn on the **Omnicode** switch under "Connect local agents", then restart Omnicode for it to take effect
 
 <div style="max-width: 380px; margin: 0 auto;">
 
-![Kimi Computer Use authorization window](../../media/kimi-computer-use-auth.jpeg)
+![Omnicode Computer Use authorization window](../../media/omnicode-computer-use-auth.jpeg)
 
 </div>
 
 #### Notes for the Windows version
 
-The Windows version (WinCU) installs differently from the macOS one: run `/plugins install https://cdn.kimi.com/kimi-computer-use-windows/latest/kimi-cu-win-plugin.zip` in Lacrous Kimi Code, then restart after installation. A few things to know before using it:
+The Windows version (WinCU) installs differently from the macOS one: run `/plugins install https://cdn.omnicode.com/omnicode-computer-use-windows/latest/omnicode-cu-win-plugin.zip` in Omnicode, then restart after installation. A few things to know before using it:
 
 - **It may briefly take over your mouse and keyboard**: Unlike the macOS version, the Windows version cannot reliably inject input in the background; it may briefly activate the target window and use your real mouse and keyboard while performing actions
 - **System requirements**: Windows 10 version 1903 (Build 18362) or later, or Windows 11, x64; a real interactive desktop session is required, and Windows Server needs Desktop Experience
 - **No extra permissions needed**: Windows does not require the Accessibility and Screen Recording grants that macOS does
-- **Matching privilege level**: If the target app runs as administrator, KimiCU must run at the same privilege level
+- **Matching privilege level**: If the target app runs as administrator, OmnicodeCU must run at the same privilege level
 
 #### What you can do
 
@@ -246,26 +246,26 @@ Don't hand it anything involving money, accounts, or publishing, such as payment
 A plugin is a directory or zip file containing a manifest. The manifest can be placed at either of the following locations:
 
 ```text
-<plugin_root>/kimi.plugin.json
-<plugin_root>/.kimi-plugin/plugin.json
+<plugin_root>/omnicode.plugin.json
+<plugin_root>/.omnicode-plugin/plugin.json
 ```
 
-When both files exist, `kimi.plugin.json` takes precedence.
+When both files exist, `omnicode.plugin.json` takes precedence. Plugins that still ship the legacy `kimi.plugin.json` or `.kimi-plugin/plugin.json` manifest keep loading, and the new names take precedence when both are present.
 
 Example:
 
 ```json
 {
-  "name": "kimi-finance",
+  "name": "omnicode-finance",
   "version": "1.0.0",
-  "description": "Finance data and analysis workflows for Lacrous Kimi Code CLI",
+  "description": "Finance data and analysis workflows for Omnicode CLI",
   "skills": "./skills/",
   "systemPromptPath": "./SYSTEM.md",
   "sessionStart": {
     "skill": "using-finance"
   },
   "interface": {
-    "displayName": "Kimi Finance",
+    "displayName": "Omnicode Finance",
     "shortDescription": "Market data and financial analysis workflows"
   }
 }
@@ -313,7 +313,7 @@ Each field (the inline `systemPrompt` and the `systemPromptPath` file) is limite
 
 ### Differences between the two engines
 
-System-prompt contributions take effect on every Lacrous Kimi Code surface: the interactive TUI, `kimi -p`, and `kimi web` all run on the v2 engine.
+System-prompt contributions take effect on every Omnicode surface: the interactive TUI, `omnicode -p`, and `omnicode web` all run on the v2 engine.
 
 <details>
 <summary>Instruction refresh behavior under the two engines</summary>
@@ -331,17 +331,17 @@ Slash commands save a prompt you use often as a `/command`, so you can trigger i
 Here is a minimal end-to-end example. The plugin's directory structure:
 
 ```text
-kimi-finance/
-  kimi.plugin.json
+omnicode-finance/
+  omnicode.plugin.json
   commands/
     report.md
 ```
 
-In the manifest (`kimi.plugin.json`), the `commands` field points to where the command files live:
+In the manifest (`omnicode.plugin.json`), the `commands` field points to where the command files live:
 
 ```json
 {
-  "name": "kimi-finance",
+  "name": "omnicode-finance",
   "version": "1.0.0",
   "commands": "./commands/"
 }
@@ -360,10 +360,10 @@ Pull the latest financials for $ARGUMENTS and summarize revenue, profit, and key
 After installing and enabling the plugin, type this in the chat:
 
 ```text
-/kimi-finance:report TSLA
+/omnicode-finance:report TSLA
 ```
 
-Kimi replaces `$ARGUMENTS` in the body with `TSLA`, then runs the prompt. The three details below cover each step.
+Omnicode replaces `$ARGUMENTS` in the body with `TSLA`, then runs the prompt. The three details below cover each step.
 
 ### Declaring Commands (the `commands` field)
 
@@ -382,7 +382,7 @@ A command file has two parts: an optional **frontmatter** (the metadata between 
 
 ### Running Commands and Passing Arguments
 
-Commands are prefixed with the plugin id (their namespace) and registered as `<plugin>:<command>`, so the command above is actually `/kimi-finance:report`. This keeps same-named commands from different plugins from colliding.
+Commands are prefixed with the plugin id (their namespace) and registered as `<plugin>:<command>`, so the command above is actually `/omnicode-finance:report`. This keeps same-named commands from different plugins from colliding.
 
 Whatever you type after the command replaces `$ARGUMENTS` in the body (above, `TSLA` replaces `$ARGUMENTS`). If the body has no `$ARGUMENTS` but you pass arguments anyway, they are not dropped; they are appended to the end of the body as `ARGUMENTS: <what you typed>`.
 
@@ -392,7 +392,7 @@ Plugin Skills use the same `SKILL.md` format as ordinary [Agent Skills](./skills
 
 ```text
 my-plugin/
-  kimi.plugin.json
+  omnicode.plugin.json
   skills/
     using-my-plugin/
       SKILL.md
@@ -400,7 +400,7 @@ my-plugin/
       SKILL.md
 ```
 
-`sessionStart.skill` loads a plugin Skill into the main Agent at session start, making it suitable for initialization instructions, workflow rules, or mapping terminology from other tools to Lacrous Kimi Code CLI. It only injects text; it does not execute code.
+`sessionStart.skill` loads a plugin Skill into the main Agent at session start, making it suitable for initialization instructions, workflow rules, or mapping terminology from other tools to Omnicode CLI. It only injects text; it does not execute code.
 
 Regardless of how a Skill is loaded (`sessionStart.skill`, `/skill:<name>`, or automatic model invocation), `skillInstructions` appears alongside that plugin's Skill.
 
@@ -410,7 +410,7 @@ A plugin can ship custom agents: declare one or more `./` directories in the man
 
 ```text
 my-plugin/
-  kimi.plugin.json
+  omnicode.plugin.json
   agents/
     reviewer.md
 ```
@@ -428,7 +428,7 @@ Stdio server (local command):
   "mcpServers": {
     "finance": {
       "command": "uvx",
-      "args": ["kimi-finance-mcp"]
+      "args": ["omnicode-finance-mcp"]
     }
   }
 }
@@ -451,10 +451,10 @@ For stdio servers, `command` can be a command on `PATH` or a path starting with 
 Plugin MCP servers start after `/reload` or in new sessions. To enable or disable a server:
 
 ```sh
-/plugins mcp disable kimi-finance finance
+/plugins mcp disable omnicode-finance finance
 /reload
 
-/plugins mcp enable kimi-finance finance
+/plugins mcp enable omnicode-finance finance
 /reload
 ```
 
@@ -479,7 +479,7 @@ Plugin hooks reuse the same mechanism as global hooks. See [Hooks](./hooks.md) f
 
 - A plugin's hooks are active only while the plugin is **enabled**; disabling the plugin stops its hooks.
 - Each hook runs with its working directory set to the plugin root, so `command` can use `./` paths inside the plugin.
-- The hook process receives two extra environment variables: `KIMI_CODE_HOME` and `KIMI_PLUGIN_ROOT` (the plugin root directory).
+- The hook process receives two extra environment variables: `OMNICODE_HOME` and `OMNICODE_PLUGIN_ROOT` (the plugin root directory).
 
 Installing a plugin never runs its hooks by itself. They only fire when their matching event occurs while the plugin is enabled.
 

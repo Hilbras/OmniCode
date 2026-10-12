@@ -1,6 +1,6 @@
 # Providers and models
 
-Lacrous Kimi Code CLI supports connecting to multiple LLM platforms simultaneously: one-click login via the Lacrous Kimi Code managed service, connecting Claude with an Anthropic API key, or connecting third-party inference services via the OpenAI-compatible protocol. Each provider corresponds to a specific API protocol; models are declared on top of providers with their own name, context length, and capabilities. This page explains how to configure each type of provider in `config.toml`.
+Omnicode CLI supports connecting to multiple LLM platforms simultaneously: one-click login via the Omnicode managed service, connecting Claude with an Anthropic API key, or connecting third-party inference services via the OpenAI-compatible protocol. Each provider corresponds to a specific API protocol; models are declared on top of providers with their own name, context length, and capabilities. This page explains how to configure each type of provider in `config.toml`.
 
 ## Supported provider types
 
@@ -8,7 +8,7 @@ The `type` field in the `providers` table determines which protocol implementati
 
 | Type | Protocol | Typical use |
 | --- | --- | --- |
-| [`kimi`](#kimi) | OpenAI-compatible | Lacrous Kimi Code managed service, Kimi Platform API key |
+| [`omnicode`](#omnicode) | OpenAI-compatible | Omnicode managed service, Omnicode Platform API key |
 | [`anthropic`](#anthropic) | Anthropic Messages | Claude model family |
 | [`openai`](#openai) | OpenAI Chat Completions | OpenAI and compatible services, DeepSeek, Qwen, etc. |
 | [`openai_responses`](#openai_responses) | OpenAI Responses API | OpenAI's newer Responses interface |
@@ -17,7 +17,7 @@ The `type` field in the `providers` table determines which protocol implementati
 
 All providers communicate with models in streaming mode by default. Capabilities such as thinking, vision, and tool use are matched automatically by model name prefix, so you typically do not need to declare them manually.
 
-**Endpoint rules**: `base_url` must be `http(s)` and must not embed a username or password — put the key in `api_key` / `api_key_env` instead, so it never lands in the config file, a backup, or a debug dump. Plain `http://` is accepted only for hosts the key cannot leave the local link on, because a plaintext request header exposes the credential to anyone watching the network: `localhost` and `*.localhost`, any `*.local` (mDNS) name, `127.0.0.0/8`, `::1`, `0.0.0.0`, `::`, the private ranges `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, and the IPv6 ranges `fc00::/7` and `fe80::/10`. A gateway on a public host must use `https`; if a public host genuinely serves only plaintext and you accept the exposure, set `KIMI_CODE_ALLOW_INSECURE_PROVIDER_HTTP=1` to restore the old behavior for that run.
+**Endpoint rules**: `base_url` must be `http(s)` and must not embed a username or password — put the key in `api_key` / `api_key_env` instead, so it never lands in the config file, a backup, or a debug dump. Plain `http://` is accepted only for hosts the key cannot leave the local link on, because a plaintext request header exposes the credential to anyone watching the network: `localhost` and `*.localhost`, any `*.local` (mDNS) name, `127.0.0.0/8`, `::1`, `0.0.0.0`, `::`, the private ranges `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, and the IPv6 ranges `fc00::/7` and `fe80::/10`. A gateway on a public host must use `https`; if a public host genuinely serves only plaintext and you accept the exposure, set `OMNICODE_ALLOW_INSECURE_PROVIDER_HTTP=1` to restore the old behavior for that run.
 
 **Credential priority**: `api_key` or `api_key_env` (mutually exclusive alternatives — set exactly one) > `[providers.<name>.env]` sub-table key (only when neither is present) > if all are absent, startup fails with an error. Except for the explicitly declared `api_key_env`, the CLI does not fall back to shell environment variables for credentials. See [Config overrides: provider credentials](./overrides.md#provider-credentials).
 
@@ -34,7 +34,7 @@ The manager displays providers as a list of entries grouped by source. Navigatio
 - `d` to delete the current provider (with `[y/N]` confirmation)
 - Press Enter on the `[ Add New Platform ]` row to add a new provider
 
-Entries that authenticate with an account rather than an API key — OAuth platforms from `/login` — refuse the edit and point you at `/login` instead. Their credential comes from the login session, so a key you typed here would be overwritten the next time the session refreshes. Kimi Platform entries do hold a real API key, so their key is editable here exactly like any other provider's.
+Entries that authenticate with an account rather than an API key — OAuth platforms from `/login` — refuse the edit and point you at `/login` instead. Their credential comes from the login session, so a key you typed here would be overwritten the next time the session refreshes. Omnicode Platform entries do hold a real API key, so their key is editable here exactly like any other provider's.
 
 Two paths when adding:
 
@@ -42,17 +42,17 @@ Two paths when adding:
 - **Custom registry (api.json)**: paste a custom registry URL and, for private registries, a Bearer token; the CLI automatically creates the `providers` / `models` entries. When a registry entry declares the `env` field (the name of the environment variable holding the API key), the CLI prints it as a hint — set `api_key_env` in `config.toml` yourself to use it. The binding is never automatic: the registry chooses both the variable name and the endpoint the credential is sent to, so it must not decide which of your secrets is read. For private registries the Bearer token itself is still stored as `source.apiKey` so the registry can be refetched on refresh. On later startup, providers from the same registry URL are refreshed together, so upstream provider additions, removals, and model metadata changes are synced.
 
 ::: warning
-Lacrous Kimi Code OAuth managed accounts logged in via `/login` do not appear in `/provider`. Use `/login` and `/logout` to manage them.
+Omnicode OAuth managed accounts logged in via `/login` do not appear in `/provider`. Use `/login` and `/logout` to manage them.
 :::
 
-The same operations are also available in non-interactive environments via the shell command: [`kimi provider`](../reference/kimi-command.md#kimi-provider).
+The same operations are also available in non-interactive environments via the shell command: [`omnicode provider`](../reference/omnicode-command.md#omnicode-provider).
 
 ## Built-in providers
 
 The `/provider` manager's "known third-party provider" path fetches a public catalog and adapts it, which works for vendors the catalog describes. For the vendors below, the CLI ships the endpoint, protocol, and key prefix as data, so you can add one by id without the catalog being reachable:
 
 ```sh
-kimi provider add-builtin <providerId>
+omnicode provider add-builtin <providerId>
 ```
 
 This writes a complete provider entry for you — protocol, `base_url`, and the API key you enter at the prompt — then refreshes its model list. Afterwards it is an ordinary provider: edit it, re-key it, or delete it like any other.
@@ -83,22 +83,22 @@ Two entries carry more than the table shows. `anthropic` and `gemini` do not acc
 
 For how a key reaches any of these endpoints, see [Authentication and credentials](./authentication.md).
 
-## `kimi`
+## `omnicode`
 
-For connecting to Moonshot AI's OpenAI-compatible interface, including the Lacrous Kimi Code managed service and Kimi Platform API keys.
+For connecting to Hilbras's OpenAI-compatible interface, including the Omnicode managed service and Omnicode Platform API keys.
 
-- Default `base_url`: `https://api.moonshot.ai/v1`
-- Credential key names: `KIMI_API_KEY`, `KIMI_BASE_URL`
+- Default `base_url`: `https://api.hilbras.ai/v1`
+- Credential key names: `OMNICODE_API_KEY`, `OMNICODE_BASE_URL`
 - Additional capability: supports video upload
 
 ```toml
-[providers.kimi]
-type = "kimi"
-base_url = "https://api.moonshot.ai/v1"
+[providers.omnicode]
+type = "omnicode"
+base_url = "https://api.hilbras.ai/v1"
 api_key = "sk-xxxxx"
 ```
 
-> When using the Lacrous Kimi Code managed service, running `/login` automatically configures `base_url` and credentials, so no manual setup is needed.
+> When using the Omnicode managed service, running `/login` automatically configures `base_url` and credentials, so no manual setup is needed.
 
 ## `anthropic`
 
@@ -203,7 +203,7 @@ base_url = "https://your-gateway.example"
 
 Shares the same implementation as `google-genai`; setting `type = "vertexai"` switches to the Vertex AI access path.
 
-Authentication follows the standard Google Cloud ADC flow (`gcloud auth application-default login` or a `GOOGLE_APPLICATION_CREDENTIALS` service account JSON); this part is unrelated to Lacrous Kimi Code. **The project ID and region must be written in the `[providers.vertexai.env]` sub-table**. Simply `export GOOGLE_CLOUD_PROJECT` in the shell will not be read by the CLI.
+Authentication follows the standard Google Cloud ADC flow (`gcloud auth application-default login` or a `GOOGLE_APPLICATION_CREDENTIALS` service account JSON); this part is unrelated to Omnicode. **The project ID and region must be written in the `[providers.vertexai.env]` sub-table**. Simply `export GOOGLE_CLOUD_PROJECT` in the shell will not be read by the CLI.
 
 ```toml
 [providers.vertexai]
@@ -216,14 +216,14 @@ GOOGLE_CLOUD_LOCATION = "us-central1"
 
 ```sh
 gcloud auth application-default login   # one-time authentication
-kimi
+omnicode
 ```
 
 To route Vertex requests through a custom (e.g. proxied) endpoint, set `base_url` (or the `GOOGLE_VERTEX_BASE_URL` env var); when omitted, the SDK default regional `*-aiplatform.googleapis.com` host is used. As with `google-genai`, give the host root only. The SDK appends `/v1beta1/publishers/google/models/…` itself.
 
 ## OAuth and credential injection
 
-The Lacrous Kimi Code managed service uses OAuth rather than static API keys. After running `/login`, the built-in authentication toolchain automatically writes and refreshes credentials, so no manual configuration is needed in `config.toml` for this.
+The Omnicode managed service uses OAuth rather than static API keys. After running `/login`, the built-in authentication toolchain automatically writes and refreshes credentials, so no manual configuration is needed in `config.toml` for this.
 
 ## Next steps
 

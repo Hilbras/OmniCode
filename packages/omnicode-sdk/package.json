@@ -1,0 +1,70 @@
+{
+  "name": "@hilbras/omnicode-sdk",
+  "version": "0.21.0",
+  "private": true,
+  "description": "TypeScript SDK for the Omnicode Agent",
+  "license": "MIT",
+  "author": "Hilbras",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/node-sdk#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hilbras/omnicode.git",
+    "directory": "packages/node-sdk"
+  },
+  "bugs": {
+    "url": "https://github.com/Hilbras/omnicode/issues"
+  },
+  "keywords": [
+    "omnicode",
+    "sdk",
+    "typescript",
+    "agent",
+    "api"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:dts": "node scripts/build-dts.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist .tmp-api-extractor"
+  },
+  "dependencies": {
+    "@antfu/utils": "^9.3.0",
+    "smol-toml": "^1.6.1",
+    "yazl": "^3.3.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@hilbras/omnicode-core": "workspace:^",
+    "@hilbras/omnicode-kaos": "workspace:^",
+    "@hilbras/omnicode-auth": "workspace:^",
+    "@hilbras/omnicode-client": "workspace:^",
+    "@hilbras/omnicode-llm": "workspace:^",
+    "@types/yazl": "^2.4.6",
+    "jimp": "^1.6.1"
+  }
+}

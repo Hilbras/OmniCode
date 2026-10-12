@@ -59,7 +59,7 @@ const features = computed<Feature[]>(() => isZh.value
       {
         icon: '🧩',
         title: 'Agent Skills',
-        desc: '把团队的工作流程封装成 Kimi 随时调用的技能，不必每次都重新解释。',
+        desc: '把团队的工作流程封装成 Omnicode 随时调用的技能，不必每次都重新解释。',
         href: '/zh/customization/skills',
       },
       {
@@ -85,7 +85,7 @@ const features = computed<Feature[]>(() => isZh.value
       {
         icon: '🧩',
         title: 'Agent Skills',
-        desc: "Package your team's workflows into skills Kimi can invoke on demand.",
+        desc: "Package your team's workflows into skills Omnicode can invoke on demand.",
         href: '/en/customization/skills',
       },
       {
@@ -122,36 +122,36 @@ const ctaText = computed(() => isZh.value ? '了解' : 'Learn more')
 </script>
 
 <template>
-  <section class="KimiHome__section KimiHighlights">
-    <h2 class="KimiHome__sectionTitle">{{ highlightsTitle }}</h2>
-    <p class="KimiHome__sectionLede">{{ highlightsLede }}</p>
-    <div class="KimiHighlights__grid">
+  <section class="OmnicodeHome__section OmnicodeHighlights">
+    <h2 class="OmnicodeHome__sectionTitle">{{ highlightsTitle }}</h2>
+    <p class="OmnicodeHome__sectionLede">{{ highlightsLede }}</p>
+    <div class="OmnicodeHighlights__grid">
       <div
         v-for="h in highlights"
         :key="h.title"
-        class="KimiHighlights__card"
+        class="OmnicodeHighlights__card"
       >
-        <div class="KimiHighlights__icon" aria-hidden="true">{{ h.icon }}</div>
-        <h3 class="KimiHighlights__title">{{ h.title }}</h3>
-        <p class="KimiHighlights__desc">{{ h.desc }}</p>
+        <div class="OmnicodeHighlights__icon" aria-hidden="true">{{ h.icon }}</div>
+        <h3 class="OmnicodeHighlights__title">{{ h.title }}</h3>
+        <p class="OmnicodeHighlights__desc">{{ h.desc }}</p>
       </div>
     </div>
   </section>
 
-  <section class="KimiHome__section KimiFeatures">
-    <h2 class="KimiHome__sectionTitle">{{ featuresTitle }}</h2>
-    <p class="KimiHome__sectionLede">{{ featuresLede }}</p>
-    <div class="KimiFeatures__grid">
+  <section class="OmnicodeHome__section OmnicodeFeatures">
+    <h2 class="OmnicodeHome__sectionTitle">{{ featuresTitle }}</h2>
+    <p class="OmnicodeHome__sectionLede">{{ featuresLede }}</p>
+    <div class="OmnicodeFeatures__grid">
       <a
         v-for="f in features"
         :key="f.title"
-        class="KimiFeatures__card"
+        class="OmnicodeFeatures__card"
         :href="withBase(f.href)"
       >
-        <div class="KimiFeatures__icon" aria-hidden="true">{{ f.icon }}</div>
-        <h3 class="KimiFeatures__title">{{ f.title }}</h3>
-        <p class="KimiFeatures__desc">{{ f.desc }}</p>
-        <span class="KimiFeatures__cta">
+        <div class="OmnicodeFeatures__icon" aria-hidden="true">{{ f.icon }}</div>
+        <h3 class="OmnicodeFeatures__title">{{ f.title }}</h3>
+        <p class="OmnicodeFeatures__desc">{{ f.desc }}</p>
+        <span class="OmnicodeFeatures__cta">
           {{ ctaText }}
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
             <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -164,41 +164,41 @@ const ctaText = computed(() => isZh.value ? '了解' : 'Learn more')
 
 <style scoped>
 /* === Highlights (top section: non-clickable product attributes) === */
-.KimiHighlights__grid {
+.OmnicodeHighlights__grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 16px;
 }
 
 @media (max-width: 720px) {
-  .KimiHighlights__grid {
+  .OmnicodeHighlights__grid {
     grid-template-columns: 1fr;
   }
 }
 
-.KimiHighlights__card {
+.OmnicodeHighlights__card {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 22px 22px 24px;
-  border-radius: var(--kimi-radius-card);
+  border-radius: var(--omnicode-radius-card);
   border: 1px solid var(--vp-c-divider);
   background: var(--vp-c-bg-soft);
 }
 
-.KimiHighlights__icon {
+.OmnicodeHighlights__icon {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: var(--kimi-brand-soft);
+  background: var(--omnicode-brand-soft);
   font-size: 18px;
   margin-bottom: 14px;
 }
 
-.KimiHighlights__title {
+.OmnicodeHighlights__title {
   font-size: 16px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -206,7 +206,7 @@ const ctaText = computed(() => isZh.value ? '了解' : 'Learn more')
   color: var(--vp-c-text-1);
 }
 
-.KimiHighlights__desc {
+.OmnicodeHighlights__desc {
   font-size: 14px;
   line-height: 1.55;
   color: var(--vp-c-text-2);
@@ -214,60 +214,60 @@ const ctaText = computed(() => isZh.value ? '了解' : 'Learn more')
 }
 
 /* === Features (bottom section: clickable extension points) === */
-.KimiFeatures__grid {
+.OmnicodeFeatures__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 20px;
 }
 
 @media (max-width: 1024px) {
-  .KimiFeatures__grid {
+  .OmnicodeFeatures__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 @media (max-width: 640px) {
-  .KimiFeatures__grid {
+  .OmnicodeFeatures__grid {
     grid-template-columns: 1fr;
   }
 }
 
-.KimiFeatures__card {
+.OmnicodeFeatures__card {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   padding: 28px 24px 26px;
-  border-radius: var(--kimi-radius-card);
+  border-radius: var(--omnicode-radius-card);
   border: 1px solid var(--vp-c-divider);
   background: var(--vp-c-bg);
   color: var(--vp-c-text-1);
   text-decoration: none;
-  transition: transform var(--kimi-transition), border-color var(--kimi-transition),
-              box-shadow var(--kimi-transition), background var(--kimi-transition);
+  transition: transform var(--omnicode-transition), border-color var(--omnicode-transition),
+              box-shadow var(--omnicode-transition), background var(--omnicode-transition);
   overflow: hidden;
 }
 
-.KimiFeatures__card::before {
+.OmnicodeFeatures__card::before {
   content: '';
   position: absolute;
   inset: 0;
-  background: var(--kimi-brand-gradient-soft);
+  background: var(--omnicode-brand-gradient-soft);
   opacity: 0;
-  transition: opacity var(--kimi-transition);
+  transition: opacity var(--omnicode-transition);
   pointer-events: none;
   border-radius: inherit;
 }
 
-.KimiFeatures__card:hover {
+.OmnicodeFeatures__card:hover {
   transform: translateY(-3px);
   border-color: var(--vp-c-brand-1);
   box-shadow: var(--vp-shadow-3);
 }
-.KimiFeatures__card:hover::before {
+.OmnicodeFeatures__card:hover::before {
   opacity: 1;
 }
 
-.KimiFeatures__icon {
+.OmnicodeFeatures__icon {
   position: relative;
   z-index: 1;
   display: inline-flex;
@@ -276,12 +276,12 @@ const ctaText = computed(() => isZh.value ? '了解' : 'Learn more')
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  background: var(--kimi-brand-soft);
+  background: var(--omnicode-brand-soft);
   font-size: 22px;
   margin-bottom: 18px;
 }
 
-.KimiFeatures__title {
+.OmnicodeFeatures__title {
   position: relative;
   z-index: 1;
   font-size: 18px;
@@ -291,7 +291,7 @@ const ctaText = computed(() => isZh.value ? '了解' : 'Learn more')
   color: var(--vp-c-text-1);
 }
 
-.KimiFeatures__desc {
+.OmnicodeFeatures__desc {
   position: relative;
   z-index: 1;
   font-size: 14.5px;
@@ -300,7 +300,7 @@ const ctaText = computed(() => isZh.value ? '了解' : 'Learn more')
   margin: 0 0 20px;
 }
 
-.KimiFeatures__cta {
+.OmnicodeFeatures__cta {
   position: relative;
   z-index: 1;
   display: inline-flex;
@@ -310,10 +310,10 @@ const ctaText = computed(() => isZh.value ? '了解' : 'Learn more')
   font-weight: 600;
   color: var(--vp-c-brand-1);
   margin-top: auto;
-  transition: transform var(--kimi-transition);
+  transition: transform var(--omnicode-transition);
 }
 
-.KimiFeatures__card:hover .KimiFeatures__cta {
+.OmnicodeFeatures__card:hover .OmnicodeFeatures__cta {
   transform: translateX(3px);
 }
 </style>

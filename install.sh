@@ -1,32 +1,31 @@
 #!/usr/bin/env bash
 #
-# Installer for the lacrous fork of Kimi Code CLI (@lacrous/kimi-code).
+# Installer for Omnicode CLI (@hilbras/omnicode).
 #
 # Installs the published npm package into a self-contained prefix and exposes
-# it as the `lacrous-kimi` command, so it never collides with a `kimi` already
-# on PATH (upstream's CLI, or a prebuilt native binary).
+# it as the `omnicode` command.
 #
 # Usage:
 #   ./install.sh
-#   ./install.sh --version 2.2.0-lacrous.0
-#   ./install.sh --prefix "$HOME/.local/share/lacrous-kimi"
+#   ./install.sh --version 3.7.0
+#   ./install.sh --prefix "$HOME/.local/share/omnicode"
 #   ./install.sh --bin-dir /usr/local/bin
 #
 # Optional env (flags win when both are given):
-#   KIMI_VERSION            npm version to install (default: latest)
-#   LACROUS_PREFIX          install prefix (default: ~/.local/share/lacrous-kimi)
-#   LACROUS_BIN_DIR         directory for the `lacrous-kimi` launcher (default: ~/.local/bin)
-#   LACROUS_NO_MODIFY_PATH  skip PATH modification when non-empty
+#   OMNICODE_VERSION            npm version to install (default: latest)
+#   OMNICODE_PREFIX         install prefix (default: ~/.local/share/omnicode)
+#   OMNICODE_BIN_DIR        directory for the `omnicode` launcher (default: ~/.local/bin)
+#   OMNICODE_NO_MODIFY_PATH skip PATH modification when non-empty
 
 set -euo pipefail
 
-readonly PACKAGE="@lacrous/kimi-code"
-readonly SHORTCUT="lacrous-kimi"
+readonly PACKAGE="@hilbras/omnicode"
+readonly SHORTCUT="omnicode"
 
-KIMI_VERSION="${KIMI_VERSION:-}"
-LACROUS_PREFIX="${LACROUS_PREFIX:-$HOME/.local/share/lacrous-kimi}"
-LACROUS_BIN_DIR="${LACROUS_BIN_DIR:-$HOME/.local/bin}"
-LACROUS_NO_MODIFY_PATH="${LACROUS_NO_MODIFY_PATH:-}"
+OMNICODE_VERSION="${OMNICODE_VERSION:-}"
+OMNICODE_PREFIX="${OMNICODE_PREFIX:-$HOME/.local/share/omnicode}"
+OMNICODE_BIN_DIR="${OMNICODE_BIN_DIR:-$HOME/.local/bin}"
+OMNICODE_NO_MODIFY_PATH="${OMNICODE_NO_MODIFY_PATH:-}"
 
 # Populated by the helpers below.
 NODE_BIN=""
@@ -61,22 +60,22 @@ _err() {
 
 _usage() {
   cat <<'EOF'
-Install the lacrous fork of Kimi Code CLI (@lacrous/kimi-code).
+Install Omnicode CLI (@hilbras/omnicode).
 
 Usage:
   ./install.sh [options]
 
 Options:
   --version VERSION    npm version to install (default: latest)
-  --prefix DIR         install prefix (default: ~/.local/share/lacrous-kimi)
-  --bin-dir DIR        directory for the `lacrous-kimi` launcher (default: ~/.local/bin)
+  --prefix DIR         install prefix (default: ~/.local/share/omnicode)
+  --bin-dir DIR        directory for the `omnicode` launcher (default: ~/.local/bin)
   -h, --help           show this help
 
 Environment:
-  KIMI_VERSION            same as --version
-  LACROUS_PREFIX          same as --prefix
-  LACROUS_BIN_DIR         same as --bin-dir
-  LACROUS_NO_MODIFY_PATH  skip PATH modification when set
+  OMNICODE_VERSION            same as --version
+  OMNICODE_PREFIX         same as --prefix
+  OMNICODE_BIN_DIR        same as --bin-dir
+  OMNICODE_NO_MODIFY_PATH skip PATH modification when set
 EOF
 }
 
@@ -89,32 +88,32 @@ _parse_args() {
         ;;
       --version)
         [ -n "${2:-}" ] || _err "--version requires a value"
-        KIMI_VERSION="$2"
+        OMNICODE_VERSION="$2"
         shift 2
         ;;
       --version=*)
-        KIMI_VERSION="${1#--version=}"
-        [ -n "$KIMI_VERSION" ] || _err "--version requires a value"
+        OMNICODE_VERSION="${1#--version=}"
+        [ -n "$OMNICODE_VERSION" ] || _err "--version requires a value"
         shift
         ;;
       --prefix)
         [ -n "${2:-}" ] || _err "--prefix requires a value"
-        LACROUS_PREFIX="$2"
+        OMNICODE_PREFIX="$2"
         shift 2
         ;;
       --prefix=*)
-        LACROUS_PREFIX="${1#--prefix=}"
-        [ -n "$LACROUS_PREFIX" ] || _err "--prefix requires a value"
+        OMNICODE_PREFIX="${1#--prefix=}"
+        [ -n "$OMNICODE_PREFIX" ] || _err "--prefix requires a value"
         shift
         ;;
       --bin-dir)
         [ -n "${2:-}" ] || _err "--bin-dir requires a value"
-        LACROUS_BIN_DIR="$2"
+        OMNICODE_BIN_DIR="$2"
         shift 2
         ;;
       --bin-dir=*)
-        LACROUS_BIN_DIR="${1#--bin-dir=}"
-        [ -n "$LACROUS_BIN_DIR" ] || _err "--bin-dir requires a value"
+        OMNICODE_BIN_DIR="${1#--bin-dir=}"
+        [ -n "$OMNICODE_BIN_DIR" ] || _err "--bin-dir requires a value"
         shift
         ;;
       -*)
@@ -139,15 +138,15 @@ _detect_platform() {
 }
 
 _require_node() {
-  _have node || _err "Node.js is required but was not found on PATH. Install Node.js >= 22.19.0 first."
+  _have node || _err "Node.js is required but was not found on PATH. Install Node.js >= 24.15.0 first."
   NODE_BIN="$(command -v node)"
 
   local major minor
   major="$("$NODE_BIN" -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)"
   minor="$("$NODE_BIN" -p 'process.versions.node.split(".")[1]' 2>/dev/null || echo 0)"
 
-  if [ "$major" -lt 22 ] || { [ "$major" -eq 22 ] && [ "$minor" -lt 19 ]; }; then
-    _err "Node.js >= 22.19.0 is required (found $("$NODE_BIN" --version)). Install a newer Node.js first."
+  if [ "$major" -lt 24 ] || { [ "$major" -eq 24 ] && [ "$minor" -lt 15 ]; }; then
+    _err "Node.js >= 24.15.0 is required (found $("$NODE_BIN" --version)). Install a newer Node.js first."
   fi
   _log "Using Node.js $("$NODE_BIN" --version) at $NODE_BIN"
 }
@@ -164,40 +163,40 @@ _choose_installer() {
 
 _resolve_entry() {
   local candidate
-  candidate="$LACROUS_PREFIX/lib/node_modules/@lacrous/kimi-code/dist/main.mjs"
+  candidate="$OMNICODE_PREFIX/lib/node_modules/@hilbras/omnicode/dist/main.mjs"
   [ -f "$candidate" ] || _err "installed entry point not found at $candidate"
   ENTRY="$candidate"
 }
 
 _install_package() {
   local installer="$1" pkg_target
-  if [ -n "$KIMI_VERSION" ]; then
-    pkg_target="${PACKAGE}@${KIMI_VERSION}"
+  if [ -n "$OMNICODE_VERSION" ]; then
+    pkg_target="${PACKAGE}@${OMNICODE_VERSION}"
   else
     pkg_target="${PACKAGE}@latest"
   fi
-  _log "Installing ${pkg_target} into ${LACROUS_PREFIX}/lib (via ${installer})"
-  mkdir -p "$LACROUS_PREFIX/lib"
+  _log "Installing ${pkg_target} into ${OMNICODE_PREFIX}/lib (via ${installer})"
+  mkdir -p "$OMNICODE_PREFIX/lib"
   case "$installer" in
     npm)
-      npm_config_update_notifier=false npm install --prefix "$LACROUS_PREFIX/lib" \
+      npm_config_update_notifier=false npm install --prefix "$OMNICODE_PREFIX/lib" \
         --no-save --no-fund --no-audit --prefer-offline --loglevel=error "$pkg_target" \
         || _err "npm install failed for ${pkg_target}"
       ;;
     pnpm)
-      if [ ! -f "$LACROUS_PREFIX/lib/package.json" ]; then
-        printf '{ "name": "lacrous-kimi-prefix", "private": true }\n' \
-          > "$LACROUS_PREFIX/lib/package.json"
+      if [ ! -f "$OMNICODE_PREFIX/lib/package.json" ]; then
+        printf '{ "name": "omnicode-prefix", "private": true }\n' \
+          > "$OMNICODE_PREFIX/lib/package.json"
       fi
-      pnpm add --dir "$LACROUS_PREFIX/lib" --ignore-workspace "$pkg_target" \
+      pnpm add --dir "$OMNICODE_PREFIX/lib" --ignore-workspace "$pkg_target" \
         || _err "pnpm add failed for ${pkg_target}"
       ;;
   esac
 }
 
 _write_launcher() {
-  mkdir -p "$LACROUS_BIN_DIR"
-  local launcher="${LACROUS_BIN_DIR}/${SHORTCUT}"
+  mkdir -p "$OMNICODE_BIN_DIR"
+  local launcher="${OMNICODE_BIN_DIR}/${SHORTCUT}"
   cat > "$launcher" <<EOF
 #!/bin/sh
 exec "${NODE_BIN}" "${ENTRY}" "\$@"
@@ -218,12 +217,12 @@ _path_contains() {
 }
 
 _update_path() {
-  if _path_contains "$LACROUS_BIN_DIR"; then
+  if _path_contains "$OMNICODE_BIN_DIR"; then
     IS_BIN_ON_PATH=1
     return
   fi
   IS_BIN_ON_PATH=0
-  if [ -n "$LACROUS_NO_MODIFY_PATH" ]; then
+  if [ -n "$OMNICODE_NO_MODIFY_PATH" ]; then
     return
   fi
 
@@ -250,24 +249,24 @@ _update_path() {
     rc="$HOME/.profile"
   fi
 
-  local guard="# added by the lacrous kimi installer"
+  local guard="# added by the omnicode installer"
   if grep -qF "$guard" "$rc" 2>/dev/null; then
-    _log "${LACROUS_BIN_DIR} already referenced in ${rc}; leaving it untouched"
+    _log "${OMNICODE_BIN_DIR} already referenced in ${rc}; leaving it untouched"
     return
   fi
 
   mkdir -p "$(dirname "$rc")"
   if [ "$shell_name" = "fish" ]; then
-    printf '\n%s\nset -gx PATH %s $PATH\n' "$guard" "$LACROUS_BIN_DIR" >> "$rc"
+    printf '\n%s\nset -gx PATH %s $PATH\n' "$guard" "$OMNICODE_BIN_DIR" >> "$rc"
   else
-    printf '\n%s\nexport PATH="%s:$PATH"\n' "$guard" "$LACROUS_BIN_DIR" >> "$rc"
+    printf '\n%s\nexport PATH="%s:$PATH"\n' "$guard" "$OMNICODE_BIN_DIR" >> "$rc"
   fi
   PATH_UPDATED_RC="$rc"
-  _log "Added ${LACROUS_BIN_DIR} to PATH in ${rc}"
+  _log "Added ${OMNICODE_BIN_DIR} to PATH in ${rc}"
 }
 
 _verify() {
-  local launcher="${LACROUS_BIN_DIR}/${SHORTCUT}" out=""
+  local launcher="${OMNICODE_BIN_DIR}/${SHORTCUT}" out=""
   [ -x "$launcher" ] || _err "launcher not found at ${launcher}"
 
   if out="$("$launcher" --version 2>&1)"; then
@@ -298,8 +297,8 @@ main() {
     if [ -n "$PATH_UPDATED_RC" ]; then
       _log "If ${SHORTCUT} is not found, restart your shell or run: source ${PATH_UPDATED_RC}"
     else
-      _warn "${LACROUS_BIN_DIR} is not on your PATH. Add it, then run: ${SHORTCUT}"
-      printf '    export PATH="%s:$PATH"\n' "$LACROUS_BIN_DIR" >&2
+      _warn "${OMNICODE_BIN_DIR} is not on your PATH. Add it, then run: ${SHORTCUT}"
+      printf '    export PATH="%s:$PATH"\n' "$OMNICODE_BIN_DIR" >&2
     fi
   fi
 }

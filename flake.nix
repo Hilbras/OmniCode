@@ -1,10 +1,10 @@
 {
-  description = "Lacrous Kimi Code CLI";
+  description = "Omnicode CLI";
 
   inputs = {
     # Pinned to the 25.11 release channel because nixpkgs-unstable currently
     # ships nodejs_24 = 24.14.1, which trips the >= 24.15.0 floor that the
-    # native SEA build enforces (see apps/kimi-code/scripts/native/build.mjs).
+    # native SEA build enforces (see apps/omnicode/scripts/native/build.mjs).
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-25.11";
   };
 
@@ -42,7 +42,7 @@
           node
         else
           throw ''
-            Lacrous Kimi Code requires Node.js >= ${minNodeVersion},
+            Omnicode requires Node.js >= ${minNodeVersion},
             but nixpkgs only offers ${node.version}.
             Pin a newer nixpkgs revision or update minNodeVersion in flake.nix.
           '';
@@ -62,53 +62,50 @@
       # pnpmConfigHook (dependencies for that workspace won't be fetched).
       # -------------------------------------------------------------------
       workspacePaths = [
-        ./packages/acp-server
-        ./packages/agent-core-v2
-        ./packages/kap-server
-        ./packages/kaos
-        ./packages/klient
-        ./packages/kosong
-        ./packages/migration-legacy
-        ./packages/minidb
-        ./packages/node-sdk
-        ./packages/oauth
-        ./packages/pi-tui
-        ./packages/remote-control
-        ./packages/telemetry
-        ./packages/transcript
-        ./packages/tree-sitter-bash
-        ./apps/kimi-code
-        ./apps/vscode
-        ./apps/kimi-inspect
-        ./apps/vis
-        ./apps/vis/server
-        ./apps/vis/web
+        ./packages/omnicode-acp
+        ./packages/omnicode-core
+        ./packages/omnicode-server
+        ./packages/omnicode-kaos
+        ./packages/omnicode-client
+        ./packages/omnicode-llm
+        ./packages/omnicode-migration
+        ./packages/omnicode-minidb
+        ./packages/omnicode-remote
+        ./packages/omnicode-auth
+        ./packages/omnicode-tui
+        ./packages/omnicode-telemetry
+        ./packages/omnicode-transcript
+        ./packages/omnicode-tree-sitter-bash
+        ./apps/omnicode
+        ./apps/omnicode-inspect
+        ./apps/omnicode-vis
+        ./apps/omnicode-vis/server
+        ./apps/omnicode-vis/web
         ./docs
       ];
 
       workspaceNames = [
-        "@moonshot-ai/acp-server"
-        "@moonshot-ai/agent-core-v2"
-        "@moonshot-ai/kap-server"
-        "@moonshot-ai/kaos"
-        "@moonshot-ai/kosong"
-        "@moonshot-ai/migration-legacy"
-        "@moonshot-ai/minidb"
-        "@moonshot-ai/kimi-code-sdk"
-        "@moonshot-ai/kimi-code-oauth"
-        "@moonshot-ai/klient"
-        "@moonshot-ai/pi-tui"
-        "@moonshot-ai/remote-control"
-        "@moonshot-ai/kimi-telemetry"
-        "@moonshot-ai/transcript"
-        "@moonshot-ai/tree-sitter-bash"
-        "@lacrous/kimi-code"
-        "kimi-code"
-        "@moonshot-ai/kimi-inspect"
-        "@moonshot-ai/vis"
-        "@moonshot-ai/vis-server"
-        "@moonshot-ai/vis-web"
-        "kimi-code-docs"
+        "@hilbras/omnicode-acp"
+        "@hilbras/omnicode-core"
+        "@hilbras/omnicode-server"
+        "@hilbras/omnicode-kaos"
+        "@hilbras/omnicode-client"
+        "@hilbras/omnicode-llm"
+        "@hilbras/omnicode-migration"
+        "@hilbras/omnicode-minidb"
+        "@hilbras/omnicode-remote"
+        "@hilbras/omnicode-auth"
+        "@hilbras/omnicode-tui"
+        "@hilbras/omnicode-telemetry"
+        "@hilbras/omnicode-transcript"
+        "@hilbras/omnicode-tree-sitter-bash"
+        "@hilbras/omnicode"
+        "omnicode"
+        "@hilbras/omnicode-inspect"
+        "@hilbras/omnicode-vis"
+        "@hilbras/omnicode-vis-server"
+        "@hilbras/omnicode-vis-web"
+        "omnicode-docs"
       ];
     in
     {
@@ -117,7 +114,7 @@
         let
           nodejs = nodejsFor pkgs;
           pnpm = pnpmFor pkgs;
-          appPackageJson = builtins.fromJSON (builtins.readFile ./apps/kimi-code/package.json);
+          appPackageJson = builtins.fromJSON (builtins.readFile ./apps/omnicode/package.json);
           nativeTarget =
             if pkgs.stdenv.hostPlatform.isLinux && pkgs.stdenv.hostPlatform.isAarch64 then
               "linux-arm64"
@@ -128,10 +125,10 @@
             else if pkgs.stdenv.hostPlatform.isDarwin then
               "darwin-x64"
             else
-              throw "Unsupported Lacrous Kimi Code native target for ${pkgs.stdenv.hostPlatform.system}";
+              throw "Unsupported Omnicode native target for ${pkgs.stdenv.hostPlatform.system}";
 
-          kimi-code = pkgs.stdenv.mkDerivation (finalAttrs: {
-            pname = "kimi-code";
+          omnicode = pkgs.stdenv.mkDerivation (finalAttrs: {
+            pname = "omnicode";
             version = appPackageJson.version;
 
             src = lib.fileset.toSource {
@@ -184,24 +181,24 @@
 
             buildPhase = ''
               runHook preBuild
-              export KIMI_CODE_BUILD_TARGET=${nativeTarget}
+              export OMNICODE_BUILD_TARGET=${nativeTarget}
               ${lib.optionalString pkgs.stdenv.hostPlatform.isDarwin ''
                 # pkgs.darwin.sigtool's codesign supports `--sign -` (ad-hoc)
                 # but not the inspection mode (`-dv`) that 05-verify.mjs runs
                 # afterwards. Disable the verify step for the Nix build; the
                 # release CI keeps it via the unmodified script.
-                substituteInPlace apps/kimi-code/scripts/native/build.mjs \
+                substituteInPlace apps/omnicode/scripts/native/build.mjs \
                   --replace-fail \
                     "await runVerifyStep({ requireGatekeeper: false });" \
                     "// runVerifyStep skipped in nix sandbox (sigtool lacks -dv)"
               ''}
               # The SEA blob step (scripts/native/02-sea-blob.mjs) embeds the
-              # Kimi web assets from apps/kimi-code/dist-web and fails if that
+              # Omnicode web assets from apps/omnicode/dist-web and fails if that
               # directory is missing. The bundle is committed (synced from the
               # code-app repo) — verify it is in place before producing the
               # native executable.
-              node apps/kimi-code/scripts/check-web-assets.mjs
-              pnpm --filter=@lacrous/kimi-code run build:native:sea
+              node apps/omnicode/scripts/check-web-assets.mjs
+              pnpm --filter=@hilbras/omnicode run build:native:sea
               runHook postBuild
             '';
 
@@ -209,37 +206,37 @@
               runHook preInstall
 
               install -Dm755 \
-                "apps/kimi-code/dist-native/bin/${nativeTarget}/kimi" \
-                "$out/bin/kimi"
+                "apps/omnicode/dist-native/bin/${nativeTarget}/omnicode" \
+                "$out/bin/omnicode"
 
               runHook postInstall
             '';
 
             postInstall = ''
-              wrapProgram $out/bin/kimi --prefix PATH : ${lib.makeBinPath [ pkgs.ripgrep pkgs.fd ]}
+              wrapProgram $out/bin/omnicode --prefix PATH : ${lib.makeBinPath [ pkgs.ripgrep pkgs.fd ]}
             '';
 
             meta = {
-              description = "Lacrous Kimi Code CLI";
-              homepage = "https://github.com/MoonshotAI/kimi-code";
+              description = "Omnicode CLI";
+              homepage = "https://github.com/Hilbras/omnicode";
               license = lib.licenses.mit;
-              mainProgram = "kimi";
+              mainProgram = "omnicode";
               platforms = systems;
             };
           });
         in
         {
-          inherit kimi-code;
-          default = kimi-code;
+          inherit omnicode;
+          default = omnicode;
         }
       );
 
       apps = forAllSystems (pkgs: {
-        kimi-code = {
+        omnicode = {
           type = "app";
-          program = "${self.packages.${pkgs.system}.kimi-code}/bin/kimi";
+          program = "${self.packages.${pkgs.system}.omnicode}/bin/omnicode";
         };
-        default = self.apps.${pkgs.system}.kimi-code;
+        default = self.apps.${pkgs.system}.omnicode;
       });
 
       devShells = forAllSystems (pkgs: {

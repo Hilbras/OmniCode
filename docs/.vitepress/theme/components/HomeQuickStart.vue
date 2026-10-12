@@ -5,14 +5,14 @@ import { computed, ref } from 'vue'
 const { lang } = useData()
 const isZh = computed(() => lang.value.startsWith('zh'))
 
-const installMacCommand = 'curl -fsSL https://code.kimi.com/kimi-code/install.sh | bash'
-const installWinCommand = 'irm https://code.kimi.com/kimi-code/install.ps1 | iex'
-const runCommand = 'kimi'
+const installMacCommand = 'npm install -g @hilbras/omnicode'
+const installWinCommand = 'npm install -g @hilbras/omnicode'
+const runCommand = 'omnicode'
 
 const copy = computed(() => isZh.value
   ? {
       title: '一行命令开始',
-      lede: '装好之后跑 kimi，立刻在你当前的项目里开聊。',
+      lede: '装好之后跑 omnicode，立刻在你当前的项目里开聊。',
       macLabel: 'macOS / Linux',
       winLabel: 'Windows (PowerShell)',
       runLabel: '在任意目录运行',
@@ -23,7 +23,7 @@ const copy = computed(() => isZh.value
     }
   : {
       title: 'Get started in one line',
-      lede: 'Once installed, run kimi inside any project to start a conversation.',
+      lede: 'Once installed, run omnicode inside any project to start a conversation.',
       macLabel: 'macOS / Linux',
       winLabel: 'Windows (PowerShell)',
       runLabel: 'Run anywhere',
@@ -47,18 +47,18 @@ function copyText(value: string, key: string) {
 </script>
 
 <template>
-  <section class="KimiHome__section KimiQuick">
-    <h2 class="KimiHome__sectionTitle">{{ copy.title }}</h2>
-    <p class="KimiHome__sectionLede">{{ copy.lede }}</p>
+  <section class="OmnicodeHome__section OmnicodeQuick">
+    <h2 class="OmnicodeHome__sectionTitle">{{ copy.title }}</h2>
+    <p class="OmnicodeHome__sectionLede">{{ copy.lede }}</p>
 
-    <div class="KimiQuick__installs">
-      <div class="KimiQuick__block">
-        <div class="KimiQuick__label">{{ copy.macLabel }}</div>
-        <div class="KimiQuick__cmd">
-          <code><span class="KimiQuick__prompt">$</span> {{ installMacCommand }}</code>
+    <div class="OmnicodeQuick__installs">
+      <div class="OmnicodeQuick__block">
+        <div class="OmnicodeQuick__label">{{ copy.macLabel }}</div>
+        <div class="OmnicodeQuick__cmd">
+          <code><span class="OmnicodeQuick__prompt">$</span> {{ installMacCommand }}</code>
           <button
             type="button"
-            class="KimiQuick__copy"
+            class="OmnicodeQuick__copy"
             @click="copyText(installMacCommand, 'mac')"
             :aria-label="copy.copyHint"
           >
@@ -68,13 +68,13 @@ function copyText(value: string, key: string) {
         </div>
       </div>
 
-      <div class="KimiQuick__block">
-        <div class="KimiQuick__label">{{ copy.winLabel }}</div>
-        <div class="KimiQuick__cmd">
-          <code><span class="KimiQuick__prompt">PS&gt;</span> {{ installWinCommand }}</code>
+      <div class="OmnicodeQuick__block">
+        <div class="OmnicodeQuick__label">{{ copy.winLabel }}</div>
+        <div class="OmnicodeQuick__cmd">
+          <code><span class="OmnicodeQuick__prompt">PS&gt;</span> {{ installWinCommand }}</code>
           <button
             type="button"
-            class="KimiQuick__copy"
+            class="OmnicodeQuick__copy"
             @click="copyText(installWinCommand, 'win')"
             :aria-label="copy.copyHint"
           >
@@ -85,13 +85,13 @@ function copyText(value: string, key: string) {
       </div>
     </div>
 
-    <div class="KimiQuick__block KimiQuick__block--run">
-      <div class="KimiQuick__label">{{ copy.runLabel }}</div>
-      <div class="KimiQuick__cmd">
-        <code><span class="KimiQuick__prompt">$</span> {{ runCommand }}</code>
+    <div class="OmnicodeQuick__block OmnicodeQuick__block--run">
+      <div class="OmnicodeQuick__label">{{ copy.runLabel }}</div>
+      <div class="OmnicodeQuick__cmd">
+        <code><span class="OmnicodeQuick__prompt">$</span> {{ runCommand }}</code>
         <button
           type="button"
-          class="KimiQuick__copy"
+          class="OmnicodeQuick__copy"
           @click="copyText(runCommand, 'run')"
           :aria-label="copy.copyHint"
         >
@@ -101,7 +101,7 @@ function copyText(value: string, key: string) {
       </div>
     </div>
 
-    <a class="KimiQuick__more" :href="withBase(copy.ctaHref)">
+    <a class="OmnicodeQuick__more" :href="withBase(copy.ctaHref)">
       {{ copy.ctaText }}
       <svg width="14" height="14" viewBox="0 0 16 16" fill="none" aria-hidden="true">
         <path d="M6 3l5 5-5 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
@@ -111,24 +111,24 @@ function copyText(value: string, key: string) {
 </template>
 
 <style scoped>
-.KimiQuick__installs {
+.OmnicodeQuick__installs {
   display: flex;
   flex-direction: column;
   gap: 16px;
   margin-bottom: 16px;
 }
 
-.KimiQuick__block {
+.OmnicodeQuick__block {
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.KimiQuick__block--run {
+.OmnicodeQuick__block--run {
   margin-bottom: 28px;
 }
 
-.KimiQuick__label {
+.OmnicodeQuick__label {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -136,26 +136,26 @@ function copyText(value: string, key: string) {
   color: var(--vp-c-text-3);
 }
 
-.KimiQuick__cmd {
+.OmnicodeQuick__cmd {
   position: relative;
   display: flex;
   align-items: center;
   padding: 18px 22px;
   background: var(--vp-c-bg-soft);
   border: 1px solid var(--vp-c-divider);
-  border-radius: var(--kimi-radius-code);
+  border-radius: var(--omnicode-radius-code);
   font-family: var(--vp-font-family-mono);
   font-size: 14.5px;
   line-height: 1.4;
   color: var(--vp-c-text-1);
   overflow: hidden;
-  transition: border-color var(--kimi-transition), box-shadow var(--kimi-transition);
+  transition: border-color var(--omnicode-transition), box-shadow var(--omnicode-transition);
 }
-.KimiQuick__cmd:hover {
+.OmnicodeQuick__cmd:hover {
   border-color: var(--vp-c-brand-1);
   box-shadow: var(--vp-shadow-2);
 }
-.KimiQuick__cmd code {
+.OmnicodeQuick__cmd code {
   flex: 1;
   white-space: pre;
   overflow-x: auto;
@@ -166,14 +166,14 @@ function copyText(value: string, key: string) {
   font-family: inherit;
   border-radius: 0;
 }
-.KimiQuick__prompt {
+.OmnicodeQuick__prompt {
   color: var(--vp-c-brand-1);
   margin-right: 8px;
   user-select: none;
   font-weight: 600;
 }
 
-.KimiQuick__copy {
+.OmnicodeQuick__copy {
   flex: none;
   margin-left: 12px;
   padding: 6px 12px;
@@ -186,14 +186,14 @@ function copyText(value: string, key: string) {
   border: 1px solid var(--vp-c-divider);
   border-radius: 8px;
   cursor: pointer;
-  transition: color var(--kimi-transition), border-color var(--kimi-transition), background var(--kimi-transition);
+  transition: color var(--omnicode-transition), border-color var(--omnicode-transition), background var(--omnicode-transition);
 }
-.KimiQuick__copy:hover {
+.OmnicodeQuick__copy:hover {
   color: var(--vp-c-brand-1);
   border-color: var(--vp-c-brand-1);
 }
 
-.KimiQuick__more {
+.OmnicodeQuick__more {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -201,9 +201,9 @@ function copyText(value: string, key: string) {
   font-weight: 600;
   color: var(--vp-c-brand-1);
   text-decoration: none;
-  transition: transform var(--kimi-transition), color var(--kimi-transition);
+  transition: transform var(--omnicode-transition), color var(--omnicode-transition);
 }
-.KimiQuick__more:hover {
+.OmnicodeQuick__more:hover {
   color: var(--vp-c-brand-2);
   transform: translateX(3px);
 }

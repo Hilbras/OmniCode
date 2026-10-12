@@ -1,6 +1,6 @@
 # Keyboard Shortcuts
 
-Lacrous Kimi Code CLI's TUI interactive mode supports a set of keyboard shortcuts. The shortcuts are organized into five groups by usage context: general input, mode switching, during streaming, tool output control, the approval panel, and popup navigation. Type `/help` in the TUI at any time to open the built-in shortcut reference.
+Omnicode CLI's TUI interactive mode supports a set of keyboard shortcuts. The shortcuts are organized into five groups by usage context: general input, mode switching, during streaming, tool output control, the approval panel, and popup navigation. Type `/help` in the TUI at any time to open the built-in shortcut reference.
 
 ## General Shortcuts
 
@@ -13,7 +13,7 @@ The following keys are always available in the input box:
 | `↑` / `↓` | Browse input history |
 | `Esc` | Close a popup / cancel completion / interrupt streaming output or context compaction |
 | `Ctrl-C` | Interrupt the current streaming output, or clear the input box |
-| `Ctrl-D` | Exit Lacrous Kimi Code CLI when the input box is empty |
+| `Ctrl-D` | Exit Omnicode CLI when the input box is empty |
 | `Ctrl-T` | Expand or collapse the todo list when it is truncated |
 | `Ctrl-P` | Previous page in the experimental `Updates` panel when it has multiple pages |
 | `Ctrl-N` | Next page in the experimental `Updates` panel when it has multiple pages |
@@ -101,4 +101,4 @@ After opening the help panel with `/help`, use the following keys to navigate an
 ## Next steps
 
 - [Slash Commands](./slash-commands.md) — Quick reference for built-in TUI control commands
-- [`kimi` Command](./kimi-command.md) — Complete reference for startup flags and subcommands
+- [`omnicode` Command](./omnicode-command.md) — Complete reference for startup flags and subcommands

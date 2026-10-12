@@ -1,6 +1,6 @@
 # Computer control
 
-Author: lacrous.
+Author: Hilbras.
 
 `packages/agent-core-v2/src/features/computerUse/` adds the `ComputerController`
 seam: a platform-independent interface for seeing and operating a machine, with
@@ -44,7 +44,7 @@ above it.
 | `observation.ts` | Failure classes, `observationPolicy`, `LoopDetector`, `ComputerState` |
 | `computerUseService.ts` | DI service; owns the controller and the media handoff |
 | `computerUseFeature.ts` | Feature registration, gated on the experimental flag |
-| `flag.ts` | `KIMI_CODE_EXPERIMENTAL_COMPUTER_USE` |
+| `flag.ts` | `OMNICODE_EXPERIMENTAL_COMPUTER_USE` |
 | `tools/computer-use.ts` | zod schemas and tool service identifiers |
 | `tools/computerUseTools.ts` | The five tools |
 
@@ -99,7 +99,7 @@ so failures and navigations always earn one and typing does not.
 
 Verified on the dev machine (Ubuntu 26.04.1, display `:0`) with `xdotool`,
 `wmctrl` and ImageMagick installed to a user-local prefix
-(`~/.local/opt/kimi-computer-tools`) — this account has the `sudo` group but
+(`~/.local/opt/omnicode-computer-tools`) — this account has the `sudo` group but
 `sudo` requires a password, and asking for one is not acceptable, so the
 packages were fetched with `apt-get download` and extracted with `dpkg-deb -x`.
 
@@ -136,7 +136,7 @@ Off by default. The feature is assembled only when the flag is on, so a machine
 with no display pays nothing:
 
 ```sh
-KIMI_CODE_EXPERIMENTAL_COMPUTER_USE=1 kimi
+OMNICODE_EXPERIMENTAL_COMPUTER_USE=1 omnicode
 ```
 
 Tools: `ComputerScreenshot`, `ComputerClick`, `ComputerType`, `ComputerKey`,

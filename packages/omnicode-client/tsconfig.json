@@ -1,0 +1,4 @@
+{
+  "extends": "../../tsconfig.json",
+  "include": ["src", "test", "scenarios", "scripts", "../omnicode-core/src/env.d.ts"]
+}

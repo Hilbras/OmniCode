@@ -1,0 +1,34 @@
+{
+  "name": "@hilbras/omnicode-migration",
+  "version": "0.1.18",
+  "description": "Migrate omnicode-cli (~/.omnicode/) data into omnicode (~/.omnicode/).",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "files": [
+    "dist"
+  ],
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hilbras/omnicode-core": "workspace:^",
+    "smol-toml": "^1.6.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@hilbras/omnicode-transcript": "workspace:^"
+  }
+}
