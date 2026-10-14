@@ -11,8 +11,7 @@ Everything in this repository that is not listed under "Changes made after the u
 work, Copyright (c) 2026 Hilbras, and remains under the MIT License in [LICENSE](LICENSE).
 This project is based on upstream commit `21406fb4c` (omnicode 2.1.1).
 
-Upstream documentation, issue tracker and the maintained, signed release channel all live in
-that repository — see the [README](README.md#provenance) for links.
+Project and release details live in the [README](README.md#project).
 
 ## Changes made after the upstream base
 

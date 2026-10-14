@@ -4,13 +4,8 @@
 
 [![npm](https://img.shields.io/npm/v/@hilbras/omnicode)](https://www.npmjs.com/package/@hilbras/omnicode) [![License](https://img.shields.io/badge/license-MIT-blue)](LICENSE)  [![Docs](https://img.shields.io/badge/docs-online-blue)](https://hilbras.github.io/omnicode/en/)
 
-> Omnicode is maintained by Hilbras. Source: [hilbras/omnicode](https://github.com/hilbras/omnicode).
+> Omnicode is maintained by Hilbras. Source: [Hilbras/OmniCode](https://github.com/Hilbras/OmniCode).
 > Published as [`@hilbras/omnicode`](https://www.npmjs.com/package/@hilbras/omnicode).
->
-> Notable changes from the original code base: model discovery for hand-written providers, 17
-> built-in vendor endpoints, `omnicode provider add-manual` / `add-builtin`, the
-> `/provider` built-in flow, and model-id search in the picker. Upstream's
-> release and publish workflows are maintained in this repository.
 >
 > Upgrade with `npm install -g @hilbras/omnicode@latest`.
 
@@ -19,11 +14,6 @@
 Omnicode CLI is an AI coding agent that runs in your terminal. It can read and edit code, run shell commands, search files, fetch web pages, and choose the next step based on the feedback it receives. It works out of the box with Hilbras's Omnicode models and can also be configured to use other compatible providers.
 
 ## Install
-
-This is a fork of [Hilbras/omnicode](https://github.com/Hilbras/omnicode) published
-under a different npm name. Install it from npm — the `install.sh` / `install.ps1` scripts
-linked below belong to the upstream project and install `@hilbras/omnicode`, not this
-package.
 
 ```sh
 npm install -g @hilbras/omnicode
@@ -45,7 +35,7 @@ Then run it with a new Terminal session:
 omnicode --version
 ```
 
-> Upstream's install scripts (for `@hilbras/omnicode`): macOS / Linux
+> Official install scripts: macOS / Linux
 > `curl -fsSL https://code.omnicode.com/omnicode/install.sh | bash`, Windows
 > `irm https://code.omnicode.com/omnicode/install.ps1 | iex`.
 
@@ -84,8 +74,8 @@ Take a look at this project and explain the main directories.
 
 ## Repository & Issues
 
-- Source: https://github.com/Hilbras/omnicode
-- Issues: https://github.com/Hilbras/omnicode/issues
+- Source: https://github.com/Hilbras/OmniCode
+- Issues: https://github.com/Hilbras/OmniCode/issues
 - Security: see SECURITY.md in the main repository
 
 ## License

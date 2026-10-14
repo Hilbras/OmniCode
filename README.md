@@ -4,37 +4,39 @@
 
 # Omnicode CLI
 
-**Bring-your-own-provider builds for Omnicode CLI.**
+**An AI coding agent that runs in your terminal — with any OpenAI-compatible endpoint as a
+first-class provider.**
 
-[![Upstream](https://img.shields.io/badge/upstream-Hilbras%2Fomnicode--code-8A8A8A?style=flat-square)](https://github.com/Hilbras/omnicode)
 [![License](https://img.shields.io/badge/license-MIT-C06014?style=flat-square)](LICENSE)
-[![Based on](https://img.shields.io/badge/based%20on-21406fb4c-8250DF?style=flat-square)](#provenance)
+[![Node](https://img.shields.io/badge/node-%E2%89%A524.15-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org)
+[![npm](https://img.shields.io/badge/npm-%40hilbras%2Fomnicode-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@hilbras/omnicode)
 
-Built on [Hilbras/omnicode](https://github.com/Hilbras/omnicode), focused on making
-**any OpenAI-compatible endpoint a first-class provider**, without a registry, without a
-catalog entry, and without hand-writing model metadata.
+Omnicode works against any provider you can point it at. No registry document, no catalog
+entry, no hand-written model metadata — you type the endpoint, it discovers the models itself.
 
 </div>
 
 ---
 
-## What this project changes
+## Adding a provider
 
-Upstream already supports importing providers from a **custom registry** (`api.json`) and from
-the public **models.dev catalog**. Both require a registry document to exist somewhere. This
-project adds the missing third path: **you type the endpoint, it discovers the models itself.**
+Omnicode can set up and manage providers from the CLI and from the TUI.
 
-| | Upstream | This project |
-|---|---|---|
-| Import from `api.json` registry | ✅ | ✅ |
-| Import from models.dev catalog | ✅ | ✅ |
-| **Add a provider by hand** (`--type` + `--base-url` + key) | ❌ | ✅ `omnicode provider add-manual` |
-| **Models auto-discovered from the endpoint** | ❌ | ✅ `GET {baseUrl}/models` |
-| **Built-in vendors** (17 — see the table below) | ❌ | ✅ `omnicode provider add-builtin <id>` |
-| **Change a provider's endpoint, protocol or key later** | ❌ | ✅ `omnicode provider edit <id>` |
-| **Pick a provider in the TUI** (`/provider` → Add provider) | ❌ | ✅ asks for the key, discovers models, picks a default |
+| What you want | How |
+|---|---|
+| Import every provider in a custom `api.json` registry | `omnicode provider add <url>` |
+| Import from the public models.dev catalog | `omnicode provider catalog add <id>` |
+| **Add a provider by hand** (`--type` + `--base-url` + key) | `omnicode provider add-manual` |
+| **Use one of the 17 built-in vendors** (see the table below) | `omnicode provider add-builtin <id>` |
+| **Change a provider's endpoint, protocol or key later** | `omnicode provider edit <id>` |
+| **Pick a provider in the TUI** (`/provider` → Add provider) | asks for the key, discovers the models, picks a default |
 
-The same flow is available in both places — `/provider` → **Add provider** → pick a
+The first two need a registry document to exist somewhere. The two `add` commands do not: for
+any provider with a declared `base_url`, no `oauth` reference and no registry `source`,
+Omnicode fetches `{base_url}/models` and writes one alias per model. **You type the endpoint,
+it discovers the models itself.**
+
+The same discovery flow is available in both places — `/provider` → **Add provider** → pick a
 vendor, or from the command line with `omnicode provider add-builtin <id>`.
 
 ### Built-in providers
@@ -195,14 +197,12 @@ Three details worth knowing:
 
 ## How discovery works
 
-Upstream's refresh orchestrator had four branches for maintaining a provider's model list:
-managed OAuth, first-party platforms, managed-endpoint API keys, and custom registries. A
-provider you typed in by hand matched none of them — `model_source = "discover"` existed in
-the config schema but no code path ever acted on it.
-
-This project adds a fifth branch. For any provider with a declared `base_url`, no `oauth`
-reference, and no registry `source`, it fetches `{base_url}/models` and writes one alias per
-model.
+The model refresh orchestrator has five branches for maintaining a provider's model list:
+managed OAuth, first-party platforms, managed-endpoint API keys, endpoint discovery, and
+custom registries. Endpoint discovery is the branch that handles a provider you typed in by
+hand — the other four only cover providers Omnicode already knows how to reach. For any
+provider with a declared `base_url`, no `oauth` reference, and no registry `source`, it
+fetches `{base_url}/models` and writes one alias per model.
 
 **Design decisions worth knowing:**
 
@@ -233,9 +233,10 @@ model.
 
 ## Install
 
-This project **publishes its CLI to npm** as
+The CLI is published to npm as
 [`@hilbras/omnicode`](https://www.npmjs.com/package/@hilbras/omnicode); the VS Code marketplace
-is not used. Publishing is done manually by the maintainers, not by an automated workflow. You can also build and run it from source:
+is not used. Publishing is done manually by the maintainers, not by an automated workflow.
+You can also build and run it from source:
 
 ```sh
 git clone https://github.com/hilbras/omnicode.git
@@ -245,9 +246,9 @@ pnpm build
 node apps/omnicode/dist/main.mjs --version
 ```
 
-> **Clone tip:** a default clone also pulls upstream's inherited
-> history (~90 MB). If you only want the code, not the 4,000-odd upstream commits, clone the
-> `lite` branch instead — same 4,426 files, single squashed commit, **~27 MB**:
+> **Clone tip:** a default clone pulls the full commit history, which is most of the clone
+> weight. If you only want the code, clone the `lite` branch instead — byte-identical files,
+> history squashed to a single commit and a much smaller download:
 >
 > ```sh
 > git clone --branch lite --single-branch https://github.com/hilbras/omnicode.git
@@ -379,10 +380,8 @@ pnpm run omnicode -- --version
 `pnpm run omnicode` uses `scripts/omnicode-dev.mjs`, which runs against an isolated
 `OMNICODE_HOME` so a development run never touches an installed `omnicode`'s
 configuration.
->
-> Both branches have byte-identical content; only the history differs.
 
-For the **official, signed release**, use upstream's installer:
+For the **official, signed release**, use the installer:
 
 ```sh
 curl -fsSL https://code.omnicode.com/omnicode/install.sh | bash
@@ -439,7 +438,7 @@ Run the provider tests specifically:
 
 ```sh
 npx vitest run apps/omnicode/test/cli/provider.test.ts
-npx vitest run packages/agent-core-v2/test/app/kosongConfig/discovery.test.ts
+npx vitest run packages/omnicode-core/test/app/kosongConfig/discovery.test.ts
 ```
 
 Architecture, coding rules, and contribution guidance live in [AGENTS.md](AGENTS.md) and
@@ -447,40 +446,21 @@ Architecture, coding rules, and contribution guidance live in [AGENTS.md](AGENTS
 
 ---
 
-## Provenance
+## Project
 
-This repository is built on **[Hilbras/omnicode](https://github.com/Hilbras/omnicode)**,
-an AI coding agent that runs in your terminal.
-
-- **Upstream:** Hilbras · MIT License · [upstream repo](https://github.com/Hilbras/omnicode) ·
-  [upstream issues](https://github.com/Hilbras/omnicode/issues)
 - **Maintained by:** Hilbras · <https://github.com/hilbras/omnicode>
-- **Upstream base commit:** `21406fb4c`
-- **Branches:** `main` (canonical, full history) · `lite` (same content, squashed to one commit,
-  ~70% smaller clone)
-- **Changes in this project:** model discovery for hand-written providers, 17 built-in vendors,
-  per-model wire overrides (`providers.<id>.protocolOverrides`), `omnicode provider add-manual`,
-  `omnicode provider add-builtin`, the `/provider` built-in flow, model-id search in the picker,
-  `pnpm run omnicode`, and removal of upstream's release/publish workflows. See
-  [CREDITS.md](CREDITS.md) for the per-file breakdown.
-
-All upstream code remains under the MIT License; see [LICENSE](LICENSE). Upstream
-documentation is at
-[hilbras.github.io/omnicode](https://hilbras.github.io/omnicode/en/).
-
-To pull upstream changes in, add the upstream remote and merge:
-
-```sh
-git remote add upstream https://github.com/Hilbras/omnicode.git
-git fetch upstream && git merge upstream/main
-```
+- **Branches:** `main` (canonical, full history) · `lite` (same content, squashed to a single
+  commit, much smaller clone)
+- **History and attribution:** Omnicode builds on prior work that remains under the MIT
+  License. [CREDITS.md](CREDITS.md) records the upstream base commit and a per-file breakdown
+  of what was added on top of it.
 
 ## Acknowledgements
 
 - **Hilbras** for Omnicode CLI, the foundation of this project.
-- [`pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui) — upstream's
-  TUI layer, used under its original license.
+- [`pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui) — the TUI
+  layer, used under its original license.
 
 ## License
 
-MIT, unchanged from upstream. Copyright (c) 2026 Hilbras. See [LICENSE](LICENSE).
+MIT. Copyright (c) 2026 Hilbras. See [LICENSE](LICENSE).
