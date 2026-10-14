@@ -32,8 +32,8 @@
   "dependencies": {
     "@fastify/multipart": "^10.0.0",
     "@fastify/swagger": "^9.7.0",
-    "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-auth": "workspace:^",
+    "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-minidb": "workspace:*",
     "@hilbras/omnicode-remote": "workspace:^",
     "@hilbras/omnicode-transcript": "workspace:^",

@@ -28,8 +28,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@hono/node-server": "^1.13.7",
     "@hilbras/omnicode-core": "workspace:^",
+    "@hono/node-server": "^1.13.7",
     "hono": "^4.7.7",
     "yauzl": "^3.3.0"
   },

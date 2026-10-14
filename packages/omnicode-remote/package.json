@@ -40,8 +40,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-auth": "workspace:^",
+    "@hilbras/omnicode-core": "workspace:^",
     "ws": "^8.18.0"
   },
   "devDependencies": {

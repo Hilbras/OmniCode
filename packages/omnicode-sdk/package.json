@@ -59,10 +59,10 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@hilbras/omnicode-core": "workspace:^",
-    "@hilbras/omnicode-kaos": "workspace:^",
     "@hilbras/omnicode-auth": "workspace:^",
     "@hilbras/omnicode-client": "workspace:^",
+    "@hilbras/omnicode-core": "workspace:^",
+    "@hilbras/omnicode-kaos": "workspace:^",
     "@hilbras/omnicode-llm": "workspace:^",
     "@types/yazl": "^2.4.6",
     "jimp": "^1.6.1"
