@@ -1,6 +1,11 @@
 import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
 import type { Event } from '#/_base/event';
-import type { HookBlockDecision, HookMatcherValue, HookResult } from '../internal/types';
+import type {
+  HookBlockDecision,
+  HookDecision,
+  HookMatcherValue,
+  HookResult,
+} from '../internal/types';
 
 export interface ExternalHooksRunnerTriggerArgs {
   readonly matcherValue?: HookMatcherValue;
@@ -19,6 +24,10 @@ export interface IExternalHooksRunnerService {
     event: string,
     args?: ExternalHooksRunnerTriggerArgs,
   ): Promise<HookBlockDecision | undefined>;
+  resolveDecision(
+    event: string,
+    args?: ExternalHooksRunnerTriggerArgs,
+  ): Promise<HookDecision>;
   fireAndForgetTrigger(event: string, args?: ExternalHooksRunnerTriggerArgs): Promise<HookResult[]>;
   hasHooksFor(event: string): boolean;
 }

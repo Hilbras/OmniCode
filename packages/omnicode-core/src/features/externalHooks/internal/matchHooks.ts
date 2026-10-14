@@ -2,6 +2,7 @@ import type { IHostProcessService } from '#/os/interface/hostProcess';
 
 import { runHook } from './runHook';
 import type {
+  HookApproveDecision,
   HookBlockDecision,
   HookDef,
   HookMatcherValue,
@@ -76,12 +77,12 @@ export async function runMatchedHooks(
     ),
   );
 
-  const decision = blockDecision(event, results);
+  const decision = resolveDecision(event, results);
   try {
     callbacks.onResolved?.(
       event,
       matcherValue,
-      decision === undefined ? 'allow' : decision.block ? 'block' : 'allow',
+      decision === undefined ? 'allow' : decision.kind,
       decision?.reason,
       Date.now() - startedAt,
     );
@@ -90,17 +91,27 @@ export async function runMatchedHooks(
   return results;
 }
 
-export function blockDecision(
+export function resolveDecision(
   event: string,
   results: readonly HookResult[],
-): HookBlockDecision | undefined {
+): HookApproveDecision | HookBlockDecision | undefined {
   const block = results.find((result) => result.action === 'block');
-  if (block === undefined) return undefined;
-  const reason = block.reason?.trim();
-  return {
-    block: true,
-    reason: reason === undefined || reason.length === 0 ? `Blocked by ${event} hook` : reason,
-  };
+  if (block !== undefined) {
+    const reason = block.reason?.trim();
+    return {
+      kind: 'block',
+      reason: reason === undefined || reason.length === 0 ? `Blocked by ${event} hook` : reason,
+    };
+  }
+  const approve = results.find((result) => result.action === 'approve');
+  if (approve !== undefined) {
+    const reason = approve.reason?.trim();
+    return {
+      kind: 'approve',
+      reason: reason === undefined || reason.length === 0 ? undefined : reason,
+    };
+  }
+  return undefined;
 }
 
 function matches(pattern: string, value: string): boolean {

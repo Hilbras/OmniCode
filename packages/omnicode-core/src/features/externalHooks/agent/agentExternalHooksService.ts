@@ -36,7 +36,7 @@ import { IEventDispatcher } from '#/state/eventDispatcher';
 
 import { IAgentExternalHooksService } from './agentExternalHooks';
 import { IExternalHooksRunnerService } from '../app/externalHooksRunner';
-import type { HookMatcherValue } from '../internal/types';
+import type { HookDecision, HookMatcherValue } from '../internal/types';
 import {
   renderUserPromptHookBlockResult,
   renderUserPromptHookResult,
@@ -160,10 +160,13 @@ export class AgentExternalHooksService extends Service implements IAgentExternal
   private registerToolHooks(toolExecutor: IAgentToolExecutorService): void {
     this._register(
       toolExecutor.onBeforeExecuteTool(async (event) => {
-        const reason = await this.runPreToolUse(event);
-        if (reason !== undefined) {
-          event.veto(denyToolExecution(reason));
+        const decision = await this.runPreToolUse(event);
+        if (decision === undefined) return;
+        if (decision.kind === 'approve') {
+          event.allow();
+          return;
         }
+        event.veto(denyToolExecution(decision.reason));
       }),
     );
     this._register(
@@ -298,10 +301,12 @@ export class AgentExternalHooksService extends Service implements IAgentExternal
     );
   }
 
-  private async runPreToolUse(ctx: ResolvedToolExecutionHookContext): Promise<string | undefined> {
+  private async runPreToolUse(
+    ctx: ResolvedToolExecutionHookContext,
+  ): Promise<HookDecision> {
     ctx.signal.throwIfAborted();
     const toolInput = isPlainRecord(ctx.args) ? ctx.args : {};
-    const block = await this.runner.triggerBlock('PreToolUse', {
+    const decision = await this.runner.resolveDecision('PreToolUse', {
       matcherValue: ctx.toolCall.name,
       signal: ctx.signal,
       sessionId: this.sessionContext.sessionId,
@@ -312,7 +317,7 @@ export class AgentExternalHooksService extends Service implements IAgentExternal
       }),
     });
     ctx.signal.throwIfAborted();
-    return block?.reason;
+    return decision;
   }
 
   private notifyPostToolUse(ctx: ToolDidExecuteContext): void {

@@ -47,12 +47,14 @@ All hook rules are written in the `[[hooks]]` array in `~/.omnicode/config.toml`
 | `matcher` | `string` | No | A regular expression to filter event targets; if omitted, matches all |
 | `command` | `string` | Yes | The shell command to run when triggered |
 | `timeout` | `integer` | No | Timeout in seconds, range 1–600; defaults to 30 seconds |
+| `cwd` | `string` | No | Working directory for the command; defaults to the current session's project directory |
+| `env` | `table` | No | Extra environment variables for the command; names must be valid identifiers (`[A-Za-z_][A-Za-z0-9_]*`), at most 64 per rule |
 
-`[[hooks]]` only allows these four fields; extra fields will cause the config file to fail to load.
+`[[hooks]]` only allows these six fields; extra fields will cause the config file to fail to load.
 
 **When multiple rules match the same event**, all matching hooks run in parallel; multiple rules with identical `command` values run only once.
 
-The working directory for hook commands is the current session's project directory.
+The working directory for hook commands defaults to the current session's project directory; the `cwd` field overrides it.
 
 <details>
 <summary>Process group and timeout handling</summary>
@@ -88,7 +90,7 @@ After the script exits, the CLI determines the hook's intent based on the exit c
 | Other non-zero | Script error | Default allow (fail-open) |
 | Timeout or crash | Script exception | Default allow (fail-open) |
 
-You can also return a JSON object via stdout to block:
+You can also return a JSON object via stdout to control the flow:
 
 ```json
 {
@@ -98,6 +100,21 @@ You can also return a JSON object via stdout to block:
   }
 }
 ```
+
+Set `permissionDecision` to `"approve"` to allow the tool call without a permission prompt:
+
+```json
+{
+  "hookSpecificOutput": {
+    "permissionDecision": "approve",
+    "permissionDecisionReason": "Allowed by organization policy"
+  }
+}
+```
+
+::: warning An approve decision never overrides a deny rule
+When several hooks match the same event, a block wins over an approve. An approve also never overrides a deny rule you configured yourself: permission rules are evaluated first, and only the `ask` decision can be turned into an automatic allow.
+:::
 
 ::: info Which events support blocking?
 Only **blockable events** (`PreToolUse`, `Stop`, `UserPromptSubmit`) have return values that affect the main flow. All other events are **observation-only events**: they fire and forget, and the main flow is unaffected regardless of what the script returns.

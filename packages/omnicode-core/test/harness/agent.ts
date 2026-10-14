@@ -724,6 +724,7 @@ const noopHookRunner: IExternalHooksRunnerService = {
   onDidReload: Event.None as Event<void>,
   trigger: async () => [],
   triggerBlock: async () => undefined,
+  resolveDecision: async () => undefined,
   fireAndForgetTrigger: async () => [],
   hasHooksFor: () => false,
 };

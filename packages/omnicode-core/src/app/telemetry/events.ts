@@ -218,7 +218,7 @@ export interface SwarmModeTransitionEvent {
 
 export interface ExternalHookResolvedEvent {
   event: string;
-  action: 'allow' | 'block';
+  action: 'allow' | 'block' | 'approve';
   matched_count: number;
   failed_count: number;
 }
@@ -852,7 +852,7 @@ export const telemetryEventDefinitions = {
     comment: 'An external hook trigger finishes running its matched hooks.',
     properties: {
       event: 'Hook event type (e.g. PreToolUse, UserPromptSubmit, Stop)',
-      action: 'Whether the trigger resolved to allow or block',
+      action: 'Whether the trigger resolved to allow, block, or approve',
       matched_count: 'Number of hooks that ran for the trigger',
       failed_count: 'Number of hooks that failed (timeout, spawn error, or a non-zero exit code other than 2)',
     },

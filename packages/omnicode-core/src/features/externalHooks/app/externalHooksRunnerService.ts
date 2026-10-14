@@ -11,9 +11,9 @@ import {
   IExternalHooksRunnerService,
   type ExternalHooksRunnerTriggerArgs,
 } from './externalHooksRunner';
-import { blockDecision, indexHooks, runMatchedHooks } from '../internal/matchHooks';
+import { indexHooks, resolveDecision, runMatchedHooks } from '../internal/matchHooks';
 import type { HookRunCallbacks } from '../internal/matchHooks';
-import type { HookBlockDecision, HookDef, HookResult } from '../internal/types';
+import type { HookBlockDecision, HookDecision, HookDef, HookResult } from '../internal/types';
 
 export class ExternalHooksRunnerService extends Disposable implements IExternalHooksRunnerService {
   declare readonly _serviceBrand: undefined;
@@ -61,7 +61,15 @@ export class ExternalHooksRunnerService extends Disposable implements IExternalH
     event: string,
     args: ExternalHooksRunnerTriggerArgs = {},
   ): Promise<HookBlockDecision | undefined> {
-    return blockDecision(event, await this.trigger(event, args));
+    const decision = resolveDecision(event, await this.trigger(event, args));
+    return decision?.kind === 'block' ? decision : undefined;
+  }
+
+  async resolveDecision(
+    event: string,
+    args: ExternalHooksRunnerTriggerArgs = {},
+  ): Promise<HookDecision> {
+    return resolveDecision(event, await this.trigger(event, args));
   }
 
   fireAndForgetTrigger(
@@ -99,9 +107,10 @@ export class ExternalHooksRunnerService extends Disposable implements IExternalH
       this.callbacks,
     );
     if (results.length > 0) {
+      const decision = resolveDecision(event, results);
       this.telemetry.track2('external_hook_resolved', {
         event,
-        action: blockDecision(event, results) === undefined ? 'allow' : 'block',
+        action: decision === undefined ? 'allow' : decision.kind,
         matched_count: results.length,
         failed_count: results.filter(
           (r) => r.timedOut === true || r.errored === true || (!!r.exitCode && r.exitCode !== 2),

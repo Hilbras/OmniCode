@@ -61,7 +61,7 @@ describe('ExternalHooksRunnerService', () => {
 
     await expect(
       runner.triggerBlock('PreToolUse', { matcherValue: 'Read', inputData: {} }),
-    ).resolves.toEqual({ block: true, reason: 'blocked' });
+    ).resolves.toEqual({ kind: 'block', reason: 'blocked' });
   });
 
   it('fills a default triggerBlock reason when the hook result has none', async () => {
@@ -71,7 +71,109 @@ describe('ExternalHooksRunnerService', () => {
 
     await expect(
       runner.triggerBlock('PreToolUse', { matcherValue: 'Read', inputData: {} }),
-    ).resolves.toEqual({ block: true, reason: 'Blocked by PreToolUse hook' });
+    ).resolves.toEqual({ kind: 'block', reason: 'Blocked by PreToolUse hook' });
+  });
+
+  it('maps permissionDecision approve to an approve action', async () => {
+    const runner = makeHookRunner([
+      {
+        event: 'PreToolUse',
+        matcher: 'Read',
+        command: nodeCommand(
+          'process.stdout.write(JSON.stringify({hookSpecificOutput:{permissionDecision:"approve",permissionDecisionReason:"org policy"}}));',
+        ),
+        timeout: 5,
+      },
+    ]);
+
+    const results = await runner.trigger('PreToolUse', { matcherValue: 'Read', inputData: {} });
+    expect(results).toHaveLength(1);
+    expect(results[0]?.action).toBe('approve');
+  });
+
+  it('exposes a resolveDecision helper for approve decisions', async () => {
+    const runner = makeHookRunner([
+      {
+        event: 'PreToolUse',
+        matcher: 'Read',
+        command: nodeCommand(
+          'process.stdout.write(JSON.stringify({hookSpecificOutput:{permissionDecision:"approve",permissionDecisionReason:"org policy"}}));',
+        ),
+        timeout: 5,
+      },
+    ]);
+
+    await expect(
+      runner.resolveDecision('PreToolUse', { matcherValue: 'Read', inputData: {} }),
+    ).resolves.toEqual({ kind: 'approve', reason: 'org policy' });
+  });
+
+  it('omits the reason when an approve decision has none', async () => {
+    const runner = makeHookRunner([
+      {
+        event: 'PreToolUse',
+        matcher: 'Read',
+        command: nodeCommand(
+          'process.stdout.write(JSON.stringify({hookSpecificOutput:{permissionDecision:"approve"}}));',
+        ),
+        timeout: 5,
+      },
+    ]);
+
+    await expect(
+      runner.resolveDecision('PreToolUse', { matcherValue: 'Read', inputData: {} }),
+    ).resolves.toEqual({ kind: 'approve', reason: undefined });
+  });
+
+  it('prefers a block decision over an approve decision', async () => {
+    const runner = makeHookRunner([
+      {
+        event: 'PreToolUse',
+        matcher: 'Read',
+        command: nodeCommand(
+          'process.stdout.write(JSON.stringify({hookSpecificOutput:{permissionDecision:"approve"}}));',
+        ),
+        timeout: 5,
+      },
+      { event: 'PreToolUse', matcher: 'Read', command: nodeCommand('process.exit(2);'), timeout: 5 },
+    ]);
+
+    await expect(
+      runner.resolveDecision('PreToolUse', { matcherValue: 'Read', inputData: {} }),
+    ).resolves.toEqual({ kind: 'block', reason: 'Blocked by PreToolUse hook' });
+  });
+
+  it('keeps triggerBlock reporting only block decisions', async () => {
+    const runner = makeHookRunner([
+      {
+        event: 'PreToolUse',
+        matcher: 'Read',
+        command: nodeCommand(
+          'process.stdout.write(JSON.stringify({hookSpecificOutput:{permissionDecision:"approve"}}));',
+        ),
+        timeout: 5,
+      },
+    ]);
+
+    await expect(
+      runner.triggerBlock('PreToolUse', { matcherValue: 'Read', inputData: {} }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('accepts cwd and env for a hook', async () => {
+    const runner = makeHookRunner([
+      {
+        event: 'PreToolUse',
+        matcher: 'Read',
+        command: nodeCommand('process.stdout.write(process.env.OMNI_TEST_HOOK ?? "unset");'),
+        timeout: 5,
+        cwd: process.cwd(),
+        env: { OMNI_TEST_HOOK: 'from-env' },
+      },
+    ]);
+
+    const results = await runner.trigger('PreToolUse', { matcherValue: 'Read', inputData: {} });
+    expect(results[0]?.stdout).toBe('from-env');
   });
 
   it('aborts a running hook when the trigger signal aborts', async () => {

@@ -34,8 +34,10 @@ export interface HookDef {
   readonly env?: Record<string, string>;
 }
 
+export type HookAction = 'allow' | 'block' | 'approve';
+
 export interface HookResult {
-  readonly action: 'allow' | 'block';
+  readonly action: HookAction;
   readonly message?: string;
   readonly reason?: string;
   readonly stdout?: string;
@@ -47,8 +49,15 @@ export interface HookResult {
 }
 
 export interface HookBlockDecision {
-  readonly block: true;
+  readonly kind: 'block';
   readonly reason: string;
 }
+
+export interface HookApproveDecision {
+  readonly kind: 'approve';
+  readonly reason?: string;
+}
+
+export type HookDecision = HookBlockDecision | HookApproveDecision | undefined;
 
 export type HookMatcherValue = string | readonly ContentPart[];

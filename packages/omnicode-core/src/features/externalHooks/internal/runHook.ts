@@ -162,6 +162,17 @@ function resultFromExitCode(exitCode: number, stdout: string, stderr: string): H
       structuredOutput: structured.structuredOutput,
     };
   }
+  if (structured?.action === 'approve') {
+    return {
+      action: 'approve',
+      message: structured.message,
+      reason: structured.reason,
+      stdout,
+      stderr,
+      exitCode,
+      structuredOutput: structured.structuredOutput,
+    };
+  }
 
   return allowResult({
     message: structured?.message,
@@ -172,34 +183,36 @@ function resultFromExitCode(exitCode: number, stdout: string, stderr: string): H
   });
 }
 
-function structuredOutput(
-  stdout: string,
-): { action?: 'block'; reason?: string; message?: string; structuredOutput: true } | undefined {
-  const text = stdout.trim();
-  if (text.length === 0) return undefined;
+interface StructuredHookOutput {
+  readonly action?: 'block' | 'approve';
+  readonly reason?: string;
+  readonly message?: string;
+  readonly structuredOutput: true;
+}
+
+function structuredOutput(stdout: string): StructuredHookOutput | undefined {
+  const raw = stdout.trim();
+  if (raw.length === 0) return undefined;
 
   try {
-    const parsed = JSON.parse(text) as unknown;
+    const parsed = JSON.parse(raw) as unknown;
     const output = HookJsonOutputSchema.safeParse(parsed);
     if (!output.success) return undefined;
 
     const { message, hookSpecificOutput } = output.data;
-    const result = {
-      message: message ?? hookSpecificOutput?.message,
-      structuredOutput: true as const,
-    };
-    if (hookSpecificOutput?.permissionDecision !== 'deny') {
-      return result;
+    const decision = hookSpecificOutput?.permissionDecision;
+    const reason =
+      typeof hookSpecificOutput?.permissionDecisionReason === 'string'
+        ? hookSpecificOutput.permissionDecisionReason
+        : undefined;
+    const text = message ?? hookSpecificOutput?.message;
+    if (decision === 'deny') {
+      return { action: 'block', message: text, reason, structuredOutput: true };
     }
-    return {
-      action: 'block',
-      message: result.message,
-      reason:
-        typeof hookSpecificOutput.permissionDecisionReason === 'string'
-          ? hookSpecificOutput.permissionDecisionReason
-          : undefined,
-      structuredOutput: true as const,
-    };
+    if (decision === 'approve') {
+      return { action: 'approve', message: text, reason, structuredOutput: true };
+    }
+    return { message: text, structuredOutput: true };
   } catch {
     return undefined;
   }

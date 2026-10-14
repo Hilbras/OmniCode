@@ -47,12 +47,14 @@ command = "terminal-notifier -title Omnicode -message 'Task done'"
 | `matcher` | `string` | 否 | 用正则表达式（一种字符串匹配语法）过滤事件目标；不填则匹配全部 |
 | `command` | `string` | 是 | 触发时要运行的 Shell 命令 |
 | `timeout` | `integer` | 否 | 超时秒数，范围 1–600；默认 30 秒 |
+| `cwd` | `string` | 否 | 命令的工作目录；默认取当前会话的项目目录 |
+| `env` | `table` | 否 | 传给命令的额外环境变量；变量名必须是合法标识符（`[A-Za-z_][A-Za-z0-9_]*`），每条规则最多 64 个 |
 
-`[[hooks]]` 只允许这四个字段，多写会导致配置文件加载失败。
+`[[hooks]]` 只允许这六个字段，多写会导致配置文件加载失败。
 
 **同一事件匹配多条规则时**，所有命中的 hook 并行运行；`command` 完全相同的多条规则只运行一次。
 
-Hook 命令的工作目录是当前会话的项目目录。
+Hook 命令的工作目录默认是当前会话的项目目录；用 `cwd` 字段可以覆盖它。
 
 <details>
 <summary>进程组与超时处理</summary>
@@ -88,7 +90,7 @@ Hook 命令的工作目录是当前会话的项目目录。
 | 其他非零值 | 脚本出错 | 默认放行（fail-open） |
 | 超时或崩溃 | 脚本异常 | 默认放行（fail-open） |
 
-也可以通过标准输出返回一段 JSON 来阻断：
+也可以通过标准输出返回一段 JSON 来控制流程：
 
 ```json
 {
@@ -98,6 +100,21 @@ Hook 命令的工作目录是当前会话的项目目录。
   }
 }
 ```
+
+把 `permissionDecision` 设为 `"approve"`，可以在不弹出权限确认的情况下直接放行这次工具调用：
+
+```json
+{
+  "hookSpecificOutput": {
+    "permissionDecision": "approve",
+    "permissionDecisionReason": "已由组织策略放行"
+  }
+}
+```
+
+::: warning 注意
+同一事件的多条 hook 规则同时命中时，block 优先于 approve。你自行配置的 deny 规则永远优先于 approve：权限规则先被评估，approve 只能把 `ask` 决策变成自动放行，不能推翻 deny。
+:::
 
 ::: info 说明
 只有**可阻断事件**（`PreToolUse`、`Stop`、`UserPromptSubmit`）的返回值会影响主流程。其余事件属于**观察型事件**：触发后即发即忘，不管脚本返回什么，主流程都不会改变。

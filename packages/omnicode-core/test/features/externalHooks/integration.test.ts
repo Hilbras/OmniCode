@@ -46,6 +46,15 @@ import {
   PermissionApprovalResolved,
 } from '#/agent/toolApproval/toolApprovalService';
 import { IAgentToolExecutorService } from '#/agent/toolExecutor/toolExecutor';
+import type {
+  ResolvedToolExecutionHookContext,
+} from '#/agent/toolExecutor/toolHooks';
+import type { ToolCall } from '#human/llm/message';
+import { AgentPermissionGate } from '#/agent/permissionGate/permissionGateService';
+import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
+import { IAgentPermissionPolicyService } from '#/agent/permissionPolicy/permissionPolicy';
+import { IAgentPermissionRulesService } from '#/agent/permissionRules/permissionRules';
+import { IAgentToolApprovalService } from '#/agent/toolApproval/toolApproval';
 import { IExternalHooksRunnerService } from '#/features/externalHooks/app/externalHooksRunner';
 import { ExternalHooksRunnerService } from '#/features/externalHooks/app/externalHooksRunnerService';
 import { makeHookRunner } from './runner-stub';
@@ -83,6 +92,10 @@ import { IModelService } from '#/llm-adapter/model/model';
 
 import { stubBootstrap } from '../../app/bootstrap/stubs';
 import { stubLoopWithHooks, stubToolExecutor } from '../../agent/loop/stubs';
+import { stubToolExecutorEvents } from '../../agent/toolExecutor/stubs';
+import { stubPermissionModeService } from '../../agent/permissionMode/stubs';
+import { stubPermissionPolicyService } from '../../agent/permissionPolicy/stubs';
+import { stubPermissionRulesService } from '../../agent/permissionRules/stubs';
 import { registerStateServices } from '../../state/stubs';
 import { registerTestAgentWireServices } from '../../wire/stubs';
 
@@ -99,6 +112,27 @@ function stdinScript(body: string): string {
     body,
     '});',
   ].join('\n'));
+}
+
+function makeReadContext(): ResolvedToolExecutionHookContext {
+  const toolCall: ToolCall = {
+    type: 'function',
+    id: 'call-Read',
+    name: 'Read',
+    arguments: JSON.stringify({ path: 'a.txt' }),
+  };
+  return {
+    turnId: 1,
+    signal: new AbortController().signal,
+    toolCall,
+    toolCalls: [toolCall],
+    args: { path: 'a.txt' },
+    execution: {
+      description: 'Read a.txt',
+      approvalRule: 'Read',
+      execute: () => Promise.resolve({ output: '' }),
+    },
+  };
 }
 
 function makeAfterStep(signal: AbortSignal): AfterStepContext {
@@ -148,7 +182,7 @@ function stubHookRunner(partial: unknown): IExternalHooksRunnerService {
   const p = partial as Partial<
     Pick<
       IExternalHooksRunnerService,
-      'trigger' | 'triggerBlock' | 'fireAndForgetTrigger' | 'hasHooksFor'
+      'trigger' | 'triggerBlock' | 'resolveDecision' | 'fireAndForgetTrigger' | 'hasHooksFor'
     >
   >;
   return {
@@ -156,6 +190,7 @@ function stubHookRunner(partial: unknown): IExternalHooksRunnerService {
     ready: Promise.resolve(),
     onDidReload: Event.None,
     hasHooksFor: () => false,
+    resolveDecision: async () => undefined,
     ...p,
   } as IExternalHooksRunnerService;
 }
@@ -335,7 +370,7 @@ describe('IExternalHooksRunnerService integration', () => {
         fireAndForgetTrigger: async () => [],
         triggerBlock: async (_event: string, args: { inputData?: unknown }) => {
           stopInputs.push(args.inputData);
-          return { block: true, reason: `continue ${stopInputs.length}` };
+          return { kind: 'block', reason: `continue ${stopInputs.length}` };
         },
       };
 
@@ -775,6 +810,51 @@ describe('IExternalHooksRunnerService integration', () => {
     expect(parsed[0]).toMatchObject({ event: 'PreToolUse', matcher: 'Bash' });
     expect(parsed[1]).toMatchObject({ event: 'Notification', timeout: 5 });
     expect(hooksToToml(parsed, undefined)).toEqual(raw);
+  });
+
+  it('accepts cwd and env on a hook and round-trips them', () => {
+    const raw = [
+      {
+        event: 'PreToolUse',
+        matcher: 'Bash',
+        command: 'echo ok',
+        cwd: '/tmp',
+        env: { OMNI_HOOK_TOKEN: 'abc', PATH_EXTRA: '/opt/bin' },
+      },
+    ];
+
+    const parsed = (hooksFromToml(raw) as unknown[]).map((hook) => HookDefSchema.parse(hook));
+
+    expect(parsed[0]).toMatchObject({
+      cwd: '/tmp',
+      env: { OMNI_HOOK_TOKEN: 'abc', PATH_EXTRA: '/opt/bin' },
+    });
+    expect(hooksToToml(parsed, undefined)).toEqual(raw);
+  });
+
+  it('rejects env variable names that are not valid identifiers', () => {
+    const hook = {
+      event: 'PreToolUse',
+      command: 'echo ok',
+      env: { 'BAD-NAME': 'x' },
+    };
+
+    expect(HookDefSchema.safeParse(hook).success).toBe(false);
+  });
+
+  it('rejects an env map with more than the allowed entries', () => {
+    const env: Record<string, string> = {};
+    for (let i = 0; i < 65; i++) env[`VAR_${i}`] = 'x';
+
+    expect(HookDefSchema.safeParse({ event: 'PreToolUse', command: 'echo ok', env }).success).toBe(
+      false,
+    );
+  });
+
+  it('still rejects unknown hook fields', () => {
+    expect(
+      HookDefSchema.safeParse({ event: 'PreToolUse', command: 'echo ok', nope: 1 }).success,
+    ).toBe(false);
   });
 
   it('exposes a summary map of event name to registered hook count', async () => {
@@ -1446,6 +1526,80 @@ describe('IExternalHooksRunnerService integration', () => {
       ix?.dispose();
       disposables.dispose();
       vi.useRealTimers();
+    }
+  });
+
+  it('keeps a user deny decision authoritative even when a PreToolUse hook approves', async () => {
+    const disposables = new DisposableStore();
+    let ix: TestInstantiationService | undefined;
+    try {
+      const executorEvents = stubToolExecutorEvents();
+      const approveHookRunner = {
+        trigger: async () => [],
+        fireAndForgetTrigger: async () => [],
+        triggerBlock: async () => undefined,
+        resolveDecision: async () => ({ kind: 'approve', reason: 'hook says yes' }) as const,
+        hasHooksFor: () => true,
+      };
+
+      ix = createServices(disposables, {
+        strict: true,
+        additionalServices: (reg) => {
+          registerStateServices(reg);
+          registerTestAgentWireServices(reg, 'wire/external-hooks');
+          reg.defineInstance(IBootstrapService, stubBootstrap());
+          reg.defineInstance(ISessionContext, stubSessionContext());
+          reg.defineInstance(ISessionMetadata, stubSessionMetadata());
+          reg.definePartialInstance(IConfigService, {});
+          reg.definePartialInstance(IPluginService, {});
+          reg.defineInstance(IAgentContextMemoryService, stubContextMemory());
+          reg.defineInstance(IAgentLoopService, stubLoopWithHooks());
+          registerAgentEventBus(reg);
+          reg.defineInstance(IAgentToolExecutorService, executorEvents.executor);
+          reg.defineInstance(
+            IAgentPermissionModeService,
+            stubPermissionModeService(() => 'manual'),
+          );
+          reg.defineInstance(
+            IAgentPermissionPolicyService,
+            stubPermissionPolicyService(() => ({
+              policyName: 'user-configured-deny',
+              result: { kind: 'deny', message: 'denied by policy' },
+            })),
+          );
+          reg.defineInstance(
+            IAgentPermissionRulesService,
+            stubPermissionRulesService(() => []),
+          );
+          reg.defineInstance(IAgentToolApprovalService, {
+            _serviceBrand: undefined,
+            resolvePermissionResolution: async () => ({
+              veto: { output: 'denied by policy', isError: true },
+            }),
+            requestToolApproval: async () => undefined,
+            formatDenyMessage: (message: string) => message,
+            formatApprovalRejectionMessage: () => '',
+          } as unknown as IAgentToolApprovalService);
+          reg.define(IAgentPermissionGate, AgentPermissionGate);
+          reg.definePartialInstance(IAgentFullCompactionService, {
+            hooks: createHooks(['onWillCompact']),
+          });
+          reg.definePartialInstance(IAgentTaskService, {});
+        },
+      });
+      activateAgentEventBus(ix);
+      ix.set(IExternalHooksRunnerService, stubHookRunner(approveHookRunner));
+      ix.set(IAgentExternalHooksService, new SyncDescriptor(AgentExternalHooksService));
+
+      ix.get(IAgentPermissionGate);
+      ix.get(IAgentExternalHooksService);
+
+      const decision = await executorEvents.fireBeforeExecute(makeReadContext());
+
+      expect(decision?.veto).toEqual({ output: 'denied by policy', isError: true });
+    } finally {
+      ix?.dispose();
+      disposables.dispose();
     }
   });
 });
