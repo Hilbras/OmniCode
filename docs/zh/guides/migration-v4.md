@@ -96,6 +96,6 @@ V4 的发现是尽力而为的。如果发现失败，供应商仍然会被保�
 
 ## 后续步骤
 
-- [供应商与模型](/configuration/providers) — 配置 API 适配器和认证策略
-- [认证与凭证](/configuration/authentication) — 安全地管理凭证
-- [配置文件](/configuration/config-files) — `config.toml` 的完整参考
+- [供应商与模型](../configuration/providers.md) — 配置 API 适配器和认证策略
+- [认证与凭证](../configuration/authentication.md) — 安全地管理凭证
+- [配置文件](../configuration/config-files.md) — `config.toml` 的完整参考

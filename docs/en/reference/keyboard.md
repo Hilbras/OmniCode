@@ -101,4 +101,4 @@ After opening the help panel with `/help`, use the following keys to navigate an
 ## Next steps
 
 - [Slash Commands](./slash-commands.md) — Quick reference for built-in TUI control commands
-- [`omnicode` Command](./omnicode-command.md) — Complete reference for startup flags and subcommands
+- [`omnicode` Command](./omnicode.md) — Complete reference for startup flags and subcommands

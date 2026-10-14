@@ -45,12 +45,12 @@ Some commands are only available in the idle state. Executing these commands whi
 | `/reload-tui` | — | Reload only the `tui.toml` UI preferences (theme, editor, notifications, etc.) without rebuilding the session | Yes |
 | `/init` | — | Analyze the current codebase and generate `AGENTS.md` | No |
 | `/export-md [<path>]` | `/export` | Export the current session as a Markdown file | No |
-| `/export-debug-zip` | — | Export the current session as a debug ZIP archive (same behavior as [`omnicode export`](./omnicode-command.md#omnicode-export)) | No |
+| `/export-debug-zip` | — | Export the current session as a debug ZIP archive (same behavior as [`omnicode export`](./omnicode.md#omnicode-export)) | No |
 | `/copy` | — | Copy the last assistant message to the clipboard | No |
 | `/add-dir [<path>]` | — | Add an extra workspace directory to the current session. Run without a path (or with `list`) to list configured directories. When adding, choose whether to remember the directory for the project in `.omnicode/local.toml` | No |
-| `/web` | — | Open the current session in the web UI: pick a running server to connect to, or start a new foreground server after the TUI exits. See [`omnicode web`](./omnicode-command.md#omnicode-web) | Yes |
+| `/web` | — | Open the current session in the web UI: pick a running server to connect to, or start a new foreground server after the TUI exits. See [`omnicode web`](./omnicode.md#omnicode-web) | Yes |
 | `/remote-control` | `/rc` | Open the current session through Omnicode Remote Control. See [Remote Control](../guides/remote-control.md) | Yes |
-| `/desktop` | `/install-desktop` | Open the Omnicode desktop app page in your browser (URL follows the active region: `https://www.omnicode.com/code` or `https://www.omnicode.ai/code`). See [`omnicode install-desktop`](./omnicode-command.md#omnicode-install-desktop) | Yes |
+| `/desktop` | `/install-desktop` | Open the Omnicode desktop app page in your browser (URL follows the active region: `https://www.omnicode.com/code` or `https://www.omnicode.ai/code`). See [`omnicode install-desktop`](./omnicode.md#omnicode-install-desktop) | Yes |
 
 ## Modes & Run Control
 

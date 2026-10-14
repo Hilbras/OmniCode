@@ -93,4 +93,4 @@ Paseo's generic ACP adapter does not drive the login flow, so complete the termi
 ## Next steps
 
 - [omnicode acp reference](../reference/omnicode-acp.md) — ACP capability matrix and method coverage details
-- [omnicode command reference](../reference/omnicode-command.md) — full subcommand list
+- [omnicode command reference](../reference/omnicode.md) — full subcommand list

@@ -45,12 +45,12 @@
 | `/reload-tui` | — | 只重新加载 `tui.toml` 界面偏好（主题、编辑器、通知等），不重建会话 | 是 |
 | `/init` | — | 分析当前代码库并生成 `AGENTS.md` | 否 |
 | `/export-md [<path>]` | `/export` | 将当前会话导出为 Markdown 文件 | 否 |
-| `/export-debug-zip` | — | 将当前会话导出为调试用 ZIP 压缩包（与 [`omnicode export`](./omnicode-command.md#omnicode-export) 行为一致） | 否 |
+| `/export-debug-zip` | — | 将当前会话导出为调试用 ZIP 压缩包（与 [`omnicode export`](./omnicode.md#omnicode-export) 行为一致） | 否 |
 | `/copy` | — | 将最后一条 AI 回复复制到剪贴板 | 否 |
 | `/add-dir [<path>]` | — | 为当前会话添加额外的工作目录。不带路径（或传入 `list`）运行时列出已配置的目录。添加时可选择是否将目录记入项目的 `.omnicode/local.toml` | 否 |
-| `/web` | — | 在 web UI 中打开当前会话：选择一个运行中的实例进行连接，或在 TUI 退出后新开一个前台服务器。参见 [`omnicode web`](./omnicode-command.md#omnicode-web) | 是 |
+| `/web` | — | 在 web UI 中打开当前会话：选择一个运行中的实例进行连接，或在 TUI 退出后新开一个前台服务器。参见 [`omnicode web`](./omnicode.md#omnicode-web) | 是 |
 | `/remote-control` | `/rc` | 通过 Omnicode Remote Control 打开当前会话。详见 [Remote Control](../guides/remote-control.md) | 是 |
-| `/desktop` | `/install-desktop` | 在浏览器中打开 Omnicode 桌面端页面（地址随当前区域而定：`https://www.omnicode.com/code` 或 `https://www.omnicode.ai/code`）。参见 [`omnicode install-desktop`](./omnicode-command.md#omnicode-install-desktop) | 是 |
+| `/desktop` | `/install-desktop` | 在浏览器中打开 Omnicode 桌面端页面（地址随当前区域而定：`https://www.omnicode.com/code` 或 `https://www.omnicode.ai/code`）。参见 [`omnicode install-desktop`](./omnicode.md#omnicode-install-desktop) | 是 |
 
 ## 模式与运行控制
 

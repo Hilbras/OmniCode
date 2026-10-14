@@ -78,7 +78,7 @@ omnicode auth login <providerId>
 
 它以隐藏输入的方式提示你输入，写入 `api_key`，并清空该供应商原有的 `api_key_env`——同时保留两者属于配置错误。因为值是从终端读取的，而不是从命令行参数传入的，所以它不会出现在 Shell 历史或进程列表里。同样的操作在 [`/provider` 管理器](./providers.md#provider-—-交互式供应商管理)里也能完成：选中某个供应商后按 <kbd>E</kbd>，打开的就是同一个隐藏输入对话框。删除供应商同理，按 <kbd>D</kbd>，会先要求确认。
 
-脚本和无人值守的初始化可以用 [`omnicode provider auth <providerId>`](../reference/omnicode-command.md#omnicode-provider-auth-providerid)，它把密钥作为参数接收。手动操作时优先用隐藏输入框：参数形式会在运行期间把密钥暴露在 Shell 历史和 `ps` 输出里。
+脚本和无人值守的初始化可以用 [`omnicode provider auth <providerId>`](../reference/omnicode.md#omnicode-provider-auth-providerid)，它把密钥作为参数接收。手动操作时优先用隐藏输入框：参数形式会在运行期间把密钥暴露在 Shell 历史和 `ps` 输出里。
 
 通过 OAuth 认证的供应商会拒绝 `omnicode auth login`，并指向 `omnicode login`——它们的凭证属于登录会话，用前者写进去会被登录会话覆盖掉。
 
@@ -103,4 +103,4 @@ omnicode auth logout <providerId>
 - [平台与模型](./providers.md)——协议类型、`/provider` 管理器和内置供应商目录
 - [配置覆盖](./overrides.md)——完整的凭证优先级顺序，含项目级覆盖
 - [数据路径](./data-locations.md)——CLI 会写出的每一个文件，以及如何迁移它们
-- [omnicode 命令参考](../reference/omnicode-command.md)——完整的 `omnicode auth` 与 `omnicode provider`
+- [omnicode 命令参考](../reference/omnicode.md)——完整的 `omnicode auth` 与 `omnicode provider`

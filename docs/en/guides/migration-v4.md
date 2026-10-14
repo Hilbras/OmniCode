@@ -96,6 +96,6 @@ Custom headers now live under `providers.<id>.api.defaultHeaders` rather than th
 
 ## Next steps
 
-- [Providers](/configuration/providers) — configure API adapters and auth strategies
-- [Authentication](/configuration/authentication) — manage credentials securely
-- [Configuration files](/configuration/config-files) — full reference for `config.toml`
+- [Providers](../configuration/providers.md) — configure API adapters and auth strategies
+- [Authentication](../configuration/authentication.md) — manage credentials securely
+- [Configuration files](../configuration/config-files.md) — full reference for `config.toml`

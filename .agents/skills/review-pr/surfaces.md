@@ -104,7 +104,7 @@ prompt 文本改动影响全体用户，且没有测试能证明"无影响"。�
 | `packages/transcript/src/contract/` | kap-server 发给 desktop、web、VS Code 的 transcript 载荷契约 | 消费方在 code-app，点名让作者去核；上一版客户端能否解析新载荷 |
 | `.github/workflows/release.yml`、`_native-build.yml`、`manual-native-bundle.yml`、`vscode-publish.yml`，`apps/omnicode/scripts/native/`、`apps/omnicode/scripts/check-web-assets.mjs` | 发布产物 | 按安装方式与平台核：npm 包内容、各平台 native 二进制、VS Code 市场包、内置 web 产物是否仍齐全 |
 | `packages/acp-server/` | ACP 客户端 | 对照 `docs/en/reference/omnicode-acp.md` 的能力矩阵逐项核对 |
-| `apps/omnicode/src/cli/` | 命令行参数、子命令、`--output-format` | 对照 `docs/en/reference/omnicode-command.md` |
+| `apps/omnicode/src/cli/` | 命令行参数、子命令、`--output-format` | 对照 `docs/en/reference/omnicode.md` |
 | `packages/agent-core-v2/src/features/externalHooks/` | hook 事件与载荷 | 对照 `docs/en/customization/hooks.md` 的事件参考 |
 | `packages/agent-core-v2/src/human/llm/requester/bases/` | provider 方言分支 | 枚举每种上游载荷形态改动前后各走哪条分支，尤其是多个字段并存的网关 |
 | `packages/agent-core-v2/src/app/git/`、`apps/omnicode/src/utils/git/` | 后台 git 的调用方式、config 覆盖、超时 | 对照"git 仓库形态"人群逐行核：前置探针失败是否让整个后台 git 静默不可用；覆盖的 config 键是否有 `required`、`gpgSign`、`hooksPath` 这类会把"禁用"变成"失败"的键；Windows 用例是否全部 skip |

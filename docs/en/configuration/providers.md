@@ -45,7 +45,7 @@ Two paths when adding:
 Omnicode OAuth managed accounts logged in via `/login` do not appear in `/provider`. Use `/login` and `/logout` to manage them.
 :::
 
-The same operations are also available in non-interactive environments via the shell command: [`omnicode provider`](../reference/omnicode-command.md#omnicode-provider).
+The same operations are also available in non-interactive environments via the shell command: [`omnicode provider`](../reference/omnicode.md#omnicode-provider).
 
 ## Built-in providers
 

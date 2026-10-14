@@ -94,4 +94,4 @@ When an ACP client provides `mcpServers` in `session/new` or `session/load`, the
 ## Next steps
 
 - [Using in IDEs](../guides/ides.md) — Zed / JetBrains configuration steps and troubleshooting
-- [`omnicode` Command Reference](./omnicode-command.md) — Complete subcommand list
+- [`omnicode` Command Reference](./omnicode.md) — Complete subcommand list

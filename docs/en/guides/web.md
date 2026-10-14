@@ -80,7 +80,7 @@ How the two sides compare:
 ## Security notes
 
 - **Set a parallel credential**: when binding a LAN address, also set the `OMNICODE_PASSWORD` environment variable; the server then rate-limits authentication failures automatically.
-- **Don't disable authentication entirely**: `--dangerous-bypass-auth` turns off all authentication — anyone who can reach the port can control your sessions, file system, and shell. Only use it on trusted networks or behind your own authenticating proxy. See the [omnicode command reference](../reference/omnicode-command.md#omnicode-web).
+- **Don't disable authentication entirely**: `--dangerous-bypass-auth` turns off all authentication — anyone who can reach the port can control your sessions, file system, and shell. Only use it on trusted networks or behind your own authenticating proxy. See the [omnicode command reference](../reference/omnicode.md#omnicode-web).
 
 ## FAQ
 
@@ -103,5 +103,5 @@ Make sure you started with `--host` (bare is fine), and use the LAN URL from the
 ## Next steps
 
 - [Server API](../reference/server-api.md) — REST / WebSocket APIs for scripts and third-party integrations (experimental)
-- [omnicode command](../reference/omnicode-command.md#omnicode-web) — all `omnicode web` command-line options
+- [omnicode command](../reference/omnicode.md#omnicode-web) — all `omnicode web` command-line options
 - [Remote Control](./remote-control.md) — remotely view and take over local sessions from any device over the public internet

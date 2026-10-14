@@ -78,7 +78,7 @@ omnicode auth login <providerId>
 
 It prompts with the input hidden, writes the value to `api_key`, and clears any `api_key_env` the provider had, since keeping both is a configuration error. Because the value is read from the terminal rather than from an argument, it never appears in shell history or in the process list. The same operation is available in the [`/provider` manager](./providers.md#provider-—-interactive-provider-management): highlight a provider and press <kbd>E</kbd> to open the same hidden-input dialog. Deleting works the same way with <kbd>D</kbd>, which asks for confirmation first.
 
-For scripts and unattended setup, [`omnicode provider auth <providerId>`](../reference/omnicode-command.md#omnicode-provider-auth-providerid) takes the key as an argument instead. Prefer the hidden prompt by hand; the argument form puts the secret in your shell history and in `ps` output while it runs.
+For scripts and unattended setup, [`omnicode provider auth <providerId>`](../reference/omnicode.md#omnicode-provider-auth-providerid) takes the key as an argument instead. Prefer the hidden prompt by hand; the argument form puts the secret in your shell history and in `ps` output while it runs.
 
 Providers that authenticate with OAuth refuse `omnicode auth login` and point you at `omnicode login` instead — their credential belongs to the login session and would be overwritten by it.
 
@@ -103,4 +103,4 @@ The command only applies to OAuth providers. For a static API key it reports tha
 - [Providers and models](./providers.md) — protocol types, the `/provider` manager, and the built-in provider catalog
 - [Config overrides](./overrides.md) — the full credential priority order, including project-level overrides
 - [Data locations](./data-locations.md) — every file the CLI writes, and how to relocate it
-- [omnicode command reference](../reference/omnicode-command.md) — `omnicode auth` and `omnicode provider` in full
+- [omnicode command reference](../reference/omnicode.md) — `omnicode auth` and `omnicode provider` in full

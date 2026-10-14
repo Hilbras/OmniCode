@@ -93,4 +93,4 @@ Paseo 的通用 ACP 适配层不会帮你走登录流程，所以请先完成终
 ## 下一步
 
 - [omnicode acp 参考](../reference/omnicode-acp.md) — ACP 能力矩阵和方法覆盖详情
-- [omnicode 命令参考](../reference/omnicode-command.md) — 完整子命令列表
+- [omnicode 命令参考](../reference/omnicode.md) — 完整子命令列表

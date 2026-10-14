@@ -45,7 +45,7 @@ Omnicode CLI 支持同时接入多家模型供应商服务，模型在供应商�
 通过 `/login` 登录的 Omnicode OAuth 托管账号不会在 `/provider` 里显示，请用 `/login` 和 `/logout` 管理。
 :::
 
-非交互环境下也可以用 shell 命令完成同样操作：[`omnicode provider`](../reference/omnicode-command.md#omnicode-provider)。
+非交互环境下也可以用 shell 命令完成同样操作：[`omnicode provider`](../reference/omnicode.md#omnicode-provider)。
 
 ## 内置供应商
 
