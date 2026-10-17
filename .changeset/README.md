@@ -11,7 +11,7 @@ Current publishable packages:
 | Package | Directory | Description |
 | --- | --- | --- |
 | `@hilbras/omnicode` | `apps/omnicode` | CLI / TUI application — provides the `omnicode` command after install |
-| `@hilbras/omnicode-sdk` | `packages/omnicode-sdk` | Public TypeScript SDK |
+| `@hilbras/omnicode-sdk` | `Kernel/SDK` | Public TypeScript SDK |
 
 All other workspace packages are private internal packages, are not published to npm, and are excluded via `ignore` in `.changeset/config.json`:
 

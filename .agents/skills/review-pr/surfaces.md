@@ -13,7 +13,7 @@
 | desktop 与 web 用户 | 源码在 code-app 仓库，只消费 omnicode-server 的 `/api/v1` REST 与 `/api/v1/ws`。本仓 diff 看不到它们的用法，改契约时必须点名让作者去对方仓库核对 | `packages/omnicode-server/src/routes/`、`packages/omnicode-server/src/transport/ws/`、`docs/en/reference/server-api.md` |
 | VS Code 扩展用户 | 走 SDK 事件适配层，webview 有自己的渲染契约（#3250：v2 不再发 `display` 字段导致卡片空白） | `apps/vscode/` |
 | ACP 客户端用户 | Zed 等，`omnicode acp`。stdio MCP 是 ACP 的默认传输，客户端会无条件发（#3167）；能力矩阵是公开承诺（#3081） | `packages/omnicode-acp/`、`docs/en/reference/omnicode-acp.md` |
-| SDK 调用方 | `@hilbras/omnicode-sdk` 的导出面；其中 `OmnicodeForCodingProvider` 走 omnicode-llm 的 provider 实现，CLI 与服务端不用 omnicode-llm | `packages/omnicode-sdk/src/index.ts`、`packages/omnicode-sdk/package.json` 的 `exports`、`packages/omnicode-llm/src/providers/` |
+| SDK 调用方 | `@hilbras/omnicode-sdk` 的导出面；其中 `OmnicodeForCodingProvider` 走 omnicode-llm 的 provider 实现，CLI 与服务端不用 omnicode-llm | `Kernel/SDK/src/index.ts`、`Kernel/SDK/package.json` 的 `exports`、`packages/omnicode-llm/src/providers/` |
 | 远程控制用户 | `omnicode web --remote-control`，凭据槽位与 relay 按登录区域选择（#3969） | `packages/omnicode-remote/` |
 
 ### provider 方言
@@ -99,7 +99,7 @@ prompt 文本改动影响全体用户，且没有测试能证明"无影响"。�
 | `packages/omnicode-core/src/human/utils/watch.ts`（热加载开关）以及任何模块级默认常量、`?? true` / `?? false` 兜底被配置键覆盖的地方 | 默认值来源 | 默认翻转必列；退路的 config 路径要有 guard 测试，不能只靠 env；退路是否依赖 ConfigService 先于消费方构造 |
 | `packages/omnicode-core/docs/wire-manifest.d.ts`、`packages/omnicode-core/docs/state-manifest.d.ts` | 磁盘会话格式 | 旧会话能否读、回滚到上一版能否读、有无迁移 |
 | `packages/omnicode-server/test/__snapshots__/apiSurface.snapshot.test.ts.snap`、`packages/omnicode-server/src/routes/`、`packages/omnicode-server/src/transport/ws/` | desktop、web、VS Code 的服务端契约 | 消费方在仓库外，点名让作者去 code-app 核对；上一版客户端连新服务端是否仍可用 |
-| `packages/omnicode-sdk/src/index.ts`、`packages/omnicode-sdk/package.json` | SDK 导出面 | 删除或改签名即破坏性变更 |
+| `Kernel/SDK/src/index.ts`、`Kernel/SDK/package.json` | SDK 导出面 | 删除或改签名即破坏性变更 |
 | `packages/omnicode-client/src/` | SDK 与 ACP 下面的客户端门面契约 | 只改 omnicode-client 的 PR 碰不到 omnicode-sdk 导出面，按 SDK 调用方与 ACP 客户端两个人群核行为变化 |
 | `packages/omnicode-transcript/src/contract/` | omnicode-server 发给 desktop、web、VS Code 的 transcript 载荷契约 | 消费方在 code-app，点名让作者去核；上一版客户端能否解析新载荷 |
 | `.github/workflows/release.yml`、`_native-build.yml`、`manual-native-bundle.yml`、`vscode-publish.yml`，`apps/omnicode/scripts/native/`、`apps/omnicode/scripts/check-web-assets.mjs` | 发布产物 | 按安装方式与平台核：npm 包内容、各平台 native 二进制、VS Code 市场包、内置 web 产物是否仍齐全 |

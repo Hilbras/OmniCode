@@ -28,7 +28,8 @@ This is a pnpm monorepo. The most relevant entry points are:
 - `apps/omnicode` — CLI / TUI
 - `apps/vscode` — VS Code extension
 - `apps/omnicode-vis` — session debug visualizer
-- `packages/omnicode-sdk` — public TypeScript SDK (`@hilbras/omnicode-sdk`)
+- `Kernel/SDK` — public TypeScript SDK (`@hilbras/omnicode-sdk`)
+- `Kernel/API` — the kernel connection surface (`@hilbras/kernel-api`)
 - `packages/omnicode-core` — the agent engine (DI Scope architecture)
 - `packages/omnicode-client`, `packages/omnicode-server`, `packages/omnicode-transcript`, `packages/omnicode-llm`, `packages/omnicode-kaos`, `packages/omnicode-auth`, `packages/omnicode-telemetry` — internal engine packages
 - `docs/` — VitePress bilingual docs site

@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "outDir": ".tmp-api-extractor/dts",
+    "rootDir": ".."
+  },
+  "include": [
+    "src/**/*.ts",
+    "../../packages/omnicode-core/src/**/*.ts",
+    "../../packages/omnicode-core/src/env.d.ts",
+    "../../packages/omnicode-kaos/src/**/*.ts",
+    "../../packages/omnicode-client/src/**/*.ts",
+    "../../packages/omnicode-llm/src/**/*.ts",
+    "../../packages/omnicode-auth/src/**/*.ts"
+  ],
+  "exclude": ["dist", ".tmp-api-extractor", "examples", "test", "../../packages/*/dist", "../../packages/*/test", "../../packages/omnicode-core/src/human/test"]
+}

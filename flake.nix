@@ -71,7 +71,7 @@
         ./packages/omnicode-migration
         ./packages/omnicode-minidb
         ./packages/omnicode-remote
-        ./packages/omnicode-sdk
+        ./Kernel/SDK
         ./packages/omnicode-auth
         ./packages/omnicode-tui
         ./packages/omnicode-telemetry

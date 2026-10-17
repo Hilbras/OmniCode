@@ -74,7 +74,50 @@ importers:
     dependencies:
       '@hilbras/omnicode-sdk':
         specifier: workspace:^
-        version: link:../../packages/omnicode-sdk
+        version: link:../SDK
+
+  Kernel/SDK:
+    dependencies:
+      '@antfu/utils':
+        specifier: ^9.3.0
+        version: 9.3.0
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.29.0
+        version: 1.29.0(zod@4.3.6)
+      immer:
+        specifier: ^11.1.0
+        version: 11.1.11
+      smol-toml:
+        specifier: ^1.6.1
+        version: 1.6.1
+      yazl:
+        specifier: ^3.3.1
+        version: 3.3.1
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@hilbras/omnicode-auth':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-auth
+      '@hilbras/omnicode-client':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-client
+      '@hilbras/omnicode-core':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-core
+      '@hilbras/omnicode-kaos':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-kaos
+      '@hilbras/omnicode-llm':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-llm
+      '@types/yazl':
+        specifier: ^2.4.6
+        version: 2.4.6
+      jimp:
+        specifier: ^1.6.1
+        version: 1.6.1
 
   apps/omnicode:
     dependencies:
@@ -573,49 +616,6 @@ importers:
       '@types/ws':
         specifier: ^8.18.0
         version: 8.18.1
-
-  packages/omnicode-sdk:
-    dependencies:
-      '@antfu/utils':
-        specifier: ^9.3.0
-        version: 9.3.0
-      '@modelcontextprotocol/sdk':
-        specifier: ^1.29.0
-        version: 1.29.0(zod@4.3.6)
-      immer:
-        specifier: ^11.1.0
-        version: 11.1.11
-      smol-toml:
-        specifier: ^1.6.1
-        version: 1.6.1
-      yazl:
-        specifier: ^3.3.1
-        version: 3.3.1
-      zod:
-        specifier: ^4.3.6
-        version: 4.3.6
-    devDependencies:
-      '@hilbras/omnicode-auth':
-        specifier: workspace:^
-        version: link:../omnicode-auth
-      '@hilbras/omnicode-client':
-        specifier: workspace:^
-        version: link:../omnicode-client
-      '@hilbras/omnicode-core':
-        specifier: workspace:^
-        version: link:../omnicode-core
-      '@hilbras/omnicode-kaos':
-        specifier: workspace:^
-        version: link:../omnicode-kaos
-      '@hilbras/omnicode-llm':
-        specifier: workspace:^
-        version: link:../omnicode-llm
-      '@types/yazl':
-        specifier: ^2.4.6
-        version: 2.4.6
-      jimp:
-        specifier: ^1.6.1
-        version: 1.6.1
 
   packages/omnicode-server:
     dependencies:

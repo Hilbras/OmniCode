@@ -20,12 +20,12 @@ export default defineConfig({
     ].join('\n'),
   },
   alias: {
-    '@hilbras/omnicode-kaos': fileURLToPath(new URL('../omnicode-kaos/src/index.ts', import.meta.url)),
+    '@hilbras/omnicode-kaos': fileURLToPath(new URL('../../packages/omnicode-kaos/src/index.ts', import.meta.url)),
     '@hilbras/omnicode-auth/provider-credential': fileURLToPath(
-      new URL('../omnicode-auth/src/provider-credential.ts', import.meta.url),
+      new URL('../../packages/omnicode-auth/src/provider-credential.ts', import.meta.url),
     ),
-    '@hilbras/omnicode-auth': fileURLToPath(new URL('../omnicode-auth/src/index.ts', import.meta.url)),
-    '@hilbras/omnicode-llm': fileURLToPath(new URL('../omnicode-llm/src/index.ts', import.meta.url)),
+    '@hilbras/omnicode-auth': fileURLToPath(new URL('../../packages/omnicode-auth/src/index.ts', import.meta.url)),
+    '@hilbras/omnicode-llm': fileURLToPath(new URL('../../packages/omnicode-llm/src/index.ts', import.meta.url)),
   },
   deps: {
     alwaysBundle: [/^@hilbras\//],
