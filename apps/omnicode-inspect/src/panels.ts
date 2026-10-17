@@ -29,7 +29,7 @@ import { IAuthSummaryService } from '@hilbras/omnicode-core/app/auth/auth';
 import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
 import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
 import { IProviderService } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
-import { ISessionInitService } from '@hilbras/omnicode-core/features/sessionInit/sessionInit';
+import { ISessionInitService } from '@hilbras/omnicode-addons/features/sessionInit/sessionInit';
 import { ISessionMetadata } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
 import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspaceContext/workspaceContext';
 

@@ -184,7 +184,6 @@ import {
   ISessionExportService,
   ISessionIndex,
   ISessionIndexMirror,
-  ISessionInitService,
   ISessionManager,
   ISessionMcpHandle,
   ISessionMetadata,
@@ -227,6 +226,7 @@ import {
   type ServicesAccessor,
   type SessionSummary as V2SessionSummary,
 } from '@hilbras/omnicode-core';
+import { ISessionInitService } from '@hilbras/omnicode-addons/features/sessionInit/sessionInit';
 import {
   RPCError,
   type AgentHandle,

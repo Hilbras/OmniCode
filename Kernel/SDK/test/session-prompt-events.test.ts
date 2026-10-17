@@ -5,6 +5,8 @@ import { setTimeout as delay } from 'node:timers/promises';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import '@hilbras/omnicode-addons';
+
 import { createOmnicodeHarness, type Event, type OmnicodeHarness } from '#/index';
 
 import { TEST_IDENTITY } from './test-identity';

@@ -21,6 +21,7 @@ This is a TypeScript monorepo built for agent-assisted development. Keep the roo
 - `packages/omnicode-core`: the DI × Scope agent engine (the v2 port behind omnicode-server). Three `LifecycleScope` tiers — `App` / `Session` / `Agent` (`app/scopes.ts`) — plus the L3 unit layer (`Service`/`Fiber` units, collection contribution points, the Feature seam in `src/features/`); there is no App-level session lifecycle facade — callers compose `ISessionIndex` → `IWorkspaceLifecycleService.handlerFor` → the handler.
 - `Kernel/API`: the single connection surface between kernel packages (`@hilbras/omnicode-api`). Systems reach the SDK through here, never by importing it directly.
 - `Kernel/SDK`: the public TypeScript SDK and harness (`@hilbras/omnicode-sdk`).
+- `Kernel/ACP`: the Agent Client Protocol host (`@hilbras/omnicode-acp`) — lets editors drive Omnicode over stdio. See `Kernel/README.md` for what `Kernel/Addons` can and cannot hold.
 - `packages/omnicode-llm`: the LLM / provider abstraction layer.
 - `packages/omnicode-kaos`: the execution environment and file/process abstractions.
 - `packages/omnicode-auth`: Omnicode OAuth and managed auth utilities.
@@ -110,7 +111,7 @@ Editing or deleting sentences under `packages/omnicode-core/src/**/*.md` (system
 
 ### Contract files are tripwires
 
-The manifests under `packages/omnicode-core/docs/` (`config-manifest.toml`, `wire-manifest.d.ts`, `state-manifest.d.ts`), `packages/omnicode-server/test/__snapshots__/apiSurface.snapshot.test.ts.snap`, `Kernel/SDK/src/index.ts`, `packages/omnicode-core/src/features/externalHooks/`, `packages/omnicode-acp/`, and `apps/omnicode/src/cli/` are consumed outside this repository: desktop and web in code-app, the VS Code extension, ACP clients such as Zed, SDK users, hook scripts, and headless-output parsers. When they change, require the PR to name the consumers and how data and clients from the previous release keep working.
+The manifests under `packages/omnicode-core/docs/` (`config-manifest.toml`, `wire-manifest.d.ts`, `state-manifest.d.ts`), `packages/omnicode-server/test/__snapshots__/apiSurface.snapshot.test.ts.snap`, `Kernel/SDK/src/index.ts`, `packages/omnicode-core/src/features/externalHooks/`, `Kernel/ACP/`, and `apps/omnicode/src/cli/` are consumed outside this repository: desktop and web in code-app, the VS Code extension, ACP clients such as Zed, SDK users, hook scripts, and headless-output parsers. When they change, require the PR to name the consumers and how data and clients from the previous release keep working.
 
 ### Ports and refactors carry the old path's feature inventory
 

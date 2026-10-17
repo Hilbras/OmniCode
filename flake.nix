@@ -62,7 +62,7 @@
       # pnpmConfigHook (dependencies for that workspace won't be fetched).
       # -------------------------------------------------------------------
       workspacePaths = [
-        ./packages/omnicode-acp
+        ./Kernel/ACP
         ./packages/omnicode-core
         ./packages/omnicode-server
         ./packages/omnicode-kaos
@@ -78,6 +78,7 @@
         ./packages/omnicode-transcript
         ./packages/omnicode-tree-sitter-bash
         ./Kernel/API
+        ./Kernel/Addons
         ./apps/omnicode
         ./apps/omnicode-inspect
         ./apps/omnicode-vis
@@ -103,6 +104,7 @@
         "@hilbras/omnicode-transcript"
         "@hilbras/omnicode-tree-sitter-bash"
         "@hilbras/omnicode-api"
+        "@hilbras/omnicode-addons"
         "@hilbras/omnicode"
         "@hilbras/omnicode-inspect"
         "@hilbras/omnicode-vis"

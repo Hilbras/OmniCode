@@ -12,7 +12,7 @@
 | print 模式用户 | `omnicode -p`，含解析 `--output-format stream-json` 输出的脚本。脚本解析者算二等人群，但输出格式变化必须写进 changeset（#3146） | `apps/omnicode/src/cli/options.ts` |
 | desktop 与 web 用户 | 源码在 code-app 仓库，只消费 omnicode-server 的 `/api/v1` REST 与 `/api/v1/ws`。本仓 diff 看不到它们的用法，改契约时必须点名让作者去对方仓库核对 | `packages/omnicode-server/src/routes/`、`packages/omnicode-server/src/transport/ws/`、`docs/en/reference/server-api.md` |
 | VS Code 扩展用户 | 走 SDK 事件适配层，webview 有自己的渲染契约（#3250：v2 不再发 `display` 字段导致卡片空白） | `apps/vscode/` |
-| ACP 客户端用户 | Zed 等，`omnicode acp`。stdio MCP 是 ACP 的默认传输，客户端会无条件发（#3167）；能力矩阵是公开承诺（#3081） | `packages/omnicode-acp/`、`docs/en/reference/omnicode-acp.md` |
+| ACP 客户端用户 | Zed 等，`omnicode acp`。stdio MCP 是 ACP 的默认传输，客户端会无条件发（#3167）；能力矩阵是公开承诺（#3081） | `Kernel/ACP/`、`docs/en/reference/omnicode-acp.md` |
 | SDK 调用方 | `@hilbras/omnicode-sdk` 的导出面；其中 `OmnicodeForCodingProvider` 走 omnicode-llm 的 provider 实现，CLI 与服务端不用 omnicode-llm | `Kernel/SDK/src/index.ts`、`Kernel/SDK/package.json` 的 `exports`、`packages/omnicode-llm/src/providers/` |
 | 远程控制用户 | `omnicode web --remote-control`，凭据槽位与 relay 按登录区域选择（#3969） | `packages/omnicode-remote/` |
 
@@ -103,7 +103,7 @@ prompt 文本改动影响全体用户，且没有测试能证明"无影响"。�
 | `packages/omnicode-client/src/` | SDK 与 ACP 下面的客户端门面契约 | 只改 omnicode-client 的 PR 碰不到 omnicode-sdk 导出面，按 SDK 调用方与 ACP 客户端两个人群核行为变化 |
 | `packages/omnicode-transcript/src/contract/` | omnicode-server 发给 desktop、web、VS Code 的 transcript 载荷契约 | 消费方在 code-app，点名让作者去核；上一版客户端能否解析新载荷 |
 | `.github/workflows/release.yml`、`_native-build.yml`、`manual-native-bundle.yml`、`vscode-publish.yml`，`apps/omnicode/scripts/native/`、`apps/omnicode/scripts/check-web-assets.mjs` | 发布产物 | 按安装方式与平台核：npm 包内容、各平台 native 二进制、VS Code 市场包、内置 web 产物是否仍齐全 |
-| `packages/omnicode-acp/` | ACP 客户端 | 对照 `docs/en/reference/omnicode-acp.md` 的能力矩阵逐项核对 |
+| `Kernel/ACP/` | ACP 客户端 | 对照 `docs/en/reference/omnicode-acp.md` 的能力矩阵逐项核对 |
 | `apps/omnicode/src/cli/` | 命令行参数、子命令、`--output-format` | 对照 `docs/en/reference/omnicode.md` |
 | `packages/omnicode-core/src/features/externalHooks/` | hook 事件与载荷 | 对照 `docs/en/customization/hooks.md` 的事件参考 |
 | `packages/omnicode-core/src/human/llm/requester/bases/` | provider 方言分支 | 枚举每种上游载荷形态改动前后各走哪条分支，尤其是多个字段并存的网关 |

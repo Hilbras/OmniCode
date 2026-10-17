@@ -42,6 +42,14 @@
     "./*": {
       "types": "./src/*.ts",
       "default": "./src/*.ts"
+    },
+    "./test/harness": {
+      "types": "./test/harness/index.ts",
+      "default": "./test/harness/index.ts"
+    },
+    "./test/*": {
+      "types": "./test/*.ts",
+      "default": "./test/*.ts"
     }
   },
   "scripts": {
