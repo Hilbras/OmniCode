@@ -140,6 +140,7 @@ export function parseOpenAIUsage(usage: OpenAIRawUsage | null | undefined): Toke
 export interface OpenAIRequestParams {
   readonly params: OpenAI.Chat.ChatCompletionCreateParamsStreaming;
   readonly headers?: Record<string, string>;
+  readonly toolNameAliases?: Readonly<Record<string, string>>;
 }
 
 export interface OpenAILowerOptions {
@@ -201,6 +202,7 @@ export function encodeOpenAIRequest(params: Record<string, unknown>): OpenAIRequ
 
 export interface OpenAIStreamParserOptions extends StreamParserOptions<OpenAIRawChunk> {
   readonly reasoningKey?: string;
+  readonly toolNameAliases?: Readonly<Record<string, string>>;
 }
 
 export interface OpenAIProtocolFormat extends ProtocolFormat<OpenAIRawChunk> {
@@ -220,7 +222,9 @@ export function createOpenAIFormat(): OpenAIProtocolFormat {
           return [];
         }
         const streamIndex = toolCall.index;
-        const functionName = toolCall.function.name;
+        const wireName = toolCall.function.name;
+        const functionName =
+          wireName === undefined ? undefined : (options?.toolNameAliases?.[wireName] ?? wireName);
         const functionArguments = toolCall.function.arguments;
         const hasConcreteName = typeof functionName === 'string' && functionName.length > 0;
         const hasArguments = typeof functionArguments === 'string' && functionArguments.length > 0;

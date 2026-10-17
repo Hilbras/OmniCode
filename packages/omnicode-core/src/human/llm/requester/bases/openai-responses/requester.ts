@@ -10,10 +10,6 @@ import { applyThinking } from '#/llm/protocol/thinking';
 import { resolveMaxCompletionCap, type FormatRequestInput } from '#/llm/protocol/format';
 import { consumeStream, resolveTransportHeaders } from '#/llm/protocol/stream';
 import { encodeReasoningEffortFallback } from '#/llm/thinking';
-import {
-  opencodeFreeSessionId,
-  opencodeFreeTierHeaders,
-} from '#/llm/provider/providers/opencode';
 import { resolveAuthSchemeHeaders } from '#/llm/requester/auth-scheme-headers';
 import {
   type LlmClientContext,
@@ -132,11 +128,7 @@ async function executeOpenAIResponsesRequest(
   transport: OpenAIResponsesTransport,
 ): Promise<void> {
   const { connection, trait, ctx, format, resolveClient, signal, onEvent } = transport;
-  const transportHeaders = resolveTransportHeaders(connection, ctx, request.headers);
-  const headers =
-    ctx.model.opencodeFreeTier === true
-      ? { ...transportHeaders, ...opencodeFreeTierHeaders(opencodeFreeSessionId()) }
-      : transportHeaders;
+  const headers = resolveTransportHeaders(connection, ctx, request.headers);
   const client = resolveClient({
     model: ctx.model,
     headers,

@@ -23,6 +23,7 @@ import {
   type BuiltInProvider,
 } from '#/utils/built-in-providers';
 import {
+  backfillCatalogLimits,
   buildFreeTierAliases,
   describeFreeTierFailure,
   fetchCatalogLimits,
@@ -606,8 +607,18 @@ async function routeFreeTierAliases(
   },
 ): Promise<void> {
   for (const source of target.freeTier ?? []) {
+    const limits =
+      target.catalogProvider === undefined
+        ? new Map<string, CatalogLimit>()
+        : await fetchCatalogLimits(target.catalogProvider);
+    let config = await host.harness.getConfig({ reload: true });
+    const models = { ...config.models } as Record<string, Record<string, unknown>>;
+    const changed = backfillCatalogLimits({ models, providerId: target.providerId, limits });
     const { ids, failure } = await fetchFreeTierModelIds(source);
-    const config = await host.harness.getConfig({ reload: true });
+    if (changed) {
+      await host.harness.setConfig({ models });
+      config = await host.harness.getConfig({ reload: true });
+    }
     if (ids.length === 0) {
       host.showError(describeFreeTierFailure(source.baseUrl, failure));
       const preserved = target.previousFreeAliases ?? {};
@@ -616,10 +627,6 @@ async function routeFreeTierAliases(
       }
       continue;
     }
-    const limits =
-      target.catalogProvider === undefined
-        ? new Map<string, CatalogLimit>()
-        : await fetchCatalogLimits(target.catalogProvider);
     const aliases = buildFreeTierAliases({
       providerId: target.providerId,
       baseUrl: source.baseUrl,

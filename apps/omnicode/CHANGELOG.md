@@ -1,5 +1,13 @@
 # @hilbras/omnicode
 
+## 1.1.8
+
+### Patch Changes
+
+- Keep a tool usable on free OpenCode models when its name collides with one of the vendor's placeholder tools, instead of the model calling it under a name the engine cannot resolve.
+
+- Record the same real context windows when adding a built-in provider from the `/provider` menu as the command line does, so both surfaces leave the same config.
+
 ## 1.1.7
 
 ### Patch Changes

@@ -49,11 +49,11 @@ import {
 } from '#/utils/built-in-providers';
 import { parseProviderBaseUrl } from '#/utils/custom-provider';
 import {
+  backfillCatalogLimits,
   buildFreeTierAliases,
   describeFreeTierFailure,
   fetchFreeTierModelIds,
   fetchCatalogLimits,
-  DEFAULT_MAX_CONTEXT,
   type CatalogLimit,
 } from '#/utils/builtin-model-import';
 import { redactProviderSecrets, writeProviderRecords } from '#/utils/provider-records';
@@ -429,22 +429,7 @@ async function importBuiltInExtras(
       ? new Map<string, CatalogLimit>()
       : await fetchCatalogLimits(builtin.catalogProvider);
 
-  // Fill real limits onto aliases already written by discovery, but only where
-  // the value is still the flat default: an alias the user hand-tuned keeps
-  // whatever they chose.
-  let touched = false;
-  for (const [key, raw] of Object.entries(models)) {
-    if (!key.startsWith(`${providerId}/`)) continue;
-    const record = raw as Record<string, unknown>;
-    if (record === null || typeof record !== 'object') continue;
-    const id = typeof record['model'] === 'string' ? record['model'] : undefined;
-    if (id === undefined) continue;
-    const limit = limits.get(id);
-    if (limit === undefined) continue;
-    if (record['maxContextSize'] !== DEFAULT_MAX_CONTEXT) continue;
-    models[key] = { ...record, maxContextSize: limit.context } as (typeof models)[string];
-    touched = true;
-  }
+  let touched = backfillCatalogLimits({ models, providerId, limits });
 
   const routed: string[] = [];
   for (const source of builtin.freeTier ?? []) {

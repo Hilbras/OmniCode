@@ -16,6 +16,8 @@ import type { LlmRequestEvent } from '#human/llm/requester/requester';
 import { thinkingMetadataOf } from '#human/llm/thinking';
 import type { Model } from '#/llm-adapter/model/catalog';
 import { ProtocolAdapterRegistry } from '#/llm-adapter/protocol/protocolAdapterRegistry';
+import { prepareOpenAIRequest } from '#human/llm/requester/bases/openai/requester';
+import type { LlmModel } from '#human/llm/model';
 import {
   getProviderDefinition,
   getProviderDefinitions,
@@ -557,7 +559,7 @@ describe('opencode free tier variant', () => {
   });
 
   it('adds the placeholder note and the vendor tool fingerprint to the payload', () => {
-    const out = applyOpencodeFreeTierPayload(
+    const { params: out } = applyOpencodeFreeTierPayload(
       { messages: [{ role: 'user', content: 'hi' }], tools: [], max_completion_tokens: 16 },
       'big-pickle',
     );
@@ -571,7 +573,7 @@ describe('opencode free tier variant', () => {
   });
 
   it('renames a client tool that collides with a fingerprint tool name', () => {
-    const out = applyOpencodeFreeTierPayload(
+    const { params: out } = applyOpencodeFreeTierPayload(
       {
         messages: [],
         tools: [{ type: 'function', function: { name: 'read', parameters: { type: 'object' } } }],
@@ -584,20 +586,20 @@ describe('opencode free tier variant', () => {
 
   it('leaves an identical fingerprint tool in place instead of aliasing it', () => {
     const canonical = opencodeFingerprintTools();
-    const out = applyOpencodeFreeTierPayload({ messages: [], tools: [canonical[0]!] }, 'big-pickle');
+    const { params: out } = applyOpencodeFreeTierPayload({ messages: [], tools: [canonical[0]!] }, 'big-pickle');
     const names = (out['tools'] as { function: { name: string } }[]).map((t) => t.function.name);
     expect(names).toEqual(['read', 'shell']);
   });
 
   it('never raises the output budget past the remaining context window', () => {
-    const nearLimit = applyOpencodeFreeTierPayload(
+    const { params: nearLimit } = applyOpencodeFreeTierPayload(
       { messages: [], tools: [], max_completion_tokens: 8 },
       'big-pickle',
       { remainingContextTokens: 40, thinkingRequested: true },
     );
     expect(nearLimit['max_completion_tokens']).toBe(40);
 
-    const roomy = applyOpencodeFreeTierPayload(
+    const { params: roomy } = applyOpencodeFreeTierPayload(
       { messages: [], tools: [], max_completion_tokens: 8 },
       'glm-5.3',
       { remainingContextTokens: 100_000, thinkingRequested: true },
@@ -606,18 +608,43 @@ describe('opencode free tier variant', () => {
   });
 
   it('skips the thinking reserve when thinking is off', () => {
-    const off = applyOpencodeFreeTierPayload(
+    const { params: off } = applyOpencodeFreeTierPayload(
       { messages: [], tools: [], max_completion_tokens: 8 },
       'muse-spark-1.3',
       { thinkingRequested: false },
     );
     expect(off['max_completion_tokens']).toBe(512);
 
-    const on = applyOpencodeFreeTierPayload(
+    const { params: on } = applyOpencodeFreeTierPayload(
       { messages: [], tools: [], max_completion_tokens: 8 },
       'muse-spark-1.3',
       { thinkingRequested: true },
     );
     expect(on['max_completion_tokens']).toBe(1024 + 4096);
+  });
+
+  it('hands the parser a map that renames a colliding tool back on the way home', () => {
+    const { toolAliases } = applyOpencodeFreeTierPayload(
+      {
+        messages: [],
+        tools: [{ type: 'function', function: { name: 'read', parameters: { type: 'object' } } }],
+      },
+      'big-pickle',
+    );
+    expect(toolAliases).toEqual({ read_client: 'read' });
+
+    const freeModel = {
+      provider: 'opencode-zen',
+      model: 'big-pickle',
+      capability: { image_in: false, video_in: false, audio_in: false, thinking: false, tool_use: true },
+      maxContextSize: 131072,
+      opencodeFreeTier: true,
+    } as unknown as LlmModel;
+    const wire = prepareOpenAIRequest({
+      model: freeModel,
+      messages: [],
+      tools: [{ name: 'read', description: 'client tool', parameters: {} }],
+    });
+    expect(wire.toolNameAliases).toEqual({ read_client: 'read' });
   });
 });

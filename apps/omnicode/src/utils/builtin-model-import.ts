@@ -184,3 +184,29 @@ export function buildFreeTierAliases(input: {
   }
   return out;
 }
+/**
+ * Fills real context windows from the models.dev catalog onto aliases that
+ * discovery already wrote, so both add surfaces produce the same config.
+ *
+ * Only aliases still holding the flat default are touched: one the user
+ * hand-tuned keeps whatever they chose. Returns whether anything changed.
+ */
+export function backfillCatalogLimits(input: {
+  readonly models: Record<string, Record<string, unknown>>;
+  readonly providerId: string;
+  readonly limits: ReadonlyMap<string, CatalogLimit>;
+}): boolean {
+  let touched = false;
+  for (const [key, record] of Object.entries(input.models)) {
+    if (!key.startsWith(`${input.providerId}/`)) continue;
+    if (record === null || typeof record !== 'object') continue;
+    const id = typeof record['model'] === 'string' ? record['model'] : undefined;
+    if (id === undefined) continue;
+    const limit = input.limits.get(id);
+    if (limit === undefined) continue;
+    if (record['maxContextSize'] !== DEFAULT_MAX_CONTEXT) continue;
+    input.models[key] = { ...record, maxContextSize: limit.context };
+    touched = true;
+  }
+  return touched;
+}

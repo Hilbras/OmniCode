@@ -138,17 +138,23 @@ export function prepareOpenAIRequest(
   );
   const params = assembleOpenAIRequest(input, { messages: merged, tools, kwargs });
   const finalParams = trait?.buildParams?.(params, ctx) ?? params;
-  const withFingerprint =
-    ctx.model.opencodeFreeTier === true
-      ? applyOpencodeFreeTierPayload(finalParams, ctx.model.model, {
-          remainingContextTokens:
-            input.maxContextTokens !== undefined && input.maxContextTokens > 0 && input.usedContextTokens !== undefined
-              ? input.maxContextTokens - input.usedContextTokens
-              : undefined,
-          thinkingRequested: input.thinking?.effort !== 'off',
-        })
-      : finalParams;
-  return encodeOpenAIRequest(withFingerprint);
+  if (ctx.model.opencodeFreeTier !== true) {
+    return encodeOpenAIRequest(finalParams);
+  }
+  const { params: withFingerprint, toolAliases } = applyOpencodeFreeTierPayload(
+    finalParams,
+    ctx.model.model,
+    {
+      remainingContextTokens:
+        input.maxContextTokens !== undefined &&
+        input.maxContextTokens > 0 &&
+        input.usedContextTokens !== undefined
+          ? input.maxContextTokens - input.usedContextTokens
+          : undefined,
+      thinkingRequested: input.thinking?.effort !== 'off',
+    },
+  );
+  return { ...encodeOpenAIRequest(withFingerprint), toolNameAliases: toolAliases };
 }
 
 interface OpenAITransport {
@@ -183,6 +189,7 @@ async function executeOpenAIRequest(
   onEvent?.({ type: 'llm.streaming.headers', headers: headersToRecord(response.headers) ?? {} });
   const parse = format.createStreamParser({
     reasoningKey: trait?.reasoningKey,
+    toolNameAliases: request.toolNameAliases,
     resolveUsage:
       trait?.extractUsage === undefined
         ? undefined

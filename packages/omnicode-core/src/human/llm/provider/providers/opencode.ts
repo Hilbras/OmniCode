@@ -200,14 +200,20 @@ function effectiveMaxTokens(
   return Math.min(capped, MAX_OUTPUT_TOKENS);
 }
 
+export interface FreeTierPayload {
+  readonly params: Record<string, unknown>;
+  readonly toolAliases: Readonly<Record<string, string>>;
+}
+
 export function applyOpencodeFreeTierPayload(
   params: Record<string, unknown>,
   modelId: string,
   budget: FreeTierTokenBudget = { thinkingRequested: true },
-): Record<string, unknown> {
+): FreeTierPayload {
   const next = { ...params };
   const taken = new Set<string>();
   const exact = new Set<string>();
+  const toolAliases: Record<string, string> = {};
   const clientTools = Array.isArray(next['tools']) ? (next['tools'] as unknown[]) : [];
   const aliased = clientTools.map((tool) => {
     if (tool === null || typeof tool !== 'object') return tool;
@@ -234,6 +240,7 @@ export function applyOpencodeFreeTierPayload(
     let alias = `${name}_client`;
     for (let i = 2; taken.has(alias); i++) alias = `${name}_client${i}`;
     taken.add(alias);
+    toolAliases[alias] = name;
     const body = wireToolBody(tool as Record<string, unknown>);
     const hasFn = (tool as Record<string, unknown>)['function'] !== undefined;
     return hasFn
@@ -256,7 +263,7 @@ export function applyOpencodeFreeTierPayload(
       next[key] = effectiveMaxTokens(next[key], modelId, budget);
     }
   }
-  return next;
+  return { params: next, toolAliases };
 }
 
 export const opencodeFreeTierConnection: ProviderConnection = {
