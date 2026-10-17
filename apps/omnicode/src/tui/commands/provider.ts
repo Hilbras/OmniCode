@@ -600,6 +600,10 @@ async function routeFreeTierAliases(
     });
     const config = await host.harness.getConfig({ reload: true });
     await host.harness.setConfig({ models: { ...config.models, ...aliases } });
+    // The aliases just written are in config but not yet in appState, which is
+    // what the model picker reads. Without this refresh the picker offers only
+    // the paid models until the TUI is restarted.
+    await host.authFlow.refreshConfigAfterLogin();
   }
 }
 

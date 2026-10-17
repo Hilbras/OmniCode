@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.3
+
+### Patch Changes
+
+- Show a built-in provider's free models in the model picker straight after adding it from the `/provider` menu, instead of only after the TUI is restarted.
+
 ## 1.1.2
 
 ### Patch Changes
