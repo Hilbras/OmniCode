@@ -41,7 +41,8 @@ function isDelimiter(ch: string): boolean {
 }
 
 function codePointOf(text: string): number {
-  return text.codePointAt(0) ?? text.codePointAt(0);
+  const point = text.codePointAt(0);
+  return point === undefined ? 0 : point;
 }
 
 function readLiteralString(src: string, start: number): { token: PdfToken; next: number } {

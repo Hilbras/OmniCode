@@ -10,6 +10,8 @@ import {
   type TodoItem,
 } from '#/features/todo/todoItem';
 
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import {
   ITodoListTool,
   TodoListInputSchema,
@@ -62,3 +64,8 @@ export class TodoListTool implements ITodoListTool {
     };
   }
 }
+
+registerAgentToolService(ITodoListTool, TodoListTool, {
+  name: TODO_LIST_TOOL_NAME,
+  domain: 'todo',
+});

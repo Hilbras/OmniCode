@@ -709,6 +709,7 @@ export * from '#/agent/agentContext/agentContext';
 export * from '#/agent/agentContext/agentSpace';
 export * from '#/agent/scopeContext/scopeContext';
 export * from '#/features/todo/todoItem';
+import '#/features/todo/tools/todo-list/todoListTool';
 export * from '#/features/todo/todoListReminder';
 export * from '#/features/todo/todoService';
 export * from '#/features/todo/tools/todo-list/todo-list';
