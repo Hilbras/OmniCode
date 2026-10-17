@@ -8,7 +8,7 @@ import { oldMd5BucketName } from '../../src/sessions/workdir-bucket.js';
 import { targetSessionIndex } from '../../src/paths.js';
 
 const FIXTURES = fileURLToPath(new URL('../fixtures', import.meta.url));
-const FIXTURE_OMNICODE = join(FIXTURES, 'multi-workdir', '.kimi');
+const FIXTURE_OMNICODE = join(FIXTURES, 'multi-workdir', '.omnicode');
 
 // md5("/proj-b") — bucket for placeholder + empty cases.
 const PROJ_B_BUCKET = 'dbf62706c1b976e79a5e7cfcc3491a1f';
@@ -118,7 +118,7 @@ describe('migrateSessionsStep (multi-workdir fixture)', () => {
     try {
       const workdir = '/Users/me/corrupt-proj';
       await writeFile(
-        join(src, 'kimi.json'),
+        join(src, 'omnicode.json'),
         JSON.stringify({ work_dirs: [{ path: workdir, kaos: 'local' }] }),
       );
       const bucket = join(src, 'sessions', oldMd5BucketName(workdir));
@@ -149,7 +149,7 @@ describe('migrateSessionsStep (multi-workdir fixture)', () => {
     try {
       const workdir = '/Users/me/empty-proj';
       await writeFile(
-        join(src, 'kimi.json'),
+        join(src, 'omnicode.json'),
         JSON.stringify({ work_dirs: [{ path: workdir, kaos: 'local' }] }),
       );
       const bucket = join(src, 'sessions', oldMd5BucketName(workdir));
@@ -182,7 +182,7 @@ describe('migrateSessionsStep (multi-workdir fixture)', () => {
     try {
       const workdir = '/Users/me/missing-context-project';
       await writeFile(
-        join(src, 'kimi.json'),
+        join(src, 'omnicode.json'),
         JSON.stringify({ work_dirs: [{ path: workdir, kaos: 'local' }] }),
       );
       const sessionDir = join(src, 'sessions', oldMd5BucketName(workdir), 'missing-context');
@@ -210,7 +210,7 @@ describe('migrateSessionsStep (multi-workdir fixture)', () => {
       const bucket = join(src, 'sessions', oldMd5BucketName(workdir));
       await mkdir(bucket, { recursive: true });
       await writeFile(
-        join(src, 'kimi.json'),
+        join(src, 'omnicode.json'),
         JSON.stringify({ work_dirs: [{ path: workdir, kaos: 'local' }] }),
       );
       await writeFile(
@@ -241,7 +241,7 @@ describe('migrateSessionsStep (multi-workdir fixture)', () => {
       const sessionDir = join(src, 'sessions', oldMd5BucketName(workdir), 'titled-1');
       await mkdir(sessionDir, { recursive: true });
       await writeFile(
-        join(src, 'kimi.json'),
+        join(src, 'omnicode.json'),
         JSON.stringify({ work_dirs: [{ path: workdir, kaos: 'local' }] }),
       );
       await writeFile(join(sessionDir, 'context.jsonl'), '');
@@ -266,7 +266,7 @@ describe('migrateSessionsStep (multi-workdir fixture)', () => {
     try {
       const workdir = '/Users/me/unreadable-context-project';
       await writeFile(
-        join(src, 'kimi.json'),
+        join(src, 'omnicode.json'),
         JSON.stringify({ work_dirs: [{ path: workdir, kaos: 'local' }] }),
       );
       const sessionDir = join(src, 'sessions', oldMd5BucketName(workdir), 'bad-context');
@@ -310,7 +310,7 @@ describe('migrateSessionsStep (multi-workdir fixture)', () => {
     try {
       const workdir = '/Users/me/unreadable-bucket-project';
       await writeFile(
-        join(src, 'kimi.json'),
+        join(src, 'omnicode.json'),
         JSON.stringify({ work_dirs: [{ path: workdir, kaos: 'local' }] }),
       );
       const bucket = join(src, 'sessions', oldMd5BucketName(workdir));

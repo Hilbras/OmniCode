@@ -5,11 +5,11 @@
   "description": "Execution environment abstraction for AI agent applications",
   "license": "MIT",
   "author": "Hilbras",
-  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/kaos#readme",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/omnicode-kaos#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hilbras/omnicode.git",
-    "directory": "packages/kaos"
+    "directory": "packages/omnicode-kaos"
   },
   "bugs": {
     "url": "https://github.com/Hilbras/omnicode/issues"

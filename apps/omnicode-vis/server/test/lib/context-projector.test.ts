@@ -1,4 +1,4 @@
-// apps/vis/server/test/lib/context-projector.test.ts
+// apps/omnicode-vis/server/test/lib/context-projector.test.ts
 import { describe, it, expect, afterEach } from 'vitest';
 import { estimateTokensForMessages } from '@hilbras/omnicode-core/llm-adapter/contract/tokens';
 import { buildCompactionContinuationText } from '@hilbras/omnicode-core/agent/contextMemory/compactionHandoff';

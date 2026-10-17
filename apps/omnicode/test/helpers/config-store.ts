@@ -5,7 +5,7 @@
  * exists to keep them honest:
  *
  * - `setConfig` mirrors `setOmnicodeConfig`: undefined values are skipped and
- *   everything else is *deep-merged* (agent-core-v2 `app/config/configPure.ts`),
+ *   everything else is *deep-merged* (omnicode-core `app/config/configPure.ts`),
  *   recursing into each provider record. A key absent from the patch therefore
  *   survives on disk. A fake that shallow-assigned whole sections would let a
  *   test pass no matter what the command wrote, because the stale field would

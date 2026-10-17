@@ -2,7 +2,7 @@
 
 Author: Hilbras.
 
-`packages/agent-core-v2/src/features/computerUse/browser/` is the DOM-mode half
+`packages/omnicode-core/src/features/computerUse/browser/` is the DOM-mode half
 of computer control. The plan it implements is explicit: **DOM mode whenever
 reliable, visual mode only as a fallback** — canvas apps, remote desktops, and
 interfaces with no accessible structure.
@@ -29,7 +29,7 @@ point of the split, and it is why these types carry no `x`/`y`.
 WebSocket. Playwright was the plan's suggestion, and this is a deliberate
 departure:
 
-- **No new dependency.** `agent-core-v2` does not depend on Playwright, and
+- **No new dependency.** `omnicode-core` does not depend on Playwright, and
   adding it pulls a browser download and a large install. CDP is the browser's
   own wire protocol.
 - **Socket injection.** `CdpBrowserOptions.connectionFactory` takes a
@@ -40,7 +40,7 @@ departure:
   telling the caller to pass `connectionFactory`, rather than importing `ws` —
   an unresolvable import is a typecheck error even in a branch that never runs,
   and silently adding a manifest dependency for a path most callers never take
-  is the wrong default. `agent-core-v2/package.json` is untouched.
+  is the wrong default. `omnicode-core/package.json` is untouched.
 
 The trade is real: Playwright has auto-waiting, a locator engine, and network
 interception. `waitFor` here is a single evaluation, not a polling loop. If

@@ -1,6 +1,6 @@
 # @hilbras/omnicode-client
 
-Contract-driven client SDK for the agent-core-v2 engine. One facade, two
+Contract-driven client SDK for the omnicode-core engine. One facade, two
 transports — you pick the transport **once** at creation; everything after
 that is byte-identical:
 
@@ -98,7 +98,7 @@ only).
 ## Smoke check
 
 ```sh
-pnpm -C packages/klient smoke
+pnpm -C packages/omnicode-client smoke
 ```
 
 `examples/smoke.ts` boots an in-process engine (memory transport) and asserts

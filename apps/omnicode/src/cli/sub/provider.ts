@@ -44,9 +44,17 @@ import { fetchCatalogOrBuiltIn } from '#/utils/catalog-fetch';
 import {
   BUILT_IN_PROVIDERS,
   getBuiltInProvider,
+  type BuiltInProvider,
   type BuiltInProviderPin,
 } from '#/utils/built-in-providers';
 import { parseProviderBaseUrl } from '#/utils/custom-provider';
+import {
+  buildImportedModels,
+  fetchFreeTierModelIds,
+  fetchCatalogLimits,
+  DEFAULT_MAX_CONTEXT,
+  type CatalogLimit,
+} from '#/utils/builtin-model-import';
 import { redactProviderSecrets, writeProviderRecords } from '#/utils/provider-records';
 import {
   refreshAllProviderModels,
@@ -107,6 +115,12 @@ interface AddManualOptions {
    * provider's author is the user, who can write the same map themselves.
    */
   readonly protocolOverrides?: Readonly<Record<string, BuiltInProviderPin>>;
+  /**
+   * Model ids or `prefix*` globs from the vendor table, written into config as
+   * `providers.<id>.excludedModels`. Only a built-in sets these: a manual
+   * provider's author is the user, who can write the same list themselves.
+   */
+  readonly excludedModels?: readonly string[];
   /**
    * Vendor's expected key prefix, used only to warn. Vendors change prefixes
    * without notice, so a mismatch is never fatal — it usually means the key
@@ -361,6 +375,7 @@ export async function handleProviderAddBuiltin(
     apiKey: opts.apiKey,
     apiKeyEnv: opts.apiKeyEnv,
     protocolOverrides: builtin.protocolOverrides,
+    excludedModels: builtin.excludedModels,
     keyHint: builtin.keyHint,
     displayName: builtin.name,
   });
@@ -369,7 +384,96 @@ export async function handleProviderAddBuiltin(
   // one model was listed. Kept explicit because the alternative — printing it
   // from a `finally` or ignoring the exit code — would report a working
   // provider on the paths where the user is told to hand-edit config.toml.
+  const imported = await importBuiltInExtras(deps, id, builtin);
   deps.stdout.write(`${builtin.name} is ready — run /provider in the TUI to pick a default model.\n`);
+  if (imported > 0) {
+    deps.stdout.write(
+      `Also routed ${imported} free model${imported === 1 ? '' : 's'} to their free tier.\n`,
+    );
+  }
+}
+
+/**
+ * Finishes a built-in add: pulls real context windows from the models.dev
+ * catalog, then routes the ids the vendor's free tier owns.
+ *
+ * Two gaps in plain discovery motivate this. A `/models` route carries ids and
+ * no limits, so every alias would otherwise be written with one flat default.
+ * And a provider has a single `base_url`, so ids served somewhere else cannot
+ * be listed at all. Both are fixed here without changing the engine: an alias
+ * may carry its own `base_url`, which wins over the provider's.
+ *
+ * Every step degrades to a no-op. An unreachable catalog leaves the defaults;
+ * an unreachable free-tier endpoint yields no free models, and failing the add
+ * over that would be worse than listing fewer models.
+ *
+ * Returns how many models were routed to the free tier.
+ */
+async function importBuiltInExtras(
+  deps: ProviderDeps,
+  providerId: string,
+  builtin: BuiltInProvider,
+): Promise<number> {
+  const harness = deps.getHarness();
+  const config = await harness.getConfig({ reload: true });
+  const models = { ...config.models };
+
+  const limits =
+    builtin.catalogProvider === undefined
+      ? new Map<string, CatalogLimit>()
+      : await fetchCatalogLimits(builtin.catalogProvider);
+
+  // Fill real limits onto aliases already written by discovery, but only where
+  // the value is still the flat default: an alias the user hand-tuned keeps
+  // whatever they chose.
+  let touched = false;
+  for (const [key, raw] of Object.entries(models)) {
+    if (!key.startsWith(`${providerId}/`)) continue;
+    const record = raw as Record<string, unknown>;
+    if (record === null || typeof record !== 'object') continue;
+    const id = typeof record['model'] === 'string' ? record['model'] : undefined;
+    if (id === undefined) continue;
+    const limit = limits.get(id);
+    if (limit === undefined) continue;
+    if (record['maxContextSize'] !== DEFAULT_MAX_CONTEXT) continue;
+    models[key] = { ...record, maxContextSize: limit.context } as (typeof models)[string];
+    touched = true;
+  }
+
+  let routed = 0;
+  for (const source of builtin.freeTier ?? []) {
+    const ids = await fetchFreeTierModelIds(source);
+    if (ids.length === 0) continue;
+    for (const imported of buildImportedModels({
+      providerId,
+      ids,
+      baseUrl: source.baseUrl,
+      limits,
+    })) {
+      models[`${providerId}/${imported.id}`] = {
+        provider: providerId,
+        model: imported.id,
+        baseUrl: imported.baseUrl,
+        apiKey: source.apiKey,
+        freeTier: true,
+        maxContextSize: imported.maxContextSize,
+        maxInputSize: imported.maxInputSize,
+        maxOutputSize: imported.maxOutputSize,
+        capabilities: ['tool_use'],
+        displayName: imported.id,
+      };
+      routed++;
+    }
+    touched = true;
+  }
+
+  if (touched) {
+    await harness.setConfig({
+      providers: config.providers,
+      models,
+    } as Parameters<typeof harness.setConfig>[0]);
+  }
+  return routed;
 }
 
 /**
@@ -469,6 +573,9 @@ export async function handleProviderAddManual(
       ...(apiKey !== undefined ? { apiKey } : { apiKeyEnv }),
       ...(opts.protocolOverrides !== undefined
         ? { protocolOverrides: opts.protocolOverrides }
+        : undefined),
+      ...(opts.excludedModels !== undefined
+        ? { excludedModels: [...opts.excludedModels] }
         : undefined),
       ...(authScheme !== undefined ? { authScheme } : undefined),
     },

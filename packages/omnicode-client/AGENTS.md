@@ -1,6 +1,6 @@
-# klient Agent Guide
+# omnicode-client Agent Guide
 
-Package-local rules for `packages/klient`.
+Package-local rules for `packages/omnicode-client`.
 
 ## Architecture
 
@@ -13,7 +13,7 @@ The package is layered; keep the layers strict when changing code:
   service locator (`core()`/`service()`/`makeProxy`).
 - **Contract** (`src/contract/`) — zod input/output schemas for every wire
   method plus event payload schemas. Schemas are hand-mirrored from
-  agent-core-v2 types and pinned by the compile-time parity assertions in
+  omnicode-core types and pinned by the compile-time parity assertions in
   `test/contract-parity.ts`; when the engine types change, tsc fails here
   first. `maybe()`/`noResult()` in `src/contract/helpers.ts` encode the HTTP
   wire's `null`-vs-`undefined` semantics — use them for every

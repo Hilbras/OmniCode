@@ -10,7 +10,7 @@ omnicode-cli itself still upgrades (`config.json`, flat `<uuid>.jsonl` sessions,
 Usage (from the omnicode repo):
 
     cd ../../../omnicode-cli && uv run python \
-        /path/to/omnicode/packages/migration-legacy/test/fixtures/gen/generate_fixtures.py
+        /path/to/omnicode/packages/omnicode-migration/test/fixtures/gen/generate_fixtures.py
 
 `--out` defaults to the sibling `golden/` directory next to this script.
 Re-run and commit the result whenever omnicode-cli's on-disk formats change.

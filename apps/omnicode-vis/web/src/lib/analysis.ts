@@ -1,4 +1,4 @@
-// apps/vis/web/src/lib/analysis.ts
+// apps/omnicode-vis/web/src/lib/analysis.ts
 //
 // Fold a flat wire timeline into the agent's natural execution structure —
 // turns → steps → tool calls — and derive the metrics a data-analysis view

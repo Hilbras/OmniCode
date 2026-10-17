@@ -15,8 +15,6 @@ import {
 
 const OMNICODE_PLUGIN_ROOT_PATH = 'omnicode.plugin.json';
 const OMNICODE_PLUGIN_DIR_PATH = '.omnicode-plugin/plugin.json';
-const LEGACY_PLUGIN_ROOT_PATH = 'kimi.plugin.json';
-const LEGACY_PLUGIN_DIR_PATH = '.kimi-plugin/plugin.json';
 
 export const PLUGIN_SYSTEM_PROMPT_MAX_BYTES = 32 * 1024;
 
@@ -40,18 +38,12 @@ export interface ParsedManifestResult {
 export async function parseManifest(pluginRoot: string): Promise<ParsedManifestResult> {
   const rootJsonPath = path.join(pluginRoot, OMNICODE_PLUGIN_ROOT_PATH);
   const dirJsonPath = path.join(pluginRoot, OMNICODE_PLUGIN_DIR_PATH);
-  const legacyRootJsonPath = path.join(pluginRoot, LEGACY_PLUGIN_ROOT_PATH);
-  const legacyDirJsonPath = path.join(pluginRoot, LEGACY_PLUGIN_DIR_PATH);
   const rootJsonExists = await isFile(rootJsonPath);
   const dirJsonExists = await isFile(dirJsonPath);
-  const legacyRootJsonExists = await isFile(legacyRootJsonPath);
-  const legacyDirJsonExists = await isFile(legacyDirJsonPath);
 
   const candidates = [
     { path: rootJsonPath, exists: rootJsonExists, kind: 'omnicode-plugin-root' as const },
     { path: dirJsonPath, exists: dirJsonExists, kind: 'omnicode-plugin-dir' as const },
-    { path: legacyRootJsonPath, exists: legacyRootJsonExists, kind: 'omnicode-plugin-root' as const },
-    { path: legacyDirJsonPath, exists: legacyDirJsonExists, kind: 'omnicode-plugin-dir' as const },
   ].filter((candidate) => candidate.exists);
   const [chosen, ...others] = candidates;
   if (chosen === undefined) {

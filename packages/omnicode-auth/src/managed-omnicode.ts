@@ -177,6 +177,8 @@ export interface ManagedOmnicodeModelAliasOverrides {
 export interface ManagedOmnicodeModelAlias {
   provider: string;
   model: string;
+  baseUrl?: string | undefined;
+  apiKey?: string | undefined;
   maxContextSize: number;
   capabilities?: string[] | undefined;
   supportEfforts?: readonly string[] | undefined;
@@ -185,6 +187,7 @@ export interface ManagedOmnicodeModelAlias {
   protocol?: ManagedOmnicodeCodeProtocol;
   betaApi?: boolean;
   adaptiveThinking?: boolean | undefined;
+  freeTier?: boolean | undefined;
   overrides?: ManagedOmnicodeModelAliasOverrides | undefined;
   readonly [key: string]: unknown;
 }

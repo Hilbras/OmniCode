@@ -1,7 +1,7 @@
 /**
  * Probe the ModelRequester problem boundary, in two parts.
  *
- * Part 1 — real config: bootstraps the agent-core-v2 App scope on the REAL
+ * Part 1 — real config: bootstraps the omnicode-core App scope on the REAL
  * Omnicode home (`OMNICODE_HOME` or `~/.omnicode`), resolves `IModelCatalog`
  * with the providers/auth from `config.toml`, lists every provider/model, and
  * pings every configured model through its `ModelRequester` (one tiny live
@@ -33,7 +33,7 @@
  * and request-side encoding of tool declarations and tool results.
  *
  * Run (the examples tsconfig enables the decorators the engine sources need):
- *   pnpm -C packages/klient smoke:boundary
+ *   pnpm -C packages/omnicode-client smoke:boundary
  *
  * Env:
  *   OMNICODE_HOME        — default `~/.omnicode`

@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 
 import {
   applyDiscoveredModels,
+  applyModelExclusions,
   applyProtocolOverrides,
+  isExcludedModel,
   normalizeDiscoveryBaseUrl,
   buildModelsUrl,
   resolveProtocolOverride,
@@ -50,10 +52,7 @@ describe('resolveProtocolOverride', () => {
 });
 
 describe('applyProtocolOverrides', () => {
-  const models: readonly DiscoveredModelInfo[] = [
-    { id: 'claude-sonnet-4' },
-    { id: 'gpt-5' },
-  ];
+  const models: readonly DiscoveredModelInfo[] = [{ id: 'claude-sonnet-4' }, { id: 'gpt-5' }];
 
   it('pins only the models a glob matches', () => {
     const out = applyProtocolOverrides(models, { 'claude-*': 'anthropic' });
@@ -121,9 +120,66 @@ describe('applyDiscoveredModels protocol pin', () => {
   });
 });
 
+describe('applyModelExclusions', () => {
+  it('drops ids named exactly and ids matched by a prefix glob', () => {
+    const models: DiscoveredModelInfo[] = [
+      { id: 'big-pickle' },
+      { id: 'mimo-v2.6-flash-free' },
+      { id: 'claude-sonnet-5' },
+    ];
+    expect(applyModelExclusions(models, ['*-free', 'big-pickle']).map((m) => m.id)).toEqual([
+      'claude-sonnet-5',
+    ]);
+  });
+
+  it('leaves the list untouched when nothing is declared', () => {
+    const models: DiscoveredModelInfo[] = [{ id: 'big-pickle' }, { id: 'gpt-5' }];
+    expect(applyModelExclusions(models, undefined)).toBe(models);
+    expect(applyModelExclusions(models, [])).toBe(models);
+  });
+
+  it('prunes an alias a previous refresh wrote for an excluded model', () => {
+    // The point of filtering before the write: an entry that has since been
+    // declared off-limits must disappear on the next refresh, not linger.
+    const config: { models?: Record<string, unknown> } = {};
+    applyDiscoveredModels(config, 'zen', [{ id: 'big-pickle' }, { id: 'gpt-5' }]);
+    expect((config.models ?? {})['zen/big-pickle']).toBeDefined();
+
+    applyDiscoveredModels(
+      config,
+      'zen',
+      applyModelExclusions([{ id: 'big-pickle' }, { id: 'gpt-5' }], ['big-pickle']),
+    );
+    expect((config.models ?? {})['zen/big-pickle']).toBeUndefined();
+    expect((config.models ?? {})['zen/gpt-5']).toBeDefined();
+  });
+});
+
+describe('isExcludedModel', () => {
+  it('requires an exact match when the pattern has no glob', () => {
+    expect(isExcludedModel('big-pickle', ['big-pickle'])).toBe(true);
+    expect(isExcludedModel('big-pickle-2', ['big-pickle'])).toBe(false);
+  });
+
+  it('treats a trailing star as a prefix and a leading star as a suffix', () => {
+    expect(isExcludedModel('claude-sonnet-5', ['claude-*'])).toBe(true);
+    expect(isExcludedModel('mimo-v2.6-flash-free', ['*-free'])).toBe(true);
+    expect(isExcludedModel('not-really-free', ['*-free'])).toBe(true);
+    expect(isExcludedModel('free-tier-gpt', ['*-free'])).toBe(false);
+    expect(isExcludedModel('gpt-5', ['*-free'])).toBe(false);
+  });
+
+  it('ignores a declaration that is absent or empty', () => {
+    expect(isExcludedModel('big-pickle', undefined)).toBe(false);
+    expect(isExcludedModel('big-pickle', [])).toBe(false);
+  });
+});
+
 describe('normalizeDiscoveryBaseUrl', () => {
   it('strips a pasted completions path and trailing slashes', () => {
-    expect(normalizeDiscoveryBaseUrl('https://x.test/v1/chat/completions')).toBe('https://x.test/v1');
+    expect(normalizeDiscoveryBaseUrl('https://x.test/v1/chat/completions')).toBe(
+      'https://x.test/v1',
+    );
     expect(normalizeDiscoveryBaseUrl('https://x.test/v1///')).toBe('https://x.test/v1');
   });
 

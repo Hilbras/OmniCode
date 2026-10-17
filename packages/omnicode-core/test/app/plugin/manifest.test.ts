@@ -17,10 +17,16 @@ describe('plugin manifest parser', () => {
     await rm(dir, { recursive: true, force: true });
   });
 
-  it('still loads a legacy kimi.plugin.json manifest from an installed plugin', async () => {
-    await writeFile(join(dir, 'kimi.plugin.json'), JSON.stringify({ name: 'legacy-demo' }), 'utf8');
+  it('loads a manifest from the nested .omnicode-plugin/plugin.json location', async () => {
+    await mkdir(join(dir, '.omnicode-plugin'), { recursive: true });
+    await writeFile(
+      join(dir, '.omnicode-plugin', 'plugin.json'),
+      JSON.stringify({ name: 'legacy-demo' }),
+      'utf8',
+    );
     const result = await parseManifest(dir);
     expect(result.manifest?.name).toBe('legacy-demo');
+    expect(result.manifestKind).toBe('omnicode-plugin-dir');
     expect(result.diagnostics).toEqual([]);
   });
 

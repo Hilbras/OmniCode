@@ -59,7 +59,6 @@ const TUI_THEMES: ReadonlySet<string> = new Set(['dark', 'light', 'auto']);
 const SUPPORTED_PROVIDER_TYPES: ReadonlySet<string> = new Set([
   'anthropic',
   'openai',
-  'kimi',
   'omnicode',
   'google-genai',
   'openai_responses',

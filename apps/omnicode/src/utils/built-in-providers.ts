@@ -15,10 +15,10 @@
  *
  * Caveat worth knowing: `/models` returns ids and little else, and cannot
  * express a per-model protocol. Some gateways (OpenCode Zen) serve part of
- * their catalog over the Anthropic Messages API and mark those models in
- * models.dev, but that metadata is not visible here. Those models are
- * therefore listed and may fail on first use; import the vendor from the
- * models.dev catalog instead if you need the per-model protocol honored.
+ * their catalog over the Anthropic Messages API. The models.dev catalog does
+ * not record that distinction either — its `opencode` entry carries no
+ * per-model protocol marker — so importing the vendor from the catalog does not
+ * recover it. `protocolOverrides` below is the only place it is expressed.
  */
 
 /**
@@ -80,7 +80,74 @@ export interface BuiltInProvider {
    * own wire. A vendor with no overrides behaves exactly as before.
    */
   readonly protocolOverrides?: Readonly<Record<string, BuiltInProviderPin>>;
+  /**
+   * Model ids, or `prefix*` globs, that discovery must not write aliases for.
+   *
+   * Written into config as `providers.<id>.excluded_models` and applied where
+   * discovered models are turned into aliases, so a stale alias from an earlier
+   * refresh is pruned by the next one rather than lingering. Same shape and
+   * matching rules as `protocolOverrides` — an exact id beats any glob, and the
+   * longest prefix wins — so one table reads the same way for both.
+   *
+   * This exists because `/models` is unauthenticated: it lists a vendor's
+   * entire catalog, including entries the vendor restricts to its own client.
+   * Listing those is worse than hiding them, because discovery cannot tell they
+   * will fail and the user only finds out at request time. A vendor with no
+   * exclusions behaves exactly as before.
+   */
+  readonly excludedModels?: readonly string[];
+
+  /**
+   * A vendor's free tier, served from an endpoint its paid `baseUrl` does not
+   * carry. Each entry lists the ids it owns, matched with the same three
+   * pattern shapes as `excludedModels`, and the endpoint plus the literal
+   * credential those ids authenticate with.
+   *
+   * Those ids are written as aliases carrying their own `base_url` and
+   * `free_tier`, so they resolve at the free endpoint while the rest of the
+   * provider resolves against `baseUrl`. A source that does not answer is
+   * skipped rather than failing the add.
+   */
+  readonly freeTier?: {
+    readonly baseUrl: string;
+    readonly match: readonly string[];
+    readonly apiKey: string;
+  }[];
+
+  /**
+   * Provider id in the models.dev catalog used to fill in real context windows.
+   *
+   * `/models` returns ids and no limits, so without this every alias is written
+   * with one flat default. Absent or unreachable catalog leaves the default in
+   * place rather than failing the add.
+   */
+  readonly catalogProvider?: string;
 }
+
+/**
+ * OpenCode Zen and Go publish their free tier on the same unauthenticated
+ * `/models` route as their paid catalog, but the gateway answers those entries
+ * with `403 FreeTierError`. Two facts drive the wiring below: free inference
+ * lives on `/inference/v1/*` (the paid `/zen/v1/*` route rejects it), and the
+ * free route gates on the caller presenting OpenCode's own client fingerprint
+ * rather than on a credential — hence the literal `public` key plus the
+ * `free_tier` flag, which makes the engine emit that fingerprint.
+ *
+ * `big-pickle` carries no suffix, so it is listed by exact id.
+ */
+const OPENCODE_FREE_MODEL_PATTERNS = ['*-free', '*-contributor-free', 'big-pickle'] as const;
+
+/**
+ * Where OpenCode's free tier is actually served. Distinct from the paid route
+ * above, and reachable with no account and no key.
+ */
+const OPENCODE_FREE_BASE_URL = 'https://opencode.ai/inference/v1';
+
+const OPENCODE_FREE_TIER = {
+  baseUrl: OPENCODE_FREE_BASE_URL,
+  match: OPENCODE_FREE_MODEL_PATTERNS,
+  apiKey: 'public',
+} as const;
 
 export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
   {
@@ -113,6 +180,9 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     protocolOverrides: {
       'claude-*': 'anthropic',
     },
+    excludedModels: OPENCODE_FREE_MODEL_PATTERNS,
+    freeTier: [OPENCODE_FREE_TIER],
+    catalogProvider: 'opencode',
   },
   {
     id: 'opencode-go',
@@ -121,6 +191,9 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     baseUrl: 'https://opencode.ai/zen/go/v1',
     description: 'OpenCode Zen models on the Go plan',
     consoleUrl: 'https://opencode.ai/zen',
+    excludedModels: OPENCODE_FREE_MODEL_PATTERNS,
+    freeTier: [OPENCODE_FREE_TIER],
+    catalogProvider: 'opencode',
   },
   {
     id: 'nvidia',

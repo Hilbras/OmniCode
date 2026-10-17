@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { ensureHome } from '#/cli/home';
+import { ensureHome, HOME_DIRNAME, LEGACY_HOME_DIRNAMES } from '#/cli/home';
 
 describe('ensureHome', () => {
   let root: string;
@@ -19,15 +19,11 @@ describe('ensureHome', () => {
     rmSync(root, { recursive: true, force: true });
   });
 
-  function legacyHome(): string {
-    return join(root, '.lacrous-omnicode');
-  }
-
   function home(): string {
-    return join(root, '.omnicode');
+    return join(root, HOME_DIRNAME);
   }
 
-  function writeLegacyLayout(dir = legacyHome()): void {
+  function writeHomeLayout(dir = home()): void {
     mkdirSync(join(dir, 'sessions'), { recursive: true });
     mkdirSync(join(dir, 'cache', 'rg'), { recursive: true });
     mkdirSync(join(dir, 'logs'), { recursive: true });
@@ -38,7 +34,7 @@ describe('ensureHome', () => {
   }
 
   it('respects an explicit OMNICODE_HOME and never migrates into it', () => {
-    writeLegacyLayout();
+    writeHomeLayout();
     env['OMNICODE_HOME'] = join(root, 'custom-home');
 
     const outcome = ensureHome(env, root);
@@ -62,55 +58,38 @@ describe('ensureHome', () => {
     expect(env['OMNICODE_HOME']).toBe(home());
   });
 
-  it('copies user data from the legacy home, skipping regenerable state', () => {
-    writeLegacyLayout();
-
-    const outcome = ensureHome(env, root);
-
-    expect(outcome.migrated).toBe(true);
-    expect(outcome.legacyHome).toBe(legacyHome());
-    expect(existsSync(join(home(), 'config.toml'))).toBe(true);
-    expect(existsSync(join(home(), 'sessions', 'sess_1.jsonl'))).toBe(true);
-    expect(existsSync(join(home(), 'migrated-from-omnicode.json'))).toBe(true);
-    expect(existsSync(join(home(), 'cache'))).toBe(false);
-    expect(existsSync(join(home(), 'logs'))).toBe(false);
-    expect(existsSync(join(legacyHome(), 'config.toml'))).toBe(true);
-    expect(existsSync(join(legacyHome(), 'cache', 'rg', 'rg.bin'))).toBe(true);
-    expect(readdirSync(root).filter((entry) => entry.includes('migrating'))).toEqual([]);
-  });
-
-  it('falls back to older legacy homes when the newest is absent', () => {
-    writeLegacyLayout(join(root, '.lacrous-kimi'));
-
-    const outcome = ensureHome(env, root);
-
-    expect(outcome.migrated).toBe(true);
-    expect(outcome.legacyHome).toBe(join(root, '.lacrous-kimi'));
-    expect(existsSync(join(home(), 'config.toml'))).toBe(true);
-  });
-
   it('never touches an existing data home', () => {
-    writeLegacyLayout();
-    mkdirSync(home(), { recursive: true });
+    writeHomeLayout();
     writeFileSync(join(home(), 'fresh-config.toml'), 'mine = true\n');
 
     const outcome = ensureHome(env, root);
 
     expect(outcome.migrated).toBe(false);
+    expect(outcome.legacyHome).toBeUndefined();
     expect(existsSync(join(home(), 'fresh-config.toml'))).toBe(true);
-    expect(existsSync(join(home(), 'config.toml'))).toBe(false);
+    expect(existsSync(join(home(), 'config.toml'))).toBe(true);
+    expect(readdirSync(root).filter((entry) => entry.includes('migrating'))).toEqual([]);
   });
 
-  it('reports a migration failure instead of throwing, leaving nothing behind', () => {
-    writeFileSync(legacyHome(), 'not a directory\n');
+  it('treats a stray non-directory at the data home path as an existing home', () => {
+    writeFileSync(home(), 'not a directory\n');
 
     const outcome = ensureHome(env, root);
 
     expect(outcome.defaultApplied).toBe(true);
     expect(outcome.migrated).toBe(false);
-    expect(outcome.migrationError).toBeDefined();
-    expect(outcome.legacyHome).toBe(legacyHome());
-    expect(existsSync(home())).toBe(false);
+    expect(outcome.migrationError).toBeUndefined();
+    expect(outcome.legacyHome).toBeUndefined();
+    expect(existsSync(home())).toBe(true);
     expect(readdirSync(root).filter((entry) => entry.includes('migrating'))).toEqual([]);
+  });
+
+  it('names no legacy home distinct from the data home itself', () => {
+    expect(LEGACY_HOME_DIRNAMES).toEqual([HOME_DIRNAME]);
+
+    const outcome = ensureHome(env, root);
+
+    expect(outcome.migrated).toBe(false);
+    expect(outcome.legacyHome).toBeUndefined();
   });
 });

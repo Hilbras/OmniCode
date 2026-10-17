@@ -185,7 +185,7 @@ omnicode
 | `OMNICODE_NO_AUTO_UPDATE` | 完全禁用更新预检：不检查、不后台安装、不提示。同时兼容旧名 `OMNICODE_CLI_NO_AUTO_UPDATE` | 真值：`1`/`true`/`yes`/`on` |
 | `OMNICODE_DISABLE_CRON` | 禁用定时任务工具（`CronCreate` 拒绝新计划，已有任务不触发） | `1` 表示禁用 |
 
-`OMNICODE_INFINITE_RETRY`、`OMNICODE_IDENTITY_*` 和 `OMNICODE_BUILTIN_PRODUCT_SKILLS` 这几个变量由 `agent-core-v2` 引擎读取。
+`OMNICODE_INFINITE_RETRY`、`OMNICODE_IDENTITY_*` 和 `OMNICODE_BUILTIN_PRODUCT_SKILLS` 这几个变量由 `omnicode-core` 引擎读取。
 
 ## 诊断日志
 

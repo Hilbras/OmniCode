@@ -7,7 +7,7 @@ import { detectMigration, runMigration } from '../src/index.js';
 import { computeWorkdirBucket, oldMd5BucketName } from '../src/sessions/workdir-bucket.js';
 
 const FIXTURES = fileURLToPath(new URL('./fixtures', import.meta.url));
-const SOURCE_HOME = join(FIXTURES, 'multi-workdir', '.kimi');
+const SOURCE_HOME = join(FIXTURES, 'multi-workdir', '.omnicode');
 const MARKER_PATH = join(SOURCE_HOME, '.migrated-to-omnicode');
 const FIXTURE_CONFIG = join(SOURCE_HOME, 'config.toml');
 
@@ -208,7 +208,7 @@ describe('runMigration (end-to-end on multi-workdir fixture)', () => {
       const uuid = 'conflict-session';
       const bucket = join(src, 'sessions', oldMd5BucketName(workdir));
       await mkdir(join(bucket, uuid), { recursive: true });
-      await writeFile(join(src, 'kimi.json'), JSON.stringify({ work_dirs: [{ path: workdir }] }));
+      await writeFile(join(src, 'omnicode.json'), JSON.stringify({ work_dirs: [{ path: workdir }] }));
       await writeFile(join(bucket, uuid, 'context.jsonl'), '{"role":"user","content":"hi"}\n');
 
       const foreignDir = join(

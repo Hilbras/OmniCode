@@ -1,4 +1,4 @@
-// apps/vis/server/src/lib/import-store.ts
+// apps/omnicode-vis/server/src/lib/import-store.ts
 //
 // Imported debug bundles (`/export-debug-zip` zips) live under
 // `<home>/imported/<importId>/`, unzipped to the same on-disk shape as a real

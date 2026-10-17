@@ -55,7 +55,7 @@ The `/provider` manager's "known third-party provider" path fetches a public cat
 omnicode provider add-builtin <providerId>
 ```
 
-This writes a complete provider entry for you — protocol, `base_url`, and the API key you enter at the prompt — then refreshes its model list. Afterwards it is an ordinary provider: edit it, re-key it, or delete it like any other.
+This writes a complete provider entry for you — protocol, `base_url`, and the API key you pass with `--api-key` (or `--api-key-env`) — then refreshes its model list. Afterwards it is an ordinary provider: edit it, re-key it, or delete it like any other.
 
 | Id | Name | Protocol | Key prefix | What it serves |
 | --- | --- | --- | --- | --- |
@@ -79,7 +79,15 @@ This writes a complete provider entry for you — protocol, `base_url`, and the 
 
 The key prefix is a hint shown at the prompt, not a validation rule — vendors change prefixes without notice, and rejecting a working key would be worse than showing no hint.
 
-Two entries carry more than the table shows. `anthropic` and `gemini` do not accept a `Bearer` header, so `add-builtin` writes the `auth_scheme` each one expects; a `Bearer` there returns a 401 that looks identical to a bad key. `opencode-zen` lists Claude models on an OpenAI-compatible `/models` route but serves them over the Anthropic Messages API, so the entry pins `claude-*` to that protocol — without the pin those models list successfully and then fail on first use.
+Three entries carry more than the table shows. `anthropic` and `gemini` do not accept a `Bearer` header, so their model discovery sends the `x-api-key` and `x-goog-api-key` forms instead; a `Bearer` there returns a 401 that looks identical to a bad key. `opencode-zen` lists Claude models on an OpenAI-compatible `/models` route but serves them over the Anthropic Messages API, so the entry pins `claude-*` to that protocol — without the pin those models list successfully and then fail on first use. (Importing the vendor from the models.dev catalog does not recover this: that catalog records no per-model protocol for OpenCode.)
+
+### OpenCode's free tier
+
+`opencode-zen` and `opencode-go` also publish a free tier. Those models need neither your key nor an account, but they are not served from the paid route: they live at `https://opencode.ai/inference/v1`, and the gateway only answers requests that present OpenCode's own client shape. Omnicode does that for you, so `provider add-builtin opencode-zen` lists the free models (currently ids ending in `-free`, plus `big-pickle`) alongside the paid ones and they work immediately — no extra service to run.
+
+Each free model is written as its own alias carrying the free endpoint, the literal credential that tier expects, and a `free_tier` marker. That marker is what makes the request carry the client headers; it is also why these aliases survive a model refresh.
+
+Be aware of what "carries the client shape" means in practice: to pass the gate, a free-tier request also ships the two placeholder tool definitions that tier expects (`read` and `shell`), preceded by a system line telling the model they do nothing. Omnicode renames any of its own tools that share those names, and never executes the placeholders — but the request is not a plain OpenAI-shaped call. Two more things follow from how the tier meters itself: a session is reused for a couple of hours before a new one is minted, and the upstream quota is counted per session, so heavy use can still be rate-limited. There is no key to enter for these models, and `add-builtin` still needs one for the paid half of the catalog.
 
 For how a key reaches any of these endpoints, see [Authentication and credentials](./authentication.md).
 

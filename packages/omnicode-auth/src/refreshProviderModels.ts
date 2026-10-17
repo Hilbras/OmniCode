@@ -10,6 +10,7 @@ import {
 } from './custom-registry';
 import {
   applyDiscoveredModels,
+  applyModelExclusions,
   applyProtocolOverrides,
   fetchDiscoveredModels,
   normalizeDiscoveryBaseUrl,
@@ -106,6 +107,8 @@ interface ProviderView {
    * an unknown wire drops that key instead of poisoning the alias.
    */
   readonly protocolOverrides?: unknown;
+  /** Declared off-limits model ids or `prefix*` globs. Read as an array. */
+  readonly excludedModels?: unknown;
 }
 
 /**
@@ -184,6 +187,20 @@ function protocolOverridesFor(
     if (parsed !== undefined && parsed !== 'omnicode') out[pattern] = parsed;
   }
   return Object.keys(out).length > 0 ? out : undefined;
+}
+
+/**
+ * Narrows a provider's declared `excluded_models` to a usable pattern list.
+ *
+ * Re-checked here for the same reason `protocolOverrides` is: a hand-edited or
+ * older config can carry anything. A non-string entry drops only itself, so one
+ * bad line cannot cost the user the rest of their exclusions.
+ */
+function excludedModelsFor(provider: ProviderView): readonly string[] | undefined {
+  const raw = provider.excludedModels;
+  if (!Array.isArray(raw)) return undefined;
+  const out = raw.filter((pattern): pattern is string => typeof pattern === 'string');
+  return out.length > 0 ? out : undefined;
 }
 
 /**
@@ -321,6 +338,12 @@ function providerAliasKeys(config: ManagedOmnicodeConfigShape, providerId: strin
   return keys;
 }
 
+/**
+ * Aliases a provider refresh is allowed to rewrite or prune. A `free_tier`
+ * alias is owned by the vendor's free endpoint rather than by this provider's
+ * `/models` route, so it is left alone — otherwise every refresh would delete
+ * it and the free models would disappear after the first refresh.
+ */
 function generatedProviderAliasKeys(
   config: ManagedOmnicodeConfigShape,
   providerId: string,
@@ -329,6 +352,7 @@ function generatedProviderAliasKeys(
   const keys = new Set<string>();
   for (const [alias, raw] of Object.entries(config.models ?? {})) {
     const model = raw as ManagedOmnicodeModelAlias;
+    if (model.freeTier === true) continue;
     if (model.provider === providerId && alias.startsWith(aliasPrefix)) {
       keys.add(alias);
     }
@@ -826,12 +850,18 @@ export async function refreshProviderModels(
       });
       if (models.length === 0) continue;
 
+      // A vendor may publish entries on `/models` that its gateway refuses to serve
+      // to this client. Those are dropped before the pins are applied, so the
+      // pin map only ever sees models that can actually be written.
+      const offered = applyModelExclusions(models, excludedModelsFor(provider));
+      if (offered.length === 0) continue;
+
       // `/models` cannot express a per-model wire, so a gateway that serves
       // part of its catalog over another protocol is described by this
       // provider-level map instead. Applied after the fetch and before the
       // write, so the override lands on the alias in the same atomic write
       // that publishes the model list.
-      const withOverrides = applyProtocolOverrides(models, protocolOverridesFor(provider));
+      const withOverrides = applyProtocolOverrides(offered, protocolOverridesFor(provider));
       if (withOverrides.length === 0) continue;
 
       config = await rebaseSelectionAfterFetch(host, config);

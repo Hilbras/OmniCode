@@ -9,6 +9,6 @@ export default defineConfig({
   clean: true,
   plugins: [rawTextPlugin()],
   deps: {
-    alwaysBundle: [/^@hilbras\/agent-core-v2/],
+    alwaysBundle: [/^@hilbras\/omnicode-core/],
   },
 });

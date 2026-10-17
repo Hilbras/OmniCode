@@ -576,6 +576,7 @@ function buildProtocolProviderOptions(
       if (reasoningKey !== undefined) options.reasoningKey = reasoningKey;
       if (model.offEffort !== undefined) options.offEffort = model.offEffort;
       if (model.promptCacheKey !== undefined) options.promptCacheKey = model.promptCacheKey;
+      if (model.freeTier === true) options.opencodeFreeTier = true;
       if (authScheme !== undefined) options.authScheme = authScheme;
       break;
     }

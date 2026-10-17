@@ -69,13 +69,14 @@ describe('daemon file URL', () => {
     });
     expect(parseDaemonFileUrl('omnicode-file://file_1?path=')).toEqual({ fileId: 'file_1' });
     expect(parseDaemonFileUrl('omnicode-file://file_1?path=%E0%A4%A')).toEqual({ fileId: 'file_1' });
-    expect(parseDaemonFileUrl('kimi-file://file_1')).toEqual({ fileId: 'file_1' });
   });
 
   it('rejects non-daemon URLs and empty file ids', () => {
     expect(isDaemonFileUrl('omnicode-file://file_1')).toBe(true);
     expect(isDaemonFileUrl('ms://file_1')).toBe(false);
+    expect(isDaemonFileUrl('file://file_1')).toBe(false);
     expect(parseDaemonFileUrl('ms://prov-1')).toBeUndefined();
+    expect(parseDaemonFileUrl('file://file_1')).toBeUndefined();
     expect(parseDaemonFileUrl('data:video/mp4;base64,AAAA')).toBeUndefined();
     expect(parseDaemonFileUrl('https://example.com/clip.mp4')).toBeUndefined();
     expect(parseDaemonFileUrl('omnicode-file://')).toBeUndefined();

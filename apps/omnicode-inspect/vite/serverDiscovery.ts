@@ -1,10 +1,10 @@
 /**
- * Local kap-server discovery — a dev/preview middleware that lets the browser
- * see and reach every kap-server running on this machine without typing a URL
+ * Local omnicode-server discovery — a dev/preview middleware that lets the browser
+ * see and reach every omnicode-server running on this machine without typing a URL
  * or a token.
  *
- * kap-server already self-registers for peer discovery
- * (`packages/kap-server/src/instanceRegistry.ts`):
+ * omnicode-server already self-registers for peer discovery
+ * (`packages/omnicode-server/src/instanceRegistry.ts`):
  *   current builds  `<omnicode home>/server/instances/<serverId>.json`
  *   pre-registry builds  `<omnicode home>/server/lock`
  * and persists the bearer token at `<omnicode home>/server.token` (one token per
@@ -13,7 +13,7 @@
  * instances (pid-liveness filtered), the dev-proxy target, and the token.
  *
  * The registry/lock file formats are deliberately reimplemented here (~100
- * lines) instead of importing kap-server: the inspector must stay free of
+ * lines) instead of importing omnicode-server: the inspector must stay free of
  * server-side dependencies.
  *
  * Security: dev/preview only, bound to loopback by Vite defaults. It hands

@@ -71,6 +71,7 @@
         ./packages/omnicode-migration
         ./packages/omnicode-minidb
         ./packages/omnicode-remote
+        ./packages/omnicode-sdk
         ./packages/omnicode-auth
         ./packages/omnicode-tui
         ./packages/omnicode-telemetry
@@ -94,6 +95,7 @@
         "@hilbras/omnicode-migration"
         "@hilbras/omnicode-minidb"
         "@hilbras/omnicode-remote"
+        "@hilbras/omnicode-sdk"
         "@hilbras/omnicode-auth"
         "@hilbras/omnicode-tui"
         "@hilbras/omnicode-telemetry"

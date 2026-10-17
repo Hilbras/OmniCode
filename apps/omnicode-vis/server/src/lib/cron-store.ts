@@ -1,4 +1,4 @@
-// apps/vis/server/src/lib/cron-store.ts
+// apps/omnicode-vis/server/src/lib/cron-store.ts
 //
 // Read-only reader for cron tasks. v2 persists cron state as durable wire
 // records (`cron.add` / `cron.delete` / `cron.cursor`) inside each agent's
@@ -41,7 +41,7 @@ export async function listCronTasks(agentDir: string): Promise<CronTask[]> {
     byId.set(task.id, task);
   }
   await foldCronWireInto(agentDir, byId);
-  return [...byId.values()].sort((a, b) => a.createdAt - b.createdAt);
+  return [...byId.values()].toSorted((a, b) => a.createdAt - b.createdAt);
 }
 
 /** Legacy v1 layout: one JSON file per task under `<agentDir>/cron/`. */

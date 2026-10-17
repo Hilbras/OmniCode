@@ -2,11 +2,11 @@
 
 Author: Hilbras.
 
-`packages/agent-core-v2/src/features/computerUse/` adds the `ComputerController`
+`packages/omnicode-core/src/features/computerUse/` adds the `ComputerController`
 seam: a platform-independent interface for seeing and operating a machine, with
 an Ubuntu/X11 adapter behind it.
 
-`agent-core-v2` is a comment-free zone enforced by `scripts/check-no-comments.mjs`,
+`omnicode-core` is a comment-free zone enforced by `scripts/check-no-comments.mjs`,
 so the reasoning that would normally live in doc comments lives here instead.
 
 ## Layering

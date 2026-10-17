@@ -468,8 +468,11 @@ async function handleBuiltinProviderAdd(
         baseUrl: builtin.baseUrl,
         apiKey,
         // Same record the CLI writes: without this a TUI-added Zen loses the
-        // per-model wire pins and its Claude models go back to failing.
+        // per-model wire pins and its Claude models go back to failing, and
+        // loses the vendor's off-limits list so it re-offers models the
+        // gateway refuses to serve.
         protocolOverrides: builtin.protocolOverrides,
+        excludedModels: builtin.excludedModels === undefined ? undefined : [...builtin.excludedModels],
       }),
   );
 }

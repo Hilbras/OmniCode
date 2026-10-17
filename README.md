@@ -393,7 +393,7 @@ Requires Node.js ≥ 24.15.0 and pnpm 10.33.0.
 
 The npm package installs an `omnicode` command. Its data home is `~/.omnicode`
 (`OMNICODE_HOME` overrides it); on first run it copies your config, sessions, and history out of a
-legacy `~/.lacrous-omnicode` (or `~/.lacrous-kimi`) and leaves that original home untouched.
+legacy data home and leaves that original home untouched.
 
 `install.sh` is the one-shot alternative: it installs the published `@hilbras/omnicode` npm
 package into an isolated prefix (default `~/.local/share/omnicode/lib`) and exposes the

@@ -645,6 +645,84 @@ describe('omnicode provider add-builtin', () => {
     });
   });
 
+  it("routes a built-in's free-tier models onto the free endpoint", async () => {
+    // The paid route lists ids its gateway refuses to serve; the vendor's free
+    // endpoint serves them. They must land as aliases carrying their own
+    // base_url, the literal free credential, and the flag that makes the engine
+    // present the client fingerprint the free gate requires.
+    const seen: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        seen.push(url);
+        if (url.includes('opencode.ai/inference')) {
+          return new Response(JSON.stringify({ data: [{ id: 'big-pickle' }] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        if (url.includes('models.dev')) {
+          return new Response(JSON.stringify({}), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        return new Response(JSON.stringify({ data: [{ id: 'claude-sonnet-4' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }),
+    );
+    const { harness, current } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
+    const { deps, exitCodes } = makeDeps(harness);
+
+    await tryRun(() => handleProviderAddBuiltin(deps, 'opencode-zen', { apiKey: 'sk-test' }));
+
+    expect(exitCodes).toEqual([]);
+    expect(seen.some((u) => u.includes('opencode.ai/inference/v1/models'))).toBe(true);
+    const aliased = current().models?.['opencode-zen/big-pickle'] as Record<string, unknown>;
+    expect(aliased).toMatchObject({
+      provider: 'opencode-zen',
+      model: 'big-pickle',
+      baseUrl: 'https://opencode.ai/inference/v1',
+      apiKey: 'public',
+      freeTier: true,
+    });
+    // The paid alias must keep resolving against the provider and must not be
+    // turned into a free-tier alias.
+    expect(current().models?.['opencode-zen/claude-sonnet-4']).toMatchObject({
+      provider: 'opencode-zen',
+      model: 'claude-sonnet-4',
+    });
+    expect(
+      (current().models?.['opencode-zen/claude-sonnet-4'] as Record<string, unknown>)['freeTier'],
+    ).toBeUndefined();
+  });
+
+  it('adds a built-in cleanly when the free endpoint is unreachable', async () => {
+    // The free endpoint is a separate host that may be down or unreachable.
+    // That must degrade to fewer models, not a failed add.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        if (url.includes('opencode.ai/inference')) throw new Error('ECONNREFUSED');
+        return new Response(JSON.stringify({ data: [{ id: 'claude-sonnet-4' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }),
+    );
+    const { harness, current } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
+    const { deps, exitCodes } = makeDeps(harness);
+
+    await tryRun(() => handleProviderAddBuiltin(deps, 'opencode-zen', { apiKey: 'sk-test' }));
+
+    expect(exitCodes).toEqual([]);
+    expect(Object.keys(current().models ?? {})).toEqual(['opencode-zen/claude-sonnet-4']);
+  });
+
   it('writes no override map for a built-in that declares none', async () => {
     vi.stubGlobal(
       'fetch',
@@ -800,6 +878,26 @@ describe('omnicode provider add-builtin', () => {
         expect(pattern.length, `${p.id} override pattern must be an id or a glob`).toBeGreaterThan(
           0,
         );
+      }
+    }
+  });
+
+  it('declares only well-formed model exclusion patterns', () => {
+    for (const p of BUILT_IN_PROVIDERS) {
+      for (const source of p.freeTier ?? []) {
+        expect(source.baseUrl, `${p.id} free tier needs a base url`).toBeTruthy();
+        expect(source.apiKey, `${p.id} free tier needs a credential`).toBeTruthy();
+        expect(source.match.length, `${p.id} free tier must name what it owns`).toBeGreaterThan(0);
+        for (const pattern of source.match) {
+          // A bare `*` would claim the whole catalog, which is never what a
+          // vendor table means and would repoint every model at one endpoint.
+          expect(pattern.length, `${p.id} source pattern must not be empty`).toBeGreaterThan(1);
+          expect(pattern, `${p.id} source pattern must not be a bare wildcard`).not.toBe('*');
+          expect(
+            (pattern.startsWith('*') ? 1 : 0) + (pattern.endsWith('*') ? 1 : 0),
+            `${p.id} source pattern "${pattern}" globs from both ends, which matches everything`,
+          ).toBeLessThan(2);
+        }
       }
     }
   });

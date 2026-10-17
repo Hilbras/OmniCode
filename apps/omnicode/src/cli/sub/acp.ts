@@ -2,7 +2,7 @@
  * `omnicode acp` sub-command.
  *
  * Starts the Agent Client Protocol (ACP) server backed directly by the
- * DI × Scope agent engine (`agent-core-v2`) over stdio, so ACP-compatible
+ * DI × Scope agent engine (`omnicode-core`) over stdio, so ACP-compatible
  * clients can drive a omnicode session.
  *
  * Wire-up:
@@ -14,7 +14,7 @@
  *    reads from, and `process.argv[1]` is advertised as the legacy
  *    `_meta['terminal-auth'].command` fallback.
  *
- * `@hilbras/omnicode-acp` (and its `agent-core-v2` engine) is loaded via a
+ * `@hilbras/omnicode-acp` (and its `omnicode-core` engine) is loaded via a
  * lazy dynamic import so parsing the CLI does not initialize the ACP engine —
  * mirroring the `omnicode server run` v2 routing in `#/cli/sub/server/run.ts`.
  */

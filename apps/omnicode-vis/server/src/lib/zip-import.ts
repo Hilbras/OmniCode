@@ -1,4 +1,4 @@
-// apps/vis/server/src/lib/zip-import.ts
+// apps/omnicode-vis/server/src/lib/zip-import.ts
 //
 // Safe extraction of a user-supplied debug zip into a destination directory.
 //

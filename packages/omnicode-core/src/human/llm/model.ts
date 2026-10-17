@@ -23,6 +23,7 @@ export interface LlmModel extends LlmConnection {
   readonly maxInputSize?: number;
   readonly promptCacheKey?: boolean;
   readonly authScheme?: LlmAuthScheme;
+  readonly opencodeFreeTier?: boolean;
 }
 
 export function modelKey(model: LlmModel): string {

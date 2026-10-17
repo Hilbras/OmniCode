@@ -74,6 +74,7 @@ export const ProviderConfigSchema = z.object({
   customHeaders: StringRecordSchema.optional(),
   source: z.record(z.string(), z.unknown()).optional(),
   protocolOverrides: z.record(z.string(), ProtocolSchema).optional(),
+  excludedModels: z.array(z.string()).optional(),
 });
 
 export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
@@ -94,6 +95,8 @@ const ModelAliasBaseSchema = z.object({
   offEffort: z.string().optional(),
   betaApi: z.boolean().optional(),
   baseUrl: z.string().optional(),
+  apiKey: z.string().optional(),
+  freeTier: z.boolean().optional(),
   promptCacheKey: z.boolean().optional(),
 });
 
@@ -103,6 +106,8 @@ export const ModelAliasOverrideSchema = ModelAliasBaseSchema.omit({
   protocol: true,
   betaApi: true,
   baseUrl: true,
+  apiKey: true,
+  freeTier: true,
 }).partial();
 
 export type ModelAliasOverrides = z.infer<typeof ModelAliasOverrideSchema>;

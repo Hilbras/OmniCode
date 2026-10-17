@@ -11,15 +11,25 @@ Current publishable packages:
 | Package | Directory | Description |
 | --- | --- | --- |
 | `@hilbras/omnicode` | `apps/omnicode` | CLI / TUI application — provides the `omnicode` command after install |
-| `@hilbras/omnicode-sdk` | `packages/node-sdk` | Public TypeScript SDK |
+| `@hilbras/omnicode-sdk` | `packages/omnicode-sdk` | Public TypeScript SDK |
 
 All other workspace packages are private internal packages, are not published to npm, and are excluded via `ignore` in `.changeset/config.json`:
 
-- `@hilbras/omnicode-kaos`
+- `@hilbras/omnicode-acp`
 - `@hilbras/omnicode-auth`
-- `@hilbras/omnicode-telemetry`
+- `@hilbras/omnicode-client`
+- `@hilbras/omnicode-core`
+- `@hilbras/omnicode-inspect`
+- `@hilbras/omnicode-kaos`
 - `@hilbras/omnicode-llm`
 - `@hilbras/omnicode-migration`
+- `@hilbras/omnicode-minidb`
+- `@hilbras/omnicode-remote`
+- `@hilbras/omnicode-server`
+- `@hilbras/omnicode-telemetry`
+- `@hilbras/omnicode-transcript`
+- `@hilbras/omnicode-tree-sitter-bash`
+- `@hilbras/omnicode-tui`
 - `@hilbras/omnicode-vis`
 - `@hilbras/omnicode-vis-server`
 - `@hilbras/omnicode-vis-web`

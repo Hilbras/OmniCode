@@ -19,6 +19,7 @@ import type { OpenAITrait } from '#human/llm/requester/bases/openai/trait';
 import { openAIBase } from '#human/llm/requester/bases/openai/requester';
 import { openAIResponsesBase } from '#human/llm/requester/bases/openai-responses/requester';
 import { OmnicodeFiles, omnicodeFilesBaseUrl } from '#human/llm-omnicode/files';
+import { opencodeFreeTierConnection } from '#human/llm/provider/providers/opencode';
 
 import type { Model } from '../model/catalog';
 import type { ResolvedLlmModel } from '../model/model-requester-impl';
@@ -83,6 +84,10 @@ const PROTOCOL_ROUTES: Record<Protocol, ProtocolRoute> = {
     base: openAIBase,
     connection: openAIConnection,
     traitFor: openAIReasoningTraitFor,
+    variantFor: (model) =>
+      model.providerOptions?.opencodeFreeTier === true
+        ? { base: openAIBase, connection: opencodeFreeTierConnection }
+        : undefined,
   },
   openai_responses: {
     providerId: 'openai-responses',
@@ -194,6 +199,7 @@ export class ProtocolAdapterRegistry implements IProtocolAdapterRegistry {
       adaptiveThinking: model.providerOptions?.adaptiveThinking,
       promptCacheKey: model.providerOptions?.promptCacheKey,
       authScheme: model.providerOptions?.authScheme,
+      opencodeFreeTier: model.providerOptions?.opencodeFreeTier,
     };
     return { requester, protocol: model.protocol, model: llmModel, media: route.media };
   }

@@ -22,7 +22,7 @@
  *   7. restart durability: dispose the app, re-bootstrap on the same home,
  *      and compare every section against the pre-restart snapshot.
  *
- *   pnpm -C packages/klient stress:kosong-config
+ *   pnpm -C packages/omnicode-client stress:kosong-config
  *
  * Env: OMNICODE_MODEL_NAME is unset for the run (it would pin `defaultModel` and
  * break the pointer assertions); restored on exit.

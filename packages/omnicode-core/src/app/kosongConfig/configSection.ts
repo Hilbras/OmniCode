@@ -74,6 +74,7 @@ export const ProviderConfigSchema = z.object({
   env: StringRecordSchema.optional(),
   source: z.record(z.string(), z.unknown()).optional(),
   protocolOverrides: z.record(z.string(), ProtocolSchema).optional(),
+  excludedModels: z.array(z.string()).optional(),
 });
 
 export const ProvidersSectionSchema = z.record(z.string(), ProviderConfigSchema);
@@ -196,6 +197,7 @@ const ModelBaseSchema = z.object({
   defaultEffort: z.string().optional(),
   offEffort: z.string().optional(),
   promptCacheKey: z.boolean().optional(),
+  freeTier: z.boolean().optional(),
 });
 
 export const ModelOverrideSchema = ModelBaseSchema.omit({
@@ -209,6 +211,7 @@ export const ModelOverrideSchema = ModelBaseSchema.omit({
   provider: true,
   model: true,
   betaApi: true,
+  freeTier: true,
 }).partial();
 
 export const ModelRecordSchema = ModelBaseSchema.extend({

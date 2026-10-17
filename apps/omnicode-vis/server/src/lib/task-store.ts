@@ -1,4 +1,4 @@
-// apps/vis/server/src/lib/task-store.ts
+// apps/omnicode-vis/server/src/lib/task-store.ts
 //
 // Read-only reader for background tasks, persisted by the engine under each
 // spawning agent's homedir at `<agentDir>/tasks/<taskId>.json`
@@ -212,7 +212,7 @@ function isMissingPath(error: unknown): boolean {
   );
 }
 
-// ── normalization (ported from agent-core-v2/agent/task/persist.ts) ────────
+// ── normalization (ported from omnicode-core/agent/task/persist.ts) ────────
 
 type ReadablePersistedTask = Record<string, unknown>;
 

@@ -5,6 +5,12 @@ import { beforeEach, afterEach, describe, expect, it } from 'vitest';
 
 import { isUnknownCapability } from '#/llm-adapter/contract/capability';
 import { createUserMessage } from '#human/llm/message';
+import {
+  applyOpencodeFreeTierPayload,
+  opencodeFingerprintTools,
+  opencodeFreeSessionId,
+  resetOpencodeFreeSession,
+} from '#human/llm/provider/providers/opencode';
 import type { LlmRequestEvent } from '#human/llm/requester/requester';
 import { thinkingMetadataOf } from '#human/llm/thinking';
 import type { Model } from '#/llm-adapter/model/catalog';
@@ -153,11 +159,17 @@ const GOOGLE_STREAM = sse([
 ]);
 
 async function withStubGateway(
-  run: (gateway: { readonly baseUrl: string; readonly paths: readonly string[] }) => Promise<void>,
+  run: (gateway: {
+    readonly baseUrl: string;
+    readonly paths: readonly string[];
+    readonly headers: readonly NodeJS.Dict<string | string[]>[];
+  }) => Promise<void>,
 ): Promise<void> {
   const paths: string[] = [];
+  const headers: NodeJS.Dict<string | string[]>[] = [];
   const server = createServer((req: IncomingMessage, res: ServerResponse) => {
     paths.push(req.url ?? '');
+    headers.push({ ...req.headers });
     req.resume();
     req.on('end', () => {
       res.writeHead(200, {
@@ -172,7 +184,7 @@ async function withStubGateway(
   await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
   const { port } = server.address() as AddressInfo;
   try {
-    await run({ baseUrl: `http://127.0.0.1:${port}`, paths });
+    await run({ baseUrl: `http://127.0.0.1:${port}`, paths, headers });
   } finally {
     server.closeAllConnections();
     await new Promise<void>((resolve, reject) => {
@@ -478,5 +490,101 @@ describe('omnicode provider definitions', () => {
         baseProtocol: 'openai',
       }),
     ).toThrow(/already registered/);
+  });
+});
+
+async function dispatchHeaders(
+  model: Model,
+): Promise<readonly NodeJS.Dict<string | string[]>[]> {
+  const resolved = registry.resolve(model);
+  let seen: readonly NodeJS.Dict<string | string[]>[] = [];
+  await withStubGateway(async (gateway) => {
+    await resolved.requester.generate(
+      { model: { ...resolved.model, baseUrl: gateway.baseUrl } },
+      { messages: [createUserMessage('hi')] },
+      { signal: new AbortController().signal },
+    );
+    seen = gateway.headers;
+  });
+  return seen;
+}
+
+describe('opencode free tier variant', () => {
+  it('presents the vendor client fingerprint on a free-tier model', async () => {
+    const headers = await dispatchHeaders(
+      modelWith({ protocol: 'openai', providerType: 'openai', providerOptions: { opencodeFreeTier: true } }),
+    );
+    expect(headers.length).toBeGreaterThan(0);
+    const sent = headers[0] ?? {};
+    expect(sent['x-opencode-client']).toBe('cli');
+    expect(sent['x-opencode-project']).toBe('global');
+    expect(sent['user-agent']).toMatch(/^opencode\/[a-z0-9-]+\/\d+\.\d+\.\d+\/cli$/i);
+    const session = String(sent['x-opencode-session'] ?? '');
+    expect(session).toMatch(/^ses_[0-9a-f]{12}[0-9A-Za-z]{14}$/);
+    expect(sent['x-opencode-session-id']).toBe(session);
+    expect(sent['x-session-affinity']).toBe(session);
+    expect(sent['x-session-id']).toBe(session);
+    expect(sent['x-opencode-request']).toBeUndefined();
+  });
+
+  it('leaves an ordinary openai model untouched', async () => {
+    const headers = await dispatchHeaders(modelWith({ protocol: 'openai', providerType: 'openai' }));
+    const sent = headers[0] ?? {};
+    expect(sent['x-opencode-session']).toBeUndefined();
+    expect(sent['x-opencode-client']).toBeUndefined();
+  });
+
+  it('reuses one session id across requests and rotates it once it ages out', () => {
+    resetOpencodeFreeSession();
+    const base = Date.UTC(2026, 0, 1);
+    const first = opencodeFreeSessionId(base);
+    expect(opencodeFreeSessionId(base + 1_000)).toBe(first);
+    expect(opencodeFreeSessionId(base + 60_000)).toBe(first);
+    const rotated = opencodeFreeSessionId(base + 3 * 60 * 60 * 1000);
+    expect(rotated).not.toBe(first);
+    expect(rotated).toMatch(/^ses_[0-9a-f]{12}[0-9A-Za-z]{14}$/);
+    resetOpencodeFreeSession();
+  });
+
+  it('keeps the encoded counter inside the range upstream accepts', () => {
+    resetOpencodeFreeSession();
+    const base = Date.UTC(2026, 0, 2);
+    for (let i = 0; i < 40; i++) {
+      expect(opencodeFreeSessionId(base)).toMatch(/^ses_[0-9a-f]{12}[0-9A-Za-z]{14}$/);
+    }
+    resetOpencodeFreeSession();
+  });
+
+  it('adds the placeholder note and the vendor tool fingerprint to the payload', () => {
+    const out = applyOpencodeFreeTierPayload(
+      { messages: [{ role: 'user', content: 'hi' }], tools: [], max_completion_tokens: 16 },
+      'big-pickle',
+    );
+    expect((out['messages'] as unknown[])[0]).toEqual({
+      role: 'system',
+      content: expect.stringContaining('placeholders that do nothing'),
+    });
+    const tools = out['tools'] as { function: { name: string } }[];
+    expect(tools.map((t) => t.function.name)).toEqual(['read', 'shell']);
+    expect(out['max_completion_tokens']).toBeGreaterThan(16);
+  });
+
+  it('renames a client tool that collides with a fingerprint tool name', () => {
+    const out = applyOpencodeFreeTierPayload(
+      {
+        messages: [],
+        tools: [{ type: 'function', function: { name: 'read', parameters: { type: 'object' } } }],
+      },
+      'big-pickle',
+    );
+    const names = (out['tools'] as { function: { name: string } }[]).map((t) => t.function.name);
+    expect(names).toEqual(['read_client', 'read', 'shell']);
+  });
+
+  it('leaves an identical fingerprint tool in place instead of aliasing it', () => {
+    const canonical = opencodeFingerprintTools();
+    const out = applyOpencodeFreeTierPayload({ messages: [], tools: [canonical[0]!] }, 'big-pickle');
+    const names = (out['tools'] as { function: { name: string } }[]).map((t) => t.function.name);
+    expect(names).toEqual(['read', 'shell']);
   });
 });

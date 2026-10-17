@@ -15,7 +15,7 @@
     "dev:kap-server": "pnpm -C apps/omnicode run dev:kap-server",
     "dev:v2": "pnpm -C apps/omnicode run dev:kap-server:multi",
     "build:plugin-marketplace": "pnpm -C apps/omnicode run build:plugin-marketplace",
-    "vis": "pnpm -C apps/vis run dev",
+    "vis": "pnpm -C apps/omnicode-vis run dev",
     "dev:docs": "pnpm -C docs install --ignore-workspace && pnpm -C docs run dev",
     "typecheck": "pnpm run build:packages && pnpm -r --filter './packages/*' run typecheck && pnpm --filter @hilbras/omnicode run typecheck && pnpm --filter omnicode run typecheck && pnpm --filter @hilbras/omnicode-vis-server run typecheck && pnpm --filter @hilbras/omnicode-vis-web run typecheck",
     "lint": "node scripts/check-no-comments.mjs && oxlint --type-aware",

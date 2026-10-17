@@ -11,7 +11,7 @@ import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
 export const HOME_DIRNAME = '.omnicode';
-export const LEGACY_HOME_DIRNAMES = ['.lacrous-omnicode', '.lacrous-kimi'] as const;
+export const LEGACY_HOME_DIRNAMES = ['.omnicode'] as const;
 export const MIGRATION_MARKER_FILENAME = 'migrated-from-omnicode.json';
 
 // Regenerable state that is not worth carrying over: the launcher bits, the
@@ -35,9 +35,8 @@ export interface HomeOutcome {
 /**
  * Point the CLI at its data home. `OMNICODE_HOME` always wins; otherwise the
  * default is `~/.omnicode`, and on the very first run the user data from the
- * newest legacy home (`~/.lacrous-omnicode`, `~/.lacrous-kimi`) is copied in so
- * existing sessions and config follow. Legacy homes are never modified or
- * removed.
+ * newest legacy home is copied in so existing sessions and config follow.
+ * Legacy homes are never modified or removed.
  */
 export function ensureHome(
   env: NodeJS.ProcessEnv = process.env,

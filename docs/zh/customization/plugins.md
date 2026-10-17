@@ -249,7 +249,7 @@ Plugin 是一个带 manifest 的目录或 zip 文件。Manifest 可以放在以�
 <plugin_root>/.omnicode-plugin/plugin.json
 ```
 
-两个文件同时存在时，以 `omnicode.plugin.json` 为准。仍使用旧版 `kimi.plugin.json` 或 `.kimi-plugin/plugin.json` manifest 的插件会继续加载,同时存在时新文件名优先。
+两个文件同时存在时，以 `omnicode.plugin.json` 为准。`.omnicode-plugin/plugin.json` 作为回退。
 
 示例：
 

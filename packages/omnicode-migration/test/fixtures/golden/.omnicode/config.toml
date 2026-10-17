@@ -22,7 +22,7 @@ model = "mooncake-v1"
 max_context_size = 131072
 
 [providers."managed:omnicode"]
-type = "kimi"
+type = "omnicode"
 base_url = "https://api.example.test/coding/v1"
 api_key = "sk-golden-managed"
 

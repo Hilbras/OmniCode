@@ -34,9 +34,9 @@ requires; this project's edits to them are recorded here instead of by rewriting
 
 | File | Change |
 |---|---|
-| `packages/oauth/src/refreshProviderModels.ts` | New discovery branch: populates model aliases for a provider that has a declared base URL, no oauth ref and no registry source. Also the per-wire auth/version profile used by that branch. |
-| `packages/oauth/src/index.ts` | Exports the new discovery module. |
-| `packages/agent-core-v2/test/app/kosongConfig/discovery.test.ts` | Tests for the discovery branch, including the exclusions (managed endpoint, `__omnicode_env__`). |
+| `packages/omnicode-auth/src/refreshProviderModels.ts` | New discovery branch: populates model aliases for a provider that has a declared base URL, no oauth ref and no registry source. Also the per-wire auth/version profile used by that branch. |
+| `packages/omnicode-auth/src/index.ts` | Exports the new discovery module. |
+| `packages/omnicode-core/test/app/kosongConfig/discovery.test.ts` | Tests for the discovery branch, including the exclusions (managed endpoint, `__omnicode_env__`). |
 | `apps/omnicode/src/cli/sub/provider.ts` | `omnicode provider add-manual` and `omnicode provider add-builtin`. |
 | `apps/omnicode/src/tui/commands/provider.ts` | The `/provider` built-in flow: key prompt, discovery, default-model picker. |
 | `apps/omnicode/src/tui/components/dialogs/model-selector.ts` | Model search now matches the alias and model id, not only the display label. |
@@ -44,8 +44,8 @@ requires; this project's edits to them are recorded here instead of by rewriting
 | `apps/omnicode/test/tui/components/dialogs/model-selector.test.ts` | Test that search matches a gateway model id. |
 | `apps/omnicode/package.json`, `package.json` | The `omnicode` / `dev:local` script entries. |
 | `packages/omnicode-auth/src/discover-models.ts` | Per-model wire overrides: `resolveProtocolOverride` (longest-prefix-wins) and `applyProtocolOverrides`, plus writing a declared wire onto the model alias. |
-| `packages/oauth/src/managed-omnicode.ts` | `parseModelProtocol` accepts every `ProtocolSchema` wire (`openai`, `google-genai` added), not just `anthropic` / `response`. |
-| `packages/agent-core-v2/src/llm-adapter/provider/provider.ts`, `app/kosongConfig/configSection.ts` | `providers.<id>.protocolOverrides` — the config field discovery reads the pins from. |
+| `packages/omnicode-auth/src/managed-omnicode.ts` | `parseModelProtocol` accepts every `ProtocolSchema` wire (`openai`, `google-genai` added), not just `anthropic` / `response`. |
+| `packages/omnicode-core/src/llm-adapter/provider/provider.ts`, `app/kosongConfig/configSection.ts` | `providers.<id>.protocolOverrides` — the config field discovery reads the pins from. |
 | `apps/omnicode/src/utils/built-in-providers.ts` | The `protocolOverrides` field, declared for `opencode-zen` (`claude-*` → `anthropic`); `vertexai` removed from the wire union, where it was a declared wire that `add-manual` rejected. |
 | `apps/omnicode/test/cli/provider.test.ts` | Guards that a built-in declares only wires `add-manual` accepts, and that overrides name known wires. |
 | `packages/omnicode-auth/test/discover-models.test.ts` | Override resolution, longest-prefix-wins, alias persistence. |

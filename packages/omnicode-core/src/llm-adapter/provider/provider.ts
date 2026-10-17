@@ -1,7 +1,7 @@
 import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
 import type { Event, IWaitUntil } from '#/_base/event';
-import type { LlmAuthScheme } from '#human/llm/model';
 import type { Protocol } from '#/llm-adapter/protocol/protocol';
+import type { LlmAuthScheme } from '#human/llm/model';
 
 export type ProviderType = string;
 
@@ -30,6 +30,7 @@ export interface ProviderConfig {
   env?: Record<string, string>;
   source?: Record<string, unknown>;
   protocolOverrides?: Record<string, Protocol>;
+  excludedModels?: string[];
 }
 
 export type ProvidersSection = Record<string, ProviderConfig>;

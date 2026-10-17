@@ -1,4 +1,4 @@
-// apps/vis/server/src/lib/log-reader.ts
+// apps/omnicode-vis/server/src/lib/log-reader.ts
 //
 // Parse a omnicode diagnostic log into structured lines for the Logs view.
 //

@@ -5,7 +5,7 @@ description: Use when generating changesets in the omnicode repository — decid
 
 # Generate Changesets
 
-The only user-facing published package is the CLI: `@hilbras/omnicode`. All other `@hilbras/*` packages (sdk, kosong, kaos, oauth, telemetry, and so on) are internal.
+The only user-facing published package is the CLI: `@hilbras/omnicode`. All other `@hilbras/*` packages (sdk, llm, kaos, auth, telemetry, and so on) are internal.
 
 ## 1. Whether to Write
 
@@ -50,7 +50,7 @@ Wording:
 - An internal change enters the CLI bundle and is user-perceivable → list `@hilbras/omnicode`.
 - An internal change does not enter the CLI or is not user-perceivable → write nothing; if it is written, list only that internal package.
 - Never mix packages ignored in `.changeset/config.json` with non-ignored packages in one frontmatter.
-- pi-tui exception: pi-tui-only changes list `@hilbras/omnicode-tui`; if the same change is also visible to CLI users, write a separate CLI changeset (two files, never mixed).
+- omnicode-tui exception: omnicode-tui-only changes list `@hilbras/omnicode-tui`; if the same change is also visible to CLI users, write a separate CLI changeset (two files, never mixed).
 - omnicode-inspect and the vis packages never appear in a changeset.
 
 ## 5. Workflow

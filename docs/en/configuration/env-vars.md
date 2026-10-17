@@ -185,7 +185,7 @@ Switches that control the behavior of subsystems such as telemetry, background t
 | `OMNICODE_NO_AUTO_UPDATE` | Fully disable the update preflight: no check, background install, or prompt. Legacy alias `OMNICODE_CLI_NO_AUTO_UPDATE` also honored | Truthy: `1`/`true`/`yes`/`on` |
 | `OMNICODE_DISABLE_CRON` | Disable the scheduled-task tool (`CronCreate` rejects new schedules; existing tasks do not fire) | `1` to disable |
 
-The `OMNICODE_INFINITE_RETRY`, `OMNICODE_IDENTITY_*`, and `OMNICODE_BUILTIN_PRODUCT_SKILLS` variables are read by the `agent-core-v2` engine.
+The `OMNICODE_INFINITE_RETRY`, `OMNICODE_IDENTITY_*`, and `OMNICODE_BUILTIN_PRODUCT_SKILLS` variables are read by the `omnicode-core` engine.
 
 ## Diagnostic logs
 

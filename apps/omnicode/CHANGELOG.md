@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.0
+
+### Minor Changes
+
+- Add OpenCode's free models to the built-in `opencode-zen` and `opencode-go` providers; run `provider add-builtin opencode-zen` and they work without any separate local service.
+
 ## 3.8.0
 
 ### Minor Changes

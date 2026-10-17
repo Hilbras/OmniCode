@@ -55,7 +55,7 @@ Omnicode CLI 支持同时接入多家模型供应商服务，模型在供应商�
 omnicode provider add-builtin <providerId>
 ```
 
-这条命令会替你写好一整条供应商配置——协议、`base_url` 以及你在提示中输入的 API 密钥——随后刷新它的模型列表。完成之后它就是一个普通供应商：可以像其他供应商一样修改、更换密钥或删除。
+这条命令会替你写好一整条供应商配置——协议、`base_url` 以及你用 `--api-key`（或 `--api-key-env`）传入的 API 密钥——随后刷新它的模型列表。完成之后它就是一个普通供应商：可以像其他供应商一样修改、更换密钥或删除。
 
 | Id | 名称 | 协议 | 密钥前缀 | 可接入的服务 |
 | --- | --- | --- | --- | --- |
@@ -79,7 +79,15 @@ omnicode provider add-builtin <providerId>
 
 密钥前缀只是提示里展示的参考，不是校验规则——厂商可能不打招呼就改前缀，而拒绝一把本来可用的密钥，比不显示任何提示更糟糕。
 
-表格里还有两条情况没有写全。`anthropic` 和 `gemini` 都不接受 `Bearer` 请求头，因此 `add-builtin` 会为它们分别写入各自所需的 `auth_scheme`；在那里带上 `Bearer` 会返回 401，看起来和密钥失效一模一样。`opencode-zen` 在 OpenAI 兼容的 `/models` 接口上列出 Claude 模型，实际却通过 Anthropic Messages API 提供服务，因此这条配置把 `claude-*` 固定到该协议上——不固定的话，这些模型能列出来，一用就失败。
+表格里还有三条情况没有写全。`anthropic` 和 `gemini` 都不接受 `Bearer` 请求头，因此它们的模型发现会改用 `x-api-key` 和 `x-goog-api-key`；在那里带上 `Bearer` 会返回 401，看起来和密钥失效一模一样。`opencode-zen` 在 OpenAI 兼容的 `/models` 接口上列出 Claude 模型，实际却通过 Anthropic Messages API 提供服务，因此这条配置把 `claude-*` 固定到该协议上——不固定的话，这些模型能列出来，一用就失败。（从 models.dev 目录导入该厂商也补不回这一点：目录里没有记录 OpenCode 的逐模型协议。）
+
+### OpenCode 免费额度
+
+`opencode-zen` 和 `opencode-go` 另外还提供免费额度。这些模型既不需要你的密钥也不需要账号，但不由付费线路提供服务：它们位于 `https://opencode.ai/inference/v1`，而且只有呈现 OpenCode 客户端形态的请求才会被网关接受。Omnicode 会替你完成这一步，所以 `provider add-builtin opencode-zen` 会把免费模型（目前是以 `-free` 结尾的 id，外加 `big-pickle`）与付费模型一起列出，开箱即用——不需要额外运行任何服务。
+
+每个免费模型都会写成一条独立的 alias，带上免费端点、该额度所期望的字面凭证，以及一个 `free_tier` 标记。正是这个标记让请求带上客户端请求头，也正是它让这些 alias 在模型刷新后依然存在。
+
+需要清楚“带上客户端形态”在实践中意味着什么：为了通过校验，免费请求还会附带该额度所期望的两个占位工具定义（`read` 和 `shell`），并在前面加一行系统提示，告诉模型这两个工具不做任何事。Omnicode 会把与之同名的自有工具改名，并且从不执行这两个占位工具——但这个请求并不是普通的 OpenAI 形态调用。此外还有两点：会话会在几个小时后更换新的；上游配额按会话计算，所以高强度使用仍然可能触发限流。这些模型没有密钥可填，但 `add-builtin` 仍需要一把密钥来访问同一目录中的付费部分。
 
 这些端点具体如何接收密钥，详见 [身份验证与凭证](./authentication.md)。
 

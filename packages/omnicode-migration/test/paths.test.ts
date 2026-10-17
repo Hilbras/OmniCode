@@ -31,6 +31,6 @@ describe('paths', () => {
   it('sourceSessionsDir / sourceUserHistoryDir / sourceLegacyIndexJson', () => {
     expect(paths.sourceSessionsDir('/x')).toBe(join('/x', 'sessions'));
     expect(paths.sourceUserHistoryDir('/x')).toBe(join('/x', 'user-history'));
-    expect(paths.sourceLegacyIndexJson('/x')).toBe(join('/x', 'kimi.json'));
+    expect(paths.sourceLegacyIndexJson('/x')).toBe(join('/x', 'omnicode.json'));
   });
 });

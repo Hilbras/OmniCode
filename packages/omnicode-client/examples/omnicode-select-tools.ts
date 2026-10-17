@@ -38,7 +38,7 @@
  *           the loaded computer-use tool?
  *
  * Run:
- *   pnpm -C packages/klient exec tsx --tsconfig ./tsconfig.examples.json \
+ *   pnpm -C packages/omnicode-client exec tsx --tsconfig ./tsconfig.examples.json \
  *     --import ../../build/register-raw-text-loader.mjs examples/omnicode-select-tools.ts
  *
  * Env:

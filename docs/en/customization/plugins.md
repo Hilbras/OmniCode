@@ -250,7 +250,7 @@ A plugin is a directory or zip file containing a manifest. The manifest can be p
 <plugin_root>/.omnicode-plugin/plugin.json
 ```
 
-When both files exist, `omnicode.plugin.json` takes precedence. Plugins that still ship the legacy `kimi.plugin.json` or `.kimi-plugin/plugin.json` manifest keep loading, and the new names take precedence when both are present.
+When both files exist, `omnicode.plugin.json` takes precedence; the nested `.omnicode-plugin/plugin.json` is the fallback.
 
 Example:
 

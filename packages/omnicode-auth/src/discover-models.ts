@@ -316,6 +316,52 @@ export function applyProtocolOverrides(
 }
 
 /**
+ * Whether `modelId` is named by a provider's `excluded_models` list.
+ *
+ * Three pattern shapes, matching how the field reads in config:
+ *
+ * - `claude-*` — trailing star, so a **prefix** match, the same rule
+ *   `resolveProtocolOverride` uses for wire pins.
+ * - `*-free` — leading star, so a **suffix** match. Free tiers are recognised
+ *   by their suffix, and a suffix cannot be expressed as a prefix rule without
+ *   inventing a wildcard the rest of the config does not have.
+ * - anything else — an exact id.
+ *
+ * Order never decides the winner: the question is membership, not which rule
+ * applies, so any match excludes. A pattern that matches nothing is inert
+ * rather than a hard failure, which keeps a stale entry harmless after an
+ * endpoint renames a model.
+ */
+export function isExcludedModel(
+  modelId: string,
+  exclusions: readonly string[] | undefined,
+): boolean {
+  if (exclusions === undefined || exclusions.length === 0) return false;
+  return exclusions.some((pattern) => {
+    if (pattern.endsWith('*')) return modelId.startsWith(pattern.slice(0, -1));
+    if (pattern.startsWith('*')) return modelId.endsWith(pattern.slice(1));
+    return modelId === pattern;
+  });
+}
+
+/**
+ * Returns `models` without the ids the provider declares off-limits.
+ *
+ * Dropped before the alias write, so a model already aliased from an earlier
+ * refresh is pruned by the next one instead of lingering in config. Discovery
+ * cannot verify that an excluded model would fail — that is why a vendor
+ * declares it — so this trades a listing for a request-time failure the user
+ * would otherwise only meet after picking the model.
+ */
+export function applyModelExclusions(
+  models: readonly DiscoveredModelInfo[],
+  exclusions: readonly string[] | undefined,
+): readonly DiscoveredModelInfo[] {
+  if (exclusions === undefined || exclusions.length === 0) return models;
+  return models.filter((model) => !isExcludedModel(model.id, exclusions));
+}
+
+/**
  * Writes discovered models into `config` as `${providerId}/${id}` aliases,
  * merging onto any existing alias so hand-added fields survive. Aliases the
  * endpoint no longer lists are removed — the caller restores user-owned ones

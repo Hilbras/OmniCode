@@ -1,5 +1,5 @@
-// apps/vis/server/src/lib/agent-record-types.ts
-// Single source of truth: engine shapes come from agent-core-v2 directly.
+// apps/omnicode-vis/server/src/lib/agent-record-types.ts
+// Single source of truth: engine shapes come from omnicode-core directly.
 // Do NOT add local interfaces that duplicate upstream shapes — the only
 // exceptions are the legacy records below, which v2 never writes but old
 // (v1-written / pre-migration) wires still contain on disk.

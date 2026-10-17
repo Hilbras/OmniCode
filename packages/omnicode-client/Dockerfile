@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 #
-# klient e2e docker-run image.
+# omnicode-client e2e docker-run image.
 #
 # This image layers server-e2e defaults on top of the repository server dev
 # image. Source code and node_modules are still provided by bind mounts from
@@ -22,6 +22,6 @@ ENV OMNICODE_HOME=/data/docker-e2e/omnicode-home \
     npm_config_store_dir=/workspace/omnicode/node_modules/.pnpm-store \
     npm_config_package_import_method=copy
 
-WORKDIR /workspace/omnicode/packages/klient
+WORKDIR /workspace/omnicode/packages/omnicode-client
 
 CMD ["bash"]

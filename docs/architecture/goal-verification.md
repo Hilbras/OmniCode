@@ -2,7 +2,7 @@
 
 Author: Hilbras.
 
-`packages/agent-core-v2/src/features/computerUse/goalVerifier.ts` answers the
+`packages/omnicode-core/src/features/computerUse/goalVerifier.ts` answers the
 question the computer-control plan puts plainly: **never trust the model's claim
 that a goal was completed.**
 

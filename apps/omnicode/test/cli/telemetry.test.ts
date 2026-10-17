@@ -30,7 +30,7 @@ vi.mock('@hilbras/omnicode-telemetry', () => ({
 }));
 
 vi.mock('@hilbras/omnicode-auth', async (importOriginal) => {
-  // Spread the real module: the SDK's v2 client pulls agent-core-v2 into the
+  // Spread the real module: the SDK's v2 client pulls omnicode-core into the
   // import graph, which subclasses OmnicodeOAuthToolkit from this package.
   const actual = await importOriginal<typeof import('@hilbras/omnicode-auth')>();
   return {

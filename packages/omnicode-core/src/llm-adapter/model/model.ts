@@ -44,6 +44,7 @@ export interface ModelRecord {
   defaultEffort?: string;
   offEffort?: string;
   promptCacheKey?: boolean;
+  freeTier?: boolean;
 
   overrides?: ModelOverride;
 

@@ -3,7 +3,7 @@
  *
  * Detection rule for the `[imported]` badge: `metadata.imported_from_omnicode_cli`
  * is strictly the boolean `true`. This mirrors the value written by
- * `migration-legacy` into the session's `state.json` `custom` block.
+ * `omnicode-migration` into the session's `state.json` `custom` block.
  */
 
 const IMPORTED_BADGE = '[imported]';

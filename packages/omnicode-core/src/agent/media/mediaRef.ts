@@ -100,7 +100,7 @@ export function mediaKindOfPart(part: ContentPart): 'image' | 'video' | 'audio' 
 }
 
 const OMNICODE_FILE_SCHEME = 'omnicode-file://';
-const LEGACY_FILE_SCHEMES = ['kimi-file://'] as const;
+const LEGACY_FILE_SCHEMES = [] as const;
 
 export interface DaemonFileRef {
   readonly fileId: string;

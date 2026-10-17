@@ -64,7 +64,7 @@ describe('detectMigration', () => {
     const workdir = '/workspace/flat-proj';
     const bucket = join(src, 'sessions', oldMd5BucketName(workdir));
     await mkdir(join(bucket, 'titled'), { recursive: true });
-    await writeFile(join(src, 'kimi.json'), JSON.stringify({ work_dirs: [{ path: workdir }] }));
+    await writeFile(join(src, 'omnicode.json'), JSON.stringify({ work_dirs: [{ path: workdir }] }));
     await writeFile(join(bucket, 'flat-1.jsonl'), '{"role":"user","content":"hi"}\n');
     await writeFile(join(bucket, 'titled', 'context.jsonl'), '');
     await writeFile(
@@ -75,7 +75,7 @@ describe('detectMigration', () => {
     const plan = await detectMigration({ sourcePath: src });
     expect(plan.totalSessions).toBe(2);
     expect(plan.sessionScanFailures).toEqual([]);
-    expect(plan.workdirs[0]?.sessions.map((s) => s.uuid).sort()).toEqual(['flat-1', 'titled']);
+    expect(plan.workdirs[0]?.sessions.map((s) => s.uuid).toSorted()).toEqual(['flat-1', 'titled']);
   });
 
   it('detects a skills-only source', async () => {

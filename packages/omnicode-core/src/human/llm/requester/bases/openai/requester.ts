@@ -10,6 +10,11 @@ import { applyThinking } from '#/llm/protocol/thinking';
 import { resolveMaxCompletionCap, type FormatRequestInput } from '#/llm/protocol/format';
 import { consumeStream, resolveTransportHeaders } from '#/llm/protocol/stream';
 import { encodeReasoningEffortFallback } from '#/llm/thinking';
+import {
+  applyOpencodeFreeTierPayload,
+  opencodeFreeSessionId,
+  opencodeFreeTierHeaders,
+} from '#/llm/provider/providers/opencode';
 import { resolveAuthSchemeHeaders } from '#/llm/requester/auth-scheme-headers';
 import {
   type LlmClientContext,
@@ -133,7 +138,11 @@ export function prepareOpenAIRequest(
   );
   const params = assembleOpenAIRequest(input, { messages: merged, tools, kwargs });
   const finalParams = trait?.buildParams?.(params, ctx) ?? params;
-  return encodeOpenAIRequest(finalParams);
+  const withFingerprint =
+    ctx.model.opencodeFreeTier === true
+      ? applyOpencodeFreeTierPayload(finalParams, ctx.model.model)
+      : finalParams;
+  return encodeOpenAIRequest(withFingerprint);
 }
 
 interface OpenAITransport {
@@ -152,13 +161,18 @@ async function executeOpenAIRequest(
   transport: OpenAITransport,
 ): Promise<void> {
   const { connection, trait, ctx, format, reasoning, resolveClient, signal, onEvent } = transport;
+  const transportHeaders = resolveTransportHeaders(connection, ctx, request.headers);
+  const headers =
+    ctx.model.opencodeFreeTier === true
+      ? { ...transportHeaders, ...opencodeFreeTierHeaders(opencodeFreeSessionId()) }
+      : transportHeaders;
   const client = resolveClient({
     model: ctx.model,
-    headers: resolveTransportHeaders(connection, ctx, request.headers),
+    headers,
   });
   onEvent?.({ type: 'llm.sent' });
   const { data: stream, response } = await client.chat.completions
-    .create(request.params, { signal })
+    .create(request.params, { signal, headers })
     .withResponse();
   onEvent?.({ type: 'llm.streaming.headers', headers: headersToRecord(response.headers) ?? {} });
   const parse = format.createStreamParser({

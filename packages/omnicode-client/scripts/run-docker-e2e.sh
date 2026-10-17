@@ -46,21 +46,19 @@ NM_ROOT="${STATE_ROOT}/docker-e2e/${RUN_ID}/nm"
 workspace_node_modules=(
   "root:/workspace/omnicode/node_modules"
   "apps_omnicode:/workspace/omnicode/apps/omnicode/node_modules"
-  "apps_omnicode-web:/workspace/omnicode/apps/omnicode-web/node_modules"
-  "apps_vis:/workspace/omnicode/apps/vis/node_modules"
-  "apps_vis_server:/workspace/omnicode/apps/vis/server/node_modules"
-  "apps_vis_web:/workspace/omnicode/apps/vis/web/node_modules"
+  "apps_omnicode-vis:/workspace/omnicode/apps/omnicode-vis/node_modules"
+  "apps_omnicode-vis_server:/workspace/omnicode/apps/omnicode-vis/server/node_modules"
+  "apps_omnicode-vis_web:/workspace/omnicode/apps/omnicode-vis/web/node_modules"
   "docs:/workspace/omnicode/docs/node_modules"
-  "pkg_kap-server:/workspace/omnicode/packages/kap-server/node_modules"
-  "pkg_server-e2e:/workspace/omnicode/packages/klient/node_modules"
-  "pkg_kaos:/workspace/omnicode/packages/kaos/node_modules"
-  "pkg_kosong:/workspace/omnicode/packages/kosong/node_modules"
-  "pkg_migration-legacy:/workspace/omnicode/packages/migration-legacy/node_modules"
-  "pkg_node-sdk:/workspace/omnicode/packages/node-sdk/node_modules"
-  "pkg_oauth:/workspace/omnicode/packages/oauth/node_modules"
-  "pkg_protocol:/workspace/omnicode/packages/protocol/node_modules"
-  "pkg_services:/workspace/omnicode/packages/services/node_modules"
-  "pkg_telemetry:/workspace/omnicode/packages/telemetry/node_modules"
+  "pkg_omnicode-server:/workspace/omnicode/packages/omnicode-server/node_modules"
+  "pkg_omnicode-client:/workspace/omnicode/packages/omnicode-client/node_modules"
+  "pkg_omnicode-kaos:/workspace/omnicode/packages/omnicode-kaos/node_modules"
+  "pkg_omnicode-llm:/workspace/omnicode/packages/omnicode-llm/node_modules"
+  "pkg_omnicode-migration:/workspace/omnicode/packages/omnicode-migration/node_modules"
+  "pkg_omnicode-sdk:/workspace/omnicode/packages/omnicode-sdk/node_modules"
+  "pkg_omnicode-auth:/workspace/omnicode/packages/omnicode-auth/node_modules"
+  "pkg_omnicode-core:/workspace/omnicode/packages/omnicode-core/node_modules"
+  "pkg_omnicode-telemetry:/workspace/omnicode/packages/omnicode-telemetry/node_modules"
 )
 
 mkdir -p "${STATE_ROOT}" "${OMNICODE_HOME_HOST}" "${REPORT_DIR_HOST}" "${NM_ROOT}"
@@ -95,7 +93,7 @@ cd /workspace/omnicode
 mkdir -p "${OMNICODE_HOME}/server" "${OMNICODE_SERVER_E2E_REPORT_DIR}" "${TMPDIR}" /data/server-e2e-reports/docker
 rm -f "${OMNICODE_HOME}/server/lock"
 
-if [[ ! -e /workspace/omnicode/node_modules/.modules.yaml || ! -e /workspace/omnicode/packages/klient/node_modules/ws ]]; then
+if [[ ! -e /workspace/omnicode/node_modules/.modules.yaml || ! -e /workspace/omnicode/packages/omnicode-client/node_modules/ws ]]; then
   echo "[server-e2e:docker] installing pnpm deps"
   pnpm install --frozen-lockfile
 else
@@ -146,7 +144,7 @@ if [[ "${ready}" != "1" ]]; then
   exit 1
 fi
 
-cd /workspace/omnicode/packages/klient
+cd /workspace/omnicode/packages/omnicode-client
 pnpm test
 EOS
 
@@ -155,7 +153,7 @@ docker_args=(
   --rm
   --init
   --name "${CONTAINER}"
-  --workdir /workspace/omnicode/packages/klient
+  --workdir /workspace/omnicode/packages/omnicode-client
   --env "OMNICODE_HOME=${OMNICODE_HOME_CONTAINER}"
   --env "OMNICODE_SERVER_E2E_PORT=${PORT}"
   --env "OMNICODE_SERVER_URL=http://127.0.0.1:${PORT}"

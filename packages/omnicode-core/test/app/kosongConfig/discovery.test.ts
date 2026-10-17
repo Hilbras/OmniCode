@@ -1102,6 +1102,44 @@ describe('refreshProviderModels hand-written provider discovery', () => {
       host.dispose();
     }
   });
+it('keeps a free-tier alias across refreshes', async () => {
+    stubModelsEndpoint({ data: [{ id: 'gw-smart' }] });
+    const { host, discovery, models } = await createHost({
+      providers: {
+        mygw: {
+          type: 'openai',
+          baseUrl: 'https://gw.example.test/v1',
+          apiKey: 'sk-test',
+          excludedModels: ['big-pickle'],
+        },
+      },
+      models: {
+        'mygw/big-pickle': {
+          provider: 'mygw',
+          model: 'big-pickle',
+          maxContextSize: 131072,
+          baseUrl: 'https://gw.example.test/free/v1',
+          apiKey: 'public',
+          freeTier: true,
+        },
+      },
+    });
+    try {
+      await discovery.refreshProviderModels({ scope: 'all' });
+      await discovery.refreshProviderModels({ scope: 'all' });
+
+      expect(models.list()['mygw/gw-smart']).toBeDefined();
+      expect(models.get('mygw/big-pickle')).toMatchObject({
+        provider: 'mygw',
+        model: 'big-pickle',
+        baseUrl: 'https://gw.example.test/free/v1',
+        apiKey: 'public',
+        freeTier: true,
+      });
+    } finally {
+      host.dispose();
+    }
+  });
 });
 
 describe('modelCatalog config section', () => {

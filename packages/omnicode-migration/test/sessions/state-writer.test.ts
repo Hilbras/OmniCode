@@ -2,7 +2,7 @@
  * Scenario: translating legacy session state into the v2 session metadata file.
  * Responsibilities: user-visible metadata and legacy session-scoped fields survive migration.
  * Wiring: real state writer and filesystem; no collaborators are stubbed.
- * Run: pnpm exec vitest run packages/migration-legacy/test/sessions/state-writer.test.ts
+ * Run: pnpm exec vitest run packages/omnicode-migration/test/sessions/state-writer.test.ts
  */
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';

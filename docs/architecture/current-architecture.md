@@ -16,12 +16,12 @@ User
 CLI / TUI  (apps/omnicode)
   |
   v
-HumanTurn (packages/agent-core-v2/src/human/agent/turn.ts)
+HumanTurn (packages/omnicode-core/src/human/agent/turn.ts)
   |
   +--> ToolRegistry  (agent/toolRegistry/)
   |       resolves a ToolDefinition, checks approval, runs it
   |
-  +--> LLmAdapter    (agent-core-v2/src/llm-adapter/)
+  +--> LLmAdapter    (omnicode-core/src/llm-adapter/)
           sends messages, returns tool calls
 ```
 
@@ -70,7 +70,7 @@ scoping, approval and disposal.
 
 This was the load-bearing question for computer control, and the answer is yes.
 
-- `kosong` carries an `image_url` content part across all four provider wires
+- `omnicode-llm` carries an `image_url` content part across all four provider wires
   (`providers/openai-legacy.ts`, `openai-responses.ts`, `anthropic.ts`,
   `google-genai.ts`).
 - `human/media/tool.ts` (`ReadMediaFile`) already reads an image off disk and
@@ -95,7 +95,7 @@ The computer-control plan treats a large amount of this as greenfield. It isn't.
 | 17 — failure recovery | retry and backoff in the turn loop |
 | 21 — permission system | approval rules on every `ToolExecution`; CLI approval prompts |
 | 29 — goal verification | the `complete` tool requires a completion audit and explicitly tells the model not to mark complete because a budget is nearly spent |
-| 9, 10 — filesystem, terminal | `packages/kaos` |
+| 9, 10 — filesystem, terminal | `packages/omnicode-kaos` |
 | 2 — screenshot to model | `human/media/tool.ts` |
 | 28 — scheduler | `features/cron/` |
 

@@ -5,7 +5,7 @@ export const sourceCredentialsDir = (src: string): string => join(src, 'credenti
 export const sourceSessionsDir = (src: string): string => join(src, 'sessions');
 export const sourceUserHistoryDir = (src: string): string => join(src, 'user-history');
 export const sourceSkillsDir = (src: string): string => join(src, 'skills');
-export const sourceLegacyIndexJson = (src: string): string => join(src, 'kimi.json');
+export const sourceLegacyIndexJson = (src: string): string => join(src, 'omnicode.json');
 export const sourceConfigToml = (src: string): string => join(src, 'config.toml');
 export const sourceConfigJson = (src: string): string => join(src, 'config.json');
 export const sourceMcpJson = (src: string): string => join(src, 'mcp.json');

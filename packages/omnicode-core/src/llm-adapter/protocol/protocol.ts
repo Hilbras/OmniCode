@@ -22,6 +22,7 @@ export interface ProtocolProviderOptions {
   readonly promptCacheKey?: boolean;
   readonly authScheme?: LlmAuthScheme;
   readonly betaApi?: boolean;
+  readonly opencodeFreeTier?: boolean;
   readonly metadata?: Readonly<Record<string, string>>;
   readonly vertexai?: boolean;
   readonly project?: string;

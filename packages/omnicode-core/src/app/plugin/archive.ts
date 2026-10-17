@@ -157,8 +157,6 @@ async function hasManifest(dir: string): Promise<boolean> {
   const manifests = [
     path.join(dir, 'omnicode.plugin.json'),
     path.join(dir, '.omnicode-plugin', 'plugin.json'),
-    path.join(dir, 'kimi.plugin.json'),
-    path.join(dir, '.kimi-plugin', 'plugin.json'),
   ];
   for (const manifest of manifests) {
     if (await isFile(manifest)) return true;

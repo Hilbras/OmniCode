@@ -20,7 +20,7 @@
  * engine has no default model), so both env vars are required. Run it (the
  * engine sources need the decorators tsconfig + raw-text loader):
  *   OMNICODE_EXAMPLE_MODEL=... OMNICODE_EXAMPLE_API_KEY=... \
- *   pnpm -C packages/klient exec tsx --tsconfig ./tsconfig.examples.json \
+ *   pnpm -C packages/omnicode-client exec tsx --tsconfig ./tsconfig.examples.json \
  *     --import ../../build/register-raw-text-loader.mjs examples/context-usage.ts
  *
  * Env:

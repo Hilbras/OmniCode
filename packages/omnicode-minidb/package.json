@@ -5,11 +5,11 @@
   "description": "A pure-Node.js embedded key-value database mixing Redis-style in-memory KV with SQLite-style durable persistence (WAL + snapshot).",
   "license": "MIT",
   "author": "Hilbras",
-  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/minidb#readme",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/omnicode-minidb#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hilbras/omnicode.git",
-    "directory": "packages/minidb"
+    "directory": "packages/omnicode-minidb"
   },
   "bugs": {
     "url": "https://github.com/Hilbras/omnicode/issues"

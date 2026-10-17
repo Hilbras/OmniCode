@@ -41,7 +41,7 @@ async function writeRealSession(workdir: string, uuid: string): Promise<void> {
   const sessionDir = join(sourceHome(), 'sessions', bucket, uuid);
   await mkdir(sessionDir, { recursive: true });
   await writeFile(
-    join(sourceHome(), 'kimi.json'),
+    join(sourceHome(), 'omnicode.json'),
     JSON.stringify({ work_dirs: [{ path: workdir, kaos: 'local', last_session_id: uuid }] }),
     'utf-8',
   );
@@ -117,7 +117,7 @@ describe('runHeadlessMigrate', () => {
     const bucket = createHash('md5').update(workdir).digest('hex');
     await writeFile(
       join(sourceHome(), 'sessions', bucket, '11111111-aaaa-4bbb-8ccc-111111111111', 'context.jsonl'),
-      '"broken\x00line\nnot json at all\n',
+      '"broken\u0000line\nnot json at all\n',
       'utf-8',
     );
     const code = await runHeadlessMigrate(
