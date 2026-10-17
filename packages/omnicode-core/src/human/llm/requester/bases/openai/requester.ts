@@ -140,7 +140,13 @@ export function prepareOpenAIRequest(
   const finalParams = trait?.buildParams?.(params, ctx) ?? params;
   const withFingerprint =
     ctx.model.opencodeFreeTier === true
-      ? applyOpencodeFreeTierPayload(finalParams, ctx.model.model)
+      ? applyOpencodeFreeTierPayload(finalParams, ctx.model.model, {
+          remainingContextTokens:
+            input.maxContextTokens !== undefined && input.maxContextTokens > 0 && input.usedContextTokens !== undefined
+              ? input.maxContextTokens - input.usedContextTokens
+              : undefined,
+          thinkingRequested: input.thinking?.effort !== 'off',
+        })
       : finalParams;
   return encodeOpenAIRequest(withFingerprint);
 }

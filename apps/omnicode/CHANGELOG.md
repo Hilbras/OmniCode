@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.6
+
+### Patch Changes
+
+- Stop a free-tier model's output budget from being raised past the context window left in the conversation, which the gateway rejected as too long.
+
 ## 1.1.5
 
 ### Patch Changes

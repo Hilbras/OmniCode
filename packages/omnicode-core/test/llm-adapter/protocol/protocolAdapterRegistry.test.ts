@@ -588,4 +588,36 @@ describe('opencode free tier variant', () => {
     const names = (out['tools'] as { function: { name: string } }[]).map((t) => t.function.name);
     expect(names).toEqual(['read', 'shell']);
   });
+
+  it('never raises the output budget past the remaining context window', () => {
+    const nearLimit = applyOpencodeFreeTierPayload(
+      { messages: [], tools: [], max_completion_tokens: 8 },
+      'big-pickle',
+      { remainingContextTokens: 40, thinkingRequested: true },
+    );
+    expect(nearLimit['max_completion_tokens']).toBe(40);
+
+    const roomy = applyOpencodeFreeTierPayload(
+      { messages: [], tools: [], max_completion_tokens: 8 },
+      'glm-5.3',
+      { remainingContextTokens: 100_000, thinkingRequested: true },
+    );
+    expect(roomy['max_completion_tokens']).toBe(512);
+  });
+
+  it('skips the thinking reserve when thinking is off', () => {
+    const off = applyOpencodeFreeTierPayload(
+      { messages: [], tools: [], max_completion_tokens: 8 },
+      'muse-spark-1.3',
+      { thinkingRequested: false },
+    );
+    expect(off['max_completion_tokens']).toBe(512);
+
+    const on = applyOpencodeFreeTierPayload(
+      { messages: [], tools: [], max_completion_tokens: 8 },
+      'muse-spark-1.3',
+      { thinkingRequested: true },
+    );
+    expect(on['max_completion_tokens']).toBe(1024 + 4096);
+  });
 });

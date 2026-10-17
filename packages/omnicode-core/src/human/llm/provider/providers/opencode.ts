@@ -174,21 +174,36 @@ function wireToolBody(tool: Record<string, unknown>): Record<string, unknown> {
   return copy;
 }
 
-function effectiveMaxTokens(requested: unknown, modelId: string): number {
-  const wanted = typeof requested === 'number' && Number.isFinite(requested) && requested >= 0
-    ? Math.floor(requested)
-    : MAX_OUTPUT_TOKENS;
+export interface FreeTierTokenBudget {
+  readonly remainingContextTokens?: number;
+  readonly thinkingRequested: boolean;
+}
+
+function effectiveMaxTokens(
+  requested: unknown,
+  modelId: string,
+  budget: FreeTierTokenBudget,
+): number {
+  const wanted =
+    typeof requested === 'number' && Number.isFinite(requested) && requested >= 0
+      ? Math.floor(requested)
+      : MAX_OUTPUT_TOKENS;
   const id = modelId.toLowerCase();
-  const reasoning = REASONING_MODEL_HINTS.some((hint) => id.includes(hint));
-  const effective = reasoning
-    ? Math.max(wanted, MIN_ANSWER_TOKENS) + THINKING_BUDGET
-    : Math.max(wanted, MIN_PLAIN_TOKENS);
-  return Math.min(effective, MAX_OUTPUT_TOKENS);
+  const reasoning =
+    budget.thinkingRequested && REASONING_MODEL_HINTS.some((hint) => id.includes(hint));
+  const floor = Math.max(wanted, reasoning ? MIN_ANSWER_TOKENS : MIN_PLAIN_TOKENS);
+  const withThinking = floor + (reasoning ? THINKING_BUDGET : 0);
+  const capped =
+    budget.remainingContextTokens === undefined
+      ? withThinking
+      : Math.min(withThinking, Math.max(1, budget.remainingContextTokens));
+  return Math.min(capped, MAX_OUTPUT_TOKENS);
 }
 
 export function applyOpencodeFreeTierPayload(
   params: Record<string, unknown>,
   modelId: string,
+  budget: FreeTierTokenBudget = { thinkingRequested: true },
 ): Record<string, unknown> {
   const next = { ...params };
   const taken = new Set<string>();
@@ -238,7 +253,7 @@ export function applyOpencodeFreeTierPayload(
 
   for (const key of ['max_completion_tokens', 'max_tokens'] as const) {
     if (typeof next[key] === 'number') {
-      next[key] = effectiveMaxTokens(next[key], modelId);
+      next[key] = effectiveMaxTokens(next[key], modelId, budget);
     }
   }
   return next;
