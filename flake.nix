@@ -137,6 +137,7 @@
               fileset = lib.fileset.unions (
                 [
                   ./build
+                  ./Kernel
                   ./.npmrc
                   ./.nvmrc
                   ./package.json
