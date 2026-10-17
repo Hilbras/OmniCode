@@ -15,7 +15,10 @@
     }
   },
   "dependencies": {
-    "@hilbras/omnicode-sdk": "workspace:^"
+    "@hilbras/omnicode-acp": "workspace:^",
+    "@hilbras/omnicode-addons": "workspace:^",
+    "@hilbras/omnicode-sdk": "workspace:^",
+    "@hilbras/omnicode-tools": "workspace:^"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",

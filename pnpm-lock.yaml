@@ -84,9 +84,18 @@ importers:
 
   Kernel/API:
     dependencies:
+      '@hilbras/omnicode-acp':
+        specifier: workspace:^
+        version: link:../ACP
+      '@hilbras/omnicode-addons':
+        specifier: workspace:^
+        version: link:../Addons
       '@hilbras/omnicode-sdk':
         specifier: workspace:^
         version: link:../SDK
+      '@hilbras/omnicode-tools':
+        specifier: workspace:^
+        version: link:../Tools
 
   Kernel/Addons:
     dependencies:
@@ -177,12 +186,6 @@ importers:
         specifier: ^8.18.0
         version: 8.20.0
     devDependencies:
-      '@hilbras/omnicode-acp':
-        specifier: workspace:^
-        version: link:../../Kernel/ACP
-      '@hilbras/omnicode-addons':
-        specifier: workspace:^
-        version: link:../../Kernel/Addons
       '@hilbras/omnicode-api':
         specifier: workspace:^
         version: link:../../Kernel/API
@@ -207,9 +210,6 @@ importers:
       '@hilbras/omnicode-telemetry':
         specifier: workspace:^
         version: link:../../packages/omnicode-telemetry
-      '@hilbras/omnicode-tools':
-        specifier: workspace:^
-        version: link:../../Kernel/Tools
       '@hilbras/omnicode-tui':
         specifier: workspace:^
         version: link:../../packages/omnicode-tui

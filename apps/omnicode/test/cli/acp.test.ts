@@ -11,11 +11,15 @@
 import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@hilbras/omnicode-acp', () => ({
-  runAcpServer: vi.fn(async () => undefined),
+const { runAcpServer } = vi.hoisted(() => ({
+  runAcpServer: vi.fn(async (_options: { terminalAuthEnv?: unknown }) => undefined),
 }));
 
-import { runAcpServer } from '@hilbras/omnicode-acp';
+vi.mock('@hilbras/omnicode-api', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@hilbras/omnicode-api')>()),
+  loadAcpServer: async () => ({ runAcpServer }),
+}));
+
 
 import { registerAcpCommand } from '#/cli/sub/acp';
 import { getDataDir } from '#/utils/paths';
@@ -104,9 +108,7 @@ describe('omnicode acp', () => {
 
       await expect(program.parseAsync(['node', 'omnicode', 'acp'])).rejects.toThrow(ExitCalled);
 
-      const optsArg = vi.mocked(runAcpServer).mock.calls[0]?.[0] as {
-        terminalAuthEnv?: unknown;
-      };
+      const optsArg = vi.mocked(runAcpServer).mock.calls[0]?.[0];
       expect(optsArg.terminalAuthEnv).toBeUndefined();
     } finally {
       if (previous !== undefined) {

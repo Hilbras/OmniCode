@@ -5,8 +5,6 @@
  * outer update preflight, then delegates to the requested UI runner.
  */
 
-import '@hilbras/omnicode-addons';
-import '@hilbras/omnicode-tools';
 
 import {
   createOmnicodeHarness,

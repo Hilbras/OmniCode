@@ -26,6 +26,7 @@ import { OMNICODE_HOME_ENV } from '#/constant/app';
 import { getDataDir } from '#/utils/paths';
 
 import { parseRegionFlag, runLoginFlow } from './login-flow';
+import { loadAcpServer } from '@hilbras/omnicode-api';
 
 export function registerAcpCommand(parent: Command): void {
   parent
@@ -57,7 +58,7 @@ export function registerAcpCommand(parent: Command): void {
       // path to this very binary so the client can spawn it for login.
       const legacyCommand = process.argv[1];
       try {
-        const { runAcpServer } = await import('@hilbras/omnicode-acp');
+        const { runAcpServer } = await loadAcpServer();
         await runAcpServer({
           homeDir: getDataDir(),
           agentInfo: { name: 'Omnicode CLI', version: getVersion() },

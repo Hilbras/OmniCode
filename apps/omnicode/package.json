@@ -86,8 +86,6 @@
     "node-pty": "^1.1.0"
   },
   "devDependencies": {
-    "@hilbras/omnicode-acp": "workspace:^",
-    "@hilbras/omnicode-addons": "workspace:^",
     "@hilbras/omnicode-api": "workspace:^",
     "@hilbras/omnicode-auth": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
@@ -96,7 +94,6 @@
     "@hilbras/omnicode-remote": "workspace:^",
     "@hilbras/omnicode-server": "workspace:^",
     "@hilbras/omnicode-telemetry": "workspace:^",
-    "@hilbras/omnicode-tools": "workspace:^",
     "@hilbras/omnicode-tui": "workspace:^",
     "@hilbras/omnicode-vis-server": "workspace:^",
     "@hilbras/omnicode-vis-web": "workspace:*",
