@@ -1,8 +1,8 @@
-# pi-tui
+# omnicode-tui
 
 Vendored fork of [`earendil-works/pi`](https://github.com/earendil-works/pi) `packages/tui`. Keep the fork small so upstream syncs stay cheap.
 
-**Syncing from upstream, adding a local patch, or reviewing a pi-tui diff:** read [UPSTREAM.md](./UPSTREAM.md). The fork is the diff against the pinned upstream commit; that file records why those diffs exist.
+**Syncing from upstream, adding a local patch, or reviewing an omnicode-tui diff:** read [UPSTREAM.md](./UPSTREAM.md). The fork is the diff against the pinned upstream commit; that file records why those diffs exist.
 
 ## Changing this package
 

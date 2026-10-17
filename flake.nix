@@ -102,7 +102,6 @@
         "@hilbras/omnicode-transcript"
         "@hilbras/omnicode-tree-sitter-bash"
         "@hilbras/omnicode"
-        "omnicode"
         "@hilbras/omnicode-inspect"
         "@hilbras/omnicode-vis"
         "@hilbras/omnicode-vis-server"

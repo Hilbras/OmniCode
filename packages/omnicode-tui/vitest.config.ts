@@ -1,6 +1,6 @@
 import { defineConfig } from "vitest/config";
 
-// pi-tui's suite is written for `node:test` and runs through the package
+// omnicode-tui's suite is written for `node:test` and runs through the package
 // `test` script (`node --test test/*.test.ts`). Vitest cannot execute
 // `node:test`-style tests, so the repo's projects-mode `vitest run` is
 // pointed at no files here and allowed to pass with none. Convert a test

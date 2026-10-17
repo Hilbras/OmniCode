@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    name: 'kosong',
+    name: 'omnicode-llm',
     include: ['test/**/*.test.ts'],
   },
 });

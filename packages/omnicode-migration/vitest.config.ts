@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    name: 'migration-legacy',
+    name: 'omnicode-migration',
     include: ['test/**/*.test.ts'],
   },
 });

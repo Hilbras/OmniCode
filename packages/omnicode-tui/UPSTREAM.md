@@ -1,4 +1,4 @@
-# pi-tui upstream
+# omnicode-tui upstream
 
 The fork is the diff against the pinned upstream tree. This file records **why** those diffs exist, not where they live. Paths and function names move when upstream refactors; intents do not.
 
@@ -30,7 +30,7 @@ diff -rq \
   --exclude vitest.config.ts \
   --exclude node_modules \
   --exclude dist \
-  "$tmp/pi/packages/tui" packages/pi-tui
+  "$tmp/pi/packages/tui" packages/omnicode-tui
 ```
 
 Run from the monorepo root. Replace `<sha>` with the Last Sync Point commit. Do not dump a recursive unified diff of the whole tree.
@@ -38,7 +38,7 @@ Run from the monorepo root. Replace `<sha>` with the Last Sync Point commit. Do 
 Then diff a named file yourself, for example:
 
 ```bash
-diff -u "$tmp/pi/packages/tui/src/components/editor.ts" packages/pi-tui/src/components/editor.ts
+diff -u "$tmp/pi/packages/tui/src/components/editor.ts" packages/omnicode-tui/src/components/editor.ts
 ```
 
 The file list is an index, not the contract. Cards below are the contract: behaviors we must not lose.

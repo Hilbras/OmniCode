@@ -7,7 +7,7 @@ import { rawTextPlugin } from '../../build/raw-text-plugin.mjs';
 export default defineConfig({
   plugins: [rawTextPlugin()],
   test: {
-    name: 'kap-server',
+    name: 'omnicode-server',
     include: ['test/**/*.{test,e2e}.ts'],
     setupFiles: ['test/setup.ts'],
     globalSetup: ['test/globalSetup.ts'],
