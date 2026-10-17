@@ -49,6 +49,7 @@ import { acpClientFromContext } from './acp-client';
 import { IAcpConnection } from './acp-fs';
 import { AcpRuntimeProviderFactory } from './acp-terminal';
 import { AcpServer, type AcpServerOptions, createAcpAgentApp } from './server';
+import '@hilbras/omnicode-tools';
 
 export interface RunAcpServerOptions extends AcpServerOptions {
   readonly homeDir?: string;
