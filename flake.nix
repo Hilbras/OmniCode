@@ -65,7 +65,7 @@
         ./Kernel/ACP
         ./packages/omnicode-core
         ./packages/omnicode-server
-        ./packages/omnicode-kaos
+        ./Kernel/Kaos
         ./packages/omnicode-client
         ./packages/omnicode-llm
         ./packages/omnicode-migration
