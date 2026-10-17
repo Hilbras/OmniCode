@@ -311,7 +311,7 @@ describe('Markdown mermaid live updates', () => {
     currentTheme.setPalette(lightColors);
     markdown.invalidate();
     const lightOutput = markdown.render(80).join('\n');
-    expect(lightOutput).toContain('38;2;176;138;58');
+    expect(lightOutput).toContain('38;2;160;126;51');
   });
 });
 

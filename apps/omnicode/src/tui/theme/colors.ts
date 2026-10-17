@@ -48,7 +48,10 @@ export interface ColorPalette {
   // ── State ──
   /** Success: ✓ marks, "enabled", completed states. */
   success: string;
-  /** Warning: auto/yolo badges, stale markers, plan-mode hint. */
+  /** Warning: auto/yolo badges, stale markers, plan-mode hint. Must stay
+   *  separable from `primary`: the footer renders the plan badge in `primary`
+   *  beside the auto/yolo badge in this colour, so an equal hue makes the two
+   *  permission modes unreadable. */
   warning: string;
   /** Error: error messages, failed tool output. */
   error: string;
@@ -69,7 +72,9 @@ export interface ColorPalette {
 
   // ── Roles ──
   /** User message: bullet & text, skill-activation name. The one role colour
-   *  with its own hue — assistant/thinking/status bullets reuse text/textDim. */
+   *  with its own hue — assistant/thinking/status bullets reuse text/textDim.
+   *  It sits next to `primary` in the same transcript line (the user's words
+   *  beside inline code), so it must not converge on `primary`'s hue. */
   roleUser: string;
 
   // ── Shell mode ──
@@ -89,10 +94,10 @@ export const darkColors: ColorPalette = {
   textMuted: '#6B6B6B',
 
   border: '#B8934E',
-  borderFocus: '#E8A838',
+  borderFocus: '#F97316',
 
   success: '#4EC87E',
-  warning: '#E8A838',
+  warning: '#F97316',
   error: '#E85454',
 
   diffAdded: '#4EC87E',
@@ -102,7 +107,7 @@ export const darkColors: ColorPalette = {
   diffGutter: '#6B6B6B',
   diffMeta: '#888888',
 
-  roleUser: '#FFCB6B',
+  roleUser: '#FFA53D',
   shellMode: '#BD93F9',
 };
 
@@ -115,11 +120,11 @@ export const lightColors: ColorPalette = {
   textDim: '#454545',
   textMuted: '#5F5F5F',
 
-  border: '#B08A3A',
-  borderFocus: '#92660A',
+  border: '#A07E33',
+  borderFocus: '#A83A0B',
 
   success: '#0E7A38',
-  warning: '#92660A',
+  warning: '#A83A0B',
   error: '#B91C1C',
 
   diffAdded: '#0E7A38',
@@ -129,7 +134,7 @@ export const lightColors: ColorPalette = {
   diffGutter: '#737373',
   diffMeta: '#5F5F5F',
 
-  roleUser: '#9A4A00',
+  roleUser: '#7C2D12',
   shellMode: '#7C3AED',
 };
 

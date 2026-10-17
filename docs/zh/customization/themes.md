@@ -14,10 +14,10 @@ Omnicode CLI 可以使用内置配色，也可以使用自定义 JSON 主题文�
 | `textStrong` | `#F5F5F5` | `#1A1A1A` | 加粗强调文字。输入类对话框、状态消息 |
 | `textDim` | `#888888` | `#454545` | 次级、变暗文字。思考、提示、已完成 todo、Markdown 引用、footer 状态栏 |
 | `textMuted` | `#6B6B6B` | `#5F5F5F` | 最浅文字。计数、滚动信息、Markdown 链接 URL、代码块边框 |
-| `border` | `#B8934E` | `#B08A3A` | 面板与编辑器的普通边框、Markdown 分隔线 |
-| `borderFocus` | `#E8A838` | `#92660A` | 聚焦/注意边框，目前仅审批面板使用 |
+| `border` | `#B8934E` | `#A07E33` | 面板与编辑器的普通边框、Markdown 分隔线 |
+| `borderFocus` | `#F97316` | `#A83A0B` | 聚焦/注意边框，目前仅审批面板使用 |
 | `success` | `#4EC87E` | `#0E7A38` | 成功态。`✓`、已启用、完成 |
-| `warning` | `#E8A838` | `#92660A` | 警告态。auto/yolo 徽章、过期标记、Plan 模式提示 |
+| `warning` | `#F97316` | `#A83A0B` | 警告态。auto/yolo 徽章、过期标记、Plan 模式提示 |
 | `error` | `#E85454` | `#B91C1C` | 错误态。错误信息、失败的工具输出 |
 | `diffAdded` | `#4EC87E` | `#0E7A38` | diff 新增行 |
 | `diffRemoved` | `#E85454` | `#B91C1C` | diff 删除行 |
@@ -25,7 +25,7 @@ Omnicode CLI 可以使用内置配色，也可以使用自定义 JSON 主题文�
 | `diffRemovedStrong` | `#F08585` | `#B91C1C` | diff 行内改动的删除词（加粗高亮） |
 | `diffGutter` | `#6B6B6B` | `#737373` | diff 行号槽 |
 | `diffMeta` | `#888888` | `#5F5F5F` | diff 元信息 / hunk 头 |
-| `roleUser` | `#FFCB6B` | `#9A4A00` | 用户消息的子弹头与文字、技能激活名 |
+| `roleUser` | `#FFA53D` | `#7C2D12` | 用户消息的子弹头与文字、技能激活名 |
 | `shellMode` | `#BD93F9` | `#7C3AED` | Shell 模式（`!`）的提示符、编辑器边框、回显的命令行 |
 
 ## 使用 custom-theme skill

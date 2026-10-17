@@ -14,10 +14,10 @@ Custom themes can override the tokens below. The `dark` and `light` columns show
 | `textStrong` | `#F5F5F5` | `#1A1A1A` | Emphasized / bold text. Input dialogs, status messages |
 | `textDim` | `#888888` | `#454545` | Secondary, dimmed text. Thinking, hints, completed todos, Markdown quotes, footer status bar |
 | `textMuted` | `#6B6B6B` | `#5F5F5F` | Faintest text. Counters, scroll info, Markdown link URLs, code-block borders |
-| `border` | `#B8934E` | `#B08A3A` | Pane and editor borders, Markdown horizontal rule |
-| `borderFocus` | `#E8A838` | `#92660A` | Focus / attention border, currently only the approval panel |
+| `border` | `#B8934E` | `#A07E33` | Pane and editor borders, Markdown horizontal rule |
+| `borderFocus` | `#F97316` | `#A83A0B` | Focus / attention border, currently only the approval panel |
 | `success` | `#4EC87E` | `#0E7A38` | Success state. `✓`, "enabled", completed |
-| `warning` | `#E8A838` | `#92660A` | Warning state. Ask When Needed/Never Ask badges, stale markers, Plan mode hint |
+| `warning` | `#F97316` | `#A83A0B` | Warning state. Ask When Needed/Never Ask badges, stale markers, Plan mode hint |
 | `error` | `#E85454` | `#B91C1C` | Error state. Error messages, failed tool output |
 | `diffAdded` | `#4EC87E` | `#0E7A38` | Diff added lines |
 | `diffRemoved` | `#E85454` | `#B91C1C` | Diff removed lines |
@@ -25,7 +25,7 @@ Custom themes can override the tokens below. The `dark` and `light` columns show
 | `diffRemovedStrong` | `#F08585` | `#B91C1C` | Diff intra-line changed words, removed and bold |
 | `diffGutter` | `#6B6B6B` | `#737373` | Diff line-number gutter |
 | `diffMeta` | `#888888` | `#5F5F5F` | Diff meta / hunk headers |
-| `roleUser` | `#FFCB6B` | `#9A4A00` | User message bullet and text, skill-activation name |
+| `roleUser` | `#FFA53D` | `#7C2D12` | User message bullet and text, skill-activation name |
 | `shellMode` | `#BD93F9` | `#7C3AED` | Shell mode (`!`) prompt, editor border, and the echoed `$ command` line |
 
 ## Use the custom-theme skill

@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.5
+
+### Patch Changes
+
+- Give warning badges and user-message text their own hue again, so they stay distinguishable from the gold now used for links and selection.
+
 ## 1.1.4
 
 ### Patch Changes
