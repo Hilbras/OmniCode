@@ -22,6 +22,7 @@ export default defineConfig({
     env: {
       OMNICODE_LOG_LEVEL: 'off',
     },
+    setupFiles: ['./test/setup.ts'],
     include: ['test/**/*.test.ts'],
     testTimeout: 15_000,
   },
