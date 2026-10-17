@@ -32,7 +32,7 @@ import { IAgentUserToolService, type UserToolRegistration } from '#/agent/userTo
 import {
   AgentSwarmToolInputSchema,
   type AgentSwarmToolInput,
-} from '#/features/swarm/tools/agent-swarm/agent-swarm';
+} from '@hilbras/omnicode-tools/features/swarm/tools/agent-swarm/agent-swarm';
 import {
   SubagentToolInputSchema,
   type SubagentToolInput,

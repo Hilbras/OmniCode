@@ -64,7 +64,7 @@ import { TOOLS_SECTION, type ToolsConfig } from '#/agent/toolPolicy/configSectio
 import { isToolActiveComposed, findInactiveToolPatterns, literalToolNames, type InactiveToolPattern } from '#/agent/toolPolicy/evaluate';
 import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { ISessionNotify } from '#/features/notify/sessionNotify';
-import { NOTIFY_USER_TOOL_NAME } from '#/features/notify/tools/notify-user/notify-user';
+import { NOTIFY_USER_TOOL_NAME } from '#/features/notify/notifyToolName';
 import {
   renderAgentProfilePrompt,
   rootDelegationExtras,

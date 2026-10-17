@@ -1,6 +1,6 @@
 import type { ContextMessage } from '#/agent/contextMemory/types';
 
-import { NOTIFY_USER_TOOL_NAME } from './tools/notify-user/notify-user';
+import { NOTIFY_USER_TOOL_NAME } from '@hilbras/omnicode-tools/features/notify/tools/notify-user/notify-user';
 
 export const NOTIFY_USER_NUDGE_VARIANT = 'notify_user_nudge';
 export const NOTIFY_USER_NUDGE_THRESHOLD = 8;

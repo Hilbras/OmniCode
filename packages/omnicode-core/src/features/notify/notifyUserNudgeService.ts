@@ -25,7 +25,7 @@ import {
   shouldNudgeNotifyUser,
   toolCallRoundsSincePosition,
 } from './notifyUserNudge';
-import { NOTIFY_USER_TOOL_NAME } from './tools/notify-user/notify-user';
+import { NOTIFY_USER_TOOL_NAME } from '@hilbras/omnicode-tools/features/notify/tools/notify-user/notify-user';
 
 interface NotifyUserNudgeActorContext {
   readonly runtime: AgentActorContext<null>;

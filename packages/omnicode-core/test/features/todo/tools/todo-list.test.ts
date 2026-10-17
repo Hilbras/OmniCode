@@ -5,7 +5,7 @@ import { TODO_LIST_TOOL_NAME, type TodoItem } from '#/features/todo/todoItem';
 import {
   ITodoListTool,
   TodoListInputSchema,
-} from '#/features/todo/tools/todo-list/todo-list';
+} from '@hilbras/omnicode-tools/features/todo/tools/todo-list/todo-list';
 import { executeTool } from '../../../tools/fixtures/execute-tool';
 
 import { createTestAgent, type TestAgentContext } from '../../../harness';

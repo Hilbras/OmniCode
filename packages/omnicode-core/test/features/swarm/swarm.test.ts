@@ -29,8 +29,8 @@ import { IAgentSwarmService } from '#/features/swarm/agent/swarm';
 import { AgentSwarmService } from '#/features/swarm/agent/swarmService';
 import SWARM_MODE_ENTER_REMINDER from '../../../src/features/swarm/agent/enter-reminder.md?raw';
 import { swarmKey } from '#/features/swarm/swarmOps';
-import { AgentSwarmToolInputSchema } from '#/features/swarm/tools/agent-swarm/agent-swarm';
-import { AgentSwarmTool } from '#/features/swarm/tools/agent-swarm/agentSwarmTool';
+import { AgentSwarmToolInputSchema } from '@hilbras/omnicode-tools/features/swarm/tools/agent-swarm/agent-swarm';
+import { AgentSwarmTool } from '@hilbras/omnicode-tools/features/swarm/tools/agent-swarm/agentSwarmTool';
 import {
   FORK_EXPERIMENTAL_UNAVAILABLE,
   FORK_WITH_MODEL_UNAVAILABLE,

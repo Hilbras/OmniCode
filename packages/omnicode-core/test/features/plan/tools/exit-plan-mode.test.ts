@@ -4,8 +4,8 @@ import type { IAgentPlanService, PlanData } from '#/features/plan/plan';
 import {
   ExitPlanModeInputSchema,
   type ExitPlanModeInput,
-} from '#/features/plan/tools/exit-plan-mode/exit-plan-mode';
-import { ExitPlanModeTool } from '#/features/plan/tools/exit-plan-mode/exitPlanModeTool';
+} from '@hilbras/omnicode-tools/features/plan/tools/exit-plan-mode/exit-plan-mode';
+import { ExitPlanModeTool } from '@hilbras/omnicode-tools/features/plan/tools/exit-plan-mode/exitPlanModeTool';
 import type { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import type { PermissionMode } from '#/agent/permissionPolicy/types';
 import type { ITelemetryService } from '#/app/telemetry/telemetry';

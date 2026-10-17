@@ -2,9 +2,9 @@ import type { ToolCall } from '#human/llm/message';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { IAgentPlanService, PlanData } from '#/features/plan/plan';
-import { EnterPlanModeTool } from '#/features/plan/tools/enter-plan-mode/enterPlanModeTool';
-import { type ExitPlanModeInput } from '#/features/plan/tools/exit-plan-mode/exit-plan-mode';
-import { ExitPlanModeTool } from '#/features/plan/tools/exit-plan-mode/exitPlanModeTool';
+import { EnterPlanModeTool } from '@hilbras/omnicode-tools/features/plan/tools/enter-plan-mode/enterPlanModeTool';
+import { type ExitPlanModeInput } from '@hilbras/omnicode-tools/features/plan/tools/exit-plan-mode/exit-plan-mode';
+import { ExitPlanModeTool } from '@hilbras/omnicode-tools/features/plan/tools/exit-plan-mode/exitPlanModeTool';
 import type { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import type { ToolResult } from '#/tool/toolContract';
 import type { ITelemetryService } from '#/app/telemetry/telemetry';

@@ -10,8 +10,8 @@ import {
   MAX_SKILL_QUERY_DEPTH,
   NestedSkillTooDeepError,
   SkillToolInputSchema,
-} from '#/features/skill/tools/skill';
-import { SkillTool } from '#/features/skill/tools/skillTool';
+} from '@hilbras/omnicode-tools/features/skill/tools/skill';
+import { SkillTool } from '@hilbras/omnicode-tools/features/skill/tools/skillTool';
 import { executeTool } from '../../tools/fixtures/execute-tool';
 import { stubSkill } from './catalog/stubs';
 import {

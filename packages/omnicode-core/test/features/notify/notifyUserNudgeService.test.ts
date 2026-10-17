@@ -10,7 +10,7 @@ import { FlagService } from '#/app/flag/flagService';
 import { NOTIFY_USER_FLAG_ID } from '#/features/notify/flag';
 import { NOTIFY_USER_UI_CAPABILITY } from '#/features/notify/notifyUserAvailability';
 import { NOTIFY_USER_NUDGE_VARIANT } from '#/features/notify/notifyUserNudge';
-import { NOTIFY_USER_TOOL_NAME } from '#/features/notify/tools/notify-user/notify-user';
+import { NOTIFY_USER_TOOL_NAME } from '@hilbras/omnicode-tools/features/notify/tools/notify-user/notify-user';
 import type { ExecutableTool } from '#/tool/toolContract';
 
 import { recordingTelemetry, type TelemetryRecord } from '../../app/telemetry/stubs';

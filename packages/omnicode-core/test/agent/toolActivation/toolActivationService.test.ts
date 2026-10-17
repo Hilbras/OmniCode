@@ -49,11 +49,11 @@ import '@hilbras/omnicode-tools/os/grep/grepTool';
 import '@hilbras/omnicode-tools/os/read/readTool';
 import '@hilbras/omnicode-tools/os/write/writeTool';
 import '@hilbras/omnicode-tools/select-tools/selectToolsTool';
-import '#/features/skill/tools/skillTool';
+import '@hilbras/omnicode-tools/features/skill/tools/skillTool';
 import '#/agent/tools/task/task-list/taskListTool';
 import '#/agent/tools/task/task-output/taskOutputTool';
 import '#/agent/tools/task/task-stop/taskStopTool';
-import '#/features/todo/tools/todo-list/todoListTool';
+import '@hilbras/omnicode-tools/features/todo/tools/todo-list/todoListTool';
 import '@hilbras/omnicode-tools/web-search/webSearchTool';
 
 class StubTool implements AgentTool {

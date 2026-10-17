@@ -16,7 +16,7 @@ import { IAgentTaskService } from '#/agent/task/task';
 import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { SubagentTask } from '#/agent/tools/agent/subagent-task';
 import type { IHostProcess, IHostProcessService } from '#/os/interface/hostProcess';
-import { UpdateGoalToolInputSchema } from '#/features/goal/tools/update-goal/update-goal';
+import { UpdateGoalToolInputSchema } from '@hilbras/omnicode-tools/features/goal/tools/update-goal/update-goal';
 import {
   createMaxStepsExceededError,
   IAgentLoopService,

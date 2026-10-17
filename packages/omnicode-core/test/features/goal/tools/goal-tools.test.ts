@@ -7,11 +7,11 @@ import {
 } from '#/tool/args-validator';
 import { USER_PROMPT_ORIGIN } from '#/agent/contextMemory/types';
 import { IAgentGoalService } from '#/features/goal/goalService';
-import { CreateGoalTool } from '#/features/goal/tools/create-goal/createGoalTool';
-import { GetGoalTool } from '#/features/goal/tools/get-goal/getGoalTool';
-import { SetGoalBudgetTool } from '#/features/goal/tools/set-goal-budget/setGoalBudgetTool';
-import { UpdateGoalToolInputSchema } from '#/features/goal/tools/update-goal/update-goal';
-import { UpdateGoalTool } from '#/features/goal/tools/update-goal/updateGoalTool';
+import { CreateGoalTool } from '@hilbras/omnicode-tools/features/goal/tools/create-goal/createGoalTool';
+import { GetGoalTool } from '@hilbras/omnicode-tools/features/goal/tools/get-goal/getGoalTool';
+import { SetGoalBudgetTool } from '@hilbras/omnicode-tools/features/goal/tools/set-goal-budget/setGoalBudgetTool';
+import { UpdateGoalToolInputSchema } from '@hilbras/omnicode-tools/features/goal/tools/update-goal/update-goal';
+import { UpdateGoalTool } from '@hilbras/omnicode-tools/features/goal/tools/update-goal/updateGoalTool';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentSwarmService } from '#/features/swarm/agent/swarm';

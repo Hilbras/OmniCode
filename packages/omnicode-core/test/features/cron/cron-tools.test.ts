@@ -22,12 +22,12 @@ import {
 import {
   MAX_CRON_JOBS_PER_SESSION,
   type CronCreateInput,
-} from '#/features/cron/tools/cron-create/cron-create';
-import { CronCreateTool } from '#/features/cron/tools/cron-create/cronCreateTool';
-import type { CronDeleteInput } from '#/features/cron/tools/cron-delete/cron-delete';
-import { CronDeleteTool } from '#/features/cron/tools/cron-delete/cronDeleteTool';
-import type { CronListInput } from '#/features/cron/tools/cron-list/cron-list';
-import { CronListTool } from '#/features/cron/tools/cron-list/cronListTool';
+} from '@hilbras/omnicode-tools/features/cron/tools/cron-create/cron-create';
+import { CronCreateTool } from '@hilbras/omnicode-tools/features/cron/tools/cron-create/cronCreateTool';
+import type { CronDeleteInput } from '@hilbras/omnicode-tools/features/cron/tools/cron-delete/cron-delete';
+import { CronDeleteTool } from '@hilbras/omnicode-tools/features/cron/tools/cron-delete/cronDeleteTool';
+import type { CronListInput } from '@hilbras/omnicode-tools/features/cron/tools/cron-list/cron-list';
+import { CronListTool } from '@hilbras/omnicode-tools/features/cron/tools/cron-list/cronListTool';
 import { makeAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 
 const WALL_ANCHOR = 1_700_000_000_000;
@@ -184,8 +184,8 @@ function assertError(result: ExecutableToolResult): string {
 
 function scrubCronOutput(output: string): string {
   return output
-    .replace(/[0-9a-f]{8}/g, '<id>')
-    .replace(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{2}/g, '<iso>');
+    .replaceAll(/[0-9a-f]{8}/g, '<id>')
+    .replaceAll(/\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}[+-]\d{2}:\d{2}/g, '<iso>');
 }
 
 function localIsoWithOffset(ms: number): string {
@@ -365,7 +365,7 @@ describe('CronCreateTool', () => {
   it('rejects prompts over the UTF-8 byte budget', async () => {
     const harness = createToolHarness();
     const tool = new CronCreateTool(harness.cron, scopeContext);
-    const prompt = '\u4f60'.repeat(3000);
+    const prompt = '\u4F60'.repeat(3000);
 
     const output = assertError(
       await runTool<CronCreateInput>(tool, {
@@ -678,7 +678,7 @@ describe('CronListTool', () => {
   it('walks back to a UTF-8 character boundary when truncating prompts', async () => {
     const harness = createToolHarness();
     const tool = new CronListTool(harness.cron, scopeContext);
-    const cjkPrompt = '\u4f60'.repeat(100);
+    const cjkPrompt = '\u4F60'.repeat(100);
     harness.store.add({ cron: '*/5 * * * *', prompt: cjkPrompt, recurring: true }, harness.now());
 
     const output = assertSuccess(await runTool<CronListInput>(tool, {}));
@@ -687,8 +687,8 @@ describe('CronListTool', () => {
     const rendered = promptMatch![1]!;
 
     expect(rendered.endsWith(`${TRUNCATED}"`)).toBe(true);
-    expect(rendered).not.toContain('\ufffd');
-    const stripped = rendered.replace(/^"|\\u2026\(truncated\)"$/g, '');
+    expect(rendered).not.toContain('\uFFFD');
+    const stripped = rendered.replaceAll(/^"|\\u2026\(truncated\)"$/g, '');
     expect(stripped.length).toBeGreaterThan(0);
   });
 });
