@@ -210,3 +210,31 @@ export function backfillCatalogLimits(input: {
   }
   return touched;
 }
+
+/**
+ * Drops free-tier aliases for a provider that the free endpoint no longer
+ * offers.
+ *
+ * Free aliases are deliberately exempt from the provider refresh, so nothing
+ * else would ever remove a model the vendor has retired: the alias would sit
+ * in config until something asked for it and failed. Called alongside the
+ * write that adds the current set, so re-adding a provider converges on what
+ * the endpoint actually serves. Only `free_tier` aliases are considered.
+ */
+export function pruneRetiredFreeTierAliases(input: {
+  readonly models: Record<string, Record<string, unknown>>;
+  readonly providerId: string;
+  readonly liveIds: ReadonlySet<string>;
+}): string[] {
+  const removed: string[] = [];
+  for (const [alias, record] of Object.entries(input.models)) {
+    if (record === null || typeof record !== 'object') continue;
+    if (record['freeTier'] !== true) continue;
+    if (!alias.startsWith(`${input.providerId}/`)) continue;
+    const id = typeof record['model'] === 'string' ? record['model'] : undefined;
+    if (id === undefined || input.liveIds.has(id)) continue;
+    delete input.models[alias];
+    removed.push(alias);
+  }
+  return removed;
+}

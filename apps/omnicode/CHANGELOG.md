@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.9
+
+### Patch Changes
+
+- Remove a built-in provider's free models that the vendor no longer offers, instead of leaving them in config until something asks for one and fails.
+
 ## 1.1.8
 
 ### Patch Changes

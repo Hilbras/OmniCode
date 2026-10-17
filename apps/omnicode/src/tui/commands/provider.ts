@@ -28,6 +28,7 @@ import {
   describeFreeTierFailure,
   fetchCatalogLimits,
   fetchFreeTierModelIds,
+  pruneRetiredFreeTierAliases,
   type CatalogLimit,
 } from '#/utils/builtin-model-import';
 import {
@@ -627,6 +628,11 @@ async function routeFreeTierAliases(
       }
       continue;
     }
+    pruneRetiredFreeTierAliases({
+      models,
+      providerId: target.providerId,
+      liveIds: new Set(ids),
+    });
     const aliases = buildFreeTierAliases({
       providerId: target.providerId,
       baseUrl: source.baseUrl,

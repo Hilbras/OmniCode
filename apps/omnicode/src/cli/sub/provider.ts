@@ -53,6 +53,7 @@ import {
   buildFreeTierAliases,
   describeFreeTierFailure,
   fetchFreeTierModelIds,
+  pruneRetiredFreeTierAliases,
   fetchCatalogLimits,
   type CatalogLimit,
 } from '#/utils/builtin-model-import';
@@ -438,6 +439,8 @@ async function importBuiltInExtras(
       deps.stdout.write(`${describeFreeTierFailure(source.baseUrl, failure)}\n`);
       continue;
     }
+    const live = new Set(ids);
+    pruneRetiredFreeTierAliases({ models, providerId, liveIds: live });
     Object.assign(
       models,
       buildFreeTierAliases({

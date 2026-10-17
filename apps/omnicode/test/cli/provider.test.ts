@@ -765,6 +765,47 @@ describe('omnicode provider add-builtin', () => {
     expect(printed).toMatch(/Routed 2 free models to their free tier\./);
   });
 
+  it('drops a free model the endpoint no longer offers', async () => {
+    // Free aliases are exempt from provider refresh, so nothing else would ever
+    // remove one the vendor has retired: it would sit in config until something
+    // asked for it and failed.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        if (url.includes('models.dev')) {
+          return new Response(JSON.stringify({}), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        const ids = url.includes('opencode.ai/inference') ? ['big-pickle'] : ['claude-sonnet-4'];
+        return new Response(JSON.stringify({ data: ids.map((id) => ({ id })) }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }),
+    );
+    const { harness, current } = makeHarness({
+      providers: {},
+      models: {
+        'opencode-zen/retired-free': {
+          provider: 'opencode-zen',
+          model: 'retired-free',
+          maxContextSize: 131072,
+          freeTier: true,
+        },
+      },
+    } as OmnicodeConfig);
+    const { deps, exitCodes } = makeDeps(harness);
+
+    await tryRun(() => handleProviderAddBuiltin(deps, 'opencode-zen', { apiKey: 'sk-test' }));
+
+    expect(exitCodes).toEqual([]);
+    expect(current().models?.['opencode-zen/retired-free']).toBeUndefined();
+    expect(current().models?.['opencode-zen/big-pickle']).toMatchObject({ freeTier: true });
+  });
+
   it('writes no override map for a built-in that declares none', async () => {
     vi.stubGlobal(
       'fetch',
