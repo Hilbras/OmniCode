@@ -14,7 +14,7 @@ import { isOAuthCatalogVendor } from '#/llm-adapter/provider/provider-definition
 
 import { SERVICES_SECTION, type ServicesConfig } from '../configSection';
 import { HilbrasWebSearchProvider } from './providers/hilbras-web-search';
-import type { WebSearchProvider } from '#/agent/tools/web-search/web-search';
+import type { WebSearchProvider } from '#/app/auth/webSearch/webSearchContract';
 import { IWebSearchProviderService } from './webSearch';
 
 export class WebSearchProviderService implements IWebSearchProviderService {

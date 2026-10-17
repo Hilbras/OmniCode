@@ -1,7 +1,7 @@
 import type { AgentTaskStatus } from '@hilbras/omnicode-core/agent/task/types';
-import type { QuestionTaskInfo } from '@hilbras/omnicode-core/agent/tools/ask-user-question/question-background-task';
+import type { QuestionTaskInfo } from '@hilbras/omnicode-tools/ask-user-question/question-background-task';
 import type { SubagentTaskInfo } from '@hilbras/omnicode-core/agent/tools/agent/subagent-task';
-import type { ProcessTaskInfo } from '@hilbras/omnicode-core/agent/tools/os/bash/process-task';
+import type { ProcessTaskInfo } from '@hilbras/omnicode-tools/os/bash/process-task';
 
 export type BackgroundTaskStatus = AgentTaskStatus;
 

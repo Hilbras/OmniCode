@@ -10,7 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { IAgentTaskService } from '#/agent/task/task';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { TERMINAL_STATUSES } from '#/agent/task/types';
-import { ProcessTask } from '#/agent/tools/os/bash/process-task';
+import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import {
   taskServices,
   createTestAgent,

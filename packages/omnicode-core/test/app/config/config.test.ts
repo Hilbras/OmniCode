@@ -42,7 +42,7 @@ import '#/agent/permissionMode/configSection';
 import { DEFAULT_PERMISSION_MODE_SECTION } from '#/agent/permissionMode/configSection';
 import '#/agent/media/configSection';
 import { IMAGE_SECTION, type ImageConfig } from '#/agent/media/configSection';
-import { READ_SECTION } from '#/agent/tools/os/read/configSection';
+import { READ_SECTION } from '@hilbras/omnicode-tools/os/read/configSection';
 import '#/agent/tokenCounting/configSection';
 import {
   TOKEN_COUNTING_SECTION,

@@ -11,7 +11,7 @@ import { IAgentToolSelectService } from '#/agent/toolSelect/toolSelect';
 import { IAgentToolSelectAnnouncementsService } from '#/agent/toolSelect/toolSelectAnnouncements';
 import { IAgentToolSelectSchemasService } from '#/agent/toolSelect/toolSelectSchemas';
 import { IAgentUserToolService } from '#/agent/userTool/userTool';
-import '#/agent/tools/select-tools/selectToolsTool';
+import '@hilbras/omnicode-tools/select-tools/selectToolsTool';
 
 import { createTestAgent, type TestAgentContext } from '../../harness';
 

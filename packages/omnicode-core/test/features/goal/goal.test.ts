@@ -13,7 +13,7 @@ import { IGoalDeadlineScheduler } from '#/features/goal/goalDeadlineScheduler';
 
 import { GoalUpdated } from '#/features/goal/goalOps';
 import { IAgentTaskService } from '#/agent/task/task';
-import { ProcessTask } from '#/agent/tools/os/bash/process-task';
+import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { SubagentTask } from '#/agent/tools/agent/subagent-task';
 import type { IHostProcess, IHostProcessService } from '#/os/interface/hostProcess';
 import { UpdateGoalToolInputSchema } from '#/features/goal/tools/update-goal/update-goal';

@@ -67,6 +67,7 @@
     "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-kaos": "workspace:^",
     "@hilbras/omnicode-llm": "workspace:^",
+    "@hilbras/omnicode-tools": "workspace:^",
     "@types/yazl": "^2.4.6",
     "jimp": "^1.6.1"
   }

@@ -15,8 +15,8 @@ import {
   GlobInputSchema,
   DEFAULT_HEAD_LIMIT,
   WINDOWS_PATH_HINT,
-} from '#/agent/tools/os/glob/glob';
-import { GlobTool, splitCompletePaths } from '#/agent/tools/os/glob/globTool';
+} from '@hilbras/omnicode-tools/os/glob/glob';
+import { GlobTool, splitCompletePaths } from '@hilbras/omnicode-tools/os/glob/globTool';
 import type { IHostEnvironment } from '#/os/interface/hostEnvironment';
 import type { HostFileStat, IHostFileSystem } from '#/os/interface/hostFileSystem';
 import type { IHostProcess, IHostProcessService } from '#/os/interface/hostProcess';

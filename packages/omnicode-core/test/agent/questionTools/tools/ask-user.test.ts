@@ -6,8 +6,8 @@ import {
   AskUserQuestionInputSchema,
   IAskUserQuestionTool,
   type AskUserQuestionInput,
-} from '#/agent/tools/ask-user-question/ask-user-question';
-import { AskUserQuestionTool } from '#/agent/tools/ask-user-question/askUserQuestionTool';
+} from '@hilbras/omnicode-tools/ask-user-question/ask-user-question';
+import { AskUserQuestionTool } from '@hilbras/omnicode-tools/ask-user-question/askUserQuestionTool';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { IAgentTaskService } from '#/agent/task/task';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
@@ -25,7 +25,7 @@ import { ISessionContext } from '#/session/sessionContext/sessionContext';
 import type {
   QuestionBackgroundTask,
   QuestionTaskInfo,
-} from '#/agent/tools/ask-user-question/question-background-task';
+} from '@hilbras/omnicode-tools/ask-user-question/question-background-task';
 import { executeTool } from '../../../tools/fixtures/execute-tool';
 
 const signal = new AbortController().signal;

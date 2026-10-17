@@ -10,9 +10,9 @@ import {
   type ReadInput,
   ReadInputSchema,
   TRANSCODE_MAX_BYTES,
-} from '#/agent/tools/os/read/read';
-import { ReadTool } from '#/agent/tools/os/read/readTool';
-import { DOCUMENT_EXTRACT_MAX_BYTES } from '#/agent/tools/os/read/extract/extract';
+} from '@hilbras/omnicode-tools/os/read/read';
+import { ReadTool } from '@hilbras/omnicode-tools/os/read/readTool';
+import { DOCUMENT_EXTRACT_MAX_BYTES } from '@hilbras/omnicode-tools/os/read/extract/extract';
 import { renderToolResultForModel } from '#/agent/contextMemory/toolResultRender';
 import { stubToolResultTruncationService } from '../../../../agent/toolResultTruncation/stubs';
 import { stubConfigService } from '../../../../app/config/stubs';

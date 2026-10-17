@@ -6,7 +6,7 @@ import { inflateRawSync } from 'node:zlib';
 import { ISessionMediaStore } from '@hilbras/omnicode-core/agent/media/sessionMediaStore';
 import { mcpResultToExecutableOutput } from '@hilbras/omnicode-core/agent/mcp/output';
 import { renderToolResultForModel } from '@hilbras/omnicode-core/agent/contextMemory/toolResultRender';
-import { IReadTool, ReadInputSchema, type ReadInput } from '@hilbras/omnicode-core/agent/tools/os/read/read';
+import { IReadTool, ReadInputSchema, type ReadInput } from '@hilbras/omnicode-tools/os/read/read';
 
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 

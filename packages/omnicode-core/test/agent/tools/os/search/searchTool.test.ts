@@ -6,8 +6,8 @@ import {
   type SessionSearchPage,
   type SessionSearchQuery,
 } from '#/features/sessionSearch/sessionSearch';
-import { SearchSessionsTool } from '#/agent/tools/os/search/searchTool';
-import { SESSION_SEARCH_FLAG_ID } from '#/agent/tools/os/search/flag';
+import { SearchSessionsTool } from '@hilbras/omnicode-tools/os/search/searchTool';
+import { SESSION_SEARCH_FLAG_ID } from '@hilbras/omnicode-tools/os/search/flag';
 import type { ExecutableToolContext } from '#/tool/toolContract';
 
 const CTX = { signal: new AbortController().signal } as ExecutableToolContext;

@@ -38,15 +38,15 @@ import { AgentToolExecutorService } from '#/agent/toolExecutor/toolExecutorServi
 import { parseToolCallArguments } from '#/tool/tool-args-parse';
 import { IAgentToolResultTruncationService } from '#/agent/toolResultTruncation/toolResultTruncation';
 import { ToolResultTruncationService } from '#/agent/toolResultTruncation/toolResultTruncationService';
-import { ReadTool } from '#/agent/tools/os/read/readTool';
+import { ReadTool } from '@hilbras/omnicode-tools/os/read/readTool';
 import type { IAgentProfileService } from '#/agent/profile/profile';
 import type { IAgentToolPolicyService } from '#/agent/toolPolicy/toolPolicy';
 import { ReadMediaFileTool } from '#/agent/tools/read-media-file/readMediaFileTool';
 import { SessionMediaStoreService } from '#/agent/media/sessionMediaStoreService';
 import { JsonAtomicDocumentStore } from '#/persistence/backends/node-fs/atomicDocumentStore';
 import { makeSessionContext } from '#/session/sessionContext/sessionContext';
-import { GlobTool } from '#/agent/tools/os/glob/globTool';
-import { ReadInputSchema, type ReadInput } from '#/agent/tools/os/read/read';
+import { GlobTool } from '@hilbras/omnicode-tools/os/glob/globTool';
+import { ReadInputSchema, type ReadInput } from '@hilbras/omnicode-tools/os/read/read';
 import { renderToolResultForModel } from '#/agent/contextMemory/toolResultRender';
 import { HostFileSystem } from '#/os/backends/node-local/hostFsService';
 import { HostProcessService } from '#/os/backends/node-local/hostProcessService';

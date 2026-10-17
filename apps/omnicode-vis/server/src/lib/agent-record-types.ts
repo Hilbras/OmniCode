@@ -21,8 +21,8 @@ export type {
   AgentTaskStatus as BackgroundTaskStatus,
 } from '@hilbras/omnicode-core';
 export type { SubagentTaskInfo as AgentBackgroundTaskInfo } from '@hilbras/omnicode-core';
-export type { ProcessTaskInfo as ProcessBackgroundTaskInfo } from '@hilbras/omnicode-core/agent/tools/os/bash/process-task';
-export type { QuestionTaskInfo as QuestionBackgroundTaskInfo } from '@hilbras/omnicode-core/agent/tools/ask-user-question/question-background-task';
+export type { ProcessTaskInfo as ProcessBackgroundTaskInfo } from '@hilbras/omnicode-tools/os/bash/process-task';
+export type { QuestionTaskInfo as QuestionBackgroundTaskInfo } from '@hilbras/omnicode-tools/ask-user-question/question-background-task';
 
 import type {
   AgentTaskInfo as BackgroundTaskInfo,

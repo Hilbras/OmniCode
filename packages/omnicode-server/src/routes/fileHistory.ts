@@ -4,7 +4,7 @@ import {
   type Scope,
 } from '@hilbras/omnicode-core';
 import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import { FILE_RESTORE_FLAG_ID } from '@hilbras/omnicode-core/agent/tools/restore-file/flag';
+import { FILE_RESTORE_FLAG_ID } from '@hilbras/omnicode-tools/restore-file/flag';
 import { z } from 'zod';
 
 import { errEnvelope, okEnvelope } from '../envelope';

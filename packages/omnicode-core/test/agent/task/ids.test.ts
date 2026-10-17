@@ -11,7 +11,7 @@ import {
   SubagentTask,
   type SubagentHandle,
 } from '#/agent/tools/agent/subagent-task';
-import { ProcessTask } from '#/agent/tools/os/bash/process-task';
+import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { createTestAgent, type TestAgentContext } from '../../harness';
 import { createAgentTaskPersistence } from './stubs';
 

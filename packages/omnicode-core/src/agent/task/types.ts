@@ -1,6 +1,6 @@
-import type { QuestionTaskInfo } from '#/agent/tools/ask-user-question/question-background-task';
+import type { QuestionTaskInfo } from '@hilbras/omnicode-tools/ask-user-question/question-background-task';
 import type { SubagentTaskInfo } from '#/agent/tools/agent/subagent-task';
-import type { ProcessTaskInfo } from '#/agent/tools/os/bash/process-task';
+import type { ProcessTaskInfo } from '@hilbras/omnicode-tools/os/bash/process-task';
 
 export type AgentTaskStatus =
   | 'running'

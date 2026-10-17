@@ -139,12 +139,34 @@ importers:
       '@hilbras/omnicode-llm':
         specifier: workspace:^
         version: link:../../packages/omnicode-llm
+      '@hilbras/omnicode-tools':
+        specifier: workspace:^
+        version: link:../Tools
       '@types/yazl':
         specifier: ^2.4.6
         version: 2.4.6
       jimp:
         specifier: ^1.6.1
         version: 1.6.1
+
+  Kernel/Tools:
+    dependencies:
+      '@hilbras/omnicode-core':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-core
+      pathe:
+        specifier: ^2.0.3
+        version: 2.0.3
+      yauzl:
+        specifier: ^3.3.0
+        version: 3.3.0
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
+    devDependencies:
+      '@types/yauzl':
+        specifier: ^2.10.3
+        version: 2.10.3
 
   apps/omnicode:
     dependencies:
@@ -307,6 +329,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../../../packages/omnicode-core
+      '@hilbras/omnicode-tools':
+        specifier: workspace:^
+        version: link:../../../Kernel/Tools
       '@hono/node-server':
         specifier: ^1.13.7
         version: 1.19.14(hono@4.12.14)
@@ -532,6 +557,9 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
+      '@hilbras/omnicode-tools':
+        specifier: workspace:^
+        version: link:../../Kernel/Tools
       '@types/js-yaml':
         specifier: ^4.0.9
         version: 4.0.9
@@ -658,6 +686,9 @@ importers:
       '@hilbras/omnicode-remote':
         specifier: workspace:^
         version: link:../omnicode-remote
+      '@hilbras/omnicode-tools':
+        specifier: workspace:^
+        version: link:../../Kernel/Tools
       '@hilbras/omnicode-transcript':
         specifier: workspace:^
         version: link:../omnicode-transcript

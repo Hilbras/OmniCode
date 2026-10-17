@@ -1,0 +1,21 @@
+{
+  "name": "@hilbras/omnicode-tools",
+  "version": "0.1.0",
+  "description": "The built-in agent tools — filesystem, shell, search, and interactive prompts.",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "imports": { "#/*": "./src/*.ts" },
+  "exports": {
+    ".": { "types": "./src/index.ts", "default": "./src/index.ts" },
+    "./*": { "types": "./src/*.ts", "default": "./src/*.ts" }
+  },
+  "dependencies": {
+    "@hilbras/omnicode-core": "workspace:^",
+    "pathe": "^2.0.3",
+    "yauzl": "^3.3.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": { "@types/yauzl": "^2.10.3" },
+  "scripts": { "typecheck": "tsc -p tsconfig.json --noEmit", "test": "vitest run", "clean": "rm -rf dist" }
+}

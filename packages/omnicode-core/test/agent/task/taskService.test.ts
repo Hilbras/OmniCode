@@ -20,7 +20,7 @@ import {
 } from '#/agent/task/task';
 import { renderNotificationXml } from '#/agent/task/notificationXml';
 import { AgentTaskService, taskNotificationDeliveryKey } from '#/agent/task/taskService';
-import { ProcessTask } from '#/agent/tools/os/bash/process-task';
+import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import type { IHostProcess } from '#/os/interface/hostProcess';
 import { IConfigRegistry, IConfigService } from '#/app/config/config';
 import { IFlagService } from '#/app/flag/flag';

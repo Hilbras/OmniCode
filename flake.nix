@@ -79,6 +79,7 @@
         ./packages/omnicode-tree-sitter-bash
         ./Kernel/API
         ./Kernel/Addons
+        ./Kernel/Tools
         ./apps/omnicode
         ./apps/omnicode-inspect
         ./apps/omnicode-vis
@@ -105,6 +106,7 @@
         "@hilbras/omnicode-tree-sitter-bash"
         "@hilbras/omnicode-api"
         "@hilbras/omnicode-addons"
+        "@hilbras/omnicode-tools"
         "@hilbras/omnicode"
         "@hilbras/omnicode-inspect"
         "@hilbras/omnicode-vis"

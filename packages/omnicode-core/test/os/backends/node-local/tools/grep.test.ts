@@ -41,8 +41,8 @@ import {
   type GrepInput,
   GrepInputSchema,
   IGrepTool,
-} from '#/agent/tools/os/grep/grep';
-import { GrepTool as ProductionGrepTool } from '#/agent/tools/os/grep/grepTool';
+} from '@hilbras/omnicode-tools/os/grep/grep';
+import { GrepTool as ProductionGrepTool } from '@hilbras/omnicode-tools/os/grep/grepTool';
 import { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import { FakeRuntime } from '#/runtime/fakeRuntime';
 import { ensureRgPath } from '#/os/backends/node-local/tools/rgLocator';

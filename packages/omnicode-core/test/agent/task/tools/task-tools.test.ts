@@ -28,7 +28,7 @@ import { abortError } from '#/_base/utils/abort';
 import type { ITaskHandle } from '#/app/task/task';
 import type { IHostProcess } from '#/os/interface/hostProcess';
 import { compileToolArgsValidator, validateToolArgs } from '#/tool/args-validator';
-import { ProcessTask, type ProcessTaskInfo } from '#/agent/tools/os/bash/process-task';
+import { ProcessTask, type ProcessTaskInfo } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { SubagentTask } from '#/agent/tools/agent/subagent-task';
 import type { SubagentTaskInfo } from '#/agent/tools/agent/subagent-task';
 import { IWaitForTool } from '#/agent/tools/task/task-wait/task-wait';

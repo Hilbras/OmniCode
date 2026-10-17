@@ -99,6 +99,7 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@hilbras/omnicode-tools": "workspace:^",
     "@types/js-yaml": "^4.0.9",
     "@types/picomatch": "^4.0.3",
     "@types/retry": "0.12.0",

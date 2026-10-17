@@ -40,21 +40,21 @@ import { ISessionToolPolicyGate } from '#/session/sessionToolPolicyGate/sessionT
 import type { RuntimeCapability } from '#/runtime/runtime';
 import type { AgentTool, ToolExecution } from '#/tool/toolContract';
 import '#/agent/tools/agent/agentTool';
-import '#/agent/tools/ask-user-question/askUserQuestionTool';
-import '#/agent/tools/edit/editTool';
-import '#/agent/tools/fetch-url/fetchUrlTool';
-import '#/agent/tools/os/bash/bashTool';
-import '#/agent/tools/os/glob/globTool';
-import '#/agent/tools/os/grep/grepTool';
-import '#/agent/tools/os/read/readTool';
-import '#/agent/tools/os/write/writeTool';
-import '#/agent/tools/select-tools/selectToolsTool';
+import '@hilbras/omnicode-tools/ask-user-question/askUserQuestionTool';
+import '@hilbras/omnicode-tools/edit/editTool';
+import '@hilbras/omnicode-tools/fetch-url/fetchUrlTool';
+import '@hilbras/omnicode-tools/os/bash/bashTool';
+import '@hilbras/omnicode-tools/os/glob/globTool';
+import '@hilbras/omnicode-tools/os/grep/grepTool';
+import '@hilbras/omnicode-tools/os/read/readTool';
+import '@hilbras/omnicode-tools/os/write/writeTool';
+import '@hilbras/omnicode-tools/select-tools/selectToolsTool';
 import '#/features/skill/tools/skillTool';
 import '#/agent/tools/task/task-list/taskListTool';
 import '#/agent/tools/task/task-output/taskOutputTool';
 import '#/agent/tools/task/task-stop/taskStopTool';
 import '#/features/todo/tools/todo-list/todoListTool';
-import '#/agent/tools/web-search/webSearchTool';
+import '@hilbras/omnicode-tools/web-search/webSearchTool';
 
 class StubTool implements AgentTool {
   declare readonly _serviceBrand: undefined;

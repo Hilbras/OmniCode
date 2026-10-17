@@ -1,4 +1,4 @@
-import type { WebSearchProvider, WebSearchResult } from '#/agent/tools/web-search/web-search';
+import type { WebSearchProvider, WebSearchResult } from '#/app/auth/webSearch/webSearchContract';
 import { Error2, ErrorCodes } from '#/errors';
 
 export interface BearerTokenProvider {

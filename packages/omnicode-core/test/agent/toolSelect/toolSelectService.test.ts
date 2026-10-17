@@ -46,7 +46,7 @@ import { AgentToolSelectAnnouncementsService } from '#/agent/toolSelect/toolSele
 import { IAgentToolSelectSchemasService } from '#/agent/toolSelect/toolSelectSchemas';
 import { AgentToolSelectSchemasService } from '#/agent/toolSelect/toolSelectSchemasService';
 import { AgentToolSelectService } from '#/agent/toolSelect/toolSelectService';
-import { SelectToolsTool } from '#/agent/tools/select-tools/selectToolsTool';
+import { SelectToolsTool } from '@hilbras/omnicode-tools/select-tools/selectToolsTool';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { IWireService } from '#/wire/wire';
 import { IEventDispatcher } from '#/state/eventDispatcher';

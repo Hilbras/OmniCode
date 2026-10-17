@@ -16,8 +16,8 @@ import {
   SubagentTask,
   type SubagentHandle,
 } from '#/agent/tools/agent/subagent-task';
-import { ProcessTask } from '#/agent/tools/os/bash/process-task';
-import { QuestionBackgroundTask } from '#/agent/tools/ask-user-question/question-background-task';
+import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
+import { QuestionBackgroundTask } from '@hilbras/omnicode-tools/ask-user-question/question-background-task';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IEventBus } from '#/app/event/eventBus';
 import type { IExternalHooksRunnerService } from '#/features/externalHooks/app/externalHooksRunner';

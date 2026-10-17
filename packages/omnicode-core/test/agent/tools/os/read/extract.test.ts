@@ -3,9 +3,9 @@ import { deflateSync } from 'node:zlib';
 import { ZipFile } from 'yazl';
 import { describe, expect, it } from 'vitest';
 
-import { extractDocument, extractableFormat } from '#/agent/tools/os/read/extract/extract';
-import { extractPdfText } from '#/agent/tools/os/read/extract/pdf';
-import { extractRtfText } from '#/agent/tools/os/read/extract/rtf';
+import { extractDocument, extractableFormat } from '@hilbras/omnicode-tools/os/read/extract/extract';
+import { extractPdfText } from '@hilbras/omnicode-tools/os/read/extract/pdf';
+import { extractRtfText } from '@hilbras/omnicode-tools/os/read/extract/rtf';
 
 function zipBuffer(files: Record<string, string>): Promise<Buffer> {
   return new Promise((resolve, reject) => {

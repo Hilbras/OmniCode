@@ -15,7 +15,7 @@ import {
   SubagentTask,
   type SubagentHandle,
 } from '#/agent/tools/agent/subagent-task';
-import { ProcessTask } from '#/agent/tools/os/bash/process-task';
+import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { isUserCancellation, userCancellationReason } from '#/_base/utils/abort';
 import { ISessionMetadata } from '#/session/sessionMetadata/sessionMetadata';
 import {
