@@ -118,3 +118,38 @@ export function buildImportedModels(input: {
     };
   });
 }
+
+/**
+ * Builds the config alias rows for a vendor's free tier.
+ *
+ * Shared by every add-a-built-in path (CLI and TUI). A free-tier alias carries
+ * its own `base_url`, the literal credential that tier expects, and the
+ * `free_tier` marker the engine reads to emit the vendor client fingerprint —
+ * a path that forgets the marker yields aliases that list but then fail, and
+ * a path that forgets the aliases entirely loses the free models, because the
+ * same built-in also excludes those ids from the paid route.
+ */
+export function buildFreeTierAliases(input: {
+  readonly providerId: string;
+  readonly baseUrl: string;
+  readonly apiKey: string;
+  readonly ids: readonly string[];
+  readonly limits: ReadonlyMap<string, CatalogLimit>;
+}): Record<string, Record<string, unknown>> {
+  const out: Record<string, Record<string, unknown>> = {};
+  for (const imported of buildImportedModels(input)) {
+    out[`${input.providerId}/${imported.id}`] = {
+      provider: input.providerId,
+      model: imported.id,
+      baseUrl: imported.baseUrl,
+      apiKey: input.apiKey,
+      freeTier: true,
+      maxContextSize: imported.maxContextSize,
+      maxInputSize: imported.maxInputSize,
+      maxOutputSize: imported.maxOutputSize,
+      capabilities: ['tool_use'],
+      displayName: imported.id,
+    };
+  }
+  return out;
+}

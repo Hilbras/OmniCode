@@ -20,7 +20,14 @@ import { fetchCatalogOrBuiltIn } from '#/utils/catalog-fetch';
 import {
   BUILT_IN_PROVIDERS,
   getBuiltInProvider,
+  type BuiltInProvider,
 } from '#/utils/built-in-providers';
+import {
+  buildFreeTierAliases,
+  fetchCatalogLimits,
+  fetchFreeTierModelIds,
+  type CatalogLimit,
+} from '#/utils/builtin-model-import';
 import {
   buildCustomProviderRecord,
   deriveProviderId,
@@ -461,7 +468,13 @@ async function handleBuiltinProviderAdd(
 
   await addProviderAndSelectModel(
     host,
-    { providerId: builtin.id, name: builtin.name, baseUrl: builtin.baseUrl },
+    {
+      providerId: builtin.id,
+      name: builtin.name,
+      baseUrl: builtin.baseUrl,
+      freeTier: builtin.freeTier,
+      catalogProvider: builtin.catalogProvider,
+    },
     () =>
       saveProviderRecord(host, builtin.id, {
         type: builtin.wire,
@@ -489,7 +502,13 @@ async function handleBuiltinProviderAdd(
  */
 async function addProviderAndSelectModel(
   host: SlashCommandHost,
-  target: { readonly providerId: string; readonly name: string; readonly baseUrl: string },
+  target: {
+    readonly providerId: string;
+    readonly name: string;
+    readonly baseUrl: string;
+    readonly freeTier?: BuiltInProvider['freeTier'];
+    readonly catalogProvider?: string;
+  },
   save: () => Promise<void>,
 ): Promise<void> {
   const controller = new AbortController();
@@ -530,6 +549,8 @@ async function addProviderAndSelectModel(
 
   await host.authFlow.refreshConfigAfterLogin();
 
+  await routeFreeTierAliases(host, target);
+
   // Nothing was discovered (endpoint down, empty list): the provider may still
   // have been saved, so tell the user what to do rather than silently leaving a
   // provider that cannot resolve a model.
@@ -544,6 +565,42 @@ async function addProviderAndSelectModel(
   }
 
   promptProviderModelSelection(host, target.providerId, aliases);
+}
+
+/**
+ * Adds the built-in's free-tier models after discovery has written the paid
+ * ones.
+ *
+ * The same built-in excludes the free ids from its paid `/models` route, so
+ * without this step they are listed nowhere at all — which is what a TUI-side
+ * add used to do. Mirrors the CLI's `importBuiltInExtras`, so both add paths
+ * leave identical config.
+ */
+async function routeFreeTierAliases(
+  host: SlashCommandHost,
+  target: {
+    readonly providerId: string;
+    readonly freeTier?: BuiltInProvider['freeTier'];
+    readonly catalogProvider?: string;
+  },
+): Promise<void> {
+  for (const source of target.freeTier ?? []) {
+    const ids = await fetchFreeTierModelIds(source);
+    if (ids.length === 0) continue;
+    const limits =
+      target.catalogProvider === undefined
+        ? new Map<string, CatalogLimit>()
+        : await fetchCatalogLimits(target.catalogProvider);
+    const aliases = buildFreeTierAliases({
+      providerId: target.providerId,
+      baseUrl: source.baseUrl,
+      apiKey: source.apiKey,
+      ids,
+      limits,
+    });
+    const config = await host.harness.getConfig({ reload: true });
+    await host.harness.setConfig({ models: { ...config.models, ...aliases } });
+  }
 }
 
 /**

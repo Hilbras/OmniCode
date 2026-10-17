@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.1
+
+### Patch Changes
+
+- Fix adding a built-in provider from the `/provider` menu dropping the free models it excludes from the paid route, leaving those models unavailable.
+
 ## 1.1.0
 
 ### Minor Changes

@@ -49,7 +49,7 @@ import {
 } from '#/utils/built-in-providers';
 import { parseProviderBaseUrl } from '#/utils/custom-provider';
 import {
-  buildImportedModels,
+  buildFreeTierAliases,
   fetchFreeTierModelIds,
   fetchCatalogLimits,
   DEFAULT_MAX_CONTEXT,
@@ -444,26 +444,17 @@ async function importBuiltInExtras(
   for (const source of builtin.freeTier ?? []) {
     const ids = await fetchFreeTierModelIds(source);
     if (ids.length === 0) continue;
-    for (const imported of buildImportedModels({
-      providerId,
-      ids,
-      baseUrl: source.baseUrl,
-      limits,
-    })) {
-      models[`${providerId}/${imported.id}`] = {
-        provider: providerId,
-        model: imported.id,
-        baseUrl: imported.baseUrl,
+    Object.assign(
+      models,
+      buildFreeTierAliases({
+        providerId,
+        baseUrl: source.baseUrl,
         apiKey: source.apiKey,
-        freeTier: true,
-        maxContextSize: imported.maxContextSize,
-        maxInputSize: imported.maxInputSize,
-        maxOutputSize: imported.maxOutputSize,
-        capabilities: ['tool_use'],
-        displayName: imported.id,
-      };
-      routed++;
-    }
+        ids,
+        limits,
+      }),
+    );
+    routed += ids.length;
     touched = true;
   }
 
