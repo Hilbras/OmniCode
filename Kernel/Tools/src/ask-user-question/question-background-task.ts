@@ -1,3 +1,4 @@
+import type { QuestionTaskInfo } from '@hilbras/omnicode-core/agent/task/types';
 import { isAbortError } from '@hilbras/omnicode-core/_base/utils/abort';
 import {
   type AgentTask,
@@ -5,18 +6,6 @@ import {
   type AgentTaskSink,
 } from '@hilbras/omnicode-core/agent/task/types';
 import type { ExecutableToolResult } from '@hilbras/omnicode-core/tool/toolContract';
-
-export interface QuestionTaskInfo extends AgentTaskInfoBase {
-  readonly kind: 'question';
-  readonly questionCount: number;
-  readonly toolCallId?: string;
-}
-
-declare module '@hilbras/omnicode-core/agent/task/types' {
-  interface AgentTaskInfoByKind {
-    readonly question: QuestionTaskInfo;
-  }
-}
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);

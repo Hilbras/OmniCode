@@ -22,10 +22,8 @@ import {
 } from '#/human/interaction/interaction';
 import { interactions } from '#/human/interaction/facade';
 import { ISessionContext } from '#/session/sessionContext/sessionContext';
-import type {
-  QuestionBackgroundTask,
-  QuestionTaskInfo,
-} from '@hilbras/omnicode-tools/ask-user-question/question-background-task';
+import type { QuestionBackgroundTask } from '@hilbras/omnicode-tools/ask-user-question/question-background-task';
+import type { QuestionTaskInfo } from '#/agent/task/types';
 import { executeTool } from '../../../tools/fixtures/execute-tool';
 
 const signal = new AbortController().signal;

@@ -226,7 +226,7 @@ import {
   type ServicesAccessor,
   type SessionSummary as V2SessionSummary,
 } from '@hilbras/omnicode-core';
-import { ISessionInitService } from '@hilbras/omnicode-addons/features/sessionInit/sessionInit';
+import { ISessionInitService } from '@hilbras/omnicode-core/session/sessionInit/sessionInitContract';
 import {
   RPCError,
   type AgentHandle,

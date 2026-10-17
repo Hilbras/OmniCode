@@ -50,7 +50,6 @@ import {
   IAgentProfileService,
   IAgentToolActivationService,
   IAgentToolRegistryService,
-  INotifyUserTool,
   IAtomicDocumentStore,
   ISessionContext,
   IAgentTowerService,
@@ -61,6 +60,7 @@ import {
   MAIN_AGENT_ID,
   OsProcessErrors,
 } from '@hilbras/omnicode-core';
+import { INotifyUserTool } from '@hilbras/omnicode-tools/features/notify/tools/notify-user/notify-user';
 
 import { McpOAuthService as McpOAuthServiceV2 } from '@hilbras/omnicode-core/mcpCore/oauth/service';
 import { TowerStore } from '@hilbras/omnicode-core/features/tower/protocol/store';

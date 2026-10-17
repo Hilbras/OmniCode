@@ -1,6 +1,4 @@
-import type { QuestionTaskInfo } from '@hilbras/omnicode-tools/ask-user-question/question-background-task';
 import type { SubagentTaskInfo } from '#/agent/tools/agent/subagent-task';
-import type { ProcessTaskInfo } from '@hilbras/omnicode-tools/os/bash/process-task';
 
 export type AgentTaskStatus =
   | 'running'
@@ -35,6 +33,20 @@ export interface AgentTaskInfoBase {
   readonly terminalNotificationSuppressed?: boolean;
   readonly resumeReminded?: boolean;
   readonly timeoutMs?: number;
+}
+
+export interface ProcessTaskInfo extends AgentTaskInfoBase {
+  readonly kind: 'process';
+  readonly command: string;
+  readonly pid: number;
+  readonly exitCode: number | null;
+  readonly parentToolCallId?: string;
+}
+
+export interface QuestionTaskInfo extends AgentTaskInfoBase {
+  readonly kind: 'question';
+  readonly questionCount: number;
+  readonly toolCallId?: string;
 }
 
 export interface AgentTaskInfoByKind {

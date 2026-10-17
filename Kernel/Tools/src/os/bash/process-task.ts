@@ -1,3 +1,4 @@
+import type { ProcessTaskInfo } from '@hilbras/omnicode-core/agent/task/types';
 import type { Readable } from 'node:stream';
 
 import type { IHostProcess } from '@hilbras/omnicode-core/os/interface/hostProcess';
@@ -10,20 +11,6 @@ import type {
   AgentTaskSink,
   AgentTaskSettlement,
 } from '@hilbras/omnicode-core/agent/task/types';
-
-export interface ProcessTaskInfo extends AgentTaskInfoBase {
-  readonly kind: 'process';
-  readonly command: string;
-  readonly pid: number;
-  readonly exitCode: number | null;
-  readonly parentToolCallId?: string;
-}
-
-declare module '@hilbras/omnicode-core/agent/task/types' {
-  interface AgentTaskInfoByKind {
-    readonly process: ProcessTaskInfo;
-  }
-}
 
 export type ProcessTaskOutputKind = 'stdout' | 'stderr';
 
