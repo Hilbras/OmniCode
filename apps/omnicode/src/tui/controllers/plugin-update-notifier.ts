@@ -1,4 +1,4 @@
-import type { PluginSummary } from '@hilbras/omnicode-sdk';
+import type { PluginSummary } from '@hilbras/kernel-api';
 
 import { omnicodeCodePluginMarketplaceUrl } from '#/constant/app';
 import {

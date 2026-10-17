@@ -11,7 +11,7 @@ import {
   type PermissionMode,
   type SessionStatus,
   type ThinkingEffort,
-} from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
 
 import { PRODUCT_NAME } from '#/constant/app';
 import { currentTheme } from '#/tui/theme';

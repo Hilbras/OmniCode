@@ -1,4 +1,4 @@
-import type { ModelAlias } from '@hilbras/omnicode-sdk';
+import type { ModelAlias } from '@hilbras/kernel-api';
 import { visibleWidth } from '@hilbras/omnicode-tui';
 import { describe, expect, it, vi } from 'vitest';
 

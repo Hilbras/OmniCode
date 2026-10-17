@@ -52,7 +52,7 @@
  * are injected, so the tracker is unit-testable without a TUI.
  */
 
-import type { TurnEndedEvent, TurnStartedEvent } from '@hilbras/omnicode-sdk';
+import type { TurnEndedEvent, TurnStartedEvent } from '@hilbras/kernel-api';
 
 import type { QueuedMessage } from '../types';
 

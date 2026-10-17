@@ -1,4 +1,4 @@
-import type { PluginSummary } from '@hilbras/omnicode-sdk';
+import type { PluginSummary } from '@hilbras/kernel-api';
 
 export const OFFICIAL_BADGE = 'official';
 export const CURATED_BADGE = 'curated';

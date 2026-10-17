@@ -1,4 +1,4 @@
-import type { Session } from '@hilbras/omnicode-sdk';
+import type { Session } from '@hilbras/kernel-api';
 
 import { AgentGroupComponent } from '../components/messages/agent-group';
 import { AssistantMessageComponent } from '../components/messages/assistant-message';

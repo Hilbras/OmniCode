@@ -1,4 +1,4 @@
-import type { PermissionMode } from '@hilbras/omnicode-sdk';
+import type { PermissionMode } from '@hilbras/kernel-api';
 
 export const PERMISSION_MODE_DISPLAY_NAMES: Readonly<Record<PermissionMode, string>> = {
   manual: 'Always Ask',

@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import { SwarmModeMarkerComponent } from '#/tui/components/messages/swarm-markers';
 import { buildGoalMarker, GoalMarkerComponent } from '#/tui/components/messages/goal-markers';
-import type { GoalChange } from '@hilbras/omnicode-sdk';
+import type { GoalChange } from '@hilbras/kernel-api';
 
 const ANSI_SGR = /\[[0-9;]*m/g;
 function strip(lines: string[]): string {

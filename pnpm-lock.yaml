@@ -70,6 +70,12 @@ importers:
         specifier: 4.1.4
         version: 4.1.4(@types/node@22.19.17)(@vitest/coverage-v8@4.1.4)(jsdom@30.0.1)(msw@2.15.0(@types/node@22.19.17)(typescript@6.0.2))(vite@8.0.8(@types/node@22.19.17)(esbuild@0.27.7)(jiti@2.6.1)(tsx@4.21.0)(yaml@2.8.3))
 
+  Kernel/API:
+    dependencies:
+      '@hilbras/omnicode-sdk':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-sdk
+
   apps/omnicode:
     dependencies:
       qrcode:
@@ -79,6 +85,9 @@ importers:
         specifier: ^8.18.0
         version: 8.20.0
     devDependencies:
+      '@hilbras/kernel-api':
+        specifier: workspace:^
+        version: link:../../Kernel/API
       '@hilbras/omnicode-acp':
         specifier: workspace:^
         version: link:../../packages/omnicode-acp
@@ -97,9 +106,6 @@ importers:
       '@hilbras/omnicode-remote':
         specifier: workspace:^
         version: link:../../packages/omnicode-remote
-      '@hilbras/omnicode-sdk':
-        specifier: workspace:^
-        version: link:../../packages/omnicode-sdk
       '@hilbras/omnicode-server':
         specifier: workspace:^
         version: link:../../packages/omnicode-server

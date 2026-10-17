@@ -1,7 +1,7 @@
 import type {
   FileHistoryRestoreResult,
   FileHistoryTurnSummary,
-} from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
 import { describe, expect, it, vi } from 'vitest';
 
 import { handleUndoCommand } from '#/tui/commands/undo';

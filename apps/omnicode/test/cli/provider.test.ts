@@ -6,7 +6,7 @@
 
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { Command } from 'commander';
-import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/omnicode-sdk';
+import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/kernel-api';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -43,8 +43,8 @@ const harnessRouting = vi.hoisted(() => ({
   harness: undefined as unknown,
 }));
 
-vi.mock('@hilbras/omnicode-sdk', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@hilbras/omnicode-sdk')>();
+vi.mock('@hilbras/kernel-api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@hilbras/kernel-api')>();
   return {
     ...actual,
     createOmnicodeHarness: (...args: unknown[]) => {
@@ -150,8 +150,8 @@ beforeEach(() => {
 const registryHarnesses: OmnicodeHarness[] = [];
 
 async function makeRegistryHarness(initial: OmnicodeConfig) {
-  const { createOmnicodeHarness } = await vi.importActual<typeof import('@hilbras/omnicode-sdk')>(
-    '@hilbras/omnicode-sdk',
+  const { createOmnicodeHarness } = await vi.importActual<typeof import('@hilbras/kernel-api')>(
+    '@hilbras/kernel-api',
   );
   const homeDir = await mkdtemp(join(tmpdir(), 'registry-cli-'));
   const harness = createOmnicodeHarness({

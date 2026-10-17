@@ -1,4 +1,4 @@
-import type { BackgroundTaskInfo, Session } from '@hilbras/omnicode-sdk';
+import type { BackgroundTaskInfo, Session } from '@hilbras/kernel-api';
 import type { ProcessTerminal, TUI } from '@hilbras/omnicode-tui';
 
 import { AgentActivityViewer, formatSubagentActivityPreview } from '../components/dialogs/agent-activity-viewer';

@@ -1,5 +1,5 @@
 import type { Terminal } from '@hilbras/omnicode-tui';
-import type { BackgroundTaskInfo } from '@hilbras/omnicode-sdk';
+import type { BackgroundTaskInfo } from '@hilbras/kernel-api';
 import { describe, expect, it, vi } from 'vitest';
 
 import { AgentActivityViewer, formatSubagentActivityPreview } from '#/tui/components/dialogs/agent-activity-viewer';

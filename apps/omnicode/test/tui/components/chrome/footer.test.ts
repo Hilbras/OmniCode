@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FooterComponent } from '#/tui/components/chrome/footer';
 import { setRainbowDance, type RainbowDanceController } from '#/tui/easter-eggs/dance';
 import { currentTheme, darkColors, lightColors } from '#/tui/theme';
-import type { ModelAlias } from '@hilbras/omnicode-sdk';
+import type { ModelAlias } from '@hilbras/kernel-api';
 import type { AppState } from '#/tui/types';
 
 const gitStatusMocks = vi.hoisted(() => ({

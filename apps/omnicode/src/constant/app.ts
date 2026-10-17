@@ -1,4 +1,4 @@
-import { ErrorCodes, type HostUiCapability } from '@hilbras/omnicode-sdk';
+import { ErrorCodes, type HostUiCapability } from '@hilbras/kernel-api';
 
 import { currentOmnicodeProfile } from '#/utils/region';
 

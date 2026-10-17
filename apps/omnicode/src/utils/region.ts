@@ -14,7 +14,7 @@
  * ref.
  */
 
-import { loadRuntimeConfigSafe, resolveConfigPath } from '@hilbras/omnicode-sdk';
+import { loadRuntimeConfigSafe, resolveConfigPath } from '@hilbras/kernel-api';
 import {
   OMNICODE_OAUTH_KEY,
   OMNICODE_REGION_PROFILES,

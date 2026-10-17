@@ -1,4 +1,4 @@
-import type { McpServerInfo, McpServerStatusEvent } from '@hilbras/omnicode-sdk';
+import type { McpServerInfo, McpServerStatusEvent } from '@hilbras/kernel-api';
 
 export type McpServerStatusSnapshot = McpServerInfo | McpServerStatusEvent['server'];
 

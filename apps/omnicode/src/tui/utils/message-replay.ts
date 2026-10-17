@@ -7,8 +7,8 @@ import type {
   PromptOrigin,
   ResumedAgentState,
   ToolCall,
-} from '@hilbras/omnicode-sdk';
-import { limitAgentReplayByTurns } from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
+import { limitAgentReplayByTurns } from '@hilbras/kernel-api';
 
 import type {
   AppState,

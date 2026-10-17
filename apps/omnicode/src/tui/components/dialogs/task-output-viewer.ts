@@ -18,7 +18,7 @@ import {
   visibleWidth,
   type Focusable,
 } from '@hilbras/omnicode-tui';
-import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@hilbras/omnicode-sdk';
+import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@hilbras/kernel-api';
 
 import { currentTheme } from '#/tui/theme';
 import { printableChar } from '@/tui/utils/printable-key';

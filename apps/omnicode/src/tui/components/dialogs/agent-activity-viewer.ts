@@ -23,7 +23,7 @@ import {
   truncateToWidth,
   visibleWidth,
 } from '@hilbras/omnicode-tui';
-import type { BackgroundTaskInfo } from '@hilbras/omnicode-sdk';
+import type { BackgroundTaskInfo } from '@hilbras/kernel-api';
 
 import { MESSAGE_INDENT } from '#/tui/constant/rendering';
 import { STATUS_BULLET } from '#/tui/constant/symbols';

@@ -1,4 +1,4 @@
-import { log, type Logger } from '@hilbras/omnicode-sdk';
+import { log, type Logger } from '@hilbras/kernel-api';
 import { track as trackTelemetry, type TelemetryProperties } from '@hilbras/omnicode-telemetry';
 
 import { INTERACTIVE_UPDATE_CHECK_TIMEOUT_MS } from '#/constant/app';

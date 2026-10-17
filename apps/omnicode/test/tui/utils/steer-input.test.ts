@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { PromptPart } from '@hilbras/omnicode-sdk';
+import type { PromptPart } from '@hilbras/kernel-api';
 
 import type { SteerInputItem } from '#/tui/types';
 import { combineSteerInput } from '#/tui/utils/steer-input';

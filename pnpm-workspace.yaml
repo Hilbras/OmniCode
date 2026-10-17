@@ -3,6 +3,7 @@ packages:
   - apps/*
   - apps/omnicode-vis/server
   - apps/omnicode-vis/web
+  - Kernel/*
   - docs
 
 catalog:

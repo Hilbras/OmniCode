@@ -7,7 +7,7 @@
  * `<media path>` tag is authored, so text parts always merge freely.
  */
 
-import type { PromptPart } from '@hilbras/omnicode-sdk';
+import type { PromptPart } from '@hilbras/kernel-api';
 
 import type { SteerInputItem } from '../types';
 

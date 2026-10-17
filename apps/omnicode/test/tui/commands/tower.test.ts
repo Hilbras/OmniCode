@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { Session } from '@hilbras/omnicode-sdk';
+import type { Session } from '@hilbras/kernel-api';
 
 import { handleTowerCommand } from '#/tui/commands/index';
 import type { SlashCommandHost } from '#/tui/commands/dispatch';

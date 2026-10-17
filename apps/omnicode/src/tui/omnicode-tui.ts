@@ -4,7 +4,7 @@ import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { DeviceAuthorization } from '@hilbras/omnicode-auth';
-import { effectiveModelAlias, log } from '@hilbras/omnicode-sdk';
+import { effectiveModelAlias, log } from '@hilbras/kernel-api';
 import type {
   ApprovalRequest,
   ApprovalResponse,
@@ -20,7 +20,7 @@ import type {
   TurnEndedEvent,
   TurnStartedEvent,
   WorkspaceTrustInfo,
-} from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
 import { isTelemetryDisabledByEnv } from '@hilbras/omnicode-telemetry';
 import type { MigrationPlan } from '@hilbras/omnicode-migration';
 import {

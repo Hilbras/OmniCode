@@ -18,7 +18,7 @@
  * Pure logic — no TUI state, no components — so it is unit-testable.
  */
 
-import type { Event } from '@hilbras/omnicode-sdk';
+import type { Event } from '@hilbras/kernel-api';
 
 import {
   MAX_SUBAGENT_ACTIVITY_STEPS,

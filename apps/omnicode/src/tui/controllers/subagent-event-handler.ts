@@ -1,7 +1,7 @@
 import type {
   BackgroundTaskInfo,
   Event,
-} from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
 import type { Component } from '@hilbras/omnicode-tui';
 
 import {

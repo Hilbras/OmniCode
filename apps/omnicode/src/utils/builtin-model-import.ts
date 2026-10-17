@@ -1,4 +1,4 @@
-import { DEFAULT_CATALOG_URL } from '@hilbras/omnicode-sdk';
+import { DEFAULT_CATALOG_URL } from '@hilbras/kernel-api';
 
 import { fetchCatalogOrBuiltIn } from './catalog-fetch';
 

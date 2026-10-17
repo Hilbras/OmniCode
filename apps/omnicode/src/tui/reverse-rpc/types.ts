@@ -6,7 +6,7 @@
  * core payloads into these shapes for panel components.
  */
 
-import type { QuestionAnswerMethod } from '@hilbras/omnicode-sdk';
+import type { QuestionAnswerMethod } from '@hilbras/kernel-api';
 
 // ── Display blocks (approval panel) ──────────────────────────────────
 

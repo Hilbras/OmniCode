@@ -1,4 +1,4 @@
-import { ErrorCodes, OmnicodeError } from '@hilbras/omnicode-sdk';
+import { ErrorCodes, OmnicodeError } from '@hilbras/kernel-api';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {

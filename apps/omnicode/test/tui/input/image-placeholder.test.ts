@@ -9,7 +9,7 @@ import { join } from 'node:path';
 
 import { describe, it, expect } from 'vitest';
 
-import { parseDaemonFileUrl } from '@hilbras/omnicode-sdk';
+import { parseDaemonFileUrl } from '@hilbras/kernel-api';
 
 import { OMNICODE_HOME_ENV } from '#/constant/app';
 import { ImageAttachmentStore } from '#/tui/utils/image-attachment-store';

@@ -1,4 +1,4 @@
-import type { BackgroundTaskInfo } from '@hilbras/omnicode-sdk';
+import type { BackgroundTaskInfo } from '@hilbras/kernel-api';
 
 function isDetachableForegroundTask(t: BackgroundTaskInfo): boolean {
   return (
@@ -18,7 +18,7 @@ export function pickForegroundTasks(
 ): BackgroundTaskInfo[] {
   return tasks
     .filter(isDetachableForegroundTask)
-    .sort((a, b) => b.startedAt - a.startedAt);
+    .toSorted((a, b) => b.startedAt - a.startedAt);
 }
 
 /**

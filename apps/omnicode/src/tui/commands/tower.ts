@@ -1,4 +1,4 @@
-import type { Session } from '@hilbras/omnicode-sdk';
+import type { Session } from '@hilbras/kernel-api';
 
 import { TOWER_TEARDOWN_PROMPT } from '../constant/omnicode-tui';
 import { formatErrorMessage } from '../utils/event-payload';

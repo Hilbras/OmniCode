@@ -1,4 +1,4 @@
-import { isDaemonFileUrl } from '@hilbras/omnicode-sdk';
+import { isDaemonFileUrl } from '@hilbras/kernel-api';
 
 export type MediaUrlKind = 'audio' | 'image' | 'video';
 

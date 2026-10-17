@@ -1,0 +1,24 @@
+{
+  "name": "@hilbras/kernel-api",
+  "version": "0.1.0",
+  "description": "The one surface consumers of the Kernel are allowed to import.",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@hilbras/omnicode-sdk": "workspace:^"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  }
+}

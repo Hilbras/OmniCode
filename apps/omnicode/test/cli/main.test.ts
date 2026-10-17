@@ -2,7 +2,7 @@ import { afterAll, afterEach, beforeEach, describe, expect, it, vi } from 'vites
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ErrorCodes, OmnicodeError } from '@hilbras/omnicode-sdk';
+import { ErrorCodes, OmnicodeError } from '@hilbras/kernel-api';
 
 import { validateOptions } from '#/cli/options';
 import type { CLIOptions } from '#/cli/options';
@@ -65,9 +65,9 @@ vi.mock('@hilbras/omnicode-telemetry', () => ({
   shutdownTelemetry: mocks.shutdownTelemetry,
 }));
 
-vi.mock('@hilbras/omnicode-sdk', async () => {
-  const actual = await vi.importActual<typeof import('@hilbras/omnicode-sdk')>(
-    '@hilbras/omnicode-sdk',
+vi.mock('@hilbras/kernel-api', async () => {
+  const actual = await vi.importActual<typeof import('@hilbras/kernel-api')>(
+    '@hilbras/kernel-api',
   );
   class MockOmnicodeHarness {
     readonly homeDir = mocks.harness.homeDir;

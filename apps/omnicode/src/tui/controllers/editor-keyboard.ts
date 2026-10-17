@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 
-import type { FileMeta, OmnicodeHarness, Session } from '@hilbras/omnicode-sdk';
-import { compressImageForModel } from '@hilbras/omnicode-sdk';
+import type { FileMeta, OmnicodeHarness, Session } from '@hilbras/kernel-api';
+import { compressImageForModel } from '@hilbras/kernel-api';
 
 import {
   ClipboardMediaError,

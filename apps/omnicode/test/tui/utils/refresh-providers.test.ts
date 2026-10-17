@@ -6,7 +6,7 @@ import {
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { refreshAllProviderModels } from '../../../src/tui/utils/refresh-providers';
-import type { OmnicodeConfig } from '@hilbras/omnicode-sdk';
+import type { OmnicodeConfig } from '@hilbras/kernel-api';
 
 type FetchMock = (
   input: Parameters<typeof fetch>[0],

@@ -21,7 +21,7 @@ import type {
   ExportSessionManifest,
   ExportSessionResult,
   SessionSummary,
-} from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
 
 let tmp: string;
 
@@ -49,8 +49,8 @@ const mocks = vi.hoisted(() => ({
   harnessCreatesDeviceIdOnConstruction: false,
 }));
 
-vi.mock('@hilbras/omnicode-sdk', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@hilbras/omnicode-sdk')>();
+vi.mock('@hilbras/kernel-api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@hilbras/kernel-api')>();
   const createFakeHarness = (options: { readonly homeDir?: string } | undefined) => {
     const homeDir = options?.homeDir ?? '/tmp/omnicode-export-home';
     if (mocks.harnessCreatesDeviceIdOnConstruction) {

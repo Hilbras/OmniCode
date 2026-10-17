@@ -5,6 +5,7 @@ export default defineConfig({
     projects: [
       'packages/*',
       '!packages/omnicode-minidb',
+      'Kernel/*/vitest.config.ts',
       'apps/omnicode',
       'apps/omnicode-vis/server',
       'apps/omnicode-vis/web',
@@ -13,6 +14,7 @@ export default defineConfig({
       provider: 'v8',
       include: [
         'packages/*/src/**/*.ts',
+        'Kernel/*/src/**/*.ts',
         'apps/*/src/**/*.ts',
         'apps/omnicode-vis/*/src/**/*.{ts,tsx}',
       ],

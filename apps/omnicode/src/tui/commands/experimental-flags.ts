@@ -1,4 +1,4 @@
-import type { ExperimentalFeatureState, ExperimentalFlagMap } from '@hilbras/omnicode-sdk';
+import type { ExperimentalFeatureState, ExperimentalFlagMap } from '@hilbras/kernel-api';
 
 import { experimentalFeatureMap } from '#/utils/experimental-features';
 

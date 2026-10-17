@@ -1,4 +1,4 @@
-import type { Session, SkillSummary } from '@hilbras/omnicode-sdk';
+import type { Session, SkillSummary } from '@hilbras/kernel-api';
 
 import type { OmnicodeSlashCommand } from './types';
 

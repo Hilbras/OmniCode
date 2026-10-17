@@ -33,7 +33,7 @@
  * `setOptions`.
  */
 
-import type { ProviderConfig } from '@hilbras/omnicode-sdk';
+import type { ProviderConfig } from '@hilbras/kernel-api';
 import {
   getOpenPlatformById,
   isOpenPlatformId,

@@ -82,8 +82,8 @@ vi.mock('@hilbras/omnicode-auth', async () => {
   };
 });
 
-vi.mock('@hilbras/omnicode-sdk', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@hilbras/omnicode-sdk')>();
+vi.mock('@hilbras/kernel-api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@hilbras/kernel-api')>();
   return {
     ...actual,
     resolveOmnicodeHome: mocks.resolveOmnicodeHome,

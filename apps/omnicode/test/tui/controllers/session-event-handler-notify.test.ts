@@ -1,6 +1,6 @@
 import { Container } from '@hilbras/omnicode-tui';
 import { NotifyPanelComponent } from '#/tui/components/chrome/notify-panel';
-import type { Event } from '@hilbras/omnicode-sdk';
+import type { Event } from '@hilbras/kernel-api';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SessionEventHandler } from '#/tui/controllers/session-event-handler';

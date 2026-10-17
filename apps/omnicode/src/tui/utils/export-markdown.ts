@@ -1,4 +1,4 @@
-import type { ContentPart, ContextMessage, PromptOrigin, ToolCall } from '@hilbras/omnicode-sdk';
+import type { ContentPart, ContextMessage, PromptOrigin, ToolCall } from '@hilbras/kernel-api';
 
 import { isUserPromptSubmitHookPart, withoutUserPromptSubmitHookParts } from './message-replay';
 

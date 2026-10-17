@@ -1,6 +1,6 @@
 import { spawn } from 'node:child_process';
 
-import { log, type Logger } from '@hilbras/omnicode-sdk';
+import { log, type Logger } from '@hilbras/kernel-api';
 import type { TelemetryProperties } from '@hilbras/omnicode-telemetry';
 
 import {

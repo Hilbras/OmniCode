@@ -16,7 +16,7 @@ import type {
   Event,
   GoalSnapshot,
   Session,
-} from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { ApprovalPanelComponent } from '#/tui/components/dialogs/approval-panel';

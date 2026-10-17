@@ -8,7 +8,7 @@
  */
 
 import { truncateToWidth, type Component } from '@hilbras/omnicode-tui';
-import type { GoalChange } from '@hilbras/omnicode-sdk';
+import type { GoalChange } from '@hilbras/kernel-api';
 
 import { STATUS_BULLET } from '#/tui/constant/symbols';
 import { currentTheme } from '#/tui/theme';

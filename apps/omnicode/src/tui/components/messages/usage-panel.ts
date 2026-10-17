@@ -7,7 +7,7 @@
 import type { Component } from '@hilbras/omnicode-tui';
 import { truncateToWidth, visibleWidth } from '@hilbras/omnicode-tui';
 import { formatDuration } from '@hilbras/omnicode-auth';
-import type { SessionUsage, TokenUsage } from '@hilbras/omnicode-sdk';
+import type { SessionUsage, TokenUsage } from '@hilbras/kernel-api';
 
 import {
   formatTokenCount,

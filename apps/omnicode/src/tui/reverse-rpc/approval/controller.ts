@@ -1,4 +1,4 @@
-import type { ApprovalResponse } from '@hilbras/omnicode-sdk';
+import type { ApprovalResponse } from '@hilbras/kernel-api';
 
 import { ReverseRpcController } from '#/tui/reverse-rpc/base-controller';
 import type { ApprovalPanelData } from '#/tui/reverse-rpc/types';

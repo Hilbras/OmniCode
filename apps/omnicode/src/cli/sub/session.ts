@@ -13,7 +13,7 @@ import {
   type ListSessionsOptions,
   type SessionSummary,
   type TelemetryClient,
-} from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
 import type { Command } from 'commander';
 
 import { createCliTelemetryBootstrap } from '#/cli/telemetry';
@@ -132,7 +132,7 @@ function formatRow(summary: SessionSummary, showWorkDir: boolean): string {
 }
 
 function sanitizeField(value: string): string {
-  return value.replaceAll(/[\x00-\x1f\x7f]+/g, ' ').trim();
+  return value.replaceAll(/[\x00-\x1F\x7F]+/g, ' ').trim();
 }
 
 function formatTimestamp(epochMs: number): string {

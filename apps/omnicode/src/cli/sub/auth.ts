@@ -13,7 +13,7 @@
  * path here goes through the cached-only credential resolution.
  */
 
-import { createOmnicodeHarness, type OmnicodeConfig, type OmnicodeHarness } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness, type OmnicodeConfig, type OmnicodeHarness } from '@hilbras/kernel-api';
 import type { OAuthTokenInspection } from '@hilbras/omnicode-auth';
 import type { Command } from 'commander';
 

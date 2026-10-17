@@ -5,7 +5,7 @@
  * MUST treat the returned promise as `Promise<never>`.
  */
 
-import { createOmnicodeHarness } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness } from '@hilbras/kernel-api';
 import { OAuthAccessDeniedError, type OmnicodeRegion } from '@hilbras/omnicode-auth';
 
 import { createOmnicodeCodeHostIdentity } from '#/cli/version';

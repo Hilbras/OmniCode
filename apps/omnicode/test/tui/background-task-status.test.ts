@@ -1,4 +1,4 @@
-import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@hilbras/omnicode-sdk';
+import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@hilbras/kernel-api';
 import { describe, expect, it } from 'vitest';
 
 import { formatBackgroundTaskTranscript } from '@/tui/utils/background-task-status';

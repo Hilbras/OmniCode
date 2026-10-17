@@ -77,6 +77,7 @@
         ./packages/omnicode-telemetry
         ./packages/omnicode-transcript
         ./packages/omnicode-tree-sitter-bash
+        ./Kernel/API
         ./apps/omnicode
         ./apps/omnicode-inspect
         ./apps/omnicode-vis
@@ -101,6 +102,7 @@
         "@hilbras/omnicode-telemetry"
         "@hilbras/omnicode-transcript"
         "@hilbras/omnicode-tree-sitter-bash"
+        "@hilbras/kernel-api"
         "@hilbras/omnicode"
         "@hilbras/omnicode-inspect"
         "@hilbras/omnicode-vis"

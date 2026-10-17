@@ -1,4 +1,4 @@
-import type { ApprovalRequest } from '@hilbras/omnicode-sdk';
+import type { ApprovalRequest } from '@hilbras/kernel-api';
 import { describe, expect, it, vi } from 'vitest';
 
 import { ApprovalController } from '#/tui/reverse-rpc/approval/controller';

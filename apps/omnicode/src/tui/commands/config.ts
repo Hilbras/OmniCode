@@ -7,7 +7,7 @@ import {
   type PermissionMode,
   type Session,
   type ThinkingEffort,
-} from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
 
 import { EditorSelectorComponent } from '../components/dialogs/editor-selector';
 import { EffortSelectorComponent } from '../components/dialogs/effort-selector';

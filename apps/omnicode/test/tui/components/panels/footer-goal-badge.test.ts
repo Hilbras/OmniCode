@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { FooterComponent } from '#/tui/components/chrome/footer';
-import type { GoalSnapshot } from '@hilbras/omnicode-sdk';
+import type { GoalSnapshot } from '@hilbras/kernel-api';
 import type { AppState } from '#/tui/types';
 
 const ANSI_SGR = /\[[0-9;]*m/g;

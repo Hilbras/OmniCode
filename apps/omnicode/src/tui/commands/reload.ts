@@ -1,4 +1,4 @@
-import type { OmnicodeConfig } from '@hilbras/omnicode-sdk';
+import type { OmnicodeConfig } from '@hilbras/kernel-api';
 
 import { currentTheme, lightColors } from '#/tui/theme';
 import { DEFAULT_MARKDOWN_CONFIG, loadTuiConfig, type TuiConfig } from '../config';

@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@hilbras/omnicode-sdk';
+import type { SessionSummary } from '@hilbras/kernel-api';
 import { describe, expect, it } from 'vitest';
 
 import { sessionRowsForPicker } from '#/tui/utils/session-picker-rows';

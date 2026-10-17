@@ -21,7 +21,7 @@ import {
   type SessionSummary,
   type ShellEnvironment,
   type TelemetryClient,
-} from '@hilbras/omnicode-sdk';
+} from '@hilbras/kernel-api';
 import type { Command } from 'commander';
 
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE } from '#/constant/app';

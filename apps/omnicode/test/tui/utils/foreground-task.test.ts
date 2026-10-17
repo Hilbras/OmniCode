@@ -1,4 +1,4 @@
-import type { BackgroundTaskInfo } from '@hilbras/omnicode-sdk';
+import type { BackgroundTaskInfo } from '@hilbras/kernel-api';
 import { describe, expect, it } from 'vitest';
 
 import { pickForegroundTask, pickForegroundTasks } from '@/tui/utils/foreground-task';

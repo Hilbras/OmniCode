@@ -1,4 +1,4 @@
-import type { ApprovalHandler, ApprovalRequest, ApprovalResponse } from '@hilbras/omnicode-sdk';
+import type { ApprovalHandler, ApprovalRequest, ApprovalResponse } from '@hilbras/kernel-api';
 
 import { adaptApprovalRequest } from './adapter';
 import type { ApprovalController } from './controller';

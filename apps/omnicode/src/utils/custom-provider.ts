@@ -15,7 +15,7 @@
  * second config dialect for the runtime to understand.
  */
 
-import type { ProviderConfig } from '@hilbras/omnicode-sdk';
+import type { ProviderConfig } from '@hilbras/kernel-api';
 
 import { OMNICODE_ALLOW_INSECURE_PROVIDER_HTTP_ENV } from '#/constant/app';
 

@@ -1,7 +1,7 @@
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { resolveOmnicodeHome } from '@hilbras/omnicode-sdk';
+import { resolveOmnicodeHome } from '@hilbras/kernel-api';
 import {
   runMigration,
   type MigrationPlan,

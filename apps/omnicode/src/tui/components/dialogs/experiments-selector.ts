@@ -6,7 +6,7 @@ import {
   visibleWidth,
   type Focusable,
 } from '@hilbras/omnicode-tui';
-import type { ExperimentalFeatureState } from '@hilbras/omnicode-sdk';
+import type { ExperimentalFeatureState } from '@hilbras/kernel-api';
 
 import { SELECT_POINTER } from '#/tui/constant/symbols';
 import { currentTheme } from '#/tui/theme';

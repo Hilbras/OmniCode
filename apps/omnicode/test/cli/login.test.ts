@@ -13,9 +13,9 @@ import { OAuthAccessDeniedError } from '@hilbras/omnicode-auth';
 
 const mockLogin = vi.fn();
 
-vi.mock('@hilbras/omnicode-sdk', async () => {
-  const actual = await vi.importActual<typeof import('@hilbras/omnicode-sdk')>(
-    '@hilbras/omnicode-sdk',
+vi.mock('@hilbras/kernel-api', async () => {
+  const actual = await vi.importActual<typeof import('@hilbras/kernel-api')>(
+    '@hilbras/kernel-api',
   );
   return {
     ...actual,
@@ -29,7 +29,7 @@ vi.mock('@hilbras/omnicode-sdk', async () => {
 
 vi.mock('#/utils/open-url', () => ({ openUrl: vi.fn() }));
 
-import { createOmnicodeHarness } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness } from '@hilbras/kernel-api';
 
 import { registerLoginCommand } from '#/cli/sub/login';
 import { openUrl } from '#/utils/open-url';

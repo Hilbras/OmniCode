@@ -7,7 +7,7 @@ import type { Component } from '@hilbras/omnicode-tui';
 import { truncateToWidth, visibleWidth } from '@hilbras/omnicode-tui';
 import chalk from 'chalk';
 
-import { effectiveModelAlias } from '@hilbras/omnicode-sdk';
+import { effectiveModelAlias } from '@hilbras/kernel-api';
 
 import { isRainbowDancing, renderDanceWelcomeHeader } from '#/tui/easter-eggs/dance';
 import type { AppState } from '#/tui/types';
