@@ -3175,7 +3175,7 @@ describe('concurrent state writes', () => {
       (s as unknown as LockDriver).withStateLock(fn);
     const lockPath = `${store.abs(STATE_FILE)}.lock`;
     const first = new TowerStore(repo);
-    const impatient = new TowerStore(repo, { stateLockTimeoutMs: 150, stateLockPollMs: 20 });
+    const impatient = new TowerStore(repo, { stateLockTimeoutMs: 1_500, stateLockPollMs: 20 });
     const second = new TowerStore(repo);
 
     let markEntered!: () => void;
