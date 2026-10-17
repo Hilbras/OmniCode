@@ -6,6 +6,7 @@
  */
 
 import '@hilbras/omnicode-addons';
+import '@hilbras/omnicode-tools';
 
 import {
   createOmnicodeHarness,

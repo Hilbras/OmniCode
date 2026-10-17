@@ -207,6 +207,9 @@ importers:
       '@hilbras/omnicode-telemetry':
         specifier: workspace:^
         version: link:../../packages/omnicode-telemetry
+      '@hilbras/omnicode-tools':
+        specifier: workspace:^
+        version: link:../../Kernel/Tools
       '@hilbras/omnicode-tui':
         specifier: workspace:^
         version: link:../../packages/omnicode-tui
@@ -674,6 +677,9 @@ importers:
       '@fastify/swagger':
         specifier: ^9.7.0
         version: 9.7.0
+      '@hilbras/omnicode-addons':
+        specifier: workspace:^
+        version: link:../../Kernel/Addons
       '@hilbras/omnicode-auth':
         specifier: workspace:^
         version: link:../omnicode-auth

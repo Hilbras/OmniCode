@@ -1,3 +1,6 @@
+import '@hilbras/omnicode-addons';
+import '@hilbras/omnicode-tools';
+
 export { startServer } from './start';
 export type { ServerHostIdentity, ServerStartOptions, RunningServer } from './start';
 export { okEnvelope, errEnvelope } from './envelope';

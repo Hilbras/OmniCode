@@ -96,6 +96,7 @@
     "@hilbras/omnicode-remote": "workspace:^",
     "@hilbras/omnicode-server": "workspace:^",
     "@hilbras/omnicode-telemetry": "workspace:^",
+    "@hilbras/omnicode-tools": "workspace:^",
     "@hilbras/omnicode-tui": "workspace:^",
     "@hilbras/omnicode-vis-server": "workspace:^",
     "@hilbras/omnicode-vis-web": "workspace:*",
