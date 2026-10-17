@@ -1,4 +1,4 @@
-import type { OmnicodeConfig, OmnicodeConfigPatch } from '@hilbras/kernel-api';
+import type { OmnicodeConfig, OmnicodeConfigPatch } from '@hilbras/api';
 
 import {
   buildFreeTierAliases,

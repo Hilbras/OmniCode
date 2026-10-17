@@ -1,4 +1,4 @@
-import type { ModelAlias } from '@hilbras/kernel-api';
+import type { ModelAlias } from '@hilbras/api';
 import chalk from 'chalk';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 

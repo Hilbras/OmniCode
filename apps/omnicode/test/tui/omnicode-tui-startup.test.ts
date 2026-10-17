@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { log, type GoalSnapshot } from '@hilbras/kernel-api';
+import { log, type GoalSnapshot } from '@hilbras/api';
 import type { MigrationPlan } from '@hilbras/omnicode-migration';
 import { describe, expect, it, vi } from 'vitest';
 

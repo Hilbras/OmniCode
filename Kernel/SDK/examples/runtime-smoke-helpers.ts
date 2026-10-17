@@ -1,5 +1,5 @@
 import type { OmnicodeHostIdentity } from '@hilbras/omnicode-auth';
-import { type OmnicodeHarness, type Session, type Event } from '@hilbras/omnicode-sdk';
+import { type OmnicodeHarness, type Session, type Event } from '@hilbras/agent-sdk';
 
 export function smokeIdentityFromEnv(): OmnicodeHostIdentity {
   const version = process.env['OMNICODE_SMOKE_VERSION'];

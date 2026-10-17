@@ -2,7 +2,7 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createOmnicodeHarness, type OmnicodeHarness } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness, type OmnicodeHarness } from '@hilbras/agent-sdk';
 
 import { smokeIdentityFromEnv, runPromptToEnd } from './runtime-smoke-helpers';
 

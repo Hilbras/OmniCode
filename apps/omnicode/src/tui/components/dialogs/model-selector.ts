@@ -1,4 +1,4 @@
-import { effectiveModelAlias, type ModelAlias, type ThinkingEffort } from '@hilbras/kernel-api';
+import { effectiveModelAlias, type ModelAlias, type ThinkingEffort } from '@hilbras/api';
 import {
   Container,
   Key,

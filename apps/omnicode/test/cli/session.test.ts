@@ -13,7 +13,7 @@ import {
   registerSessionCommand,
   type SessionListDeps,
 } from '#/cli/sub/session';
-import type { ListSessionsOptions, SessionSummary } from '@hilbras/kernel-api';
+import type { ListSessionsOptions, SessionSummary } from '@hilbras/api';
 
 function summary(overrides: Partial<SessionSummary> = {}): SessionSummary {
   return {

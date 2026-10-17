@@ -20,7 +20,7 @@
  * copy is how the two drift apart.
  */
 
-import type { OmnicodeConfig } from '@hilbras/kernel-api';
+import type { OmnicodeConfig } from '@hilbras/api';
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);

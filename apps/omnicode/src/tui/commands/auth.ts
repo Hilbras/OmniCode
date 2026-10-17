@@ -10,7 +10,7 @@ import {
   type ManagedOmnicodeConfigShape,
   type OpenPlatformDefinition,
 } from '@hilbras/omnicode-auth';
-import { log } from '@hilbras/kernel-api';
+import { log } from '@hilbras/api';
 
 import type { ChoiceOption } from '../components/dialogs/choice-picker';
 import { DEFAULT_OAUTH_PROVIDER_NAME, PRODUCT_NAME } from '../constant/omnicode-tui';

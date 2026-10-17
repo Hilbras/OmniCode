@@ -31,7 +31,7 @@ import type {
   TurnStepStartedEvent,
   TokenUsage,
   WarningEvent,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 
 import { MoonLoader } from '../components/chrome/moon-loader';
 import { buildGoalMarker } from '../components/messages/goal-markers';

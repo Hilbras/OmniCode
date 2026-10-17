@@ -13,7 +13,7 @@
 | desktop 与 web 用户 | 源码在 code-app 仓库，只消费 omnicode-server 的 `/api/v1` REST 与 `/api/v1/ws`。本仓 diff 看不到它们的用法，改契约时必须点名让作者去对方仓库核对 | `packages/omnicode-server/src/routes/`、`packages/omnicode-server/src/transport/ws/`、`docs/en/reference/server-api.md` |
 | VS Code 扩展用户 | 走 SDK 事件适配层，webview 有自己的渲染契约（#3250：v2 不再发 `display` 字段导致卡片空白） | `apps/vscode/` |
 | ACP 客户端用户 | Zed 等，`omnicode acp`。stdio MCP 是 ACP 的默认传输，客户端会无条件发（#3167）；能力矩阵是公开承诺（#3081） | `packages/omnicode-acp/`、`docs/en/reference/omnicode-acp.md` |
-| SDK 调用方 | `@hilbras/omnicode-sdk` 的导出面；其中 `OmnicodeForCodingProvider` 走 omnicode-llm 的 provider 实现，CLI 与服务端不用 omnicode-llm | `Kernel/SDK/src/index.ts`、`Kernel/SDK/package.json` 的 `exports`、`packages/omnicode-llm/src/providers/` |
+| SDK 调用方 | `@hilbras/agent-sdk` 的导出面；其中 `OmnicodeForCodingProvider` 走 omnicode-llm 的 provider 实现，CLI 与服务端不用 omnicode-llm | `Kernel/SDK/src/index.ts`、`Kernel/SDK/package.json` 的 `exports`、`packages/omnicode-llm/src/providers/` |
 | 远程控制用户 | `omnicode web --remote-control`，凭据槽位与 relay 按登录区域选择（#3969） | `packages/omnicode-remote/` |
 
 ### provider 方言

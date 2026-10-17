@@ -1,4 +1,4 @@
-import type { QuestionRequest } from '@hilbras/kernel-api';
+import type { QuestionRequest } from '@hilbras/api';
 import { describe, expect, it, vi } from 'vitest';
 
 import { QuestionController } from '#/tui/reverse-rpc/question/controller';

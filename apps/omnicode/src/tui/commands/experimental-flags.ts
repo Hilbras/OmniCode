@@ -1,4 +1,4 @@
-import type { ExperimentalFeatureState, ExperimentalFlagMap } from '@hilbras/kernel-api';
+import type { ExperimentalFeatureState, ExperimentalFlagMap } from '@hilbras/api';
 
 import { experimentalFeatureMap } from '#/utils/experimental-features';
 

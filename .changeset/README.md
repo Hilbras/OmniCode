@@ -11,7 +11,7 @@ Current publishable packages:
 | Package | Directory | Description |
 | --- | --- | --- |
 | `@hilbras/omnicode` | `apps/omnicode` | CLI / TUI application — provides the `omnicode` command after install |
-| `@hilbras/omnicode-sdk` | `Kernel/SDK` | Public TypeScript SDK |
+| `@hilbras/agent-sdk` | `Kernel/SDK` | Public TypeScript SDK |
 
 All other workspace packages are private internal packages, are not published to npm, and are excluded via `ignore` in `.changeset/config.json`:
 
@@ -45,9 +45,9 @@ Example scenarios:
 | Only modifies TUI behavior in `@hilbras/omnicode` | Add `patch` / `minor` / `major` to `@hilbras/omnicode` |
 | Only modifies internal packages, no user-visible change in SDK / CLI | Usually no changeset needed |
 | Internal package fix changes the CLI user experience | Add a changeset to `@hilbras/omnicode` describing the user-visible fix |
-| Internal package adds a new capability exposed by the SDK | Add a changeset to `@hilbras/omnicode-sdk` |
-| SDK behavior change affects CLI user experience | Add changesets to both `@hilbras/omnicode-sdk` and `@hilbras/omnicode` |
-| Provider abstraction change affects SDK / CLI | Add changesets to the affected `@hilbras/omnicode-sdk` and/or `@hilbras/omnicode` |
+| Internal package adds a new capability exposed by the SDK | Add a changeset to `@hilbras/agent-sdk` |
+| SDK behavior change affects CLI user experience | Add changesets to both `@hilbras/agent-sdk` and `@hilbras/omnicode` |
+| Provider abstraction change affects SDK / CLI | Add changesets to the affected `@hilbras/agent-sdk` and/or `@hilbras/omnicode` |
 | Test-only, internal refactor, docs, or private debug tooling changes | Usually no changeset needed |
 | Bundled official plugin change under `plugins/` (e.g. `omnicode-datasource`) | No changeset — the plugin is versioned via its own `omnicode.plugin.json` / `plugins/marketplace.json` and shipped through the marketplace CDN, not the npm package |
 
@@ -152,7 +152,7 @@ The root-level `pnpm run publish` first runs typecheck, lint, sherif, test, buil
 - Changes under `plugins/` (the bundled official plugins such as `omnicode-datasource`) do **not** need a changeset: each plugin carries its own version in `omnicode.plugin.json` and `plugins/marketplace.json` and is distributed via the marketplace CDN, separately from the `@hilbras/omnicode` npm package.
 - Changeset files must be committed to the repository — release PRs are only triggered after they're merged.
 - Release PRs require human review and merge; they will not publish automatically.
-- Do not add release changesets for private internal packages; only select `@hilbras/omnicode` and `@hilbras/omnicode-sdk`.
+- Do not add release changesets for private internal packages; only select `@hilbras/omnicode` and `@hilbras/agent-sdk`.
 - If a change in an underlying internal package alters user-visible behavior or public API of a publishable package, add a changeset to the affected publishable package. For example, when a bug fixed in `@hilbras/omnicode-llm` resolves an issue CLI users encounter, add a changeset to `@hilbras/omnicode` describing the user-visible fix.
 - `@hilbras/omnicode` is the official CLI package name; after a global install it provides the `omnicode` command.
 - Make sure each publishable package on npm has a Trusted Publisher configured.

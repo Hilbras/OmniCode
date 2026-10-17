@@ -1,7 +1,7 @@
 import {
   MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE,
   type ToolUpdate,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

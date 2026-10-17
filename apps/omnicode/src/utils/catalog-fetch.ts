@@ -4,7 +4,7 @@ import {
   loadBuiltInCatalog,
   type Catalog,
   type FetchCatalogOptions,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 
 import { BUILT_IN_CATALOG_JSON } from '#/built-in-catalog';
 

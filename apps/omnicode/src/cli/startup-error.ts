@@ -1,4 +1,4 @@
-import { OMNICODE_ERROR_INFO, isOmnicodeError } from '@hilbras/kernel-api';
+import { OMNICODE_ERROR_INFO, isOmnicodeError } from '@hilbras/api';
 import { chalkStderr } from 'chalk';
 
 import { STARTUP_ERROR_COLOR } from '#/constant/startup-error';

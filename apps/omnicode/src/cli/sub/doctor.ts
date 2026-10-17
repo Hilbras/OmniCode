@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, resolve } from 'node:path';
 
-import { resolveConfigPath, type OmnicodeConfigValidationIssue } from '@hilbras/kernel-api';
+import { resolveConfigPath, type OmnicodeConfigValidationIssue } from '@hilbras/api';
 import type { Command } from 'commander';
 import { z } from 'zod';
 

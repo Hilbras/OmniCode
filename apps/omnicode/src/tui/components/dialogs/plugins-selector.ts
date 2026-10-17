@@ -12,7 +12,7 @@ import type {
   PluginInfo,
   PluginMcpServerInfo,
   PluginSummary,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 import chalk from 'chalk';
 
 import { SELECT_POINTER } from '#/tui/constant/symbols';

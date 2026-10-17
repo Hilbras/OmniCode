@@ -6,7 +6,7 @@
  * core payloads into these shapes for panel components.
  */
 
-import type { QuestionAnswerMethod } from '@hilbras/kernel-api';
+import type { QuestionAnswerMethod } from '@hilbras/api';
 
 // ── Display blocks (approval panel) ──────────────────────────────────
 

@@ -5,7 +5,7 @@ import {
   type OAuthRef,
   type Session,
   type ThinkingEffort,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 
 import { createOmnicodeCodeUserAgent } from '#/cli/version';
 

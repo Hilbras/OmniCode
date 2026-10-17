@@ -28,8 +28,8 @@ Omnicode 对 CLI/TUI 行为、agent 工作流和公开 API 已有自己的主张
 - `apps/omnicode` — CLI / TUI
 - `apps/vscode` — VS Code 插件
 - `apps/omnicode-vis` — 会话调试可视化工具
-- `Kernel/SDK` — 公开 TypeScript SDK（`@hilbras/omnicode-sdk`）
-- `Kernel/API` — Kernel 包之间的统一连接层（`@hilbras/kernel-api`）
+- `Kernel/SDK` — 公开 TypeScript SDK（`@hilbras/agent-sdk`）
+- `Kernel/API` — Kernel 包之间的统一连接层（`@hilbras/api`）
 - `packages/omnicode-core` — 当前的 agent 引擎（DI Scope 架构）
 - `packages/omnicode-client`、`packages/omnicode-server`、`packages/omnicode-transcript`、`packages/omnicode-llm`、`packages/omnicode-kaos`、`packages/omnicode-auth`、`packages/omnicode-telemetry` — 内部引擎包
 - `docs/` — VitePress 双语文档站

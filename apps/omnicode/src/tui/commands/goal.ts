@@ -1,4 +1,4 @@
-import { ErrorCodes, isOmnicodeError, type PermissionMode } from '@hilbras/kernel-api';
+import { ErrorCodes, isOmnicodeError, type PermissionMode } from '@hilbras/api';
 
 import {
   GoalStartPermissionPromptComponent,

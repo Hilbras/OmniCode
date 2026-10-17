@@ -1,4 +1,4 @@
-import type { GoalSnapshot } from '@hilbras/kernel-api';
+import type { GoalSnapshot } from '@hilbras/api';
 
 import { formatTokenCount } from '#/utils/usage/usage-format';
 

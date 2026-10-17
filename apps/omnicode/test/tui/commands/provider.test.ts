@@ -7,7 +7,7 @@
  * a small host rig.
  * Run: pnpm -C apps/omnicode exec vitest run test/tui/commands/provider.test.ts
  */
-import type { OmnicodeConfig, ModelAlias } from '@hilbras/kernel-api';
+import type { OmnicodeConfig, ModelAlias } from '@hilbras/api';
 import type { Component, Focusable } from '@hilbras/omnicode-tui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

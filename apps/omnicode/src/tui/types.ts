@@ -8,7 +8,7 @@ import type {
   ThinkingEffort,
   TokenUsage,
   ToolInputDisplay,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 
 import type { MarkdownConfig, NotificationsConfig, StatusLineConfig, TuiMode, UpgradePreferences } from './config';
 import type { PendingApproval, PendingQuestion } from './reverse-rpc/types';

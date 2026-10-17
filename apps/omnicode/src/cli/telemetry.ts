@@ -7,7 +7,7 @@ import {
   resolveOmnicodeHome,
   type OmnicodeConfig,
   type TelemetryClient,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 
 import type { PromptHarness } from './prompt-session';
 import {

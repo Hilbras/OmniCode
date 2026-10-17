@@ -44,13 +44,13 @@ import { copyFileSync, mkdirSync, readdirSync, statSync, unlinkSync, writeFileSy
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { PromptPart, Session } from '@hilbras/kernel-api';
+import type { PromptPart, Session } from '@hilbras/api';
 import {
   buildDaemonFileUrl,
   buildImageCompressionCaption,
   buildMediaPathTag,
   sessionMediaOriginalsDir,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 
 import { getCacheDir } from '#/utils/paths';
 

@@ -5,7 +5,7 @@ import {
   type CatalogModel,
   type ModelAlias,
   type ThinkingEffort,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 import { capabilitiesForModel } from '@hilbras/omnicode-auth';
 import type {
   ManagedOmnicodeCodeModelInfo,

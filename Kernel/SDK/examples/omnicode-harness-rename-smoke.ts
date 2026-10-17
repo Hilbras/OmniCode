@@ -2,8 +2,8 @@ import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { createOmnicodeHarness } from '@hilbras/omnicode-sdk';
-import type { Event } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness } from '@hilbras/agent-sdk';
+import type { Event } from '@hilbras/agent-sdk';
 
 import { smokeIdentityFromEnv } from './runtime-smoke-helpers';
 

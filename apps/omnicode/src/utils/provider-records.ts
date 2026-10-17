@@ -22,7 +22,7 @@
  * Author: Hilbras.
  */
 
-import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/kernel-api';
+import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/api';
 
 /**
  * Writes the complete `providers` map with replace semantics.

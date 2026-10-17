@@ -1,4 +1,4 @@
-import type { ApprovalRequest, ApprovalResponse, ToolInputDisplay } from '@hilbras/kernel-api';
+import type { ApprovalRequest, ApprovalResponse, ToolInputDisplay } from '@hilbras/api';
 
 import type { ApprovalPanelResponse } from '#/tui/components/dialogs/approval-panel';
 import { goalStartOptions } from '#/tui/components/dialogs/goal-start-permission-prompt';

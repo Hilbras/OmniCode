@@ -1,4 +1,4 @@
-import { DEFAULT_CATALOG_URL } from '@hilbras/kernel-api';
+import { DEFAULT_CATALOG_URL } from '@hilbras/api';
 
 import { fetchCatalogOrBuiltIn } from './catalog-fetch';
 

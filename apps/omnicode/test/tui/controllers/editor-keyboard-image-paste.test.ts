@@ -30,7 +30,7 @@ import {
 } from '#/tui/controllers/editor-keyboard';
 import { ImageAttachmentStore } from '#/tui/utils/image-attachment-store';
 import { parseImageMeta } from '#/utils/image/image-mime';
-import { ImageLimits, type OmnicodeHarness } from '@hilbras/kernel-api';
+import { ImageLimits, type OmnicodeHarness } from '@hilbras/api';
 
 // vitest hoists vi.mock/vi.hoisted above the imports above, so the mock still
 // applies to the editor-keyboard module that pulls in readClipboardMedia.

@@ -72,7 +72,7 @@ importers:
 
   Kernel/API:
     dependencies:
-      '@hilbras/omnicode-sdk':
+      '@hilbras/agent-sdk':
         specifier: workspace:^
         version: link:../SDK
 
@@ -128,7 +128,7 @@ importers:
         specifier: ^8.18.0
         version: 8.20.0
     devDependencies:
-      '@hilbras/kernel-api':
+      '@hilbras/api':
         specifier: workspace:^
         version: link:../../Kernel/API
       '@hilbras/omnicode-acp':

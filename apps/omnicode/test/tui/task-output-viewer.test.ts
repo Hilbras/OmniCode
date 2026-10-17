@@ -1,5 +1,5 @@
 import type { Terminal } from '@hilbras/omnicode-tui';
-import type { BackgroundTaskInfo } from '@hilbras/kernel-api';
+import type { BackgroundTaskInfo } from '@hilbras/api';
 import { describe, expect, it, vi } from 'vitest';
 
 import { TaskOutputViewer } from '@/tui/components/dialogs/task-output-viewer';

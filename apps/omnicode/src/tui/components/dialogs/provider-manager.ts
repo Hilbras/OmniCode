@@ -33,7 +33,7 @@
  * `setOptions`.
  */
 
-import type { ProviderConfig } from '@hilbras/kernel-api';
+import type { ProviderConfig } from '@hilbras/api';
 import {
   getOpenPlatformById,
   isOpenPlatformId,

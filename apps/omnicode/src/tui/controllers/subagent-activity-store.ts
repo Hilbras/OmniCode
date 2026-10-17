@@ -18,7 +18,7 @@
  * Pure logic — no TUI state, no components — so it is unit-testable.
  */
 
-import type { Event } from '@hilbras/kernel-api';
+import type { Event } from '@hilbras/api';
 
 import {
   MAX_SUBAGENT_ACTIVITY_STEPS,

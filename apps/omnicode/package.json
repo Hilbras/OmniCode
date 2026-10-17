@@ -92,7 +92,7 @@
     "@hilbras/omnicode-migration": "workspace:^",
     "@hilbras/omnicode-minidb": "workspace:^",
     "@hilbras/omnicode-remote": "workspace:^",
-    "@hilbras/kernel-api": "workspace:^",
+    "@hilbras/api": "workspace:^",
     "@hilbras/omnicode-server": "workspace:^",
     "@hilbras/omnicode-telemetry": "workspace:^",
     "@hilbras/omnicode-tui": "workspace:^",

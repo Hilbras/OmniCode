@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { log } from '@hilbras/kernel-api';
+import { log } from '@hilbras/api';
 import { resetCapabilitiesCache, setCapabilities, type Component } from '@hilbras/omnicode-tui';
 
 import { __pluginsCommandInternals } from '#/tui/commands/plugins';

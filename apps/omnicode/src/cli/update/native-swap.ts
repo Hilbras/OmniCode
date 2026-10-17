@@ -23,7 +23,7 @@ import { basename, dirname, join } from 'node:path';
 
 import { gt } from 'semver';
 
-import { log } from '@hilbras/kernel-api';
+import { log } from '@hilbras/api';
 
 import {
   OMNICODE_NATIVE_STAGED_STATE_FILE_NAME,

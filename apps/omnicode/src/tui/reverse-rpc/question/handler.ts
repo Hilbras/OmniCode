@@ -1,4 +1,4 @@
-import type { QuestionHandler, QuestionRequest, QuestionResult } from '@hilbras/kernel-api';
+import type { QuestionHandler, QuestionRequest, QuestionResult } from '@hilbras/api';
 
 import type {
   QuestionPanelData,

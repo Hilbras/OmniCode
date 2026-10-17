@@ -6,7 +6,7 @@
  * place happens on the next startup (see `cli/update/native-swap.ts`).
  */
 
-import { log } from '@hilbras/kernel-api';
+import { log } from '@hilbras/api';
 
 import {
   readUpdateInstallLockVersion,

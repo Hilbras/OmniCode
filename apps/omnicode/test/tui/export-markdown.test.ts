@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ContentPart, ToolCall } from '@hilbras/kernel-api';
-import type { ContextMessage, PromptOrigin } from '@hilbras/kernel-api';
+import type { ContentPart, ToolCall } from '@hilbras/api';
+import type { ContextMessage, PromptOrigin } from '@hilbras/api';
 
 import {
   buildExportMarkdown,

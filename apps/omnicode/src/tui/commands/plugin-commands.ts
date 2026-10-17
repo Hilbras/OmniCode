@@ -1,4 +1,4 @@
-import type { PluginCommandDef } from '@hilbras/kernel-api';
+import type { PluginCommandDef } from '@hilbras/api';
 
 import type { OmnicodeSlashCommand } from './types';
 

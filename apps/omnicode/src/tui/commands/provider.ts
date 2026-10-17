@@ -12,7 +12,7 @@ import {
   type OAuthRef,
   type ProviderConfig,
   type ThinkingEffort,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 import { readCustomRegistrySource } from '@hilbras/omnicode-auth';
 
 import { createOmnicodeCodeUserAgent } from '#/cli/version';

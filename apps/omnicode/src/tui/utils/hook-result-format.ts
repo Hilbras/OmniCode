@@ -1,4 +1,4 @@
-import type { HookResultEvent } from '@hilbras/kernel-api';
+import type { HookResultEvent } from '@hilbras/api';
 
 export function formatHookResultMarkdown(event: HookResultEvent): string {
   return `*${formatHookResultTitle(event)}*\n\n${formatHookResultBody(event)}`;

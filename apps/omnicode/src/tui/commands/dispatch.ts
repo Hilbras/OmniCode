@@ -1,6 +1,6 @@
 import type { Component, Focusable } from '@hilbras/omnicode-tui';
 import type { DeviceAuthorization } from '@hilbras/omnicode-auth';
-import type { OmnicodeHarness, Session } from '@hilbras/kernel-api';
+import type { OmnicodeHarness, Session } from '@hilbras/api';
 
 import type { ColorToken, ThemeName } from '#/tui/theme';
 

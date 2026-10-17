@@ -1,4 +1,4 @@
-import type { SessionSummary } from '@hilbras/kernel-api';
+import type { SessionSummary } from '@hilbras/api';
 
 import type { SessionRow } from '#/tui/components/dialogs/session-picker';
 

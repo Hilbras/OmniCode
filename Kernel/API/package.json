@@ -1,5 +1,5 @@
 {
-  "name": "@hilbras/kernel-api",
+  "name": "@hilbras/api",
   "version": "0.1.0",
   "description": "The one surface consumers of the Kernel are allowed to import.",
   "license": "MIT",
@@ -15,7 +15,7 @@
     }
   },
   "dependencies": {
-    "@hilbras/omnicode-sdk": "workspace:^"
+    "@hilbras/agent-sdk": "workspace:^"
   },
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",

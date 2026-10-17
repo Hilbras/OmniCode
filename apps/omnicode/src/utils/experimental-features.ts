@@ -1,7 +1,7 @@
 import type {
   ExperimentalFeatureState,
   ExperimentalFlagMap,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 
 export function experimentalFeatureMap(
   features: readonly Pick<ExperimentalFeatureState, 'id' | 'enabled'>[],

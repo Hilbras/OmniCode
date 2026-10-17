@@ -1,4 +1,4 @@
-import type { ShellEnvironment } from '@hilbras/kernel-api';
+import type { ShellEnvironment } from '@hilbras/api';
 
 function detectMultiplexer(): string | undefined {
   if (process.env['TMUX']) return 'tmux';

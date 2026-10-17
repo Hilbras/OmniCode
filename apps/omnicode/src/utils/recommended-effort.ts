@@ -1,5 +1,5 @@
 import { isManagedOmnicodeCodeBaseUrl } from '@hilbras/omnicode-auth';
-import type { OmnicodeConfig, OmnicodeConfigPatch, ModelAlias } from '@hilbras/kernel-api';
+import type { OmnicodeConfig, OmnicodeConfigPatch, ModelAlias } from '@hilbras/api';
 import type { TelemetryProperties } from '@hilbras/omnicode-telemetry';
 
 import { getRecommendedEffortStateFile } from '#/utils/paths';

@@ -1,4 +1,4 @@
-import type { ExperimentalFeatureState } from '@hilbras/kernel-api';
+import type { ExperimentalFeatureState } from '@hilbras/api';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

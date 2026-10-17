@@ -1,4 +1,4 @@
-import { ErrorCodes, OmnicodeError } from '@hilbras/kernel-api';
+import { ErrorCodes, OmnicodeError } from '@hilbras/api';
 import { describe, expect, it } from 'vitest';
 
 import { STREAMING_ARGS_PREVIEW_MAX_CHARS } from '#/tui/constant/streaming';

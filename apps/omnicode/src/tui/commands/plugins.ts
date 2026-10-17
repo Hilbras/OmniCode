@@ -7,7 +7,7 @@ import {
   type PluginInfo,
   type PluginSummary,
   type Session,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 import { Spacer } from '@hilbras/omnicode-tui';
 
 import { Markdown } from '#/tui/components/markdown/markdown';

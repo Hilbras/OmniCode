@@ -7,7 +7,7 @@
  */
 
 import type { Component, Focusable } from '@hilbras/omnicode-tui';
-import type { OmnicodeHarness, Session, TokenUsage } from '@hilbras/kernel-api';
+import type { OmnicodeHarness, Session, TokenUsage } from '@hilbras/api';
 
 import { getCacheHintConfig, peekCacheHintConfig } from '#/utils/cache-hint-config';
 import { currentTuiConfig } from '../commands/config';

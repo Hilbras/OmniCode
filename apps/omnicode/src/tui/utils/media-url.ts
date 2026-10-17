@@ -1,4 +1,4 @@
-import { isDaemonFileUrl } from '@hilbras/kernel-api';
+import { isDaemonFileUrl } from '@hilbras/api';
 
 export type MediaUrlKind = 'audio' | 'image' | 'video';
 

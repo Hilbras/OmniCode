@@ -4,7 +4,7 @@ import type {
   OmnicodeHarness,
   Session,
   TurnEndedEvent,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 
 import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/omnicode-tui';
 import { BtwPanelComponent } from '../components/panes/btw-panel';

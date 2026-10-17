@@ -1,4 +1,4 @@
-import type { BackgroundTaskInfo } from '@hilbras/kernel-api';
+import type { BackgroundTaskInfo } from '@hilbras/api';
 
 function isDetachableForegroundTask(t: BackgroundTaskInfo): boolean {
   return (

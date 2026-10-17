@@ -1,5 +1,5 @@
 // T8.4 driver: create session with explicit id, twice concurrently in same process.
-import { createOmnicodeHarness, type OmnicodeHarness } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness, type OmnicodeHarness } from '@hilbras/agent-sdk';
 
 const workDir = process.argv[2]!;
 const homeDir = process.argv[3]!;

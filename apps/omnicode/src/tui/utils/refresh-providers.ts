@@ -5,7 +5,7 @@ import {
   type RefreshProviderScope,
   type RefreshResult,
 } from '@hilbras/omnicode-auth';
-import type { OmnicodeConfig, OmnicodeConfigPatch, OAuthRef } from '@hilbras/kernel-api';
+import type { OmnicodeConfig, OmnicodeConfigPatch, OAuthRef } from '@hilbras/api';
 
 import { syncConfiguredFreeTiers } from '#/utils/free-tier-sync';
 

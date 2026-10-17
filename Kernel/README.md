@@ -7,8 +7,8 @@ reach these through `Kernel/API` rather than importing each other directly.
 
 | Package | Name | Role |
 |---|---|---|
-| `API` | `@hilbras/kernel-api` | the single connection surface between kernel packages; re-exports the SDK |
-| `SDK` | `@hilbras/omnicode-sdk` | the public TypeScript SDK and harness |
+| `API` | `@hilbras/api` | the single connection surface between kernel packages; re-exports the SDK |
+| `SDK` | `@hilbras/agent-sdk` | the public TypeScript SDK and harness |
 
 ## Current status
 

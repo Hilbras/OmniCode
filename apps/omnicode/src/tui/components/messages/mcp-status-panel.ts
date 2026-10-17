@@ -1,4 +1,4 @@
-import type { McpServerInfo } from '@hilbras/kernel-api';
+import type { McpServerInfo } from '@hilbras/api';
 
 import { currentTheme } from '#/tui/theme';
 

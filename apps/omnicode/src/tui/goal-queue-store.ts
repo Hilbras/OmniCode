@@ -4,7 +4,7 @@ import { dirname, join } from 'node:path';
 import {
   ErrorCodes,
   OmnicodeError,
-} from '@hilbras/kernel-api';
+} from '@hilbras/api';
 
 const GOAL_QUEUE_FILE = 'upcoming-goals.json';
 const GOAL_QUEUE_VERSION = 1;

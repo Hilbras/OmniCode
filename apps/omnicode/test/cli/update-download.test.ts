@@ -30,9 +30,9 @@ vi.mock('#/cli/update/native-stage', () => ({
   stagedExePath: mocks.stagedExePath,
 }));
 
-vi.mock('@hilbras/kernel-api', async () => {
-  const actual = await vi.importActual<typeof import('@hilbras/kernel-api')>(
-    '@hilbras/kernel-api',
+vi.mock('@hilbras/api', async () => {
+  const actual = await vi.importActual<typeof import('@hilbras/api')>(
+    '@hilbras/api',
   );
   return {
     ...actual,

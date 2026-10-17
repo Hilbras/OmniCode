@@ -1,4 +1,4 @@
-import type { GoalSnapshot } from '@hilbras/kernel-api';
+import type { GoalSnapshot } from '@hilbras/api';
 
 import { parseGoalCommand } from '#/tui/commands/index';
 

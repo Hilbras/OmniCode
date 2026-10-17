@@ -1,4 +1,4 @@
-import type { Event, ResumedSessionState } from '@hilbras/kernel-api';
+import type { Event, ResumedSessionState } from '@hilbras/api';
 import {
   Container,
   Text,

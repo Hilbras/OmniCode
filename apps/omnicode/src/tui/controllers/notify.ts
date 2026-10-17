@@ -1,4 +1,4 @@
-import type { Event, ResumedSessionState } from '@hilbras/kernel-api';
+import type { Event, ResumedSessionState } from '@hilbras/api';
 
 import type { NotifyEntry } from '#/tui/components/chrome/notify-panel';
 import { MAIN_AGENT_ID } from '#/tui/constant/omnicode-tui';

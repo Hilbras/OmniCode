@@ -1,4 +1,4 @@
-import type { McpServerInfo, McpServerStatusEvent } from '@hilbras/kernel-api';
+import type { McpServerInfo, McpServerStatusEvent } from '@hilbras/api';
 
 export type McpServerStatusSnapshot = McpServerInfo | McpServerStatusEvent['server'];
 

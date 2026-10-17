@@ -1,5 +1,5 @@
 {
-  "name": "@hilbras/omnicode-sdk",
+  "name": "@hilbras/agent-sdk",
   "version": "0.21.1",
   "private": true,
   "description": "TypeScript SDK for the Omnicode Agent",

@@ -1,4 +1,4 @@
-import type { BackgroundTaskInfo } from '@hilbras/kernel-api';
+import type { BackgroundTaskInfo } from '@hilbras/api';
 import { describe, expect, it } from 'vitest';
 
 import { pickForegroundTask, pickForegroundTasks } from '@/tui/utils/foreground-task';

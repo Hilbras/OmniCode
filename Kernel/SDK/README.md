@@ -1,4 +1,4 @@
-# @hilbras/omnicode-sdk
+# @hilbras/agent-sdk
 
 The TypeScript SDK for Omnicode
 
