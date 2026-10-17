@@ -40,6 +40,10 @@ function isDelimiter(ch: string): boolean {
   return DELIMITERS.has(ch);
 }
 
+function codePointOf(text: string): number {
+  return text.codePointAt(0) ?? text.codePointAt(0);
+}
+
 function readLiteralString(src: string, start: number): { token: PdfToken; next: number } {
   const bytes: number[] = [];
   let depth = 1;
@@ -70,7 +74,7 @@ function readLiteralString(src: string, start: number): { token: PdfToken; next:
         case '(':
         case ')':
         case '\\':
-          bytes.push(next.codePointAt(0));
+          bytes.push(codePointOf(next));
           break;
         case '\r':
           if (src[i] === '\n') i += 1;
@@ -88,7 +92,7 @@ function readLiteralString(src: string, start: number): { token: PdfToken; next:
             }
             bytes.push(Number.parseInt(octal, 8) & 0xff);
           } else {
-            bytes.push(next.codePointAt(0));
+            bytes.push(codePointOf(next));
           }
           break;
         }
@@ -110,7 +114,7 @@ function readLiteralString(src: string, start: number): { token: PdfToken; next:
       i += 1;
       continue;
     }
-    bytes.push(ch.codePointAt(0) & 0xff);
+    bytes.push(codePointOf(ch) & 0xff);
     i += 1;
   }
   return { token: { kind: 'str', bytes }, next: i };
@@ -252,7 +256,7 @@ function decodeAscii85(src: string): Uint8Array | undefined {
       continue;
     }
     if (ch < '!' || ch > 'u') return undefined;
-    tuple.push(ch.codePointAt(0) - 33);
+    tuple.push(codePointOf(ch) - 33);
     if (tuple.length === 5) {
       let value = 0;
       for (const digit of tuple) value = value * 85 + digit;
