@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import { toInputJsonSchema } from '#/tool/input-schema';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { GOAL_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '#/agent/tools/mainAgentOnly';
@@ -121,3 +123,5 @@ function changedGoalOutput(status: UpdateGoalToolInput['status']): string {
   if (status === 'complete') return 'Goal not completed: the current goal changed.';
   return 'Goal not blocked: the current goal changed.';
 }
+
+registerAgentToolService(IUpdateGoalTool, UpdateGoalTool, { name: 'UpdateGoal', domain: 'goal' });

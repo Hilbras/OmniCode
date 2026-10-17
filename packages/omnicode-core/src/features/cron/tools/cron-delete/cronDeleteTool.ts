@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import { type ToolExecution } from '#/tool/toolContract';
 import { toInputJsonSchema } from '#/tool/input-schema';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
@@ -57,3 +59,5 @@ export class CronDeleteTool implements ICronDeleteTool {
     };
   }
 }
+
+registerAgentToolService(ICronDeleteTool, CronDeleteTool, { name: 'CronDelete', domain: 'cron' });

@@ -7,8 +7,6 @@ import { IAgentSwarmService } from './agent/swarm';
 import { AgentSwarmService } from './agent/swarmService';
 import { ISessionSwarmService } from './session/sessionSwarm';
 import { SessionSwarmService } from './session/sessionSwarmService';
-import { IAgentSwarmTool } from './tools/agent-swarm/agent-swarm';
-import { AgentSwarmTool } from './tools/agent-swarm/agentSwarmTool';
 
 export class SwarmFeature extends Feature {
   static override readonly name = 'swarm';
@@ -21,7 +19,7 @@ export class SwarmFeature extends Feature {
     this.contributeService(LifecycleScope.Session, ISessionSwarmService, SessionSwarmService, {
       activation: ScopeActivation.OnScopeCreated,
     });
-    this.contributeTool(IAgentSwarmTool, AgentSwarmTool, { name: 'AgentSwarm', domain: 'swarm' });
+    
   }
 }
 

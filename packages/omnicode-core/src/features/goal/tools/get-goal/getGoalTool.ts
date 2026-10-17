@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import { toInputJsonSchema } from '#/tool/input-schema';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { GOAL_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '#/agent/tools/mainAgentOnly';
@@ -34,3 +36,4 @@ export class GetGoalTool implements IGetGoalTool {
   }
 }
 
+registerAgentToolService(IGetGoalTool, GetGoalTool, { name: 'GetGoal', domain: 'goal' });

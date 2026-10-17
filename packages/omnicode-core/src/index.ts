@@ -759,3 +759,8 @@ export type { AgentToolContributionOptions } from '#/agent/toolRegistry/toolCont
 export * from '#/agent/userTool/userTool';
 export * from '#/agent/userTool/userToolOps';
 export * from '#/agent/userTool/userToolService';
+import '#/features/cron/tools/cron-create/cronCreateTool';
+import '#/features/cron/tools/cron-delete/cronDeleteTool';
+import '#/features/cron/tools/cron-list/cronListTool';
+import '#/features/notify/tools/notify-user/notifyUserTool';
+import '#/features/skill/tools/skillTool';

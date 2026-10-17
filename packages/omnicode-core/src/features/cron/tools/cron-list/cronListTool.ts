@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import type { ToolExecution } from '#/tool/toolContract';
 import { toInputJsonSchema } from '#/tool/input-schema';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
@@ -93,3 +95,5 @@ export class CronListTool implements ICronListTool {
     ].join('\n');
   }
 }
+
+registerAgentToolService(ICronListTool, CronListTool, { name: 'CronList', domain: 'cron' });

@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import type { ToolInputDisplay } from '#/tool/toolInputDisplay';
 
 import { toInputJsonSchema } from '#/tool/input-schema';
@@ -69,3 +71,4 @@ export class CreateGoalTool implements ICreateGoalTool {
   }
 }
 
+registerAgentToolService(ICreateGoalTool, CreateGoalTool, { name: 'CreateGoal', domain: 'goal' });

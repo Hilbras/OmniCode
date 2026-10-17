@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import type { ToolInputDisplay } from '#/tool/toolInputDisplay';
 
 import type { ExecutableToolResult, ToolExecution } from '#/tool/toolContract';
@@ -161,3 +163,5 @@ function formatPlanForOutput(plan: string, path: string | undefined): string {
   const savedTo = path !== undefined ? `Plan saved to: ${path}\n\n` : '';
   return `Plan mode deactivated. All tools are now available.\n${savedTo}## Approved Plan:\n${plan}`;
 }
+
+registerAgentToolService(IExitPlanModeTool, ExitPlanModeTool, { name: 'ExitPlanMode', domain: 'plan' });

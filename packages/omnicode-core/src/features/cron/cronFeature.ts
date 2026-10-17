@@ -1,12 +1,6 @@
 import { Feature } from '#/features/feature';
 import { registerFeature } from '#/features/featureRegistry';
 import { AgentCronService, IAgentCronService } from '#/features/cron/cronService';
-import { ICronCreateTool } from '#/features/cron/tools/cron-create/cron-create';
-import { CronCreateTool } from '#/features/cron/tools/cron-create/cronCreateTool';
-import { ICronDeleteTool } from '#/features/cron/tools/cron-delete/cron-delete';
-import { CronDeleteTool } from '#/features/cron/tools/cron-delete/cronDeleteTool';
-import { ICronListTool } from '#/features/cron/tools/cron-list/cron-list';
-import { CronListTool } from '#/features/cron/tools/cron-list/cronListTool';
 
 export class CronFeature extends Feature {
   static override readonly name = 'cron';
@@ -14,9 +8,9 @@ export class CronFeature extends Feature {
   constructor() {
     super();
     this.contributeAgentService(IAgentCronService, AgentCronService);
-    this.contributeTool(ICronCreateTool, CronCreateTool, { name: 'CronCreate', domain: 'cron' });
-    this.contributeTool(ICronListTool, CronListTool, { name: 'CronList', domain: 'cron' });
-    this.contributeTool(ICronDeleteTool, CronDeleteTool, { name: 'CronDelete', domain: 'cron' });
+    
+    
+    
   }
 }
 

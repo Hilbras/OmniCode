@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import { randomUUID } from 'node:crypto';
 
 import type { SkillActivationOrigin } from '#/agent/contextMemory/types';
@@ -132,3 +134,5 @@ export async function executeModelSkill(
 function errorResult(message: string): ExecutableToolResult {
   return { isError: true, output: message };
 }
+
+registerAgentToolService(ISkillTool, SkillTool, { name: 'Skill', domain: 'skill' });

@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import { toInputJsonSchema } from '#/tool/input-schema';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { GOAL_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '#/agent/tools/mainAgentOnly';
@@ -146,3 +148,5 @@ function formatBudget(value: number, unit: SetGoalBudgetToolInput['unit']): stri
   const singular = unit.endsWith('s') ? unit.slice(0, -1) : unit;
   return `${String(value)} ${value === 1 ? singular : unit}`;
 }
+
+registerAgentToolService(ISetGoalBudgetTool, SetGoalBudgetTool, { name: 'SetGoalBudget', domain: 'goal' });

@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IFlagService } from '#/app/flag/flag';
@@ -5,6 +7,7 @@ import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { toInputJsonSchema } from '#/tool/input-schema';
 import { ToolAccesses, type ToolExecution } from '#/tool/toolContract';
 import { notifyUserAvailable } from '../../notifyUserAvailability';
+import { ISessionNotify } from '../../sessionNotify';
 import { notifyStreakBefore } from '../../notifyUserNudge';
 
 import {
@@ -57,3 +60,9 @@ export class NotifyUserTool implements INotifyUserTool {
     };
   }
 }
+
+registerAgentToolService(INotifyUserTool, NotifyUserTool, {
+  name: NOTIFY_USER_TOOL_NAME,
+  domain: 'notify',
+  when: (accessor) => accessor.get(ISessionNotify).enabled,
+});

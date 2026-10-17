@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import { type ToolExecution } from '#/tool/toolContract';
 import { toInputJsonSchema } from '#/tool/input-schema';
 import { literalRulePattern } from '#/tool/rule-match';
@@ -48,11 +50,11 @@ export class CronCreateTool implements ICronCreateTool {
     let parsed: ParsedCronExpression;
     try {
       parsed = parseCronExpression(normalizedCron);
-    } catch (err) {
+    } catch (error) {
       return {
         isError: true,
         output: `Invalid cron expression: ${
-          err instanceof Error ? err.message : String(err)
+          error instanceof Error ? error.message : String(error)
         }`,
       };
     }
@@ -172,3 +174,5 @@ function formatOutput(o: CronCreateOutput): string {
   ];
   return lines.join('\n');
 }
+
+registerAgentToolService(ICronCreateTool, CronCreateTool, { name: 'CronCreate', domain: 'cron' });

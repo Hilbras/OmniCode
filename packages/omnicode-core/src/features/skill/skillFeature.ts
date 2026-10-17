@@ -3,8 +3,6 @@ import { Feature } from '#/features/feature';
 import { registerFeature } from '#/features/featureRegistry';
 
 import { AgentSkillService, IAgentSkillService } from './skillService';
-import { ISkillTool } from './tools/skill';
-import { SkillTool } from './tools/skillTool';
 
 export class SkillFeature extends Feature {
   static override readonly name = 'skill';
@@ -14,7 +12,7 @@ export class SkillFeature extends Feature {
     this.contributeAgentService(IAgentSkillService, AgentSkillService, {
       activation: ScopeActivation.OnDemand,
     });
-    this.contributeTool(ISkillTool, SkillTool, { name: 'Skill', domain: 'skill' });
+    
   }
 }
 

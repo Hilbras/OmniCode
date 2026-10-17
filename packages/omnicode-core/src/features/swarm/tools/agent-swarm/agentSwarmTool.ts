@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import {
   ToolAccesses,
   type ExecutableToolContext,
@@ -349,3 +351,5 @@ function escapeXmlAttribute(value: string): string {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;');
 }
+
+registerAgentToolService(IAgentSwarmTool, AgentSwarmTool, { name: 'AgentSwarm', domain: 'swarm' });

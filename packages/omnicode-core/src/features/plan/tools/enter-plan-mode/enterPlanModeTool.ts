@@ -1,3 +1,5 @@
+import { registerAgentToolService } from '#/agent/toolRegistry/toolContribution';
+
 import type { ToolExecution } from '#/tool/toolContract';
 import { toInputJsonSchema } from '#/tool/input-schema';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
@@ -79,3 +81,5 @@ function enteredPlanModeMessage(planPath: string | null): string {
     'Use Bash only when needed; Bash follows the normal permission mode and rules.',
   ].join('\n');
 }
+
+registerAgentToolService(IEnterPlanModeTool, EnterPlanModeTool, { name: 'EnterPlanMode', domain: 'plan' });
