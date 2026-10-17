@@ -11,10 +11,8 @@ catalogs:
       version: 4.3.6
 
 overrides:
-  omnicode>@tailwindcss/vite: 4.1.18
   ssh2@1.17.0>cpu-features: '-'
   ssh2@1.17.0>nan: '-'
-  omnicode>tailwindcss: 4.1.18
 
 importers:
 
@@ -575,6 +573,12 @@ importers:
       '@antfu/utils':
         specifier: ^9.3.0
         version: 9.3.0
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.29.0
+        version: 1.29.0(zod@4.3.6)
+      immer:
+        specifier: ^11.1.0
+        version: 11.1.11
       smol-toml:
         specifier: ^1.6.1
         version: 1.6.1
