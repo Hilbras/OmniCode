@@ -9,7 +9,7 @@
  */
 import type { OmnicodeConfig, ModelAlias } from '@hilbras/omnicode-sdk';
 import type { Component, Focusable } from '@hilbras/omnicode-tui';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { SlashCommandHost } from '#/tui/commands';
 import {
@@ -21,7 +21,10 @@ import { handleProviderCommand, setDefaultModel } from '#/tui/commands/provider'
 import { ApiKeyInputDialogComponent } from '#/tui/components/dialogs/api-key-input-dialog';
 import { ChoicePickerComponent } from '#/tui/components/dialogs/choice-picker';
 import { ProviderManagerComponent } from '#/tui/components/dialogs/provider-manager';
-import { TabbedModelSelectorComponent } from '#/tui/components/dialogs/tabbed-model-selector';
+import {
+  TabbedModelSelectorComponent,
+  type TabbedModelSelectorOptions,
+} from '#/tui/components/dialogs/tabbed-model-selector';
 import { BUILT_IN_PROVIDERS } from '#/utils/built-in-providers';
 import {
   buildCustomProviderRecord,
@@ -457,6 +460,117 @@ describe('custom endpoint provider', () => {
     // Invalid URL: the dialog reports it in place instead of writing anything.
     expect(rig.mounted[2]!.render(80).join('\n')).toContain('Base URL must be http(s)');
     expect(rig.store.setConfigCalls).toHaveLength(0);
+  });
+});
+
+/**
+ * The built-in add driven end to end with real key input: provider manager →
+ * add row → source picker → API key → discovery → free-tier routing → model
+ * picker.
+ *
+ * OpenCode Zen lists its free ids on the paid `/models` route only to answer
+ * them with 403, and the same built-in excludes those ids from discovery — so
+ * an add that wrote `excludedModels` without adding the aliases back left the
+ * user with no free models at all, and an add that wrote them without reloading
+ * appState left the picker showing paid models only until a restart. Both the
+ * config write and the picker the add opens are asserted.
+ */
+describe('built-in provider add', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("routes a built-in's free tier into config and into the picker the add opens", async () => {
+    const rig = makeProviderHost();
+    // Discovery is mocked at module level and only reports counts, so the paid
+    // alias the real orchestrator would have written is seeded instead. It also
+    // has to be in config, not just appState: the refresh below replaces
+    // appState from config the way the real one does.
+    rig.store.current().models = {
+      'opencode-zen/claude-sonnet-4-5': {
+        provider: 'opencode-zen',
+        model: 'claude-sonnet-4-5',
+        maxContextSize: 200_000,
+      },
+    };
+    // The real refreshConfigAfterLogin reloads config into appState, which is
+    // the only route a just-written alias has to the picker; the shared rig
+    // stubs it to a no-op.
+    vi.mocked(rig.host.authFlow.refreshConfigAfterLogin).mockImplementation(async () => {
+      const config = await rig.store.harness.getConfig();
+      Object.assign(rig.appState, {
+        availableModels: { ...config.models },
+        availableProviders: { ...config.providers },
+      });
+      return false;
+    });
+    const requested: string[] = [];
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        requested.push(url);
+        const ids = url.includes('opencode.ai/inference/v1/models')
+          ? ['big-pickle', 'beam-free']
+          : [];
+        return new Response(JSON.stringify({ data: ids.map((id) => ({ id })) }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }),
+    );
+
+    await handleProviderCommand(rig.host);
+    // Rows are [empty, acme, other(current), add]; one hop down lands on `add`.
+    press(rig.mounted[0]!, [DOWN, ENTER]);
+    await vi.waitFor(() => {
+      expect(rig.mounted).toHaveLength(2);
+    });
+    // The source picker lists every built-in vendor first; OpenCode Zen is the
+    // third of them.
+    press(rig.mounted[1]!, [DOWN, DOWN, ENTER]);
+    await vi.waitFor(() => {
+      expect(rig.mounted[2]).toBeInstanceOf(ApiKeyInputDialogComponent);
+    });
+    press(rig.mounted[2]!, [...typed('YOUR_API_KEY'), ENTER]);
+
+    await vi.waitFor(() => {
+      expect(rig.mounted.at(-1)).toBeInstanceOf(TabbedModelSelectorComponent);
+    });
+    expect(requested.some((url) => url.includes('opencode.ai/inference/v1/models'))).toBe(true);
+    // The free ids are pruned from the paid route, so the aliases must carry
+    // the free endpoint, its literal credential, and the flag that makes the
+    // engine present the fingerprint the free gate requires.
+    expect(rig.store.current().providers['opencode-zen']?.excludedModels).toContain('big-pickle');
+    expect(rig.store.current().models?.['opencode-zen/big-pickle']).toMatchObject({
+      provider: 'opencode-zen',
+      model: 'big-pickle',
+      baseUrl: 'https://opencode.ai/inference/v1',
+      apiKey: 'public',
+      freeTier: true,
+    });
+    expect(rig.store.current().models?.['opencode-zen/beam-free']).toMatchObject({
+      baseUrl: 'https://opencode.ai/inference/v1',
+      apiKey: 'public',
+      freeTier: true,
+    });
+
+    // And they must be in the picker, not only on disk: the picker reads
+    // appState, which the aliases reach only through the refresh the routing
+    // step performs after its write.
+    const picker = rig.mounted.at(-1)!;
+    const pickerModels = (picker as unknown as { opts: TabbedModelSelectorOptions }).opts.models;
+    expect(Object.keys(pickerModels)).toEqual(
+      expect.arrayContaining([
+        'opencode-zen/claude-sonnet-4-5',
+        'opencode-zen/big-pickle',
+        'opencode-zen/beam-free',
+      ]),
+    );
+    // The paid alias is still offered, and still resolved against the provider
+    // rather than the free endpoint.
+    expect(pickerModels['opencode-zen/claude-sonnet-4-5']).not.toHaveProperty('freeTier');
+    expect(rig.host.showError).not.toHaveBeenCalled();
   });
 });
 
