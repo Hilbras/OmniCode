@@ -80,15 +80,15 @@ export interface ColorPalette {
 }
 
 export const darkColors: ColorPalette = {
-  primary: '#4FA8FF',
-  accent: '#5BC0BE',
+  primary: '#F9D06A',
+  accent: '#E8A857',
 
   text: '#E0E0E0',
   textStrong: '#F5F5F5',
   textDim: '#888888',
   textMuted: '#6B6B6B',
 
-  border: '#5A5A5A',
+  border: '#B8934E',
   borderFocus: '#E8A838',
 
   success: '#4EC87E',
@@ -107,15 +107,15 @@ export const darkColors: ColorPalette = {
 };
 
 export const lightColors: ColorPalette = {
-  primary: '#1565C0',
-  accent: '#00838F',
+  primary: '#A16207',
+  accent: '#B45309',
 
   text: '#1A1A1A',
   textStrong: '#1A1A1A',
   textDim: '#454545',
   textMuted: '#5F5F5F',
 
-  border: '#737373',
+  border: '#B08A3A',
   borderFocus: '#92660A',
 
   success: '#0E7A38',

@@ -34,7 +34,7 @@ function truecolorCodes(text: string): Set<string> {
 }
 
 // Dark dance colors the footer never uses outside of /dance.
-const RAINBOW_CYAN = '91,192,190';
+const RAINBOW_ACCENT = '232,168,87';
 const RAINBOW_GREEN = '78,200,126';
 
 function setDanceView(colored: boolean, phase: number): void {
@@ -98,7 +98,7 @@ describe('FooterComponent', () => {
 
     // "omnicode-k2" spreads across the palette, pulling in colors the footer
     // never renders on its own.
-    expect(codes.has(RAINBOW_CYAN)).toBe(true);
+    expect(codes.has(RAINBOW_ACCENT)).toBe(true);
     expect(codes.has(RAINBOW_GREEN)).toBe(true);
   });
 
@@ -107,7 +107,7 @@ describe('FooterComponent', () => {
 
     const codes = truecolorCodes(footer.render(120).join('\n'));
 
-    expect(codes.has(RAINBOW_CYAN)).toBe(false);
+    expect(codes.has(RAINBOW_ACCENT)).toBe(false);
     expect(codes.has(RAINBOW_GREEN)).toBe(false);
   });
 

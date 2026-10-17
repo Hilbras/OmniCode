@@ -306,12 +306,12 @@ describe('Markdown mermaid live updates', () => {
   it('recolors drawn art through the live theme on invalidate', () => {
     const markdown = new Markdown(fenceOnly(SIMPLE_FLOWCHART), 0, 0, createMarkdownTheme());
     const darkOutput = markdown.render(80).join('\n');
-    expect(darkOutput).toContain('38;2;90;90;90');
+    expect(darkOutput).toContain('38;2;184;147;78');
 
     currentTheme.setPalette(lightColors);
     markdown.invalidate();
     const lightOutput = markdown.render(80).join('\n');
-    expect(lightOutput).toContain('38;2;115;115;115');
+    expect(lightOutput).toContain('38;2;176;138;58');
   });
 });
 
@@ -352,7 +352,7 @@ describe('Markdown mermaid copy source', () => {
     const line = lastLine(makeCopyable());
 
     expect(strip(line)).toContain('[Copy Source]');
-    expect(line).toContain('38;2;91;192;190');
+    expect(line).toContain('38;2;232;168;87');
     expect(line).not.toContain('48;2;');
     expect(line).not.toContain('[1m');
   });

@@ -10,7 +10,7 @@
  */
 
 import chalk from 'chalk';
-import { truncateToWidth, visibleWidth } from '@hilbras/omnicode-tui';
+import { visibleWidth } from '@hilbras/omnicode-tui';
 
 import type { SlashCommandHost } from '../commands/dispatch';
 import type { ParsedSlashInput } from '../commands/types';
@@ -22,8 +22,8 @@ export const DANCE_FRAME_MS = 110;
 export const DANCE_FLOW_MS = 3000;
 
 const DARK_RAINBOW = [
-  '#4FA8FF',
-  '#5BC0BE',
+  '#F9D06A',
+  '#E8A857',
   '#4EC87E',
   '#E8A838',
   '#FFCB6B',
@@ -33,8 +33,8 @@ const DARK_RAINBOW = [
 ] as const;
 
 const LIGHT_RAINBOW = [
-  '#1565C0',
-  '#00838F',
+  '#A16207',
+  '#B45309',
   '#0E7A38',
   '#92660A',
   '#9A4A00',
@@ -110,23 +110,17 @@ export function isRainbowDancing(): boolean {
 }
 
 export function renderDanceWelcomeHeader(
-  logo: readonly [string, string],
-  textWidth: number,
-  rightRow1: string,
+  logo: readonly string[],
+  titleText: string,
+  hintText: string,
 ): string[] {
   const phase = currentDanceView?.phase ?? 0;
   const palette = getDanceRainbowPalette();
   const logoWidth = Math.max(...logo.map((row) => visibleWidth(row)));
-  const gap = '  ';
-  const rightRow0 = truncateToWidth(
-    rainbowText('Welcome to Omnicode!', palette, phase + 2, true),
-    textWidth,
-    '…',
-  );
-
   return [
-    rainbowText(logo[0].padEnd(logoWidth), palette, phase) + gap + rightRow0,
-    rainbowText(logo[1].padEnd(logoWidth), palette, phase + 3) + gap + rightRow1,
+    ...logo.map((row, index) => rainbowText(row.padEnd(logoWidth), palette, phase + index)),
+    rainbowText(titleText, palette, phase + 6, true),
+    chalk.hex(palette.at(-1) ?? '#888888')(hintText),
   ];
 }
 

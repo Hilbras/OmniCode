@@ -13,6 +13,23 @@ import { isRainbowDancing, renderDanceWelcomeHeader } from '#/tui/easter-eggs/da
 import type { AppState } from '#/tui/types';
 import { currentTheme } from '#/tui/theme';
 
+/**
+ * Tall block wordmark used when the terminal is wide enough for it. Rows are
+ * pre-aligned to one width so the columns line up; the whole mark is 52
+ * columns, hence the minimum width below.
+ */
+const WORDMARK = [
+  ' ████  ██   ██ ███  ██ ███   ████   ████  ███   ████',
+  '██  ██ ███ ███ ████ ██  ██  ██     ██  ██ ██ ██ ██  ',
+  '██  ██ ███████ ██ ████  ██  ██     ██  ██ ██ ██ ████',
+  '██  ██ ██ █ ██ ██  ███  ██  ██     ██  ██ ██ ██ ██  ',
+  ' ████  ██   ██ ██   ██ ███   ████   ████  ███   ████',
+] as const;
+
+const WORDMARK_MIN_WIDTH = 56;
+
+const COMPACT_LOGO = ['▐█▛█▛█▌', '▐█████▌'] as const;
+
 export class WelcomeComponent implements Component {
   private state: AppState;
 
@@ -45,31 +62,42 @@ export class WelcomeComponent implements Component {
     const innerWidth = Math.max(1, safeWidth - 4);
     const pad = '  ';
 
-    // Logo + side-by-side text.
-    const logo = ['▐█▛█▛█▌', '▐█████▌'] as const;
-    const logoWidth = Math.max(...logo.map((row) => visibleWidth(row)));
-    const gap = '  ';
-    const textWidth = Math.max(4, innerWidth - logoWidth - gap.length);
-
-    const rightRow0 = truncateToWidth(
-      chalk.bold.hex(currentTheme.palette.primary)('Welcome to Omnicode!'),
-      textWidth,
-      '…',
-    );
     const dim = chalk.hex(currentTheme.palette.textDim);
     const labelStyle = chalk.bold.hex(currentTheme.palette.textDim);
-    const rightRow1 = truncateToWidth(
-      dim(isLoggedOut ? 'Run /login or /provider to get started.' : 'Send /help for help information.'),
-      textWidth,
-      '…',
-    );
 
-    let renderedHeaderLines = [
-      primary(logo[0].padEnd(logoWidth)) + gap + rightRow0,
-      primary(logo[1].padEnd(logoWidth)) + gap + rightRow1,
-    ];
+    // Wide terminals get the tall wordmark stacked above the title; narrower
+    // ones fall back to the compact two-line mark beside it.
+    const useWordmark = innerWidth >= WORDMARK_MIN_WIDTH - 4;
+    const logo = useWordmark ? WORDMARK : COMPACT_LOGO;
+    const logoWidth = Math.max(...logo.map((row) => visibleWidth(row)));
+    const gap = '  ';
+    const textWidth = useWordmark
+      ? innerWidth
+      : Math.max(4, innerWidth - logoWidth - gap.length);
+
+    const titleText = 'Welcome to Omnicode!';
+    const hintText = isLoggedOut
+      ? 'Run /login or /provider to get started.'
+      : 'Send /help for help information.';
+
+    let renderedHeaderLines: string[];
     if (isRainbowDancing()) {
-      renderedHeaderLines = renderDanceWelcomeHeader(logo, textWidth, rightRow1);
+      renderedHeaderLines = renderDanceWelcomeHeader(logo, titleText, hintText);
+    } else if (useWordmark) {
+      renderedHeaderLines = [
+        ...logo.map((row) => primary(row.padEnd(logoWidth))),
+        primary(truncateToWidth(titleText, innerWidth, '…')),
+        truncateToWidth(dim(hintText), innerWidth, '…'),
+      ];
+    } else {
+      renderedHeaderLines = [
+        primary(logo[0].padEnd(logoWidth)) +
+          gap +
+          truncateToWidth(titleText, textWidth, '…'),
+        primary(logo[1].padEnd(logoWidth)) +
+          gap +
+          truncateToWidth(dim(hintText), textWidth, '…'),
+      ];
     }
 
     const modelValue = isLoggedOut

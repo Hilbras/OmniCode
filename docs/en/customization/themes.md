@@ -8,13 +8,13 @@ Custom themes can override the tokens below. The `dark` and `light` columns show
 
 | Token | `dark` | `light` | What it controls |
 | --- | --- | --- | --- |
-| `primary` | `#4FA8FF` | `#1565C0` | The most-used color. Links, inline code, selected items in dialogs, focus borders, badges, spinners |
-| `accent` | `#5BC0BE` | `#00838F` | Secondary highlight. Approval `▶` prefix, device-code box, image placeholder, panes, registry import |
+| `primary` | `#F9D06A` | `#A16207` | The most-used color. Links, inline code, selected items in dialogs, focus borders, badges, spinners |
+| `accent` | `#E8A857` | `#B45309` | Secondary highlight. Approval `▶` prefix, device-code box, image placeholder, panes, registry import |
 | `text` | `#E0E0E0` | `#1A1A1A` | Body text. Dialog bodies, todo titles, footer model label, Markdown headings, list bullets |
 | `textStrong` | `#F5F5F5` | `#1A1A1A` | Emphasized / bold text. Input dialogs, status messages |
 | `textDim` | `#888888` | `#454545` | Secondary, dimmed text. Thinking, hints, completed todos, Markdown quotes, footer status bar |
 | `textMuted` | `#6B6B6B` | `#5F5F5F` | Faintest text. Counters, scroll info, Markdown link URLs, code-block borders |
-| `border` | `#5A5A5A` | `#737373` | Pane and editor borders, Markdown horizontal rule |
+| `border` | `#B8934E` | `#B08A3A` | Pane and editor borders, Markdown horizontal rule |
 | `borderFocus` | `#E8A838` | `#92660A` | Focus / attention border, currently only the approval panel |
 | `success` | `#4EC87E` | `#0E7A38` | Success state. `✓`, "enabled", completed |
 | `warning` | `#E8A838` | `#92660A` | Warning state. Ask When Needed/Never Ask badges, stale markers, Plan mode hint |
