@@ -13,7 +13,7 @@ import {
   resolveGlobalLogPath,
   resolveOmnicodeHome,
   type TelemetryClient,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 import {
   installCrashHandlers,
   setTelemetryContext,

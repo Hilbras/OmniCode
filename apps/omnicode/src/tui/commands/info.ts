@@ -1,6 +1,6 @@
 import { release as osRelease, type as osType } from 'node:os';
 
-import type { McpServerInfo, SessionStatus, SessionUsage } from '@hilbras/api';
+import type { McpServerInfo, SessionStatus, SessionUsage } from '@hilbras/omnicode-api';
 
 import { buildMcpStatusReportLines } from '../components/messages/mcp-status-panel';
 import { buildStatusReportLines } from '../components/messages/status-panel';

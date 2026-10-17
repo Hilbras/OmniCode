@@ -1,4 +1,4 @@
-import type { TurnEndedEvent, TurnStartedEvent } from '@hilbras/api';
+import type { TurnEndedEvent, TurnStartedEvent } from '@hilbras/omnicode-api';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

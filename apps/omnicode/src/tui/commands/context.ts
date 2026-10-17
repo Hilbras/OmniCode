@@ -13,7 +13,7 @@
  * it writes the declared `maxContextSize` back, which is behaviourally
  * identical to having no override at all.
  */
-import { SECONDARY_DERIVED_MODEL_ALIAS } from '@hilbras/api';
+import { SECONDARY_DERIVED_MODEL_ALIAS } from '@hilbras/omnicode-api';
 
 import {
   ApiKeyInputDialogComponent,

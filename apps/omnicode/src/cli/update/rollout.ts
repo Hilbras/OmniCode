@@ -3,7 +3,7 @@ import { appendFile, mkdir, stat, writeFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 import { readOmnicodeDeviceId } from '@hilbras/omnicode-auth';
-import { resolveOmnicodeHome } from '@hilbras/api';
+import { resolveOmnicodeHome } from '@hilbras/omnicode-api';
 
 import { getUpdateRolloutLogFile } from '#/utils/paths';
 

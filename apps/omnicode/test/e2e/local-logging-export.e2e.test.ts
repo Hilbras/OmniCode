@@ -8,7 +8,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { registerExportCommand } from '#/cli/sub/export';
 import { createOmnicodeCodeHostIdentity } from '#/cli/version';
-import { createOmnicodeHarness } from '@hilbras/api';
+import { createOmnicodeHarness } from '@hilbras/omnicode-api';
 
 const GLOBAL_LOG = 'logs/global/omnicode.log';
 const MAIN_WIRE = 'agents/main/wire.jsonl';

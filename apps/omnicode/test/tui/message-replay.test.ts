@@ -10,7 +10,7 @@ import type {
   Role,
   Session,
   ToolCall,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 import { describe, expect, it, vi } from 'vitest';
 
 import { OmnicodeTUI, type OmnicodeTUIStartupInput, type TUIState } from '#/tui/omnicode-tui';

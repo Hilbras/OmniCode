@@ -1,4 +1,4 @@
-import { createOmnicodeHarness, type PermissionMode } from '@hilbras/agent-sdk';
+import { createOmnicodeHarness, type PermissionMode } from '@hilbras/omnicode-sdk';
 
 import {
   smokeIdentityFromEnv,

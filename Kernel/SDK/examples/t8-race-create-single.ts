@@ -1,5 +1,5 @@
 // One creator: meant to run twice as separate processes simultaneously.
-import { createOmnicodeHarness } from '@hilbras/agent-sdk';
+import { createOmnicodeHarness } from '@hilbras/omnicode-sdk';
 
 const workDir = process.argv[2]!;
 const homeDir = process.argv[3]!;

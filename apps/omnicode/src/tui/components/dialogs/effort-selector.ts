@@ -7,7 +7,7 @@ import {
   type Focusable,
 } from '@hilbras/omnicode-tui';
 
-import type { ThinkingEffort } from '@hilbras/api';
+import type { ThinkingEffort } from '@hilbras/omnicode-api';
 
 import { currentTheme } from '#/tui/theme';
 

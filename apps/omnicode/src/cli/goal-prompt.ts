@@ -1,4 +1,4 @@
-import type { GoalSnapshot } from '@hilbras/api';
+import type { GoalSnapshot } from '@hilbras/omnicode-api';
 
 import { parseGoalCommand } from '#/tui/commands/index';
 

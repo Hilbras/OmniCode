@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { WorkspaceTrustInfo } from '@hilbras/api';
+import type { WorkspaceTrustInfo } from '@hilbras/omnicode-api';
 import { TrustPromptComponent } from '#/tui/components/dialogs/trust-prompt';
 
 function info(overrides: Partial<WorkspaceTrustInfo> = {}): WorkspaceTrustInfo {

@@ -1,4 +1,4 @@
-import type { ProviderConfig } from '@hilbras/api';
+import type { ProviderConfig } from '@hilbras/omnicode-api';
 import chalk from 'chalk';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 

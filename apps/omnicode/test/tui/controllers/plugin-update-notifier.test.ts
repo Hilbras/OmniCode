@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { PluginSummary } from '@hilbras/api';
+import type { PluginSummary } from '@hilbras/omnicode-api';
 
 import { omnicodeCodePluginMarketplaceUrl } from '#/constant/app';
 import {

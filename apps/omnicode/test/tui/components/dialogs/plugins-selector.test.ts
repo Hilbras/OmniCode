@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import chalk from 'chalk';
-import type { CapabilityStatus, PluginSummary } from '@hilbras/api';
+import type { CapabilityStatus, PluginSummary } from '@hilbras/omnicode-api';
 
 import {
   PluginInstallTrustConfirmComponent,

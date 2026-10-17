@@ -1,4 +1,4 @@
-import type { Event, ResumedSessionState } from '@hilbras/api';
+import type { Event, ResumedSessionState } from '@hilbras/omnicode-api';
 import {
   Container,
   Text,

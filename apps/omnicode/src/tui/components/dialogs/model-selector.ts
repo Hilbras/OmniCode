@@ -1,4 +1,4 @@
-import { effectiveModelAlias, type ModelAlias, type ThinkingEffort } from '@hilbras/api';
+import { effectiveModelAlias, type ModelAlias, type ThinkingEffort } from '@hilbras/omnicode-api';
 import {
   Container,
   Key,

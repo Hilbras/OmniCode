@@ -26,7 +26,7 @@ import type {
   BackgroundTaskInfo,
   BackgroundTaskStatus,
   ModelAlias,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 
 import { SELECT_POINTER } from '@/tui/constant/symbols';
 import { currentTheme } from '#/tui/theme';

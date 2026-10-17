@@ -1,4 +1,4 @@
-import type { PermissionMode } from '@hilbras/api';
+import type { PermissionMode } from '@hilbras/omnicode-api';
 
 import { PERMISSION_MODE_DESCRIPTIONS, PERMISSION_MODE_DISPLAY_NAMES } from '#/tui/utils/permission-mode';
 

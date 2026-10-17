@@ -9,7 +9,7 @@
  * — into the dim detail line so the user still sees it.
  */
 
-import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@hilbras/api';
+import type { BackgroundTaskInfo, BackgroundTaskStatus } from '@hilbras/omnicode-api';
 
 import type { BackgroundAgentStatusData, BackgroundAgentStatusPhase } from '@/tui/types';
 

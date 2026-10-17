@@ -1,4 +1,4 @@
-import type { HookResultEvent } from '@hilbras/api';
+import type { HookResultEvent } from '@hilbras/omnicode-api';
 
 export function formatHookResultMarkdown(event: HookResultEvent): string {
   return `*${formatHookResultTitle(event)}*\n\n${formatHookResultBody(event)}`;

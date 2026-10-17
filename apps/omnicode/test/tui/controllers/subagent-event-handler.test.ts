@@ -1,4 +1,4 @@
-import type { Event } from '@hilbras/api';
+import type { Event } from '@hilbras/omnicode-api';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { AgentSwarmProgressComponent } from '#/tui/components/messages/agent-swarm-progress';

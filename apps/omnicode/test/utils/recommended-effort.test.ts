@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { OmnicodeConfig, OmnicodeConfigPatch, ModelAlias } from '@hilbras/api';
+import type { OmnicodeConfig, OmnicodeConfigPatch, ModelAlias } from '@hilbras/omnicode-api';
 
 import { applyRecommendedEffort } from '#/utils/recommended-effort';
 import type { RecommendedEffortConfig } from '#/utils/recommended-effort-config';

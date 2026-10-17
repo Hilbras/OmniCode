@@ -6,7 +6,7 @@ import {
   type Component,
   type Focusable,
 } from '@hilbras/omnicode-tui';
-import type { WorkspaceTrustInfo } from '@hilbras/api';
+import type { WorkspaceTrustInfo } from '@hilbras/omnicode-api';
 
 import { SELECT_POINTER } from '#/tui/constant/symbols';
 import { currentTheme, type ColorToken } from '#/tui/theme';

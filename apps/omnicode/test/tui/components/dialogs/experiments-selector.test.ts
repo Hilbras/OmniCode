@@ -1,4 +1,4 @@
-import type { ExperimentalFeatureState } from '@hilbras/api';
+import type { ExperimentalFeatureState } from '@hilbras/omnicode-api';
 import { describe, expect, it, vi } from 'vitest';
 
 import {

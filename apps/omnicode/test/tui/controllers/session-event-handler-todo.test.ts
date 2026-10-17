@@ -1,4 +1,4 @@
-import type { Event } from '@hilbras/api';
+import type { Event } from '@hilbras/omnicode-api';
 import { describe, expect, it, vi } from 'vitest';
 
 import { SessionEventHandler } from '#/tui/controllers/session-event-handler';

@@ -135,7 +135,7 @@ describe('omnicode acp', () => {
     // Stub the SDK harness so runLoginFlow doesn't hit a real OAuth endpoint:
     // harness.auth.login resolves immediately and triggers exit 0.
     const loginStub = vi.fn(async () => ({ providerName: 'omnicode' }));
-    vi.doMock(import('@hilbras/api'), async (importOriginal) => {
+    vi.doMock(import('@hilbras/omnicode-api'), async (importOriginal) => {
       const actual = await importOriginal();
       return {
         ...actual,
@@ -159,7 +159,7 @@ describe('omnicode acp', () => {
       expect(runAcpServer).not.toHaveBeenCalled();
       expect(exitSpy).toHaveBeenCalledWith(0);
     } finally {
-      vi.doUnmock('@hilbras/api');
+      vi.doUnmock('@hilbras/omnicode-api');
       vi.resetModules();
     }
   });

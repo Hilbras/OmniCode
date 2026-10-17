@@ -8,7 +8,7 @@ import type {
   Session,
   SessionSummary,
   TelemetryProperties,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 
 export interface PromptHarness {
   readonly homeDir: string;

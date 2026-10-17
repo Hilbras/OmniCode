@@ -1,4 +1,4 @@
-import type { PermissionMode } from '@hilbras/api';
+import type { PermissionMode } from '@hilbras/omnicode-api';
 
 import {
   SwarmStartPermissionPromptComponent,

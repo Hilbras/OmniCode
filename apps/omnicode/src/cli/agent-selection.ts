@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 
-import { parseAgentFileText, resolveAgentPath } from '@hilbras/api';
+import { parseAgentFileText, resolveAgentPath } from '@hilbras/omnicode-api';
 
 import type { CLIOptions } from './options';
 

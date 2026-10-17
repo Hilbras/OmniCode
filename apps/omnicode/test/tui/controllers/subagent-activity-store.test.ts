@@ -1,4 +1,4 @@
-import type { Event } from '@hilbras/api';
+import type { Event } from '@hilbras/omnicode-api';
 import { describe, expect, it } from 'vitest';
 
 import {

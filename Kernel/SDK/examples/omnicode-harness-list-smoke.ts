@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 
-import { createOmnicodeHarness } from '@hilbras/agent-sdk';
+import { createOmnicodeHarness } from '@hilbras/omnicode-sdk';
 
 import { smokeIdentityFromEnv } from './runtime-smoke-helpers';
 

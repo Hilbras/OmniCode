@@ -14,13 +14,13 @@ This is a TypeScript monorepo built for agent-assisted development. Keep the roo
 
 ## Project Map
 
-- `apps/omnicode`: the CLI / TUI application. It consumes core capabilities through `@hilbras/agent-sdk` and must not depend directly on engine packages. When writing or modifying its terminal UI, use the `write-tui` skill (`.agents/skills/write-tui/SKILL.md`).
+- `apps/omnicode`: the CLI / TUI application. It consumes core capabilities through `@hilbras/omnicode-sdk` and must not depend directly on engine packages. When writing or modifying its terminal UI, use the `write-tui` skill (`.agents/skills/write-tui/SKILL.md`).
 - the browser web UI: **its source no longer lives in this repo.** It is developed in the code-app repo (`apps/web`) and shipped as the committed, prebuilt bundle `apps/omnicode/dist-web` (gitignored, force-added), synced from code-app with `OMNICODE_REPO=<this checkout> pnpm run sync:web` — sync and commit the bundle in the same change whenever the web UI should ship differently. `apps/omnicode/scripts/check-web-assets.mjs` guards packaging against a missing bundle. To hack on the web UI against this repo's server, run `pnpm dev:server` here and point code-app's `pnpm dev:web` at it via `OMNICODE_SERVER_URL`.
 - `apps/omnicode-vis`, `apps/omnicode-vis/server`, `apps/omnicode-vis/web`: visual debugging tools for sessions and replays.
 - `apps/omnicode-inspect`: web inspector for the omnicode-server `/api/v1/debug` RPC surface — workspace/session browser, per-session transcript chat, per-scope Service panels, and the DI unit inspection view. See `apps/omnicode-inspect/AGENTS.md`.
 - `packages/omnicode-core`: the DI × Scope agent engine (the v2 port behind omnicode-server). Three `LifecycleScope` tiers — `App` / `Session` / `Agent` (`app/scopes.ts`) — plus the L3 unit layer (`Service`/`Fiber` units, collection contribution points, the Feature seam in `src/features/`); there is no App-level session lifecycle facade — callers compose `ISessionIndex` → `IWorkspaceLifecycleService.handlerFor` → the handler.
-- `Kernel/API`: the single connection surface between kernel packages (`@hilbras/api`). Systems reach the SDK through here, never by importing it directly.
-- `Kernel/SDK`: the public TypeScript SDK and harness (`@hilbras/agent-sdk`).
+- `Kernel/API`: the single connection surface between kernel packages (`@hilbras/omnicode-api`). Systems reach the SDK through here, never by importing it directly.
+- `Kernel/SDK`: the public TypeScript SDK and harness (`@hilbras/omnicode-sdk`).
 - `packages/omnicode-llm`: the LLM / provider abstraction layer.
 - `packages/omnicode-kaos`: the execution environment and file/process abstractions.
 - `packages/omnicode-auth`: Omnicode OAuth and managed auth utilities.

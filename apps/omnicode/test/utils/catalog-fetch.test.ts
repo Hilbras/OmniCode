@@ -1,4 +1,4 @@
-import { DEFAULT_CATALOG_URL, CatalogFetchError } from '@hilbras/api';
+import { DEFAULT_CATALOG_URL, CatalogFetchError } from '@hilbras/omnicode-api';
 import { describe, expect, it, vi } from 'vitest';
 
 import { fetchCatalogOrBuiltIn } from '#/utils/catalog-fetch';

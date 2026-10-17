@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { buildGoalCompletionMessage } from '#/tui/utils/goal-completion';
-import type { GoalSnapshot } from '@hilbras/api';
+import type { GoalSnapshot } from '@hilbras/omnicode-api';
 
 function snapshot(overrides: Partial<GoalSnapshot> = {}): GoalSnapshot {
   return {

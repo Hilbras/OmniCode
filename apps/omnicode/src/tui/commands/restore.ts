@@ -2,7 +2,7 @@ import type {
   FileHistoryRestoreResult,
   FileHistoryTurnSummary,
   Session,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 
 import { ChoicePickerComponent } from '../components/dialogs/choice-picker';
 import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/omnicode-tui';

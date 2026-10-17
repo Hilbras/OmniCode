@@ -1,6 +1,6 @@
 import type { Component } from '@hilbras/omnicode-tui';
-import type { ContextMessage } from '@hilbras/api';
-import { isOmnicodeError } from '@hilbras/api';
+import type { ContextMessage } from '@hilbras/omnicode-api';
+import { isOmnicodeError } from '@hilbras/omnicode-api';
 
 import { WelcomeComponent } from '../components/chrome/welcome';
 import { CompactionComponent } from '../components/dialogs/compaction';

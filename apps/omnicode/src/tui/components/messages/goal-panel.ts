@@ -20,7 +20,7 @@ import {
   wrapTextWithAnsi,
   type Component,
 } from '@hilbras/omnicode-tui';
-import type { GoalSnapshot, GoalStatus } from '@hilbras/api';
+import type { GoalSnapshot, GoalStatus } from '@hilbras/omnicode-api';
 
 import { MESSAGE_INDENT } from '#/tui/constant/rendering';
 import { STATUS_BULLET } from '#/tui/constant/symbols';

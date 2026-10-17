@@ -9,7 +9,7 @@
 import type { Component } from '@hilbras/omnicode-tui';
 import { truncateToWidth, visibleWidth } from '@hilbras/omnicode-tui';
 import chalk from 'chalk';
-import { effectiveModelAlias } from '@hilbras/api';
+import { effectiveModelAlias } from '@hilbras/omnicode-api';
 
 import { ALL_TIPS, type ToolbarTip } from '#/tui/constant/tips';
 import { isRainbowDancing, renderDanceFooterModel } from '#/tui/easter-eggs/dance';

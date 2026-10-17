@@ -8,7 +8,7 @@ import {
   type OmnicodeHarness,
   type OmnicodeHarnessOptions,
   type TelemetryClient,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 import {
   setCrashPhase,
   setTelemetryContext,

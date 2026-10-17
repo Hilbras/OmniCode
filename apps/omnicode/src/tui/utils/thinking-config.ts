@@ -1,4 +1,4 @@
-import type { ModelAlias, ThinkingEffort } from '@hilbras/api';
+import type { ModelAlias, ThinkingEffort } from '@hilbras/omnicode-api';
 
 /** Whether a thinking effort represents "thinking enabled" (anything but 'off'). */
 export function isThinkingOn(effort: ThinkingEffort): boolean {

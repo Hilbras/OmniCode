@@ -68,8 +68,8 @@ const mocks = vi.hoisted(() => {
   };
 });
 
-vi.mock('@hilbras/api', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('@hilbras/api')>();
+vi.mock('@hilbras/omnicode-api', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@hilbras/omnicode-api')>();
   const makeHarnessStub = (args: unknown[]) => {
     const options = args[0] as { readonly homeDir?: string } | undefined;
     const homeDir = options?.homeDir ?? '/tmp/omnicode-test-home';

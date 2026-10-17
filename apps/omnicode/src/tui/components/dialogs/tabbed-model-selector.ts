@@ -13,7 +13,7 @@
  * AskUserQuestion dialog's tab strip) — see .agents/skills/write-tui/DESIGN.md.
  */
 
-import type { ModelAlias } from '@hilbras/api';
+import type { ModelAlias } from '@hilbras/omnicode-api';
 import {
   Container,
   Key,

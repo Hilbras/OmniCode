@@ -1,4 +1,4 @@
-import type { QuestionHandler, QuestionRequest, QuestionResult } from '@hilbras/api';
+import type { QuestionHandler, QuestionRequest, QuestionResult } from '@hilbras/omnicode-api';
 
 import type {
   QuestionPanelData,

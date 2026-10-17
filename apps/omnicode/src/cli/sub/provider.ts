@@ -36,7 +36,7 @@ import {
   type OmnicodeHarness,
   type OAuthRef,
   providerEndpointEnvNames,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 import type { Command } from 'commander';
 
 import { createOmnicodeCodeHostIdentity, createOmnicodeCodeUserAgent } from '#/cli/version';

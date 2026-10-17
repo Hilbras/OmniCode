@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { ContentPart, ToolCall } from '@hilbras/api';
-import type { ContextMessage, PromptOrigin } from '@hilbras/api';
+import type { ContentPart, ToolCall } from '@hilbras/omnicode-api';
+import type { ContextMessage, PromptOrigin } from '@hilbras/omnicode-api';
 
 import {
   buildExportMarkdown,

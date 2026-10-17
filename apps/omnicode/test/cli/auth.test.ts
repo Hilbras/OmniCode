@@ -14,7 +14,7 @@
 
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { Command } from 'commander';
-import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/api';
+import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/omnicode-api';
 import type { OAuthTokenInspection } from '@hilbras/omnicode-auth';
 
 import {

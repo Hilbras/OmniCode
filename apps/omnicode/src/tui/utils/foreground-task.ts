@@ -1,4 +1,4 @@
-import type { BackgroundTaskInfo } from '@hilbras/api';
+import type { BackgroundTaskInfo } from '@hilbras/omnicode-api';
 
 function isDetachableForegroundTask(t: BackgroundTaskInfo): boolean {
   return (

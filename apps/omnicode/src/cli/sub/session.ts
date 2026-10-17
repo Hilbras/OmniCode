@@ -13,7 +13,7 @@ import {
   type ListSessionsOptions,
   type SessionSummary,
   type TelemetryClient,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 import type { Command } from 'commander';
 
 import { createCliTelemetryBootstrap } from '#/cli/telemetry';

@@ -30,9 +30,9 @@ vi.mock('#/cli/update/native-stage', () => ({
   stagedExePath: mocks.stagedExePath,
 }));
 
-vi.mock('@hilbras/api', async () => {
-  const actual = await vi.importActual<typeof import('@hilbras/api')>(
-    '@hilbras/api',
+vi.mock('@hilbras/omnicode-api', async () => {
+  const actual = await vi.importActual<typeof import('@hilbras/omnicode-api')>(
+    '@hilbras/omnicode-api',
   );
   return {
     ...actual,

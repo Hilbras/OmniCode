@@ -6,7 +6,7 @@ import type {
   ResumedAgentState,
   Session,
   ToolCall,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 
 import { ToolCallComponent } from '../components/messages/tool-call';
 import { ShellRunComponent } from '../components/messages/shell-run';

@@ -1,4 +1,4 @@
-import { isOmnicodeError } from '@hilbras/api';
+import { isOmnicodeError } from '@hilbras/omnicode-api';
 
 import {
   STREAMING_ARGS_FIELD_RE,

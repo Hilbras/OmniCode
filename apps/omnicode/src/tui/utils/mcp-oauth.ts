@@ -3,7 +3,7 @@ import {
   type McpOAuthAuthorizationUrlUpdateData,
   type ToolProgressEvent,
   type ToolUpdate,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 
 export type OpenUrl = (url: string) => void;
 

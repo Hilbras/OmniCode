@@ -4,7 +4,7 @@ import {
   loadBuiltInCatalog,
   type Catalog,
   type FetchCatalogOptions,
-} from '@hilbras/api';
+} from '@hilbras/omnicode-api';
 
 import { BUILT_IN_CATALOG_JSON } from '#/built-in-catalog';
 

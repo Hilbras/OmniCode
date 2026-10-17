@@ -1,5 +1,5 @@
 import { buildSkillSlashCommands, isUserActivatableSkill } from '#/tui/commands/index';
-import type { SkillSummary } from '@hilbras/api';
+import type { SkillSummary } from '@hilbras/omnicode-api';
 import { describe, expect, it } from 'vitest';
 
 function skill(

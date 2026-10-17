@@ -1,4 +1,4 @@
-import type { PluginInfo, PluginSummary } from '@hilbras/api';
+import type { PluginInfo, PluginSummary } from '@hilbras/omnicode-api';
 
 import { currentTheme } from '#/tui/theme';
 import {

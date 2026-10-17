@@ -14,7 +14,7 @@
 import { mkdirSync } from 'node:fs';
 import process from 'node:process';
 
-import { createOmnicodeHarness, type Event } from '@hilbras/api';
+import { createOmnicodeHarness, type Event } from '@hilbras/omnicode-api';
 import { describe, expect, test } from 'vitest';
 
 import { createOmnicodeCodeHostIdentity, getVersion } from '#/cli/version';

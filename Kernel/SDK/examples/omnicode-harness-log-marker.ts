@@ -8,7 +8,7 @@ import {
   log,
   resolveGlobalLogPath,
   resolveOmnicodeHome,
-} from '@hilbras/agent-sdk';
+} from '@hilbras/omnicode-sdk';
 
 type MarkerLevel = 'error' | 'warn';
 
