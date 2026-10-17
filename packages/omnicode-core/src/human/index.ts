@@ -90,8 +90,4 @@ export * from './todo/todoItem';
 export * from './todo/slice';
 export * from './todo/tool';
 export * from './todo/plugin';
-export * from './tool-select/state';
-export * from './tool-select/tool';
-export * from './tool-select/plugin';
-export * from './tool-select/resolver';
 export * from './store';
