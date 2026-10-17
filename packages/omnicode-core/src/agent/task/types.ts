@@ -1,3 +1,7 @@
+import type { QuestionTaskInfo } from '#/agent/tools/ask-user-question/question-background-task';
+import type { SubagentTaskInfo } from '#/agent/tools/agent/subagent-task';
+import type { ProcessTaskInfo } from '#/agent/tools/os/bash/process-task';
+
 export type AgentTaskStatus =
   | 'running'
   | 'completed'
@@ -33,7 +37,11 @@ export interface AgentTaskInfoBase {
   readonly timeoutMs?: number;
 }
 
-export interface AgentTaskInfoByKind {}
+export interface AgentTaskInfoByKind {
+  readonly process: ProcessTaskInfo;
+  readonly agent: SubagentTaskInfo;
+  readonly question: QuestionTaskInfo;
+}
 
 export type AgentTaskKind = Extract<keyof AgentTaskInfoByKind, string>;
 
