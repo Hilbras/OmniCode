@@ -21,6 +21,17 @@ const workspacePackages = new Map([
   ['@hilbras/omnicode-llm', 'omnicode-llm'],
 ]);
 
+// Derived from `workspacePackages` rather than hand-listed: a specifier the
+// pattern fails to match is passed through untouched, so a stale list here
+// silently ships bare `@hilbras/omnicode-*` imports in the published .d.ts —
+// pointing at devDependencies consumers do not have.
+const WORKSPACE_SPECIFIER_PATTERN = new RegExp(
+  `(["'])(#\\/[^"']+|@hilbras\\/(?:${[...workspacePackages.keys()]
+    .map((name) => name.slice('@hilbras/'.length))
+    .join('|')})(?:\\/[^"']+)?)\\1`,
+  'g',
+);
+
 try {
   await rm(tempDir, { recursive: true, force: true });
   await run('tsc', tscBinPath, ['-p', 'tsconfig.dts.json']);
@@ -105,19 +116,16 @@ async function rewriteWorkspaceSpecifiers() {
           "import { GoogleGenAI as GenAIClient } from '@google/genai';",
           `import { GoogleGenAI as GenAIClient } from '${providerClientSpecifier}';`,
         );
-      const updated = providerClientText.replaceAll(
-        /(["'])(#\/[^"']+|@hilbras\/(?:agent-core-v2|kaos|omnicode-oauth|klient|kosong)(?:\/[^"']+)?)\1/g,
-        (_match, quote, specifier) => {
-          const resolved = resolveSpecifier({
-            currentFile: file,
-            emittedFiles,
-            packageDir,
-            specifier,
-          });
+      const updated = providerClientText.replaceAll(WORKSPACE_SPECIFIER_PATTERN, (_match, quote, specifier) => {
+        const resolved = resolveSpecifier({
+          currentFile: file,
+          emittedFiles,
+          packageDir,
+          specifier,
+        });
 
-          return `${quote}${relativeSpecifier(file, resolved)}${quote}`;
-        },
-      );
+        return `${quote}${relativeSpecifier(file, resolved)}${quote}`;
+      });
 
       if (updated !== text) {
         await writeFile(file, updated);
