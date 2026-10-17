@@ -16,6 +16,7 @@ import {
 } from '@hilbras/omnicode-core/app/kosongConfig/modelsDevUpstream';
 
 import { BUILT_IN_PROVIDERS } from '#/utils/built-in-providers';
+import { syncConfiguredFreeTiers } from '#/utils/free-tier-sync';
 import { makeConfigStoreHarness, type ConfigStoreHarness } from '../helpers/config-store';
 
 import {
@@ -804,6 +805,77 @@ describe('omnicode provider add-builtin', () => {
     expect(exitCodes).toEqual([]);
     expect(current().models?.['opencode-zen/retired-free']).toBeUndefined();
     expect(current().models?.['opencode-zen/big-pickle']).toMatchObject({ freeTier: true });
+  });
+
+  it('picks up a free model the vendor adds, without a re-add', async () => {
+    // Free aliases are exempt from the provider refresh, so the free endpoint
+    // is only consulted here — without that, a newly published free model would
+    // never appear until the provider was re-added by hand.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: unknown) => {
+        if (String(input).includes('models.dev')) throw new Error('offline');
+        return new Response(JSON.stringify({ data: [{ id: 'big-pickle' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }),
+    );
+    let config: OmnicodeConfig = {
+      providers: { 'opencode-zen': { type: 'openai', baseUrl: 'https://opencode.ai/zen/v1' } },
+      models: {},
+    } as unknown as OmnicodeConfig;
+    const host = {
+      getConfig: async () => config,
+      setConfig: async (patch: Record<string, unknown>) => {
+        config = { ...config, ...patch } as OmnicodeConfig;
+        return config;
+      },
+    };
+
+    const written = await syncConfiguredFreeTiers(host);
+
+    expect(written).toEqual(['opencode-zen/big-pickle']);
+    expect(config.models?.['opencode-zen/big-pickle']).toMatchObject({
+      freeTier: true,
+      baseUrl: 'https://opencode.ai/inference/v1',
+      apiKey: 'public',
+    });
+  });
+
+  it('retires a free model the vendor drops, without a re-add', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: unknown) => {
+        if (String(input).includes('models.dev')) throw new Error('offline');
+        return new Response(JSON.stringify({ data: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }),
+    );
+    let config: OmnicodeConfig = {
+      providers: { 'opencode-zen': { type: 'openai', baseUrl: 'https://opencode.ai/zen/v1' } },
+      models: {
+        'opencode-zen/retired-free': {
+          provider: 'opencode-zen',
+          model: 'retired-free',
+          maxContextSize: 131072,
+          freeTier: true,
+        },
+      },
+    } as unknown as OmnicodeConfig;
+    const host = {
+      getConfig: async () => config,
+      setConfig: async (patch: Record<string, unknown>) => {
+        config = { ...config, ...patch } as OmnicodeConfig;
+        return config;
+      },
+    };
+
+    await syncConfiguredFreeTiers(host);
+
+    expect(config.models?.['opencode-zen/retired-free']).toBeUndefined();
   });
 
   it('writes no override map for a built-in that declares none', async () => {

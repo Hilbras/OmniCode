@@ -7,6 +7,8 @@ import {
 } from '@hilbras/omnicode-auth';
 import type { OmnicodeConfig, OmnicodeConfigPatch, OAuthRef } from '@hilbras/omnicode-sdk';
 
+import { syncConfiguredFreeTiers } from '#/utils/free-tier-sync';
+
 /**
  * CLI-side host for provider-model refresh. Kept on the SDK's full config types
  * so existing TUI callers (and tests) don't change; the daemon uses the oauth
@@ -32,7 +34,7 @@ export async function refreshAllProviderModels(
   host: RefreshProviderHost,
   options: RefreshProviderOptions = {},
 ): Promise<RefreshResult> {
-  return refreshProviderModels(
+  const result = await refreshProviderModels(
     {
       getConfig: () => host.getConfig(),
       removeProvider: (providerId) => host.removeProvider(providerId),
@@ -43,4 +45,9 @@ export async function refreshAllProviderModels(
     },
     options,
   );
+  await syncConfiguredFreeTiers(
+    { getConfig: () => host.getConfig(), setConfig: (patch) => host.setConfig(patch) },
+    options.providerId,
+  );
+  return result;
 }

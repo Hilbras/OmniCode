@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.10
+
+### Patch Changes
+
+- Pick up free models a provider adds or retires on a model refresh, instead of only when the provider is re-added.
+
 ## 1.1.9
 
 ### Patch Changes
