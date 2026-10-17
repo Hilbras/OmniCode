@@ -75,6 +75,11 @@ export { limitAgentReplayByTurns } from '#/replay';
 export { parseAgentFileText, resolveAgentPath } from '@hilbras/omnicode-core';
 export { SECONDARY_DERIVED_MODEL_ALIAS } from '#/config/index';
 export { PRIMARY_SUBAGENT_MODEL_CHOICE } from '@hilbras/omnicode-core/session/subagent/configSection';
+export type {
+  AgentTaskInfo,
+  AgentTaskInfoByKind,
+  AgentTaskKind,
+} from '@hilbras/omnicode-core';
 
 export { installGlobalProxyDispatcher } from '#/proxy';
 

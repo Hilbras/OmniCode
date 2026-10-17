@@ -1,5 +1,11 @@
 # @hilbras/omnicode-sdk
 
+## 0.21.1
+
+### Patch Changes
+
+- Make the published type declarations consumable: bundled packages are inlined rather than left as unresolvable imports, and the agent task types the declarations reference are now exported.
+
 ## 0.21.0
 
 ### Minor Changes

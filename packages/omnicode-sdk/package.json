@@ -1,6 +1,6 @@
 {
   "name": "@hilbras/omnicode-sdk",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "private": true,
   "description": "TypeScript SDK for the Omnicode Agent",
   "license": "MIT",
@@ -54,6 +54,8 @@
   },
   "dependencies": {
     "@antfu/utils": "^9.3.0",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "immer": "^11.1.0",
     "smol-toml": "^1.6.1",
     "yazl": "^3.3.1",
     "zod": "^4.3.6"

@@ -2,9 +2,14 @@
   "$schema": "https://developer.microsoft.com/json-schemas/api-extractor/v7/api-extractor.schema.json",
   "mainEntryPointFilePath": "<projectFolder>/.tmp-api-extractor/dts/omnicode-sdk/src/index.d.ts",
   "bundledPackages": [
+    "@hilbras/omnicode-core",
+    "@hilbras/omnicode-client",
     "@hilbras/omnicode-kaos",
     "@hilbras/omnicode-auth",
-    "@hilbras/omnicode-llm"
+    "@hilbras/omnicode-llm",
+    "immer",
+    "undici",
+    "@modelcontextprotocol/sdk"
   ],
   "compiler": {
     "tsconfigFilePath": "<projectFolder>/tsconfig.api-extractor.json",
@@ -27,7 +32,7 @@
   "messages": {
     "extractorMessageReporting": {
       "ae-forgotten-export": {
-        "logLevel": "none"
+        "logLevel": "warning"
       },
       "ae-missing-release-tag": {
         "logLevel": "none"

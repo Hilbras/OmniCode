@@ -453,6 +453,7 @@ export * from '#/agent/tools/task/task-wait/task-wait';
 import '#/agent/tools/task/task-wait/taskWaitTool';
 export * from '#/agent/task/task';
 export * from '#/agent/task/taskOps';
+export * from '#/agent/task/types';
 export * from '#/agent/task/taskService';
 import '#/features/cron/configSection';
 export * from '#/features/cron/cronTask';
