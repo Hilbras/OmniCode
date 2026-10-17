@@ -572,6 +572,71 @@ describe('built-in provider add', () => {
     expect(pickerModels['opencode-zen/claude-sonnet-4-5']).not.toHaveProperty('freeTier');
     expect(rig.host.showError).not.toHaveBeenCalled();
   });
+
+  it('keeps working free aliases when the free endpoint is down on a re-add', async () => {
+    const rig = makeProviderHost();
+    rig.store.current().models = {
+      'opencode-zen/claude-sonnet-4-5': {
+        provider: 'opencode-zen',
+        model: 'claude-sonnet-4-5',
+        maxContextSize: 200_000,
+      },
+      'opencode-zen/big-pickle': {
+        provider: 'opencode-zen',
+        model: 'big-pickle',
+        baseUrl: 'https://opencode.ai/inference/v1',
+        apiKey: 'public',
+        freeTier: true,
+        maxContextSize: 200_000,
+      },
+    };
+    vi.mocked(rig.host.authFlow.refreshConfigAfterLogin).mockImplementation(async () => {
+      const config = await rig.store.harness.getConfig();
+      Object.assign(rig.appState, {
+        availableModels: { ...config.models },
+        availableProviders: { ...config.providers },
+      });
+      return false;
+    });
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        if (url.includes('opencode.ai/inference')) throw new Error('ECONNREFUSED');
+        return new Response(JSON.stringify({ data: [{ id: 'claude-sonnet-4-5' }] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }),
+    );
+
+    await handleProviderCommand(rig.host);
+    press(rig.mounted[0]!, [DOWN, ENTER]);
+    await vi.waitFor(() => {
+      expect(rig.mounted).toHaveLength(2);
+    });
+    press(rig.mounted[1]!, [DOWN, DOWN, ENTER]);
+    await vi.waitFor(() => {
+      expect(rig.mounted[2]).toBeInstanceOf(ApiKeyInputDialogComponent);
+    });
+    press(rig.mounted[2]!, [...typed('YOUR_API_KEY'), ENTER]);
+    await vi.waitFor(() => {
+      expect(rig.mounted.at(-1)).toBeInstanceOf(TabbedModelSelectorComponent);
+    });
+
+    // The provider record is replaced by remove-then-write, which cascades
+    // every alias away. A failed free fetch must not take the free models with
+    // it: they were working a moment ago and the user's only error should be
+    // the missing update, not the loss of every free alias.
+    expect(rig.store.current().models?.['opencode-zen/big-pickle']).toMatchObject({
+      freeTier: true,
+      baseUrl: 'https://opencode.ai/inference/v1',
+    });
+    // And the failure is reported rather than silent.
+    expect(rig.host.showError).toHaveBeenCalledWith(
+      expect.stringContaining('could not be reached'),
+    );
+  });
 });
 
 describe('provider key edit', () => {

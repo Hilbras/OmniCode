@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.7
+
+### Patch Changes
+
+- Keep a built-in provider's working free models when re-adding it from the `/provider` menu while the free endpoint is unreachable, instead of dropping every free model.
+
 ## 1.1.6
 
 ### Patch Changes

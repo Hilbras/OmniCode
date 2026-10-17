@@ -467,6 +467,8 @@ async function handleBuiltinProviderAdd(
   );
   if (apiKey === undefined) return;
 
+  const previousFreeAliases = await snapshotFreeTierAliases(host, builtin.id);
+
   await addProviderAndSelectModel(
     host,
     {
@@ -475,6 +477,7 @@ async function handleBuiltinProviderAdd(
       baseUrl: builtin.baseUrl,
       freeTier: builtin.freeTier,
       catalogProvider: builtin.catalogProvider,
+      previousFreeAliases,
     },
     () =>
       saveProviderRecord(host, builtin.id, {
@@ -509,6 +512,7 @@ async function addProviderAndSelectModel(
     readonly baseUrl: string;
     readonly freeTier?: BuiltInProvider['freeTier'];
     readonly catalogProvider?: string;
+    readonly previousFreeAliases?: Record<string, Record<string, unknown>>;
   },
   save: () => Promise<void>,
 ): Promise<void> {
@@ -568,14 +572,29 @@ async function addProviderAndSelectModel(
   promptProviderModelSelection(host, target.providerId, aliases);
 }
 
+async function snapshotFreeTierAliases(
+  host: SlashCommandHost,
+  providerId: string,
+): Promise<Record<string, Record<string, unknown>>> {
+  const config = await host.harness.getConfig({ reload: true });
+  const kept: Record<string, Record<string, unknown>> = {};
+  for (const [alias, raw] of Object.entries(config.models ?? {})) {
+    if (raw === null || typeof raw !== 'object') continue;
+    const record = raw as Record<string, unknown>;
+    if (record['freeTier'] === true && alias.startsWith(`${providerId}/`)) {
+      kept[alias] = record;
+    }
+  }
+  return kept;
+}
+
 /**
  * Adds the built-in's free-tier models after discovery has written the paid
  * ones.
  *
  * The same built-in excludes the free ids from its paid `/models` route, so
- * without this step they are listed nowhere at all — which is what a TUI-side
- * add used to do. Mirrors the CLI's `importBuiltInExtras`, so both add paths
- * leave identical config.
+ * without this step they are listed nowhere at all. Mirrors the CLI's
+ * `importBuiltInExtras`, so both add paths leave identical config.
  */
 async function routeFreeTierAliases(
   host: SlashCommandHost,
@@ -583,12 +602,18 @@ async function routeFreeTierAliases(
     readonly providerId: string;
     readonly freeTier?: BuiltInProvider['freeTier'];
     readonly catalogProvider?: string;
+    readonly previousFreeAliases?: Record<string, Record<string, unknown>>;
   },
 ): Promise<void> {
   for (const source of target.freeTier ?? []) {
     const { ids, failure } = await fetchFreeTierModelIds(source);
+    const config = await host.harness.getConfig({ reload: true });
     if (ids.length === 0) {
       host.showError(describeFreeTierFailure(source.baseUrl, failure));
+      const preserved = target.previousFreeAliases ?? {};
+      if (Object.keys(preserved).length > 0) {
+        await host.harness.setConfig({ models: { ...config.models, ...preserved } });
+      }
       continue;
     }
     const limits =
@@ -602,7 +627,6 @@ async function routeFreeTierAliases(
       ids,
       limits,
     });
-    const config = await host.harness.getConfig({ reload: true });
     await host.harness.setConfig({ models: { ...config.models, ...aliases } });
     // The aliases just written are in config but not yet in appState, which is
     // what the model picker reads. Without this refresh the picker offers only
