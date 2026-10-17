@@ -675,7 +675,7 @@ describe('omnicode provider add-builtin', () => {
       }),
     );
     const { harness, current } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
-    const { deps, exitCodes } = makeDeps(harness);
+    const { deps, exitCodes, stdout } = makeDeps(harness);
 
     await tryRun(() => handleProviderAddBuiltin(deps, 'opencode-zen', { apiKey: 'sk-test' }));
 
@@ -689,6 +689,11 @@ describe('omnicode provider add-builtin', () => {
       apiKey: 'public',
       freeTier: true,
     });
+    // The free ids must be named in the output, not just counted: a list of
+    // only the paid models reads as though the free ones were never added.
+    const printed = stdout.join('');
+    expect(printed).toContain('opencode-zen/big-pickle');
+    expect(printed).toMatch(/Routed 1 free model to their free tier\./);
     // The paid alias must keep resolving against the provider and must not be
     // turned into a free-tier alias.
     expect(current().models?.['opencode-zen/claude-sonnet-4']).toMatchObject({

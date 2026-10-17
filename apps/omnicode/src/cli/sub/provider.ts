@@ -385,10 +385,13 @@ export async function handleProviderAddBuiltin(
   // from a `finally` or ignoring the exit code — would report a working
   // provider on the paths where the user is told to hand-edit config.toml.
   const imported = await importBuiltInExtras(deps, id, builtin);
+  for (const alias of imported) {
+    deps.stdout.write(`  - ${alias}\n`);
+  }
   deps.stdout.write(`${builtin.name} is ready — run /provider in the TUI to pick a default model.\n`);
-  if (imported > 0) {
+  if (imported.length > 0) {
     deps.stdout.write(
-      `Also routed ${imported} free model${imported === 1 ? '' : 's'} to their free tier.\n`,
+      `Routed ${imported.length} free model${imported.length === 1 ? '' : 's'} to their free tier.\n`,
     );
   }
 }
@@ -407,13 +410,15 @@ export async function handleProviderAddBuiltin(
  * an unreachable free-tier endpoint yields no free models, and failing the add
  * over that would be worse than listing fewer models.
  *
- * Returns how many models were routed to the free tier.
+ * Returns the aliases routed to the free tier, so the caller can list them
+ * alongside the paid ones — a count alone reads as though the free models
+ * were never added.
  */
 async function importBuiltInExtras(
   deps: ProviderDeps,
   providerId: string,
   builtin: BuiltInProvider,
-): Promise<number> {
+): Promise<string[]> {
   const harness = deps.getHarness();
   const config = await harness.getConfig({ reload: true });
   const models = { ...config.models };
@@ -440,7 +445,7 @@ async function importBuiltInExtras(
     touched = true;
   }
 
-  let routed = 0;
+  const routed: string[] = [];
   for (const source of builtin.freeTier ?? []) {
     const ids = await fetchFreeTierModelIds(source);
     if (ids.length === 0) continue;
@@ -454,7 +459,7 @@ async function importBuiltInExtras(
         limits,
       }),
     );
-    routed += ids.length;
+    for (const id of ids) routed.push(`${providerId}/${id}`);
     touched = true;
   }
 

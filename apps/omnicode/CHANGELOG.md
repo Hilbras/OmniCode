@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.2
+
+### Patch Changes
+
+- Name the free models when adding a built-in provider, instead of reporting only how many were routed to the free tier.
+
 ## 1.1.1
 
 ### Patch Changes
