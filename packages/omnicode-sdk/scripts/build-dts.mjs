@@ -25,8 +25,15 @@ const workspacePackages = new Map([
 // pattern fails to match is passed through untouched, so a stale list here
 // silently ships bare `@hilbras/omnicode-*` imports in the published .d.ts —
 // pointing at devDependencies consumers do not have.
+//
+// The `#…` alternatives cover both shapes a package's `imports` map uses:
+// `#/src/thing` (`"#/*"`) and named prefixes such as `#human/thing`
+// (`"#human/*"`). Both must be rewritten: the map is what made them legal
+// inside the workspace, and `src` is not published. A leading slash is
+// required after `#` in the second form's prefix so a class private field
+// (`#private;`) is never treated as a specifier.
 const WORKSPACE_SPECIFIER_PATTERN = new RegExp(
-  `(["'])(#\\/[^"']+|@hilbras\\/(?:${[...workspacePackages.keys()]
+  `(["'])(#\\/[^"']+|#[A-Za-z][\\w.-]*\\/[^"']+|@hilbras\\/(?:${[...workspacePackages.keys()]
     .map((name) => name.slice('@hilbras/'.length))
     .join('|')})(?:\\/[^"']+)?)\\1`,
   'g',
@@ -161,11 +168,11 @@ function packageDirForFile(file) {
 }
 
 function resolveSpecifier({ currentFile, emittedFiles, packageDir, specifier }) {
-  if (specifier.startsWith('#/')) {
+  if (specifier.startsWith('#')) {
     return resolvePackageSubpath({
       emittedFiles,
       srcRoot: srcRootForFile(currentFile, packageDir),
-      subpath: specifier.slice(2),
+      subpath: specifier.slice(1).replace(/^\//, ''),
       originalSpecifier: specifier,
     });
   }
