@@ -8,6 +8,9 @@
     "test",
     "../../packages/*/src/**/*.ts",
     "../../packages/*/src/**/*.tsx",
-    "../../packages/*/test/**/*.ts"
+    "../../packages/*/test/**/*.ts",
+    "../../Kernel/*/src/**/*.ts",
+    "../../Kernel/*/src/**/*.tsx",
+    "../../Kernel/*/test/**/*.ts"
   ]
 }

@@ -1,25 +1,31 @@
 # Kernel
 
-Step 1 of a planned restructure of this repository.
+Holds the packages that connect the rest of the repository to each other. Systems
+reach these through `Kernel/API` rather than importing each other directly.
 
-This folder is intentionally empty for now. Its contents, and what moves into it, are
-not decided yet — see "Open questions" below.
+## Contents
+
+| Package | Name | Role |
+|---|---|---|
+| `API` | `@hilbras/kernel-api` | the single connection surface between kernel packages; re-exports the SDK |
+| `SDK` | `@hilbras/omnicode-sdk` | the public TypeScript SDK and harness |
 
 ## Current status
 
 | | |
 |---|---|
-| Created | as an empty directory, ahead of the work that fills it |
-| pnpm workspace | **not** a workspace package — `pnpm-workspace.yaml` globs only `packages/*`, `apps/*`, and `docs` |
-| Nix build | listed in `flake.nix`'s fileset, so it is not silently dropped from the source |
+| pnpm workspace | yes — `pnpm-workspace.yaml` globs `Kernel/*` |
+| Nix build | `flake.nix`'s `workspacePaths` and `workspaceNames` list both packages |
+| vitest | the root `vitest.config.ts` project glob covers `Kernel/*/vitest.config.ts` |
 
-## Open questions
+`Kernel/SDK` was moved from `packages/omnicode-sdk`. Its package name and public
+exports are unchanged, so nothing outside this repository had to be updated.
 
-These are deliberate, not oversights. Answering them decides what this folder becomes:
+## Wiring to remember
 
-1. **What goes here?** The engine internals, a shared runtime, a spec, or something else.
-2. **What moves into it?** Nothing has been moved. No existing code was relocated to
-   create this folder.
-3. **Does it stay outside `packages/`?** If the contents become a workspace package, the
-   workspace globs and `flake.nix`'s `workspacePaths` both need updating, and the layout
-   stops being a purely structural folder.
+Adding a package under `Kernel/` needs four manual edits, all of which fail
+silently when missed: the pnpm workspace globs, `flake.nix` (an explicit fileset,
+not globs), the root `vitest.config.ts` project glob (an unmatched project root
+stops its tests from running while the suite still reports green), and the
+`--filter './Kernel/*'` arguments in the root `build:packages` and `typecheck`
+scripts.

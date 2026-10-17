@@ -7,7 +7,7 @@
   "scripts": {
     "postinstall": "node scripts/fix-node-pty-perms.mjs",
     "build": "pnpm -r run build",
-    "build:packages": "pnpm -r --filter './packages/*' run build",
+    "build:packages": "pnpm -r --filter './packages/*' --filter './Kernel/*' run build",
     "dev:cli": "pnpm -C apps/omnicode run dev",
     "dev:cli:marketplace": "OMNICODE_DEV_MARKETPLACE_URL=https://code.omnicode.com/omnicode/plugins/marketplace.json pnpm -C apps/omnicode run dev",
     "omnicode": "node ./scripts/omnicode-dev.mjs",
@@ -17,7 +17,7 @@
     "build:plugin-marketplace": "pnpm -C apps/omnicode run build:plugin-marketplace",
     "vis": "pnpm -C apps/omnicode-vis run dev",
     "dev:docs": "pnpm -C docs install --ignore-workspace && pnpm -C docs run dev",
-    "typecheck": "pnpm run build:packages && pnpm -r --filter './packages/*' run typecheck && pnpm --filter @hilbras/omnicode run typecheck && pnpm --filter omnicode run typecheck && pnpm --filter @hilbras/omnicode-vis-server run typecheck && pnpm --filter @hilbras/omnicode-vis-web run typecheck",
+    "typecheck": "pnpm run build:packages && pnpm -r --filter './packages/*' --filter './Kernel/*' run typecheck && pnpm --filter @hilbras/omnicode run typecheck && pnpm --filter omnicode run typecheck && pnpm --filter @hilbras/omnicode-vis-server run typecheck && pnpm --filter @hilbras/omnicode-vis-web run typecheck",
     "lint": "node scripts/check-no-comments.mjs && oxlint --type-aware",
     "lint:fix": "pnpm run lint --fix",
     "lint:pkg": "pnpm --filter @hilbras/omnicode exec publint && npm_config_cache=${TMPDIR:-/tmp}/omnicode-npm-cache pnpm --filter @hilbras/omnicode exec attw --pack . --profile node16",
