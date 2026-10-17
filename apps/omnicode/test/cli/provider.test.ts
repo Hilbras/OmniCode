@@ -720,12 +720,49 @@ describe('omnicode provider add-builtin', () => {
       }),
     );
     const { harness, current } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
-    const { deps, exitCodes } = makeDeps(harness);
+    const { deps, exitCodes, stdout } = makeDeps(harness);
 
     await tryRun(() => handleProviderAddBuiltin(deps, 'opencode-zen', { apiKey: 'sk-test' }));
 
     expect(exitCodes).toEqual([]);
     expect(Object.keys(current().models ?? {})).toEqual(['opencode-zen/claude-sonnet-4']);
+    // The same built-in excludes the free ids from the paid route, so a failed
+    // free fetch makes those models vanish from every surface at once. The add
+    // must say so rather than report success over a silently shortened list.
+    expect(stdout.join('')).toContain('https://opencode.ai/inference/v1');
+    expect(stdout.join('')).toMatch(/could not be reached \(network error: ECONNREFUSED\)/);
+  });
+
+  it('names the free models it routed, so the list is not silently shorter', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: unknown) => {
+        const url = String(input);
+        if (url.includes('models.dev')) {
+          return new Response(JSON.stringify({}), {
+            status: 500,
+            headers: { 'Content-Type': 'application/json' },
+          });
+        }
+        const ids = url.includes('opencode.ai/inference')
+          ? ['big-pickle', 'beam-free']
+          : ['claude-sonnet-4'];
+        return new Response(JSON.stringify({ data: ids.map((id) => ({ id })) }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }),
+    );
+    const { harness } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
+    const { deps, exitCodes, stdout } = makeDeps(harness);
+
+    await tryRun(() => handleProviderAddBuiltin(deps, 'opencode-zen', { apiKey: 'sk-test' }));
+
+    expect(exitCodes).toEqual([]);
+    const printed = stdout.join('');
+    expect(printed).toContain('opencode-zen/big-pickle');
+    expect(printed).toContain('opencode-zen/beam-free');
+    expect(printed).toMatch(/Routed 2 free models to their free tier\./);
   });
 
   it('writes no override map for a built-in that declares none', async () => {

@@ -9,6 +9,7 @@ import {
   applyOpencodeFreeTierPayload,
   opencodeFingerprintTools,
   opencodeFreeSessionId,
+  OPENCODE_SESSION_PATTERN,
   resetOpencodeFreeSession,
 } from '#human/llm/provider/providers/opencode';
 import type { LlmRequestEvent } from '#human/llm/requester/requester';
@@ -520,7 +521,7 @@ describe('opencode free tier variant', () => {
     expect(sent['x-opencode-project']).toBe('global');
     expect(sent['user-agent']).toMatch(/^opencode\/[a-z0-9-]+\/\d+\.\d+\.\d+\/cli$/i);
     const session = String(sent['x-opencode-session'] ?? '');
-    expect(session).toMatch(/^ses_[0-9a-f]{12}[0-9A-Za-z]{14}$/);
+    expect(session).toMatch(OPENCODE_SESSION_PATTERN);
     expect(sent['x-opencode-session-id']).toBe(session);
     expect(sent['x-session-affinity']).toBe(session);
     expect(sent['x-session-id']).toBe(session);
@@ -542,7 +543,7 @@ describe('opencode free tier variant', () => {
     expect(opencodeFreeSessionId(base + 60_000)).toBe(first);
     const rotated = opencodeFreeSessionId(base + 3 * 60 * 60 * 1000);
     expect(rotated).not.toBe(first);
-    expect(rotated).toMatch(/^ses_[0-9a-f]{12}[0-9A-Za-z]{14}$/);
+    expect(rotated).toMatch(OPENCODE_SESSION_PATTERN);
     resetOpencodeFreeSession();
   });
 
@@ -550,7 +551,7 @@ describe('opencode free tier variant', () => {
     resetOpencodeFreeSession();
     const base = Date.UTC(2026, 0, 2);
     for (let i = 0; i < 40; i++) {
-      expect(opencodeFreeSessionId(base)).toMatch(/^ses_[0-9a-f]{12}[0-9A-Za-z]{14}$/);
+      expect(opencodeFreeSessionId(base)).toMatch(OPENCODE_SESSION_PATTERN);
     }
     resetOpencodeFreeSession();
   });

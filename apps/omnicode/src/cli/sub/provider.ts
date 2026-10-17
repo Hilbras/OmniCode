@@ -50,6 +50,7 @@ import {
 import { parseProviderBaseUrl } from '#/utils/custom-provider';
 import {
   buildFreeTierAliases,
+  describeFreeTierFailure,
   fetchFreeTierModelIds,
   fetchCatalogLimits,
   DEFAULT_MAX_CONTEXT,
@@ -447,8 +448,11 @@ async function importBuiltInExtras(
 
   const routed: string[] = [];
   for (const source of builtin.freeTier ?? []) {
-    const ids = await fetchFreeTierModelIds(source);
-    if (ids.length === 0) continue;
+    const { ids, failure } = await fetchFreeTierModelIds(source);
+    if (ids.length === 0) {
+      deps.stdout.write(`${describeFreeTierFailure(source.baseUrl, failure)}\n`);
+      continue;
+    }
     Object.assign(
       models,
       buildFreeTierAliases({

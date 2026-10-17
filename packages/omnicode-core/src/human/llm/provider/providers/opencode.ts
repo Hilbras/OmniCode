@@ -1,7 +1,6 @@
 import type { ProviderConnection } from '#/llm/protocol/connection';
 
 export const OPENCODE_FREE_BASE_URL = 'https://opencode.ai/inference/v1';
-export const OPENCODE_FREE_API_KEY = 'public';
 export const OPENCODE_FREE_CLIENT_VERSION = '2.0.29';
 
 const SESSION_PREFIX_MASK = (1n << 48n) - 1n;

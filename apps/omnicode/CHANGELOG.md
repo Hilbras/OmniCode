@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.1.4
+
+### Patch Changes
+
+- Say why a built-in provider's free models were not added, instead of reporting success over a silently shortened list.
+
 ## 1.1.3
 
 ### Patch Changes

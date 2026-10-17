@@ -74,27 +74,58 @@ export async function fetchCatalogLimits(
 
 /**
  * The ids a vendor's free-tier endpoint owns.
+ */
+export type FreeTierFetchFailure =
+  | { readonly kind: 'http'; readonly status: number }
+  | { readonly kind: 'network'; readonly message: string };
+
+export interface FreeTierFetchResult {
+  readonly ids: readonly string[];
+  readonly failure?: FreeTierFetchFailure;
+}
+
+/**
+ * Fetches the ids a vendor's free tier owns, and reports WHY an empty result
+ * is empty.
  *
- * A source that is unreachable yields nothing rather than throwing: the ids are
- * then simply absent, which is the correct outcome when the vendor is down.
+ * The failure is part of the return value rather than swallowed: the same
+ * built-in also excludes these ids from its paid route, so a fetch that fails
+ * quietly makes the models disappear from every surface at once with nothing
+ * reported. Callers must surface it.
  */
 export async function fetchFreeTierModelIds(
   source: { readonly baseUrl: string; readonly match: readonly string[] },
   fetchImpl: typeof fetch = fetch,
-): Promise<string[]> {
+): Promise<FreeTierFetchResult> {
   const url = `${source.baseUrl.replace(/\/+$/, '')}/models`;
   try {
     const res = await fetchImpl(url, { headers: { Accept: 'application/json' } });
-    if (!res.ok) return [];
+    if (!res.ok) return { ids: [], failure: { kind: 'http', status: res.status } };
     const payload = (await res.json()) as { data?: { id?: unknown }[] };
     const rows = Array.isArray(payload.data) ? payload.data : [];
-    return rows
+    const ids = rows
       .map((row) => (typeof row?.id === 'string' ? row.id : undefined))
       .filter((id): id is string => id !== undefined)
       .filter((id) => source.match.some((pattern) => matchesPattern(id, pattern)));
-  } catch {
-    return [];
+    return { ids };
+  } catch (error) {
+    return {
+      ids: [],
+      failure: { kind: 'network', message: error instanceof Error ? error.message : String(error) },
+    };
   }
+}
+
+export function describeFreeTierFailure(
+  baseUrl: string,
+  failure: FreeTierFetchFailure | undefined,
+): string {
+  if (failure === undefined) {
+    return `${baseUrl} answered, but listed none of the expected free model ids.`;
+  }
+  const cause =
+    failure.kind === 'http' ? `HTTP ${failure.status}` : `network error: ${failure.message}`;
+  return `${baseUrl} could not be reached (${cause}); no free models were added.`;
 }
 
 /**

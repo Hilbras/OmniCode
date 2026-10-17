@@ -24,6 +24,7 @@ import {
 } from '#/utils/built-in-providers';
 import {
   buildFreeTierAliases,
+  describeFreeTierFailure,
   fetchCatalogLimits,
   fetchFreeTierModelIds,
   type CatalogLimit,
@@ -585,8 +586,11 @@ async function routeFreeTierAliases(
   },
 ): Promise<void> {
   for (const source of target.freeTier ?? []) {
-    const ids = await fetchFreeTierModelIds(source);
-    if (ids.length === 0) continue;
+    const { ids, failure } = await fetchFreeTierModelIds(source);
+    if (ids.length === 0) {
+      host.showError(describeFreeTierFailure(source.baseUrl, failure));
+      continue;
+    }
     const limits =
       target.catalogProvider === undefined
         ? new Map<string, CatalogLimit>()
