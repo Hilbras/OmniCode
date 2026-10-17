@@ -11,6 +11,7 @@ reach these through `Kernel/API` rather than importing each other directly.
 | `SDK` | `@hilbras/omnicode-sdk` | the public TypeScript SDK and harness |
 | `ACP` | `@hilbras/omnicode-acp` | the Agent Client Protocol host, so editors can drive Omnicode |
 | `Addons` | `@hilbras/omnicode-addons` | optional agent behaviours that plug in through the Feature seam |
+| `Tools` | `@hilbras/omnicode-tools` | the built-in agent tools — filesystem, shell, search, prompts |
 
 ## Current status
 
