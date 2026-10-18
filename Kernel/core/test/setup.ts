@@ -1,5 +1,7 @@
+import { isPreservedEnvKey } from '#/human/test/llm/cassette';
+
 for (const key of Object.keys(process.env)) {
-  if (key.startsWith('OMNICODE_')) {
+  if (key.startsWith('OMNICODE_') && !isPreservedEnvKey(key)) {
     delete process.env[key];
   }
 }
