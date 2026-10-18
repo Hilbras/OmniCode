@@ -37,7 +37,7 @@ import {
   type Event,
   type OmnicodeConfig,
 } from '#/index';
-import { foldAgentWireReplay } from '#/v2/resume-replay';
+import { foldAgentWireReplay } from '@hilbras/omnicode-sdk/rpc-exports';
 import {
   drainQueryStoreDisposals,
   drainSessionIndexMirror,
