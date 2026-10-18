@@ -5,11 +5,11 @@
   "description": "Omnicode OAuth toolkit for managed Omnicode authentication",
   "license": "MIT",
   "author": "Hilbras",
-  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/omnicode-auth#readme",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/Kernel/auth#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hilbras/omnicode.git",
-    "directory": "packages/omnicode-auth"
+    "directory": "Kernel/auth"
   },
   "bugs": {
     "url": "https://github.com/Hilbras/omnicode/issues"

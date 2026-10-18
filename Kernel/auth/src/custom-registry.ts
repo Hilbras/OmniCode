@@ -56,7 +56,7 @@ export interface FetchCustomRegistryOptions {
 }
 
 /**
- * The omnicode-llm `ProviderConfig` union (`packages/omnicode-llm/src/providers/index.ts`)
+ * The omnicode-llm `ProviderConfig` union (`Kernel/llm/src/providers/index.ts`)
  * mirrors these literal values. `omnicode` is included because the api.json schema
  * permits it even though kokub itself only emits the other three.
  */
