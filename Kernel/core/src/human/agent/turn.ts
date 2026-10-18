@@ -27,7 +27,7 @@ import type { LlmRequestConfig, LlmRequester } from '#/llm/requester/requester';
 import {
   readRetryAfterMs,
   resolveMaxAttempts,
-  retryBackoffDelay,
+  retryDelayMs,
   retryErrorFields,
   shouldRetry,
   type LlmRetryOptions,
@@ -682,8 +682,7 @@ export function createTurnMachine(
                 },
                 assign({
                   delayMs: ({ context, event }) =>
-                    readRetryAfterMs(event.cause.error) ??
-                    retryBackoffDelay(context.attempt - 1),
+                    retryDelayMs(context.attempt - 1, readRetryAfterMs(event.cause.error)),
                 }),
                 {
                   type: 'sendToParent',

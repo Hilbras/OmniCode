@@ -24,6 +24,17 @@ export function resolveMaxAttempts(options: LlmRetryOptions | undefined): number
   return Math.max(options?.maxAttemptsPerStep ?? DEFAULT_MAX_RETRY_ATTEMPTS, 1);
 }
 
+export const MAX_RETRY_AFTER_MS = 15 * 60_000;
+
+export function retryDelayMs(
+  attemptIndex: number,
+  retryAfterMs: number | undefined,
+): number {
+  const backoff = retryBackoffDelay(attemptIndex);
+  if (retryAfterMs === undefined) return backoff;
+  return Math.min(Math.max(backoff, retryAfterMs), MAX_RETRY_AFTER_MS);
+}
+
 export function retryBackoffDelay(attemptIndex: number): number {
   const base = Math.min(BASE_DELAY_MS * Math.pow(RETRY_FACTOR, attemptIndex), MAX_DELAY_MS);
   return base + Math.random() * JITTER_FACTOR * base;
@@ -49,6 +60,8 @@ export function isRetryableError(error: LlmErrorMessage): boolean {
       return false;
     case 'empty_response':
       return error.finishReason !== 'filtered';
+    case 'incomplete_stream':
+      return true;
     case 'status':
       return RETRYABLE_STATUS_CODES.has(error.statusCode);
     default:

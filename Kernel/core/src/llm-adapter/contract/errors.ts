@@ -425,6 +425,8 @@ export function errorFromLlmMessage(error: LlmErrorMessage): Error {
       return new APIConnectionError(error.message);
     case 'timeout':
       return new APITimeoutError(error.message);
+    case 'incomplete_stream':
+      return new APIConnectionError(error.message);
     case 'rate_limit':
       return new APIProviderRateLimitError(
         error.message,

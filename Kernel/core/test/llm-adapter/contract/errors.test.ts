@@ -12,6 +12,7 @@ import {
   ChatProviderError,
   classifyApiError,
   createAbortError,
+  errorFromLlmMessage,
   isAbortError,
   isRetryableGenerateError,
   normalizeAPIStatusError,
@@ -175,6 +176,15 @@ describe('classifyApiError', () => {
     expect(classifyApiError(normalizeAPIStatusError(413, 'context length exceeded')).kind).toBe(
       'context_overflow',
     );
+  });
+
+  it('maps an incomplete stream onto a retryable connection error', () => {
+    const mapped = errorFromLlmMessage({
+      kind: 'incomplete_stream',
+      message: 'the provider stream ended before a finish event arrived',
+    });
+    expect(mapped).toBeInstanceOf(APIConnectionError);
+    expect(isRetryableGenerateError(mapped)).toBe(true);
   });
 
   it('falls back to other for unknown values', () => {

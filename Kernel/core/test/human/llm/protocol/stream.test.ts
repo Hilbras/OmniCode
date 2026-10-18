@@ -33,6 +33,7 @@ describe('consumeStream', () => {
       (chunk, sink) => {
         parsed.push(chunk);
         sink.onDelta(textPart(chunk.text ?? ''));
+        sink.onFinish({ finishReason: 'completed', rawFinishReason: 'stop' });
       },
       (event) => events.push(event),
     );
@@ -40,9 +41,25 @@ describe('consumeStream', () => {
     expect(parsed.map((chunk) => chunk.text)).toEqual(['a', 'b']);
     expect(events).toEqual([
       { type: 'llm.streaming.part', part: textPart('a') },
+      { type: 'llm.streaming.finish', finish: { finishReason: 'completed', rawFinishReason: 'stop' } },
       { type: 'llm.streaming.part', part: textPart('b') },
+      { type: 'llm.streaming.finish', finish: { finishReason: 'completed', rawFinishReason: 'stop' } },
       { type: 'llm.done' },
     ]);
+  });
+
+  it('fails the stream when the parser never reports a finish', async () => {
+    const events: LlmRequestEvent[] = [];
+
+    await consumeStream(
+      streamOf([{ text: 'a' }]),
+      (chunk, sink) => {
+        sink.onDelta(textPart(chunk.text ?? ''));
+      },
+      (event) => events.push(event),
+    );
+
+    expect(events.at(-1)?.type).toBe('llm.failed.remote');
   });
 
   it('dedups the message id and forwards usage and finish on every chunk', async () => {

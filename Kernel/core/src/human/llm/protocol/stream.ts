@@ -23,10 +23,16 @@ export async function consumeStream<TChunk>(
   onEvent: LlmEventEmitter,
   observe?: (chunk: TChunk) => void,
 ): Promise<void> {
-  const state: { messageId?: string; failed: boolean } = { failed: false };
+  const state: { messageId?: string; failed: boolean; finished: boolean } = {
+    failed: false,
+    finished: false,
+  };
   const sink: StreamParseSink = {
     onDelta: (part) => onEvent?.({ type: 'llm.streaming.part', part }),
-    onFinish: (finish) => onEvent?.({ type: 'llm.streaming.finish', finish }),
+    onFinish: (finish) => {
+      state.finished = true;
+      onEvent?.({ type: 'llm.streaming.finish', finish });
+    },
     onMessageId: (id) => {
       if (id === state.messageId) return;
       state.messageId = id;
@@ -44,6 +50,18 @@ export async function consumeStream<TChunk>(
     if (state.failed) {
       return;
     }
+  }
+  if (!state.finished) {
+    onEvent?.({
+      type: 'llm.failed.remote',
+      error: {
+        kind: 'incomplete_stream',
+        message:
+          'The provider stream ended before a finish event arrived. ' +
+          'The response is truncated mid-flight rather than complete.',
+      },
+    });
+    return;
   }
   onEvent?.({ type: 'llm.done' });
 }

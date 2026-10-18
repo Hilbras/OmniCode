@@ -40,6 +40,7 @@ export type LlmErrorKind =
   | 'request_structure'
   | 'image_format'
   | 'empty_response'
+  | 'incomplete_stream'
   | 'provider'
   | 'unknown';
 

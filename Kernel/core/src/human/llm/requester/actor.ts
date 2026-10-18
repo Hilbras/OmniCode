@@ -12,6 +12,7 @@ import type {
   LlmRequester,
 } from './requester';
 import type { LlmRecoveryRecord } from './recovery';
+import { repairUnansweredToolCalls } from './tool-history';
 
 export interface LlmInput {
   readonly config: LlmRequestConfig;
@@ -71,7 +72,7 @@ export function createRequestActor(
                   model: applyCredential(input.config.model, await credential),
                 }
               : { ...input.config, model: applyCredential(input.config.model, credential) };
-        let messages = input.content.messages;
+        let messages = repairUnansweredToolCalls(input.content.messages).messages;
         for (const resolver of messageResolvers) {
           messages = await resolver.resolve(messages, {
             model: config.model,
