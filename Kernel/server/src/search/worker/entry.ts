@@ -2,12 +2,12 @@ import { parentPort, workerData } from 'node:worker_threads';
 
 import { configureTextBuildWorkerRuntime } from '@hilbras/omnicode-minidb/worker-runtime';
 
-import { GlobalSearchError, type GlobalSearchErrorReason } from '../contract';
+import { GlobalSearchError, type GlobalSearchErrorReason } from '../contract.ts';
 import {
   SearchIndexCore,
   type CoreSearchParams,
   type SyncSessionInput,
-} from '../indexCore';
+} from '../indexCore.ts';
 import {
   SEARCH_WORKER_PROTOCOL_VERSION,
   type SearchWorkerData,
@@ -16,7 +16,7 @@ import {
   type SearchWorkerOpenResult,
   type SearchWorkerCall,
   type SearchWorkerRequest,
-} from './protocol';
+} from './protocol.ts';
 
 const data = workerData as SearchWorkerData;
 
