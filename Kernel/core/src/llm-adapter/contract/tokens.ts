@@ -1,3 +1,4 @@
+import { firstCodePoint } from '#/_base/text/code-point';
 import type { ContentPart, Message, Tool } from './message';
 
 const messageTokenEstimateCache = new WeakMap<Message, number>();
@@ -6,7 +7,7 @@ export function estimateTokens(text: string): number {
   let asciiCount = 0;
   let nonAsciiCount = 0;
   for (const char of text) {
-    if (char.codePointAt(0)! <= 127) {
+    if (firstCodePoint(char)! <= 127) {
       asciiCount++;
     } else {
       nonAsciiCount++;

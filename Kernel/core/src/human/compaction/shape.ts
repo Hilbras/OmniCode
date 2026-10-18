@@ -1,3 +1,4 @@
+import { firstCodePoint } from '#/_base/text/code-point';
 import { estimateMessageTokens, estimateUsedContextTokens } from '#/agent/context-usage';
 import { inputSubmitted, messageAppended, turnEnded, turnStarted } from '#/agent/events';
 import { createUserEntry, type HistoryMessage, type UserEntry } from '#/agent/turn';
@@ -178,7 +179,7 @@ function truncateTextToTokens(text: string, maxTokens: number): string {
   let nonAsciiCount = 0;
   let end = 0;
   for (const char of text) {
-    if ((char.codePointAt(0) as number) <= 127) {
+    if ((firstCodePoint(char) as number) <= 127) {
       asciiCount++;
     } else {
       nonAsciiCount++;

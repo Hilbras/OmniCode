@@ -1,3 +1,4 @@
+import { firstCodePoint } from '#/_base/text/code-point';
 import { dirname, isAbsolute, join, normalize } from 'pathe';
 
 import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
@@ -44,7 +45,7 @@ async function probeGitControlDir(
 }
 
 function parseGitDirPointer(content: string, markerParent: string): string | undefined {
-  const stripped = content.codePointAt(0) === 0xfeff ? content.slice(1) : content;
+  const stripped = firstCodePoint(content) === 0xfeff ? content.slice(1) : content;
   const line = stripped.trimStart().split(/\r?\n/, 1)[0]?.trim();
   if (line === undefined || !line.startsWith('gitdir:')) return undefined;
 

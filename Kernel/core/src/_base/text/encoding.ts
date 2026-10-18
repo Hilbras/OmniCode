@@ -1,3 +1,4 @@
+import { firstCodePoint } from '#/_base/text/code-point';
 export type UtfTextEncoding = 'utf-8' | 'utf-16le' | 'utf-16be';
 
 export interface TextClassification {
@@ -92,7 +93,7 @@ export function classifyTextSample(sample: Uint8Array): TextClassification {
   let nonPrintable = 0;
   let total = 0;
   for (const ch of text) {
-    const cp = ch.codePointAt(0)!;
+    const cp = firstCodePoint(ch)!;
     total++;
     if (cp === 9 || cp === 10 || cp === 13) continue;
     if (cp < 32 || (cp >= 0x7f && cp <= 0x9f)) nonPrintable++;

@@ -1,3 +1,4 @@
+import { codePointAt } from '#/_base/text/code-point';
 export interface DecodedWebp {
   readonly data: Uint8ClampedArray;
   readonly width: number;
@@ -50,7 +51,7 @@ export function isAnimatedWebp(bytes: Uint8Array): boolean {
 
 function hasAscii(bytes: Uint8Array, text: string, at: number): boolean {
   for (let i = 0; i < text.length; i++) {
-    if (bytes[at + i] !== text.codePointAt(i)) return false;
+    if (bytes[at + i] !== codePointAt(text, i)) return false;
   }
   return true;
 }

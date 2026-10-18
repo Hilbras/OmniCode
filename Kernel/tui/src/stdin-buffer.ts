@@ -1,3 +1,4 @@
+import { firstCodePoint } from '#/code-point';
 /**
  * StdinBuffer buffers input and emits complete sequences.
  *
@@ -98,7 +99,7 @@ function isCompleteCsiSequence(data: string): "complete" | "incomplete" {
 	// CSI sequences end with a byte in the range 0x40-0x7E (@-~)
 	// This includes all letters and several special characters
 	const lastChar = payload.at(-1)!;
-	const lastCharCode = lastChar.codePointAt(0);
+	const lastCharCode = firstCodePoint(lastChar);
 
 	if (lastCharCode >= 0x40 && lastCharCode <= 0x7e) {
 		// Special handling for SGR mouse sequences
@@ -397,7 +398,7 @@ export class StdinBuffer extends EventEmitter<StdinBufferEventMap> {
 	}
 
 	private emitDataSequence(sequence: string): void {
-		const rawCodepoint = sequence.length === 1 ? sequence.codePointAt(0) : undefined;
+		const rawCodepoint = sequence.length === 1 ? firstCodePoint(sequence) : undefined;
 		if (rawCodepoint !== undefined && rawCodepoint === this.pendingKittyPrintableCodepoint) {
 			this.pendingKittyPrintableCodepoint = undefined;
 			return;

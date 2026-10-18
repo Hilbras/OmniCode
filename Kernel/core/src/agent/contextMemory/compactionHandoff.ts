@@ -1,3 +1,4 @@
+import { codePointAt, firstCodePoint } from '#/_base/text/code-point';
 import { estimateTokens, estimateTokensForMessage, estimateTokensForMessages } from '#/llm-adapter/contract/tokens';
 import { isSkillActivationPart } from '#human/agent/origin';
 import type { ContentPart } from '#human/llm/message';
@@ -318,7 +319,7 @@ function truncateTextToTokens(text: string, maxTokens: number): string {
   let nonAsciiCount = 0;
   let end = 0;
   for (const char of text) {
-    if (char.codePointAt(0)! <= 127) {
+    if (firstCodePoint(char)! <= 127) {
       asciiCount++;
     } else {
       nonAsciiCount++;
@@ -336,9 +337,9 @@ function truncateTextToTokensFromEnd(text: string, maxTokens: number): string {
   let start = text.length;
   for (let i = text.length - 1; i >= 0; i--) {
     let isAscii = false;
-    const code = text.codePointAt(i);
+    const code = codePointAt(text, i);
     if (code >= 0xdc00 && code <= 0xdfff && i > 0) {
-      const high = text.codePointAt(i - 1);
+      const high = codePointAt(text, i - 1);
       if (high >= 0xd800 && high <= 0xdbff) {
         i--;
       }

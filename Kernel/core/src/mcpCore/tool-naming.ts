@@ -1,3 +1,4 @@
+import { codePointAt } from '#/_base/text/code-point';
 const MCP_NAME_PREFIX = 'mcp__';
 const MCP_NAME_SEPARATOR = '__';
 
@@ -19,7 +20,7 @@ export function qualifyMcpToolName(serverName: string, toolName: string): string
 function stableHash8(input: string): string {
   let hash = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
-    hash ^= input.codePointAt(i)!;
+    hash ^= codePointAt(input, i)!;
     hash = Math.trunc(Math.imul(hash, 0x01000193));
   }
   return hash.toString(16).padStart(8, '0');

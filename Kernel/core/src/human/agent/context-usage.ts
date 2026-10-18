@@ -1,3 +1,4 @@
+import { firstCodePoint } from '../../_base/text/code-point';
 import type { Message, ToolDescription } from '#/llm/message';
 import { emptyUsage, type TokenUsage } from '#/llm/usage';
 
@@ -18,7 +19,7 @@ export function estimateTextTokens(text: string): number {
   let asciiCount = 0;
   let nonAsciiCount = 0;
   for (const char of text) {
-    if ((char.codePointAt(0) as number) <= 127) {
+    if ((firstCodePoint(char) as number) <= 127) {
       asciiCount++;
     } else {
       nonAsciiCount++;

@@ -1,3 +1,4 @@
+import { codePointAt } from '#/code-point';
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { deleteKittyImage, isImageLine } from "./terminal-image";
@@ -39,10 +40,10 @@ class BoundedTerminalWriter {
 			let end = Math.min(value.length, offset + capacity);
 			if (
 				end < value.length &&
-				value.codePointAt(end - 1) >= 0xd800 &&
-				value.codePointAt(end - 1) <= 0xdbff &&
-				value.codePointAt(end) >= 0xdc00 &&
-				value.codePointAt(end) <= 0xdfff
+				codePointAt(value, end - 1) >= 0xd800 &&
+				codePointAt(value, end - 1) <= 0xdbff &&
+				codePointAt(value, end) >= 0xdc00 &&
+				codePointAt(value, end) <= 0xdfff
 			) {
 				end--;
 			}

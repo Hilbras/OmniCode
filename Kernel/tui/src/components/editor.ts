@@ -1,3 +1,4 @@
+import { firstCodePoint } from '#/code-point';
 import type { AutocompleteProvider, AutocompleteSuggestions } from "../autocomplete";
 import { getKeybindings } from "../keybindings";
 import { decodePrintableKey, matchesKey } from "../keys";
@@ -786,7 +787,7 @@ export class Editor implements Component, Focusable {
 				return;
 			}
 
-			const printable = decodePrintableKey(data) ?? (data.codePointAt(0) >= 32 ? data : undefined);
+			const printable = decodePrintableKey(data) ?? (firstCodePoint(data) >= 32 ? data : undefined);
 			if (printable !== undefined) {
 				// Printable character - perform the jump
 				const direction = this.jumpMode;
@@ -828,7 +829,7 @@ export class Editor implements Component, Focusable {
 		}
 
 		const isEnterKey = data !== "\n" && kb.matches(data, "tui.input.submit");
-		const charCode = data.codePointAt(0);
+		const charCode = firstCodePoint(data);
 		const printableForBurst = decodePrintableKey(data) ??
 			(data.length === 1 && charCode >= 32 && charCode !== 0x7f ? data : undefined);
 		if (!this.disablePasteBurst && !isEnterKey && printableForBurst === undefined) {
@@ -986,7 +987,7 @@ export class Editor implements Component, Focusable {
 		// New line
 		if (
 			kb.matches(data, "tui.input.newLine") ||
-			(data.codePointAt(0) === 10 && data.length > 1) ||
+			(firstCodePoint(data) === 10 && data.length > 1) ||
 			data === "\u001b\r" ||
 			data === "\x1B[13;2~" ||
 			(data.length > 1 && data.includes("\u001b") && data.includes("\r")) ||
@@ -1095,7 +1096,7 @@ export class Editor implements Component, Focusable {
 		}
 
 		// Regular characters
-		if (data.codePointAt(0) >= 32) {
+		if (firstCodePoint(data) >= 32) {
 			if (!this.disablePasteBurst) {
 				this.pasteBurst.onPlainChar(Date.now());
 			}
@@ -1402,7 +1403,7 @@ export class Editor implements Component, Focusable {
 		// Filter out non-printable characters except newlines
 		let filteredText = cleanText
 			.split("")
-			.filter((char) => char === "\n" || char.codePointAt(0) >= 32)
+			.filter((char) => char === "\n" || firstCodePoint(char) >= 32)
 			.join("");
 
 		// If pasting a file path (starts with /, ~, or .) and the character before

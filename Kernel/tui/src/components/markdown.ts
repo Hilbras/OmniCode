@@ -1,3 +1,4 @@
+import { codePointAt } from '#/code-point';
 import { Marked, type Token, Tokenizer, type TokenizerExtension, type Tokens } from "marked";
 import { renderLatex } from "../latex";
 import { getCapabilities, hyperlink, isImageLine } from "../terminal-image";
@@ -52,7 +53,7 @@ function findCjkUrlBoundary(match: string): number {
 	let parenDepth = 0;
 	let unmatchedOpen = -1;
 	for (let i = 0; i < match.length; i++) {
-		const code = match.codePointAt(i);
+		const code = codePointAt(match, i);
 		if (code === FULLWIDTH_LEFT_PAREN) {
 			parenDepth++;
 			if (unmatchedOpen === -1) {

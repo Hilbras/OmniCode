@@ -1,3 +1,4 @@
+import { firstCodePoint } from '#/code-point';
 import {
 	AltScreenSearchComponent,
 	AltScreenSearchIndex,
@@ -991,14 +992,14 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 			};
 		}
 		if (data.length === 6 && data.startsWith("\x1B[M")) {
-			const button = data.codePointAt(3) - 32;
+			const button = firstCodePoint(data) - 32;
 			if ((button & 64) === 0) return undefined;
 			const direction = button & 3;
 			if (direction !== 0 && direction !== 1) return undefined;
 			return {
 				direction: direction === 0 ? -1 : 1,
-				x: data.codePointAt(4) - 33,
-				y: data.codePointAt(5) - 33,
+				x: firstCodePoint(data) - 33,
+				y: firstCodePoint(data) - 33,
 				button,
 			};
 		}

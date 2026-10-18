@@ -1,3 +1,4 @@
+import { codePointAt } from '#/_base/text/code-point';
 import { createReadStream } from 'node:fs';
 import {
   appendFile,
@@ -28,7 +29,7 @@ function* splitLinesKeepingTerminator(text: string): Generator<string> {
   if (text.length === 0) return;
   let start = 0;
   for (let i = 0; i < text.length; i += 1) {
-    if (text.codePointAt(i) === 0x0a) {
+    if (codePointAt(text, i) === 0x0a) {
       yield text.slice(start, i + 1);
       start = i + 1;
     }

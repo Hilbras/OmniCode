@@ -1,3 +1,4 @@
+import { codePointAt, firstCodePoint } from '#/code-point';
 import { eastAsianWidth } from "get-east-asian-width";
 
 // segmenters (shared instance)
@@ -25,7 +26,7 @@ export function getWordSegmenter(): Intl.Segmenter {
  * Unicode additions.
  */
 function couldBeEmoji(segment: string): boolean {
-	const cp = segment.codePointAt(0)!;
+	const cp = firstCodePoint(segment)!;
 	return (
 		(cp >= 0x1f000 && cp <= 0x1fbff) || // Emoji and Pictograph
 		(cp >= 0x2300 && cp <= 0x23ff) || // Misc technical
@@ -56,7 +57,7 @@ export const cjkBreakRegex =
 
 function isPrintableAscii(str: string): boolean {
 	for (let i = 0; i < str.length; i++) {
-		const code = str.codePointAt(i);
+		const code = codePointAt(str, i);
 		if (code < 0x20 || code > 0x7e) {
 			return false;
 		}
@@ -193,7 +194,7 @@ function graphemeWidth(segment: string): number {
 
 	// Get base visible codepoint
 	const base = segment.replace(leadingNonPrintingRegex, "");
-	const cp = base.codePointAt(0);
+	const cp = firstCodePoint(base);
 	if (cp === undefined) {
 		return 0;
 	}
@@ -220,7 +221,7 @@ function graphemeWidth(segment: string): number {
 		} else if (markCharRegex.test(char)) {
 			followsMark = true;
 		} else if (!nonPrintingCharRegex.test(char)) {
-			const c = char.codePointAt(0)!;
+			const c = firstCodePoint(char)!;
 			if (followsMark || (c >= 0xff00 && c <= 0xffef)) {
 				// halfwidth + fullwidth forms
 				width += eastAsianWidth(c);
@@ -376,7 +377,7 @@ export function asciiVisibleWidth(line: string, limit: number): number | undefin
 	let width = 0;
 	let i = 0;
 	while (i < line.length) {
-		const code = line.codePointAt(i);
+		const code = codePointAt(line, i);
 		if (code === 0x1b) {
 			const ansi = extractAnsiCode(line, i);
 			if (!ansi) return undefined;

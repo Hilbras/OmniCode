@@ -1,3 +1,4 @@
+import { codePointAt } from '#/_base/text/code-point';
 import { extname } from 'node:path';
 
 import { classifyTextSample } from '#/_base/text/encoding';
@@ -20,9 +21,9 @@ export function countLines(text: string): number {
   if (text.length === 0) return 0;
   let n = 1;
   for (let i = 0; i < text.length; i++) {
-    if (text.codePointAt(i) === 10) n++;
+    if (codePointAt(text, i) === 10) n++;
   }
-  if (text.codePointAt(text.length - 1) === 10) n--;
+  if (codePointAt(text, text.length - 1) === 10) n--;
   return Math.max(0, n);
 }
 

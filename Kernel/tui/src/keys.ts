@@ -1,3 +1,4 @@
+import { firstCodePoint } from '#/code-point';
 /**
  * Keyboard input handling for terminal applications.
  *
@@ -748,7 +749,7 @@ function matchesRawBackspace(data: string, expectedModifier: number): boolean {
  */
 function rawCtrlChar(key: string): string | null {
 	const char = key.toLowerCase();
-	const code = char.codePointAt(0);
+	const code = firstCodePoint(char);
 	if ((code >= 97 && code <= 122) || char === "[" || char === "\\" || char === "]" || char === "_") {
 		return String.fromCodePoint(code & 0x1f);
 	}
@@ -1147,7 +1148,7 @@ export function matchesKey(data: string, keyId: KeyId): boolean {
 
 	// Handle single letter/digit keys and symbols
 	if (key.length === 1 && ((key >= "a" && key <= "z") || isDigitKey(key) || SYMBOL_KEYS.has(key))) {
-		const codepoint = key.codePointAt(0);
+		const codepoint = firstCodePoint(key);
 		const rawCtrl = rawCtrlChar(key);
 		const isLetter = key >= "a" && key <= "z";
 		const isDigit = isDigitKey(key);
@@ -1292,7 +1293,7 @@ export function parseKey(data: string): string | undefined {
 	if (!_kittyProtocolActive && data === "\u001bB") return "alt+left";
 	if (!_kittyProtocolActive && data === "\u001bF") return "alt+right";
 	if (!_kittyProtocolActive && data.length === 2 && data[0] === "\u001b") {
-		const code = data.codePointAt(1);
+		const code = firstCodePoint(data);
 		if (code >= 1 && code <= 26) {
 			return `ctrl+alt+${String.fromCodePoint(code + 96)}`;
 		}
@@ -1314,7 +1315,7 @@ export function parseKey(data: string): string | undefined {
 
 	// Raw Ctrl+letter
 	if (data.length === 1) {
-		const code = data.codePointAt(0);
+		const code = firstCodePoint(data);
 		if (code >= 1 && code <= 26) {
 			return `ctrl+${String.fromCodePoint(code + 96)}`;
 		}

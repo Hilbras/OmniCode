@@ -1,3 +1,4 @@
+import { codePointAt } from '#/code-point';
 import { Input } from "./components/input";
 import { getKeybindings } from "./keybindings";
 import type { Component, Focusable, TuiMouseEvent, TuiMouseEventResult } from "./tui";
@@ -53,14 +54,14 @@ function buildSearchCorpus(lines: readonly string[]): SearchCorpus {
 		if (PRINTABLE_ASCII.test(line)) {
 			let index = 0;
 			while (index < line.length) {
-				if (line.codePointAt(index) === 0x20) {
+				if (codePointAt(line, index) === 0x20) {
 					if (textLength > 0) pendingSeparator = true;
 					column += 1;
 					index += 1;
 					continue;
 				}
 				let end = index + 1;
-				while (end < line.length && line.codePointAt(end) !== 0x20) end += 1;
+				while (end < line.length && codePointAt(line, end) !== 0x20) end += 1;
 				appendSeparator();
 				const text = line.slice(index, end);
 				chunks.push(text);

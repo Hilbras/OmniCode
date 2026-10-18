@@ -1,3 +1,4 @@
+import { firstCodePoint } from '#/_base/text/code-point';
 import type { FsGitStatus, FsGitStatusResponse, FsPullRequest } from './git';
 
 export function parsePorcelain(
@@ -145,7 +146,7 @@ function isSafeHttpUrl(value: string): boolean {
 
 function hasControlChars(value: string): boolean {
   for (const char of value) {
-    const code = char.codePointAt(0) ?? 0;
+    const code = firstCodePoint(char) ?? 0;
     if (code <= 0x1f || code === 0x7f) return true;
   }
   return false;

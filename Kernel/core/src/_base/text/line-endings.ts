@@ -1,3 +1,4 @@
+import { codePointAt } from '#/_base/text/code-point';
 export type LineEndingStyle = 'lf' | 'crlf' | 'mixed';
 
 export interface ModelTextView {
@@ -11,9 +12,9 @@ export function detectLineEndingStyle(text: string): LineEndingStyle {
   let hasLoneCr = false;
 
   for (let i = 0; i < text.length; i++) {
-    const code = text.codePointAt(i);
+    const code = codePointAt(text, i);
     if (code === 13) {
-      if (text.codePointAt(i + 1) === 10) {
+      if (codePointAt(text, i + 1) === 10) {
         hasCrLf = true;
         i++;
       } else {
@@ -55,7 +56,7 @@ export function splitLinesKeepingTerminator(text: string): string[] {
   const lines: string[] = [];
   let start = 0;
   for (let i = 0; i < text.length; i += 1) {
-    if (text.codePointAt(i) === 0x0a) {
+    if (codePointAt(text, i) === 0x0a) {
       lines.push(text.slice(start, i + 1));
       start = i + 1;
     }
