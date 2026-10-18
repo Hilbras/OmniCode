@@ -330,6 +330,9 @@ importers:
         specifier: ^4.3.6
         version: 4.3.6
     devDependencies:
+      '@hilbras/omnicode-addons':
+        specifier: workspace:^
+        version: link:../Addons
       '@hilbras/omnicode-tools':
         specifier: workspace:^
         version: link:../Tools
