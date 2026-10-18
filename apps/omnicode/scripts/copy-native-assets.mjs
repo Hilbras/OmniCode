@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url';
 
 const appRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const repoRoot = resolve(appRoot, '../..');
-const source = resolve(repoRoot, 'packages/omnicode-tui/native');
+const source = resolve(repoRoot, 'Kernel/tui/native');
 const target = resolve(appRoot, 'native');
 
 // pi-tui ships platform-specific native helpers for darwin/linux/win32.
@@ -19,7 +19,7 @@ async function assertPrebuilds(platform) {
     }
   } catch {
     throw new Error(
-      `omnicode-tui native prebuilds were not found at ${dir}. Build or restore packages/omnicode-tui first.`,
+      `omnicode-tui native prebuilds were not found at ${dir}. Build or restore Kernel/tui first.`,
     );
   }
   return dir;
