@@ -144,7 +144,7 @@ describe('migrated session is discoverable by agent-core-v2', () => {
       .filter((id): id is number => typeof id === 'number');
     // Turns without assistant content (e.g. an unanswered user message) get no
     // turn.ended; the rest carry sequential ids within the imported range.
-    expect(endedTurnIds).toEqual([...endedTurnIds].sort((a, b) => a - b));
+    expect(endedTurnIds).toEqual([...endedTurnIds].toSorted((a, b) => a - b));
     expect(new Set(endedTurnIds).size).toBe(endedTurnIds.length);
     expect(Math.max(...endedTurnIds)).toBeLessThan(promptCount);
   });

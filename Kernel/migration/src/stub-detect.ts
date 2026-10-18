@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { parse as parseToml } from 'smol-toml';
 
-// Verbatim from packages/omnicode-core/src/harness/configs/toml.ts:42
+// Verbatim from Kernel/core/src/harness/configs/toml.ts:42
 export const DEFAULT_CONFIG_FILE_TEXT =
   '# ~/.omnicode/config.toml\n' +
   '# Runtime settings for Omnicode.\n' +

@@ -18,7 +18,7 @@ describe('isConfigStubOrMissing', () => {
   });
 
   it('returns true when content matches DEFAULT_CONFIG_FILE_TEXT exactly', async () => {
-    // From packages/omnicode-core/src/harness/configs/toml.ts:42
+    // From Kernel/core/src/harness/configs/toml.ts:42
     const stub =
       '# ~/.omnicode/config.toml\n' +
       '# Runtime settings for Omnicode.\n' +
