@@ -1,4 +1,4 @@
-import { codePointAt, firstCodePoint } from '#/_base/text/code-point';
+import { codePointAt, firstCodePoint } from '../../../_base/text/code-point';
 import type { ContentPart, ToolCall } from '#/llm/message';
 import type { TokenUsage } from '#/llm/usage';
 import { readTodoItems, type TodoItem } from '#/todo/todoItem';

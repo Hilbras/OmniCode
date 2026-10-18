@@ -1,4 +1,4 @@
-import { firstCodePoint } from '#/_base/text/code-point';
+import { firstCodePoint } from '../../_base/text/code-point';
 import { estimateMessageTokens, estimateUsedContextTokens } from '#/agent/context-usage';
 import { inputSubmitted, messageAppended, turnEnded, turnStarted } from '#/agent/events';
 import { createUserEntry, type HistoryMessage, type UserEntry } from '#/agent/turn';
