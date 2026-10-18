@@ -8,7 +8,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hilbras/omnicode.git",
-    "directory": "packages/omnicode-transcript"
+    "directory": "Kernel/transcript"
   },
   "bugs": {
     "url": "https://github.com/Hilbras/omnicode/issues"
