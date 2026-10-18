@@ -7,6 +7,7 @@ import {
 import { describe, expect, it, vi } from 'vitest';
 
 import { UNKNOWN_CAPABILITY } from '#/llm/capability';
+import { harvestProviderCodes, toLlmStatusErrorMessage } from '#/llm/errors';
 import { createAssistantMessage, createUserMessage, type Message } from '#/llm/message';
 import type { LlmModel } from '#/llm/model';
 import { classifyOmnicodeQuotaError } from '#/llm-omnicode/errors';
@@ -324,5 +325,108 @@ describe('requester error conversion', () => {
       error: { kind: 'syntax', code: 'request_format' },
     });
     expect(clientFactory).not.toHaveBeenCalled();
+  });
+});
+
+describe('provider error codes', () => {
+  it('harvests a code from each vendor payload shape', () => {
+    expect(harvestProviderCodes({ code: 'insufficient_quota' })).toEqual(['insufficient_quota']);
+    expect(harvestProviderCodes({ error_type: 'billing_error' })).toEqual(['billing_error']);
+    expect(harvestProviderCodes({ error: { code: 'Context_Length_Exceeded' } })).toEqual([
+      'context_length_exceeded',
+    ]);
+    expect(harvestProviderCodes({ error: { type: 'overloaded_error' } })).toEqual([
+      'overloaded_error',
+    ]);
+    expect(harvestProviderCodes({ error: { status: 'RESOURCE_EXHAUSTED' } })).toEqual([
+      'resource_exhausted',
+    ]);
+    expect(harvestProviderCodes({ error: { error_type: 'rate_limit_exceeded' } })).toEqual([
+      'rate_limit_exceeded',
+    ]);
+    expect(harvestProviderCodes({ error: { details: [{ reason: 'API_KEY_INVALID' }] } })).toEqual([
+      'api_key_invalid',
+    ]);
+    expect(
+      harvestProviderCodes({ error: { innererror: { code: 'ResponsibleAIPolicyViolation' } } }),
+    ).toEqual(['responsibleaipolicyviolation']);
+    expect(harvestProviderCodes({ error: { metadata: { error_type: 'rate_limit' } } })).toEqual([
+      'rate_limit',
+    ]);
+    expect(harvestProviderCodes({ response: { error: { code: 'server_error' } } })).toEqual([
+      'server_error',
+    ]);
+    expect(harvestProviderCodes({ response: { error_type: 'upstream_error' } })).toEqual([
+      'upstream_error',
+    ]);
+    expect(harvestProviderCodes({ exception: { type: 'throttlingException' } })).toEqual([
+      'throttlingexception',
+    ]);
+    expect(harvestProviderCodes({ name: 'ServiceUnavailable', errors: [] })).toEqual([
+      'serviceunavailable',
+    ]);
+  });
+
+  it('decodes a stringified body and ignores anything else', () => {
+    expect(harvestProviderCodes('{"error":{"code":"insufficient_quota"}}')).toEqual([
+      'insufficient_quota',
+    ]);
+    expect(harvestProviderCodes('not json')).toEqual([]);
+    expect(harvestProviderCodes(undefined)).toEqual([]);
+    expect(harvestProviderCodes(42)).toEqual([]);
+    expect(harvestProviderCodes({ error: { details: 'not an array' } })).toEqual([]);
+  });
+
+  it('classifies on a code even when the message matches nothing', () => {
+    expect(
+      toLlmStatusErrorMessage({
+        statusCode: 400,
+        message: 'the model declined the input',
+        codes: harvestProviderCodes({ error: { code: 'context_length_exceeded' } }),
+      }),
+    ).toMatchObject({ kind: 'context_overflow', statusCode: 400 });
+  });
+
+  it('treats a quota code as an exhausted quota on any status', () => {
+    expect(
+      toLlmStatusErrorMessage({ statusCode: 429, message: 'slow down', codes: ['insufficient_quota'] }),
+    ).toMatchObject({ kind: 'quota_exhausted' });
+    expect(
+      toLlmStatusErrorMessage({ statusCode: 400, message: 'rejected', codes: ['billing_error'] }),
+    ).toMatchObject({ kind: 'quota_exhausted' });
+  });
+
+  it('keeps a 429 without a quota code classified as a rate limit', () => {
+    expect(toLlmStatusErrorMessage({ statusCode: 429, message: 'slow down' })).toMatchObject({
+      kind: 'rate_limit',
+    });
+  });
+
+  it('trusts a server code only when the status does not contradict it', () => {
+    expect(
+      toLlmStatusErrorMessage({ statusCode: 503, message: 'busy', codes: ['overloaded_error'] }),
+    ).toMatchObject({ kind: 'overloaded' });
+    expect(
+      toLlmStatusErrorMessage({ statusCode: 400, message: 'bad request', codes: ['server_error'] }),
+    ).toMatchObject({ kind: 'status' });
+  });
+
+  it('maps a request_too_large code on a 413', () => {
+    expect(
+      toLlmStatusErrorMessage({ statusCode: 413, message: 'nope', codes: ['request_too_large'] }),
+    ).toMatchObject({ kind: 'request_too_large' });
+  });
+
+  it('reads the code out of a provider error body', () => {
+    const error = new RawOpenAISDKAPIError(
+      400,
+      { error: { message: 'the model declined the input', code: 'context_length_exceeded' } },
+      'the model declined the input',
+      new Headers(),
+    );
+    expect(convertOpenAIError(error)).toMatchObject({
+      kind: 'context_overflow',
+      statusCode: 400,
+    });
   });
 });

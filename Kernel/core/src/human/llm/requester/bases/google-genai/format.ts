@@ -1,6 +1,7 @@
 import { ApiError as RawGoogleGenAISDKApiError, type GenerateContentParameters } from '@google/genai';
 
 import {
+  harvestProviderCodes,
   isAbortError,
   toLlmErrorMessage,
   toLlmStatusErrorMessage,
@@ -302,6 +303,7 @@ export function convertGoogleGenAIError(
       statusCode: error.status,
       message: error.message,
       retryAfterMs: parseRetryInfoDelayMs(error.message),
+      codes: harvestProviderCodes(error.message),
     });
   }
   if (error instanceof Error) {
@@ -314,7 +316,11 @@ export function convertGoogleGenAIError(
     }
     const statusCode = (error as { code?: number }).code;
     if (typeof statusCode === 'number') {
-      return toLlmStatusErrorMessage({ statusCode, message: msg });
+      return toLlmStatusErrorMessage({
+        statusCode,
+        message: msg,
+        codes: harvestProviderCodes(msg),
+      });
     }
     return { kind: 'provider', message: `GoogleGenAI error: ${msg}` };
   }

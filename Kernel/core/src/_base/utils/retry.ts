@@ -18,6 +18,13 @@ export function retryBackoffDelay(attemptIndex: number): number {
   return base + Math.random() * JITTER_FACTOR * base;
 }
 
+export const MAX_RETRY_AFTER_MS = 15 * 60_000;
+
+export function retryDelayMs(attemptIndex: number, retryAfterMs: number | undefined): number {
+  if (retryAfterMs === undefined) return retryBackoffDelay(attemptIndex);
+  return Math.min(retryAfterMs, MAX_RETRY_AFTER_MS);
+}
+
 export function retryBackoffDelays(maxAttempts: number): number[] {
   const count = Math.max(maxAttempts - 1, 0);
   const delays: number[] = [];

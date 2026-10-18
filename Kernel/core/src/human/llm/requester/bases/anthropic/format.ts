@@ -5,6 +5,7 @@ import Anthropic, {
 } from '@anthropic-ai/sdk';
 
 import {
+  harvestProviderCodes,
   headersToRecord,
   isAbortError,
   parseRetryAfterMs,
@@ -368,6 +369,7 @@ export function convertAnthropicError(
       requestId: error.requestID ?? null,
       retryAfterMs: parseRetryAfterMs(error.headers),
       headers: headersToRecord(error.headers),
+      codes: harvestProviderCodes(error.error ?? error),
     });
   }
   if (error instanceof Error) {

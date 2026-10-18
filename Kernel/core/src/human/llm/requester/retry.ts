@@ -30,9 +30,8 @@ export function retryDelayMs(
   attemptIndex: number,
   retryAfterMs: number | undefined,
 ): number {
-  const backoff = retryBackoffDelay(attemptIndex);
-  if (retryAfterMs === undefined) return backoff;
-  return Math.min(Math.max(backoff, retryAfterMs), MAX_RETRY_AFTER_MS);
+  if (retryAfterMs === undefined) return retryBackoffDelay(attemptIndex);
+  return Math.min(retryAfterMs, MAX_RETRY_AFTER_MS);
 }
 
 export function retryBackoffDelay(attemptIndex: number): number {

@@ -6,6 +6,7 @@ import OpenAI, {
 } from 'openai';
 
 import {
+  harvestProviderCodes,
   headersToRecord,
   isAbortError,
   parseRetryAfterMs,
@@ -383,6 +384,7 @@ export function convertOpenAIError(
       requestId,
       retryAfterMs,
       headers,
+      codes: harvestProviderCodes(error.error ?? error),
     });
   }
   if (

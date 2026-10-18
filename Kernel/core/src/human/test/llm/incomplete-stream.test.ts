@@ -104,13 +104,8 @@ describe('retry delay budget', () => {
     expect(delay).toBeLessThanOrEqual(MAX_DELAY_MS * 1.25);
   });
 
-  it('never retries faster than the backoff, whatever the provider asks for', () => {
-    const delay = retryDelayMs(5, 1);
-    expect(delay).toBeGreaterThanOrEqual(BASE_BACKOFF_MS * 2 ** 5);
-    expect(delay).toBeLessThanOrEqual(MAX_DELAY_MS * 1.25);
-  });
-
-  it('waits at least as long as the provider asks', () => {
+  it('honors a Retry-After the provider sends, even below the backoff', () => {
+    expect(retryDelayMs(5, 1)).toBe(1);
     expect(retryDelayMs(0, 30_000)).toBe(30_000);
   });
 
@@ -119,3 +114,4 @@ describe('retry delay budget', () => {
     expect(MAX_RETRY_AFTER_MS).toBe(15 * 60_000);
   });
 });
+

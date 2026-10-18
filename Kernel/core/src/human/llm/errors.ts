@@ -26,6 +26,56 @@ export function errorStatusCode(error: unknown): number | undefined {
   return typeof status === 'number' ? status : undefined;
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function decodeJsonRecord(value: unknown): unknown {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return undefined;
+  }
+}
+
+export function harvestProviderCodes(payload: unknown): readonly string[] {
+  const root = decodeJsonRecord(payload);
+  if (!isRecord(root)) return [];
+  const error = isRecord(root['error']) ? root['error'] : undefined;
+  const inner =
+    error !== undefined && isRecord(error['innererror']) ? error['innererror'] : undefined;
+  const metadata =
+    error !== undefined && isRecord(error['metadata']) ? error['metadata'] : undefined;
+  const response = isRecord(root['response']) ? root['response'] : undefined;
+  const responseError =
+    response !== undefined && isRecord(response['error']) ? response['error'] : undefined;
+  const exception = isRecord(root['exception']) ? root['exception'] : undefined;
+  const details = error !== undefined && Array.isArray(error['details']) ? error['details'] : [];
+  const candidates: unknown[] = [
+    root['code'],
+    Array.isArray(root['errors']) ? root['name'] : undefined,
+    root['error_type'],
+    error?.['code'],
+    error?.['type'],
+    error?.['status'],
+    error?.['error_type'],
+    ...details.map((detail) => (isRecord(detail) ? detail['reason'] : undefined)),
+    inner?.['code'],
+    metadata?.['error_type'],
+    responseError?.['code'],
+    response?.['error_type'],
+    exception?.['type'],
+  ];
+  return candidates
+    .filter((value): value is string => typeof value === 'string')
+    .map((code) => code.toLowerCase());
+}
+
+function isClientScopedStatus(statusCode: number): boolean {
+  return statusCode >= 400 && statusCode < 500;
+}
+
 export type LlmErrorKind =
   | 'syntax'
   | 'abort'
@@ -185,6 +235,29 @@ const IMAGE_FORMAT_STATUS_MESSAGE_PATTERNS = [
 
 const MEDIA_TYPE_FIELD_PATTERN = /(?:media|mime)_?type/;
 
+const QUOTA_EXHAUSTED_CODES: ReadonlySet<string> = new Set([
+  'insufficient_quota',
+  'usage_not_included',
+  'billing_error',
+  'creditlimitexceeded',
+  'gousagelimiterror',
+  'freeusagelimiterror',
+]);
+
+const CONTEXT_OVERFLOW_CODES: ReadonlySet<string> = new Set([
+  'context_length_exceeded',
+  'model_context_window_exceeded',
+]);
+
+const REQUEST_TOO_LARGE_CODES: ReadonlySet<string> = new Set(['request_too_large']);
+
+const OVERLOADED_CODES: ReadonlySet<string> = new Set([
+  'overloaded_error',
+  'server_is_overloaded',
+  'slow_down',
+  'serviceunavailableexception',
+]);
+
 const THINKING_EFFORT_CONFIG_DOCS_URL =
   'https://hilbras.github.io/omnicode/en/configuration/config-files.html#thinking';
 
@@ -214,6 +287,7 @@ export interface LlmStatusErrorInput {
   readonly requestId?: string | null;
   readonly retryAfterMs?: number | null;
   readonly headers?: Record<string, string> | null;
+  readonly codes?: readonly string[];
 }
 
 export function toLlmStatusErrorMessage(input: LlmStatusErrorInput): LlmRemoteErrorMessage {
@@ -224,16 +298,32 @@ export function toLlmStatusErrorMessage(input: LlmStatusErrorInput): LlmRemoteEr
     headers: input.headers ?? null,
   };
   const message = sanitizeStatusErrorMessage(input.message);
+  const codes = input.codes ?? [];
+  const hasCode = (set: ReadonlySet<string>): boolean =>
+    codes.some((code) => set.has(code));
+  const clientScoped = isClientScopedStatus(input.statusCode);
+  if (hasCode(QUOTA_EXHAUSTED_CODES)) {
+    return { kind: 'quota_exhausted', message, ...info };
+  }
   if (input.statusCode === 429) {
     return { kind: 'rate_limit', message, ...info };
   }
-  if (isContextOverflowStatusError(input.statusCode, input.message)) {
+  if (
+    isContextOverflowStatusError(input.statusCode, input.message) ||
+    (clientScoped && hasCode(CONTEXT_OVERFLOW_CODES))
+  ) {
     return { kind: 'context_overflow', message, ...info };
   }
-  if (isRequestTooLargeStatusError(input.statusCode, input.message)) {
+  if (
+    isRequestTooLargeStatusError(input.statusCode, input.message) ||
+    (clientScoped && hasCode(REQUEST_TOO_LARGE_CODES))
+  ) {
     return { kind: 'request_too_large', message, ...info };
   }
-  if (isProviderOverloadStatusError(input.statusCode, input.message)) {
+  if (
+    isProviderOverloadStatusError(input.statusCode, input.message) ||
+    (!clientScoped && hasCode(OVERLOADED_CODES))
+  ) {
     return { kind: 'overloaded', message, ...info };
   }
   if (isRequestStructureStatusError(input.statusCode, input.message)) {

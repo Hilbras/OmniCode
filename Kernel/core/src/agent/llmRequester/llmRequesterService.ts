@@ -81,7 +81,7 @@ import { parseBooleanEnv } from '#/_base/utils/env';
 import { ErrorCodes, Error2, unwrapErrorCause } from '#/errors';
 import {
   readRetryAfterMs,
-  retryBackoffDelay,
+  retryDelayMs,
   retryErrorFields,
   sleepForRetry,
 } from '#/_base/utils/retry';
@@ -524,9 +524,10 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
           throw error;
         }
         infiniteRetryAttempt += 1;
-        const delayMs =
-          readRetryAfterMs(raw) ??
-          retryBackoffDelay(infiniteRetryAttempt - 1);
+        const delayMs = retryDelayMs(
+          infiniteRetryAttempt - 1,
+          readRetryAfterMs(raw) ?? undefined,
+        );
         this.log.warn('llm request failed; retrying indefinitely (OMNICODE_INFINITE_RETRY)', {
           model: request.model.name,
           ...request.logFields,
