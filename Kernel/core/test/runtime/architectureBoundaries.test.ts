@@ -4,10 +4,15 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const sourceRoot = join(import.meta.dirname, '../../src');
-const kapSourceRoot = join(import.meta.dirname, '../../../omnicode-server/src');
+const kapSourceRoot = join(import.meta.dirname, '../../../server/src');
+const toolsSourceRoot = join(import.meta.dirname, '../../../Tools/src');
 
 function source(path: string): string {
   return readFileSync(join(sourceRoot, path), 'utf8');
+}
+
+function toolsSource(path: string): string {
+  return readFileSync(join(toolsSourceRoot, path), 'utf8');
 }
 
 function kapSource(path: string): string {
@@ -73,21 +78,23 @@ describe('runtime architecture boundaries', () => {
   });
 
   it('builds every agent OS execution from a runtime lease and workspace view', () => {
-    for (const path of [
-      'agent/tools/os/bash/bashTool.ts',
-      'agent/tools/os/glob/globTool.ts',
-      'agent/tools/os/grep/grepTool.ts',
-      'agent/tools/os/read/readTool.ts',
-      'agent/tools/os/write/writeTool.ts',
-      'agent/tools/edit/editTool.ts',
-      'agent/tools/read-media-file/readMediaFileTool.ts',
+    const moved = [
+      'os/bash/bashTool.ts',
+      'os/glob/globTool.ts',
+      'os/grep/grepTool.ts',
+      'os/read/readTool.ts',
+      'os/write/writeTool.ts',
+      'edit/editTool.ts',
+    ].map((path) => toolsSource(path));
+    for (const contents of [
+      ...moved,
+      source('agent/tools/read-media-file/readMediaFileTool.ts'),
     ]) {
-      const contents = source(path);
       expect(contents).toContain('new RuntimeWorkspaceView(');
       expect(contents).toMatch(/\.runtime\.(acquire|inspect)\(/);
       expect(contents).not.toMatch(/@IHost(?:Environment|FileSystem|FsWatchService|ProcessService|TerminalService)/);
     }
-    const readTool = source('agent/tools/os/read/readTool.ts');
+    const readTool = toolsSource('os/read/readTool.ts');
     expect(readTool).not.toContain('IAgentRuntimeService | IHostFileSystem');
     expect(readTool).not.toContain("'acquire' in runtime");
   });

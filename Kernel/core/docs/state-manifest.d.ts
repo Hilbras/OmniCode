@@ -1139,10 +1139,26 @@ export interface AgentStateSnapshot {
   'shellCommand.tasks': Map<string, string>;
   // src/agent/task/taskOps.ts
   // replayable · durable — folds: TaskStarted, TaskTerminated
-  'task': /* TaskModelState — Kernel/core/src/agent/task/taskOps.ts */ Map<string, /* AgentTaskInfo — Kernel/core/src/agent/task/types.ts */ /* QuestionTaskInfo — Kernel/core/src/agent/tools/ask-user-question/question-background-task.ts */ {
+  'task': /* TaskModelState — Kernel/core/src/agent/task/taskOps.ts */ Map<string, /* AgentTaskInfo — Kernel/core/src/agent/task/types.ts */ /* QuestionTaskInfo — Kernel/core/src/agent/task/types.ts */ {
     readonly kind: 'question';
     readonly questionCount: number;
     readonly toolCallId?: string;
+    readonly taskId: string;
+    readonly description: string;
+    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
+    readonly detached?: boolean;
+    readonly startedAt: number;
+    readonly endedAt: number | null;
+    readonly stopReason?: string;
+    readonly terminalNotificationSuppressed?: boolean;
+    readonly resumeReminded?: boolean;
+    readonly timeoutMs?: number;
+  } | /* ProcessTaskInfo — Kernel/core/src/agent/task/types.ts */ {
+    readonly kind: 'process';
+    readonly command: string;
+    readonly pid: number;
+    readonly exitCode: number | null;
+    readonly parentToolCallId?: string;
     readonly taskId: string;
     readonly description: string;
     readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
@@ -1161,22 +1177,6 @@ export interface AgentStateSnapshot {
     readonly model?: string;
     readonly thinkingEffort?: string;
     readonly stopCode?: string;
-    readonly taskId: string;
-    readonly description: string;
-    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
-    readonly detached?: boolean;
-    readonly startedAt: number;
-    readonly endedAt: number | null;
-    readonly stopReason?: string;
-    readonly terminalNotificationSuppressed?: boolean;
-    readonly resumeReminded?: boolean;
-    readonly timeoutMs?: number;
-  } | /* ProcessTaskInfo — Kernel/core/src/agent/tools/os/bash/process-task.ts */ {
-    readonly kind: 'process';
-    readonly command: string;
-    readonly pid: number;
-    readonly exitCode: number | null;
-    readonly parentToolCallId?: string;
     readonly taskId: string;
     readonly description: string;
     readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
@@ -1191,10 +1191,26 @@ export interface AgentStateSnapshot {
   // src/agent/task/taskService.ts
   'task.activeTaskReminderPending': boolean;
   'task.deliveredNotificationKeys': Set<string>;
-  'task.ghosts': Map<string, /* AgentTaskInfo — Kernel/core/src/agent/task/types.ts */ /* QuestionTaskInfo — Kernel/core/src/agent/tools/ask-user-question/question-background-task.ts */ {
+  'task.ghosts': Map<string, /* AgentTaskInfo — Kernel/core/src/agent/task/types.ts */ /* QuestionTaskInfo — Kernel/core/src/agent/task/types.ts */ {
     readonly kind: 'question';
     readonly questionCount: number;
     readonly toolCallId?: string;
+    readonly taskId: string;
+    readonly description: string;
+    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
+    readonly detached?: boolean;
+    readonly startedAt: number;
+    readonly endedAt: number | null;
+    readonly stopReason?: string;
+    readonly terminalNotificationSuppressed?: boolean;
+    readonly resumeReminded?: boolean;
+    readonly timeoutMs?: number;
+  } | /* ProcessTaskInfo — Kernel/core/src/agent/task/types.ts */ {
+    readonly kind: 'process';
+    readonly command: string;
+    readonly pid: number;
+    readonly exitCode: number | null;
+    readonly parentToolCallId?: string;
     readonly taskId: string;
     readonly description: string;
     readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
@@ -1213,22 +1229,6 @@ export interface AgentStateSnapshot {
     readonly model?: string;
     readonly thinkingEffort?: string;
     readonly stopCode?: string;
-    readonly taskId: string;
-    readonly description: string;
-    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
-    readonly detached?: boolean;
-    readonly startedAt: number;
-    readonly endedAt: number | null;
-    readonly stopReason?: string;
-    readonly terminalNotificationSuppressed?: boolean;
-    readonly resumeReminded?: boolean;
-    readonly timeoutMs?: number;
-  } | /* ProcessTaskInfo — Kernel/core/src/agent/tools/os/bash/process-task.ts */ {
-    readonly kind: 'process';
-    readonly command: string;
-    readonly pid: number;
-    readonly exitCode: number | null;
-    readonly parentToolCallId?: string;
     readonly taskId: string;
     readonly description: string;
     readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
