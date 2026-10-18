@@ -5,11 +5,11 @@
   "description": "Shared telemetry infrastructure for Omnicode",
   "license": "MIT",
   "author": "Hilbras",
-  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/omnicode-telemetry#readme",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/Kernel/telemetry#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hilbras/omnicode.git",
-    "directory": "packages/omnicode-telemetry"
+    "directory": "Kernel/telemetry"
   },
   "bugs": {
     "url": "https://github.com/Hilbras/omnicode/issues"
