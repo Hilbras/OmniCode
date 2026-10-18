@@ -32,6 +32,7 @@ This is a TypeScript monorepo built for agent-assisted development. Keep the roo
 - `packages/omnicode-client`: the client SDK — a contract-driven facade over omnicode-core (`global.*` / `session(id).*` / `agent(id).*`, zod-validated); transport via subpath entry (`@hilbras/omnicode-client/ipc|memory`, both return the same `Klient`); also hosts the e2e suites. See `packages/omnicode-client/AGENTS.md`.
 - `packages/omnicode-tree-sitter-bash`: a pure-TypeScript bash parser (no runtime deps, no wasm); `parse(source, { timeoutMs, maxNodes })` runs under a deterministic budget and returns a discriminated `ParseResult` — callers must treat aborted/hasError trees as "cannot analyze" and degrade. Parser only, no safety judgments; see the package README's "Known differences" section.
 - `packages/omnicode-minidb`: the embedded JSON document store (`MiniDb`) behind omnicode-server's search index — snapshot + WAL persistence with an exclusive write lock, a larger-than-RAM full-text layer, and persistent index generations. See `packages/omnicode-minidb/AGENTS.md`.
+- `Kernel/memory`: trust-gated persistent memory — provenance on every record, deterministic promotion (a model never raises its own trust; `system` trust needs an application authority), lexical retrieval over minidb with explicit scope filtering, structured budgets and honest `complete`/`partial`/`no_match`/`unavailable`/`failed` statuses, plus resumable task state. Behind `OMNICODE_EXPERIMENTAL_MEMORY` (default off); see `Kernel/memory/AGENTS.md`.
 
 ## Environment Requirements
 

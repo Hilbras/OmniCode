@@ -71,6 +71,7 @@
         ./Kernel/minidb
         ./Kernel/remote
         ./Kernel/SDK
+        ./Kernel/memory
         ./Kernel/auth
         ./Kernel/tui
         ./Kernel/telemetry
@@ -97,6 +98,7 @@
         "@hilbras/omnicode-minidb"
         "@hilbras/omnicode-remote"
         "@hilbras/omnicode-sdk"
+        "@hilbras/omnicode-memory"
         "@hilbras/omnicode-auth"
         "@hilbras/omnicode-tui"
         "@hilbras/omnicode-telemetry"

@@ -1,0 +1,32 @@
+{
+  "name": "@hilbras/omnicode-memory",
+  "version": "0.1.0",
+  "description": "Trust-gated memory with provenance for coding sessions: capture, distillation, lexical retrieval with honest budgets, and session continuity.",
+  "license": "MIT",
+  "author": "Hilbras",
+  "type": "module",
+  "private": true,
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@hilbras/omnicode-core": "workspace:^",
+    "@hilbras/omnicode-minidb": "workspace:^",
+    "zod": "catalog:"
+  }
+}

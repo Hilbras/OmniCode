@@ -99,6 +99,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-memory':
+        specifier: workspace:^
+        version: link:../memory
       '@hilbras/omnicode-sdk':
         specifier: workspace:^
         version: link:../SDK
@@ -333,6 +336,9 @@ importers:
       '@hilbras/omnicode-addons':
         specifier: workspace:^
         version: link:../Addons
+      '@hilbras/omnicode-memory':
+        specifier: workspace:^
+        version: link:../memory
       '@hilbras/omnicode-tools':
         specifier: workspace:^
         version: link:../Tools
@@ -394,6 +400,18 @@ importers:
       ajv-formats:
         specifier: ^3.0.1
         version: 3.0.1(ajv@8.20.0)
+
+  Kernel/memory:
+    dependencies:
+      '@hilbras/omnicode-core':
+        specifier: workspace:^
+        version: link:../core
+      '@hilbras/omnicode-minidb':
+        specifier: workspace:^
+        version: link:../minidb
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
 
   Kernel/migration:
     dependencies:

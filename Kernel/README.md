@@ -12,6 +12,7 @@ reach these through `Kernel/API` rather than importing each other directly.
 | `ACP` | `@hilbras/omnicode-acp` | the Agent Client Protocol host, so editors can drive Omnicode |
 | `Addons` | `@hilbras/omnicode-addons` | optional agent behaviours that plug in through the Feature seam |
 | `Tools` | `@hilbras/omnicode-tools` | the built-in agent tools — filesystem, shell, search, prompts |
+| `Memory` | `@hilbras/omnicode-memory` | trust-gated persistent memory — provenance, deterministic promotion, lexical retrieval with honest budgets; behind `OMNICODE_EXPERIMENTAL_MEMORY` |
 
 ## Current status
 
@@ -57,3 +58,11 @@ Features register through a module-level array populated by `registerFeature()`
 at import time, so anything that moves out of core also needs an explicit
 activation import at its composition root — the CLI does this in
 `apps/omnicode/src/main.ts`.
+
+That activation import is not free, and `Memory` shows why. `Kernel/API` re-exports
+it, so importing the Kernel surface is the activation point — but `omnicode-core`
+must **not** import it, not even in `test/setup.ts`. `test/_base/di/scope-topology.test.ts`
+asserts that no scope topology has been declared at import time, and any import
+that reaches `app/scopes` fails those tests. Addons and Tools get away with the
+core `test/setup.ts` import because core features genuinely depend on them;
+nothing in core depends on memory, so it is wired only through `Kernel/API`.

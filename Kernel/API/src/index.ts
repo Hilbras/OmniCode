@@ -7,8 +7,9 @@
  * without a consumer edit.
  *
  * Importing this module also activates the packages that register
- * themselves at load time: the SDK's tools and the Addons' features. Nothing
- * downstream needs a side-effect import of its own.
+ * themselves at load time: the SDK's tools, the Addons' features, and the
+ * Memory package's feature. Nothing downstream needs a side-effect import
+ * of its own.
  *
  * ACP is the exception, and is exposed through `loadAcpServer` instead of a
  * static re-export: loading it eagerly would boot the ACP engine on every CLI
@@ -17,6 +18,7 @@
 export * from '@hilbras/omnicode-sdk';
 export * from '@hilbras/omnicode-addons';
 export * from '@hilbras/omnicode-tools';
+export * from '@hilbras/omnicode-memory';
 
 export async function loadAcpServer(): Promise<typeof import('@hilbras/omnicode-acp')> {
   return import('@hilbras/omnicode-acp');
