@@ -8,6 +8,7 @@ import { IProjectLocalConfigService } from '#/app/projectLocalConfig/projectLoca
 import type { ISessionWorkspaceInfo } from '#/session/workspaceInfo/workspaceInfo';
 import { IWorkspaceStateService } from '#/workspace/state/workspaceState';
 import { IWorkspaceContext } from '#/workspace/workspaceContext/workspaceContext';
+import { IWorkspaceTrust } from '#/workspace/workspaceTrust/workspaceTrust';
 import { watchCandidates } from '#human/utils/watch';
 
 import {
@@ -41,6 +42,7 @@ export class WorkspaceDirsService extends Disposable implements IWorkspaceDirs {
   constructor(
     @IWorkspaceContext private readonly workspace: IWorkspaceContext,
     @IProjectLocalConfigService private readonly localConfig: IProjectLocalConfigService,
+    @IWorkspaceTrust private readonly trust: IWorkspaceTrust,
     @ILogService private readonly log: ILogService,
     @IWorkspaceStateService private readonly states: IWorkspaceStateService,
   ) {
@@ -51,6 +53,13 @@ export class WorkspaceDirsService extends Disposable implements IWorkspaceDirs {
     this.configPath = '';
     this.ready = this.enqueue(() => this.reloadFromDisk());
     void this.ready.then(() => this.watchLocalToml());
+    this._register(
+      this.trust.onDidChange(() => {
+        void this.enqueue(() => this.reloadFromDisk()).catch((error: unknown) => {
+          this.log.warn(`workspace directory reload after a trust change failed: ${String(error)}`);
+        });
+      }),
+    );
   }
 
   private get fileDirs(): readonly string[] {
@@ -109,9 +118,9 @@ export class WorkspaceDirsService extends Disposable implements IWorkspaceDirs {
       );
       this.projectRoot = persisted.projectRoot;
       this.configPath = persisted.configPath;
-      const changed = this.setFileDirs(persisted.additionalDirs);
-      if (changed) {
-        this.onDidChangeEmitter.fire();
+      const applied = await this.applyFileDirs(persisted.additionalDirs, persisted.configPath);
+      if (!applied) {
+        await this.addEphemeral(input.path);
       }
       return {
         projectRoot: persisted.projectRoot,
@@ -124,13 +133,7 @@ export class WorkspaceDirsService extends Disposable implements IWorkspaceDirs {
     const onDisk = await this.localConfig.readAdditionalDirs(this.workspace.cwd);
     this.projectRoot = onDisk.projectRoot;
     this.configPath = onDisk.configPath;
-    const resolved = await this.localConfig.resolveAdditionalDirs(this.workspace.cwd, [
-      input.path,
-    ]);
-    const changed = this.unionEphemeral(resolved);
-    if (changed) {
-      this.onDidChangeEmitter.fire();
-    }
+    await this.addEphemeral(input.path);
     return {
       projectRoot: onDisk.projectRoot,
       configPath: onDisk.configPath,
@@ -139,13 +142,33 @@ export class WorkspaceDirsService extends Disposable implements IWorkspaceDirs {
     };
   }
 
+  private async addEphemeral(path: string): Promise<void> {
+    const resolved = await this.localConfig.resolveAdditionalDirs(this.workspace.cwd, [path]);
+    if (this.unionEphemeral(resolved)) {
+      this.onDidChangeEmitter.fire();
+    }
+  }
+
   private async reloadFromDisk(): Promise<void> {
     const onDisk = await this.localConfig.readAdditionalDirs(this.workspace.cwd);
     this.projectRoot = onDisk.projectRoot;
     this.configPath = onDisk.configPath;
-    if (this.setFileDirs(onDisk.additionalDirs)) {
+    await this.applyFileDirs(onDisk.additionalDirs, onDisk.configPath);
+  }
+
+  private async applyFileDirs(dirs: readonly string[], configPath: string): Promise<boolean> {
+    await this.trust.ready;
+    const trusted = this.trust.isTrusted();
+    if (!trusted && dirs.length > 0) {
+      this.log.warn(
+        `ignoring the ${dirs.length} workspace.additional_dir ${dirs.length === 1 ? 'entry' : 'entries'} declared in ${configPath}: the workspace is not trusted`,
+      );
+    }
+    const applied = trusted ? dirs : [];
+    if (this.setFileDirs(applied)) {
       this.onDidChangeEmitter.fire();
     }
+    return trusted;
   }
 
   private setFileDirs(dirs: readonly string[]): boolean {

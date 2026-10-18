@@ -628,6 +628,10 @@ additional_dir = ["/absolute/path/to/shared"]
 
 Because directories are stored as absolute paths, which are specific to your machine, we recommend adding `.omnicode/local.toml` to your project's `.gitignore` so it is not committed.
 
+A directory listed here can widen what the agent may read and write without asking, so Omnicode applies these entries only in a workspace you have trusted. In an untrusted folder it skips them and logs a warning naming this file.
+
+This matches the rule for project-level MCP servers: the workspace trust prompt — or, in headless runs that cannot show it, [`OMNICODE_TRUST_WORKSPACE`](../configuration/env-vars.md#runtime-switches) set to `1` — is what makes project-local settings active. A directory you add yourself with `/add-dir` still applies to the current session either way.
+
 ## Next steps
 
 - [Providers and models](./providers.md) — connection examples for each provider type (Omnicode, Claude, OpenAI, Gemini)

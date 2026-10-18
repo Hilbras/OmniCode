@@ -627,6 +627,10 @@ additional_dir = ["/absolute/path/to/shared"]
 
 目录以绝对路径存储，与具体机器相关。因此建议把 `.omnicode/local.toml` 加入项目的 `.gitignore`，避免被提交。
 
+列入此文件的目录会扩大 agent 免询问的读写范围，因此这些条目只在已受信任的工作区生效。在不受信任的文件夹中，Omnicode 会跳过它们，并记录一条指明该文件的警告。
+
+这与项目级 MCP server 的规则一致：只有通过工作区信任提示（无法显示该提示的无头运行，可将 [`OMNICODE_TRUST_WORKSPACE`](../configuration/env-vars.md#运行时开关) 设为 `1`）信任工作区后，项目级设置才会生效。你自己通过 `/add-dir` 添加的目录在两种情况下都仍然对当前会话有效。
+
 ## 下一步
 
 - [平台与模型](./providers.md) — 各供应商类型（Omnicode、Claude、OpenAI、Gemini）的接入示例
