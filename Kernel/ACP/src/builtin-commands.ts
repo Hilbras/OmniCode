@@ -6,7 +6,7 @@ import type {
   McpServerEntry,
   SessionHandle,
   UsageStatus,
-} from '@hilbras/omnicode-client';
+} from '@hilbras/omnicode-api';
 
 /**
  * ACP-owned built-in slash commands. Advertised in

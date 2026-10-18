@@ -62,9 +62,9 @@ import type {
   SessionHandle,
   SessionRestoreOptions,
   SessionSummary,
-} from '@hilbras/omnicode-client';
+} from '@hilbras/omnicode-api';
 import { ErrorCodes, isError2 } from '@hilbras/omnicode-core';
-import { RPCError } from '@hilbras/omnicode-client';
+import { RPCError } from '@hilbras/omnicode-api';
 
 import type { AcpClient } from './acp-client';
 import type { IAcpConnection } from './acp-fs';

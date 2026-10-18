@@ -3,7 +3,7 @@
   "mainEntryPointFilePath": "<projectFolder>/.tmp-api-extractor/dts/omnicode-sdk/src/index.d.ts",
   "bundledPackages": [
     "@hilbras/omnicode-core",
-    "@hilbras/omnicode-client",
+    "@hilbras/omnicode-api",
     "@hilbras/omnicode-kaos",
     "@hilbras/omnicode-auth",
     "@hilbras/omnicode-llm",

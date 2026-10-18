@@ -1,6 +1,6 @@
 /**
  * The transport-agnostic klient factory. Every transport entry point
- * (`@hilbras/omnicode-client/ipc|memory`) builds a `KlientChannel` and hands
+ * (`@hilbras/omnicode-api/ipc|memory`) builds a `KlientChannel` and hands
  * it here; the returned `Klient` is identical in shape and behavior no matter
  * which transport carried the bytes.
  */

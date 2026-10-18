@@ -75,9 +75,9 @@ importers:
       '@agentclientprotocol/sdk':
         specifier: ^1.3.0
         version: 1.3.0(zod@4.3.6)
-      '@hilbras/omnicode-client':
+      '@hilbras/omnicode-api':
         specifier: workspace:^
-        version: link:../../packages/omnicode-client
+        version: link:../API
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../../packages/omnicode-core
@@ -93,12 +93,34 @@ importers:
       '@hilbras/omnicode-addons':
         specifier: workspace:^
         version: link:../Addons
+      '@hilbras/omnicode-auth':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-auth
+      '@hilbras/omnicode-core':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-core
       '@hilbras/omnicode-sdk':
         specifier: workspace:^
         version: link:../SDK
       '@hilbras/omnicode-tools':
         specifier: workspace:^
         version: link:../Tools
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@hilbras/omnicode-server':
+        specifier: workspace:^
+        version: link:../../packages/omnicode-server
+      '@types/ws':
+        specifier: ^8.18.0
+        version: 8.18.1
+      ulid:
+        specifier: ^3.0.1
+        version: 3.0.2
+      ws:
+        specifier: ^8.18.0
+        version: 8.20.0
 
   Kernel/Addons:
     dependencies:
@@ -149,12 +171,12 @@ importers:
       '@hilbras/omnicode-addons':
         specifier: workspace:^
         version: link:../Addons
+      '@hilbras/omnicode-api':
+        specifier: workspace:^
+        version: link:../API
       '@hilbras/omnicode-auth':
         specifier: workspace:^
         version: link:../../packages/omnicode-auth
-      '@hilbras/omnicode-client':
-        specifier: workspace:^
-        version: link:../../packages/omnicode-client
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../../packages/omnicode-core
@@ -451,28 +473,6 @@ importers:
       '@types/proper-lockfile':
         specifier: ^4.1.4
         version: 4.1.4
-
-  packages/omnicode-client:
-    dependencies:
-      '@hilbras/omnicode-core':
-        specifier: workspace:^
-        version: link:../omnicode-core
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
-    devDependencies:
-      '@hilbras/omnicode-server':
-        specifier: workspace:^
-        version: link:../omnicode-server
-      '@types/ws':
-        specifier: ^8.18.0
-        version: 8.18.1
-      ulid:
-        specifier: ^3.0.1
-        version: 3.0.2
-      ws:
-        specifier: ^8.18.0
-        version: 8.20.0
 
   packages/omnicode-core:
     dependencies:

@@ -21,7 +21,7 @@ import type {
   SessionApprovalRequest as ApprovalRequest,
   SessionApprovalResponse as ApprovalResponse,
 } from '@hilbras/omnicode-core';
-import type { IDisposable, SessionHandle } from '@hilbras/omnicode-client';
+import type { IDisposable, SessionHandle } from '@hilbras/omnicode-api';
 
 import type { AcpClient } from './acp-client';
 

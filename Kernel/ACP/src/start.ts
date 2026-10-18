@@ -38,8 +38,8 @@ import {
   type ScopeSeed,
   sessionMediaOriginalsDir,
 } from '@hilbras/omnicode-core';
-import type { Klient } from '@hilbras/omnicode-client';
-import { createKlient } from '@hilbras/omnicode-client/memory';
+import type { Klient } from '@hilbras/omnicode-api';
+import { createKlient } from '@hilbras/omnicode-api/memory';
 
 import { acpClientFromContext } from './acp-client';
 // Importing the `acp-fs` barrel also registers the ACP-backed Session-scope

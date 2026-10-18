@@ -227,25 +227,24 @@ import {
   type SessionSummary as V2SessionSummary,
 } from '@hilbras/omnicode-core';
 import { ISessionInitService } from '@hilbras/omnicode-core/session/sessionInit/sessionInitContract';
-import {
-  RPCError,
-  type AgentHandle,
-  type Klient,
-  type ImportCustomRegistryOptions,
-  type ImportCustomRegistryResult,
-} from '@hilbras/omnicode-client';
-import { RegistryImportError } from '#/catalog';
-import { createKlient } from '@hilbras/omnicode-client/memory';
+import type { AgentHandle, Klient } from './core/klient';
+import type {
+  ImportCustomRegistryOptions,
+  ImportCustomRegistryResult,
+} from './core/facade/global';
+import { RPCError } from './core/errors';
+import { RegistryImportError } from '@hilbras/omnicode-sdk/rpc-exports';
+import { createKlient } from './transports/memory';
 import { assertOmnicodeHostIdentity, createOmnicodeDefaultHeaders } from '@hilbras/omnicode-auth';
 
-import { OmnicodeAuthFacade } from '#/auth';
-import { ensureConfigFile, HookDefSchema } from '#/config/index';
-import type { AgentContextData } from '#/context';
-import { ErrorCodes, isOmnicodeErrorCode, OmnicodeError, type OmnicodeErrorCode } from '#/errors';
-import type { ExperimentalFeatureState } from '#/flag';
-import { OmnicodeHarness } from '#/omnicode-harness';
-import type { BeginGlobalMcpServerAuthResult } from '#/mcp';
-import { noopTelemetryClient } from '#/telemetry';
+import { OmnicodeAuthFacade } from '@hilbras/omnicode-sdk/rpc-exports';
+import { ensureConfigFile, HookDefSchema } from '@hilbras/omnicode-sdk/rpc-exports';
+import type { AgentContextData } from '@hilbras/omnicode-sdk/rpc-exports';
+import { ErrorCodes, isOmnicodeErrorCode, OmnicodeError, type OmnicodeErrorCode } from '@hilbras/omnicode-sdk/rpc-exports';
+import type { ExperimentalFeatureState } from '@hilbras/omnicode-sdk/rpc-exports';
+import { OmnicodeHarness } from '@hilbras/omnicode-sdk/rpc-exports';
+import type { BeginGlobalMcpServerAuthResult } from '@hilbras/omnicode-sdk/rpc-exports';
+import { noopTelemetryClient } from '@hilbras/omnicode-sdk/rpc-exports';
 import {
   SDKRpcClientBase,
   type ActivatePluginCommandRpcInput,
@@ -266,7 +265,7 @@ import {
   type SetSessionThinkingRpcInput,
   type SetSessionTowerModeRpcInput,
   type UpdateSessionMetadataRpcInput,
-} from '#/rpc';
+} from '@hilbras/omnicode-sdk/rpc-exports';
 import type {
   AddAdditionalDirInput,
   AddAdditionalDirResult,
@@ -325,27 +324,27 @@ import type {
   UploadFileOptions,
   WorkspaceTrustInfo,
   WorkspaceTrustInstructionSources,
-} from '#/types';
+} from '@hilbras/omnicode-sdk/rpc-exports';
 import {
   diagnosticsToConfigDiagnostics,
   planProviderRemoval,
   resolvedConfigToOmnicodeConfig,
-} from '#/v2/config-mapper';
-import { translateGlobalEvent } from '#/v2/event-mapper';
-import { assertImportFits, buildImportContextMessage } from '#/v2/import-context';
-import { foldAgentWireReplay, type FoldedAgentReplay } from '#/v2/resume-replay';
+} from '@hilbras/omnicode-sdk/rpc-exports';
+import { translateGlobalEvent } from '@hilbras/omnicode-sdk/rpc-exports';
+import { assertImportFits, buildImportContextMessage } from '@hilbras/omnicode-sdk/rpc-exports';
+import { foldAgentWireReplay, type FoldedAgentReplay } from '@hilbras/omnicode-sdk/rpc-exports';
 import {
   mcpConfigWithoutName,
   normalizeServerName,
   parseInlineMcpServer,
   parseReconnectMcpServerConfig,
-} from '#/v2/global-mcp';
+} from '@hilbras/omnicode-sdk/rpc-exports';
 import {
   normalizeWorkDir,
   v2MetaToSessionMeta,
   v2SummaryToSessionSummary,
-} from '#/v2/session-mapper';
-import { SessionEventWiring } from '#/v2/session-wiring';
+} from '@hilbras/omnicode-sdk/rpc-exports';
+import { SessionEventWiring } from '@hilbras/omnicode-sdk/rpc-exports';
 
 export interface SDKRpcClientV2Options {
   readonly homeDir?: string;

@@ -41,7 +41,7 @@ import type {
   SessionEventPayloads,
   SessionHandle,
   SkillSummary,
-} from '@hilbras/omnicode-client';
+} from '@hilbras/omnicode-api';
 import type { ToolResultEvent } from '@hilbras/omnicode-core/events';
 import type {
   ToolCallDeltaEvent,

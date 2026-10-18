@@ -11,7 +11,7 @@ import {
 } from '@hilbras/omnicode-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { SessionSummary } from '@hilbras/omnicode-client';
+import type { SessionSummary } from '@hilbras/omnicode-api';
 
 import { filterSessionSummariesByCwd } from '../src/server';
 import { createTestClient, type TestClient } from './_helpers/acpClient';

@@ -3,11 +3,6 @@ export type { OmnicodeHarnessRuntimeOptions } from '#/omnicode-harness';
 export { Session } from '#/session';
 export { OmnicodeAuthFacade } from '#/auth';
 export {
-  createOmnicodeHarness,
-  SDKRpcClientV2,
-  type SDKRpcClientV2Options,
-} from '#/sdk-rpc-client-v2';
-export {
   createOmnicodeConfigRpc,
   OmnicodeConfigRpcClient,
   type OmnicodeConfigRpc,

@@ -13,7 +13,7 @@
  *   3. the model id is on the {@link TOGGLEABLE_THINKING_MODELS} allow-list.
  */
 
-import type { ModelCatalogItem } from '@hilbras/omnicode-client';
+import type { ModelCatalogItem } from '@hilbras/omnicode-api';
 
 /**
  * One catalog row per configured model, suitable for an ACP picker.

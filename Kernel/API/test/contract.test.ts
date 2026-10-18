@@ -2,7 +2,7 @@
  * Scenario: runtime validation at Klient wire-contract boundaries.
  *
  * Exercises the session-creation and plugin-manifest schemas directly with no
- * external collaborators. Run with `pnpm --filter @hilbras/omnicode-client exec
+ * external collaborators. Run with `pnpm --filter @hilbras/omnicode-api exec
  * vitest run test/contract.test.ts`.
  */
 

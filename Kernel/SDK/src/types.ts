@@ -19,7 +19,7 @@ export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { readonly [key: string]: JsonValue };
 export type JsonObject = { readonly [key: string]: JsonValue };
 
-export type { ImportCustomRegistryOptions, ImportCustomRegistryResult } from '@hilbras/omnicode-client';
+export type { ImportCustomRegistryOptions, ImportCustomRegistryResult } from '@hilbras/omnicode-api';
 
 export type Unsubscribe = () => void;
 

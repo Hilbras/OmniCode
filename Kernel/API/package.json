@@ -1,27 +1,57 @@
 {
   "name": "@hilbras/omnicode-api",
   "version": "0.1.0",
+  "private": true,
   "description": "The one surface consumers of the Kernel are allowed to import.",
   "license": "MIT",
   "type": "module",
-  "private": true,
   "imports": {
     "#/*": "./src/*.ts"
   },
   "exports": {
+    "./ipc": {
+      "types": "./src/transports/ipc/index.ts",
+      "default": "./src/transports/ipc/index.ts"
+    },
+    "./memory": {
+      "types": "./src/transports/memory/index.ts",
+      "default": "./src/transports/memory/index.ts"
+    },
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json",
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
     }
+  },
+  "scripts": {
+    "build": "tsdown",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:examples": "tsc -p tsconfig.examples.json --noEmit",
+    "test": "vitest run",
+    "smoke": "tsx --tsconfig ./tsconfig.examples.json --import ../../build/register-raw-text-loader.mjs examples/smoke.ts",
+    "smoke:boundary": "tsx --tsconfig ./tsconfig.examples.json --import ../../build/register-raw-text-loader.mjs examples/model-requester-boundary.ts",
+    "smoke:select-tools": "tsx --tsconfig ./tsconfig.examples.json --import ../../build/register-raw-text-loader.mjs examples/omnicode-select-tools.ts",
+    "stress:kosong-config": "tsx --tsconfig ./tsconfig.examples.json --import ../../build/register-raw-text-loader.mjs examples/kosong-config-stress.ts",
+    "clean": "rm -rf dist",
+    "docker:e2e": "bash scripts/run-docker-e2e.sh"
   },
   "dependencies": {
     "@hilbras/omnicode-acp": "workspace:^",
     "@hilbras/omnicode-addons": "workspace:^",
+    "@hilbras/omnicode-auth": "workspace:^",
+    "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-sdk": "workspace:^",
-    "@hilbras/omnicode-tools": "workspace:^"
+    "@hilbras/omnicode-tools": "workspace:^",
+    "zod": "catalog:"
   },
-  "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rm -rf dist"
+  "devDependencies": {
+    "@hilbras/omnicode-server": "workspace:^",
+    "@types/ws": "^8.18.0",
+    "ulid": "^3.0.1",
+    "ws": "^8.18.0"
   }
 }
