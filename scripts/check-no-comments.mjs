@@ -3,7 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const PACKAGES = ['packages/omnicode-core', 'packages/omnicode-server', 'packages/omnicode-transcript'];
+const PACKAGES = ['Kernel/core', 'Kernel/server', 'Kernel/transcript'];
 const DIRS = ['src', 'test', 'scripts'];
 
 function collectLeaves(node, leaves, jsdocNodes) {

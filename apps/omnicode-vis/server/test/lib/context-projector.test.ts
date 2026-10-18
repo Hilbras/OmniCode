@@ -241,7 +241,7 @@ describe('context-projector', () => {
   // The engine's `ContextMemory.appendLoopEvent` (`tool.result` case) stores
   // `createToolMessage(toolCallId, toolResultOutputForModel(event.result))`, NOT
   // the raw `event.result.output`. `toolResultOutputForModel`
-  // (`packages/omnicode-core/src/agent/contextMemory/`) normalizes
+  // (`Kernel/core/src/agent/contextMemory/`) normalizes
   // error / empty outputs with sentinel strings. The projector must replicate
   // that normalization so the model-view shows the content the model actually
   // received for failed / empty tool calls.

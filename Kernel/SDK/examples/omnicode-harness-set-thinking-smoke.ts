@@ -1,4 +1,4 @@
-import { createOmnicodeHarness } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness } from '@hilbras/omnicode-api';;
 
 import {
   smokeIdentityFromEnv,

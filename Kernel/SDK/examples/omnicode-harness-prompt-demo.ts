@@ -1,4 +1,5 @@
-import { createOmnicodeHarness, type Event, type Session } from '@hilbras/omnicode-sdk';
+import { type Event, type Session } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness } from '@hilbras/omnicode-api';;
 
 import { smokeIdentityFromEnv } from './runtime-smoke-helpers';
 

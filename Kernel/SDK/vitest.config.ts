@@ -8,12 +8,12 @@ export default defineConfig({
       {
         find: '@hilbras/omnicode-auth/provider-credential',
         replacement: fileURLToPath(
-          new URL('../../packages/omnicode-auth/src/provider-credential.ts', import.meta.url),
+          new URL('../auth/src/provider-credential.ts', import.meta.url),
         ),
       },
       {
         find: '@hilbras/omnicode-auth',
-        replacement: fileURLToPath(new URL('../../packages/omnicode-auth/src/index.ts', import.meta.url)),
+        replacement: fileURLToPath(new URL('../auth/src/index.ts', import.meta.url)),
       },
     ],
   },

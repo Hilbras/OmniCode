@@ -61,7 +61,7 @@ describe('wire renderers', () => {
   it('covers every durable record in the current core-v2 wire manifest', async () => {
     const manifestPath = resolve(
       import.meta.dirname,
-      '../../../../packages/omnicode-core/docs/wire-manifest.d.ts',
+      '../../../../Kernel/core/docs/wire-manifest.d.ts',
     );
     const manifest = await readFile(manifestPath, 'utf8');
     const index = /\/\/ Index \(\d+ record types\)\n((?:\/\/   .*\n)+)/.exec(manifest)?.[1];

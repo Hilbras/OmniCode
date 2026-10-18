@@ -4,7 +4,7 @@
  * or a token.
  *
  * omnicode-server already self-registers for peer discovery
- * (`packages/omnicode-server/src/instanceRegistry.ts`):
+ * (`Kernel/server/src/instanceRegistry.ts`):
  *   current builds  `<omnicode home>/server/instances/<serverId>.json`
  *   pre-registry builds  `<omnicode home>/server/lock`
  * and persists the bearer token at `<omnicode home>/server.token` (one token per

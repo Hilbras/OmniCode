@@ -2,7 +2,7 @@
  * REST envelope helpers — unwrap `{ code, msg, data, request_id }` into either
  * a typed `data` or an `EnvelopeError` thrown by the caller.
  *
- * Mirrors `packages/omnicode-server/src/protocol/envelope.ts` so the server's wire
+ * Mirrors `Kernel/server/src/protocol/envelope.ts` so the server's wire
  * shape and this client's parsing stay in lockstep.
  */
 import { type Envelope } from '@hilbras/omnicode-server/protocol/envelope';

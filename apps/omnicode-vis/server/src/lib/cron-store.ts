@@ -2,7 +2,7 @@
 //
 // Read-only reader for cron tasks. v2 persists cron state as durable wire
 // records (`cron.add` / `cron.delete` / `cron.cursor`) inside each agent's
-// `wire.jsonl` (`packages/omnicode-core/src/features/cron/`); v1 wrote
+// `wire.jsonl` (`Kernel/core/src/features/cron/`); v1 wrote
 // `<agentDir>/cron/<id>.json` files instead. vis reads both: legacy files
 // first, then the wire fold on top, so a session written by either engine
 // (or carried across both) lists its cron tasks. The visualizer never

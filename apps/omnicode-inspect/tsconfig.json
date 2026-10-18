@@ -16,7 +16,7 @@
     "src",
     "vite",
     "vite.config.ts",
-    "../../packages/omnicode-core/src"
+    "../../Kernel/core/src"
   ],
-  "exclude": ["../../packages/omnicode-core/src/human"]
+  "exclude": ["../../Kernel/core/src/human"]
 }

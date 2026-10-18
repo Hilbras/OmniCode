@@ -61,8 +61,8 @@ import type {
   Klient,
   SessionHandle,
   SessionRestoreOptions,
-  SessionSummary,
 } from '@hilbras/omnicode-api';
+import type { SessionSummary } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
 import { ErrorCodes, isError2 } from '@hilbras/omnicode-core';
 import { RPCError } from '@hilbras/omnicode-api';
 

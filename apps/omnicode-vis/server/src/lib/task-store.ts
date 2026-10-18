@@ -6,7 +6,7 @@
 // legacy session root as a fallback.
 //
 // The visualizer never writes these files; it mirrors the engine's on-disk
-// layout (`packages/omnicode-core/src/agent/task/persist.ts`) for reading only:
+// layout (`Kernel/core/src/agent/task/persist.ts`) for reading only:
 //   - the same `VALID_TASK_ID` guard, so a corrupt / hand-edited filename
 //     cannot turn a log path into a traversal primitive;
 //   - the same legacy snake_case → current camelCase normalization, so old

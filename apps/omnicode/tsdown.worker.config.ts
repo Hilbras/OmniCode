@@ -2,9 +2,9 @@
 // self-contained ESM files so they can ride the SEA blob as assets
 // (02-sea-blob.mjs) and be spawned from disk at runtime:
 //   - text-build-worker.mjs: the minidb text-build worker
-//     (packages/omnicode-minidb/src/worker/text-build-worker.ts);
+//     (Kernel/minidb/src/worker/text-build-worker.ts);
 //   - search-worker.mjs: the kap-server global-search worker
-//     (packages/omnicode-server/src/search/worker/entry.ts).
+//     (Kernel/server/src/search/worker/entry.ts).
 // Without them the bundled binary lacks the worker entry files on disk and
 // heavy index work degrades to the inline main-thread cores, stalling the
 // event loop on large corpora. Runs after the main bundle with clean:false
@@ -45,6 +45,6 @@ function workerConfig(name: string, entry: string) {
 }
 
 export default [
-  workerConfig('text-build-worker', '../../packages/omnicode-minidb/src/worker/text-build-worker.ts'),
-  workerConfig('search-worker', '../../packages/omnicode-server/src/search/worker/entry.ts'),
+  workerConfig('text-build-worker', '../../Kernel/minidb/src/worker/text-build-worker.ts'),
+  workerConfig('search-worker', '../../Kernel/server/src/search/worker/entry.ts'),
 ];

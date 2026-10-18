@@ -2,13 +2,8 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 
-import {
-  createOmnicodeHarness,
-  flushDiagnosticLogs,
-  log,
-  resolveGlobalLogPath,
-  resolveOmnicodeHome,
-} from '@hilbras/omnicode-sdk';
+import { flushDiagnosticLogs, log, resolveGlobalLogPath, resolveOmnicodeHome } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness } from '@hilbras/omnicode-api';;
 
 type MarkerLevel = 'error' | 'warn';
 

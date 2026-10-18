@@ -11,12 +11,12 @@
   },
   "include": [
     "src/**/*.ts",
-    "../../packages/omnicode-core/src/**/*.ts",
-    "../../packages/omnicode-core/src/env.d.ts",
-    "../../packages/omnicode-kaos/src/**/*.ts",
-    "../../packages/omnicode-client/src/**/*.ts",
-    "../../packages/omnicode-llm/src/**/*.ts",
-    "../../packages/omnicode-auth/src/**/*.ts"
+    "../../Kernel/core/src/**/*.ts",
+    "../../Kernel/core/src/env.d.ts",
+    "../kaos/src/**/*.ts",
+    "../client/src/**/*.ts",
+    "../llm/src/**/*.ts",
+    "../auth/src/**/*.ts"
   ],
-  "exclude": ["dist", ".tmp-api-extractor", "examples", "test", "../../packages/*/dist", "../../packages/*/test", "../../packages/omnicode-core/src/human/test"]
+  "exclude": ["dist", ".tmp-api-extractor", "examples", "test", "../../Kernel/*/dist", "../../Kernel/*/test", "../../Kernel/core/src/human/test"]
 }

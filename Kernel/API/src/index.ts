@@ -61,8 +61,6 @@ export type {
   GlobalPluginsFacade,
   GlobalSessionsFacade,
   GlobalWorkspacesFacade,
-  ImportCustomRegistryOptions,
-  ImportCustomRegistryResult,
   KlientEnvInfo,
   ModelCatalogItem,
   OAuthFlowSnapshot,
@@ -91,13 +89,10 @@ export type {
   SessionQuestionsFacade,
   SessionRestoreOptions,
   SessionSkillsFacade,
-  SessionStatus,
 } from './core/facade/session.js';
 export type {
-  AgentCommandInfo,
   AgentContextData,
   AgentFacade,
-  AgentTaskInfo,
   McpServerEntry,
   PlanData,
   PromptLaunchResult,
@@ -106,7 +101,6 @@ export type {
   SetModelResult,
   ShellCommandResult,
   ThinkingLevel,
-  UsageStatus,
 } from './core/facade/agent.js';
 
 export type {
@@ -123,7 +117,6 @@ export type { AgentEventPayloads } from './contract/agent/events.js';
 // not pulled in at runtime for http consumers).
 export type {
   SessionListQuery,
-  SessionSummary,
 } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
 export type { Page } from '@hilbras/omnicode-core/persistence/interface/queryStore';
 export type {
@@ -134,7 +127,7 @@ export type {
   ConfigDiagnostic,
   ConfigInspectValue,
 } from '@hilbras/omnicode-core/app/config/config';
-export type { ProviderConfig } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
+export type { ProviderConfig } from '@hilbras/omnicode-sdk/rpc-exports';
 export type { AuthStatus } from '@hilbras/omnicode-core/app/auth/auth';
 export type { ExperimentalFeatureState } from '@hilbras/omnicode-core/app/flag/flag';
 export type {
@@ -155,7 +148,6 @@ export type {
   SessionMetaPatch,
 } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
 export type {
-  ApprovalRequest,
   ApprovalResponse,
 } from '@hilbras/omnicode-core/agent/interaction/approval';
 export type {
@@ -186,3 +178,8 @@ export {
   SDKRpcClientV2,
   type SDKRpcClientV2Options,
 } from './requestHandler';
+
+// The SDK barrel does not re-export SessionSummary; the client facade does,
+// and its shape mirrors core's session index rather than the SDK's. Name the
+// one carrying workDir and metadata.
+export type { SessionSummary } from '@hilbras/omnicode-sdk/rpc-exports';

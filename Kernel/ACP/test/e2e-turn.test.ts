@@ -12,6 +12,7 @@
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+// oxlint-disable-next-line eslint/no-unused-vars -- import.meta.url needs the helper
 import { fileURLToPath } from 'node:url';
 
 import { getLiveSessionById, IAgentLifecycleService, IEventBus } from '@hilbras/omnicode-core';
@@ -26,7 +27,7 @@ import { createScriptedProvider, type ScriptedProvider } from './_helpers/script
 
 /** Real stdio MCP fixture server from the omnicode-core test suite. */
 const STDIO_MCP_FIXTURE = fileURLToPath(
-  new URL('../../../packages/omnicode-core/test/mcpCore/fixtures/mock-stdio-server.mjs', import.meta.url),
+  new URL('../../core/test/mcpCore/fixtures/mock-stdio-server.mjs', import.meta.url),
 );
 
 describe('omnicode-acp real prompt turn (scripted LLM)', () => {

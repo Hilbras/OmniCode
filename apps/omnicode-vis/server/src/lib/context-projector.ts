@@ -300,7 +300,7 @@ export function projectContext(
         const historyEntries = [...modelMessages];
         resetFold();
         // Mirror the engine's applyCompaction
-        // (`packages/omnicode-core/src/agent/contextMemory/`): the live history
+        // (`Kernel/core/src/agent/contextMemory/`): the live history
         // becomes the kept real user messages (verbatim, within a token budget
         // — the oldest head plus the most recent tail, separated by an elision
         // marker when the pool overflowed) followed by a single user-role
@@ -644,7 +644,7 @@ const MICRO_MIN_CONTENT_TOKENS = 100;
 
 /** Replicates the engine's per-char token weighting exactly, over the same
  *  `text` + `think` parts its gate counts. The engine
- *  (`packages/omnicode-core/src/llm-adapter/contract/tokens.ts`) sums per-part
+ *  (`Kernel/core/src/llm-adapter/contract/tokens.ts`) sums per-part
  *  estimates, each
  *  `estimateTokens(s) = Math.ceil(asciiCount / 4) + nonAsciiCount` (ASCII ~4
  *  chars/token, every non-ASCII/CJK code point a full token); other part types

@@ -2,7 +2,8 @@ import { mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises'
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 
-import { createOmnicodeHarness, log } from '@hilbras/omnicode-sdk';
+import { log } from '@hilbras/omnicode-sdk';
+import { createOmnicodeHarness } from '@hilbras/omnicode-api';;
 
 const SESSION_LOG = 'logs/omnicode.log';
 const GLOBAL_LOG = 'logs/global/omnicode.log';

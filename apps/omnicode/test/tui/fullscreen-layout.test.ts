@@ -30,7 +30,7 @@ import type { AppState, TranscriptEntry } from '#/tui/types';
 import { beginScreenTakeover, endScreenTakeover } from '#/tui/utils/screen-takeover';
 import { markTranscriptComponent } from '#/tui/utils/transcript-component-metadata';
 
-import { VirtualTerminal } from '../../../../packages/omnicode-tui/test/virtual-terminal';
+import { VirtualTerminal } from '../../../../Kernel/tui/test/virtual-terminal';
 
 const WIDTH = 120;
 const HEIGHT = 30;

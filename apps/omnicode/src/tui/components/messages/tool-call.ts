@@ -217,8 +217,8 @@ const PLAN_SAVED_TO_RE = /\nPlan saved to: ([^\n]+)\n/;
 /**
  * Parses the ExitPlanMode result content string to recover the approval outcome
  * and optional plan path. Core-side templates live in
- * `packages/omnicode-core/src/features/plan/tools/exit-plan-mode/exitPlanModeTool.ts` and
- * `packages/omnicode-core/src/features/plan/exitPlanModeReview.ts`:
+ * `Kernel/core/src/features/plan/tools/exit-plan-mode/exitPlanModeTool.ts` and
+ * `Kernel/core/src/features/plan/exitPlanModeReview.ts`:
  *   - Approved output starts with 'Exited plan mode.' and selected options
  *     are reported as 'Selected approach: <label>'. Older outputs may start
  *     with 'User approved option "<label>".' Plan-file mode may include

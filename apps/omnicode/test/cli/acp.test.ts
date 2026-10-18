@@ -64,7 +64,7 @@ describe('omnicode acp', () => {
     await expect(program.parseAsync(['node', 'omnicode', 'acp'])).rejects.toThrow(ExitCalled);
 
     expect(runAcpServer).toHaveBeenCalledTimes(1);
-    const optsArg = vi.mocked(runAcpServer).mock.calls[0]?.[0];
+    const optsArg = vi.mocked(runAcpServer).mock.calls[0]![0];
     expect(optsArg).toEqual(
       expect.objectContaining({
         homeDir: getDataDir(),
@@ -83,7 +83,7 @@ describe('omnicode acp', () => {
 
       await expect(program.parseAsync(['node', 'omnicode', 'acp'])).rejects.toThrow(ExitCalled);
 
-      const optsArg = vi.mocked(runAcpServer).mock.calls[0]?.[0];
+      const optsArg = vi.mocked(runAcpServer).mock.calls[0]![0];
       expect(optsArg).toEqual(
         expect.objectContaining({
           homeDir: '/tmp/omnicode-debug',
@@ -108,7 +108,7 @@ describe('omnicode acp', () => {
 
       await expect(program.parseAsync(['node', 'omnicode', 'acp'])).rejects.toThrow(ExitCalled);
 
-      const optsArg = vi.mocked(runAcpServer).mock.calls[0]?.[0];
+      const optsArg = vi.mocked(runAcpServer).mock.calls[0]![0];
       expect(optsArg.terminalAuthEnv).toBeUndefined();
     } finally {
       if (previous !== undefined) {
@@ -123,7 +123,7 @@ describe('omnicode acp', () => {
 
     await expect(program.parseAsync(['node', 'omnicode', 'acp'])).rejects.toThrow(ExitCalled);
 
-    const optsArg = vi.mocked(runAcpServer).mock.calls[0]?.[0] as {
+    const optsArg = vi.mocked(runAcpServer).mock.calls[0]![0] as {
       terminalAuthLegacyCommand?: string;
     };
     // process.argv[1] points at the test runner entry — non-empty

@@ -63,20 +63,19 @@
       # -------------------------------------------------------------------
       workspacePaths = [
         ./Kernel/ACP
-        ./packages/omnicode-core
-        ./packages/omnicode-server
+        ./Kernel/core
+        ./Kernel/server
         ./Kernel/Kaos
-        ./packages/omnicode-client
-        ./packages/omnicode-llm
-        ./packages/omnicode-migration
-        ./packages/omnicode-minidb
-        ./packages/omnicode-remote
+        ./Kernel/llm
+        ./Kernel/migration
+        ./Kernel/minidb
+        ./Kernel/remote
         ./Kernel/SDK
-        ./packages/omnicode-auth
-        ./packages/omnicode-tui
-        ./packages/omnicode-telemetry
-        ./packages/omnicode-transcript
-        ./packages/omnicode-tree-sitter-bash
+        ./Kernel/auth
+        ./Kernel/tui
+        ./Kernel/telemetry
+        ./Kernel/transcript
+        ./Kernel/tree-sitter-bash
         ./Kernel/API
         ./Kernel/Addons
         ./Kernel/Tools
@@ -93,7 +92,6 @@
         "@hilbras/omnicode-core"
         "@hilbras/omnicode-server"
         "@hilbras/omnicode-kaos"
-        "@hilbras/omnicode-client"
         "@hilbras/omnicode-llm"
         "@hilbras/omnicode-migration"
         "@hilbras/omnicode-minidb"

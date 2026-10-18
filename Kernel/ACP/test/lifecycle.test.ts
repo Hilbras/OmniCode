@@ -1,6 +1,7 @@
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+// oxlint-disable-next-line eslint/no-unused-vars -- import.meta.url needs the helper
 import { fileURLToPath } from 'node:url';
 
 import {
@@ -11,7 +12,7 @@ import {
 } from '@hilbras/omnicode-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { SessionSummary } from '@hilbras/omnicode-api';
+import type { SessionSummary } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
 
 import { filterSessionSummariesByCwd } from '../src/server';
 import { createTestClient, type TestClient } from './_helpers/acpClient';
@@ -20,7 +21,7 @@ import { createScriptedProvider } from './_helpers/scriptedProvider';
 
 /** Real stdio MCP fixture server from the omnicode-core test suite. */
 const STDIO_MCP_FIXTURE = fileURLToPath(
-  new URL('../../../packages/omnicode-core/test/mcpCore/fixtures/mock-stdio-server.mjs', import.meta.url),
+  new URL('../../core/test/mcpCore/fixtures/mock-stdio-server.mjs', import.meta.url),
 );
 
 /**
