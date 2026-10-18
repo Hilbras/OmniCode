@@ -5,11 +5,11 @@
   "description": "The LLM abstraction layer for modern AI agent applications",
   "license": "MIT",
   "author": "Hilbras",
-  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/omnicode-llm#readme",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/Kernel/llm#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hilbras/omnicode.git",
-    "directory": "packages/omnicode-llm"
+    "directory": "Kernel/llm"
   },
   "bugs": {
     "url": "https://github.com/Hilbras/omnicode/issues"
