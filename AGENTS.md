@@ -18,20 +18,19 @@ This is a TypeScript monorepo built for agent-assisted development. Keep the roo
 - the browser web UI: **its source no longer lives in this repo.** It is developed in the code-app repo (`apps/web`) and shipped as the committed, prebuilt bundle `apps/omnicode/dist-web` (gitignored, force-added), synced from code-app with `OMNICODE_REPO=<this checkout> pnpm run sync:web` — sync and commit the bundle in the same change whenever the web UI should ship differently. `apps/omnicode/scripts/check-web-assets.mjs` guards packaging against a missing bundle. To hack on the web UI against this repo's server, run `pnpm dev:server` here and point code-app's `pnpm dev:web` at it via `OMNICODE_SERVER_URL`.
 - `apps/omnicode-vis`, `apps/omnicode-vis/server`, `apps/omnicode-vis/web`: visual debugging tools for sessions and replays.
 - `apps/omnicode-inspect`: web inspector for the omnicode-server `/api/v1/debug` RPC surface — workspace/session browser, per-session transcript chat, per-scope Service panels, and the DI unit inspection view. See `apps/omnicode-inspect/AGENTS.md`.
-- `packages/omnicode-core`: the DI × Scope agent engine (the v2 port behind omnicode-server). Three `LifecycleScope` tiers — `App` / `Session` / `Agent` (`app/scopes.ts`) — plus the L3 unit layer (`Service`/`Fiber` units, collection contribution points, the Feature seam in `src/features/`); there is no App-level session lifecycle facade — callers compose `ISessionIndex` → `IWorkspaceLifecycleService.handlerFor` → the handler.
+- `Kernel/core`: the DI × Scope agent engine (the v2 port behind omnicode-server). Three `LifecycleScope` tiers — `App` / `Session` / `Agent` (`app/scopes.ts`) — plus the L3 unit layer (`Service`/`Fiber` units, collection contribution points, the Feature seam in `src/features/`); there is no App-level session lifecycle facade — callers compose `ISessionIndex` → `IWorkspaceLifecycleService.handlerFor` → the handler.
 - `Kernel/API`: the single connection surface between kernel packages (`@hilbras/omnicode-api`). Systems reach the SDK through here, never by importing it directly.
 - `Kernel/SDK`: the public TypeScript SDK and harness (`@hilbras/omnicode-sdk`).
 - `Kernel/ACP`: the Agent Client Protocol host (`@hilbras/omnicode-acp`) — lets editors drive Omnicode over stdio. See `Kernel/README.md` for what `Kernel/Addons` can and cannot hold.
-- `packages/omnicode-llm`: the LLM / provider abstraction layer.
-- `packages/omnicode-kaos`: the execution environment and file/process abstractions.
-- `packages/omnicode-auth`: Omnicode OAuth and managed auth utilities.
-- `packages/omnicode-telemetry`: shared client-side telemetry infrastructure.
-- `packages/omnicode-transcript`: the isomorphic transcript rendering data layer — L1 agent-granular store, L2 idempotent operations, L3 `off/turn/block/delta` subscription granularity, L4 framework-free view registry, plus turn-cursor pagination. Pure TypeScript (browser-safe, no engine imports); the sole owner of the transcript contract types (`src/contract/`) and the op-batch sequencing contract.
-- `packages/omnicode-server`: the Omnicode server, backed by `@hilbras/omnicode-core`; exposes sessions over REST + WebSocket (`/api/v1` + `/api/v1/ws`), plus the `/api/v1/debug/*` reflection RPC surface (`--debug-endpoints`, loopback bind + bearer auth).
-- `packages/omnicode-remote`: the Omnicode Remote Control tunnel client — registers this machine with the relay and forwards HTTP/WebSocket traffic to the local server, with a machine-wide single-instance lock; consumed by omnicode-server (the `/api/v1/remote-control` toggle) and by the CLI (`omnicode web --remote-control`).
-- `packages/omnicode-client`: the client SDK — a contract-driven facade over omnicode-core (`global.*` / `session(id).*` / `agent(id).*`, zod-validated); transport via subpath entry (`@hilbras/omnicode-client/ipc|memory`, both return the same `Klient`); also hosts the e2e suites. See `packages/omnicode-client/AGENTS.md`.
-- `packages/omnicode-tree-sitter-bash`: a pure-TypeScript bash parser (no runtime deps, no wasm); `parse(source, { timeoutMs, maxNodes })` runs under a deterministic budget and returns a discriminated `ParseResult` — callers must treat aborted/hasError trees as "cannot analyze" and degrade. Parser only, no safety judgments; see the package README's "Known differences" section.
-- `packages/omnicode-minidb`: the embedded JSON document store (`MiniDb`) behind omnicode-server's search index — snapshot + WAL persistence with an exclusive write lock, a larger-than-RAM full-text layer, and persistent index generations. See `packages/omnicode-minidb/AGENTS.md`.
+- `Kernel/llm`: the LLM / provider abstraction layer.
+- `Kernel/Kaos`: the execution environment and file/process abstractions.
+- `Kernel/auth`: Omnicode OAuth and managed auth utilities.
+- `Kernel/telemetry`: shared client-side telemetry infrastructure.
+- `Kernel/transcript`: the isomorphic transcript rendering data layer — L1 agent-granular store, L2 idempotent operations, L3 `off/turn/block/delta` subscription granularity, L4 framework-free view registry, plus turn-cursor pagination. Pure TypeScript (browser-safe, no engine imports); the sole owner of the transcript contract types (`src/contract/`) and the op-batch sequencing contract.
+- `Kernel/server`: the Omnicode server, backed by `@hilbras/omnicode-core`; exposes sessions over REST + WebSocket (`/api/v1` + `/api/v1/ws`), plus the `/api/v1/debug/*` reflection RPC surface (`--debug-endpoints`, loopback bind + bearer auth).
+- `Kernel/remote`: the Omnicode Remote Control tunnel client — registers this machine with the relay and forwards HTTP/WebSocket traffic to the local server, with a machine-wide single-instance lock; consumed by omnicode-server (the `/api/v1/remote-control` toggle) and by the CLI (`omnicode web --remote-control`).
+- `Kernel/tree-sitter-bash`: a pure-TypeScript bash parser (no runtime deps, no wasm); `parse(source, { timeoutMs, maxNodes })` runs under a deterministic budget and returns a discriminated `ParseResult` — callers must treat aborted/hasError trees as "cannot analyze" and degrade. Parser only, no safety judgments; see the package README's "Known differences" section.
+- `Kernel/minidb`: the embedded JSON document store (`MiniDb`) behind omnicode-server's search index — snapshot + WAL persistence with an exclusive write lock, a larger-than-RAM full-text layer, and persistent index generations. See `Kernel/minidb/AGENTS.md`.
 - `Kernel/memory`: trust-gated persistent memory — provenance on every record, deterministic promotion (a model never raises its own trust; `system` trust needs an application authority), lexical retrieval over minidb with explicit scope filtering, structured budgets and honest `complete`/`partial`/`no_match`/`unavailable`/`failed` statuses, plus resumable task state. Behind `OMNICODE_EXPERIMENTAL_MEMORY` (default off); see `Kernel/memory/AGENTS.md`.
 
 ## Environment Requirements
@@ -44,14 +43,14 @@ This is a TypeScript monorepo built for agent-assisted development. Keep the roo
 
 - `pnpm-workspace.yaml` is the source of truth for workspace membership, but `flake.nix` also contains **hardcoded** `workspacePaths` and `workspaceNames` lists.
 - **Whenever you add or remove a workspace package, you MUST update both `pnpm-workspace.yaml` and `flake.nix` — for every package, including leaf / test / e2e packages that nothing depends on.**
-  - `pnpm-workspace.yaml` uses globs (`packages/*`, `apps/*`), so most packages land there automatically; `flake.nix` is fully manual and is where omissions happen.
+  - `pnpm-workspace.yaml` uses globs (`Kernel/*`, `apps/*`), so most packages land there automatically; `flake.nix` is fully manual and is where omissions happen.
   - Missing a path in `flake.nix`'s `workspacePaths` will silently drop files from the Nix build's `src` fileset.
   - Missing a name in `flake.nix`'s `workspaceNames` will break `pnpmConfigHook` because dependencies for that workspace will not be fetched.
 - The automated "Check flake.nix workspace sync" (`scripts/check-nix-workspace.mjs`) only validates the transitive dependency **closure of `@hilbras/omnicode`**. A leaf package outside that closure (e.g. an e2e package nobody imports) slips through even when it is missing from `flake.nix`. A green check is therefore NOT proof that `flake.nix` is fully in sync — keep it updated by hand on every add/remove, do not rely on the check to catch omissions.
 
 ## General Coding Rules
 
-- `packages/omnicode-core`, `packages/omnicode-server`, and `packages/omnicode-transcript` are comment-free zones: no comments of any kind — no line/block comments, no JSDoc (not even on exported symbols); the only exception is load-bearing lint-suppression directives (`oxlint-disable` / `eslint-disable`), while other tooling directives (`@ts-expect-error`, …) stay banned. Enforced by `scripts/check-no-comments.mjs` over `.ts`/`.tsx`/`.mts`/`.mjs` under `src/`/`test/`/`scripts/`, which runs as part of `pnpm lint`.
+- `Kernel/core`, `Kernel/server`, and `Kernel/transcript` are comment-free zones: no comments of any kind — no line/block comments, no JSDoc (not even on exported symbols); the only exception is load-bearing lint-suppression directives (`oxlint-disable` / `eslint-disable`), while other tooling directives (`@ts-expect-error`, …) stay banned. Enforced by `scripts/check-no-comments.mjs` over `.ts`/`.tsx`/`.mts`/`.mjs` under `src/`/`test/`/`scripts/`, which runs as part of `pnpm lint`.
 - For optional object properties, pass `undefined` directly instead of using conditional spread.
   - YES: `{ user }`
   - NO: `{ ...(user ? { user } : undefined) }`
@@ -68,7 +67,7 @@ This is a TypeScript monorepo built for agent-assisted development. Keep the roo
 ## Experimental Features
 
 - Gate a not-yet-public feature behind an experimental flag. Flags are env-driven and default off: `OMNICODE_EXPERIMENTAL_<NAME>` toggles one, `OMNICODE_EXPERIMENTAL_FLAG` enables all. Precedence is per-flag env > `[experimental]` config > master env > the flag's `default`. Release by flipping the entry's `default` to `true`.
-  - `packages/omnicode-core` and omnicode-server modules: there is no central catalog — declare the flag in the owning domain via `registerFlagDefinition` at import time, then check it with `IFlagService.enabled(id)`.
+  - `Kernel/core` and `Kernel/server` modules: there is no central catalog — declare the flag in the owning domain via `registerFlagDefinition` at import time, then check it with `IFlagService.enabled(id)`.
 
 ## Where to Update Instructions
 
@@ -108,11 +107,11 @@ Everyone on the old default is affected. Require the changeset to name the behav
 
 ### Prompt text is behavior
 
-Editing or deleting sentences under `packages/omnicode-core/src/**/*.md` (system prompt, tool descriptions, reminders, overlays, built-in skills) changes agent behavior for every user who receives that prompt. "No test references the sentence" is not evidence of no impact. Require the PR to name the population that receives the text (every session, plan mode, a flag-gated feature such as Tower), what the sentence enforced, who relied on it, and what enforces it now.
+Editing or deleting sentences under `Kernel/core/src/**/*.md` (system prompt, tool descriptions, reminders, overlays, built-in skills) changes agent behavior for every user who receives that prompt. "No test references the sentence" is not evidence of no impact. Require the PR to name the population that receives the text (every session, plan mode, a flag-gated feature such as Tower), what the sentence enforced, who relied on it, and what enforces it now.
 
 ### Contract files are tripwires
 
-The manifests under `packages/omnicode-core/docs/` (`config-manifest.toml`, `wire-manifest.d.ts`, `state-manifest.d.ts`), `packages/omnicode-server/test/__snapshots__/apiSurface.snapshot.test.ts.snap`, `Kernel/SDK/src/index.ts`, `packages/omnicode-core/src/features/externalHooks/`, `Kernel/ACP/`, and `apps/omnicode/src/cli/` are consumed outside this repository: desktop and web in code-app, the VS Code extension, ACP clients such as Zed, SDK users, hook scripts, and headless-output parsers. When they change, require the PR to name the consumers and how data and clients from the previous release keep working.
+The manifests under `Kernel/core/docs/` (`config-manifest.toml`, `wire-manifest.d.ts`, `state-manifest.d.ts`), `Kernel/server/test/__snapshots__/apiSurface.snapshot.test.ts.snap`, `Kernel/SDK/src/index.ts`, `Kernel/core/src/features/externalHooks/`, `Kernel/ACP/`, and `apps/omnicode/src/cli/` are consumed outside this repository: desktop and web in code-app, the VS Code extension, ACP clients such as Zed, SDK users, hook scripts, and headless-output parsers. When they change, require the PR to name the consumers and how data and clients from the previous release keep working.
 
 ### Ports and refactors carry the old path's feature inventory
 
