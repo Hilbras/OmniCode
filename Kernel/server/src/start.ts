@@ -523,6 +523,16 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     }
 
     if (opts.disableAuth !== true) {
+      const remoteAddress = req.socket.remoteAddress ?? '';
+      if (authFailureLimiter?.isBanned(remoteAddress) === true) {
+        logger.warn(
+          { remoteAddress, path: url, reason: 'auth_banned' },
+          'ws upgrade rejected',
+        );
+        (socket as Socket).write('HTTP/1.1 429 Too Many Requests\r\nConnection: close\r\n\r\n');
+        (socket as Socket).destroy();
+        return;
+      }
       const authHeader = req.headers.authorization;
       const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
       const protocolToken = extractWsBearerToken(req.headers['sec-websocket-protocol']);
@@ -545,6 +555,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
         }
       }
       if (!ok) {
+        authFailureLimiter?.recordFailure(remoteAddress);
         logger.warn(
           {
             remoteAddress: req.socket.remoteAddress,

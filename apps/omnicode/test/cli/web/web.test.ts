@@ -548,7 +548,7 @@ describe('`omnicode web` option threading', () => {
     });
   });
 
-  it('defaults the host to 127.0.0.1 and insecureNoTls to true', async () => {
+  it('defaults the host to 127.0.0.1 and leaves TLS required elsewhere', async () => {
     const { handleWebCommand } = await import('#/cli/sub/web/run');
     const { runner, calls } = makeRunner();
     const { stdout, stderr } = makeIo();
@@ -560,12 +560,12 @@ describe('`omnicode web` option threading', () => {
 
     expect(calls.options).toMatchObject({
       host: '127.0.0.1',
-      insecureNoTls: true,
+      insecureNoTls: false,
       logLevel: 'silent',
     });
   });
 
-  it('maps a bare --host to the default LAN host', async () => {
+  it('maps a bare --host to the default LAN host without opting out of TLS', async () => {
     const { handleWebCommand } = await import('#/cli/sub/web/run');
     const { runner, calls } = makeRunner();
     const { stdout, stderr } = makeIo();
@@ -575,7 +575,31 @@ describe('`omnicode web` option threading', () => {
       { startServerForeground: runner, openUrl: vi.fn(), stdout, stderr },
     );
 
-    expect(calls.options).toMatchObject({ host: '0.0.0.0', insecureNoTls: true });
+    expect(calls.options).toMatchObject({ host: '0.0.0.0', insecureNoTls: false });
+  });
+
+  it('warns on stderr when a non-loopback bind explicitly runs without TLS', async () => {
+    const { handleWebCommand } = await import('#/cli/sub/web/run');
+    const { runner } = makeRunner();
+    const { stdout } = makeIo();
+    let stderrOutput = '';
+
+    await handleWebCommand(
+      { port: '58627', host: '0.0.0.0', insecureNoTls: true, open: false },
+      {
+        startServerForeground: runner,
+        openUrl: vi.fn(),
+        stdout,
+        stderr: {
+          write(chunk: string | Uint8Array) {
+            stderrOutput += String(chunk);
+            return true;
+          },
+        },
+      },
+    );
+
+    expect(stderrOutput).toContain('serving HTTP without TLS on 0.0.0.0');
   });
 
   it('passes --log-level through to the runner', async () => {

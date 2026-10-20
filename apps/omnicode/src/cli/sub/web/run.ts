@@ -140,8 +140,8 @@ export function buildWebCommand(
     )
     .option(
       '--insecure-no-tls',
-      'Allow a non-loopback bind without a TLS-terminating reverse proxy. Defaults to true; only relevant for non-loopback binds.',
-      true,
+      'Allow a non-loopback bind without a TLS-terminating reverse proxy. Required for such a bind; the bearer token and every request travel in plaintext.',
+      false,
     )
     .option(
       '--allow-remote-shutdown',
@@ -198,6 +198,11 @@ export async function handleWebCommand(
   }
   if (opts.remoteControl === true && !isLoopbackHost(parsed.host)) {
     throw new Error('--remote-control requires a loopback host.');
+  }
+  if (parsed.insecureNoTls && !isLoopbackHost(parsed.host)) {
+    deps.stderr.write(
+      `WARNING: serving HTTP without TLS on ${parsed.host}; anyone who can reach this port can read the bearer token and use every route.\n`,
+    );
   }
   const run = deps.startServerForeground ?? startServerForeground;
   let remoteControl: RemoteControlHandle | undefined;

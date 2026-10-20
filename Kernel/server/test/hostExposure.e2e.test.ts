@@ -5,6 +5,7 @@ import { Writable } from 'node:stream';
 
 import { pino, type Logger } from 'pino';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { WebSocket } from 'ws';
 
 import { type RunningServer, startServer } from '../src/start';
 import { TEST_HOST_IDENTITY } from './helpers/hostIdentity';
@@ -161,5 +162,49 @@ describe('auth-failure rate limit on a real bind', () => {
       code: number;
     };
     expect(body.code).toBe(42901);
+  });
+
+  it('bans repeated failed WebSocket upgrades on the same address', async () => {
+    const home = await tmpHome();
+    const server = await startServer({
+      hostIdentity: TEST_HOST_IDENTITY,
+      host: '0.0.0.0',
+      port: 0,
+      homeDir: home,
+      logLevel: 'silent',
+      insecureNoTls: true,
+      authTokenService: {
+        _serviceBrand: undefined,
+        getToken: () => 'persistent-token',
+        isValid: async (candidate) => candidate === 'persistent-token',
+      },
+    });
+    running.push(server);
+    const url = `ws://127.0.0.1:${server.port}/api/v1/ws`;
+
+    const attempt = (token: string): Promise<boolean> =>
+      new Promise((resolve) => {
+        const ws = new WebSocket(url, { headers: { authorization: `Bearer ${token}` } });
+        let settled = false;
+        let timer: NodeJS.Timeout | undefined;
+        const finish = (opened: boolean): void => {
+          if (settled) return;
+          settled = true;
+          if (timer !== undefined) clearTimeout(timer);
+          ws.removeAllListeners();
+          ws.terminate();
+          resolve(opened);
+        };
+        timer = setTimeout(() => finish(false), 1500);
+        ws.once('open', () => finish(true));
+        ws.once('error', () => finish(false));
+        ws.once('close', () => finish(false));
+      });
+
+    expect(await attempt('persistent-token')).toBe(true);
+    for (let i = 0; i < 10; i += 1) {
+      expect(await attempt('wrong')).toBe(false);
+    }
+    expect(await attempt('persistent-token')).toBe(false);
   });
 });
