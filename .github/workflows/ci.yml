@@ -44,5 +44,11 @@ jobs:
       - name: Test
         run: pnpm run test
 
+      - name: Build CLI
+        run: pnpm --filter @hilbras/omnicode run build
+
+      - name: Pack CLI
+        run: pnpm --filter @hilbras/omnicode exec npm pack --dry-run
+
       - name: Nix workspace sync
         run: node scripts/check-nix-workspace.mjs

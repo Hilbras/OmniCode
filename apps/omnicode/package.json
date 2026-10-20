@@ -10,7 +10,7 @@
       "url": "https://github.com/hilbras/omnicode"
     }
   ],
-  "homepage": "https://github.com/hilbras/omnicode/tree/main/apps/omnicode#readme",
+  "homepage": "https://github.com/hilbras/omnicode/tree/release/apps/omnicode#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/hilbras/omnicode.git",

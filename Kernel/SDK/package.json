@@ -67,8 +67,8 @@
   },
   "devDependencies": {
     "@hilbras/omnicode-addons": "workspace:^",
-    "@hilbras/omnicode-auth": "workspace:^",
     "@hilbras/omnicode-api": "workspace:^",
+    "@hilbras/omnicode-auth": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-kaos": "workspace:^",
     "@hilbras/omnicode-llm": "workspace:^",
