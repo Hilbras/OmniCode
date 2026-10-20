@@ -35,13 +35,13 @@
 import fsSync from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import { crc32 } from '../crc32';
-import { scanFrameRefsFdAsync, scanBatchOpRefs, TYPE_SET, TYPE_DEL, TYPE_BATCH } from '../codec';
-import type { FrameRef } from '../codec';
-import { tokenize, extractText } from '../text-index/tokenize';
-import { createNgramTokenizer } from '../trigram';
-import { encodeRecord, encodePostingList, decodeRecord, decodePostingList } from '../text-postings';
-import { GenFileWriter, ByteReader, writeTextDictionaryImage } from '../gen-codec';
+import { crc32 } from '#/crc32';
+import { scanFrameRefsFdAsync, scanBatchOpRefs, TYPE_SET, TYPE_DEL, TYPE_BATCH } from '#/codec';
+import type { FrameRef } from '#/codec';
+import { tokenize, extractText } from '#/text-index/tokenize';
+import { createNgramTokenizer } from '#/trigram';
+import { encodeRecord, encodePostingList, decodeRecord, decodePostingList } from '#/text-postings';
+import { GenFileWriter, ByteReader, writeTextDictionaryImage } from '#/gen-codec';
 
 // ---- spec / result ------------------------------------------------------------
 

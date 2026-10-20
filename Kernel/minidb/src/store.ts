@@ -4,8 +4,8 @@
 // either inline in memory or as a pointer into the on-disk snapshot/WAL; in the
 // latter case the caller injects a synchronous positioned reader.
 
-import { SkipList, cmpString } from './skiplist.js';
-import type { RangeEntry, RangeOptions } from './skiplist.js';
+import { SkipList, cmpString } from '#/skiplist';
+import type { RangeEntry, RangeOptions } from '#/skiplist';
 
 export interface ValueLoc {
   file: 'snapshot' | 'wal';

@@ -9,7 +9,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import type { ValueLoc } from './store.js';
+import type { ValueLoc } from '#/store';
 
 /** Promise wrapper over fs.read (the callback API runs on the libuv thread
  *  pool for a plain fd; fs.promises has no fd-level read). Shared with the

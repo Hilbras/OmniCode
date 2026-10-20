@@ -3,7 +3,6 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     projects: [
-      '!Kernel/minidb',
       'Kernel/*/vitest.config.ts',
       'apps/omnicode',
       'apps/omnicode-vis/server',

@@ -7,7 +7,7 @@
 // relative import carries an explicit `.ts` specifier (see the IMPORT NOTE in
 // worker/text-build-core.ts).
 
-import { getPath } from '../query';
+import { getPath } from '#/query';
 
 const LATIN = /[a-z0-9]+/g;
 const CJK = /[\u3400-\u9FFF\u3040-\u30FF\uFF00-\uFFEF]+/g;

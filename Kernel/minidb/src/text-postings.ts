@@ -24,8 +24,8 @@
 import fs from 'node:fs';
 import fsp from 'node:fs/promises';
 import path from 'node:path';
-import { crc32 } from './crc32';
-import { readAtAsync } from './value-reader';
+import { crc32 } from '#/crc32';
+import { readAtAsync } from '#/value-reader';
 
 const HEADER_LEN = 2 + 4 + 4; // termLen + df + payloadLen (term is variable)
 const CRC_LEN = 4;

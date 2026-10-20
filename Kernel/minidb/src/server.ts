@@ -34,13 +34,25 @@ const reply = {
 class RespParser {
   private buf: Buffer = Buffer.alloc(0);
   private readonly maxBuf: number;
+  /** Bytes still to discard from a rejected oversized request. */
+  private skip = 0;
 
   constructor({ maxBuf = 64 * 1024 * 1024 }: { maxBuf?: number } = {}) {
     this.maxBuf = maxBuf;
   }
 
   *feed(chunk: Buffer): Generator<Buffer[]> {
-    this.buf = this.buf.length > 0 ? Buffer.concat([this.buf, chunk]) : chunk;
+    let rest = chunk;
+    if (this.skip > 0) {
+      // The tail of a rejected oversized request: discard exactly the
+      // declared bytes, so the command after it is still parsed instead of
+      // being swallowed as payload.
+      const drop = Math.min(this.skip, rest.length);
+      this.skip -= drop;
+      rest = rest.subarray(drop);
+      if (this.skip > 0) return;
+    }
+    this.buf = this.buf.length > 0 ? Buffer.concat([this.buf, rest]) : rest;
     if (this.buf.length > this.maxBuf) {
       // Drop the buffered oversized request before reporting: without the
       // reset every later chunk would fail with the same error and the giant
@@ -78,6 +90,24 @@ class RespParser {
       if (end === -1) return null;
       const len = Number(this.buf.subarray(pos, end).toString());
       pos = end + 2;
+      if (len > this.maxBuf) {
+        // Reject an oversized bulk from its header, before the payload is
+        // buffered. Buffering it first is quadratic (every chunk is
+        // concatenated onto the pending buffer) and stalls the connection
+        // long enough that the client never sees the error. The declared
+        // bytes are skipped instead, so the next command on the connection is
+        // still answered.
+        const buffered = this.buf.length - pos;
+        const declared = len + 2;
+        if (buffered >= declared) {
+          this.buf = this.buf.subarray(pos + declared);
+          this.skip = 0;
+        } else {
+          this.buf = Buffer.alloc(0);
+          this.skip = declared - buffered;
+        }
+        throw new Error(`RESP request too large (>${this.maxBuf} bytes)`);
+      }
       if (this.buf.length - pos < len + 2) return null;
       args.push(this.buf.subarray(pos, pos + len));
       pos += len + 2;

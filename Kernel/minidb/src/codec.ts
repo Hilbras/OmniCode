@@ -21,7 +21,7 @@
 // (22 + keyLen + valLen + metaLen + 4) before reading the payload.
 
 import fs from 'node:fs';
-import { crc32 } from './crc32';
+import { crc32 } from '#/crc32';
 
 export const MAGIC = Buffer.from([0x4d, 0x44]); // "MD"
 export const TYPE_SET = 1;
