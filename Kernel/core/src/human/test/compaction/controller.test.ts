@@ -331,19 +331,7 @@ describe('compaction controller manual', () => {
       'queued',
       'echo:queued',
     ]);
-    expect(main.getState().queue).toEqual([
-      {
-        message: createUserMessage('early'),
-        meta: {
-          source: 'input',
-          promptId: 'e1',
-          origin: { kind: 'user' },
-          tracked: true,
-          createdAt: '2026-09-14T00:00:00.000Z',
-          userMessageId: 'umid-e1',
-        },
-      },
-    ]);
+    expect(main.getState().queue).toEqual([]);
     expect(main.getState().turnIndex.nextTurnId).toBe(3);
     expect(harness.events.map((event) => event.type)).toEqual([
       'compaction.started',

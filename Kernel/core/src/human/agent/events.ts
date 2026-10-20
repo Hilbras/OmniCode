@@ -77,6 +77,21 @@ export const queueDrained = defineEvent({
 });
 export type QueueDrained = ReturnType<typeof queueDrained>;
 
+export const queuePromoted = defineEvent({
+  type: 'queue.promoted',
+  schema: z.object({
+    promptId: z.string().optional(),
+    messages: z.array(historyMessageSchema),
+  }),
+});
+export type QueuePromoted = ReturnType<typeof queuePromoted>;
+
+export const runAttempted = defineEvent({
+  type: 'run.attempted',
+  schema: z.object({ attempt: z.number().int().nonnegative() }),
+});
+export type RunAttempted = ReturnType<typeof runAttempted>;
+
 export const inputDrained = defineEvent({ type: 'input.drained', schema: z.object({}) });
 export type InputDrained = ReturnType<typeof inputDrained>;
 

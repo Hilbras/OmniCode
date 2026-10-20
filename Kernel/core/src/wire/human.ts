@@ -7,6 +7,10 @@ export const AGENT_WIRE_RECORD_TYPES: ReadonlySet<string> = new Set([
   'agent.message.appended',
   'agent.turn.started',
   'agent.turn.ended',
+  'agent.input.submitted',
+  'agent.input.cancelled',
+  'agent.queue.promoted',
+  'agent.run.attempted',
 ]);
 
 const LEGACY_HUMAN_RECORD_PREFIX = 'human.';

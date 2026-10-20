@@ -12,6 +12,8 @@ import {
   messageAppended,
   notificationsDrained,
   queueDrained,
+  queuePromoted,
+  runAttempted,
   turnEnded,
   turnStarted,
   type InputCancelled,
@@ -20,6 +22,8 @@ import {
   type InputSteered,
   type InputSubmitted,
   type MessageAppended,
+  type QueuePromoted,
+  type RunAttempted,
   type TurnEnded,
   type TurnStarted,
 } from './events';
@@ -32,6 +36,9 @@ export const historySlice = createSlice({
     [messageAppended.type]: (draft, event: MessageAppended) => {
       draft.push(event.message);
     },
+    [queuePromoted.type]: (draft, event: QueuePromoted) => {
+      draft.push(...event.messages);
+    },
   },
 });
 
@@ -40,11 +47,13 @@ export const queueSlice = createSlice({
   initialState: () => [] as UserEntry[],
   reducers: {
     [inputSubmitted.type]: (draft, event: InputSubmitted) => {
-      if ('entry' in event) {
-        draft.push(createUserEntry(event.entry.message, { source: 'input', ...event.entry.meta }));
-      } else {
-        draft.push(createUserEntry(event.message, { source: 'input', promptId: event.id }));
-      }
+      const entry =
+        'entry' in event
+          ? createUserEntry(event.entry.message, { source: 'input', ...event.entry.meta })
+          : createUserEntry(event.message, { source: 'input', promptId: event.id });
+      const promptId = entry.meta?.promptId;
+      if (promptId !== undefined && draft.some((item) => item.meta?.promptId === promptId)) return;
+      draft.push(entry);
     },
     [inputCancelled.type]: (draft, event: InputCancelled) =>
       draft.filter((entry) => entry.meta?.promptId !== event.id),
@@ -52,6 +61,14 @@ export const queueSlice = createSlice({
       draft.filter((entry) => entry.meta?.promptId !== event.id),
     [queueDrained.type]: (draft) => {
       draft.shift();
+    },
+    [queuePromoted.type]: (draft, event: QueuePromoted) => {
+      if (event.promptId === undefined) {
+        if (draft[0]?.meta?.promptId === undefined) draft.shift();
+        return;
+      }
+      const index = draft.findIndex((entry) => entry.meta?.promptId === event.promptId);
+      if (index >= 0) draft.splice(index, 1);
     },
   },
 });
@@ -129,12 +146,26 @@ export const turnIndexSlice = createSlice({
   },
 });
 
+export interface RunClaimsState {
+  attempts: number;
+}
+
+export const runClaimsSlice = createSlice({
+  name: 'runClaims',
+  initialState: (): RunClaimsState => ({ attempts: 0 }),
+  reducers: {
+    [runAttempted.type]: (_draft, event: RunAttempted) => ({ attempts: event.attempt }),
+    [inputSubmitted.type]: () => ({ attempts: 0 }),
+  },
+});
+
 export const agentSlices = {
   history: historySlice,
   queue: queueSlice,
   notifications: notificationsSlice,
   reminders: remindersSlice,
   turnIndex: turnIndexSlice,
+  runClaims: runClaimsSlice,
 };
 
 export type AgentSlices = typeof agentSlices;

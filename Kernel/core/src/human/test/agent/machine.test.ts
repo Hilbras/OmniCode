@@ -5,6 +5,7 @@ import { xstateInspectionCollector } from '#/xstateInspection';
 import { UNKNOWN_CAPABILITY } from '#/llm/capability';
 import {
   createAssistantMessage,
+  createToolMessage,
   createUserMessage,
   extractText,
   type AssistantMessage,
@@ -19,9 +20,18 @@ import { emptyUsage, type TokenUsage } from '#/llm/usage';
 import { createAgentMachine, type AgentEmitted, type AgentMachineSelf, type PromptGateVerdict, type ScopeFactoryOutput } from '#/agent/machine';
 import type { UserPromptOrigin } from '#/agent/origin';
 import { estimateMessageTokens, estimateTextTokens } from '#/agent/context-usage';
-import { messageAppended, turnEnded } from '#/agent/events';
+import {
+  inputSubmitted,
+  messageAppended,
+  queuePromoted,
+  runAttempted,
+  turnEnded,
+  turnStarted,
+} from '#/agent/events';
 import { agentSlices, type AgentEventStore } from '#/agent/slices';
 import {
+  createAssistantEntry,
+  createToolEntry,
   createTurnMachine,
   createUserEntry,
   toInputMessages,
@@ -2005,5 +2015,280 @@ describe('agent machine context reset', () => {
     expect(rolesAndTexts(store.getState().history)).toEqual(['user:third-seed']);
 
     releases[1]?.();
+  });
+});
+
+describe('agent machine durable prompt inbox', () => {
+  async function durableStore(): Promise<{ store: AgentEventStore; tree: Tree }> {
+    const treeStore = await TreeStore.open(new MemoryBackend(), {});
+    const tree = await treeStore.tree('test');
+    tree.createBranch('main');
+    const store = await createEventStore({
+      journal: journalFromBranch(tree.openBranch('main'), tree),
+      slices: agentSlices,
+    });
+    return { store, tree };
+  }
+
+  function reopen(tree: Tree): Promise<AgentEventStore> {
+    return createEventStore({
+      journal: journalFromBranch(tree.openBranch('main'), tree),
+      slices: agentSlices,
+    });
+  }
+
+  it('promotes a prompt into history without leaving it in the durable queue', async () => {
+    const { store, tree } = await durableStore();
+    const actor = createTestAgent(store, createStubRequester([createAssistantMessage([{ type: 'text', text: 'ok' }])]));
+    actor.start();
+    await waitFor(actor, (s) => s.matches('idle'));
+    actor.send({
+      type: 'input.submit',
+      entry: createUserEntry(createUserMessage('hi'), { promptId: 'p1' }),
+    });
+    await waitFor(
+      actor,
+      (s) => s.matches('idle') && store.getState().history.length === 2,
+      { timeout: 5000 },
+    );
+    await store.flush();
+    actor.stop();
+
+    const restored = await reopen(tree);
+    expect(restored.getState().queue).toEqual([]);
+    expect(rolesAndTexts(restored.getState().history)).toEqual(['user:hi', 'assistant:ok']);
+    await store.close();
+    await restored.close();
+  });
+
+  it('keeps an admitted prompt invisible to the model until promotion', async () => {
+    const { store, tree } = await durableStore();
+    const entry = createUserEntry(createUserMessage('pending'), { promptId: 'p1' });
+    await store.dispatch(inputSubmitted({ entry }));
+    await store.flush();
+    expect(store.getState().history).toEqual([]);
+
+    const restored = await reopen(tree);
+    expect(restored.getState().history).toEqual([]);
+    expect(restored.getState().queue.map((item) => extractText(item.message))).toEqual([
+      'pending',
+    ]);
+    await store.close();
+    await restored.close();
+  });
+
+  it('admits the same prompt id only once', async () => {
+    const { store } = await durableStore();
+    const entry = createUserEntry(createUserMessage('hi'), { promptId: 'p1' });
+    await store.dispatch(inputSubmitted({ entry }));
+    await store.dispatch(inputSubmitted({ entry }));
+    expect(store.getState().queue.map((item) => item.meta?.promptId)).toEqual(['p1']);
+    await store.close();
+  });
+
+  it('does not drain a different entry when promoting an unknown prompt id', async () => {
+    const { store } = await durableStore();
+    const first = createUserEntry(createUserMessage('a'), { promptId: 'p1' });
+    const second = createUserEntry(createUserMessage('b'), { promptId: 'p2' });
+    await store.dispatch([inputSubmitted({ entry: first }), inputSubmitted({ entry: second })]);
+
+    await store.dispatch(queuePromoted({ promptId: 'missing', messages: [second] }));
+    expect(store.getState().queue.map((item) => item.meta?.promptId)).toEqual(['p1', 'p2']);
+
+    await store.dispatch(queuePromoted({ promptId: 'p1', messages: [first] }));
+    expect(store.getState().queue.map((item) => item.meta?.promptId)).toEqual(['p2']);
+    await store.close();
+  });
+
+  it('keeps an identified prompt queued when an unidentified message is promoted', async () => {
+    const { store } = await durableStore();
+    const entry = createUserEntry(createUserMessage('keep'), { promptId: 'p1' });
+    await store.dispatch(inputSubmitted({ entry }));
+
+    await store.dispatch(
+      queuePromoted({
+        messages: [createUserEntry(createUserMessage('internal'), { source: 'compaction' })],
+      }),
+    );
+    expect(store.getState().queue.map((item) => item.meta?.promptId)).toEqual(['p1']);
+    await store.close();
+  });
+
+  it('removes a cancelled prompt from the durable queue', async () => {
+    const { store, tree } = await durableStore();
+    const actor = createTestAgent(store, createStubRequester([createAssistantMessage([{ type: 'text', text: 'ok' }])]));
+    actor.start();
+    await waitFor(actor, (s) => s.matches('idle'));
+    actor.send({ type: 'input.pause' });
+    actor.send({
+      type: 'input.submit',
+      entry: createUserEntry(createUserMessage('drop'), { promptId: 'p1' }),
+    });
+    await vi.waitFor(() => {
+      expect(store.getState().queue).toHaveLength(1);
+    });
+
+    actor.send({ type: 'input.cancel', id: 'p1' });
+    await vi.waitFor(() => {
+      expect(store.getState().queue).toHaveLength(0);
+    });
+    await store.flush();
+    actor.stop();
+
+    const restored = await reopen(tree);
+    expect(restored.getState().queue).toEqual([]);
+    await store.close();
+    await restored.close();
+  });
+});
+
+describe('agent machine interrupted run reclaim', () => {
+  async function interruptedStore(options: {
+    tail?: 'prompt' | 'tool' | 'assistant';
+    attempts?: number;
+  }): Promise<AgentEventStore> {
+    const treeStore = await TreeStore.open(new MemoryBackend(), {});
+    const tree = await treeStore.tree('test');
+    tree.createBranch('main');
+    const store = await createEventStore({
+      journal: journalFromBranch(tree.openBranch('main'), tree),
+      slices: agentSlices,
+    });
+    await store.dispatch(
+      messageAppended({ message: createUserEntry(createUserMessage('start'), { source: 'input' }) }),
+    );
+    if (options.tail === 'tool' || options.tail === 'assistant') {
+      await store.dispatch(
+        messageAppended({
+          message: createAssistantEntry(
+            createAssistantMessage(
+              options.tail === 'assistant' ? [{ type: 'text', text: 'answered' }] : [],
+              options.tail === 'tool' ? [toolCall('call-1', 'ok_tool')] : [],
+            ),
+            { source: 'llm', usage: emptyUsage() },
+          ),
+        }),
+      );
+    }
+    if (options.tail === 'tool') {
+      await store.dispatch(
+        messageAppended({
+          message: createToolEntry(createToolMessage('call-1', 'result')),
+        }),
+      );
+    }
+    await store.dispatch(turnStarted({ turnId: 0 }));
+    if (options.attempts !== undefined) {
+      await store.dispatch(runAttempted({ attempt: options.attempts }));
+    }
+    await store.flush();
+    return store;
+  }
+
+  it('resumes an interrupted run and records the attempt before calling the model', async () => {
+    const store = await interruptedStore({ tail: 'tool' });
+    let attemptsAtCall: number | undefined;
+    const requester: LlmRequester = {
+      generate: (_config, _messages, { onEvent }) => {
+        attemptsAtCall = store.getState().runClaims.attempts;
+        streamMessage(createAssistantMessage([{ type: 'text', text: 'resumed' }]), onEvent);
+        return Promise.resolve();
+      },
+    };
+    const actor = createTestAgent(store, requester);
+    actor.start();
+    await waitFor(actor, (s) => s.matches('idle') && store.getState().history.length === 4, {
+      timeout: 5000,
+    });
+
+    expect(attemptsAtCall).toBe(1);
+    expect(store.getState().runClaims.attempts).toBe(1);
+    expect(
+      store.getState().turnIndex.turns.map((turn) => [turn.turnId, turn.end !== undefined]),
+    ).toEqual([
+      [0, true],
+      [1, true],
+    ]);
+    actor.stop();
+    await store.close();
+  });
+
+  it('stops resuming once the attempt budget is exhausted and reports the failure', async () => {
+    const store = await interruptedStore({ tail: 'tool', attempts: 3 });
+    let called = false;
+    const requester: LlmRequester = {
+      generate: () => {
+        called = true;
+        return Promise.resolve();
+      },
+    };
+    const actor = createTestAgent(store, requester);
+    const failures: string[] = [];
+    actor.on('turn.failed', (event) => {
+      if (event.type === 'turn.failed') failures.push(String(event.error));
+    });
+    actor.start();
+    await waitFor(
+      actor,
+      (s) => s.matches('idle') && store.getState().turnIndex.turns.at(-1)?.end !== undefined,
+      { timeout: 5000 },
+    );
+
+    expect(called).toBe(false);
+    expect(store.getState().runClaims.attempts).toBe(3);
+    expect(failures).toHaveLength(1);
+    expect(failures[0]).toContain('resume attempts');
+    actor.stop();
+    await store.close();
+  });
+
+  it('resumes a prompt that was never answered instead of dropping the turn', async () => {
+    const store = await interruptedStore({ tail: 'prompt' });
+    const requester: LlmRequester = {
+      generate: (_config, _messages, { onEvent }) => {
+        streamMessage(createAssistantMessage([{ type: 'text', text: 'reply' }]), onEvent);
+        return Promise.resolve();
+      },
+    };
+    const actor = createTestAgent(store, requester);
+    actor.start();
+    await waitFor(actor, (s) => s.matches('idle') && store.getState().history.length === 2, {
+      timeout: 5000,
+    });
+
+    expect(store.getState().runClaims.attempts).toBe(1);
+    expect(rolesAndTexts(store.getState().history)).toEqual(['user:start', 'assistant:reply']);
+    expect(
+      store.getState().turnIndex.turns.map((turn) => [turn.turnId, turn.end !== undefined]),
+    ).toEqual([
+      [0, true],
+      [1, true],
+    ]);
+    actor.stop();
+    await store.close();
+  });
+
+  it('closes an interrupted run that already produced an answer without resuming it', async () => {
+    const store = await interruptedStore({ tail: 'assistant' });
+    let called = false;
+    const requester: LlmRequester = {
+      generate: () => {
+        called = true;
+        return Promise.resolve();
+      },
+    };
+    const actor = createTestAgent(store, requester);
+    actor.start();
+    await waitFor(
+      actor,
+      (s) => s.matches('idle') && store.getState().turnIndex.turns.at(-1)?.end !== undefined,
+      { timeout: 5000 },
+    );
+
+    expect(called).toBe(false);
+    expect(store.getState().runClaims.attempts).toBe(0);
+    expect(store.getState().turnIndex.turns).toHaveLength(1);
+    actor.stop();
+    await store.close();
   });
 });

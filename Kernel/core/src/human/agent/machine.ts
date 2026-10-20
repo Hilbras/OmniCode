@@ -24,7 +24,15 @@ import type { ToolDefinition } from '#/tool/tool';
 
 import { createWaitForTasks, type ToolActorRef } from './wait-for';
 import { interruptReasonOf, type TurnInterruptReason } from './errors';
-import { messageAppended, turnEnded, turnStarted } from './events';
+import {
+  inputCancelled,
+  inputSubmitted,
+  messageAppended,
+  queuePromoted,
+  runAttempted,
+  turnEnded,
+  turnStarted,
+} from './events';
 import { mergeSteerMessages } from './origin';
 import { createSystemEntry, createUserEntry } from './turn';
 import { createAbortScope, withAbort, type AbortScope } from '#/utils/abort';
@@ -135,6 +143,7 @@ export interface AgentMachineContext {
   input: AgentInput;
   request: LlmRequestConfig;
   store?: AgentEventStore;
+  storeReady?: boolean;
   handle?: AgentScopeHandle;
   turnLogic?: TurnLogic;
   toolLogic?: ToolLogic;
@@ -241,8 +250,21 @@ function historyEndsMidToolChain(messages: readonly HistoryMessage[]): boolean {
   return last.message.role === 'assistant' && last.message.toolCalls.length > 0;
 }
 
+function historyEndsUnanswered(messages: readonly HistoryMessage[]): boolean {
+  const last = messages.at(-1);
+  if (last === undefined) return false;
+  return last.message.role === 'user' || historyEndsMidToolChain(messages);
+}
+
 function hasBackgroundWork(context: AgentMachineContext): boolean {
   return Object.keys(context.background).length > 0;
+}
+
+const MAX_INTERRUPTED_RUN_ATTEMPTS = 3;
+
+interface ReclaimOutcome {
+  resume: boolean;
+  error?: string;
 }
 
 function drainPendingPatch(
@@ -338,6 +360,33 @@ export function createAgentMachine({
       disposeScopeActor: fromPromise<void, { handle?: AgentScopeHandle }>(async ({ input }) => {
         await input.handle?.disposeAsync();
       }),
+      reclaimRunActor: fromPromise<ReclaimOutcome, { store: AgentEventStore }>(async ({ input }) => {
+        const state = input.store.getState();
+        const open = state.turnIndex.turns.at(-1);
+        if (open === undefined || open.end !== undefined) return { resume: false };
+        const unanswered = historyEndsUnanswered(state.history);
+        const attempts = state.runClaims.attempts;
+        if (unanswered && attempts < MAX_INTERRUPTED_RUN_ATTEMPTS) {
+          await input.store.dispatch([
+            turnEnded({ turnId: open.turnId, outcome: 'aborted' }),
+            runAttempted({ attempt: attempts + 1 }),
+          ]);
+          await input.store.flush();
+          return { resume: true };
+        }
+        const error = unanswered
+          ? `interrupted run exceeded ${MAX_INTERRUPTED_RUN_ATTEMPTS} resume attempts`
+          : undefined;
+        await input.store.dispatch(
+          turnEnded({
+            turnId: open.turnId,
+            outcome: unanswered ? 'failed' : 'aborted',
+            errorMessage: error,
+          }),
+        );
+        await input.store.flush();
+        return error === undefined ? { resume: false } : { resume: false, error };
+      }),
     },
     actions: {
       forwardToParent: ({ self, event }) => {
@@ -345,16 +394,71 @@ export function createAgentMachine({
       },
       commitPendingToHistory: enqueueActions(({ context, enqueue }) => {
         const head = context.queue[0];
-        enqueue.sendTo('store', {
-          type: 'store.append' as const,
-          event: [
-            ...context.notifications.map((entry) => messageAppended({ message: entry })),
-            ...(head === undefined
-              ? []
-              : [messageAppended({ message: head })]),
-          ],
-        });
+        if (head === undefined) {
+          if (context.notifications.length > 0) {
+            enqueue.sendTo('store', {
+              type: 'store.append' as const,
+              event: context.notifications.map((entry) => messageAppended({ message: entry })),
+            });
+          }
+        } else {
+          enqueue.sendTo('store', {
+            type: 'store.append' as const,
+            event: queuePromoted({
+              promptId: head.meta?.promptId,
+              messages: [...context.notifications, head],
+            }),
+          });
+        }
         enqueue.assign(drainPendingPatch(context));
+      }),
+      reconcileQueue: enqueueActions(({ context, enqueue }) => {
+        const store = context.store;
+        if (store === undefined) return;
+        const durable = store.slice('queue');
+        const localIds = new Set(
+          context.queue.map((entry) => entry.meta?.promptId).filter((id) => id !== undefined),
+        );
+        for (const entry of durable) {
+          const id = entry.meta?.promptId;
+          if (id === undefined || localIds.has(id)) continue;
+          enqueue.sendTo('store', {
+            type: 'store.append' as const,
+            event: inputCancelled({ id }),
+          });
+        }
+        const durableIds = new Set(durable.map((entry) => entry.meta?.promptId));
+        for (const entry of context.queue) {
+          const id = entry.meta?.promptId;
+          if (id === undefined || durableIds.has(id)) continue;
+          enqueue.sendTo('store', {
+            type: 'store.append' as const,
+            event: inputSubmitted({ entry }),
+          });
+        }
+      }),
+      restoreFromStore: enqueueActions(({ context, event, enqueue }) => {
+        if (event.type !== 'store.ready') return;
+        enqueue.assign({
+          ...mirrorPatch(event.state),
+          notifications: [...event.state.notifications, ...context.notifications],
+          reminders: [
+            ...event.state.reminders.filter(
+              (entry) => !context.reminders.some((local) => local.meta?.key === entry.meta?.key),
+            ),
+            ...context.reminders,
+          ],
+          queue: [...event.state.queue, ...context.queue],
+          turnId: event.state.turnIndex.nextTurnId,
+          branchId: event.branch,
+          storeReady: true,
+        });
+        for (const entry of context.queue) {
+          enqueue.sendTo('store', {
+            type: 'store.append' as const,
+            event: inputSubmitted({ entry }),
+          });
+        }
       }),
       resetMirror: assign(({ context, event }) => {
         if (event.type !== 'store.reset') return {};
@@ -453,14 +557,18 @@ export function createAgentMachine({
         target: '.closing',
       },
       'input.submit': {
-        actions: assign(({ context, event }) => {
-          if (event.type !== 'input.submit') return {};
-          return {
-            queue: [
-              ...context.queue,
-              createUserEntry(event.entry.message, { source: 'input', ...event.entry.meta }),
-            ],
-          };
+        actions: enqueueActions(({ context, event, enqueue }) => {
+          if (event.type !== 'input.submit') return;
+          const entry = createUserEntry(event.entry.message, {
+            source: 'input',
+            ...event.entry.meta,
+          });
+          enqueue.assign({ queue: [...context.queue, entry] });
+          if (context.storeReady !== true) return;
+          enqueue.sendTo('store', {
+            type: 'store.append' as const,
+            event: inputSubmitted({ entry }),
+          });
         }),
       },
       'input.notify': {
@@ -514,6 +622,15 @@ export function createAgentMachine({
               ),
             ],
           });
+          const cancelled = steered
+            .map((item) => item.meta?.promptId)
+            .filter((id): id is string => id !== undefined);
+          if (cancelled.length > 0 && context.storeReady === true) {
+            enqueue.sendTo('store', {
+              type: 'store.append' as const,
+              event: cancelled.map((id) => inputCancelled({ id })),
+            });
+          }
           enqueue.emit({
             type: 'prompt.steered' as const,
             queueItemIds: steered.map((item) => item.meta?.promptId as string),
@@ -522,14 +639,20 @@ export function createAgentMachine({
         }),
       },
       'input.cancel': {
-        actions: assign(({ context, event }) => {
-          if (event.type !== 'input.cancel') return {};
-          return { queue: context.queue.filter((item) => item.meta?.promptId !== event.id) };
+        actions: enqueueActions(({ context, event, enqueue }) => {
+          if (event.type !== 'input.cancel') return;
+          const queue = context.queue.filter((item) => item.meta?.promptId !== event.id);
+          enqueue.assign({ queue });
+          if (queue.length === context.queue.length || context.storeReady !== true) return;
+          enqueue.sendTo('store', {
+            type: 'store.append' as const,
+            event: inputCancelled({ id: event.id }),
+          });
         }),
       },
       'store.reset': {
         target: '.idle',
-        actions: ['abortScope', 'resetMirror', 'emitReset', 'forwardToParent'],
+        actions: ['abortScope', 'resetMirror', 'reconcileQueue', 'emitReset', 'forwardToParent'],
       },
       'input.pause': {
         actions: assign({ paused: true }),
@@ -598,21 +721,57 @@ export function createAgentMachine({
       },
       restoring: {
         on: {
-          'store.ready': {
-            target: 'idle',
-            actions: assign(({ context, event }) => ({
-              ...mirrorPatch(event.state),
-              notifications: [...event.state.notifications, ...context.notifications],
-              reminders: [
-                ...event.state.reminders.filter(
-                  (entry) =>
-                    !context.reminders.some((local) => local.meta?.key === entry.meta?.key),
+          'store.ready': [
+            {
+              guard: ({ event }) => {
+                const open = event.state.turnIndex?.turns?.at(-1);
+                return open !== undefined && open.end === undefined;
+              },
+              target: 'reclaiming',
+              actions: 'restoreFromStore',
+            },
+            {
+              target: 'idle',
+              actions: 'restoreFromStore',
+            },
+          ],
+        },
+      },
+      reclaiming: {
+        invoke: {
+          src: 'reclaimRunActor',
+          input: ({ context }) => ({ store: context.store as AgentEventStore }),
+          onDone: [
+            {
+              guard: ({ event }) => event.output.resume,
+              target: '#agent.running',
+              actions: assign({ paused: false }),
+            },
+            {
+              guard: ({ event }) => event.output.error !== undefined,
+              target: '#agent.idle',
+              actions: emit(({ context, event }) => ({
+                type: 'turn.failed' as const,
+                error: new Error(
+                  event.output.error ?? 'interrupted run could not be resumed',
                 ),
-                ...context.reminders,
-              ],
-              queue: [...event.state.queue, ...context.queue],
-              turnId: event.state.turnIndex.nextTurnId,
-              branchId: event.branch,
+                messages: context.messages,
+                interruptReason: 'error' as const,
+                branchId: context.branchId,
+              })),
+            },
+            {
+              target: '#agent.idle',
+            },
+          ],
+          onError: {
+            target: '#agent.idle',
+            actions: emit(({ context, event }) => ({
+              type: 'turn.failed' as const,
+              error: event.error,
+              messages: context.messages,
+              interruptReason: 'error' as const,
+              branchId: context.branchId,
             })),
           },
         },

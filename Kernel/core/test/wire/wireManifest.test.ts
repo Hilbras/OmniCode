@@ -16,7 +16,11 @@ describe('wire manifest', () => {
       expect(type.startsWith(`${HUMAN_AGENT_DOMAIN}.`)).toBe(false);
     }
     expect([...AGENT_WIRE_RECORD_TYPES].toSorted()).toEqual([
+      'agent.input.cancelled',
+      'agent.input.submitted',
       'agent.message.appended',
+      'agent.queue.promoted',
+      'agent.run.attempted',
       'agent.switched',
       'agent.turn.ended',
       'agent.turn.started',
