@@ -49,13 +49,22 @@ export function sliceMainRecordsAtTurn(
 
   const end = turnStarts[turnIndex + 1] ?? records.length;
   const retainedTurnInputs = turnInputIndicesThrough(records, turnIndex);
-  const retained = records
+  const visible = records
     .slice(0, end)
     .filter(
       (record, index) =>
         !record.type.startsWith(FILE_HISTORY_RECORD_PREFIX) &&
         (!isUserVisibleTurnInputRecord(record) || retainedTurnInputs.has(index)),
     );
+  const retainedPromptIds = new Set(
+    visible
+      .map((record) => (record.type === 'turn.prompt' ? record['promptId'] : undefined))
+      .filter((id): id is string => typeof id === 'string'),
+  );
+  const retained = visible.filter((record) => {
+    const inboxPromptId = inboxRecordPromptId(record);
+    return inboxPromptId === undefined || retainedPromptIds.has(inboxPromptId);
+  });
   const cutoffTimes = retained
     .map(recordTime)
     .filter((time): time is number => time !== undefined);
@@ -116,6 +125,19 @@ function isUserVisibleTurnInputRecord(record: WireRecord): boolean {
     default:
       return false;
   }
+}
+
+function inboxRecordPromptId(record: WireRecord): string | undefined {
+  if (record.type === 'agent.input.submitted') {
+    const entry = asRecord(record['entry']);
+    const fromEntry = asRecord(entry?.['meta'])?.['promptId'];
+    if (typeof fromEntry === 'string') return fromEntry;
+    return typeof record['id'] === 'string' ? record['id'] : undefined;
+  }
+  if (record.type === 'agent.input.cancelled') {
+    return typeof record['id'] === 'string' ? record['id'] : undefined;
+  }
+  return undefined;
 }
 
 function turnInputIndicesThrough(
