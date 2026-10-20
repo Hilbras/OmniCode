@@ -5,17 +5,16 @@ import { fetchLatestFromCdn, type FetchLatestResult } from './cdn';
 import { type UpdateCache } from './types';
 
 /**
- * Whether this build may self-update from the upstream CDN.
+ * Whether this build may self-update from the release CDN.
  *
- * This package is a fork published under its own npm name. The version
- * manifest (`/latest`, `/latest.json`) and the native binaries
- * (`/binaries/<version>`) are served by Hilbras's CDN and describe
- * `@hilbras/omnicode`, not this package — so a "newer version" found
- * there is a version of a package that is not installed here. Acting on it
- * runs `npm install -g @hilbras/omnicode@<upstream version>`, which 404s
- * until our version happens to match upstream's, and silently means nothing
- * once it does not. `refreshAndMaybeInstallInBackground` can do that without
- * asking, so the channel is off here rather than merely un-advertised.
+ * The version manifest (`/latest`, `/latest.json`) and the native binaries
+ * (`/binaries/<version>`) are served by Hilbras's CDN, and this package is
+ * published on npm as `@hilbras/omnicode` — the same name that channel
+ * describes. The original reason for this gate (the channel belonged to a
+ * different package) therefore no longer holds. The channel stays off
+ * anyway: the release manifest is unsigned, so a hijacked channel could
+ * hand this build an arbitrary binary to stage and swap in. Turning it back
+ * on is a maintainer decision that has to come with artifact signing.
  *
  * The gate lives in this module, not in `cdn.ts`, so the CDN transport keeps
  * being exercised by its own tests while the policy has exactly one home.
@@ -23,20 +22,36 @@ import { type UpdateCache } from './types';
 const SELF_UPDATE_ENABLED = false;
 
 /**
+ * The gate as a policy every channel path can ask.
+ *
+ * The startup preflight, the hidden downloader and the native staged swap
+ * all consult this, so a disabled channel cannot be bypassed by a cached
+ * release manifest or by invoking the downloader directly.
+ */
+let selfUpdateEnabledOverrideForTests: boolean | undefined;
+
+export function isSelfUpdateChannelEnabled(): boolean {
+  return selfUpdateEnabledOverrideForTests ?? SELF_UPDATE_ENABLED;
+}
+
+export function _setSelfUpdateChannelEnabledForTests(value: boolean | undefined): void {
+  selfUpdateEnabledOverrideForTests = value;
+}
+
+/**
  * The user-facing explanation for a disabled self-update channel, or null
  * when the channel is enabled. Single source for both the thrown error and
  * `omnicode upgrade`'s message, so the two can never disagree.
  *
  * The `?? 'Self-update is disabled'` fallback inside `SelfUpdateDisabledError`
- * is unreachable while `SELF_UPDATE_ENABLED` is false: the gate only throws
- * when this returns non-null. It exists so flipping the flag to true cannot
+ * is unreachable while the channel is disabled: the gate only throws
+ * when this returns non-null. It exists so enabling the channel cannot
  * produce an error whose message contradicts the branch that reported it.
  */
 export function selfUpdateDisabledMessage(): string | null {
-  if (SELF_UPDATE_ENABLED) return null;
+  if (isSelfUpdateChannelEnabled()) return null;
   return (
-    `${NPM_PACKAGE_NAME} does not self-update: the upstream CDN publishes version and ` +
-    'binary manifests for @hilbras/omnicode, which this fork does not ship.\n' +
+    `${NPM_PACKAGE_NAME} does not self-update: the update channel is disabled in this build.\n` +
     `Upgrade manually: npm install -g ${NPM_PACKAGE_NAME}@latest`
   );
 }

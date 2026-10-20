@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { _setSelfUpdateChannelEnabledForTests } from '#/cli/update/refresh';
 import { createDownloadProgress, runUpdateDownloadCommand } from '#/cli/sub/update-download';
 
 const mocks = vi.hoisted(() => ({
@@ -104,6 +105,9 @@ describe('runUpdateDownloadCommand', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // The build ships with the update channel disabled; the downloader tests
+    // exercise the enabled path. The disabled path has its own test below.
+    _setSelfUpdateChannelEnabledForTests(true);
     mocks.detectNativeInstall.mockReturnValue(true);
     mocks.tryAcquireUpdateInstallLock.mockResolvedValue({
       filePath: '/tmp/install.lock',
@@ -114,7 +118,21 @@ describe('runUpdateDownloadCommand', () => {
   });
 
   afterEach(() => {
+    _setSelfUpdateChannelEnabledForTests(undefined);
     vi.restoreAllMocks();
+  });
+
+  it('refuses to stage anything while the update channel is disabled', async () => {
+    // The downloader is the only way channel material reaches this machine.
+    // With the channel off it must not fetch, stage, or take the install lock.
+    _setSelfUpdateChannelEnabledForTests(undefined);
+    const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+
+    await expect(runUpdateDownloadCommand('0.7.0')).resolves.toBe(1);
+
+    expect(mocks.stageNativeUpdate).not.toHaveBeenCalled();
+    expect(mocks.tryAcquireUpdateInstallLock).not.toHaveBeenCalled();
+    expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('does not self-update'));
   });
 
   it('refuses on non-native installs', async () => {

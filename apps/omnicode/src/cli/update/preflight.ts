@@ -20,7 +20,7 @@ import {
   type InstallPromptChoiceValue,
   type InstallPromptOptions,
 } from './prompt';
-import { refreshUpdateCache } from './refresh';
+import { refreshUpdateCache, isSelfUpdateChannelEnabled } from './refresh';
 import {
   appendRolloutDecisionLog,
   decidePassiveUpdateTarget,
@@ -789,6 +789,15 @@ export async function runUpdatePreflight(
   const platform = process.platform;
 
   if (isAutoUpdateDisabledByEnv()) {
+    return 'continue';
+  }
+
+  // A disabled channel is a hard gate, not a hint: the cached release
+  // manifest below is the one path that never asks the CDN, so honoring it
+  // would let a disabled channel install and prompt exactly like an enabled
+  // one — from a manifest this build refuses to fetch.
+  if (!isSelfUpdateChannelEnabled()) {
+    logUpdateInfo(logger, 'self-update channel disabled, skipping the update check', {});
     return 'continue';
   }
 

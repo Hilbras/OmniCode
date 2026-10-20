@@ -12,7 +12,7 @@ import {
 import { installCommandFor, runUpdatePreflight } from '#/cli/update/preflight';
 import { promptForInstallChoice } from '#/cli/update/prompt';
 import type * as PromptModule from '#/cli/update/prompt';
-import { refreshUpdateCache } from '#/cli/update/refresh';
+import { _setSelfUpdateChannelEnabledForTests, refreshUpdateCache } from '#/cli/update/refresh';
 import type * as RefreshModule from '#/cli/update/refresh';
 import type * as RolloutModule from '#/cli/update/rollout';
 import { detectInstallSource } from '#/cli/update/source';
@@ -234,6 +234,10 @@ async function flushBackgroundInstall(): Promise<void> {
 
 describe('runUpdatePreflight', () => {
   beforeEach(() => {
+    // The build ships with the update channel disabled; these tests exercise
+    // the enabled path, so the policy is switched on for the file and reset
+    // afterwards. The disabled path has its own test below.
+    _setSelfUpdateChannelEnabledForTests(true);
     // Pin the experimental flag off so rollout gating is deterministic
     // regardless of the host environment (the flag bypasses batch holds).
     // Tests that exercise the bypass opt back in with `vi.stubEnv(..., '1')`.
@@ -254,7 +258,33 @@ describe('runUpdatePreflight', () => {
     mocks.resolveCommandPath.mockImplementation((cmd: string) => cmd);
   });
 
-  afterEach(() => { vi.clearAllMocks(); vi.unstubAllEnvs(); refreshOmnicodeRegion(); });
+  afterEach(() => {
+    _setSelfUpdateChannelEnabledForTests(undefined);
+    vi.clearAllMocks();
+    vi.unstubAllEnvs();
+    refreshOmnicodeRegion();
+  });
+
+  it('ignores a cached release manifest when the update channel is disabled', async () => {
+    // The cached manifest is the one path that never asks the CDN, so a
+    // disabled channel has to refuse it explicitly — otherwise a stale cache
+    // still installs and prompts, exactly like an enabled channel.
+    _setSelfUpdateChannelEnabledForTests(undefined);
+    mocks.readUpdateCache.mockResolvedValue(cacheWith('0.5.0'));
+    mocks.refreshUpdateCache.mockResolvedValue(cacheWith('0.5.0'));
+    mocks.detectInstallSource.mockResolvedValue('npm-global');
+    mockSpawnExit(0);
+    const { options } = captureOutput();
+
+    await expect(runUpdatePreflight('0.4.0', options)).resolves.toBe('continue');
+    await flushBackgroundInstall();
+
+    expect(readUpdateCache).not.toHaveBeenCalled();
+    expect(refreshUpdateCache).not.toHaveBeenCalled();
+    expect(detectInstallSource).not.toHaveBeenCalled();
+    expect(promptForInstallChoice).not.toHaveBeenCalled();
+    expect(mocks.spawn).not.toHaveBeenCalled();
+  });
 
   it('skips all update work when OMNICODE_NO_AUTO_UPDATE is set', async () => {
     vi.stubEnv('OMNICODE_NO_AUTO_UPDATE', '1');

@@ -9,6 +9,10 @@
 import { log } from '@hilbras/omnicode-api';
 
 import {
+  isSelfUpdateChannelEnabled,
+  selfUpdateDisabledMessage,
+} from '#/cli/update/refresh';
+import {
   readUpdateInstallLockVersion,
   tryAcquireUpdateInstallLock,
   type UpdateInstallLockHandle,
@@ -85,6 +89,15 @@ export async function runUpdateDownloadCommand(
   version: string,
   manual: boolean = false,
 ): Promise<number> {
+  // The downloader is the only way channel material reaches this machine, so
+  // it carries the channel gate too: a disabled channel must not stage a
+  // binary that the startup swap would then install.
+  if (!isSelfUpdateChannelEnabled()) {
+    process.stderr.write(
+      `error: ${selfUpdateDisabledMessage() ?? 'Self-update is disabled'}\n`,
+    );
+    return 1;
+  }
   if (!detectNativeInstall()) {
     process.stderr.write('error: update download is only available in the native build\n');
     return 1;

@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { readUpdateInstallState } from '#/cli/update/install-state';
 import { readStagedNativeUpdate, stagedExeFileName } from '#/cli/update/native-stage';
+import { _setSelfUpdateChannelEnabledForTests } from '#/cli/update/refresh';
 import {
   maybeRelaunchWithStagedNativeUpdate,
   type NativeSwapDeps,
@@ -174,6 +175,9 @@ describe('maybeRelaunchWithStagedNativeUpdate', () => {
   let homeDir: string;
 
   beforeEach(async () => {
+    // The build ships with the update channel disabled; the swap tests
+    // exercise the enabled path. The disabled path has its own test below.
+    _setSelfUpdateChannelEnabledForTests(true);
     workDir = await mkdtemp(join(tmpdir(), 'omnicode-swap-test-'));
     homeDir = join(workDir, 'home');
     exePath = join(workDir, 'bin', 'omnicode');
@@ -185,8 +189,30 @@ describe('maybeRelaunchWithStagedNativeUpdate', () => {
   });
 
   afterEach(async () => {
+    _setSelfUpdateChannelEnabledForTests(undefined);
     vi.unstubAllEnvs();
     await rm(workDir, { recursive: true, force: true });
+  });
+
+  it('does not apply a staged update while the update channel is disabled', async () => {
+    // The staged payload came from the channel this build refuses to use, so
+    // it must stay untouched: not claimed, not installed, and not destroyed —
+    // a build whose channel is enabled can still apply it.
+    _setSelfUpdateChannelEnabledForTests(undefined);
+    await seedStagedUpdate(exePath, STAGED_VERSION);
+    const { calls, spawnImpl } = createSpawnMock({});
+
+    const relaunched = await maybeRelaunchWithStagedNativeUpdate(
+      makeDeps(exePath, { spawnImpl }),
+    );
+
+    expect(relaunched).toBe(false);
+    expect(calls).toHaveLength(0);
+    expect(await readFile(exePath, 'utf-8')).toBe('old-binary');
+    await expect(stat(getNativeStagedStateFile(exePath))).resolves.toBeDefined();
+    await expect(
+      stat(join(getNativeStagingDir(exePath), stagedExeFileName(STAGED_VERSION, 'linux'))),
+    ).resolves.toBeDefined();
   });
 
   it('does nothing when the re-exec guard env is set', async () => {

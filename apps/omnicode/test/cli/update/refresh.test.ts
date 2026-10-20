@@ -1,6 +1,8 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  _setSelfUpdateChannelEnabledForTests,
+  isSelfUpdateChannelEnabled,
   isSelfUpdateDisabled,
   refreshUpdateCache,
   selfUpdateDisabledMessage,
@@ -20,11 +22,11 @@ const MANIFEST: UpdateManifest = {
 describe('refreshUpdateCache', () => {
   it('rejects with the self-update explanation when using the real CDN channel', async () => {
     // No overrides: this is the production path, and self-update is off in
-    // this fork because the upstream CDN describes @hilbras/omnicode,
-    // so a version found there is not a version of this package.
+    // this build because the release manifest is unsigned — a version found
+    // on the channel must not become an install without artifact signing.
     const writeCache = vi.fn(async () => {});
 
-    const error = await refreshUpdateCache({ writeCache }).catch((e: unknown) => e);
+    const error = await refreshUpdateCache({ writeCache }).catch((error: unknown) => error);
 
     expect(error).toBeInstanceOf(Error);
     expect((error as Error).message).toMatch(/does not self-update/);
@@ -85,7 +87,7 @@ describe('refreshUpdateCache', () => {
 
 describe('isSelfUpdateDisabled', () => {
   it('recognizes the gate rejection', async () => {
-    const error = await refreshUpdateCache().catch((e: unknown) => e);
+    const error = await refreshUpdateCache().catch((error: unknown) => error);
     expect(isSelfUpdateDisabled(error)).toBe(true);
   });
 
@@ -97,7 +99,7 @@ describe('isSelfUpdateDisabled', () => {
       fetchLatest: async () => {
         throw new Error('network down');
       },
-    }).catch((e: unknown) => e);
+    }).catch((error: unknown) => error);
     expect((error as Error).message).toMatch(/network down/);
     expect(isSelfUpdateDisabled(error)).toBe(false);
   });
@@ -105,6 +107,24 @@ describe('isSelfUpdateDisabled', () => {
   it('returns false for values that are not errors', () => {
     expect(isSelfUpdateDisabled(undefined)).toBe(false);
     expect(isSelfUpdateDisabled('nope')).toBe(false);
+  });
+});
+
+describe('isSelfUpdateChannelEnabled', () => {
+  afterEach(() => {
+    _setSelfUpdateChannelEnabledForTests(undefined);
+  });
+
+  it('is off in this build, so no channel path may act on a release manifest', () => {
+    expect(isSelfUpdateChannelEnabled()).toBe(false);
+  });
+
+  it('lets a test exercise the enabled path without touching the build policy', () => {
+    _setSelfUpdateChannelEnabledForTests(true);
+    expect(isSelfUpdateChannelEnabled()).toBe(true);
+    // The message is the single source for "the channel is off" — with the
+    // channel on it must disappear, or callers would keep printing it.
+    expect(selfUpdateDisabledMessage()).toBeNull();
   });
 });
 

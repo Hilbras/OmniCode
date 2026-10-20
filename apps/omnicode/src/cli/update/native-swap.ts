@@ -39,6 +39,7 @@ import {
   type StagedNativeUpdate,
 } from './native-stage';
 import { isAutoUpdateDisabledByEnv, shouldAutoInstallUpdates } from './preflight';
+import { isSelfUpdateChannelEnabled } from './refresh';
 import { getNativeStagedStateFile, getNativeStagingDir } from '#/utils/paths';
 import { createFileIfAbsent } from '#/utils/persistence';
 
@@ -491,6 +492,17 @@ export async function maybeRelaunchWithStagedNativeUpdate(
     // still need for rollback. Its re-exec — or our next launch — lands the
     // update, so this session simply runs the current exe.
     logSwap('another instance is mid-swap, skipping', { exePath: deps.exePath });
+    return false;
+  }
+
+  // A disabled channel must not install anything: the staged payload came
+  // from that very channel. The stage is left untouched (not even claimed), so
+  // a build whose channel is enabled can still apply it, and nothing is
+  // destroyed for a policy decision this build cannot undo.
+  if (!isSelfUpdateChannelEnabled()) {
+    logSwap('self-update channel disabled, leaving the staged update untouched', {
+      exePath: deps.exePath,
+    });
     return false;
   }
 
