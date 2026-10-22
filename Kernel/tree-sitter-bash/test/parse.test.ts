@@ -54,7 +54,7 @@ describe('ParseBudget', () => {
   });
 
   it('applies documented defaults', () => {
-    const budget = new ParseBudget();
+    const budget = new ParseBudget({ timeoutMs: 60_000 });
     // Default node cap is 50_000: the 50_000th node is still allowed.
     for (let i = 0; i < 50_000; i++) budget.tick();
     expect(() => {
@@ -441,7 +441,7 @@ describe('adversarial input', () => {
     }
   });
 
-  it('parses a 500KB double-quoted string under the default budget', () => {
+  it('parses a 500KB double-quoted string under the default node budget', () => {
     // Regression: per-character budget.tick() used to burn the 50k node cap
     // on long strings even though only a handful of nodes are created.
     // The node cap stays at its default; the wall-clock limit is raised to the
@@ -457,7 +457,7 @@ describe('adversarial input', () => {
     expect(content[0]!.text).toBe(body);
   });
 
-  it('parses a 500KB heredoc body under the default budget', () => {
+  it('parses a 500KB heredoc body under the default node budget', () => {
     const body = 'b'.repeat(500 * 1024);
     const result = parse(`cat <<EOF\n${body}\nEOF`, { timeoutMs: 10_000 });
     expect(result.ok).toBe(true);

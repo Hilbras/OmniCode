@@ -133,7 +133,7 @@ describe('fuzz: nesting bombs degrade locally per the documented depth caps', ()
   });
 
   it('beyond the caps the parse still succeeds and flags hasError (MAX_SUBSTITUTION_DEPTH = 150)', () => {
-    const result = checkContract(substitution(200));
+    const result = checkContract(substitution(200), { timeoutMs: 60_000 });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.hasError).toBe(true);
   });

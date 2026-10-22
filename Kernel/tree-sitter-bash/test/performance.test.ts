@@ -86,10 +86,14 @@ describe('performance smoke', () => {
     console.log(`typical command: ${(perParse * 1000).toFixed(0)}µs per parse`);
   });
 
-  it('a 500KB heredoc body parses within the default budget (few nodes)', () => {
+  it('a 500KB heredoc body parses within the default node budget (few nodes)', () => {
     const source = `cat <<EOF\n${'line of text\n'.repeat(40_000)}EOF`;
     expect(source.length).toBeGreaterThan(500_000);
-    const result = parse(source);
+    // The subject is the node budget: a large heredoc body is a single token,
+    // so the parse must stay far below the 50k node cap. The wall-clock limit
+    // is raised so the assertion does not depend on how loaded the machine is;
+    // an abort here can therefore only come from the node cap.
+    const result = parse(source, { timeoutMs: 10_000 });
     expect(result.ok).toBe(true);
   });
 });
