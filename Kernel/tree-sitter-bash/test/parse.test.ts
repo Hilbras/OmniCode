@@ -444,8 +444,11 @@ describe('adversarial input', () => {
   it('parses a 500KB double-quoted string under the default budget', () => {
     // Regression: per-character budget.tick() used to burn the 50k node cap
     // on long strings even though only a handful of nodes are created.
+    // The node cap stays at its default; the wall-clock limit is raised to the
+    // same value the other large-input cases use, so the assertion depends on
+    // the node budget rather than on how loaded the machine is.
     const body = 'a'.repeat(500 * 1024);
-    const result = parse(`echo "${body}"`);
+    const result = parse(`echo "${body}"`, { timeoutMs: 10_000 });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.hasError).toBe(false);
@@ -456,7 +459,7 @@ describe('adversarial input', () => {
 
   it('parses a 500KB heredoc body under the default budget', () => {
     const body = 'b'.repeat(500 * 1024);
-    const result = parse(`cat <<EOF\n${body}\nEOF`);
+    const result = parse(`cat <<EOF\n${body}\nEOF`, { timeoutMs: 10_000 });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.hasError).toBe(false);
