@@ -1,0 +1,124 @@
+name: Release
+
+# Manual only. Publishing changes the public registry, so it never runs on a
+# plain push; the tag trigger is a convenience for the maintainer.
+#
+# One-time prerequisite: configure trusted publishing for @hilbras/omnicode on
+# npm.com (package settings -> Trusted Publisher -> repository Hilbras/OmniCode,
+# workflow "Release", environment "npm"). The workflow then exchanges the
+# GitHub OIDC token for a short-lived npm credential, so no npm secret is
+# stored in this repository. Until that is configured, publish locally with
+# `pnpm run release:publish`.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g. 1.2.1)'
+        required: true
+        type: string
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: '24.15.0'
+  PNPM_VERSION: '10.33.0'
+  PACKAGE: '@hilbras/omnicode'
+
+jobs:
+  release:
+    name: Validate, build and publish
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: npm
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # changesets resolves changelog commit links from the git history.
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve version
+        id: version
+        run: |
+          set -euo pipefail
+          version="${{ inputs.version }}"
+          if [ -z "$version" ]; then
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "resolved version: $version"
+
+      - name: Validate
+        run: pnpm run typecheck && pnpm run lint && pnpm run sherif
+
+      - name: Test
+        run: pnpm run test
+
+      - name: Build
+        run: pnpm run build
+
+      - name: Inspect package
+        run: |
+          set -euo pipefail
+          cd apps/omnicode
+          npm pack --dry-run --json > pack-report.json
+          node -e '
+            const fs = require("fs");
+            const report = JSON.parse(fs.readFileSync("pack-report.json", "utf8"))[0];
+            const pkg = JSON.parse(fs.readFileSync("package.json", "utf8"));
+            const want = process.env.VERSION;
+            if (pkg.name !== process.env.PACKAGE) {
+              throw new Error(`unexpected package ${pkg.name}`);
+            }
+            if (pkg.version !== want) {
+              throw new Error(`package.json version ${pkg.version} != ${want}`);
+            }
+            const paths = report.files.map((f) => f.path);
+            for (const required of ["dist/main.mjs", "LICENSE", "README.md"]) {
+              if (!paths.includes(required)) throw new Error(`missing ${required} in the tarball`);
+            }
+            const bin = pkg.bin.omnicode;
+            if (!paths.includes(bin)) throw new Error(`bin ${bin} is not in the tarball`);
+            console.log(`package ${pkg.name}@${pkg.version} — ${paths.length} files, bin ${bin}`);
+          '
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          PACKAGE: ${{ env.PACKAGE }}
+
+      - name: Publish
+        run: pnpm --filter ${{ env.PACKAGE }} exec npm publish --access public --tag latest
+
+      - name: Verify publication
+        run: |
+          set -euo pipefail
+          version="$(npm view ${{ env.PACKAGE }} version)"
+          latest="$(npm view ${{ env.PACKAGE }} dist-tags.latest)"
+          echo "published version: $version"
+          echo "latest dist-tag:   $latest"
+          if [ "$version" != "$latest" ]; then
+            echo "::error::published version $version is not the latest dist-tag ($latest)"
+            exit 1
+          fi
+          npm view ${{ env.PACKAGE }}@$version version dist.integrity

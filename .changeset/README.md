@@ -108,43 +108,52 @@ git push
 
 Commit messages must follow Conventional Commit style. Do not include any author/agent identity in the commit message.
 
-### 4. CI generates the release PR
+### 4. Cut the release version
 
-Once the changeset file is merged into `main`, `.github/workflows/release.yml` uses `changesets/action@v1` to create or update a release PR.
+Once the changeset file is merged into `release`, cut the release version locally:
 
-The release PR runs:
+```sh
+pnpm run version:release
+git commit -m "chore(release): <version>"
+git push
+```
 
-- `pnpm changeset version`: bumps publishable package versions and updates changelogs;
-- Deletes the consumed `.changeset/*.md` files;
-- Uses the title `[CI]: Release packages`.
+`pnpm changeset version` bumps the publishable package versions, updates the changelogs and deletes the consumed `.changeset/*.md` files. It needs a `GITHUB_TOKEN` in the environment, because the changelog generator resolves the commit links through the GitHub API:
 
-### 5. Merge the release PR
+```sh
+GITHUB_TOKEN="$(gh auth token)" pnpm run version:release
+```
 
-Once the release PR is merged into `main`, the same workflow runs:
+### 5. Publish
 
-- `pnpm install --frozen-lockfile`
-- `pnpm build`
-- `pnpm changeset publish`
+Publish the versioned tree with the release workflow, or with the local gate below.
 
-The packages are then published via npm Trusted Publishing, and a GitHub Release is created.
+`.github/workflows/release.yml` runs on demand (`workflow_dispatch`) and performs the whole release: validate, test, build, inspect the tarball, publish, then verify the registry.
+
+```sh
+gh workflow run release.yml -f version=1.2.1
+```
+
+It publishes through npm Trusted Publishing, so it needs no long-lived npm token — but the package must be configured for trusted publishing on npm.com first (package settings → Trusted Publisher → this repository, the `release` workflow). Until that is done, publish locally.
 
 ## Manual Publishing (Not Recommended)
 
 Only publish manually when CI is unavailable. Before publishing manually, make sure you are logged into npm locally and using the Node.js and pnpm versions required by the repository.
 
 ```sh
-pnpm run version
-pnpm run publish
+GITHUB_TOKEN="$(gh auth token)" pnpm run version:release
+pnpm run release:publish
 ```
 
 The underlying changesets commands are:
 
 ```sh
 pnpm changeset version
-pnpm changeset publish
 ```
 
-The root-level `pnpm run publish` first runs typecheck, lint, sherif, test, build, and package lint, then publishes `@hilbras/omnicode` with `npm publish`. It does not call `changeset publish`: with pnpm as the package manager, `changeset publish` runs `pnpm publish` in the repository root instead of the package directory, so it targets the root package and never publishes the CLI.
+`pnpm run release:publish` first runs typecheck, lint, sherif, test, build, and package lint, then publishes `@hilbras/omnicode` with `npm publish`. It does not call `changeset publish`: with pnpm as the package manager, `changeset publish` runs `pnpm publish` in the repository root instead of the package directory, so it targets the root package and never publishes the CLI.
+
+The script is named `release:publish` rather than `publish` on purpose. A script named `publish` is an npm lifecycle hook, so `npm publish` or `pnpm publish` in the repository root would run this whole gate as a side effect of publishing the root package, which is never what anyone wants.
 
 ## Notes
 
