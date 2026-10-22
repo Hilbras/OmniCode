@@ -35,6 +35,9 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Install ripgrep
+        run: sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends ripgrep
+
       - name: Typecheck
         run: pnpm run typecheck
 

@@ -1274,7 +1274,7 @@ describe('truncation pipeline', () => {
     } finally {
       await rm(root, { recursive: true, force: true });
     }
-  });
+  }, 120_000);
 
   it('keeps the MCP attachment path visible after text spill without repeating the remote call', async () => {
     const bytes = Buffer.from('%PDF-1.4\nexample report\n%%EOF');

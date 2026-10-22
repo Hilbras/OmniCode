@@ -17,6 +17,11 @@ describe('UbuntuBackend — live environment', () => {
 
   it('lists monitors from the running display', async () => {
     const backend = new UbuntuBackend();
+    const capabilities = await backend.capabilities();
+    if (!capabilities.mouse) {
+      expect(capabilities.missingDependencies).toContain('xdotool');
+      return;
+    }
     const monitors = await backend.listMonitors();
 
     expect(Array.isArray(monitors)).toBe(true);
