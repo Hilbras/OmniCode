@@ -1,5 +1,7 @@
+import { onUnexpectedError } from '#/_base/errors/unexpectedError';
 import type { IHostProcessService } from '#/os/interface/hostProcess';
 
+import type { ExternalHooksRunnerTriggerArgs } from '../app/externalHooksRunner';
 import { runHook } from './runHook';
 import type {
   HookApproveDecision,
@@ -8,8 +10,6 @@ import type {
   HookMatcherValue,
   HookResult,
 } from './types';
-
-import type { ExternalHooksRunnerTriggerArgs } from '../app/externalHooksRunner';
 
 const DEFAULT_HOOK_TIMEOUT_SECONDS = 30;
 
@@ -119,6 +119,9 @@ function matches(pattern: string, value: string): boolean {
   try {
     return new RegExp(pattern).test(value);
   } catch {
+    onUnexpectedError(
+      new Error(`hook matcher "${pattern}" is not a valid regular expression; the hook never runs`),
+    );
     return false;
   }
 }

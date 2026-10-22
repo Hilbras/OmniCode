@@ -21,14 +21,10 @@ export {
   showPermissionPicker,
   showSettingsSelector,
 } from './config';
-export {
-  formatContextSize,
-  handleContextCommand,
-  parseContextSize,
-} from './context';
+export { formatContextSize, handleContextCommand, parseContextSize } from './context';
 export { handleSwarmCommand } from './swarm';
 export { handleTowerCommand } from './tower';
-export { handleFeedbackCommand, showMcpServers, showStatusReport, showUsage } from './info';
+export { handleFeedbackCommand, showStatusReport, showUsage } from './info';
 export { handlePluginsCommand } from './plugins';
 export { handleReloadCommand, handleReloadTuiCommand } from './reload';
 export { handleGoalCommand, parseGoalCommand, goalObjectiveLengthWarning } from './goal';

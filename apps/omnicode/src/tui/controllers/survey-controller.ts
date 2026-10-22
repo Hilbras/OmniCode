@@ -4,6 +4,7 @@ import { isManagedOmnicodeCodeBaseUrl } from '@hilbras/omnicode-auth';
 import { isTelemetryDisabledByEnv } from '@hilbras/omnicode-telemetry';
 import { Key, matchesKey, Spacer } from '@hilbras/omnicode-tui';
 
+import { currentOmnicodeRegion } from '#/utils/region';
 import {
   getSurveyPopupConfig,
   peekSurveyPopupConfig,
@@ -13,11 +14,9 @@ import {
   type SurveyPopupPayload,
 } from '#/utils/survey-popup-config';
 import { readSurveyLastShownTime, writeSurveyLastShownTime } from '#/utils/survey-state-store';
-import { currentOmnicodeRegion } from '#/utils/region';
 
 import { SurveyPanelComponent, type SurveyPanelView } from '../components/panes/survey-panel';
 import { CHROME_GUTTER } from '../constant/rendering';
-import { printableChar } from '../utils/printable-key';
 import {
   SURVEY_DIGIT_DEBOUNCE_MS,
   SURVEY_IDLE_EVALUATION_DELAY_MS,
@@ -34,6 +33,7 @@ import {
   SURVEY_THANKS_DURATION_MS,
 } from '../constant/survey';
 import type { TUIState } from '../tui-state';
+import { printableChar } from '../utils/printable-key';
 import {
   buildSurveyEventProperties,
   evaluateSurveyGate,
@@ -522,7 +522,9 @@ export class SurveyController {
             : this.userTurnsSinceMount - this.userTurnsAtLastShown,
         sample: this.currentSample(),
         msSinceGlobalLastShown:
-          this.globalLastShownAt === undefined ? undefined : this.wallNow() - this.globalLastShownAt,
+          this.globalLastShownAt === undefined
+            ? undefined
+            : this.wallNow() - this.globalLastShownAt,
       },
       longContext: {
         ...shared,
@@ -547,6 +549,8 @@ export class SurveyController {
       state.livePane.pendingApproval !== null ||
       state.livePane.pendingQuestion !== null ||
       state.tasksBrowser !== undefined ||
+      state.skillsBrowser !== undefined ||
+      state.subagentsBrowser !== undefined ||
       this.host.btwPanelController.isActive()
     );
   }
@@ -592,9 +596,7 @@ export class SurveyController {
     if (survey === 'long_context') this.longContextShownThisMount = true;
     this.globalLastShownAt = this.wallNow();
     try {
-      (this.deps.writeGlobalLastShown ?? defaultDeps.writeGlobalLastShown)(
-        this.globalLastShownAt,
-      );
+      (this.deps.writeGlobalLastShown ?? defaultDeps.writeGlobalLastShown)(this.globalLastShownAt);
     } catch {}
   }
 
@@ -709,7 +711,9 @@ export class SurveyController {
     const current = this.view.hoverIndex;
     this.view.hoverIndex =
       current === undefined
-        ? (delta > 0 ? 0 : SURVEY_OPTION_COUNT - 1)
+        ? delta > 0
+          ? 0
+          : SURVEY_OPTION_COUNT - 1
         : (current + delta + SURVEY_OPTION_COUNT) % SURVEY_OPTION_COUNT;
     this.host.state.ui.requestRender();
   }

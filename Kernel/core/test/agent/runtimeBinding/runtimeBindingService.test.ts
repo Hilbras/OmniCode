@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
 import { Emitter } from '#/_base/event';
-import { AgentRuntimeService, snapshotAgentRuntimeBinding } from '#/agent/runtimeBinding/agentRuntime';
-import { AgentRuntimeBindingService, agentRuntimeBindingKey } from '#/agent/runtimeBinding/runtimeBindingService';
+import {
+  AgentRuntimeService,
+  snapshotAgentRuntimeBinding,
+} from '#/agent/runtimeBinding/agentRuntime';
+import {
+  AgentRuntimeBindingService,
+  agentRuntimeBindingKey,
+} from '#/agent/runtimeBinding/runtimeBindingService';
 import { AgentStateService } from '#/agent/state/agentStateService';
 import { FakeRuntime } from '#/runtime/fakeRuntime';
 import type { Runtime, RuntimeBinding, RuntimeCapability, RuntimeLease } from '#/runtime/runtime';
@@ -13,6 +19,7 @@ import type {
   IRuntimeResolver,
   IWorkspaceInstanceManager,
 } from '#/workspace/workspaceInstance/workspaceInstanceManager';
+
 import { stubAgentContext } from '../agentContext/stubs';
 
 function runtime(
@@ -127,8 +134,14 @@ describe('AgentRuntimeBindingService', () => {
     binding.switch('remote');
     const newLease = agentRuntime.acquire();
 
-    expect(oldLease.runtime.identity).toMatchObject({ runtimeId: 'local', generation: 'local-one' });
-    expect(newLease.runtime.identity).toMatchObject({ runtimeId: 'remote', generation: 'remote-one' });
+    expect(oldLease.runtime.identity).toMatchObject({
+      runtimeId: 'local',
+      generation: 'local-one',
+    });
+    expect(newLease.runtime.identity).toMatchObject({
+      runtimeId: 'remote',
+      generation: 'remote-one',
+    });
     oldLease.dispose();
     newLease.dispose();
   });

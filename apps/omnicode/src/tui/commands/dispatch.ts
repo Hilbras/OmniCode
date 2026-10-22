@@ -1,12 +1,18 @@
-import type { Component, Focusable } from '@hilbras/omnicode-tui';
-import type { DeviceAuthorization } from '@hilbras/omnicode-auth';
 import type { OmnicodeHarness, Session } from '@hilbras/omnicode-api';
+import type { DeviceAuthorization } from '@hilbras/omnicode-auth';
+import type { Component, Focusable } from '@hilbras/omnicode-tui';
 
 import type { ColorToken, ThemeName } from '#/tui/theme';
 
 import { LLM_NOT_SET_MESSAGE } from '../constant/omnicode-tui';
 import type { AuthFlowController } from '../controllers/auth-flow';
 import type { BtwPanelController } from '../controllers/btw-panel';
+import type {
+  ConnectorsBrowserController,
+  SkillsBrowserController,
+  SubagentsBrowserController,
+} from '../controllers/catalog-browser';
+import type { McpManagerController } from '../controllers/mcp-manager';
 import type { StreamingUIController } from '../controllers/streaming-ui';
 import type { TasksBrowserController } from '../controllers/tasks-browser';
 import { tryHandleDanceCommand } from '../easter-eggs/dance';
@@ -20,14 +26,10 @@ import type {
   TranscriptEntry,
 } from '../types';
 import { formatErrorMessage } from '../utils/event-payload';
-import {
-  extractInlineSkillActivations,
-  findInlineSkillTokens,
-} from '../utils/inline-skill-tokens';
+import { extractInlineSkillActivations, findInlineSkillTokens } from '../utils/inline-skill-tokens';
+import { handleAddDirCommand } from './add-dir';
 import { handleLoginCommand, handleLogoutCommand } from './auth';
 import { handleBtwCommand } from './btw';
-import { handleCopyCommand } from './copy';
-import { handleDesktopCommand } from './desktop';
 import {
   handleCompactCommand,
   handleEditorCommand,
@@ -42,9 +44,10 @@ import {
   showSettingsSelector,
 } from './config';
 import { handleContextCommand } from './context';
+import { handleCopyCommand } from './copy';
+import { handleDesktopCommand } from './desktop';
 import { handleGoalCommand } from './goal';
-import { handleFeedbackCommand, showMcpServers, showStatusReport, showUsage } from './info';
-import { handleAddDirCommand } from './add-dir';
+import { handleFeedbackCommand, showStatusReport, showUsage } from './info';
 import { parseSlashInput } from './parse';
 import { handlePluginsCommand } from './plugins';
 import { handleProviderCommand } from './provider';
@@ -54,14 +57,13 @@ import {
   type BuiltinSlashCommandName,
 } from './registry';
 import { handleReloadCommand, handleReloadTuiCommand } from './reload';
-import { handleRestoreCommand } from './restore';
-import type { SkillListSession } from './skills';
 import {
   canRestoreSubmittedInput,
   resolveSlashCommandInput,
   slashBusyMessage,
   slashCommandBusyReason,
 } from './resolve';
+import { handleRestoreCommand } from './restore';
 import {
   handleExportDebugZipCommand,
   handleExportMdCommand,
@@ -69,6 +71,7 @@ import {
   handleInitCommand,
   handleTitleCommand,
 } from './session';
+import type { SkillListSession } from './skills';
 import { handleSwarmCommand } from './swarm';
 import { handleTowerCommand } from './tower';
 import { handleUndoCommand } from './undo';
@@ -98,7 +101,7 @@ export {
 } from './config';
 export { handleSwarmCommand } from './swarm';
 export { handleTowerCommand } from './tower';
-export { handleFeedbackCommand, showMcpServers, showStatusReport, showUsage } from './info';
+export { handleFeedbackCommand, showStatusReport, showUsage } from './info';
 export { handlePluginsCommand } from './plugins';
 export { handleReloadCommand, handleReloadTuiCommand } from './reload';
 export { handleGoalCommand } from './goal';
@@ -201,7 +204,10 @@ export interface SlashCommandHost {
    * (v2 engine only): all activations ride the same submission as the prompt
    * and launch as a single turn.
    */
-  sendInlineSkillUserInput(text: string, activations: readonly InlineSkillActivation[]): Promise<void>;
+  sendInlineSkillUserInput(
+    text: string,
+    activations: readonly InlineSkillActivation[],
+  ): Promise<void>;
   sendSkillActivation(session: Session, skillName: string, skillArgs: string): void;
   activatePluginCommand(
     session: Session,
@@ -216,6 +222,10 @@ export interface SlashCommandHost {
   readonly streamingUI: StreamingUIController;
   readonly btwPanelController: BtwPanelController;
   readonly tasksBrowserController: TasksBrowserController;
+  readonly skillsBrowserController: SkillsBrowserController;
+  readonly subagentsBrowserController: SubagentsBrowserController;
+  readonly connectorsBrowserController: ConnectorsBrowserController;
+  readonly mcpManagerController: McpManagerController;
   readonly authFlow: AuthFlowController;
 }
 
@@ -489,8 +499,17 @@ async function handleBuiltInSlashCommand(
     case 'tasks':
       void host.tasksBrowserController.show();
       return;
+    case 'skills':
+      void host.skillsBrowserController.show();
+      return;
+    case 'subagents':
+      void host.subagentsBrowserController.show();
+      return;
+    case 'connectors':
+      void host.connectorsBrowserController.show();
+      return;
     case 'mcp':
-      void showMcpServers(host);
+      void host.mcpManagerController.show();
       return;
     case 'plugins':
       // `handlePluginsCommand` throws when no session is active (its own

@@ -1,16 +1,18 @@
+import { Command, InvalidArgumentError, Option } from 'commander';
+
 import { CLI_COMMAND_NAME } from '#/constant/app';
 import { registerMigrateCommand, type MigrateCommandOptions } from '#/migration/index';
-import { Command, InvalidArgumentError, Option } from 'commander';
 
 import type { CLIOptions } from './options';
 import { registerAcpCommand } from './sub/acp';
+import { registerAppCommand } from './sub/app';
 import { registerAuthCommand } from './sub/auth';
 import { registerDoctorCommand } from './sub/doctor';
 import { registerExportCommand } from './sub/export';
 import { registerForkCommand } from './sub/fork';
-import { registerAppCommand } from './sub/app';
 import { registerInstallDesktopCommand } from './sub/install-desktop';
 import { registerLoginCommand } from './sub/login';
+import { registerMcpCommand } from './sub/mcp';
 import { registerProviderCommand } from './sub/provider';
 import { registerSessionCommand } from './sub/session';
 import { registerVisCommand } from './sub/vis';
@@ -54,8 +56,16 @@ export function createProgram(
     )
     .option('-c, --continue', 'Continue the previous session for the working directory.', false)
     .addOption(new Option('-C').hideHelp().default(false))
-    .option('-y, --yolo', 'Start in Ask When Needed mode: routine edits and commands run automatically; risky actions, questions, and plans still ask.', false)
-    .option('--auto', 'Start in Never Ask mode: never interrupts you; everything runs and is decided automatically.', false)
+    .option(
+      '-y, --yolo',
+      'Start in Ask When Needed mode: routine edits and commands run automatically; risky actions, questions, and plans still ask.',
+      false,
+    )
+    .option(
+      '--auto',
+      'Start in Never Ask mode: never interrupts you; everything runs and is decided automatically.',
+      false,
+    )
     .addOption(
       new Option(
         '-m, --model <model>',
@@ -124,6 +134,7 @@ export function createProgram(
   registerExportCommand(program);
   registerForkCommand(program);
   registerProviderCommand(program);
+  registerMcpCommand(program);
   registerSessionCommand(program);
   registerAcpCommand(program);
   registerWebCommand(program);

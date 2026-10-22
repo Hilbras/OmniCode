@@ -5,20 +5,21 @@ import {
 } from '@hilbras/omnicode-auth/provider-credential';
 
 import { Disposable } from '#/_base/di/lifecycle';
-import { LifecycleScope } from '#/app/scopes';
 import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
 import { Error2 } from '#/_base/errors/errors';
-
-import type { CatalogModel, CatalogProviderInfo } from '#human/llm/provider-catalog';
-import type { LlmAuthScheme } from '#human/llm/model';
+import { ILogService } from '#/_base/log/log';
+import { LifecycleScope } from '#/app/scopes';
 import {
   createOAuthCredentialProvider,
   createStaticCredentialProvider,
 } from '#human/credentials/credentials';
+import type { LlmAuthScheme } from '#human/llm/model';
+import type { CatalogModel, CatalogProviderInfo } from '#human/llm/provider-catalog';
 import type { LlmCredentialProvider } from '#human/llm/requester/requester';
+import type { TokenUsage } from '#human/llm/usage';
+
 import type { ModelCapability } from '../contract/capability';
 import { CONFIG_INVALID_ERROR_CODE } from '../contract/errors';
-import type { TokenUsage } from '#human/llm/usage';
 import {
   IProtocolAdapterRegistry,
   type Protocol,
@@ -26,11 +27,7 @@ import {
 } from '../protocol/protocol';
 import { assertProviderBaseUrl } from '../provider/base-url';
 import { IProviderService } from '../provider/provider';
-import {
-  getProviderDefinition,
-  resolveProviderEndpoint,
-} from '../provider/provider-definition';
-
+import { getProviderDefinition, resolveProviderEndpoint } from '../provider/provider-definition';
 import {
   IModelCatalog,
   type Model,
@@ -44,10 +41,7 @@ import {
   toProtocolProvider,
 } from './catalog';
 import { IProviderCatalogRuntime, rawRecordOf } from './catalog-runtime';
-import {
-  runWithCredentialRecovery,
-  streamWithCredentialRecovery,
-} from './credential-recovery';
+import { runWithCredentialRecovery, streamWithCredentialRecovery } from './credential-recovery';
 import { ModelCatalogErrors } from './errors';
 import { IHostRequestHeaders } from './host-request-headers';
 import { IModelService, type ModelRecord } from './model';
@@ -60,7 +54,6 @@ import {
   withAnthropicProfile,
 } from './model-auth';
 import { IModelOAuthTokens } from './model-oauth';
-import type { ResolvedModelAuthMaterial } from './model.types';
 import type {
   ModelRequestEvent,
   ModelRequestInput,
@@ -68,6 +61,7 @@ import type {
   ModelRequester,
 } from './model-requester';
 import { ModelRequesterImpl } from './model-requester-impl';
+import type { ResolvedModelAuthMaterial } from './model.types';
 
 type MutableProtocolProviderOptions = {
   -readonly [K in keyof ProtocolProviderOptions]: ProtocolProviderOptions[K];
@@ -91,6 +85,7 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
     @IProtocolAdapterRegistry
     private readonly protocolRegistry: IProtocolAdapterRegistry,
     @IHostRequestHeaders private readonly hostRequestHeaders: IHostRequestHeaders,
+    @ILogService private readonly log: ILogService,
   ) {
     super();
     this._register(
@@ -215,7 +210,12 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
       const providerType = this.providerTypeOf(record);
       try {
         out.push(toProtocolModel(this.get(modelId), record, providerType));
-      } catch {
+      } catch (error) {
+        this.log.warn('model catalog entry fell back to the raw record', {
+          model: modelId,
+          provider: providerType,
+          reason: error instanceof Error ? error.message : String(error),
+        });
         out.push(toProtocolModelFallback(modelId, record, providerType));
       }
     }
@@ -253,10 +253,7 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
   async setDefaultModel(modelId: string): Promise<SetDefaultModelResponse> {
     const definition = this.runtime.lookup(modelId);
     if (definition === undefined) {
-      throw new Error2(
-        ModelCatalogErrors.codes.MODEL_NOT_FOUND,
-        `model ${modelId} does not exist`,
-      );
+      throw new Error2(ModelCatalogErrors.codes.MODEL_NOT_FOUND, `model ${modelId} does not exist`);
     }
     const record = rawRecordOf(definition);
     const model = this.get(modelId);
@@ -298,14 +295,16 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
     };
   }
 
-  private async hasCachedToken(providerId: string, provider: CatalogProviderInfo): Promise<boolean> {
+  private async hasCachedToken(
+    providerId: string,
+    provider: CatalogProviderInfo,
+  ): Promise<boolean> {
     if (provider.oauth === undefined) return false;
     return this.oauth.hasCachedAccessToken(providerId, provider.oauth);
   }
 
   private providerTypeOf(record: ModelRecord): string | undefined {
-    const providerId =
-      record.providerId ?? record.provider ?? this.providers.getDefaultProvider();
+    const providerId = record.providerId ?? record.provider ?? this.providers.getDefaultProvider();
     return this.runtime.providerInfo(providerId ?? '')?.type ?? record.protocol;
   }
 
@@ -320,8 +319,11 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
     }
     const configuredModel = rawRecordOf(definition);
 
-    const { providerConfig, providerName, resolvedBaseUrl: rawBaseUrl } =
-      this.resolveProviderContext(id, configuredModel);
+    const {
+      providerConfig,
+      providerName,
+      resolvedBaseUrl: rawBaseUrl,
+    } = this.resolveProviderContext(id, configuredModel);
 
     const protocol = this.resolveProtocol(id, configuredModel, providerConfig);
     const model = withAnthropicProfile(
@@ -411,8 +413,7 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
     readonly providerName: string;
     readonly resolvedBaseUrl: string | undefined;
   } {
-    const providerId =
-      model.providerId ?? model.provider ?? this.providers.getDefaultProvider();
+    const providerId = model.providerId ?? model.provider ?? this.providers.getDefaultProvider();
     if (providerId !== undefined) {
       const providerConfig = this.runtime.providerInfo(providerId);
       if (providerConfig === undefined) {
@@ -503,8 +504,7 @@ export function resolveOutboundHeaders(
   host: Pick<IHostRequestHeaders, 'headers' | 'thirdPartyHeaders'>,
 ): Readonly<Record<string, string>> {
   const forwardsAll =
-    providerType !== undefined &&
-    getProviderDefinition(providerType)?.hostHeaders === 'full';
+    providerType !== undefined && getProviderDefinition(providerType)?.hostHeaders === 'full';
   const hostLayer = forwardsAll ? host.headers : host.thirdPartyHeaders;
   return { ...parseOmnicodeCodeCustomHeaders(), ...hostLayer, ...customHeaders };
 }
@@ -525,8 +525,7 @@ function resolveModelCapabilities(
     max_context_tokens: maxContextSize,
     max_input_tokens: maxInputSize,
     dynamically_loaded_tools:
-      declared.has('dynamically_loaded_tools') ||
-      detected.dynamically_loaded_tools === true,
+      declared.has('dynamically_loaded_tools') || detected.dynamically_loaded_tools === true,
   };
 }
 
@@ -601,9 +600,7 @@ function buildProtocolProviderOptions(
     }
   }
 
-  return Object.values(options).some((value) => value !== undefined)
-    ? options
-    : undefined;
+  return Object.values(options).some((value) => value !== undefined) ? options : undefined;
 }
 
 const AUTH_SCHEME_PROTOCOLS: ReadonlySet<Protocol> = new Set<Protocol>([
@@ -637,7 +634,10 @@ function vertexAILocation(
   return envValue(provider?.env, 'GOOGLE_CLOUD_LOCATION') ?? locationFromVertexAIBaseUrl(baseUrl);
 }
 
-function envValue(env: Readonly<Record<string, string>> | undefined, key: string): string | undefined {
+function envValue(
+  env: Readonly<Record<string, string>> | undefined,
+  key: string,
+): string | undefined {
   return nonEmpty(env?.[key]);
 }
 

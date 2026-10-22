@@ -1,3 +1,14 @@
+import type { IncomingMessage } from 'node:http';
+import type { Socket } from 'node:net';
+import { join } from 'node:path';
+import type { Duplex } from 'node:stream';
+
+import {
+  createOmnicodeDefaultHeaders,
+  OMNICODE_PROVIDER_NAME,
+  omnicodeRegionProfile,
+  type OmnicodeHostIdentity,
+} from '@hilbras/omnicode-auth';
 import {
   bootstrap,
   drainQueryStoreDisposals,
@@ -26,70 +37,50 @@ import {
   type Scope,
   type ScopeSeed,
 } from '@hilbras/omnicode-core';
-import {
-  createOmnicodeDefaultHeaders,
-  OMNICODE_PROVIDER_NAME,
-  omnicodeRegionProfile,
-  type OmnicodeHostIdentity,
-} from '@hilbras/omnicode-auth';
-import { createAsyncApiDocument } from './protocol/asyncapi';
+import { createRemoteControlManager } from '@hilbras/omnicode-remote';
 import Fastify, { type FastifyInstance } from 'fastify';
 
 import { installErrorHandler } from './error-handler';
 import { createInstanceRegistry, type InstanceRegistration } from './instanceRegistry';
+import { createAuthHook } from './middleware/auth';
+import { createHostCheck, isHostCheckDisabled, parseAllowedHosts } from './middleware/hostnames';
+import { createOriginHook, isOriginAllowed, parseCorsOrigins } from './middleware/origin';
+import { createAuthFailureLimiter } from './middleware/rateLimit';
+import { createSecurityHeadersHook } from './middleware/securityHeaders';
 import { transformOpenApiDocument } from './openapi/transforms';
-import { registerRequestLogging } from './requestLogging';
+import { createAsyncApiDocument } from './protocol/asyncapi';
 import { resolveRequestId } from './request-id';
+import { registerRequestLogging } from './requestLogging';
 import { registerApiV1Routes } from './routes/registerApiV1Routes';
 import { registerApiV2Routes } from './routes/registerApiV2Routes';
 import { registerWebAssetRoutes } from './routes/webAssets';
+import { drainGlobalSearchDisposals, IGlobalSearchService } from './search/searchService';
+import { classify } from './security/bindClassify';
+import { createAuthTokenService, type IAuthTokenService } from './services/auth/authTokenService';
+import { createCredentialValidator } from './services/auth/credentials';
+import { resolvePasswordHash } from './services/auth/password';
+import { createTokenStore } from './services/auth/tokenStore';
+import { startConfigChangedPublisher } from './services/config/configChangedPublisher';
+import { GuiStoreService } from './services/guiStore/guiStoreService';
+import { ModelCatalogRefreshScheduler } from './services/modelCatalog/modelCatalogRefreshScheduler';
 import {
   createServerLogger,
   type ServerLogger,
   type ServerLogLevel,
 } from './services/pinoLoggerService';
-import { join } from 'node:path';
-import type { Socket } from 'node:net';
-import type { IncomingMessage } from 'node:http';
-import type { Duplex } from 'node:stream';
-
-import {
-  ConnectionRegistry,
-  type IConnectionRegistry,
-} from './transport/ws/connectionRegistry';
-import { extractWsBearerToken } from './transport/ws/bearerProtocol';
-import { SessionEventBroadcaster } from './transport/ws/v1/sessionEventBroadcaster';
-import type { ConfigWarningItem } from './transport/ws/v1/events';
-import { registerWsV1, WS_PATH as WS_PATH_V1 } from './transport/ws/v1/registerWsV1';
-import { registerWsDebug, WS_DEBUG_PATH } from './transport/ws/debug/registerWsDebug';
-import { getServerVersion } from './version';
-import { classify } from './security/bindClassify';
-import {
-  createHostCheck,
-  isHostCheckDisabled,
-  parseAllowedHosts,
-} from './middleware/hostnames';
-import { createOriginHook, isOriginAllowed, parseCorsOrigins } from './middleware/origin';
-import { createSecurityHeadersHook } from './middleware/securityHeaders';
-import { createAuthHook } from './middleware/auth';
-import { GuiStoreService } from './services/guiStore/guiStoreService';
 import {
   initializeServerTelemetry,
   type ServerTelemetry,
   shutdownServerTelemetry,
 } from './services/telemetry';
 import { TranscriptService } from './services/transcript/transcriptService';
-import { ModelCatalogRefreshScheduler } from './services/modelCatalog/modelCatalogRefreshScheduler';
-import { startConfigChangedPublisher } from './services/config/configChangedPublisher';
-import { createAuthFailureLimiter } from './middleware/rateLimit';
-import { createRemoteControlManager } from '@hilbras/omnicode-remote';
-
-import { createAuthTokenService, type IAuthTokenService } from './services/auth/authTokenService';
-import { createCredentialValidator } from './services/auth/credentials';
-import { resolvePasswordHash } from './services/auth/password';
-import { createTokenStore } from './services/auth/tokenStore';
-
-import { drainGlobalSearchDisposals, IGlobalSearchService } from './search/searchService';
+import { extractWsBearerToken } from './transport/ws/bearerProtocol';
+import { ConnectionRegistry, type IConnectionRegistry } from './transport/ws/connectionRegistry';
+import { registerWsDebug, WS_DEBUG_PATH } from './transport/ws/debug/registerWsDebug';
+import type { ConfigWarningItem } from './transport/ws/v1/events';
+import { registerWsV1, WS_PATH as WS_PATH_V1 } from './transport/ws/v1/registerWsV1';
+import { SessionEventBroadcaster } from './transport/ws/v1/sessionEventBroadcaster';
+import { getServerVersion } from './version';
 import './search/sessionSearchAdapter';
 
 export interface ServerHostIdentity extends OmnicodeHostIdentity {
@@ -147,16 +138,8 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
   const registry = createInstanceRegistry({
     instancesDir: opts.instancesDir ?? join(homeDir, 'server', 'instances'),
   });
-  const registration: InstanceRegistration = await registry.register({
-    pid: process.pid,
-    host,
-    port,
-    startedAt: Date.now(),
-    serverVersion,
-  });
   const exposureClass = classify(host, { bindClass: opts.bindClass });
   if (exposureClass !== 'loopback' && opts.insecureNoTls !== true) {
-    await registration.release();
     throw new Error(
       `Refusing to bind ${host} (${exposureClass}) without TLS; terminate TLS at a reverse proxy or pass --insecure-no-tls.`,
     );
@@ -172,10 +155,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     );
   };
   const onUncaughtException = (err: unknown): void => {
-    logger.error(
-      { err: err instanceof Error ? err : new Error(String(err)) },
-      'uncaughtException',
-    );
+    logger.error({ err: err instanceof Error ? err : new Error(String(err)) }, 'uncaughtException');
   };
   const authFailureLimiter =
     exposureClass === 'loopback' ? undefined : createAuthFailureLimiter({ logger });
@@ -285,7 +265,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     disableRequestLogging: true,
     genReqId: (req) => resolveRequestId(req.headers),
   }) as unknown as FastifyInstance;
-  app.server.requestTimeout = 0;
+  app.server.requestTimeout = 5 * 60_000;
   registerRequestLogging(app);
   app.setValidatorCompiler(() => () => true);
   app.setSerializerCompiler(() => (data) => JSON.stringify(data));
@@ -397,8 +377,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
         publishConfigWarnings(configService.diagnostics());
       }
     })
-    .catch(() => {
-    });
+    .catch(() => {});
 
   async function registerOpenApi(): Promise<void> {
     const { default: swagger } = await import('@fastify/swagger');
@@ -451,7 +430,8 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     enableTerminals,
     guiStore,
     pluginMarketplaceUrl: (() => {
-      const configured = opts.pluginMarketplaceUrl ?? process.env['OMNICODE_PLUGIN_MARKETPLACE_URL'];
+      const configured =
+        opts.pluginMarketplaceUrl ?? process.env['OMNICODE_PLUGIN_MARKETPLACE_URL'];
       if (configured !== undefined) return () => configured;
       return () =>
         `${omnicodeRegionProfile(core.accessor.get(IOAuthService).getRegion()).cdnBase}/plugins/marketplace.json`;
@@ -525,18 +505,18 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     if (opts.disableAuth !== true) {
       const remoteAddress = req.socket.remoteAddress ?? '';
       if (authFailureLimiter?.isBanned(remoteAddress) === true) {
-        logger.warn(
-          { remoteAddress, path: url, reason: 'auth_banned' },
-          'ws upgrade rejected',
-        );
+        logger.warn({ remoteAddress, path: url, reason: 'auth_banned' }, 'ws upgrade rejected');
         (socket as Socket).write('HTTP/1.1 429 Too Many Requests\r\nConnection: close\r\n\r\n');
         (socket as Socket).destroy();
         return;
       }
       const authHeader = req.headers.authorization;
-      const bearerToken = authHeader?.startsWith('Bearer ') ? authHeader.slice('Bearer '.length) : null;
+      const bearerToken = authHeader?.startsWith('Bearer ')
+        ? authHeader.slice('Bearer '.length)
+        : null;
       const protocolToken = extractWsBearerToken(req.headers['sec-websocket-protocol']);
-      const candidate = bearerToken !== null && bearerToken.length > 0 ? bearerToken : protocolToken;
+      const candidate =
+        bearerToken !== null && bearerToken.length > 0 ? bearerToken : protocolToken;
       let ok = false;
       if (candidate !== null) {
         try {
@@ -601,6 +581,13 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     await registerWebAssetRoutes(app, opts.webAssetsDir);
   }
 
+  const registration: InstanceRegistration = await registry.register({
+    pid: process.pid,
+    host,
+    port,
+    startedAt: Date.now(),
+    serverVersion,
+  });
   try {
     await listenWithPortRetry({
       listen: (h, p) => app.listen({ host: h, port: p }),
@@ -611,8 +598,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
   } catch (error) {
     try {
       await close();
-    } catch {
-    }
+    } catch {}
     throw error;
   }
 

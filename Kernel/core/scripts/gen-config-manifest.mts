@@ -2,7 +2,6 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { getConfigOverlayContributions } from '#/app/config/configOverlayContributions';
 import type { ConfigSectionContribution } from '#/app/config/configSectionContributions';
 import { getConfigSectionContributions } from '#/app/config/configSectionContributions';
 import { camelToSnake } from '#/app/config/toml';
@@ -249,11 +248,10 @@ function renderSection(section: ConfigSectionContribution, owner: string | undef
 
 export async function buildConfigManifest(): Promise<string> {
   await import('../src/index.ts');
-  const sections = getConfigSectionContributions().toSorted((a, b) =>
-    a.domain.localeCompare(b.domain),
-  );
-  const overlays = getConfigOverlayContributions();
   const sectionOwners = scanSectionOwners();
+  const sections = getConfigSectionContributions()
+    .filter((section) => sectionOwners.has(section.domain))
+    .toSorted((a, b) => a.domain.localeCompare(b.domain));
   const overlayOwners = scanOverlayOwners();
 
   const out: string[] = [
@@ -267,7 +265,7 @@ export async function buildConfigManifest(): Promise<string> {
     '# commented "# field: type" lines describe the remaining schema fields.',
     '# Values resolve as: default -> config.toml -> env overlay -> memory.',
     '',
-    `# Index (${sections.length} sections · ${overlays.length} overlay(s))`,
+    `# Index (${sections.length} sections · ${overlayOwners.size} overlay(s))`,
   ];
   const width = Math.max(...sections.map((s) => s.domain.length));
   for (const { domain } of sections) {

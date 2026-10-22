@@ -7,7 +7,12 @@
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { truncateToWidth, visibleWidth, type Component, type MarkdownTheme } from '@hilbras/omnicode-tui';
+import {
+  truncateToWidth,
+  visibleWidth,
+  type Component,
+  type MarkdownTheme,
+} from '@hilbras/omnicode-tui';
 import chalk from 'chalk';
 
 import { Markdown } from '#/tui/components/markdown/markdown';
@@ -43,7 +48,14 @@ export class PlanBoxComponent implements Component {
     // parse + wrap output keyed on (text, width), so reusing the same
     // instance means repeated render() calls from the parent Container
     // hit the cache instead of re-parsing on every frame.
-    this.markdown = new Markdown(plan.trim(), 0, 0, markdownTheme, undefined, createMarkdownOptions());
+    this.markdown = new Markdown(
+      plan.trim(),
+      0,
+      0,
+      markdownTheme,
+      undefined,
+      createMarkdownOptions(),
+    );
     this.status = opts?.status;
   }
 
@@ -57,7 +69,9 @@ export class PlanBoxComponent implements Component {
     const safeWidth = Math.max(0, width);
     if (safeWidth <= 0) return [''];
     if (safeWidth < LEFT_MARGIN + 4) {
-      return this.markdown.render(Math.max(1, safeWidth)).map((line) => truncateToWidth(line, safeWidth, '…'));
+      return this.markdown
+        .render(Math.max(1, safeWidth))
+        .map((line) => truncateToWidth(line, safeWidth, '…'));
     }
 
     if (this.cachedLines !== undefined && this.cachedWidth === width) {

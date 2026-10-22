@@ -45,6 +45,7 @@ Use the first line when it is non-empty; otherwise use the second line. In the r
   ```
 
   - `name` (required), `displayName` (optional), `base` (optional: `"dark"` default, or `"light"`), `colors` (each value a 6-digit hex `#RRGGBB`).
+
 - **Partial themes are fine**: any token you leave out falls back to the **base** palette (`dark` by default; set `"base": "light"` for a light theme), so you can recolor just a few tokens or all of them.
 
 ## Source of truth: the docs token reference
@@ -59,27 +60,27 @@ Only set tokens from this set — unknown keys are silently ignored at load. If 
 
 ## Color tokens (what each controls)
 
-| Token | Controls |
-| --- | --- |
-| `primary` | The most-used color: links, inline code, the selected item in nearly every dialog, the focused editor border, plan/"running" badges, spinners |
-| `accent` | Secondary highlight: approval `▶` prefix, device-code box, image placeholder, BTW / queue panes, registry import |
-| `text` | Body text: dialog bodies, todo titles, footer model label, Markdown headings, assistant/tool message bullets, list bullets |
-| `textStrong` | Emphasized / bold text: input dialogs, status messages |
-| `textDim` | Secondary, dimmed text (the most widely used dim shade): thinking, hints, descriptions, completed todos, Markdown quotes, footer status bar |
-| `textMuted` | Faintest text: counters, scroll info, descriptions, Markdown link URLs, code-block borders |
-| `border` | Pane and editor borders, Markdown horizontal rule |
-| `borderFocus` | Focus / attention border (currently only the approval panel) |
-| `success` | Success state: `✓`, "enabled", completed |
-| `warning` | Warning state: auto/yolo badges, stale markers, plan-mode hint |
-| `error` | Error state: error messages, failed tool output |
-| `diffAdded` | Diff added lines |
-| `diffRemoved` | Diff removed lines |
-| `diffAddedStrong` | Diff intra-line changed words, added (bold) |
-| `diffRemovedStrong` | Diff intra-line changed words, removed (bold) |
-| `diffGutter` | Diff line-number gutter |
-| `diffMeta` | Diff meta / hunk headers |
-| `roleUser` | User message bullet and text, skill-activation name (the one role color with its own hue) |
-| `shellMode` | Shell mode (`!`) prompt, editor border, and the echoed `$ command` line |
+| Token               | Controls                                                                                                                                      |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `primary`           | The most-used color: links, inline code, the selected item in nearly every dialog, the focused editor border, plan/"running" badges, spinners |
+| `accent`            | Secondary highlight: approval `▶` prefix, device-code box, image placeholder, BTW / queue panes, registry import                              |
+| `text`              | Body text: dialog bodies, todo titles, footer model label, Markdown headings, assistant/tool message bullets, list bullets                    |
+| `textStrong`        | Emphasized / bold text: input dialogs, status messages                                                                                        |
+| `textDim`           | Secondary, dimmed text (the most widely used dim shade): thinking, hints, descriptions, completed todos, Markdown quotes, footer status bar   |
+| `textMuted`         | Faintest text: counters, scroll info, descriptions, Markdown link URLs, code-block borders                                                    |
+| `border`            | Pane and editor borders, Markdown horizontal rule                                                                                             |
+| `borderFocus`       | Focus / attention border (currently only the approval panel)                                                                                  |
+| `success`           | Success state: `✓`, "enabled", completed                                                                                                      |
+| `warning`           | Warning state: auto/yolo badges, stale markers, plan-mode hint                                                                                |
+| `error`             | Error state: error messages, failed tool output                                                                                               |
+| `diffAdded`         | Diff added lines                                                                                                                              |
+| `diffRemoved`       | Diff removed lines                                                                                                                            |
+| `diffAddedStrong`   | Diff intra-line changed words, added (bold)                                                                                                   |
+| `diffRemovedStrong` | Diff intra-line changed words, removed (bold)                                                                                                 |
+| `diffGutter`        | Diff line-number gutter                                                                                                                       |
+| `diffMeta`          | Diff meta / hunk headers                                                                                                                      |
+| `roleUser`          | User message bullet and text, skill-activation name (the one role color with its own hue)                                                     |
+| `shellMode`         | Shell mode (`!`) prompt, editor border, and the echoed `$ command` line                                                                       |
 
 ## Workflow
 
@@ -120,7 +121,7 @@ Only set tokens from this set — unknown keys are silently ignored at load. If 
 
 - The `/theme` picker re-scans the themes directory every time it opens, so a newly added file shows up **without restarting** — tell the user to run `/theme` and choose `Custom: <name>`.
 - Or set it in `tui.toml`: `theme = "<name>"`.
-- **Editing the active theme**: changes to the theme that's *currently in use* are not auto-reloaded. Tell the user to run **`/reload-tui`** (or switch to another theme and back). Re-selecting the **same** theme in `/theme` is a no-op ("Theme unchanged").
+- **Editing the active theme**: changes to the theme that's _currently in use_ are not auto-reloaded. Tell the user to run **`/reload-tui`** (or switch to another theme and back). Re-selecting the **same** theme in `/theme` is a no-op ("Theme unchanged").
 
 ## Don'ts
 

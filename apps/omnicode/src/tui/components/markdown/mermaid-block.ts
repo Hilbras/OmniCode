@@ -8,15 +8,17 @@ import {
   type TuiMouseEventResult,
 } from '@hilbras/omnicode-tui';
 
-import { currentTheme } from '#/tui/theme';
 import type { OmnicodeMarkdownOptions } from '#/tui/components/markdown/markdown';
-import {
-  isMarkdownAltScreenActive,
-  requestMarkdownRender,
-} from '#/tui/utils/markdown-options';
+import { currentTheme } from '#/tui/theme';
+import { isMarkdownAltScreenActive, requestMarkdownRender } from '#/tui/utils/markdown-options';
 import { copyTextToClipboard } from '#/utils/clipboard/clipboard-text';
 
-import { colorMermaidArt, COULD_NOT_DRAW_MESSAGE, drawMermaid, undrawnDiagramReason } from './mermaid-art';
+import {
+  colorMermaidArt,
+  COULD_NOT_DRAW_MESSAGE,
+  drawMermaid,
+  undrawnDiagramReason,
+} from './mermaid-art';
 
 const COPY_SOURCE_LABEL = '[Copy Source]';
 const COPIED_LABEL = '[Copied]';
@@ -78,7 +80,14 @@ export class MermaidBlock implements Component {
             ? `mermaid diagram too wide to render (needs ${draw.art.width} columns)`
             : undrawnDiagramReason(this.fenceBody);
       content.push(currentTheme.fg('warning', truncateToWidth(reason, contentWidth, '…')));
-      this.codeMarkdown ??= new PiMarkdown(this.fenceRaw, 0, 0, this.theme, undefined, this.options);
+      this.codeMarkdown ??= new PiMarkdown(
+        this.fenceRaw,
+        0,
+        0,
+        this.theme,
+        undefined,
+        this.options,
+      );
       content.push(...this.codeMarkdown.render(contentWidth));
     }
     if (showButton) {
@@ -100,7 +109,11 @@ export class MermaidBlock implements Component {
     if (!this.showsCopyButton()) return undefined;
     const lines = this.render(event.width);
     if (lines.length === 0) return undefined;
-    const label = truncateToWidth(this.copyLabel(), Math.max(1, event.width - this.paddingX * 2), '…');
+    const label = truncateToWidth(
+      this.copyLabel(),
+      Math.max(1, event.width - this.paddingX * 2),
+      '…',
+    );
     const x = event.x - this.paddingX;
     const onLabel = event.y === lines.length - 1 && x >= 0 && x < visibleWidth(label);
 

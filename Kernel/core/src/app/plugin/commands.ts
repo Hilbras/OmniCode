@@ -49,7 +49,7 @@ export async function loadPluginCommand(input: {
 }
 
 export function expandCommandArguments(body: string, args: string): string {
-  const replaced = body.replaceAll('$ARGUMENTS', args);
+  const replaced = body.replaceAll('$ARGUMENTS', () => args);
   if (!body.includes('$ARGUMENTS') && args.length > 0) {
     return `${replaced}\n\nARGUMENTS: ${args}`;
   }

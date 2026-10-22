@@ -516,6 +516,44 @@ omnicode provider test cline
 omnicode provider test my-gateway --model my-gateway/auto --timeout 30000
 ```
 
+### `omnicode mcp`
+
+在终端中管理 MCP server——相当于 TUI 中 `/mcp` 与 `/mcp-config` 的非交互版本。它读写的是同一批 `mcp.json` 文件，因此在这里配置的 server 就是 Agent 会连接的 server。
+
+```sh
+omnicode mcp <action> [options]
+```
+
+| 操作 | 说明 |
+| --- | --- |
+| `omnicode mcp list` | 列出已配置的 server，含传输方式、状态与来源。只读取，不连接任何 server |
+| `omnicode mcp status [name]` | 连接 server 并报告是否响应。探测失败时以非零状态码退出 |
+| `omnicode mcp tools <name>` | 通过一次真实连接列出某个 server 提供的工具 |
+| `omnicode mcp inspect <name>` | 查看某个 server：已保存的配置与授权状态 |
+| `omnicode mcp add <name>` | 向用户级配置新增一个 server |
+| `omnicode mcp remove <name>` | 从用户级配置删除一个 server |
+| `omnicode mcp enable <name>` | 启用某个 server，不改动它的配置 |
+| `omnicode mcp disable <name>` | 禁用某个 server，但不删除它 |
+
+`list`、`status`、`tools` 与 `inspect` 支持 `--json`；所有操作都支持 `--cwd <dir>`，用于把某个目录的项目级 server 一并纳入。
+
+```sh
+omnicode mcp list
+omnicode mcp status
+omnicode mcp add docs --command npx --arg -y --arg @modelcontextprotocol/server-filesystem --arg /tmp
+omnicode mcp add linear --transport http --url https://mcp.linear.app/mcp
+omnicode mcp disable docs
+omnicode mcp remove docs
+```
+
+`add` 中，本地 server 使用 `--command` 搭配可重复的 `--arg` 与 `--env`，远程 server 使用 `--url` 搭配可重复的 `--header` 与 `--bearer-token-env`。`--no-inherit-env` 让子进程拿不到 Omnicode 的环境；`--allow-private-network` 允许指向内网地址的远程端点。完整选项见 [Model Context Protocol](../customization/mcp.md#命令行)。
+
+stdio server 在这里只是被登记，不会执行任何命令；只有会话真正连接时才会启动它。
+
+::: warning 注意
+`--env KEY=VALUE` 的值会以明文写入 `mcp.json`。远程 server 建议用 `--bearer-token-env`，本地 server 建议用 `inheritEnv: false`。
+:::
+
 ### `omnicode auth`
 
 查看供应商是否已登录，并管理其背后的凭证。[`omnicode provider auth`](#omnicode-provider-auth-providerid) 面向脚本——它把密钥作为参数传入；本命令面向交互——它一眼列出每个供应商的状态，并以隐藏输入的方式在终端中读取新密钥，因此密钥不会进入 shell 历史、进程表，也不会出现在终端回滚截图里。

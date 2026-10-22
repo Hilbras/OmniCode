@@ -6,7 +6,6 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { BrowserController } from '#/features/computerUse/browser/browserController';
-import { CdpBrowserBackend } from '#/features/computerUse/browser/cdpBackend';
 import {
   BrowserLaunchError,
   findChromium,
@@ -14,6 +13,7 @@ import {
   launchBrowser,
   type LaunchedBrowser,
 } from '#/features/computerUse/browser/browserLauncher';
+import { CdpBrowserBackend } from '#/features/computerUse/browser/cdpBackend';
 
 describe('findChromium', () => {
   it('finds a cached chromium without a package dependency', async () => {
@@ -117,9 +117,7 @@ describe('BrowserController against a real browser', () => {
     const controller = new BrowserController({ backend });
     await backend.launch();
 
-    await expect(controller.navigate('javascript:alert(1)')).rejects.toThrow(
-      /Only http and https/,
-    );
+    await expect(controller.navigate('javascript:alert(1)')).rejects.toThrow(/Only http and https/);
     expect(controller.currentUrl).toBeUndefined();
   }, 90_000);
 

@@ -19,8 +19,9 @@ export const McpServerStdioConfigSchema = z.object({
   command: z.string().min(1),
   args: z.array(z.string()).optional(),
   env: StringRecordSchema.optional(),
+  inheritEnv: z.boolean().optional(),
   cwd: z.string().optional(),
-  executor: z.enum(['local', 'kaos']).optional(),
+  executor: z.literal('local').optional(),
   runtime_id: z.string().min(1).optional(),
   ...McpServerCommonFields,
 });
@@ -33,6 +34,7 @@ export const McpServerHttpConfigSchema = z.object({
   headers: StringRecordSchema.optional(),
   auth: z.literal('oauth').optional(),
   bearerTokenEnvVar: z.string().min(1).optional(),
+  allowPrivateNetwork: z.boolean().optional(),
   ...McpServerCommonFields,
 });
 
@@ -44,6 +46,7 @@ export const McpServerSseConfigSchema = z.object({
   headers: StringRecordSchema.optional(),
   auth: z.literal('oauth').optional(),
   bearerTokenEnvVar: z.string().min(1).optional(),
+  allowPrivateNetwork: z.boolean().optional(),
   ...McpServerCommonFields,
 });
 
@@ -66,3 +69,15 @@ export const McpServerConfigSchema = z.preprocess((raw) => {
 }, McpServerConfigDiscriminatedSchema);
 
 export type McpServerConfig = z.infer<typeof McpServerConfigSchema>;
+
+export function mergeMcpServerConfig(
+  stored: McpServerConfig,
+  incoming: McpServerConfig,
+): McpServerConfig {
+  const merged: Record<string, unknown> = { ...stored };
+  for (const [key, value] of Object.entries(incoming)) {
+    if (value === undefined) continue;
+    merged[key] = value;
+  }
+  return merged as McpServerConfig;
+}

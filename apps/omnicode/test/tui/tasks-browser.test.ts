@@ -1,14 +1,14 @@
-import type { Terminal } from '@hilbras/omnicode-tui';
 import type { BackgroundTaskInfo, BackgroundTaskStatus, Event } from '@hilbras/omnicode-api';
+import type { Terminal } from '@hilbras/omnicode-tui';
 import { describe, expect, it, vi } from 'vitest';
 
+import { AgentActivityViewer } from '@/tui/components/dialogs/agent-activity-viewer';
+import { TaskOutputViewer } from '@/tui/components/dialogs/task-output-viewer';
 import {
   TasksBrowserApp,
   type TasksBrowserProps,
   type TasksFilter,
 } from '@/tui/components/dialogs/tasks-browser';
-import { AgentActivityViewer } from '@/tui/components/dialogs/agent-activity-viewer';
-import { TaskOutputViewer } from '@/tui/components/dialogs/task-output-viewer';
 import { SubagentActivityStore } from '@/tui/controllers/subagent-activity-store';
 import { TasksBrowserController } from '@/tui/controllers/tasks-browser';
 import { darkColors } from '@/tui/theme/colors';
@@ -436,13 +436,7 @@ describe('TasksBrowserApp — full-screen rendering', () => {
   });
 
   it('renders without throwing for every BackgroundTaskStatus', () => {
-    const statuses: BackgroundTaskStatus[] = [
-      'running',
-      'completed',
-      'failed',
-      'killed',
-      'lost',
-    ];
+    const statuses: BackgroundTaskStatus[] = ['running', 'completed', 'failed', 'killed', 'lost'];
     for (const status of statuses) {
       const props = makeProps({
         tasks: [task({ taskId: 'bash-aaaaaaaa', status })],

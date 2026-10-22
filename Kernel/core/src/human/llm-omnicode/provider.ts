@@ -1,11 +1,16 @@
 import { createProvider } from '#/llm/provider/definition';
 import { anthropicBetaBase } from '#/llm/requester/bases/anthropic/requester';
-import { openAIBase } from '#/llm/requester/bases/openai/requester';
 import { openAIResponsesBase } from '#/llm/requester/bases/openai-responses/requester';
+import { openAIBase } from '#/llm/requester/bases/openai/requester';
 
-import { omnicodeAnthropicTrait, omnicodeConnection, omnicodeOpenAITrait, omnicodeResponsesTrait } from './trait';
 import { classifyOmnicodeQuotaError } from './errors';
 import { omnicodeMediaContribution } from './media';
+import {
+  omnicodeAnthropicTrait,
+  omnicodeConnection,
+  omnicodeOpenAITrait,
+  omnicodeResponsesTrait,
+} from './trait';
 
 export const omnicodeProvider = createProvider({
   id: 'omnicode',

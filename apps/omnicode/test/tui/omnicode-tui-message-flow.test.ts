@@ -4,12 +4,6 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
-import {
-  deleteAllKittyImages,
-  resetCapabilitiesCache,
-  setCapabilities,
-  type TuiMouseEvent,
-} from '@hilbras/omnicode-tui';
 import type {
   ApprovalRequest,
   ApprovalResponse,
@@ -17,61 +11,65 @@ import type {
   GoalSnapshot,
   Session,
 } from '@hilbras/omnicode-api';
+import {
+  deleteAllKittyImages,
+  resetCapabilitiesCache,
+  setCapabilities,
+  type TuiMouseEvent,
+} from '@hilbras/omnicode-tui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ApprovalPanelComponent } from '#/tui/components/dialogs/approval-panel';
-import { EffortSelectorComponent } from '#/tui/components/dialogs/effort-selector';
 import { omnicodeCodePluginMarketplaceUrl } from '#/constant/app';
-import { MOON_SPINNER_FRAMES } from '#/tui/constant/rendering';
-import {
-  AgentSwarmProgressComponent,
-  agentSwarmGridHeightForTerminalRows,
-} from '#/tui/components/messages/agent-swarm-progress';
-import { AssistantMessageComponent } from '#/tui/components/messages/assistant-message';
-import { StepSummaryComponent } from '#/tui/components/messages/step-summary';
-import { ToolCallComponent } from '#/tui/components/messages/tool-call';
-import {
-  groupTurns,
-  TRANSCRIPT_KEEP_RECENT_ASSISTANT,
-  TRANSCRIPT_KEEP_RECENT_ASSISTANT_COMPLETED,
-  TRANSCRIPT_KEEP_RECENT_STEPS,
-} from '#/tui/utils/transcript-window';
-import { BtwPanelComponent } from '#/tui/components/panes/btw-panel';
-import { ThinkingComponent } from '#/tui/components/messages/thinking';
-import { WelcomeComponent } from '#/tui/components/chrome/welcome';
-import { ModelSelectorComponent } from '#/tui/components/dialogs/model-selector';
-import { TabbedModelSelectorComponent } from '#/tui/components/dialogs/tabbed-model-selector';
-import { PermissionSelectorComponent } from '#/tui/components/dialogs/permission-selector';
-import { UndoSelectorComponent } from '#/tui/components/dialogs/undo-selector';
-import {
-  PluginInstallTrustConfirmComponent,
-  PluginMcpSelectorComponent,
-  PluginRemoveConfirmComponent,
-  PluginsPanelComponent,
-} from '#/tui/components/dialogs/plugins-selector';
-import { OmnicodeTUI, type OmnicodeTUIStartupInput, type TUIState } from '#/tui/omnicode-tui';
-import type { SessionReplayRenderer } from '#/tui/controllers/session-replay';
-import type { StreamingUIController } from '#/tui/controllers/streaming-ui';
-import type { SurveyController } from '#/tui/controllers/survey-controller';
 import { handleFeedbackCommand } from '#/tui/commands/info';
-import { copyTextToClipboard } from '#/utils/clipboard/clipboard-text';
-import { openUrl } from '#/utils/open-url';
-import { readSurveyLastShownTime } from '#/utils/survey-state-store';
-import { createFeedbackArchivePath } from '../../src/feedback/archive';
-import { packageCodebase, scanCodebase } from '../../src/feedback/codebase';
-import { uploadArchive } from '../../src/feedback/upload';
 import {
   promptFeedbackAttachment,
   promptFeedbackInput,
   runModelSelector,
   type FeedbackPromptResult,
 } from '#/tui/commands/prompts';
+import { WelcomeComponent } from '#/tui/components/chrome/welcome';
+import { ApprovalPanelComponent } from '#/tui/components/dialogs/approval-panel';
+import { EffortSelectorComponent } from '#/tui/components/dialogs/effort-selector';
+import { ModelSelectorComponent } from '#/tui/components/dialogs/model-selector';
+import { PermissionSelectorComponent } from '#/tui/components/dialogs/permission-selector';
+import {
+  PluginInstallTrustConfirmComponent,
+  PluginMcpSelectorComponent,
+  PluginRemoveConfirmComponent,
+  PluginsPanelComponent,
+} from '#/tui/components/dialogs/plugins-selector';
+import { TabbedModelSelectorComponent } from '#/tui/components/dialogs/tabbed-model-selector';
+import { UndoSelectorComponent } from '#/tui/components/dialogs/undo-selector';
+import {
+  AgentSwarmProgressComponent,
+  agentSwarmGridHeightForTerminalRows,
+} from '#/tui/components/messages/agent-swarm-progress';
+import { AssistantMessageComponent } from '#/tui/components/messages/assistant-message';
+import { StepSummaryComponent } from '#/tui/components/messages/step-summary';
+import { ThinkingComponent } from '#/tui/components/messages/thinking';
+import { ToolCallComponent } from '#/tui/components/messages/tool-call';
+import { BtwPanelComponent } from '#/tui/components/panes/btw-panel';
+import { MOON_SPINNER_FRAMES } from '#/tui/constant/rendering';
+import type { SessionReplayRenderer } from '#/tui/controllers/session-replay';
+import type { StreamingUIController } from '#/tui/controllers/streaming-ui';
+import type { SurveyController } from '#/tui/controllers/survey-controller';
+import { OmnicodeTUI, type OmnicodeTUIStartupInput, type TUIState } from '#/tui/omnicode-tui';
 import type { QueuedMessage, TranscriptEntry } from '#/tui/types';
 import type { ImageAttachmentStore } from '#/tui/utils/image-attachment-store';
+import { extractMediaAttachments, type ExtractionResult } from '#/tui/utils/image-placeholder';
 import {
-  extractMediaAttachments,
-  type ExtractionResult,
-} from '#/tui/utils/image-placeholder';
+  groupTurns,
+  TRANSCRIPT_KEEP_RECENT_ASSISTANT,
+  TRANSCRIPT_KEEP_RECENT_ASSISTANT_COMPLETED,
+  TRANSCRIPT_KEEP_RECENT_STEPS,
+} from '#/tui/utils/transcript-window';
+import { copyTextToClipboard } from '#/utils/clipboard/clipboard-text';
+import { openUrl } from '#/utils/open-url';
+import { readSurveyLastShownTime } from '#/utils/survey-state-store';
+
+import { createFeedbackArchivePath } from '../../src/feedback/archive';
+import { packageCodebase, scanCodebase } from '../../src/feedback/codebase';
+import { uploadArchive } from '../../src/feedback/upload';
 
 vi.mock('#/tui/commands/prompts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('#/tui/commands/prompts')>();
@@ -308,6 +306,8 @@ function makeHarness(session = makeSession(), overrides: Record<string, unknown>
     forkSession: vi.fn(async () => session),
     reloadSession: vi.fn(async () => session),
     listSessions: vi.fn(async () => []),
+    listMcpServers: vi.fn(async () => []),
+    listMcpServerAuthStatuses: vi.fn(async () => []),
     exportSession: vi.fn(async () => ({
       zipPath: '/tmp/fake-session.zip',
       entries: ['manifest.json', 'state.json'],
@@ -350,12 +350,10 @@ function makeHarness(session = makeSession(), overrides: Record<string, unknown>
       sessionId?: string;
     }) => Promise<unknown[]>;
     Object.assign(harness, {
-      listSessionsPage: vi.fn(
-        async (input: { workDir?: string; sessionId?: string } = {}) => ({
-          items: await listSessions({ workDir: input.workDir, sessionId: input.sessionId }),
-          nextCursor: undefined,
-        }),
-      ),
+      listSessionsPage: vi.fn(async (input: { workDir?: string; sessionId?: string } = {}) => ({
+        items: await listSessions({ workDir: input.workDir, sessionId: input.sessionId }),
+        nextCursor: undefined,
+      })),
     });
   }
   return harness;
@@ -371,7 +369,10 @@ async function makeDriver(
   harness: ReturnType<typeof makeHarness>;
 }> {
   const harness = makeHarness(session, harnessOverrides);
-  const driver = new OmnicodeTUI(harness as never, startupInput ?? makeStartupInput()) as unknown as MessageDriver;
+  const driver = new OmnicodeTUI(
+    harness as never,
+    startupInput ?? makeStartupInput(),
+  ) as unknown as MessageDriver;
   vi.spyOn(driver.state.ui, 'requestRender').mockImplementation(() => {});
   vi.spyOn(driver.state.terminal, 'setProgress').mockImplementation(() => {});
   driver.persistInputHistory = vi.fn(async () => {});
@@ -616,9 +617,7 @@ describe('OmnicodeTUI message flow', () => {
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     expect(harness.createSession).not.toHaveBeenCalled();
 
@@ -642,15 +641,18 @@ describe('OmnicodeTUI message flow', () => {
       {
         listWorkspaceSkills: vi.fn(async () => [
           { name: 'review', description: 'Review skill', path: '/tmp/review', source: 'user' },
-          { name: 'security', description: 'Security skill', path: '/tmp/security', source: 'user' },
+          {
+            name: 'security',
+            description: 'Security skill',
+            path: '/tmp/security',
+            source: 'user',
+          },
         ]),
         listPluginCommands: vi.fn(async () => []),
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('please /skill:review and /skill:security this change');
 
@@ -675,15 +677,18 @@ describe('OmnicodeTUI message flow', () => {
       {
         listWorkspaceSkills: vi.fn(async () => [
           { name: 'review', description: 'Review skill', path: '/tmp/review', source: 'user' },
-          { name: 'security', description: 'Security skill', path: '/tmp/security', source: 'user' },
+          {
+            name: 'security',
+            description: 'Security skill',
+            path: '/tmp/security',
+            source: 'user',
+          },
         ]),
         listPluginCommands: vi.fn(async () => []),
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('/skill:review check this /skill:security');
 
@@ -712,9 +717,7 @@ describe('OmnicodeTUI message flow', () => {
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('/skill:review check /skill:review');
 
@@ -737,15 +740,18 @@ describe('OmnicodeTUI message flow', () => {
       {
         listWorkspaceSkills: vi.fn(async () => [
           { name: 'review', description: 'Review skill', path: '/tmp/review', source: 'user' },
-          { name: 'security', description: 'Security skill', path: '/tmp/security', source: 'user' },
+          {
+            name: 'security',
+            description: 'Security skill',
+            path: '/tmp/security',
+            source: 'user',
+          },
         ]),
         listPluginCommands: vi.fn(async () => []),
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
     const imageStore = (driver as unknown as { imageStore: ImageAttachmentStore }).imageStore;
     const attachment = imageStore.addImage(new Uint8Array([0xaa, 0xbb]), 'image/png', 1, 1);
 
@@ -774,15 +780,18 @@ describe('OmnicodeTUI message flow', () => {
       {
         listWorkspaceSkills: vi.fn(async () => [
           { name: 'review', description: 'Review skill', path: '/tmp/review', source: 'user' },
-          { name: 'security', description: 'Security skill', path: '/tmp/security', source: 'user' },
+          {
+            name: 'security',
+            description: 'Security skill',
+            path: '/tmp/security',
+            source: 'user',
+          },
         ]),
         listPluginCommands: vi.fn(async () => []),
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('/skill:review\ncheck this /skill:security');
 
@@ -811,17 +820,14 @@ describe('OmnicodeTUI message flow', () => {
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('/dance please use /skill:review');
 
     await vi.waitFor(() => {
-      expect(session.promptWithSkills).toHaveBeenCalledWith(
-        '/dance please use /skill:review',
-        [{ name: 'review' }],
-      );
+      expect(session.promptWithSkills).toHaveBeenCalledWith('/dance please use /skill:review', [
+        { name: 'review' },
+      ]);
     });
     expect(session.prompt).not.toHaveBeenCalled();
   });
@@ -847,9 +853,7 @@ describe('OmnicodeTUI message flow', () => {
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
     await (driver as unknown as { ensureSession(): Promise<unknown> }).ensureSession();
     driver.state.appState.goal = makeActiveGoalSnapshot();
 
@@ -875,16 +879,19 @@ describe('OmnicodeTUI message flow', () => {
       {
         listWorkspaceSkills: vi.fn(async () => [
           { name: 'review', description: 'Review skill', path: '/tmp/review', source: 'user' },
-          { name: 'security', description: 'Security skill', path: '/tmp/security', source: 'user' },
+          {
+            name: 'security',
+            description: 'Security skill',
+            path: '/tmp/security',
+            source: 'user',
+          },
         ]),
         listPluginCommands: vi.fn(async () => []),
       },
       startupInput,
     );
     await (driver as unknown as { ensureSession(): Promise<unknown> }).ensureSession();
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
     driver.state.appState.goal = makeActiveGoalSnapshot();
 
     driver.handleUserInput('/skill:review check this /skill:security');
@@ -922,9 +929,7 @@ describe('OmnicodeTUI message flow', () => {
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('please /skill:review');
 
@@ -1053,9 +1058,10 @@ describe('OmnicodeTUI message flow', () => {
     ]);
     expect(turns[1]!.entries[2]!.hookResult).toBe(true);
     expect(turns[1]!.entries[3]!.content).toBe('please /skill:review and /skill:security');
-    expect(
-      turns[1]!.entries.slice(0, 2).map((entry) => entry.bundledWithPrompt),
-    ).toEqual([true, true]);
+    expect(turns[1]!.entries.slice(0, 2).map((entry) => entry.bundledWithPrompt)).toEqual([
+      true,
+      true,
+    ]);
     expect(turns[2]!.entries.map((entry) => entry.kind)).toEqual(['skill_activation', 'user']);
     expect(turns[2]!.entries[1]!.content).toBe('please /commit');
   });
@@ -1064,14 +1070,35 @@ describe('OmnicodeTUI message flow', () => {
     const { driver } = await makeDriver(makeSession());
     const notifications = driver.sessionEventHandler.notifications;
     notifications.setEnabled(true);
-    notifications.handleEvent({ type: 'turn.started', agentId: 'main', sessionId: 's1', turnId: 1, origin: { kind: 'user' } });
+    notifications.handleEvent({
+      type: 'turn.started',
+      agentId: 'main',
+      sessionId: 's1',
+      turnId: 1,
+      origin: { kind: 'user' },
+    });
     for (const [toolCallId, message] of [
       ['n1', 'first update'],
       ['n2', 'second update'],
       ['n3', 'third update'],
     ] as const) {
-      notifications.handleEvent({ type: 'tool.call.started', agentId: 'main', sessionId: 's1', turnId: 1, toolCallId, name: 'NotifyUser', args: { message } });
-      notifications.handleEvent({ type: 'tool.result', agentId: 'main', sessionId: 's1', turnId: 1, toolCallId, output: 'Update shown to the user.' });
+      notifications.handleEvent({
+        type: 'tool.call.started',
+        agentId: 'main',
+        sessionId: 's1',
+        turnId: 1,
+        toolCallId,
+        name: 'NotifyUser',
+        args: { message },
+      });
+      notifications.handleEvent({
+        type: 'tool.result',
+        agentId: 'main',
+        sessionId: 's1',
+        turnId: 1,
+        toolCallId,
+        output: 'Update shown to the user.',
+      });
     }
     driver.state.editor.setText('unsent follow-up');
     const cursor = driver.state.editor.getCursor();
@@ -1391,9 +1418,7 @@ describe('OmnicodeTUI message flow', () => {
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     let release!: () => void;
     const heldPrompt = new Promise<void>((resolve) => {
@@ -1438,7 +1463,10 @@ describe('OmnicodeTUI message flow', () => {
 
     let resolveCreate!: (s: ReturnType<typeof makeSession>) => void;
     harness.createSession.mockImplementationOnce(
-      () => new Promise((resolve) => { resolveCreate = resolve; }),
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = resolve;
+        }),
     );
 
     const ensure = (driver as unknown as { ensureSession(): Promise<unknown> }).ensureSession;
@@ -1463,7 +1491,10 @@ describe('OmnicodeTUI message flow', () => {
     let resolveCreate!: (s: ReturnType<typeof makeSession>) => void;
     harness.createSession
       .mockImplementationOnce(
-        () => new Promise((resolve) => { resolveCreate = resolve; }),
+        () =>
+          new Promise((resolve) => {
+            resolveCreate = resolve;
+          }),
       )
       .mockResolvedValueOnce(newSession);
     const ensure = (driver as unknown as { ensureSession(): Promise<unknown> }).ensureSession;
@@ -1494,7 +1525,10 @@ describe('OmnicodeTUI message flow', () => {
 
     let resolveCreate!: (s: ReturnType<typeof makeSession>) => void;
     harness.createSession.mockImplementationOnce(
-      () => new Promise((resolve) => { resolveCreate = resolve; }),
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = resolve;
+        }),
     );
 
     driver.handleUserInput('hello');
@@ -1541,7 +1575,10 @@ describe('OmnicodeTUI message flow', () => {
 
     let resolveCreate!: (s: ReturnType<typeof makeSession>) => void;
     harness.createSession.mockImplementationOnce(
-      () => new Promise((resolve) => { resolveCreate = resolve; }),
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = resolve;
+        }),
     );
 
     driver.handleUserInput('hello');
@@ -1575,7 +1612,10 @@ describe('OmnicodeTUI message flow', () => {
 
     let resolveCreate!: (s: ReturnType<typeof makeSession>) => void;
     harness.createSession.mockImplementationOnce(
-      () => new Promise((resolve) => { resolveCreate = resolve; }),
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = resolve;
+        }),
     );
     const ensure = (driver as unknown as { ensureSession(): Promise<unknown> }).ensureSession;
     const pending = ensure.call(driver);
@@ -1612,7 +1652,10 @@ describe('OmnicodeTUI message flow', () => {
 
     let resolveCreate!: (s: ReturnType<typeof makeSession>) => void;
     harness.createSession.mockImplementationOnce(
-      () => new Promise((resolve) => { resolveCreate = resolve; }),
+      () =>
+        new Promise((resolve) => {
+          resolveCreate = resolve;
+        }),
     );
 
     driver.handleUserInput('hello');
@@ -1627,7 +1670,9 @@ describe('OmnicodeTUI message flow', () => {
     resolveCreate(lazySession);
     await vi.waitFor(() => {
       expect(lazySession.prompt).toHaveBeenCalledWith('hello', { promptId: undefined });
-      expect(stripSgr(renderTranscript(driver))).toContain('Cannot switch sessions while streaming');
+      expect(stripSgr(renderTranscript(driver))).toContain(
+        'Cannot switch sessions while streaming',
+      );
     });
     expect(harness.resumeSession).not.toHaveBeenCalled();
     expect(driver.getCurrentSessionId()).toBe('ses-lazy');
@@ -1701,9 +1746,7 @@ describe('OmnicodeTUI message flow', () => {
     await vi.waitFor(() => {
       expect(session.prompt).toHaveBeenCalledWith('hello', { promptId: undefined });
     });
-    expect(harness.createSession).toHaveBeenCalledWith(
-      expect.objectContaining({ planMode: true }),
-    );
+    expect(harness.createSession).toHaveBeenCalledWith(expect.objectContaining({ planMode: true }));
   });
 
   it('queues a bash command submitted while the lazy session is being created (v2 engine)', async () => {
@@ -1724,9 +1767,7 @@ describe('OmnicodeTUI message flow', () => {
       expect(session.prompt).toHaveBeenCalledWith('hello', { promptId: undefined });
     });
     expect(runShellCommand).not.toHaveBeenCalled();
-    expect(driver.state.queuedMessages).toEqual([
-      { text: 'ls', agentId: 'main', mode: 'bash' },
-    ]);
+    expect(driver.state.queuedMessages).toEqual([{ text: 'ls', agentId: 'main', mode: 'bash' }]);
   });
 
   it('opens /settings without creating a session (v2 engine)', async () => {
@@ -1766,9 +1807,7 @@ describe('OmnicodeTUI message flow', () => {
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('hello');
     driver.handleUserInput('/skill:my-skill');
@@ -2109,7 +2148,10 @@ describe('OmnicodeTUI message flow', () => {
 
     let resolvePermission!: () => void;
     session.setPermission.mockImplementationOnce(
-      () => new Promise<void>((resolve) => { resolvePermission = resolve; }),
+      () =>
+        new Promise<void>((resolve) => {
+          resolvePermission = resolve;
+        }),
     );
 
     const ensure = (driver as unknown as { ensureSession(): Promise<unknown> }).ensureSession;
@@ -2132,25 +2174,28 @@ describe('OmnicodeTUI message flow', () => {
     expect(harness.createSession).toHaveBeenCalledTimes(1);
   });
 
-  it('lists MCP servers before the lazy session via the workspace view (v2 engine)', async () => {
+  it('lists MCP servers before the lazy session via the managed view (v2 engine)', async () => {
     const session = makeSession({ id: 'ses-lazy' });
-    const listWorkspaceMcpServers = vi.fn(async () => [
-      { name: 'my-mcp', status: 'connected', transport: 'stdio', tools: [] },
+    const listMcpServers = vi.fn(async () => [
+      {
+        name: 'my-mcp',
+        transport: 'stdio',
+        command: 'npx',
+        source: 'global',
+        origin: '/home/user/.omnicode/mcp.json',
+        mutable: true,
+      },
     ]);
     const startupInput: OmnicodeTUIStartupInput = {
       ...makeStartupInput(),
       cliOptions: { ...makeStartupInput().cliOptions },
     };
-    const { driver, harness } = await makeDriver(
-      session,
-      { listWorkspaceMcpServers },
-      startupInput,
-    );
+    const { driver, harness } = await makeDriver(session, { listMcpServers }, startupInput);
 
     driver.handleUserInput('/mcp');
 
     await vi.waitFor(() => {
-      expect(listWorkspaceMcpServers).toHaveBeenCalledWith('/tmp/proj-a');
+      expect(listMcpServers).toHaveBeenCalledWith({ cwd: '/tmp/proj-a' });
     });
     expect(harness.createSession).not.toHaveBeenCalled();
     expect(session.listMcpServers).not.toHaveBeenCalled();
@@ -2329,7 +2374,9 @@ command = "vim"
     vi.mocked(promptFeedbackInput).mockImplementation(async () => ({ value: 'useful feedback' }));
     vi.mocked(promptFeedbackAttachment).mockImplementation(async () => 'logs');
     harness.auth.submitFeedback.mockResolvedValueOnce({ kind: 'ok', feedbackId: 3 });
-    harness.listSessions.mockResolvedValueOnce([{ id: 'ses-1', sessionDir: '/tmp/session-a' }] as never);
+    harness.listSessions.mockResolvedValueOnce([
+      { id: 'ses-1', sessionDir: '/tmp/session-a' },
+    ] as never);
 
     const zipPath = await makeExportedSessionZip();
     let resolveExport!: () => void;
@@ -2460,7 +2507,9 @@ command = "vim"
     vi.mocked(promptFeedbackInput).mockImplementation(async () => ({ value: 'useful feedback' }));
     vi.mocked(promptFeedbackAttachment).mockImplementation(async () => 'logs+codebase');
     harness.auth.submitFeedback.mockResolvedValueOnce({ kind: 'ok', feedbackId: 3 });
-    harness.listSessions.mockResolvedValueOnce([{ id: 'ses-1', sessionDir: '/tmp/session-a' }] as never);
+    harness.listSessions.mockResolvedValueOnce([
+      { id: 'ses-1', sessionDir: '/tmp/session-a' },
+    ] as never);
     const sessionZipPath = await makeExportedSessionZip();
     vi.mocked(scanCodebase).mockRejectedValueOnce(new Error('scan failed'));
     harness.exportSession.mockResolvedValueOnce({
@@ -2493,7 +2542,9 @@ command = "vim"
     vi.mocked(promptFeedbackInput).mockImplementation(async () => ({ value: 'useful feedback' }));
     vi.mocked(promptFeedbackAttachment).mockImplementation(async () => 'logs');
     harness.auth.submitFeedback.mockResolvedValueOnce({ kind: 'ok', feedbackId: 3 });
-    harness.listSessions.mockResolvedValueOnce([{ id: 'ses-1', sessionDir: '/tmp/session-a' }] as never);
+    harness.listSessions.mockResolvedValueOnce([
+      { id: 'ses-1', sessionDir: '/tmp/session-a' },
+    ] as never);
     vi.mocked(createFeedbackArchivePath).mockRejectedValueOnce(new Error('cache dir not writable'));
     vi.mocked(openUrl).mockClear();
 
@@ -2516,7 +2567,9 @@ command = "vim"
     vi.mocked(promptFeedbackInput).mockImplementation(async () => ({ value: 'useful feedback' }));
     vi.mocked(promptFeedbackAttachment).mockImplementation(async () => 'logs+codebase');
     harness.auth.submitFeedback.mockResolvedValueOnce({ kind: 'ok', feedbackId: 3 });
-    harness.listSessions.mockResolvedValueOnce([{ id: 'ses-1', sessionDir: '/tmp/session-a' }] as never);
+    harness.listSessions.mockResolvedValueOnce([
+      { id: 'ses-1', sessionDir: '/tmp/session-a' },
+    ] as never);
     const sessionZipPath = await makeExportedSessionZip();
 
     vi.mocked(scanCodebase).mockResolvedValueOnce({
@@ -2535,7 +2588,9 @@ command = "vim"
 
     await handleFeedbackCommand(feedbackDriver as any);
 
-    const calls = harness.auth.submitFeedback.mock.calls as unknown as Array<[Record<string, unknown>]>;
+    const calls = harness.auth.submitFeedback.mock.calls as unknown as Array<
+      [Record<string, unknown>]
+    >;
     expect(calls[0]?.[0]?.['info']).toBeUndefined();
     expect(uploadArchive).toHaveBeenCalledWith(
       expect.any(Object),
@@ -3326,7 +3381,11 @@ command = "vim"
     expect(session.prompt).not.toHaveBeenCalled();
     expect(driver.state.queuedMessages).toHaveLength(1);
     const queued = driver.state.queuedMessages[0];
-    const parts = queued?.parts as Array<{ type: string; text?: string; videoUrl?: { url: string } }>;
+    const parts = queued?.parts as Array<{
+      type: string;
+      text?: string;
+      videoUrl?: { url: string };
+    }>;
     expect(parts?.[0]).toEqual({ type: 'text', text: 'describe ' });
     expect(parts?.[1]).toEqual({ type: 'video_url', videoUrl: { url: 'omnicode-file://file-v1' } });
     expect(queued?.videoAttachmentIds).toEqual([attachment.id]);
@@ -3351,9 +3410,7 @@ command = "vim"
 
     driver.sendQueuedMessage(session, {
       text: `describe ${attachment.placeholder}`,
-      parts: [
-        { type: 'image_url', imageUrl: { url: 'omnicode-file://file-expired' } },
-      ],
+      parts: [{ type: 'image_url', imageUrl: { url: 'omnicode-file://file-expired' } }],
       imageAttachmentIds: [attachment.id],
     });
 
@@ -3744,7 +3801,11 @@ command = "vim"
       return {
         type,
         ...base,
-        update: { kind: 'status', text: 'Waiting 0s / 1m · 1 background task still running', replace: true },
+        update: {
+          kind: 'status',
+          text: 'Waiting 0s / 1m · 1 background task still running',
+          replace: true,
+        },
         ...extra,
       } as Event;
     }
@@ -3756,7 +3817,11 @@ command = "vim"
     driver.sessionEventHandler.handleEvent(waitForEvent('tool.progress', extra), () => {});
   }
 
-  function pendingSteer(): { session: ReturnType<typeof makeSession>; resolve: () => void; reject: (error: Error) => void } {
+  function pendingSteer(): {
+    session: ReturnType<typeof makeSession>;
+    resolve: () => void;
+    reject: (error: Error) => void;
+  } {
     let resolve!: () => void;
     let reject!: (error: Error) => void;
     const session = makeSession({
@@ -3834,9 +3899,15 @@ command = "vim"
     driver.state.appState.streamingPhase = 'waiting';
     driver.handleUserInput('queued note');
 
-    driver.sessionEventHandler.handleEvent(waitForEvent('tool.call.started', { args: { timeout: 600 } }), () => {});
+    driver.sessionEventHandler.handleEvent(
+      waitForEvent('tool.call.started', { args: { timeout: 600 } }),
+      () => {},
+    );
     driver.handleUserInput('typed while the call was rejected');
-    driver.sessionEventHandler.handleEvent(waitForEvent('tool.result', { output: 'invalid arguments', isError: true }), () => {});
+    driver.sessionEventHandler.handleEvent(
+      waitForEvent('tool.result', { output: 'invalid arguments', isError: true }),
+      () => {},
+    );
 
     expect(session.steer).not.toHaveBeenCalled();
     expect(driver.state.queuedMessages).toEqual([
@@ -4003,8 +4074,14 @@ command = "vim"
     await vi.waitFor(() => {
       expect(session.prompt).toHaveBeenCalledTimes(1);
     });
-    const parts = vi.mocked(session.prompt).mock.calls[0]?.[0] as Array<{ type: string; videoUrl?: { url: string } }>;
-    expect(parts).toContainEqual({ type: 'video_url', videoUrl: { url: 'omnicode-file://file-v1' } });
+    const parts = vi.mocked(session.prompt).mock.calls[0]?.[0] as Array<{
+      type: string;
+      videoUrl?: { url: string };
+    }>;
+    expect(parts).toContainEqual({
+      type: 'video_url',
+      videoUrl: { url: 'omnicode-file://file-v1' },
+    });
     await (driver as unknown as { staging: { drain(): Promise<void> } }).staging.drain();
     expect(harness.deleteFile).not.toHaveBeenCalledWith('file-v1');
     expect(driver.state.queuedMessages).toEqual([]);
@@ -4291,9 +4368,7 @@ command = "vim"
     driver.handleUserInput('ls');
 
     expect(session.prompt).not.toHaveBeenCalled();
-    expect(driver.state.queuedMessages).toEqual([
-      { text: 'ls', agentId: 'main', mode: 'bash' },
-    ]);
+    expect(driver.state.queuedMessages).toEqual([{ text: 'ls', agentId: 'main', mode: 'bash' }]);
   });
 
   it('dispatches a queued bash item to runShellCommand instead of prompt', async () => {
@@ -4343,9 +4418,7 @@ command = "vim"
     driver.state.editor.onCtrlS?.();
 
     expect(session.steer).toHaveBeenCalledWith('focus on tests');
-    expect(driver.state.queuedMessages).toEqual([
-      { text: 'ls', agentId: 'main', mode: 'bash' },
-    ]);
+    expect(driver.state.queuedMessages).toEqual([{ text: 'ls', agentId: 'main', mode: 'bash' }]);
   });
 
   it('does not steer while a shell command is running', async () => {
@@ -4748,9 +4821,10 @@ command = "vim"
   });
 
   it('collapses long ! output to its first 10 rows and expands it with ctrl+o', async () => {
-    const stdout = Array.from({ length: 30 }, (_, i) => `row-${String(i + 1).padStart(2, '0')}`).join(
-      '\n',
-    );
+    const stdout = Array.from(
+      { length: 30 },
+      (_, i) => `row-${String(i + 1).padStart(2, '0')}`,
+    ).join('\n');
     const runShellCommand = vi.fn(async () => ({ stdout, stderr: '', isError: false }));
     const session = makeSession({ runShellCommand });
     const { driver } = await makeDriver(session);
@@ -4779,9 +4853,10 @@ command = "vim"
   });
 
   it('a new ! card inherits an already-on ctrl+o expand state', async () => {
-    const stdout = Array.from({ length: 30 }, (_, i) => `row-${String(i + 1).padStart(2, '0')}`).join(
-      '\n',
-    );
+    const stdout = Array.from(
+      { length: 30 },
+      (_, i) => `row-${String(i + 1).padStart(2, '0')}`,
+    ).join('\n');
     let resolveCmd!: (value: { stdout: string; stderr: string; isError: boolean }) => void;
     const runShellCommand = vi.fn(
       () =>
@@ -4896,7 +4971,12 @@ command = "vim"
       stale: false,
     };
     emit({ type: 'turn.started', agentId: 'main', turnId: 2, origin: cronOrigin } as Event);
-    emit({ type: 'cron.fired', agentId: 'main', origin: cronOrigin, prompt: 'inspect the fleet' } as Event);
+    emit({
+      type: 'cron.fired',
+      agentId: 'main',
+      origin: cronOrigin,
+      prompt: 'inspect the fleet',
+    } as Event);
     entry('assistant', 'cron report part one', '2');
     entry('assistant', 'cron report final', '2');
     emit({ type: 'turn.ended', agentId: 'main', turnId: 2, reason: 'completed' } as Event);
@@ -4933,7 +5013,12 @@ command = "vim"
       coalescedCount: 1,
       stale: false,
     };
-    emit({ type: 'cron.fired', agentId: 'main', origin: cronOrigin, prompt: 'inspect the fleet' } as Event);
+    emit({
+      type: 'cron.fired',
+      agentId: 'main',
+      origin: cronOrigin,
+      prompt: 'inspect the fleet',
+    } as Event);
     entry('assistant', 'cron report part one', '1');
     entry('assistant', 'cron report final', '1');
     emit({ type: 'turn.ended', agentId: 'main', turnId: 1, reason: 'completed' } as Event);
@@ -5328,9 +5413,7 @@ command = "vim"
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('/btw');
     await vi.waitFor(() => {
@@ -5369,9 +5452,7 @@ command = "vim"
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('/btw check this /skill:review');
 
@@ -5404,9 +5485,7 @@ command = "vim"
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('/btw /skill:review check this');
 
@@ -5435,15 +5514,18 @@ command = "vim"
       {
         listWorkspaceSkills: vi.fn(async () => [
           { name: 'review', description: 'Review skill', path: '/tmp/review', source: 'user' },
-          { name: 'security', description: 'Security skill', path: '/tmp/security', source: 'user' },
+          {
+            name: 'security',
+            description: 'Security skill',
+            path: '/tmp/security',
+            source: 'user',
+          },
         ]),
         listPluginCommands: vi.fn(async () => []),
       },
       startupInput,
     );
-    await (
-      driver as unknown as { refreshSkillCommands(): Promise<void> }
-    ).refreshSkillCommands();
+    await (driver as unknown as { refreshSkillCommands(): Promise<void> }).refreshSkillCommands();
 
     driver.handleUserInput('/btw check /skill:review /skill:security');
 
@@ -5979,9 +6061,7 @@ command = "vim"
 
   it('replaces a running /btw panel when another /btw command is submitted', async () => {
     const session = makeSession({
-      startBtw: vi.fn()
-        .mockResolvedValueOnce('agent-btw-1')
-        .mockResolvedValueOnce('agent-btw-2'),
+      startBtw: vi.fn().mockResolvedValueOnce('agent-btw-1').mockResolvedValueOnce('agent-btw-2'),
     });
     const { driver } = await makeDriver(session);
     await openBtwPanel(driver, session, 'first question');
@@ -6464,7 +6544,8 @@ command = "vim"
         agentId: 'main',
         sessionId: 'ses-1',
         code: 'compaction.failed',
-        message: "APIStatusError: 400 the message at position 82 with role 'assistant' must not be empty",
+        message:
+          "APIStatusError: 400 the message at position 82 with role 'assistant' must not be empty",
         retryable: false,
       } as Event,
       vi.fn(),
@@ -7043,8 +7124,7 @@ command = "vim"
     if (swarmProgress === undefined) throw new Error('expected AgentSwarm progress');
 
     const transcriptWidth = Math.max(1, terminalColumns - 2);
-    const renderSwarm = (): string =>
-      stripSgr(swarmProgress.render(transcriptWidth).join('\n'));
+    const renderSwarm = (): string => stripSgr(swarmProgress.render(transcriptWidth).join('\n'));
 
     expect(renderSwarm()).toContain('001 Queued…');
 
@@ -7318,84 +7398,64 @@ command = "vim"
     });
   });
 
-  it('renders /mcp using a fresh MCP server snapshot', async () => {
-    const session = makeSession({
-      listMcpServers: vi.fn(async () => [
-        {
-          name: 'local-tools',
-          transport: 'stdio',
-          status: 'connected',
-          toolCount: 2,
-        },
-        {
-          name: 'remote-tools',
-          transport: 'http',
-          status: 'failed',
-          toolCount: 0,
-          error: 'connection refused',
-        },
-        {
-          name: 'linear',
-          transport: 'http',
-          status: 'needs-auth',
-          toolCount: 0,
-        },
-        {
-          name: 'disabled-tools',
-          transport: 'stdio',
-          status: 'disabled',
-          toolCount: 0,
-        },
-      ]),
-    });
-    const { driver } = await makeDriver(session);
-    const listMcpServers = vi.mocked(session.listMcpServers);
-    const previousCalls = listMcpServers.mock.calls.length;
+  it('opens the MCP manager with the configured servers', async () => {
+    const session = makeSession();
+    const listMcpServers = vi.fn(async () => [
+      {
+        name: 'local-tools',
+        transport: 'stdio',
+        command: 'npx',
+        source: 'global',
+        origin: '/home/user/.omnicode/mcp.json',
+        mutable: true,
+      },
+      {
+        name: 'remote-tools',
+        transport: 'http',
+        url: 'https://mcp.example.com/mcp',
+        source: 'global',
+        origin: '/home/user/.omnicode/mcp.json',
+        mutable: true,
+      },
+    ]);
+    const { driver } = await makeDriver(session, { listMcpServers });
 
     driver.handleUserInput('/mcp');
 
     await vi.waitFor(() => {
-      expect(listMcpServers).toHaveBeenCalledTimes(previousCalls + 1);
-      const output = stripSgr(driver.state.transcriptContainer.render(140).join('\n'));
-      expect(output).toContain(' MCP (4) ');
-      expect(output).toContain('Servers');
+      const manager = driver.state.mcpManager;
+      expect(manager).toBeDefined();
+      const output = stripSgr(manager?.component.render(120).join('\n') ?? '');
+      expect(output).toContain('MCP servers');
+      expect(output).toContain('Add an MCP server');
       expect(output).toContain('local-tools');
-      expect(output).toContain('connected');
-      expect(output).toContain('stdio');
-      expect(output).toContain('2 tools');
+      expect(output).toContain('npx');
       expect(output).toContain('remote-tools');
-      expect(output).toContain('failed');
-      expect(output).toContain('connection refused');
-      expect(output).toContain('linear');
-      expect(output).toContain('needs auth');
-      expect(output).toContain('/mcp-config login linear');
-      expect(output).toContain('disabled-tools');
-      expect(output).toContain('disabled');
-      expect(output).toContain('1 connected · 1 needs auth · 1 failed · 1 disabled · 2 tools available');
+      expect(output).toContain('https://mcp.example.com/mcp');
     });
   });
 
-  it('renders an empty /mcp state when no MCP servers are configured', async () => {
-    const session = makeSession({
-      listMcpServers: vi.fn(async () => []),
-    });
-    const { driver } = await makeDriver(session);
+  it('opens the MCP manager when no MCP servers are configured', async () => {
+    const session = makeSession();
+    const listMcpServers = vi.fn(async () => []);
+    const { driver } = await makeDriver(session, { listMcpServers });
 
     driver.handleUserInput('/mcp');
 
     await vi.waitFor(() => {
-      const output = stripSgr(driver.state.transcriptContainer.render(120).join('\n'));
-      expect(output).toContain('No MCP servers configured. Run /mcp-config to add one.');
+      const manager = driver.state.mcpManager;
+      expect(manager).toBeDefined();
+      const output = stripSgr(manager?.component.render(120).join('\n') ?? '');
+      expect(output).toContain('Add an MCP server');
     });
   });
 
   it('renders /mcp list failures as command boundary errors', async () => {
-    const session = makeSession({
-      listMcpServers: vi.fn(async () => {
-        throw new Error('rpc unavailable');
-      }),
+    const session = makeSession();
+    const listMcpServers = vi.fn(async () => {
+      throw new Error('rpc unavailable');
     });
-    const { driver } = await makeDriver(session);
+    const { driver } = await makeDriver(session, { listMcpServers });
 
     driver.handleUserInput('/mcp');
 
@@ -7469,7 +7529,8 @@ command = "vim"
         enabledMcpServerCount: 1,
         hasErrors: false,
         source: 'zip-url',
-        originalSource: 'https://code.omnicode.com/omnicode/plugins/official/omnicode-datasource.zip',
+        originalSource:
+          'https://code.omnicode.com/omnicode/plugins/official/omnicode-datasource.zip',
       })),
     });
     const { driver } = await makeDriver(session);
@@ -7735,9 +7796,7 @@ command = "vim"
     driver.handleUserInput('/plugins remove omnicode-webbridge');
 
     await vi.waitFor(() => {
-      expect(driver.state.editorContainer.children[0]).toBeInstanceOf(
-        PluginRemoveConfirmComponent,
-      );
+      expect(driver.state.editorContainer.children[0]).toBeInstanceOf(PluginRemoveConfirmComponent);
     });
     const confirm = driver.state.editorContainer.children[0] as PluginRemoveConfirmComponent;
     confirm.handleInput('\u001B[B');
@@ -7751,17 +7810,25 @@ command = "vim"
 
   it('installs default marketplace entries through plain install', async () => {
     const originalFetch = globalThis.fetch;
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
-      plugins: [
-        {
-          id: 'omnicode-datasource',
-          tier: 'official',
-          displayName: 'Omnicode Datasource',
-          description: 'Datasource plugin',
-          source: './official/omnicode-datasource.zip',
-        },
-      ],
-    }))));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              plugins: [
+                {
+                  id: 'omnicode-datasource',
+                  tier: 'official',
+                  displayName: 'Omnicode Datasource',
+                  description: 'Datasource plugin',
+                  source: './official/omnicode-datasource.zip',
+                },
+              ],
+            }),
+          ),
+      ),
+    );
     const session = makeSession();
     const { driver } = await makeDriver(session);
 
@@ -7918,9 +7985,11 @@ command = "vim"
         ],
         diagnostics: [],
       })),
-      setPluginMcpServerEnabled: vi.fn(async (_id: string, _server: string, nextEnabled: boolean) => {
-        serverEnabled.set(_server, nextEnabled);
-      }),
+      setPluginMcpServerEnabled: vi.fn(
+        async (_id: string, _server: string, nextEnabled: boolean) => {
+          serverEnabled.set(_server, nextEnabled);
+        },
+      ),
     });
     const { driver } = await makeDriver(session);
 
@@ -7933,9 +8002,7 @@ command = "vim"
     panel.handleInput('m');
 
     await vi.waitFor(() => {
-      expect(driver.state.editorContainer.children[0]).toBeInstanceOf(
-        PluginMcpSelectorComponent,
-      );
+      expect(driver.state.editorContainer.children[0]).toBeInstanceOf(PluginMcpSelectorComponent);
     });
     const mcpPicker = driver.state.editorContainer.children[0] as PluginMcpSelectorComponent;
     mcpPicker.handleInput('\u001B[B');
@@ -7965,9 +8032,7 @@ command = "vim"
     driver.handleUserInput('/plugins remove demo');
 
     await vi.waitFor(() => {
-      expect(driver.state.editorContainer.children[0]).toBeInstanceOf(
-        PluginRemoveConfirmComponent,
-      );
+      expect(driver.state.editorContainer.children[0]).toBeInstanceOf(PluginRemoveConfirmComponent);
     });
     expect(session.removePlugin).not.toHaveBeenCalled();
 
@@ -8044,7 +8109,9 @@ command = "vim"
     expect(pickerOutput).toMatch(/❯ Omnicode Turbo\s+Omnicode/);
     (picker as TabbedModelSelectorComponent).handleInput('t');
     (picker as TabbedModelSelectorComponent).handleInput('u');
-    const filteredOutput = stripSgr((picker as TabbedModelSelectorComponent).render(120).join('\n'));
+    const filteredOutput = stripSgr(
+      (picker as TabbedModelSelectorComponent).render(120).join('\n'),
+    );
     expect(filteredOutput).toContain('Search: tu');
     expect(filteredOutput).toContain('Omnicode Turbo');
     expect(filteredOutput).not.toContain('Omnicode K2');
@@ -8490,10 +8557,14 @@ command = "vim"
       await Promise.resolve();
 
       expect(refreshOAuthProviderModels).toHaveBeenCalledOnce();
-      expect(driver.state.editorContainer.children[0]).not.toBeInstanceOf(TabbedModelSelectorComponent);
+      expect(driver.state.editorContainer.children[0]).not.toBeInstanceOf(
+        TabbedModelSelectorComponent,
+      );
 
       await vi.advanceTimersByTimeAsync(1_999);
-      expect(driver.state.editorContainer.children[0]).not.toBeInstanceOf(TabbedModelSelectorComponent);
+      expect(driver.state.editorContainer.children[0]).not.toBeInstanceOf(
+        TabbedModelSelectorComponent,
+      );
 
       await vi.advanceTimersByTimeAsync(1);
       const picker = driver.state.editorContainer.children[0];
@@ -8666,10 +8737,14 @@ command = "vim"
       const source = makeSession({ id: 'ses-source' });
       const forked = makeSession({ id: 'ses-fork' });
       const forkSession = vi.fn(async () => forked);
-      const { driver } = await makeDriver(source, { forkSession }, {
-        ...makeStartupInput(),
-        workDir: 'D:\\proj',
-      });
+      const { driver } = await makeDriver(
+        source,
+        { forkSession },
+        {
+          ...makeStartupInput(),
+          workDir: 'D:\\proj',
+        },
+      );
       await driver.setSession(source);
       await driver.syncRuntimeState(source);
 
@@ -9255,9 +9330,9 @@ describe('transcript step and assistant folding', () => {
     driveSteps(driver, cycles);
 
     let children = driver.state.transcriptContainer.children;
-    expect(
-      children.filter((child) => child instanceof AssistantMessageComponent),
-    ).toHaveLength(cycles);
+    expect(children.filter((child) => child instanceof AssistantMessageComponent)).toHaveLength(
+      cycles,
+    );
 
     driver.sessionEventHandler.handleEvent(
       {
@@ -9277,7 +9352,9 @@ describe('transcript step and assistant folding', () => {
     const summaries = children.filter((child) => child instanceof StepSummaryComponent);
     expect(summaries).toHaveLength(1);
     const summaryText = stripSgr(summaries[0]!.render(120).join('\n'));
-    expect(summaryText).toContain(`${cycles - TRANSCRIPT_KEEP_RECENT_ASSISTANT_COMPLETED} messages`);
+    expect(summaryText).toContain(
+      `${cycles - TRANSCRIPT_KEEP_RECENT_ASSISTANT_COMPLETED} messages`,
+    );
 
     expect(children.filter((child) => child instanceof ToolCallComponent)).toHaveLength(cycles);
 
@@ -9322,7 +9399,11 @@ describe('footer ctrl+o hint', () => {
     const { driver } = await makeDriver();
     expect(renderFooterLine1(driver)).not.toContain('ctrl+o');
 
-    emitBashResult(driver, 'call_bash', ['line1', 'line2', 'line3', 'line4', 'Tests 5 passed'].join('\n'));
+    emitBashResult(
+      driver,
+      'call_bash',
+      ['line1', 'line2', 'line3', 'line4', 'Tests 5 passed'].join('\n'),
+    );
     expect(renderFooterLine1(driver)).toContain('ctrl+o expand');
 
     driver.toggleToolOutputExpansion();
@@ -9340,7 +9421,11 @@ describe('footer ctrl+o hint', () => {
 
   it('keeps the collapse hint for an expanded card that slid out of the expansion window', async () => {
     const { driver } = await makeDriver();
-    emitBashResult(driver, 'call_bash', ['line1', 'line2', 'line3', 'line4', 'Tests 5 passed'].join('\n'));
+    emitBashResult(
+      driver,
+      'call_bash',
+      ['line1', 'line2', 'line3', 'line4', 'Tests 5 passed'].join('\n'),
+    );
     driver.toggleToolOutputExpansion();
     expect(renderFooterLine1(driver)).toContain('ctrl+o collapse');
 
@@ -9459,7 +9544,9 @@ describe('OmnicodeTUI session rating survey', () => {
       const { driver, harness } = await makeDriver();
       vi.useRealTimers();
       await vi.waitFor(() => {
-        expect((driver.surveyController as unknown as { cooldownReady: boolean }).cooldownReady).toBe(true);
+        expect(
+          (driver.surveyController as unknown as { cooldownReady: boolean }).cooldownReady,
+        ).toBe(true);
       });
       vi.useFakeTimers();
       harness.track.mockClear();
@@ -9530,9 +9617,8 @@ describe('OmnicodeTUI session rating survey', () => {
         },
         { sessionId: 'ses-1' },
       );
-      const appearanceId = (
-        harness.trackWithContext.mock.calls[0]![1] as { appearance_id: string }
-      ).appearance_id;
+      const appearanceId = (harness.trackWithContext.mock.calls[0]![1] as { appearance_id: string })
+        .appearance_id;
 
       driver.state.editor.handleInput('1');
       vi.advanceTimersByTime(400);
@@ -9601,7 +9687,9 @@ describe('OmnicodeTUI session rating survey', () => {
       const { driver, harness } = await makeDriver();
       vi.useRealTimers();
       await vi.waitFor(() => {
-        expect((driver.surveyController as unknown as { cooldownReady: boolean }).cooldownReady).toBe(true);
+        expect(
+          (driver.surveyController as unknown as { cooldownReady: boolean }).cooldownReady,
+        ).toBe(true);
       });
       vi.useFakeTimers();
       harness.track.mockClear();
@@ -9671,7 +9759,9 @@ describe('OmnicodeTUI session rating survey', () => {
       const { driver } = await makeDriver();
       vi.useRealTimers();
       await vi.waitFor(() => {
-        expect((driver.surveyController as unknown as { cooldownReady: boolean }).cooldownReady).toBe(true);
+        expect(
+          (driver.surveyController as unknown as { cooldownReady: boolean }).cooldownReady,
+        ).toBe(true);
       });
       vi.useFakeTimers();
       const emit = (event: Event) => {
@@ -9718,7 +9808,9 @@ describe('OmnicodeTUI session rating survey', () => {
       const { driver } = await makeDriver();
       vi.useRealTimers();
       await vi.waitFor(() => {
-        expect((driver.surveyController as unknown as { cooldownReady: boolean }).cooldownReady).toBe(true);
+        expect(
+          (driver.surveyController as unknown as { cooldownReady: boolean }).cooldownReady,
+        ).toBe(true);
       });
       vi.useFakeTimers();
       const emit = (event: Event) => {

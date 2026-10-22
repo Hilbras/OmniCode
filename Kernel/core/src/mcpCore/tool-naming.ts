@@ -23,5 +23,5 @@ function stableHash8(input: string): string {
     hash ^= codePointAt(input, i)!;
     hash = Math.trunc(Math.imul(hash, 0x01000193));
   }
-  return hash.toString(16).padStart(8, '0');
+  return (hash >>> 0).toString(16).padStart(8, '0');
 }

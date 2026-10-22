@@ -38,6 +38,14 @@ export interface TokenStorage {
   list(): Promise<string[]>;
 }
 
+function isEnoent(error: unknown): boolean {
+  return (
+    typeof error === 'object' &&
+    error !== null &&
+    (error as { code?: unknown }).code === 'ENOENT'
+  );
+}
+
 export class FileTokenStorage implements TokenStorage {
   private readonly dir: string;
 
@@ -74,8 +82,12 @@ export class FileTokenStorage implements TokenStorage {
     let raw: string;
     try {
       raw = readFileSync(file, 'utf-8');
-    } catch {
-      return undefined;
+    } catch (error) {
+      // A missing file means "not stored". Anything else — a permission
+      // problem, a directory in the way — is a failure, and reporting it as
+      // "no token" would send the user to log in again for nothing.
+      if (isEnoent(error)) return undefined;
+      throw error;
     }
     let parsed: unknown;
     try {

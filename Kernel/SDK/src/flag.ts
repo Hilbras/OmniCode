@@ -1,7 +1,4 @@
-import type {
-  FlagDefinitionInput,
-  FlagId,
-} from '@hilbras/omnicode-core/app/flag/flagRegistry';
+import type { FlagDefinitionInput, FlagId } from '@hilbras/omnicode-core/app/flag/flagRegistry';
 
 export type {
   ExperimentalFeatureState,

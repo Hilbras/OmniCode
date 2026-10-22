@@ -7,15 +7,17 @@ import {
   MODELS_SECTION,
   PROVIDERS_SECTION,
 } from '#/app/kosongConfig/configSection';
+import { KosongConfigService } from '#/app/kosongConfig/kosongConfigService';
 import { type ModelRecord } from '#/llm-adapter/model/model';
 import { ModelService } from '#/llm-adapter/model/model-service';
 import { type ProviderConfig } from '#/llm-adapter/provider/provider';
 import { ProviderService } from '#/llm-adapter/provider/provider-service';
 
 import { StubConfigService } from '../../stubs';
-import { KosongConfigService } from '#/app/kosongConfig/kosongConfigService';
 
-function stubLogService(): ILogService & { warnings: Array<{ message: string; payload?: LogPayload }> } {
+function stubLogService(): ILogService & {
+  warnings: Array<{ message: string; payload?: LogPayload }>;
+} {
   const warnings: Array<{ message: string; payload?: LogPayload }> = [];
   return {
     warnings,
@@ -121,7 +123,11 @@ describe('KosongConfigService kosong → config persistence', () => {
   it('persists model records and the default-model pointer', async () => {
     const { config, models, bridge } = await createBridge(seededSections);
     try {
-      await models.set('k2', { provider: 'omnicode', model: 'omnicode-k2.5', maxContextSize: 2000 });
+      await models.set('k2', {
+        provider: 'omnicode',
+        model: 'omnicode-k2.5',
+        maxContextSize: 2000,
+      });
       await models.setDefaultModel('k2');
       await flush();
 
@@ -270,9 +276,9 @@ describe('KosongConfigService loop termination', () => {
       await flush();
 
       expect(events).toEqual(['providers', 'defaultProvider']);
-      expect(
-        replaceSpy.mock.calls.filter(([domain]) => domain === PROVIDERS_SECTION),
-      ).toHaveLength(1);
+      expect(replaceSpy.mock.calls.filter(([domain]) => domain === PROVIDERS_SECTION)).toHaveLength(
+        1,
+      );
       expect(
         replaceSpy.mock.calls.filter(([domain]) => domain === DEFAULT_PROVIDER_SECTION),
       ).toHaveLength(1);

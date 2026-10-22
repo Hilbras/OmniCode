@@ -1,3 +1,9 @@
+import type {
+  CapabilityStatus,
+  PluginInfo,
+  PluginMcpServerInfo,
+  PluginSummary,
+} from '@hilbras/omnicode-api';
 import {
   Container,
   Input,
@@ -7,12 +13,6 @@ import {
   visibleWidth,
   type Focusable,
 } from '@hilbras/omnicode-tui';
-import type {
-  CapabilityStatus,
-  PluginInfo,
-  PluginMcpServerInfo,
-  PluginSummary,
-} from '@hilbras/omnicode-api';
 import chalk from 'chalk';
 
 import { SELECT_POINTER } from '#/tui/constant/symbols';
@@ -64,7 +64,12 @@ interface PluginsOverviewItem {
 }
 
 export type PluginMcpSelection =
-  | { readonly kind: 'toggle'; readonly pluginId: string; readonly server: string; readonly enabled: boolean }
+  | {
+      readonly kind: 'toggle';
+      readonly pluginId: string;
+      readonly server: string;
+      readonly enabled: boolean;
+    }
   | { readonly kind: 'back'; readonly pluginId: string };
 
 export interface PluginMcpSelectorOptions {
@@ -138,7 +143,10 @@ export class PluginMcpSelectorComponent extends Container implements Focusable {
       chalk.hex(colors.primary).bold(` MCP servers · ${info.displayName}`),
       mutedHintLine(' ↑↓ navigate · Enter/Space enable/disable · Esc cancel', colors),
       '',
-      sectionLabel(`MCP servers (${info.enabledMcpServerCount}/${info.mcpServerCount} enabled)`, colors),
+      sectionLabel(
+        `MCP servers (${info.enabledMcpServerCount}/${info.mcpServerCount} enabled)`,
+        colors,
+      ),
     ];
 
     if (serverItems.length === 0) {
@@ -183,9 +191,7 @@ export class PluginMcpSelectorComponent extends Container implements Focusable {
   }
 }
 
-export type PluginRemoveConfirmResult =
-  | { readonly kind: 'confirm' }
-  | { readonly kind: 'cancel' };
+export type PluginRemoveConfirmResult = { readonly kind: 'confirm' } | { readonly kind: 'cancel' };
 
 export interface PluginRemoveConfirmOptions {
   readonly id: string;
@@ -360,7 +366,11 @@ type MarketState =
   | { readonly status: 'idle' }
   | { readonly status: 'loading' }
   | { readonly status: 'error'; readonly message: string }
-  | { readonly status: 'loaded'; readonly entries: readonly PluginMarketplaceEntry[]; readonly source: string };
+  | {
+      readonly status: 'loaded';
+      readonly entries: readonly PluginMarketplaceEntry[];
+      readonly source: string;
+    };
 
 const PLUGINS_PANEL_TABS: readonly { id: PluginsPanelTabId; label: string }[] = [
   { id: 'installed', label: 'Installed' },
@@ -430,8 +440,7 @@ export class PluginsPanelComponent extends Container implements Focusable {
     if (this.market.status !== 'loaded') return [];
     return this.market.entries.toSorted(
       (a, b) =>
-        Number(this.isMarketplaceEntryInstalled(b)) -
-        Number(this.isMarketplaceEntryInstalled(a)),
+        Number(this.isMarketplaceEntryInstalled(b)) - Number(this.isMarketplaceEntryInstalled(a)),
     );
   }
 
@@ -590,7 +599,8 @@ export class PluginsPanelComponent extends Container implements Focusable {
   }
 
   private handleMarketplaceInput(data: string): void {
-    const entries = this.activeTab.id === 'official' ? this.officialEntries : this.thirdPartyEntries;
+    const entries =
+      this.activeTab.id === 'official' ? this.officialEntries : this.thirdPartyEntries;
     if (matchesKey(data, Key.up)) {
       this.selectedIndex = Math.max(0, this.selectedIndex - 1);
       return;
@@ -598,7 +608,8 @@ export class PluginsPanelComponent extends Container implements Focusable {
     if (matchesKey(data, Key.down)) {
       // Clamp to 0 while the catalog is still loading (entries empty); otherwise
       // `entries.length - 1` is -1 and a later Enter reads `entries[-1]`.
-      this.selectedIndex = entries.length === 0 ? 0 : Math.min(entries.length - 1, this.selectedIndex + 1);
+      this.selectedIndex =
+        entries.length === 0 ? 0 : Math.min(entries.length - 1, this.selectedIndex + 1);
       return;
     }
     if (matchesKey(data, Key.enter)) {
@@ -680,12 +691,13 @@ export class PluginsPanelComponent extends Container implements Focusable {
     const entry = this.market.entries.find(
       (candidate) =>
         candidate.id === plugin.id ||
-        (candidate.builtIn === true &&
-          this.capabilityForEntry(candidate)?.pluginId === plugin.id),
+        (candidate.builtIn === true && this.capabilityForEntry(candidate)?.pluginId === plugin.id),
     );
     if (entry === undefined) return undefined;
     const status = computeUpdateStatus(entry.version, plugin.version, true);
-    return status.kind === 'update' ? { entry, local: status.local, latest: status.latest } : undefined;
+    return status.kind === 'update'
+      ? { entry, local: status.local, latest: status.latest }
+      : undefined;
   }
 
   private renderInstalledRow(plugin: PluginSummary, index: number, width: number): string[] {
@@ -698,7 +710,12 @@ export class PluginsPanelComponent extends Container implements Focusable {
     const update = this.installedUpdateStatus(plugin);
     let line = prefix + labelStyle(plugin.displayName);
     if (status !== undefined) {
-      line += '  ' + statusStyle({ kind: 'plugin', value: '', label: '', description: '', status }, colors)(status);
+      line +=
+        '  ' +
+        statusStyle(
+          { kind: 'plugin', value: '', label: '', description: '', status },
+          colors,
+        )(status);
     }
     if (update !== undefined) {
       const badge = `update ${update.local} → ${update.latest}`;
@@ -780,7 +797,11 @@ export class PluginsPanelComponent extends Container implements Focusable {
     this.renderMarketplaceTab(lines, width, this.thirdPartyEntries);
   }
 
-  private renderMarketplaceRow(entry: PluginMarketplaceEntry, index: number, width: number): string[] {
+  private renderMarketplaceRow(
+    entry: PluginMarketplaceEntry,
+    index: number,
+    width: number,
+  ): string[] {
     const colors = currentTheme.palette;
     const selected = index === this.selectedIndex;
     const pointer = selected ? SELECT_POINTER : ' ';
@@ -791,13 +812,12 @@ export class PluginsPanelComponent extends Container implements Focusable {
       ? 'open in browser'
       : capability?.install.running === true
         ? 'installing…'
-        : marketplaceEntryStatus(
-            entry,
-            this.installedVersions,
-            this.installedPluginId(entry),
-          );
+        : marketplaceEntryStatus(entry, this.installedVersions, this.installedPluginId(entry));
     const line =
-      prefix + labelStyle(entry.displayName) + '  ' + marketplaceStatusStyle(status, colors)(status);
+      prefix +
+      labelStyle(entry.displayName) +
+      '  ' +
+      marketplaceStatusStyle(status, colors)(status);
     const descWidth = Math.max(1, width - 4);
     const out = [line];
     const description =
@@ -853,7 +873,8 @@ function mcpServerDescription(server: PluginMcpServerInfo): string {
   if (server.transport === 'http' || server.transport === 'sse') {
     return `${action} · ${server.transport.toUpperCase()} · ${server.url ?? server.runtimeName}`;
   }
-  const args = server.args !== undefined && server.args.length > 0 ? ` ${server.args.join(' ')}` : '';
+  const args =
+    server.args !== undefined && server.args.length > 0 ? ` ${server.args.join(' ')}` : '';
   const command = `${server.command ?? ''}${args}`.trim();
   const cwd = server.cwd === undefined ? '' : ` · cwd ${server.cwd}`;
   return `${action} · stdio · ${command || server.runtimeName}${cwd}`;
@@ -925,10 +946,7 @@ function sectionLabel(label: string, colors: ColorPalette): string {
   return chalk.hex(colors.textDim).bold(` ${label}`);
 }
 
-function statusStyle(
-  item: PluginsOverviewItem,
-  colors: ColorPalette,
-): (text: string) => string {
+function statusStyle(item: PluginsOverviewItem, colors: ColorPalette): (text: string) => string {
   if (item.kind === 'action') return chalk.hex(colors.textDim);
   if (item.status === 'enabled' || item.status === 'installed') return chalk.hex(colors.success);
   if (item.status?.startsWith('install')) return chalk.hex(colors.primary);

@@ -1,10 +1,7 @@
 import { z } from 'zod';
 
-import {
-  type ConfigDiagnostic,
-  type ConfigStripEnv,
-  envBindings,
-} from '#/app/config/config';
+import { type AssertExact, type Equal } from '#/_base/utils/typeEquality';
+import { type ConfigDiagnostic, type ConfigStripEnv, envBindings } from '#/app/config/config';
 import { registerConfigSection } from '#/app/config/configSectionContributions';
 import {
   camelToSnake,
@@ -15,11 +12,10 @@ import {
   snakeToCamel,
   transformPlainObject,
 } from '#/app/config/toml';
-import { type AssertExact, type Equal } from '#/_base/utils/typeEquality';
 import type { ModelOverride, ModelRecord, ModelsSection } from '#/llm-adapter/model/model';
 import type { ThinkingConfig } from '#/llm-adapter/model/thinking';
-import type { OAuthRef, ProviderConfig, ProvidersSection } from '#/llm-adapter/provider/provider';
 import { ProtocolSchema } from '#/llm-adapter/protocol/protocol';
+import type { OAuthRef, ProviderConfig, ProvidersSection } from '#/llm-adapter/provider/provider';
 
 export const PROVIDERS_SECTION = 'providers';
 
@@ -37,25 +33,16 @@ export const OAuthRefSchema = z.object({
 
 export const ModelSourceSchema = z.enum(['static', 'discover', 'oauth-catalog']);
 
-export const ProviderAuthSchemeKindSchema = z.enum([
-  'bearer',
-  'api-key',
-  'custom-header',
-  'none',
-]);
+export const ProviderAuthSchemeKindSchema = z.enum(['bearer', 'api-key', 'custom-header', 'none']);
 
 export const ProviderAuthSchemeSchema = z
   .object({
     kind: ProviderAuthSchemeKindSchema,
     header: z.string().min(1).optional(),
   })
-  .refine(
-    (scheme) =>
-      scheme.kind !== 'custom-header' || scheme.header !== undefined,
-    {
-      error: 'authScheme.kind "custom-header" requires authScheme.header to name the header.',
-    },
-  );
+  .refine((scheme) => scheme.kind !== 'custom-header' || scheme.header !== undefined, {
+    error: 'authScheme.kind "custom-header" requires authScheme.header to name the header.',
+  });
 
 const StringRecordSchema = z.record(z.string(), z.string());
 
@@ -220,13 +207,9 @@ export const ModelRecordSchema = ModelBaseSchema.extend({
 
 export const ModelsSectionSchema = z.record(z.string(), ModelRecordSchema);
 
-type _AssertModelOverride = AssertExact<
-  Equal<z.infer<typeof ModelOverrideSchema>, ModelOverride>
->;
+type _AssertModelOverride = AssertExact<Equal<z.infer<typeof ModelOverrideSchema>, ModelOverride>>;
 type _AssertModelRecord = AssertExact<Equal<z.infer<typeof ModelRecordSchema>, ModelRecord>>;
-type _AssertModelsSection = AssertExact<
-  Equal<z.infer<typeof ModelsSectionSchema>, ModelsSection>
->;
+type _AssertModelsSection = AssertExact<Equal<z.infer<typeof ModelsSectionSchema>, ModelsSection>>;
 
 const MODEL_OBJECT_FIELDS = new Set(
   Object.entries(ModelRecordSchema.shape)

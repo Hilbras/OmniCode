@@ -4,37 +4,36 @@ import { SyncDescriptor } from '#/_base/di/descriptors';
 import { DisposableStore } from '#/_base/di/lifecycle';
 import { TestInstantiationService } from '#/_base/di/test';
 import { Event } from '#/_base/event';
+import { IAgentAgentsMdReminderService } from '#/agent/agentsMdReminder/agentsMdReminder';
 import { IAgentProfileService } from '#/agent/profile/profile';
-import { AgentProfileService } from '#/agent/profile/profileService';
 import { profileActiveToolsKey, profileKey } from '#/agent/profile/profileOps';
+import { AgentProfileService } from '#/agent/profile/profileService';
+import { IAgentScopeContext, makeAgentScopeContext } from '#/agent/scopeContext/scopeContext';
+import { IAgentStateService } from '#/agent/state/agentState';
+import { AgentStateService } from '#/agent/state/agentStateService';
 import {
   DEFAULT_AGENT_PROFILE_NAME,
   type EnvironmentDisclosureSnapshot,
 } from '#/app/agentProfileCatalog/agentProfileCatalog';
-import { IAgentAgentsMdReminderService } from '#/agent/agentsMdReminder/agentsMdReminder';
-import { ISessionAgentProfileCatalog } from '#/session/sessionAgentProfileCatalog/sessionAgentProfileCatalog';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
+import { ITelemetryService } from '#/app/telemetry/telemetry';
+import { ISessionSkillCatalog } from '#/features/skill/session/skillCatalog';
 import { IModelCatalog, type Model } from '#/llm-adapter/model/catalog';
 import { IProtocolAdapterRegistry, type Protocol } from '#/llm-adapter/protocol/protocol';
-import { ITelemetryService } from '#/app/telemetry/telemetry';
-import { IAgentScopeContext, makeAgentScopeContext } from '#/agent/scopeContext/scopeContext';
-import { IAgentStateService } from '#/agent/state/agentState';
-import { AgentStateService } from '#/agent/state/agentStateService';
 import { IHostEnvironment } from '#/os/interface/hostEnvironment';
 import { IHostFileSystem } from '#/os/interface/hostFileSystem';
-import { AppendLogStore } from '#/persistence/backends/node-fs/appendLogStore';
 import { InMemoryStorageService } from '#/persistence/backends/memory/inMemoryStorageService';
+import { AppendLogStore } from '#/persistence/backends/node-fs/appendLogStore';
 import { IAppendLogStore } from '#/persistence/interface/appendLogStore';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
+import { ISessionAgentProfileCatalog } from '#/session/sessionAgentProfileCatalog/sessionAgentProfileCatalog';
 import { ISessionContext } from '#/session/sessionContext/sessionContext';
-import { ISessionSkillCatalog } from '#/features/skill/session/skillCatalog';
 import { ISessionInstructionsProvider } from '#/session/sessionInstructions/instructionsProvider';
 import { ISessionToolPolicy } from '#/session/sessionToolPolicy/sessionToolPolicy';
 import { ISessionWorkspaceContext } from '#/session/workspaceContext/workspaceContext';
 import { IEventDispatcher } from '#/state/eventDispatcher';
 import { AGENT_WIRE_RECORD_KEY, type WireRecord } from '#/wire/record';
-
 
 import {
   registerTestAgentWire,
@@ -272,7 +271,10 @@ afterEach(() => disposables.dispose());
 async function readRecords(key = KEY): Promise<WireRecord[]> {
   await dispatcher.flush();
   const out: WireRecord[] = [];
-  for await (const record of log.read<WireRecord>(testWireScope(SCOPE, key), AGENT_WIRE_RECORD_KEY)) {
+  for await (const record of log.read<WireRecord>(
+    testWireScope(SCOPE, key),
+    AGENT_WIRE_RECORD_KEY,
+  )) {
     out.push(record);
   }
   return out;
@@ -306,7 +308,12 @@ describe('AgentProfileService (wire-backed config.update)', () => {
         systemPrompt: 'You are helpful.',
         time: expect.any(Number),
       },
-      { type: 'config.update', agentId: 'test-agent', thinkingEffort: 'on', time: expect.any(Number) },
+      {
+        type: 'config.update',
+        agentId: 'test-agent',
+        thinkingEffort: 'on',
+        time: expect.any(Number),
+      },
     ]);
     expect(records.every((record) => 'payload' in record === false)).toBe(true);
   });
@@ -485,11 +492,13 @@ describe('AgentProfileService (wire-backed config.update)', () => {
       host.dispatcher,
       host.log,
       testWireScope(SCOPE, 'profile-replay-removed-model'),
-      [{
-        type: 'config.update',
-        modelAlias: 'removed-model',
-        thinkingEffort: 'high',
-      }],
+      [
+        {
+          type: 'config.update',
+          modelAlias: 'removed-model',
+          thinkingEffort: 'high',
+        },
+      ],
     );
 
     expect(host.svc.getEffectiveThinkingLevel()).toBe('high');
@@ -513,7 +522,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('applies thinking.keep model override when thinking is enabled', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
     });
     const host = buildHost('profile-thinking-keep');
     host.svc.configure({ emitStatusUpdated: () => undefined });
@@ -531,7 +540,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('exposes the provider type of the bound model, or nothing before a model binds', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
       'claude-code': createTestModel({ id: 'claude-code', protocol: 'anthropic' }),
     });
     const host = buildHost('profile-provider-type');
@@ -548,7 +557,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('resolves the provider type of another catalog model without rebinding', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
       'claude-code': createTestModel({ id: 'claude-code', protocol: 'anthropic' }),
     });
     const host = buildHost('profile-provider-type-of-alias');
@@ -562,7 +571,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('falls back to the configured default model when nothing binds and no alias is given', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
       'claude-code': createTestModel({ id: 'claude-code', protocol: 'anthropic' }),
     });
     configValues['defaultModel'] = 'omnicode';
@@ -591,7 +600,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('uses the resolved Omnicode effort instead of the configured default', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
     });
     const host = buildHost('profile-thinking-effort-resolved');
     host.svc.configure({ emitStatusUpdated: () => undefined });
@@ -608,7 +617,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('forces the environment Omnicode effort instead of the resolved effort', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
     });
     const host = buildHost('profile-thinking-effort-force');
     host.svc.configure({ emitStatusUpdated: () => undefined });
@@ -628,7 +637,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('does not leak a forced Omnicode effort when switching to a non-Omnicode model', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
       'other-code': createTestModel({ id: 'other-code', protocol: 'anthropic' }),
     });
     const host = buildHost('profile-thinking-effort-force-switch');
@@ -666,7 +675,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('forces Omnicode effort through Anthropic without Omnicode generation kwargs', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ protocol: 'anthropic', providerType: 'omnicode' }),
+      omnicode: createTestModel({ protocol: 'anthropic', providerType: 'omnicode' }),
     });
     const host = buildHost('profile-thinking-effort-force-anthropic');
     host.svc.configure({ emitStatusUpdated: () => undefined });
@@ -684,7 +693,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('defaults thinking.keep to "all" when thinking is enabled on Omnicode', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
     });
     const host = buildHost('profile-thinking-keep-default');
     host.svc.configure({ emitStatusUpdated: () => undefined });
@@ -700,7 +709,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('treats an off env thinking.keep override as disabled on Omnicode', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
     });
     const host = buildHost('profile-thinking-keep-env-off');
     host.svc.configure({ emitStatusUpdated: () => undefined });
@@ -733,7 +742,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('does not apply thinking.keep model override when thinking is off', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
     });
     const host = buildHost('profile-thinking-keep-off');
     host.svc.configure({ emitStatusUpdated: () => undefined });
@@ -753,7 +762,7 @@ describe('AgentProfileService (wire-backed config.update)', () => {
 
   it('uses the session id as a Omnicode prompt cache hint', () => {
     modelCatalog = createModelCatalogStub({
-      'omnicode': createTestModel({ providerType: 'omnicode' }),
+      omnicode: createTestModel({ providerType: 'omnicode' }),
     });
     const host = buildHost('profile-prompt-cache-key');
     host.svc.configure({ emitStatusUpdated: () => undefined });

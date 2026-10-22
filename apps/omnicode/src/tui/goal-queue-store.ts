@@ -1,10 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
-import {
-  ErrorCodes,
-  OmnicodeError,
-} from '@hilbras/omnicode-api';
+
+import { ErrorCodes, OmnicodeError } from '@hilbras/omnicode-api';
 
 const GOAL_QUEUE_FILE = 'upcoming-goals.json';
 const GOAL_QUEUE_VERSION = 1;

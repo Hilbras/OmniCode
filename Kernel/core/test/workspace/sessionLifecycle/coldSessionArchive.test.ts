@@ -1,4 +1,3 @@
-
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ServiceIdentifier, ServicesAccessor } from '#/_base/di/instantiation';
@@ -6,13 +5,16 @@ import type { ISessionScopeHandle } from '#/_base/di/scope';
 import { Emitter, Event } from '#/_base/event';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IEventService } from '#/app/event/event';
-import { ISessionManager, type UnguardedSessionLifecycle } from '#/app/sessionManager/sessionManager';
-import { SessionManager } from '#/app/sessionManager/sessionManagerService';
 import {
   ISessionIndex,
   ISessionIndexMirror,
   type SessionSummary,
 } from '#/app/sessionIndex/sessionIndex';
+import {
+  ISessionManager,
+  type UnguardedSessionLifecycle,
+} from '#/app/sessionManager/sessionManager';
+import { SessionManager } from '#/app/sessionManager/sessionManagerService';
 import { IAtomicDocumentStore } from '#/persistence/interface/atomicDocumentStore';
 import type { SessionMeta } from '#/session/sessionMetadata/sessionMetadata';
 import {
@@ -231,10 +233,16 @@ function sessionManagerResuming(sessionId: string): SessionManager {
   } as unknown as SessionLifecycleService;
   const workspace = {
     id: summary.workspaceId,
-    program: { sessionControllerGeneration: 'generation-1', createSessionController: () => controller },
+    program: {
+      sessionControllerGeneration: 'generation-1',
+      createSessionController: () => controller,
+    },
   } as unknown as WorkspaceInstance;
   return new SessionManager(
-    { getOrCreate: async () => workspace, get: () => workspace } as unknown as IWorkspaceInstanceManager,
+    {
+      getOrCreate: async () => workspace,
+      get: () => workspace,
+    } as unknown as IWorkspaceInstanceManager,
     { get: async () => summary } as unknown as ISessionIndex,
   );
 }
@@ -249,9 +257,10 @@ describe('setSessionArchived', () => {
     let releaseEarlierTransition!: () => void;
     const earlierTransition = manager.withLifecycleSerialization(
       's1',
-      () => new Promise<void>((resolve) => {
-        releaseEarlierTransition = resolve;
-      }),
+      () =>
+        new Promise<void>((resolve) => {
+          releaseEarlierTransition = resolve;
+        }),
     );
     let archiveOutcome: string | undefined;
     void setSessionArchived(

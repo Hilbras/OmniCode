@@ -9,14 +9,14 @@ import {
   type OmnicodeError,
   type SkillActivatedEvent,
   type SkillSummary,
+  type AgentProfileSummary,
+  type ConnectorEntry,
+  type ConnectorKind,
+  type ConnectorStatus,
 } from '#/index';
 import type { SDKRpcClientBase } from '#/rpc';
 
-import {
-  makeTempDir,
-  removeTempDirs,
-  waitForSDKEvent,
-} from './session-runtime-helpers';
+import { makeTempDir, removeTempDirs, waitForSDKEvent } from './session-runtime-helpers';
 import { TEST_IDENTITY } from './test-identity';
 
 const { Session } = await import('#/index');
@@ -78,10 +78,10 @@ describe('Session skills', () => {
       });
       const ended = waitForSDKEvent(session, (event) => event.type === 'turn.ended');
 
-      await session.promptWithSkills(
-        'Review this change.',
-        [{ name: 'review' }, { name: 'security' }],
-      );
+      await session.promptWithSkills('Review this change.', [
+        { name: 'review' },
+        { name: 'security' },
+      ]);
       await ended;
       unsubscribe();
 
@@ -312,6 +312,29 @@ describe('OmnicodeHarness workspace skills', () => {
     }
   });
 
+  it('offers a first-party provider connect action only in a trusted workspace', async () => {
+    vi.stubEnv('OMNICODE_EXPERIMENTAL_GITHUB_CONNECTOR', '1');
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-provider-home-');
+    const workDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-provider-work-');
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      const untrusted = await harness.listWorkspaceConnectors(workDir);
+      const github = untrusted.find((connector) => connector.id === 'github');
+      expect(github?.kind).toBe('service');
+      expect(github?.status).toBe('needs-trust');
+      expect(github?.actions).not.toContain('connect-github');
+
+      await harness.trustWorkspace(workDir);
+      const trusted = await harness.listWorkspaceConnectors(workDir);
+      const trustedGithub = trusted.find((connector) => connector.id === 'github');
+      expect(trustedGithub?.actions).toContain('connect-github');
+    } finally {
+      await harness.close();
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('preserves the core error when workDir is empty', async () => {
     const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-workspace-skills-home-');
     const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
@@ -342,6 +365,331 @@ describe('OmnicodeHarness workspace skills', () => {
     }
   });
 });
+
+describe('OmnicodeHarness workspace agent profiles', () => {
+  it('exposes the public profile summary type', () => {
+    expectTypeOf<AgentProfileSummary['name']>().toEqualTypeOf<string>();
+    expectTypeOf<AgentProfileSummary['description']>().toEqualTypeOf<string | undefined>();
+  });
+
+  it('returns workspace-scoped profile summaries without creating a session', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-profile-home-');
+    const firstWorkDir = await makeTempDir(tempDirs, 'omnicode-sdk-profile-first-');
+    const secondWorkDir = await makeTempDir(tempDirs, 'omnicode-sdk-profile-second-');
+    await writeAgentProfile(
+      firstWorkDir,
+      'first-profile',
+      'First profile',
+      'Use for first-workspace tasks.',
+    );
+    await writeAgentProfile(
+      secondWorkDir,
+      'second-profile',
+      'Second profile',
+      'Use for second-workspace tasks.',
+    );
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      const first = await harness.listWorkspaceAgentProfiles(firstWorkDir);
+      const second = await harness.listWorkspaceAgentProfiles(secondWorkDir);
+
+      expect(first).toContainEqual({
+        name: 'first-profile',
+        description: 'First profile',
+        whenToUse: 'Use for first-workspace tasks.',
+      });
+      expect(first.some((profile) => profile.name === 'second-profile')).toBe(false);
+      expect(second.some((profile) => profile.name === 'first-profile')).toBe(false);
+      expect(second).toContainEqual({
+        name: 'second-profile',
+        description: 'Second profile',
+        whenToUse: 'Use for second-workspace tasks.',
+      });
+      expect(harness.sessions.size).toBe(0);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('preserves the core error when workDir is empty', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-profile-home-');
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      await expect(harness.listWorkspaceAgentProfiles('   ')).rejects.toMatchObject({
+        name: 'OmnicodeError',
+        code: 'request.work_dir_required',
+        message: 'listWorkspaceAgentProfiles requires workDir',
+      } satisfies Partial<OmnicodeError>);
+    } finally {
+      await harness.close();
+    }
+  });
+});
+
+describe('OmnicodeHarness workspace connectors', () => {
+  it('exposes the public connector entry type', () => {
+    expectTypeOf<ConnectorEntry['id']>().toEqualTypeOf<string>();
+    expectTypeOf<ConnectorEntry['kind']>().toEqualTypeOf<ConnectorKind>();
+    expectTypeOf<ConnectorEntry['status']>().toEqualTypeOf<ConnectorStatus>();
+  });
+
+  it('lists the workspace MCP servers with their kind, status, scope and actions', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-home-');
+    const workDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-work-');
+    await writeMcpJson(join(homeDir, 'mcp.json'), {
+      'user-server': { transport: 'stdio', command: 'user-command' },
+    });
+    await writeMcpJson(join(workDir, '.omnicode', 'mcp.json'), {
+      'workspace-server': { transport: 'stdio', command: 'workspace-command' },
+    });
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      await harness.trustWorkspace(workDir);
+      const connectors = await harness.listWorkspaceConnectors(workDir);
+
+      expect(connectors).toContainEqual({
+        id: 'mcp:user-server',
+        kind: 'mcp',
+        name: 'user-server',
+        description: 'stdio',
+        scope: 'user',
+        status: 'active',
+        capabilities: ['tools'],
+        actions: ['open-mcp'],
+      });
+      expect(connectors).toContainEqual({
+        id: 'mcp:workspace-server',
+        kind: 'mcp',
+        name: 'workspace-server',
+        description: 'stdio',
+        scope: 'workspace',
+        status: 'active',
+        capabilities: ['tools'],
+        actions: ['open-mcp'],
+      });
+      expect(harness.sessions.size).toBe(0);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('lists a first-party platform as unavailable while its experimental flag is off', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-service-home-');
+    const workDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-service-work-');
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      const connectors = await harness.listWorkspaceConnectors(workDir);
+
+      const github = connectors.find((connector) => connector.id === 'github');
+      expect(github?.kind).toBe('service');
+      expect(github?.status).toBe('unavailable');
+      expect(github?.actions).toEqual([]);
+      expect(connectors.some((connector) => connector.status === 'active')).toBe(false);
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('reports the GitHub connection state without exposing token material', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-github-status-home-');
+    const workDir = await makeTempDir(tempDirs, 'omnicode-sdk-github-status-work-');
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      const status = await harness.getGitHubStatus();
+
+      expect(status).toMatchObject({ configured: false, connected: false, scopes: [] });
+      expect(JSON.stringify(status)).not.toContain('token');
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('keeps a GitHub connection across sessions', async () => {
+    vi.stubEnv('OMNICODE_EXPERIMENTAL_GITHUB_CONNECTOR', '1');
+    vi.stubEnv('OMNICODE_GITHUB_CLIENT_ID', 'Iv1.0testclientid000000');
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-github-persist-home-');
+    const workDir = await makeTempDir(tempDirs, 'omnicode-sdk-github-persist-work-');
+    const credentials = join(homeDir, 'credentials', 'github');
+    await mkdir(credentials, { recursive: true });
+    await writeFile(
+      join(credentials, 'account'),
+      JSON.stringify({
+        accessToken: 'gho_persisted_token',
+        tokenType: 'bearer',
+        scopes: ['repo'],
+        login: 'octocat',
+        repositoryAccess: 'all',
+        repositories: [],
+      }),
+    );
+
+    const first = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+    try {
+      const status = await first.getGitHubStatus();
+      expect(status).toMatchObject({ configured: true, connected: true, accountLogin: 'octocat' });
+    } finally {
+      await first.close();
+    }
+
+    const second = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+    try {
+      const status = await second.getGitHubStatus();
+      expect(status.connected).toBe(true);
+      expect(status.accountLogin).toBe('octocat');
+      expect(JSON.stringify(status)).not.toContain('gho_persisted_token');
+    } finally {
+      await second.close();
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('refuses to start a GitHub device flow while no client id is configured', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-github-flow-home-');
+    const workDir = await makeTempDir(tempDirs, 'omnicode-sdk-github-flow-work-');
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      await expect(harness.startGitHubDeviceFlow()).rejects.toMatchObject({
+        code: 'github.not_configured',
+      });
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('reports the Vercel connection state without exposing token material', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-vercel-status-home-');
+    const workDir = await makeTempDir(tempDirs, 'omnicode-sdk-vercel-status-work-');
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      const status = await harness.getVercelStatus();
+
+      expect(status).toMatchObject({ configured: false, connected: false, scopes: [] });
+      expect(JSON.stringify(status)).not.toContain('token');
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('refuses to connect Vercel while no token is configured', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-vercel-connect-home-');
+    const workDir = await makeTempDir(tempDirs, 'omnicode-sdk-vercel-connect-work-');
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      await expect(harness.connectVercel()).rejects.toMatchObject({
+        code: 'vercel.not_configured',
+      });
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('keeps another workspace out of the listing', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-scope-home-');
+    const firstWorkDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-scope-first-');
+    const secondWorkDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-scope-second-');
+    await writeMcpJson(join(homeDir, 'mcp.json'), {
+      'user-server': { transport: 'stdio', command: 'user-command' },
+    });
+    await writeMcpJson(join(firstWorkDir, '.omnicode', 'mcp.json'), {
+      'first-server': { transport: 'stdio', command: 'first-command' },
+    });
+    await writeMcpJson(join(secondWorkDir, '.omnicode', 'mcp.json'), {
+      'second-server': { transport: 'stdio', command: 'second-command' },
+    });
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      await harness.trustWorkspace(firstWorkDir);
+      await harness.trustWorkspace(secondWorkDir);
+
+      const first = await harness.listWorkspaceConnectors(firstWorkDir);
+      const second = await harness.listWorkspaceConnectors(secondWorkDir);
+
+      expect(first.map((connector) => connector.id)).toContain('mcp:first-server');
+      expect(first.map((connector) => connector.id)).not.toContain('mcp:second-server');
+      expect(second.map((connector) => connector.id)).toContain('mcp:second-server');
+      expect(second.map((connector) => connector.id)).not.toContain('mcp:first-server');
+      expect(first.map((connector) => connector.id)).toContain('mcp:user-server');
+      expect(second.map((connector) => connector.id)).toContain('mcp:user-server');
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('hides workspace-scoped servers from an untrusted workspace', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-trust-home-');
+    const workDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-trust-work-');
+    await writeMcpJson(join(homeDir, 'mcp.json'), {
+      'user-server': { transport: 'stdio', command: 'user-command' },
+    });
+    await writeMcpJson(join(workDir, '.omnicode', 'mcp.json'), {
+      'workspace-server': { transport: 'stdio', command: 'workspace-command' },
+    });
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      const connectors = await harness.listWorkspaceConnectors(workDir);
+
+      expect(connectors.map((connector) => connector.id)).toContain('mcp:user-server');
+      expect(connectors.map((connector) => connector.id)).not.toContain('mcp:workspace-server');
+    } finally {
+      await harness.close();
+    }
+  });
+
+  it('preserves the core error when workDir is empty', async () => {
+    const homeDir = await makeTempDir(tempDirs, 'omnicode-sdk-connector-empty-home-');
+    const harness = createOmnicodeHarness({ homeDir, identity: TEST_IDENTITY });
+
+    try {
+      await expect(harness.listWorkspaceConnectors('   ')).rejects.toMatchObject({
+        name: 'OmnicodeError',
+        code: 'request.work_dir_required',
+        message: 'listWorkspaceConnectors requires workDir',
+      } satisfies Partial<OmnicodeError>);
+    } finally {
+      await harness.close();
+    }
+  });
+});
+
+async function writeMcpJson(
+  filePath: string,
+  servers: Readonly<Record<string, { transport: 'stdio'; command: string }>>,
+): Promise<void> {
+  await mkdir(join(filePath, '..'), { recursive: true });
+  await writeFile(filePath, JSON.stringify({ mcpServers: servers }, undefined, 2));
+}
+
+async function writeAgentProfile(
+  workDir: string,
+  name: string,
+  description: string,
+  whenToUse: string,
+): Promise<void> {
+  const dir = join(workDir, '.omnicode', 'agents');
+  await mkdir(dir, { recursive: true });
+  await writeFile(
+    join(dir, `${name}.md`),
+    [
+      '---',
+      `name: ${name}`,
+      `description: ${description}`,
+      `whenToUse: ${whenToUse}`,
+      '---',
+      '',
+      'Complete the task carefully.',
+    ].join('\n'),
+  );
+}
 
 async function writeSkill(workDir: string, name: string, lines: readonly string[]): Promise<void> {
   const dir = join(workDir, '.omnicode', 'skills', name);

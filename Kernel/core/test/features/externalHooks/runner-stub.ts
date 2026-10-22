@@ -1,18 +1,32 @@
 import { Event } from '#/_base/event';
-import { ExternalHooksRunnerService } from '#/features/externalHooks/app/externalHooksRunnerService';
-import { HOOKS_SECTION } from '#/features/externalHooks/configSection';
-import type { HookDef } from '#/features/externalHooks/internal/types';
+import type { ILogService } from '#/_base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { IPluginService } from '#/app/plugin/plugin';
 import { ITelemetryService, noopTelemetryService } from '#/app/telemetry/telemetry';
+import { ExternalHooksRunnerService } from '#/features/externalHooks/app/externalHooksRunnerService';
+import { HOOKS_SECTION } from '#/features/externalHooks/configSection';
+import type { HookDef } from '#/features/externalHooks/internal/types';
 import { HostProcessService } from '#/os/backends/node-local/hostProcessService';
+
+const noopLogger: ILogService = {
+  _serviceBrand: undefined,
+  level: 'info',
+  setLevel: () => {},
+  flush: async () => {},
+  error: () => {},
+  warn: () => {},
+  info: () => {},
+  debug: () => {},
+  child: () => noopLogger,
+};
 
 export function makeHookRunner(
   hooks: readonly HookDef[],
   options: {
     cwd?: string;
     telemetry?: ITelemetryService;
+    log?: ILogService;
     onTriggered?: (event: string, target: string, count: number) => void;
     onResolved?: (
       event: string,
@@ -40,6 +54,7 @@ export function makeHookRunner(
       clientIdentity: { productName: 'test', version: '0.0.0-test', platform: 'test_platform' },
     } as unknown as IBootstrapService,
     new HostProcessService(),
+    options.log ?? noopLogger,
     options.telemetry ?? noopTelemetryService,
     { onTriggered: options.onTriggered, onResolved: options.onResolved },
   );

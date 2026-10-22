@@ -6,7 +6,6 @@
  * their payload schemas.
  */
 
-import type { KlientContract } from './types.js';
 import {
   agentCommandContract,
   agentContextMemoryContract,
@@ -27,27 +26,31 @@ import {
 import { authContract, authSummaryContract } from './global/auth.js';
 import { capabilitiesContract } from './global/capabilities.js';
 import { catalogContract } from './global/catalog.js';
-import { providerDiscoveryContract } from './global/providerDiscovery.js';
-import { registryImportContract } from './global/registryImport.js';
 import { configContract } from './global/config.js';
+import { connectorCatalogContract } from './global/connectors.js';
 import { envContract } from './global/env.js';
 import { filesContract } from './global/files.js';
 import { flagsContract } from './global/flags.js';
+import { githubContract } from './global/github.js';
 import { hostFsContract } from './global/hostFs.js';
-import { modelsContract } from './global/models.js';
 import { mcpManagementContract } from './global/mcpManagement.js';
+import { modelsContract } from './global/models.js';
 import { pluginsContract } from './global/plugins.js';
+import { providerDiscoveryContract } from './global/providerDiscovery.js';
 import { providersContract } from './global/providers.js';
+import { registryImportContract } from './global/registryImport.js';
 import { sessionsContract } from './global/sessions.js';
+import { vercelContract } from './global/vercel.js';
 import { workspacesContract } from './global/workspaces.js';
-import { sessionApprovalContract } from './session/approval.js';
 import { sessionActivityViewContract } from './session/activity.js';
+import { sessionApprovalContract } from './session/approval.js';
 import { sessionInteractionContract } from './session/interaction.js';
 import { sessionManagerContract } from './session/lifecycle.js';
 import { sessionMetadataContract } from './session/metadata.js';
 import { sessionQuestionContract } from './session/question.js';
 import { sessionSkillCatalogContract } from './session/skills.js';
 import { sessionTitleContract } from './session/title.js';
+import type { KlientContract } from './types.js';
 
 export const globalContract: KlientContract = {
   // core (app scope)
@@ -64,6 +67,9 @@ export const globalContract: KlientContract = {
   flagService: flagsContract,
   pluginService: pluginsContract,
   capabilityService: capabilitiesContract,
+  connectorCatalogService: connectorCatalogContract,
+  githubService: githubContract,
+  vercelService: vercelContract,
   hostFolderBrowser: hostFsContract,
   bootstrapService: envContract,
   fileService: filesContract,
@@ -95,5 +101,10 @@ export const globalContract: KlientContract = {
   agentFullCompactionService: agentFullCompactionContract,
 };
 
-export type { KlientContract, ProcedureContract, ServiceContract, StreamingProcedureContract } from './types.js';
+export type {
+  KlientContract,
+  ProcedureContract,
+  ServiceContract,
+  StreamingProcedureContract,
+} from './types.js';
 export { isStreamingContract } from './types.js';

@@ -1,9 +1,16 @@
+import { execFile } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { createWriteStream, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  createWriteStream,
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
-import { execFile } from 'node:child_process';
 import { pipeline } from 'node:stream/promises';
 import { promisify } from 'node:util';
 import { inflateRawSync, zstdDecompressSync } from 'node:zlib';
@@ -137,7 +144,11 @@ describe('native release artifacts', () => {
       env: { ...process.env, OMNICODE_BUILD_TARGET: target },
     });
 
-    await execFileAsync(process.execPath, [manifestScript, artifactsDir, '@hilbras/omnicode@0.5.0']);
+    await execFileAsync(process.execPath, [
+      manifestScript,
+      artifactsDir,
+      '@hilbras/omnicode@0.5.0',
+    ]);
 
     const zstBytes = readFileSync(resolve(artifactsDir, `omnicode-${target}.zst`));
     expect(zstdDecompressSync(zstBytes).toString('utf-8')).toBe(binaryContent);
@@ -147,9 +158,7 @@ describe('native release artifacts', () => {
       `${sha256(readFileSync(tarballPath))}  omnicode-${target}.tar.gz\n`,
     );
 
-    const manifest = JSON.parse(
-      readFileSync(resolve(artifactsDir, 'manifest.json'), 'utf-8'),
-    ) as {
+    const manifest = JSON.parse(readFileSync(resolve(artifactsDir, 'manifest.json'), 'utf-8')) as {
       version: string;
       tag: string;
       platforms: Record<

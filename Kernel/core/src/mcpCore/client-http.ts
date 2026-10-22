@@ -1,11 +1,13 @@
-import { ErrorCodes, Error2 } from '#/errors';
-import type { McpServerHttpConfig } from './config-schema';
-import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { OAuthClientProvider } from '@modelcontextprotocol/sdk/client/auth.js';
+import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 
+import { ErrorCodes, Error2 } from '#/errors';
+
+import { buildMcpRemoteHeaders } from './client-remote';
 import {
   buildRequestOptions,
+  installToolListChangedHandler,
   OMNICODE_MCP_CLIENT_NAME,
   OMNICODE_MCP_CLIENT_VERSION,
   MCP_LIVENESS_PROBE_TIMEOUT_MS,
@@ -14,8 +16,9 @@ import {
   type UnexpectedCloseListener,
   type UnexpectedCloseReason,
 } from './client-shared';
-import { buildMcpRemoteHeaders } from './client-remote';
+import type { McpServerHttpConfig } from './config-schema';
 import { createMcpOAuthFetch } from './oauth/provider';
+import { assertMcpEndpointAllowed, createMcpRedirectGuardFetch } from './remote-guard';
 import type { MCPClient, MCPToolDefinition, MCPToolResult } from './types';
 
 export interface HttpMcpClientOptions {
@@ -41,14 +44,21 @@ export class HttpMcpClient implements MCPClient {
   private lastTransportError: Error | undefined;
   private pendingUnexpectedClose: UnexpectedCloseReason | undefined;
   private unexpectedCloseFired = false;
+  private toolsChangedListener: (() => void) | undefined;
 
   constructor(config: McpServerHttpConfig, options: HttpMcpClientOptions = {}) {
     const envLookup = options.envLookup ?? ((name) => process.env[name]);
     const headers = buildMcpHttpHeaders(config, envLookup);
+    const endpoint = assertMcpEndpointAllowed(config.url, {
+      allowPrivateNetwork: config.allowPrivateNetwork,
+    });
 
-    this.transport = new StreamableHTTPClientTransport(new URL(config.url), {
+    this.transport = new StreamableHTTPClientTransport(endpoint, {
       requestInit: headers !== undefined ? { headers } : undefined,
-      fetch: createMcpOAuthFetch(options.oauthProvider, options.fetch),
+      fetch: createMcpRedirectGuardFetch(
+        endpoint,
+        createMcpOAuthFetch(options.oauthProvider, options.fetch),
+      ),
       authProvider: options.oauthProvider,
     });
     this.client = new Client({
@@ -105,6 +115,10 @@ export class HttpMcpClient implements MCPClient {
     return result.tools.map(toMcpToolDefinition);
   }
 
+  onToolsChanged(listener: () => void): void {
+    this.toolsChangedListener = listener;
+  }
+
   async callTool(
     name: string,
     args: Record<string, unknown>,
@@ -128,6 +142,9 @@ export class HttpMcpClient implements MCPClient {
   private installTransportHooks(): void {
     if (this.hooksInstalled) return;
     this.hooksInstalled = true;
+    installToolListChangedHandler(this.client, () => {
+      this.toolsChangedListener?.();
+    });
     this.client.onclose = () => {
       if (this.closed) return;
       if (!this.ready) return;

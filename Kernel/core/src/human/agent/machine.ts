@@ -1,3 +1,10 @@
+import { storeActor } from '#/eventStore/actor';
+import { createUserMessage, type ToolCall, type UserMessage } from '#/llm/message';
+import type { LlmRequestConfig } from '#/llm/requester/requester';
+import type { ToolExecutor, ToolResult } from '#/tool/executor';
+import { createToolMachine, type ToolEvent, type ToolOutput } from '#/tool/machine';
+import type { ToolDefinition } from '#/tool/tool';
+import { createAbortScope, withAbort, type AbortScope } from '#/utils/abort';
 import {
   assign,
   emit,
@@ -16,13 +23,6 @@ import {
   type Subscription,
 } from '#/xstate2';
 
-import { createUserMessage, type ToolCall, type UserMessage } from '#/llm/message';
-import type { LlmRequestConfig } from '#/llm/requester/requester';
-import type { ToolExecutor, ToolResult } from '#/tool/executor';
-import { createToolMachine, type ToolEvent, type ToolOutput } from '#/tool/machine';
-import type { ToolDefinition } from '#/tool/tool';
-
-import { createWaitForTasks, type ToolActorRef } from './wait-for';
 import { interruptReasonOf, type TurnInterruptReason } from './errors';
 import {
   inputCancelled,
@@ -34,11 +34,17 @@ import {
   turnStarted,
 } from './events';
 import { mergeSteerMessages } from './origin';
-import { createSystemEntry, createUserEntry } from './turn';
-import { createAbortScope, withAbort, type AbortScope } from '#/utils/abort';
-import type { createTurnMachine, HistoryMessage, SystemEntry, TurnLlmEvent, TurnOutput, UserEntry } from './turn';
-import { storeActor } from '#/eventStore/actor';
 import type { AgentEventStore, AgentStoreState } from './slices';
+import { createSystemEntry, createUserEntry } from './turn';
+import type {
+  createTurnMachine,
+  HistoryMessage,
+  SystemEntry,
+  TurnLlmEvent,
+  TurnOutput,
+  UserEntry,
+} from './turn';
+import { createWaitForTasks, type ToolActorRef } from './wait-for';
 
 export interface AgentInput {
   request: LlmRequestConfig;
@@ -113,7 +119,13 @@ export type AgentEvent =
 export type AgentEmitted =
   | TurnLlmEvent
   | ToolEvent
-  | { type: 'turn.started'; turnId: number; branchId: string; queueItemId?: string; entry?: UserEntry }
+  | {
+      type: 'turn.started';
+      turnId: number;
+      branchId: string;
+      queueItemId?: string;
+      entry?: UserEntry;
+    }
   | { type: 'step.started'; step: number }
   | { type: 'turn.aborting' }
   | { type: 'turn.reminders_consumed'; reminders: HistoryMessage[] }
@@ -169,7 +181,9 @@ function completionNotification(toolCall: ToolCall, output: ToolOutput): UserEnt
   if (output.type === 'failed') {
     const text = output.error instanceof Error ? output.error.message : String(output.error);
     return createUserEntry(
-      createUserMessage(`[async tool failed] ${toolCall.name} (tool_call_id=${toolCall.id})\n${text}`),
+      createUserMessage(
+        `[async tool failed] ${toolCall.name} (tool_call_id=${toolCall.id})\n${text}`,
+      ),
       { source: 'async-tool' },
     );
   }
@@ -269,7 +283,10 @@ interface ReclaimOutcome {
 
 function drainPendingPatch(
   context: AgentMachineContext,
-): Pick<AgentMachineContext, 'messages' | 'notifications' | 'queue' | 'drainedId' | 'drainedEntry'> {
+): Pick<
+  AgentMachineContext,
+  'messages' | 'notifications' | 'queue' | 'drainedId' | 'drainedEntry'
+> {
   const [head, ...rest] = context.queue;
   return {
     messages: [
@@ -284,10 +301,9 @@ function drainPendingPatch(
   };
 }
 
-function mirrorPatch(state: AgentStoreState): Pick<
-  AgentMachineContext,
-  'messages' | 'notifications' | 'reminders'
-> {
+function mirrorPatch(
+  state: AgentStoreState,
+): Pick<AgentMachineContext, 'messages' | 'notifications' | 'reminders'> {
   return {
     messages: [...state.history],
     notifications: [...state.notifications],
@@ -322,10 +338,7 @@ export function dispatchTools(tools: readonly ToolDefinition[]): ToolExecutor {
   };
 }
 
-export function createAgentMachine({
-  abortTimeoutMs,
-  maxStepsPerTurn,
-}: CreateAgentMachineOptions) {
+export function createAgentMachine({ abortTimeoutMs, maxStepsPerTurn }: CreateAgentMachineOptions) {
   return setup({
     types: {
       input: {} as AgentInput,
@@ -348,7 +361,8 @@ export function createAgentMachine({
         { gate?: PromptGate; head?: UserEntry }
       >(async ({ input }) => {
         const { gate, head } = input;
-        if (gate === undefined || head === undefined) return { id: head?.meta?.promptId, block: false };
+        if (gate === undefined || head === undefined)
+          return { id: head?.meta?.promptId, block: false };
         try {
           const verdict = await gate(head.meta?.promptId, head.message);
           if (typeof verdict === 'boolean') return { id: head.meta?.promptId, block: verdict };
@@ -360,33 +374,35 @@ export function createAgentMachine({
       disposeScopeActor: fromPromise<void, { handle?: AgentScopeHandle }>(async ({ input }) => {
         await input.handle?.disposeAsync();
       }),
-      reclaimRunActor: fromPromise<ReclaimOutcome, { store: AgentEventStore }>(async ({ input }) => {
-        const state = input.store.getState();
-        const open = state.turnIndex.turns.at(-1);
-        if (open === undefined || open.end !== undefined) return { resume: false };
-        const unanswered = historyEndsUnanswered(state.history);
-        const attempts = state.runClaims.attempts;
-        if (unanswered && attempts < MAX_INTERRUPTED_RUN_ATTEMPTS) {
-          await input.store.dispatch([
-            turnEnded({ turnId: open.turnId, outcome: 'aborted' }),
-            runAttempted({ attempt: attempts + 1 }),
-          ]);
+      reclaimRunActor: fromPromise<ReclaimOutcome, { store: AgentEventStore }>(
+        async ({ input }) => {
+          const state = input.store.getState();
+          const open = state.turnIndex.turns.at(-1);
+          if (open === undefined || open.end !== undefined) return { resume: false };
+          const unanswered = historyEndsUnanswered(state.history);
+          const attempts = state.runClaims.attempts;
+          if (unanswered && attempts < MAX_INTERRUPTED_RUN_ATTEMPTS) {
+            await input.store.dispatch([
+              turnEnded({ turnId: open.turnId, outcome: 'aborted' }),
+              runAttempted({ attempt: attempts + 1 }),
+            ]);
+            await input.store.flush();
+            return { resume: true };
+          }
+          const error = unanswered
+            ? `interrupted run exceeded ${MAX_INTERRUPTED_RUN_ATTEMPTS} resume attempts`
+            : undefined;
+          await input.store.dispatch(
+            turnEnded({
+              turnId: open.turnId,
+              outcome: unanswered ? 'failed' : 'aborted',
+              errorMessage: error,
+            }),
+          );
           await input.store.flush();
-          return { resume: true };
-        }
-        const error = unanswered
-          ? `interrupted run exceeded ${MAX_INTERRUPTED_RUN_ATTEMPTS} resume attempts`
-          : undefined;
-        await input.store.dispatch(
-          turnEnded({
-            turnId: open.turnId,
-            outcome: unanswered ? 'failed' : 'aborted',
-            errorMessage: error,
-          }),
-        );
-        await input.store.flush();
-        return error === undefined ? { resume: false } : { resume: false, error };
-      }),
+          return error === undefined ? { resume: false } : { resume: false, error };
+        },
+      ),
     },
     actions: {
       forwardToParent: ({ self, event }) => {
@@ -473,7 +489,10 @@ export function createAgentMachine({
           branchId: event.branch,
         };
       }),
-      emitReset: emit(({ context }) => ({ type: 'context.reset' as const, branchId: context.branchId })),
+      emitReset: emit(({ context }) => ({
+        type: 'context.reset' as const,
+        branchId: context.branchId,
+      })),
       abortScope: ({ context }) => {
         context.scope.abort();
       },
@@ -752,9 +771,7 @@ export function createAgentMachine({
               target: '#agent.idle',
               actions: emit(({ context, event }) => ({
                 type: 'turn.failed' as const,
-                error: new Error(
-                  event.output.error ?? 'interrupted run could not be resumed',
-                ),
+                error: new Error(event.output.error ?? 'interrupted run could not be resumed'),
                 messages: context.messages,
                 interruptReason: 'error' as const,
                 branchId: context.branchId,
@@ -861,7 +878,9 @@ export function createAgentMachine({
                       const rewritten = event.output.message;
                       const head = context.queue[0];
                       if (rewritten === undefined || head === undefined) return {};
-                      return { queue: [{ ...head, message: rewritten }, ...context.queue.slice(1)] };
+                      return {
+                        queue: [{ ...head, message: rewritten }, ...context.queue.slice(1)],
+                      };
                     }),
                     'commitPendingToHistory',
                   ],
@@ -963,18 +982,16 @@ export function createAgentMachine({
           },
           'store.reset': {
             target: '#agent.idle',
-            actions: [
-              'abortScope',
-              'resetMirror',
-              'emitReset',
-              'forwardToParent',
-            ],
+            actions: ['abortScope', 'resetMirror', 'emitReset', 'forwardToParent'],
           },
           'input.pause': {
             actions: [assign({ paused: true }), sendTo('turn', { type: 'turn.pause' as const })],
           },
           'input.continue': {
-            actions: [assign({ paused: false }), sendTo('turn', { type: 'turn.continue' as const })],
+            actions: [
+              assign({ paused: false }),
+              sendTo('turn', { type: 'turn.continue' as const }),
+            ],
           },
           'turn.drain': {
             actions: enqueueActions(({ context, enqueue }) => {

@@ -1,46 +1,24 @@
 import { createControlledPromise } from '@antfu/utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import { LifecycleScope } from '#/app/scopes';
 import { SyncDescriptor } from '#/_base/di/descriptors';
 import { DisposableStore } from '#/_base/di/lifecycle';
+import type { IAgentScopeHandle } from '#/_base/di/scope';
 import { TestInstantiationService } from '#/_base/di/test';
 import { Event } from '#/_base/event';
-import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { userCancellationReason } from '#/_base/utils/abort';
-import { Error2, ErrorCodes } from '#/errors';
-import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
-import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
-import { IAgentProfileService, type ProfileData } from '#/agent/profile/profile';
+import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentLoopService } from '#/agent/loop/loop';
-import { IAgentUserToolService } from '#/agent/userTool/userTool';
-import { IEventBus } from '#/app/event/eventBus';
-import type { Event2 } from '#/app/event/event2';
-import { APIProviderRateLimitError } from '#/llm-adapter/contract/errors';
-import { ITelemetryService, noopTelemetryService } from '#/app/telemetry/telemetry';
-import {
-  IAgentLifecycleService,
-  type CreateAgentOptions,
-} from '#/session/agentLifecycle/agentLifecycle';
-import { labelsFromAgentMeta } from '#/session/agentLifecycle/subagentMetadata';
-import { createHooks } from '#/hooks';
-import {
-  type AgentRunHandle,
-  type AgentTaskHooks,
-  ISessionSubagentService,
-} from '#/session/subagent/subagent';
-import {
-  type SpawnSubagentOptions,
-  type SubagentSpawnPlanInput,
-} from '#/session/subagent/spawn';
-import {
-  ISessionMetadata,
-  type AgentMeta,
-  type SessionMetadataChangedEvent,
-} from '#/session/sessionMetadata/sessionMetadata';
-import { IEventDispatcher } from '#/state/eventDispatcher';
+import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
+import { IAgentProfileService, type ProfileData } from '#/agent/profile/profile';
 import { IAgentRuntimeBindingService } from '#/agent/runtimeBinding/runtimeBinding';
+import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
+import { IAgentUserToolService } from '#/agent/userTool/userTool';
+import type { Event2 } from '#/app/event/event2';
+import { IEventBus } from '#/app/event/eventBus';
+import { LifecycleScope } from '#/app/scopes';
+import { ITelemetryService, noopTelemetryService } from '#/app/telemetry/telemetry';
+import { Error2, ErrorCodes } from '#/errors';
 import {
   AgentRunBatch,
   resolveSwarmMaxConcurrency,
@@ -53,8 +31,31 @@ import {
   type AgentSpawnAttemptOptions,
   type QueuedAgentRunTask,
 } from '#/features/swarm/session/agentRunBatch';
-import { ISessionSwarmService, type SessionSwarmSpawnTask, type SessionSwarmTask } from '#/features/swarm/session/sessionSwarm';
+import {
+  ISessionSwarmService,
+  type SessionSwarmSpawnTask,
+  type SessionSwarmTask,
+} from '#/features/swarm/session/sessionSwarm';
 import { SessionSwarmService } from '#/features/swarm/session/sessionSwarmService';
+import { createHooks } from '#/hooks';
+import { APIProviderRateLimitError } from '#/llm-adapter/contract/errors';
+import {
+  IAgentLifecycleService,
+  type CreateAgentOptions,
+} from '#/session/agentLifecycle/agentLifecycle';
+import { labelsFromAgentMeta } from '#/session/agentLifecycle/subagentMetadata';
+import {
+  ISessionMetadata,
+  type AgentMeta,
+  type SessionMetadataChangedEvent,
+} from '#/session/sessionMetadata/sessionMetadata';
+import { type SpawnSubagentOptions, type SubagentSpawnPlanInput } from '#/session/subagent/spawn';
+import {
+  type AgentRunHandle,
+  type AgentTaskHooks,
+  ISessionSubagentService,
+} from '#/session/subagent/subagent';
+import { IEventDispatcher } from '#/state/eventDispatcher';
 
 import { stubAgentContext } from '../../agent/agentContext/stubs';
 
@@ -853,10 +854,7 @@ describe('AgentRunBatch abandoned callback', () => {
         error: 'Rate limited',
       });
 
-      await expect(running).resolves.toMatchObject([
-        { status: 'completed' },
-        { status: 'failed' },
-      ]);
+      await expect(running).resolves.toMatchObject([{ status: 'completed' }, { status: 'failed' }]);
       expect(onAbandoned).toHaveBeenCalledTimes(1);
       expect(onAbandoned).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -1341,9 +1339,7 @@ describe('SessionSwarmService metadata compatibility', () => {
             agentId,
             turn: {} as never,
             completion:
-              retryRuns === 1
-                ? rateLimited
-                : Promise.resolve({ summary: 'recovered summary' }),
+              retryRuns === 1 ? rateLimited : Promise.resolve({ summary: 'recovered summary' }),
           };
         }
         return { agentId, turn: {} as never, completion: blocker };
@@ -1657,22 +1653,25 @@ describe('SessionSwarmService metadata compatibility', () => {
       handles.set('agent-hook', agentHandle('agent-hook', lifecycle, eventBus));
       handles.set(
         'main',
-        agentHandle('main', lifecycle, eventBus, {}, new Map([[ISessionSubagentService, subagents]])),
+        agentHandle(
+          'main',
+          lifecycle,
+          eventBus,
+          {},
+          new Map([[ISessionSubagentService, subagents]]),
+        ),
       );
-      subagents.hooks.onWillStartAgentTask.register(
-        'test-hook',
-        async (hookContext) => {
-          await new Promise((_, reject) => {
-            hookContext.signal.addEventListener(
-              'abort',
-              () => {
-                reject(hookContext.signal.reason);
-              },
-              { once: true },
-            );
-          });
-        },
-      );
+      subagents.hooks.onWillStartAgentTask.register('test-hook', async (hookContext) => {
+        await new Promise((_, reject) => {
+          hookContext.signal.addEventListener(
+            'abort',
+            () => {
+              reject(hookContext.signal.reason);
+            },
+            { once: true },
+          );
+        });
+      });
       runAgent.mockImplementation((agent, _request, options) => {
         options?.onReady?.();
         const agentId = (agent as AgentContext).agentId;
@@ -1704,9 +1703,7 @@ describe('SessionSwarmService metadata compatibility', () => {
       await vi.advanceTimersByTimeAsync(0);
 
       controller.abort(userCancellationReason());
-      await expect(running).resolves.toMatchObject([
-        { status: 'aborted', agentId: 'agent-hook' },
-      ]);
+      await expect(running).resolves.toMatchObject([{ status: 'aborted', agentId: 'agent-hook' }]);
       await vi.advanceTimersByTimeAsync(0);
 
       const subagentIdsOf = (type: string) =>
@@ -1730,22 +1727,25 @@ describe('SessionSwarmService metadata compatibility', () => {
       handles.set('agent-hook', agentHandle('agent-hook', lifecycle, eventBus));
       handles.set(
         'main',
-        agentHandle('main', lifecycle, eventBus, {}, new Map([[ISessionSubagentService, subagents]])),
+        agentHandle(
+          'main',
+          lifecycle,
+          eventBus,
+          {},
+          new Map([[ISessionSubagentService, subagents]]),
+        ),
       );
-      subagents.hooks.onWillStartAgentTask.register(
-        'test-hook',
-        async (hookContext) => {
-          await new Promise((_, reject) => {
-            hookContext.signal.addEventListener(
-              'abort',
-              () => {
-                reject(hookContext.signal.reason);
-              },
-              { once: true },
-            );
-          });
-        },
-      );
+      subagents.hooks.onWillStartAgentTask.register('test-hook', async (hookContext) => {
+        await new Promise((_, reject) => {
+          hookContext.signal.addEventListener(
+            'abort',
+            () => {
+              reject(hookContext.signal.reason);
+            },
+            { once: true },
+          );
+        });
+      });
       runAgent.mockImplementation((agent, _request, options) => {
         const agentId = (agent as AgentContext).agentId;
         return {
@@ -1776,9 +1776,7 @@ describe('SessionSwarmService metadata compatibility', () => {
       await vi.advanceTimersByTimeAsync(0);
 
       controller.abort(userCancellationReason());
-      await expect(running).resolves.toMatchObject([
-        { status: 'aborted', agentId: 'agent-hook' },
-      ]);
+      await expect(running).resolves.toMatchObject([{ status: 'aborted', agentId: 'agent-hook' }]);
       await vi.advanceTimersByTimeAsync(0);
 
       const subagentIdsOf = (type: string) =>
@@ -1868,9 +1866,7 @@ describe('SessionSwarmService metadata compatibility', () => {
         callerAgentId: 'main',
         tasks: [spawnSessionTask('src/a.ts')],
       }),
-    ).resolves.toMatchObject([
-      { status: 'failed', state: 'not_started', error: 'enqueue boom' },
-    ]);
+    ).resolves.toMatchObject([{ status: 'failed', state: 'not_started', error: 'enqueue boom' }]);
 
     const failedEvents = published.filter((event) => event.type === 'subagent.failed');
     expect(failedEvents).toHaveLength(1);
@@ -1978,15 +1974,21 @@ describe('SessionSwarmService metadata compatibility', () => {
     };
     handles.set(
       'agent-existing',
-      agentHandle('agent-existing', lifecycle, eventBus, {}, new Map([
-        [
-          IAgentLoopService,
-          {
-            _serviceBrand: undefined,
-            snapshot: () => ({ state: 'running' }),
-          },
-        ],
-      ])),
+      agentHandle(
+        'agent-existing',
+        lifecycle,
+        eventBus,
+        {},
+        new Map([
+          [
+            IAgentLoopService,
+            {
+              _serviceBrand: undefined,
+              snapshot: () => ({ state: 'running' }),
+            },
+          ],
+        ]),
+      ),
     );
     const service = ix.get(ISessionSwarmService);
 
@@ -1999,8 +2001,7 @@ describe('SessionSwarmService metadata compatibility', () => {
       {
         status: 'failed',
         state: 'not_started',
-        error:
-          'Agent instance "agent-existing" is already running and cannot run concurrently',
+        error: 'Agent instance "agent-existing" is already running and cannot run concurrently',
       },
     ]);
     expect(runAgent).not.toHaveBeenCalled();
@@ -2320,9 +2321,7 @@ type MockAgentRunBatchRunnerOptions = {
   readonly maxConcurrency?: number;
 };
 
-function createMockAgentRunBatchRunner(
-  options: MockAgentRunBatchRunnerOptions = {},
-): {
+function createMockAgentRunBatchRunner(options: MockAgentRunBatchRunnerOptions = {}): {
   readonly runBatch: <T>(
     tasks: readonly QueuedAgentRunTask<T>[],
     options?: { readonly signal?: AbortSignal },
@@ -2332,7 +2331,7 @@ function createMockAgentRunBatchRunner(
   const attempts: MockAgentRunAttemptRecord[] = [];
   let activeTasks: readonly QueuedAgentRunTask<unknown>[] = [];
 
-  const createHandle = <T,>(
+  const createHandle = <T>(
     runOptions: AgentRunAttemptOptions,
     agentId: string,
     profileName: string,
@@ -2383,7 +2382,7 @@ function createMockAgentRunBatchRunner(
   };
 
   return {
-    runBatch: <T,>(
+    runBatch: <T>(
       tasks: readonly QueuedAgentRunTask<T>[],
       runOptions?: { readonly signal?: AbortSignal },
     ) => {

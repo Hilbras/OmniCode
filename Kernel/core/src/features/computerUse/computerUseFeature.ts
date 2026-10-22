@@ -2,18 +2,18 @@ import type { ServiceIdentifier } from '#/_base/di/instantiation';
 import type { AgentToolCtor, AnyAgentTool } from '#/agent/toolRegistry/toolContribution';
 import { IFlagService } from '#/app/flag/flag';
 import { LifecycleScope } from '#/app/scopes';
-import { Feature } from '#/features/feature';
-import { registerFeature } from '#/features/featureRegistry';
-
-import { AgentComputerUseService, IAgentComputerUseService } from '#/features/computerUse/computerUseService';
-import {
-  AgentRunSupervisor,
-  IAgentRunSupervisor,
-} from '#/features/computerUse/runSupervisor';
 import {
   CompletionCriteriaService,
   ICompletionCriteriaService,
 } from '#/features/computerUse/completionCriteriaService';
+import {
+  AgentComputerUseService,
+  IAgentComputerUseService,
+} from '#/features/computerUse/computerUseService';
+import { AgentRunSupervisor, IAgentRunSupervisor } from '#/features/computerUse/runSupervisor';
+import { Feature } from '#/features/feature';
+import { registerFeature } from '#/features/featureRegistry';
+
 import { COMPUTER_USE_FLAG_ID } from './computerUse';
 import {
   IComputerApplicationTool,
@@ -54,11 +54,7 @@ export class ComputerUseFeature extends Feature {
       ICompletionCriteriaService,
       CompletionCriteriaService,
     );
-    this.contributeService(
-      LifecycleScope.Agent,
-      IAgentRunSupervisor,
-      AgentRunSupervisor,
-    );
+    this.contributeService(LifecycleScope.Agent, IAgentRunSupervisor, AgentRunSupervisor);
     if (!flags.enabled(COMPUTER_USE_FLAG_ID)) return;
     assembledFlagServices.add(flags);
     this.onDispose(() => {

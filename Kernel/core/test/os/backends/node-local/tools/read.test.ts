@@ -1,32 +1,37 @@
-import { describe, expect, it, vi } from 'vitest';
-import { ZipFile } from 'yazl';
-
-import { PathSecurityError } from '#/tool/path-access';
-import { MEDIA_SNIFF_BYTES } from '#/agent/media/file-type';
-import type { ISessionSkillCatalog } from '#/features/skill/session/skillCatalog';
-import { stubWorkspaceContext } from '../../../../session/workspaceContext/stub-workspace-context';
-import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
+import { DOCUMENT_EXTRACT_MAX_BYTES } from '@hilbras/omnicode-tools/os/read/extract/extract';
 import {
   type ReadInput,
   ReadInputSchema,
   TRANSCODE_MAX_BYTES,
 } from '@hilbras/omnicode-tools/os/read/read';
 import { ReadTool } from '@hilbras/omnicode-tools/os/read/readTool';
-import { DOCUMENT_EXTRACT_MAX_BYTES } from '@hilbras/omnicode-tools/os/read/extract/extract';
+import { describe, expect, it, vi } from 'vitest';
+import { ZipFile } from 'yazl';
+
 import { renderToolResultForModel } from '#/agent/contextMemory/toolResultRender';
-import { stubToolResultTruncationService } from '../../../../agent/toolResultTruncation/stubs';
-import { stubConfigService } from '../../../../app/config/stubs';
-import type { IAgentToolResultTruncationService } from '#/agent/toolResultTruncation/toolResultTruncation';
+import { MEDIA_SNIFF_BYTES } from '#/agent/media/file-type';
 import type { IAgentProfileService } from '#/agent/profile/profile';
+import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import type { IAgentToolPolicyService } from '#/agent/toolPolicy/toolPolicy';
 import type { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
-import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
+import type { IAgentToolResultTruncationService } from '#/agent/toolResultTruncation/toolResultTruncation';
+import type { IFlagService } from '#/app/flag/flag';
+import type { ISessionSkillCatalog } from '#/features/skill/session/skillCatalog';
+import type { IHostEnvironment } from '#/os/interface/hostEnvironment';
+import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
 import { FakeRuntime } from '#/runtime/fakeRuntime';
 import { RuntimeRegistry } from '#/runtime/runtimeRegistry';
-import type { IHostEnvironment } from '#/os/interface/hostEnvironment';
-import type { ExecutableToolContext, ExecutableToolResult, ToolExecution } from '#/tool/toolContract';
-import type { IFlagService } from '#/app/flag/flag';
+import { PathSecurityError } from '#/tool/path-access';
+import type {
+  ExecutableToolContext,
+  ExecutableToolResult,
+  ToolExecution,
+} from '#/tool/toolContract';
+
+import { stubToolResultTruncationService } from '../../../../agent/toolResultTruncation/stubs';
+import { stubConfigService } from '../../../../app/config/stubs';
 import { stubFlag } from '../../../../app/flag/stubs';
+import { stubWorkspaceContext } from '../../../../session/workspaceContext/stub-workspace-context';
 
 const signal = new AbortController().signal;
 const PERMISSIVE_WORKSPACE = stubWorkspaceContext('/');
@@ -90,8 +95,12 @@ function createReadTool(
   } as unknown as ISessionSkillCatalog,
   truncation: IAgentToolResultTruncationService = stubToolResultTruncationService(),
   profile: IAgentProfileService = stubProfileService({ image_in: true, video_in: true }),
-  toolPolicy: IAgentToolPolicyService = { isToolActive: () => true } as unknown as IAgentToolPolicyService,
-  toolRegistry: IAgentToolRegistryService = { resolve: () => ({}) } as unknown as IAgentToolRegistryService,
+  toolPolicy: IAgentToolPolicyService = {
+    isToolActive: () => true,
+  } as unknown as IAgentToolPolicyService,
+  toolRegistry: IAgentToolRegistryService = {
+    resolve: () => ({}),
+  } as unknown as IAgentToolRegistryService,
   flags: IFlagService = stubFlag(false),
 ): ReadTool {
   const runtime = Object.assign(
@@ -108,7 +117,17 @@ function createReadTool(
     inspect: () => runtime,
     acquire: () => ({ runtime, track: (resource) => resource, dispose: () => {} }),
   };
-  return new ReadTool(resolver, workspace, skillCatalog, truncation, stubConfigService(), profile, toolPolicy, toolRegistry, flags);
+  return new ReadTool(
+    resolver,
+    workspace,
+    skillCatalog,
+    truncation,
+    stubConfigService(),
+    profile,
+    toolPolicy,
+    toolRegistry,
+    flags,
+  );
 }
 
 function createSpiedFs(content: string) {
@@ -169,7 +188,9 @@ function toolWithContent(content: string, workspace = PERMISSIVE_WORKSPACE) {
   return createReadTool(createSpiedFs(content).fs, createTestEnv(), workspace);
 }
 
-function isPromiseLike(value: ToolExecution | Promise<ToolExecution>): value is Promise<ToolExecution> {
+function isPromiseLike(
+  value: ToolExecution | Promise<ToolExecution>,
+): value is Promise<ToolExecution> {
   return typeof (value as Promise<ToolExecution>).then === 'function';
 }
 
@@ -198,15 +219,19 @@ async function execute(tool: ReadTool, args: ReadInput): Promise<ExecutableToolR
 
 describe('ReadTool', () => {
   it('reads a 4621-line document in full when the requested character budget fits', async () => {
-    const content = Array.from({ length: 4621 }, (_, index) =>
-      `section ${String(index + 1)} ${'x'.repeat(55)}`,
+    const content = Array.from(
+      { length: 4621 },
+      (_, index) => `section ${String(index + 1)} ${'x'.repeat(55)}`,
     ).join('\n');
     const tool = toolWithContent(content);
 
-    const result = await execute(tool, ReadInputSchema.parse({
-      path: '/tmp/paper.md',
-      max_chars: 500_000,
-    }));
+    const result = await execute(
+      tool,
+      ReadInputSchema.parse({
+        path: '/tmp/paper.md',
+        max_chars: 500_000,
+      }),
+    );
     const output = toolContentString(result);
 
     expect(result.isError).not.toBe(true);
@@ -216,10 +241,18 @@ describe('ReadTool', () => {
   });
 
   it('recovers a line above the maximum request size through fixed-budget column continuations', async () => {
-    const content = Array.from({ length: 60_000 }, (_, index) => `${String(index).padStart(5, '0')}value`).join('');
+    const content = Array.from(
+      { length: 60_000 },
+      (_, index) => `${String(index).padStart(5, '0')}value`,
+    ).join('');
     const tool = toolWithContent(content);
     const fragments: string[] = [];
-    let args: ReadInput | undefined = { path: '/tmp/record.jsonl', line_offset: 1, n_lines: 1, max_chars: 100_000 };
+    let args: ReadInput | undefined = {
+      path: '/tmp/record.jsonl',
+      line_offset: 1,
+      n_lines: 1,
+      max_chars: 100_000,
+    };
     let consumed = 0;
 
     for (let page = 0; args !== undefined && page < 20; page += 1) {
@@ -232,13 +265,23 @@ describe('ReadTool', () => {
       expect(fragment.length).toBeGreaterThan(0);
       expect(fragment).toBe(content.slice(consumed, consumed + fragment.length));
       expect(output.length + 1 + (result.note?.length ?? 0)).toBeLessThanOrEqual(100_000);
-      expect(result.note).toContain(`columns [${String(consumed)}, ${String(consumed + fragment.length)})`);
+      expect(result.note).toContain(
+        `columns [${String(consumed)}, ${String(consumed + fragment.length)})`,
+      );
       fragments.push(fragment);
       consumed += fragment.length;
       const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
-      args = next === undefined || next === null ? undefined : ReadInputSchema.parse(JSON.parse(next[1]!));
+      args =
+        next === undefined || next === null
+          ? undefined
+          : ReadInputSchema.parse(JSON.parse(next[1]!));
       if (args !== undefined) {
-        expect(args).toMatchObject({ line_offset: 1, column_offset: consumed, n_lines: 1, max_chars: 100_000 });
+        expect(args).toMatchObject({
+          line_offset: 1,
+          column_offset: consumed,
+          n_lines: 1,
+          max_chars: 100_000,
+        });
         expect(result.note).not.toContain('End of file reached.');
         expect(result.truncated).toBe(true);
       } else {
@@ -252,28 +295,38 @@ describe('ReadTool', () => {
     expect(fragments.join('')).toBe(content);
   });
 
-  it.each([650, 651])('keeps every Unicode fragment well formed with a %i-character budget', async (maxChars) => {
-    const content = '文🙂'.repeat(400) + 'END';
-    const tool = toolWithContent(content);
-    const fragments: string[] = [];
-    let args: ReadInput | undefined = { path: '/tmp/unicode.txt', n_lines: 1, max_chars: maxChars };
+  it.each([650, 651])(
+    'keeps every Unicode fragment well formed with a %i-character budget',
+    async (maxChars) => {
+      const content = '文🙂'.repeat(400) + 'END';
+      const tool = toolWithContent(content);
+      const fragments: string[] = [];
+      let args: ReadInput | undefined = {
+        path: '/tmp/unicode.txt',
+        n_lines: 1,
+        max_chars: maxChars,
+      };
 
-    for (let page = 0; args !== undefined && page < 20; page += 1) {
-      const result = await execute(tool, args);
-      const output = toolContentString(result);
-      expect(result.isError).not.toBe(true);
-      const fragment = output.slice(2);
-      expect(fragment.length).toBeGreaterThan(0);
-      expect(Buffer.from(fragment, 'utf8').toString('utf8')).toBe(fragment);
-      expect(output.length + 1 + (result.note?.length ?? 0)).toBeLessThanOrEqual(maxChars);
-      fragments.push(fragment);
-      const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
-      args = next === undefined || next === null ? undefined : ReadInputSchema.parse(JSON.parse(next[1]!));
-    }
+      for (let page = 0; args !== undefined && page < 20; page += 1) {
+        const result = await execute(tool, args);
+        const output = toolContentString(result);
+        expect(result.isError).not.toBe(true);
+        const fragment = output.slice(2);
+        expect(fragment.length).toBeGreaterThan(0);
+        expect(Buffer.from(fragment, 'utf8').toString('utf8')).toBe(fragment);
+        expect(output.length + 1 + (result.note?.length ?? 0)).toBeLessThanOrEqual(maxChars);
+        fragments.push(fragment);
+        const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
+        args =
+          next === undefined || next === null
+            ? undefined
+            : ReadInputSchema.parse(JSON.parse(next[1]!));
+      }
 
-    expect(args).toBeUndefined();
-    expect(fragments.join('')).toBe(content);
-  });
+      expect(args).toBeUndefined();
+      expect(fragments.join('')).toBe(content);
+    },
+  );
 
   it.each([
     { line_offset: 1, column_offset: 1 },
@@ -281,17 +334,32 @@ describe('ReadTool', () => {
     { line_offset: 2, column_offset: 1 },
     { line_offset: -1, column_offset: 1 },
   ])('rejects an invalid starting column $column_offset at line $line_offset', async (offsets) => {
-    const result = await execute(toolWithContent('🙂tail'), { path: '/tmp/column.txt', ...offsets });
+    const result = await execute(toolWithContent('🙂tail'), {
+      path: '/tmp/column.txt',
+      ...offsets,
+    });
 
     expect(result.isError).toBe(true);
     expect(result.output).toContain('column_offset');
   });
 
   it('resumes mixed short and long lines without changing the requested ending line', async () => {
-    const lines = ['outside before', `START${'🙂文'.repeat(400)}`, 'short target', 'last target '.repeat(150), 'outside after'];
+    const lines = [
+      'outside before',
+      `START${'🙂文'.repeat(400)}`,
+      'short target',
+      'last target '.repeat(150),
+      'outside after',
+    ];
     const tool = toolWithContent(lines.join('\n'));
     const returned = new Map<number, string>();
-    let args: ReadInput | undefined = { path: '/tmp/mixed.txt', line_offset: 2, column_offset: 5, n_lines: 3, max_chars: 650 };
+    let args: ReadInput | undefined = {
+      path: '/tmp/mixed.txt',
+      line_offset: 2,
+      column_offset: 5,
+      n_lines: 3,
+      max_chars: 650,
+    };
 
     for (let page = 0; args !== undefined && page < 50; page += 1) {
       const result = await execute(tool, args);
@@ -308,7 +376,10 @@ describe('ReadTool', () => {
         returned.set(line, (returned.get(line) ?? '') + fragment);
       }
       const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
-      args = next === undefined || next === null ? undefined : ReadInputSchema.parse(JSON.parse(next[1]!));
+      args =
+        next === undefined || next === null
+          ? undefined
+          : ReadInputSchema.parse(JSON.parse(next[1]!));
       if (args !== undefined) expect(args.n_lines).toBe(5 - args.line_offset!);
       else expect(result.note).toContain('Requested range complete.');
     }
@@ -320,12 +391,18 @@ describe('ReadTool', () => {
   });
 
   it('pages through the requested range without losing text or exceeding the character budget', async () => {
-    const lines = Array.from({ length: 20 }, (_, index) =>
-      `section ${String(index + 1)} ${'文'.repeat(70)}`,
+    const lines = Array.from(
+      { length: 20 },
+      (_, index) => `section ${String(index + 1)} ${'文'.repeat(70)}`,
     );
     const tool = toolWithContent(lines.join('\n'));
     const contents: string[] = [];
-    let args: ReadInput | undefined = { path: '/tmp/range.md', line_offset: 3, n_lines: 12, max_chars: 650 };
+    let args: ReadInput | undefined = {
+      path: '/tmp/range.md',
+      line_offset: 3,
+      n_lines: 12,
+      max_chars: 650,
+    };
     let last: ExecutableToolResult | undefined;
 
     for (let page = 0; args !== undefined && page < 20; page += 1) {
@@ -336,7 +413,10 @@ describe('ReadTool', () => {
       expect(output.length + 1 + (result.note?.length ?? 0)).toBeLessThanOrEqual(650);
       contents.push(output.replaceAll(/^\d+\t/gm, ''));
       const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
-      args = next === undefined || next === null ? undefined : ReadInputSchema.parse(JSON.parse(next[1]!));
+      args =
+        next === undefined || next === null
+          ? undefined
+          : ReadInputSchema.parse(JSON.parse(next[1]!));
       last = result;
     }
 
@@ -348,12 +428,18 @@ describe('ReadTool', () => {
   });
 
   it('returns the newest part of a tail range and lets the caller recover the omitted earlier lines', async () => {
-    const lines = Array.from({ length: 20 }, (_, index) =>
-      `section ${String(index + 1)} ${'x'.repeat(70)}`,
+    const lines = Array.from(
+      { length: 20 },
+      (_, index) => `section ${String(index + 1)} ${'x'.repeat(70)}`,
     );
     const tool = toolWithContent(lines.join('\n'));
     const returned: string[] = [];
-    let args: ReadInput | undefined = { path: '/tmp/tail.md', line_offset: -15, n_lines: 10, max_chars: 650 };
+    let args: ReadInput | undefined = {
+      path: '/tmp/tail.md',
+      line_offset: -15,
+      n_lines: 10,
+      max_chars: 650,
+    };
 
     for (let page = 0; args !== undefined && page < 20; page += 1) {
       const result = await execute(tool, args);
@@ -364,13 +450,20 @@ describe('ReadTool', () => {
       if (page === 0) expect(output.split('\n').at(-1)).toBe(`15\t${lines[14]}`);
       returned.push(...output.split('\n'));
       const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
-      args = next === undefined || next === null ? undefined : ReadInputSchema.parse(JSON.parse(next[1]!));
+      args =
+        next === undefined || next === null
+          ? undefined
+          : ReadInputSchema.parse(JSON.parse(next[1]!));
     }
 
     expect(args).toBeUndefined();
     expect(returned).toHaveLength(10);
-    expect(returned.toSorted((left, right) => Number(left.split('\t')[0]) - Number(right.split('\t')[0]))
-      .map((line) => line.replace(/^\d+\t/, '')).join('\n')).toBe(lines.slice(5, 15).join('\n'));
+    expect(
+      returned
+        .toSorted((left, right) => Number(left.split('\t')[0]) - Number(right.split('\t')[0]))
+        .map((line) => line.replace(/^\d+\t/, ''))
+        .join('\n'),
+    ).toBe(lines.slice(5, 15).join('\n'));
   });
 
   it('exposes current metadata and schema', () => {
@@ -390,9 +483,7 @@ describe('ReadTool', () => {
     expect(ReadInputSchema.safeParse({ path: '/tmp/test.txt', line_offset: 0 }).success).toBe(
       false,
     );
-    expect(
-      ReadInputSchema.safeParse({ path: '/tmp/test.txt', max_chars: 0 }).success,
-    ).toBe(false);
+    expect(ReadInputSchema.safeParse({ path: '/tmp/test.txt', max_chars: 0 }).success).toBe(false);
   });
 
   it('matches permission args with glob path semantics', async () => {
@@ -460,7 +551,9 @@ describe('ReadTool', () => {
 
     expect(result).toMatchObject({
       output: '2\tb\n3\tc',
-      note: readNote('2 lines read from file starting from line 2. Total lines in file: 5. Requested range complete. Effective max_chars: 100000.'),
+      note: readNote(
+        '2 lines read from file starting from line 2. Total lines in file: 5. Requested range complete. Effective max_chars: 100000.',
+      ),
     });
   });
 
@@ -471,7 +564,9 @@ describe('ReadTool', () => {
 
     expect(result).toMatchObject({
       output: '',
-      note: readNote('No lines read from file. Total lines in file: 2. Requested range complete. Effective max_chars: 100000. End of file reached.'),
+      note: readNote(
+        'No lines read from file. Total lines in file: 2. Requested range complete. Effective max_chars: 100000. End of file reached.',
+      ),
     });
   });
 
@@ -488,16 +583,23 @@ describe('ReadTool', () => {
     });
   });
 
-  it.each([undefined, 3, 5])('reads the last three lines in one file scan with n_lines=%s', async (nLines) => {
-    const { fs, readLines } = createSpiedFs('a\nb\nc\nd\ne');
-    const tool = createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE);
+  it.each([undefined, 3, 5])(
+    'reads the last three lines in one file scan with n_lines=%s',
+    async (nLines) => {
+      const { fs, readLines } = createSpiedFs('a\nb\nc\nd\ne');
+      const tool = createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE);
 
-    const result = await execute(tool, { path: '/tmp/tail.log', line_offset: -3, n_lines: nLines });
+      const result = await execute(tool, {
+        path: '/tmp/tail.log',
+        line_offset: -3,
+        n_lines: nLines,
+      });
 
-    expect(result.output).toBe('3\tc\n4\td\n5\te');
-    expect(result.note).toContain('Requested range complete.');
-    expect(readLines).toHaveBeenCalledTimes(1);
-  });
+      expect(result.output).toBe('3\tc\n4\td\n5\te');
+      expect(result.note).toContain('Requested range complete.');
+      expect(readLines).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('applies n_lines from the start of the negative line_offset tail window', async () => {
     const tool = toolWithContent('a\nb\nc\nd\ne');
@@ -506,7 +608,9 @@ describe('ReadTool', () => {
 
     expect(result.output).toBe('1\ta\n2\tb');
     expect(result.note).toBe(
-      readNote('2 lines read from file starting from line 1. Total lines in file: 5. Requested range complete. Effective max_chars: 100000.'),
+      readNote(
+        '2 lines read from file starting from line 1. Total lines in file: 5. Requested range complete. Effective max_chars: 100000.',
+      ),
     );
   });
 
@@ -559,7 +663,8 @@ describe('ReadTool', () => {
 
   it('rejects a tail reread that observes a line beyond the counted EOF', async () => {
     const { fs, readLines } = createSpiedFs('a\nb\nc\n');
-    readLines.mockReturnValueOnce(generateLines('a\nb\nc\n'))
+    readLines
+      .mockReturnValueOnce(generateLines('a\nb\nc\n'))
       .mockReturnValueOnce(generateLines('a\nb\nc\nd\n'));
     const tool = createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE);
 
@@ -678,7 +783,11 @@ describe('ReadTool', () => {
 
   it('expands leading tilde paths using the kaos home directory', async () => {
     const { fs, readBytes, readLines } = createSpiedFs('home note');
-    const tool = createReadTool(fs, createTestEnv('/home/test'), stubWorkspaceContext('/workspace'));
+    const tool = createReadTool(
+      fs,
+      createTestEnv('/home/test'),
+      stubWorkspaceContext('/workspace'),
+    );
 
     const result = await execute(tool, { path: '~/notes/today.txt' });
 
@@ -949,65 +1058,93 @@ describe('ReadTool', () => {
     ['utf16-le-unpaired', [0xff, 0xfe, 0x00, 0xd8]],
     ['utf16-be-unpaired', [0xfe, 0xff, 0xd8, 0x00]],
     ['utf16-le-truncated', [0xff, 0xfe, 0x41]],
-  ] as const)('returns malformed %s with an explicit lossy-decoding warning', async (name, bytes) => {
-    const path = `/tmp/${name}.txt`;
-    const { fs } = createSpiedMapFs({ [path]: { bytes: Buffer.from(bytes) } });
-    const result = await execute(createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE), { path });
+  ] as const)(
+    'returns malformed %s with an explicit lossy-decoding warning',
+    async (name, bytes) => {
+      const path = `/tmp/${name}.txt`;
+      const { fs } = createSpiedMapFs({ [path]: { bytes: Buffer.from(bytes) } });
+      const result = await execute(createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE), {
+        path,
+      });
 
-    expect(result.isError).not.toBe(true);
-    expect(result.output).toBe('1\t\uFFFD');
-    expect(result.note).toContain('Lossy UTF-16 decoding');
-    expect(result.note).toContain('may differ from the original file');
-    expect(result.note).toContain('Requested range complete.');
-  });
-
-  it.each(['utf8', 'utf16le'] as const)('does not flag a literal replacement character in valid %s text', async (encoding) => {
-    const content = 'valid \uFFFD and 🙂';
-    const encoded = Buffer.from(content, encoding);
-    const bytes = encoding === 'utf16le' ? Buffer.concat([Buffer.from([0xff, 0xfe]), encoded]) : encoded;
-    const { fs } = createSpiedMapFs({ '/tmp/literal.txt': { bytes } });
-    const result = await execute(createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE), { path: '/tmp/literal.txt' });
-
-    expect(result.isError).not.toBe(true);
-    expect(result.output).toBe(`1\t${content}`);
-    expect(result.note).not.toContain('Lossy');
-  });
-
-  it.each([2, -2])('preserves the lossy warning and budget through Read continuation from offset %i', async (lineOffset) => {
-    const rawLine = '文'.repeat(1000) + '\uD800' + '🙂'.repeat(500) + 'tail';
-    const expected = '文'.repeat(1000) + '\uFFFD' + '🙂'.repeat(500) + 'tail';
-    const bytes = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(`first\n${rawLine}\nlast`, 'utf16le')]);
-    const path = '/tmp/lossy-range.txt';
-    const { fs } = createSpiedMapFs({ [path]: { bytes } });
-    const tool = createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE);
-    const fragments: string[] = [];
-    let args: ReadInput | undefined = { path, line_offset: lineOffset, n_lines: 1, max_chars: 1200 };
-
-    for (let page = 0; args !== undefined && page < 20; page += 1) {
-      const result = await execute(tool, args);
+      expect(result.isError).not.toBe(true);
+      expect(result.output).toBe('1\t\uFFFD');
       expect(result.note).toContain('Lossy UTF-16 decoding');
-      if (result.isError) {
-        expect(lineOffset).toBe(-2);
-        expect(page).toBe(0);
-        expect(result.note).toContain('Next Read:');
-      } else {
-        const output = toolContentString(result);
-        expect(output.startsWith('2\t')).toBe(true);
-        expect(output.length + 1 + (result.note?.length ?? 0)).toBeLessThanOrEqual(1200);
-        fragments.push(output.slice(2));
-      }
-      const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
-      args = next === undefined || next === null ? undefined : ReadInputSchema.parse(JSON.parse(next[1]!));
-    }
+      expect(result.note).toContain('may differ from the original file');
+      expect(result.note).toContain('Requested range complete.');
+    },
+  );
 
-    expect(args).toBeUndefined();
-    expect(fragments.length).toBeGreaterThan(1);
-    expect(fragments.join('')).toBe(expected);
-  });
+  it.each(['utf8', 'utf16le'] as const)(
+    'does not flag a literal replacement character in valid %s text',
+    async (encoding) => {
+      const content = 'valid \uFFFD and 🙂';
+      const encoded = Buffer.from(content, encoding);
+      const bytes =
+        encoding === 'utf16le' ? Buffer.concat([Buffer.from([0xff, 0xfe]), encoded]) : encoded;
+      const { fs } = createSpiedMapFs({ '/tmp/literal.txt': { bytes } });
+      const result = await execute(createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE), {
+        path: '/tmp/literal.txt',
+      });
+
+      expect(result.isError).not.toBe(true);
+      expect(result.output).toBe(`1\t${content}`);
+      expect(result.note).not.toContain('Lossy');
+    },
+  );
+
+  it.each([2, -2])(
+    'preserves the lossy warning and budget through Read continuation from offset %i',
+    async (lineOffset) => {
+      const rawLine = '文'.repeat(1000) + '\uD800' + '🙂'.repeat(500) + 'tail';
+      const expected = '文'.repeat(1000) + '\uFFFD' + '🙂'.repeat(500) + 'tail';
+      const bytes = Buffer.concat([
+        Buffer.from([0xff, 0xfe]),
+        Buffer.from(`first\n${rawLine}\nlast`, 'utf16le'),
+      ]);
+      const path = '/tmp/lossy-range.txt';
+      const { fs } = createSpiedMapFs({ [path]: { bytes } });
+      const tool = createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE);
+      const fragments: string[] = [];
+      let args: ReadInput | undefined = {
+        path,
+        line_offset: lineOffset,
+        n_lines: 1,
+        max_chars: 1200,
+      };
+
+      for (let page = 0; args !== undefined && page < 20; page += 1) {
+        const result = await execute(tool, args);
+        expect(result.note).toContain('Lossy UTF-16 decoding');
+        if (result.isError) {
+          expect(lineOffset).toBe(-2);
+          expect(page).toBe(0);
+          expect(result.note).toContain('Next Read:');
+        } else {
+          const output = toolContentString(result);
+          expect(output.startsWith('2\t')).toBe(true);
+          expect(output.length + 1 + (result.note?.length ?? 0)).toBeLessThanOrEqual(1200);
+          fragments.push(output.slice(2));
+        }
+        const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
+        args =
+          next === undefined || next === null
+            ? undefined
+            : ReadInputSchema.parse(JSON.parse(next[1]!));
+      }
+
+      expect(args).toBeUndefined();
+      expect(fragments.length).toBeGreaterThan(1);
+      expect(fragments.join('')).toBe(expected);
+    },
+  );
 
   it('fits a lossy tail recovery hint within the model-visible character budget', async () => {
     const path = '/tmp/edge.txt';
-    const bytes = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('x'.repeat(2000) + '\uD800', 'utf16le')]);
+    const bytes = Buffer.concat([
+      Buffer.from([0xff, 0xfe]),
+      Buffer.from('x'.repeat(2000) + '\uD800', 'utf16le'),
+    ]);
     const { fs } = createSpiedMapFs({ [path]: { bytes } });
     const result = await execute(createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE), {
       path,
@@ -1019,7 +1156,8 @@ describe('ReadTool', () => {
     expect(result.note).toContain('Lossy UTF-16 decoding');
     expect(result.note).toContain('Next Read:');
     const visible = renderToolResultForModel(result)
-      .map((part) => part.type === 'text' ? part.text : '').join('');
+      .map((part) => (part.type === 'text' ? part.text : ''))
+      .join('');
     expect(visible.length).toBeLessThanOrEqual(650);
   });
 
@@ -1124,41 +1262,54 @@ describe('ReadTool', () => {
     expect(result.truncated).toBeUndefined();
   });
 
-  it.each([2, -3])('recovers the entire oversized range at offset %i using only Read', async (lineOffset) => {
-    const long = '文'.repeat(700) + '🙂END';
-    const tool = toolWithContent(['outside before', 'target head', long, 'outside after'].join('\n'));
-    const returned = new Map<number, string>();
-    let args: ReadInput | undefined = { path: '/tmp/line.txt', line_offset: lineOffset, n_lines: 2, max_chars: 650 };
+  it.each([2, -3])(
+    'recovers the entire oversized range at offset %i using only Read',
+    async (lineOffset) => {
+      const long = '文'.repeat(700) + '🙂END';
+      const tool = toolWithContent(
+        ['outside before', 'target head', long, 'outside after'].join('\n'),
+      );
+      const returned = new Map<number, string>();
+      let args: ReadInput | undefined = {
+        path: '/tmp/line.txt',
+        line_offset: lineOffset,
+        n_lines: 2,
+        max_chars: 650,
+      };
 
-    for (let page = 0; args !== undefined && page < 20; page += 1) {
-      const result = await execute(tool, args);
-      const output = toolContentString(result);
-      if (result.isError) {
-        expect(lineOffset).toBe(-3);
-        expect(page).toBe(0);
-        expect(output).not.toContain('Bash');
-        expect(result.note).toContain('Next Read:');
-      } else {
-        expect(output.length + 1 + (result.note?.length ?? 0)).toBeLessThanOrEqual(650);
-        for (const row of output.split('\n')) {
-          const separator = row.indexOf('\t');
-          const line = Number(row.slice(0, separator));
-          expect([2, 3]).toContain(line);
-          returned.set(line, (returned.get(line) ?? '') + row.slice(separator + 1));
+      for (let page = 0; args !== undefined && page < 20; page += 1) {
+        const result = await execute(tool, args);
+        const output = toolContentString(result);
+        if (result.isError) {
+          expect(lineOffset).toBe(-3);
+          expect(page).toBe(0);
+          expect(output).not.toContain('Bash');
+          expect(result.note).toContain('Next Read:');
+        } else {
+          expect(output.length + 1 + (result.note?.length ?? 0)).toBeLessThanOrEqual(650);
+          for (const row of output.split('\n')) {
+            const separator = row.indexOf('\t');
+            const line = Number(row.slice(0, separator));
+            expect([2, 3]).toContain(line);
+            returned.set(line, (returned.get(line) ?? '') + row.slice(separator + 1));
+          }
+        }
+        expect(result.note).not.toContain('End of file reached.');
+        const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
+        args =
+          next === undefined || next === null
+            ? undefined
+            : ReadInputSchema.parse(JSON.parse(next[1]!));
+        if (lineOffset < 0 && page === 0) {
+          expect(args).toMatchObject({ line_offset: 2, n_lines: 2, max_chars: 650 });
         }
       }
-      expect(result.note).not.toContain('End of file reached.');
-      const next = result.note?.match(/Next Read: (\{[^\n]*\})/);
-      args = next === undefined || next === null ? undefined : ReadInputSchema.parse(JSON.parse(next[1]!));
-      if (lineOffset < 0 && page === 0) {
-        expect(args).toMatchObject({ line_offset: 2, n_lines: 2, max_chars: 650 });
-      }
-    }
 
-    expect(args).toBeUndefined();
-    expect(returned.get(2)).toBe('target head');
-    expect(returned.get(3)).toBe(long);
-  });
+      expect(args).toBeUndefined();
+      expect(returned.get(2)).toBe('target head');
+      expect(returned.get(3)).toBe(long);
+    },
+  );
 
   it('returns agent event log lines untruncated and marks the read spill-exempt', async () => {
     const long = 'x'.repeat(2_000 + 10);
@@ -1192,7 +1343,13 @@ describe('ReadTool', () => {
       ...stubToolResultTruncationService(),
       isWireJournalPath: (path) => path.endsWith('/wire.jsonl'),
     };
-    const tool = createReadTool(createSpiedFs(`${huge}\nshort`).fs, createTestEnv(), PERMISSIVE_WORKSPACE, undefined, truncation);
+    const tool = createReadTool(
+      createSpiedFs(`${huge}\nshort`).fs,
+      createTestEnv(),
+      PERMISSIVE_WORKSPACE,
+      undefined,
+      truncation,
+    );
     const result = await execute(tool, {
       path: '/home/user/.omnicode/sessions/ws/session/agents/main/wire.jsonl',
       line_offset: 1,
@@ -1332,7 +1489,11 @@ describe('ReadTool', () => {
 
   it('reads files inside additional_dirs via absolute path', async () => {
     const { fs } = createSpiedFs('extra-dir note');
-    const tool = createReadTool(fs, createTestEnv(), stubWorkspaceContext('/workspace', ['/extra']));
+    const tool = createReadTool(
+      fs,
+      createTestEnv(),
+      stubWorkspaceContext('/workspace', ['/extra']),
+    );
 
     const result = await execute(tool, { path: '/extra/notes.txt' });
 
@@ -1359,7 +1520,9 @@ describe('ReadTool', () => {
     expect(result.isError).toBeFalsy();
     expect(result.output).toBe('');
     expect(result.note).toBe(
-      readNote('No lines read from file. Total lines in file: 0. Requested range complete. Effective max_chars: 100000. End of file reached.'),
+      readNote(
+        'No lines read from file. Total lines in file: 0. Requested range complete. Effective max_chars: 100000. End of file reached.',
+      ),
     );
   });
 
@@ -1399,12 +1562,17 @@ describe('ReadTool', () => {
 
   it('accepts large positive and negative line ranges without a fixed line cap', () => {
     expect(ReadInputSchema.safeParse({ path: '/tmp/a.txt', line_offset: -1 }).success).toBe(true);
-    expect(ReadInputSchema.safeParse({ path: '/tmp/a.txt', line_offset: -10_000, n_lines: 10_000 }).success).toBe(
+    expect(
+      ReadInputSchema.safeParse({ path: '/tmp/a.txt', line_offset: -10_000, n_lines: 10_000 })
+        .success,
+    ).toBe(true);
+    expect(ReadInputSchema.safeParse({ path: '/tmp/a.txt', line_offset: 10_000 }).success).toBe(
       true,
     );
-    expect(ReadInputSchema.safeParse({ path: '/tmp/a.txt', line_offset: 10_000 }).success).toBe(true);
     expect(ReadInputSchema.safeParse({ path: '/tmp/a.txt', line_offset: 0 }).success).toBe(false);
-    expect(ReadInputSchema.safeParse({ path: '/tmp/a.txt', line_offset: -1.5 }).success).toBe(false);
+    expect(ReadInputSchema.safeParse({ path: '/tmp/a.txt', line_offset: -1.5 }).success).toBe(
+      false,
+    );
   });
 
   it('reads non-sensitive dotfiles like .gitignore successfully', async () => {
@@ -1424,7 +1592,9 @@ describe('ReadTool', () => {
     expect(result.isError).toBeFalsy();
     expect(result.output).toContain('1\ta');
     expect(result.output).toContain('5\te');
-    expect(result.note).toContain('Total lines in file: 5. Requested range complete. Effective max_chars: 100000.');
+    expect(result.note).toContain(
+      'Total lines in file: 5. Requested range complete. Effective max_chars: 100000.',
+    );
   });
 
   it('tail mode on an empty file returns empty output without erroring', async () => {
@@ -1433,7 +1603,9 @@ describe('ReadTool', () => {
     const result = await execute(tool, { path: '/tmp/empty-tail.txt', line_offset: -10 });
 
     expect(result.isError).toBeFalsy();
-    expect(result.note).toContain('Total lines in file: 0. Requested range complete. Effective max_chars: 100000.');
+    expect(result.note).toContain(
+      'Total lines in file: 0. Requested range complete. Effective max_chars: 100000.',
+    );
   });
 
   it('line_offset=-1 returns only the last line with its absolute line number', async () => {
@@ -1448,10 +1620,13 @@ describe('ReadTool', () => {
 
   it('keeps absolute line numbers and whole long lines in tail mode', async () => {
     const longLine = 'X'.repeat(2_500);
-    const result = await execute(toolWithContent(['short', longLine, 'short', longLine, 'short'].join('\n')), {
-      path: '/tmp/tail-long.txt',
-      line_offset: -3,
-    });
+    const result = await execute(
+      toolWithContent(['short', longLine, 'short', longLine, 'short'].join('\n')),
+      {
+        path: '/tmp/tail-long.txt',
+        line_offset: -3,
+      },
+    );
 
     expect(result.isError).not.toBe(true);
     expect(result.output).toBe(`3\tshort\n4\t${longLine}\n5\tshort`);
@@ -1521,7 +1696,9 @@ describe('ReadTool', () => {
       parts.push(
         '3 0 obj\n<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R >>\nendobj\n',
       );
-      parts.push(`4 0 obj\n<< /Length ${String(body.length)} >>\nstream\n${body}\nendstream\nendobj\n`);
+      parts.push(
+        `4 0 obj\n<< /Length ${String(body.length)} >>\nstream\n${body}\nendstream\nendobj\n`,
+      );
       parts.push('trailer\n<< /Size 5 /Root 1 0 R >>\n%%EOF\n');
       return Buffer.from(parts.join(''), 'latin1');
     }
@@ -1542,11 +1719,25 @@ describe('ReadTool', () => {
 
     function documentTool(path: string, file: FakeFile, enabled: boolean): ReadTool {
       const fs = createSpiedMapFs({ [path]: file }).fs;
-      return createReadTool(fs, createTestEnv(), PERMISSIVE_WORKSPACE, undefined, undefined, undefined, undefined, undefined, stubFlag(enabled));
+      return createReadTool(
+        fs,
+        createTestEnv(),
+        PERMISSIVE_WORKSPACE,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        stubFlag(enabled),
+      );
     }
 
     it('still refuses documents while the flag is off', async () => {
-      const tool = documentTool('/tmp/report.pdf', { bytes: textPdf(['First line', 'Second line']) }, false);
+      const tool = documentTool(
+        '/tmp/report.pdf',
+        { bytes: textPdf(['First line', 'Second line']) },
+        false,
+      );
 
       const result = await execute(tool, ReadInputSchema.parse({ path: '/tmp/report.pdf' }));
 
@@ -1557,7 +1748,11 @@ describe('ReadTool', () => {
     });
 
     it('returns the extracted text with line numbers when the flag is on', async () => {
-      const tool = documentTool('/tmp/report.pdf', { bytes: textPdf(['First line', 'Second line']) }, true);
+      const tool = documentTool(
+        '/tmp/report.pdf',
+        { bytes: textPdf(['First line', 'Second line']) },
+        true,
+      );
 
       const result = await execute(tool, ReadInputSchema.parse({ path: '/tmp/report.pdf' }));
 
@@ -1568,7 +1763,11 @@ describe('ReadTool', () => {
     });
 
     it('pages through the extracted text with line_offset and n_lines', async () => {
-      const tool = documentTool('/tmp/report.pdf', { bytes: textPdf(['One', 'Two', 'Three', 'Four']) }, true);
+      const tool = documentTool(
+        '/tmp/report.pdf',
+        { bytes: textPdf(['One', 'Two', 'Three', 'Four']) },
+        true,
+      );
 
       const result = await execute(
         tool,

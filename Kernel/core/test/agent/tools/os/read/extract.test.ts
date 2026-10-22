@@ -1,11 +1,13 @@
 import { deflateSync } from 'node:zlib';
 
-import { ZipFile } from 'yazl';
-import { describe, expect, it } from 'vitest';
-
-import { extractDocument, extractableFormat } from '@hilbras/omnicode-tools/os/read/extract/extract';
+import {
+  extractDocument,
+  extractableFormat,
+} from '@hilbras/omnicode-tools/os/read/extract/extract';
 import { extractPdfText } from '@hilbras/omnicode-tools/os/read/extract/pdf';
 import { extractRtfText } from '@hilbras/omnicode-tools/os/read/extract/rtf';
+import { describe, expect, it } from 'vitest';
+import { ZipFile } from 'yazl';
 
 function zipBuffer(files: Record<string, string>): Promise<Buffer> {
   return new Promise((resolve, reject) => {
@@ -34,7 +36,9 @@ function textPdf(lines: readonly string[]): Buffer {
     'BT',
     '/F1 12 Tf',
     '72 720 Td',
-    ...lines.map((line, index) => `(${pdfEscape(line)}) Tj${index < lines.length - 1 ? ' T*' : ''}`),
+    ...lines.map(
+      (line, index) => `(${pdfEscape(line)}) Tj${index < lines.length - 1 ? ' T*' : ''}`,
+    ),
     'ET',
   ].join('\n');
   const compressed = deflateSync(Buffer.from(body, 'latin1'));
@@ -100,7 +104,10 @@ describe('extractPdfText', () => {
         '3 0 obj\n<< /Type /Page /Parent 2 0 R /Contents 4 0 R /Resources << /XObject << /Im0 5 0 R >> >> >>\nendobj\n',
         'latin1',
       ),
-      Buffer.from(`4 0 obj\n<< /Length ${String(body.length)} /Filter /FlateDecode >>\nstream\n`, 'latin1'),
+      Buffer.from(
+        `4 0 obj\n<< /Length ${String(body.length)} /Filter /FlateDecode >>\nstream\n`,
+        'latin1',
+      ),
       body,
       Buffer.from('\nendstream\nendobj\n', 'latin1'),
       Buffer.from('5 0 obj\n<< /Type /XObject /Subtype /Image >>\nendobj\n', 'latin1'),
@@ -113,9 +120,15 @@ describe('extractPdfText', () => {
   it('returns undefined for an encrypted document', () => {
     const pdf = textPdf(['secret']);
 
-    const encrypted = Buffer.concat([pdf, Buffer.from('\n9 0 obj\n<< /Filter /Standard >>\nendobj\n', 'latin1')])
+    const encrypted = Buffer.concat([
+      pdf,
+      Buffer.from('\n9 0 obj\n<< /Filter /Standard >>\nendobj\n', 'latin1'),
+    ])
       .toString('latin1')
-      .replace('trailer\n<< /Size 6 /Root 1 0 R >>', 'trailer\n<< /Size 6 /Root 1 0 R /Encrypt 9 0 R >>');
+      .replace(
+        'trailer\n<< /Size 6 /Root 1 0 R >>',
+        'trailer\n<< /Size 6 /Root 1 0 R /Encrypt 9 0 R >>',
+      );
     const buffer = Buffer.from(encrypted, 'latin1');
 
     expect(extractPdfText(buffer)).toBeUndefined();
@@ -147,14 +160,20 @@ describe('extractPdfText', () => {
         '3 0 obj\n<< /Type /Page /Parent 2 0 R /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>\nendobj\n',
         'latin1',
       ),
-      Buffer.from(`4 0 obj\n<< /Length ${String(content.length)} /Filter /FlateDecode >>\nstream\n`, 'latin1'),
+      Buffer.from(
+        `4 0 obj\n<< /Length ${String(content.length)} /Filter /FlateDecode >>\nstream\n`,
+        'latin1',
+      ),
       content,
       Buffer.from('\nendstream\nendobj\n', 'latin1'),
       Buffer.from(
         `5 0 obj\n<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /ToUnicode 6 0 R >>\nendobj\n`,
         'latin1',
       ),
-      Buffer.from(`6 0 obj\n<< /Length ${String(compressed.length)} /Filter /FlateDecode >>\nstream\n`, 'latin1'),
+      Buffer.from(
+        `6 0 obj\n<< /Length ${String(compressed.length)} /Filter /FlateDecode >>\nstream\n`,
+        'latin1',
+      ),
       compressed,
       Buffer.from('\nendstream\nendobj\n', 'latin1'),
       Buffer.from('trailer\n<< /Size 7 /Root 1 0 R >>\n%%EOF\n', 'latin1'),
@@ -200,16 +219,17 @@ describe('extractDocument', () => {
 
   it('orders pptx slides numerically and labels them', async () => {
     const bytes = await zipBuffer({
-      'ppt/slides/slide1.xml': '<p:sld><p:cSld><a:p><a:r><a:t>Opening</a:t></a:r></a:p></p:cSld></p:sld>',
-      'ppt/slides/slide2.xml': '<p:sld><p:cSld><a:p><a:r><a:t>Closing</a:t></a:r></a:p></p:cSld></p:sld>',
-      'ppt/slides/slide10.xml': '<p:sld><p:cSld><a:p><a:r><a:t>Appendix</a:t></a:r></a:p></p:cSld></p:sld>',
+      'ppt/slides/slide1.xml':
+        '<p:sld><p:cSld><a:p><a:r><a:t>Opening</a:t></a:r></a:p></p:cSld></p:sld>',
+      'ppt/slides/slide2.xml':
+        '<p:sld><p:cSld><a:p><a:r><a:t>Closing</a:t></a:r></a:p></p:cSld></p:sld>',
+      'ppt/slides/slide10.xml':
+        '<p:sld><p:cSld><a:p><a:r><a:t>Appendix</a:t></a:r></a:p></p:cSld></p:sld>',
     });
 
     const result = await extractDocument('deck.pptx', bytes);
 
-    expect(result?.text).toBe(
-      '## Slide 1\nOpening\n\n## Slide 2\nClosing\n\n## Slide 3\nAppendix',
-    );
+    expect(result?.text).toBe('## Slide 1\nOpening\n\n## Slide 2\nClosing\n\n## Slide 3\nAppendix');
   });
 
   it('extracts OpenDocument content.xml', async () => {

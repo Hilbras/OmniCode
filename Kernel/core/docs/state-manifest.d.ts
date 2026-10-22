@@ -773,6 +773,11 @@ export interface AgentStateSnapshot {
       description: string;
       parameters: Record<string, unknown>;
       deferred?: true;
+      annotations?: {
+        readonly readOnlyHint?: boolean;
+        readonly destructiveHint?: boolean;
+        readonly idempotentHint?: boolean;
+      };
     }[];
   } & {
     readonly id?: string;

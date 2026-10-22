@@ -175,6 +175,8 @@ interface TurnDriver {
 }
 
 export class AcpSession {
+  private disposed = false;
+
   /** The klient facade this session was created from. */
   private readonly klient: Klient;
   private readonly session: SessionHandle;
@@ -381,6 +383,7 @@ export class AcpSession {
    * and detaches the event subscriptions. Idempotent.
    */
   dispose(): void {
+    this.disposed = true;
     this.cancel();
     const driver = this.driver;
     if (driver !== undefined) {
@@ -964,6 +967,10 @@ export class AcpSession {
   /** Push a `session/update` notification (best-effort, never throws). */
   private emit(notification: SessionNotification | null): void {
     if (notification === null) return;
+    // A notification for a session the client already dropped is noise it
+    // cannot use; the teardown has already detached the event subscriptions,
+    // so only an in-flight push can still arrive.
+    if (this.disposed) return;
     void this.conn.sessionUpdate(notification).catch((error) => {
       log.warn('acp: failed to push session/update', {
         sessionId: this.sessionId,

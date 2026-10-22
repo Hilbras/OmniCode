@@ -1,18 +1,13 @@
+import type { Event, OmnicodeHarness, Session, TurnEndedEvent } from '@hilbras/omnicode-api';
 import { Spacer } from '@hilbras/omnicode-tui';
-import type {
-  Event,
-  OmnicodeHarness,
-  Session,
-  TurnEndedEvent,
-} from '@hilbras/omnicode-api';
 
-import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/omnicode-tui';
 import { BtwPanelComponent } from '../components/panes/btw-panel';
+import { NO_ACTIVE_SESSION_MESSAGE } from '../constant/omnicode-tui';
+import { createMarkdownTheme } from '../theme/pi-tui-theme';
+import type { TUIState } from '../tui-state';
+import type { InlineSkillActivation } from '../types';
 import { formatErrorMessage } from '../utils/event-payload';
 import { formatHookResultPlain } from '../utils/hook-result-format';
-import { createMarkdownTheme } from '../theme/pi-tui-theme';
-import type { InlineSkillActivation } from '../types';
-import type { TUIState } from '../tui-state';
 
 const BTW_BUSY_NOTICE = 'Wait for /btw to finish before sending another question.';
 
@@ -165,10 +160,7 @@ export class BtwPanelController {
     if (this.active?.panel === panel) this.active = undefined;
   }
 
-  private showBusyNotice(
-    active: { readonly panel: BtwPanelComponent },
-    input: string,
-  ): void {
+  private showBusyNotice(active: { readonly panel: BtwPanelComponent }, input: string): void {
     this.host.state.editor.setText(input);
     active.panel.addTransientNotice(BTW_BUSY_NOTICE);
     this.host.state.ui.requestRender();

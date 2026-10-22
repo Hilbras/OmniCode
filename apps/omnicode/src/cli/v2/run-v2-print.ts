@@ -17,6 +17,11 @@
 import { readFile } from 'node:fs/promises';
 
 import {
+  createOmnicodeDefaultHeaders,
+  createOmnicodeDeviceId,
+  OMNICODE_PROVIDER_NAME,
+} from '@hilbras/omnicode-auth';
+import {
   IAgentCronService,
   IAgentGoalService,
   IAgentLifecycleService,
@@ -58,15 +63,24 @@ import {
   type PrintBackgroundMode,
   type Scope,
 } from '@hilbras/omnicode-core';
+import type {
+  AssistantDelta,
+  ThinkingDelta,
+  ToolCallDelta,
+} from '@hilbras/omnicode-core/agent/loop/turnEvents';
+import type { TurnStepRetrying } from '@hilbras/omnicode-core/agent/loop/turnEvents';
+import type { TurnEnded } from '@hilbras/omnicode-core/agent/loop/turnOps';
+import type {
+  ToolCallStarted,
+  ToolProgress,
+  ToolResultEvent,
+} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
 import {
   loadMcpServersDetailed,
   resolveMcpJsonPaths,
 } from '@hilbras/omnicode-core/app/mcpConfig/configLoader';
-import {
-  createOmnicodeDefaultHeaders,
-  createOmnicodeDeviceId,
-  OMNICODE_PROVIDER_NAME,
-} from '@hilbras/omnicode-auth';
+import type { HookResult } from '@hilbras/omnicode-core/features/externalHooks/agent/agentExternalHooksService';
+import type { GoalUpdated } from '@hilbras/omnicode-core/features/goal/goalOps';
 import {
   initializeTelemetry,
   setCrashPhase,
@@ -75,20 +89,6 @@ import {
   shouldEnableTelemetry,
   shutdownTelemetry,
 } from '@hilbras/omnicode-telemetry';
-import type { GoalUpdated } from '@hilbras/omnicode-core/features/goal/goalOps';
-import type { TurnEnded } from '@hilbras/omnicode-core/agent/loop/turnOps';
-import type {
-  AssistantDelta,
-  ThinkingDelta,
-  ToolCallDelta,
-} from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { TurnStepRetrying } from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { HookResult } from '@hilbras/omnicode-core/features/externalHooks/agent/agentExternalHooksService';
-import type {
-  ToolCallStarted,
-  ToolProgress,
-  ToolResultEvent,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
 import { resolve } from 'pathe';
 
 import {
@@ -105,15 +105,6 @@ import {
   parseHeadlessGoalCreate,
   type HeadlessGoalCreate,
 } from '../goal-prompt';
-import {
-  type PromptRunIO,
-  configuredModel,
-  installPromptTerminationCleanup,
-  raceWithTimeout,
-  requireConfiguredModel,
-} from '../run-prompt';
-import { createOmnicodeCodeHostIdentity } from '../version';
-
 import { resolveOutputFormat } from '../options';
 import type { CLIOptions, PromptOutputFormat } from '../options';
 import {
@@ -124,6 +115,14 @@ import {
   writeExperimentalVersion,
   writeResumeHint,
 } from '../prompt-render';
+import {
+  type PromptRunIO,
+  configuredModel,
+  installPromptTerminationCleanup,
+  raceWithTimeout,
+  requireConfiguredModel,
+} from '../run-prompt';
+import { createOmnicodeCodeHostIdentity } from '../version';
 
 const PROMPT_UI_MODE = 'print';
 /** Re-check `goalActive` at least this often while waiting for goal turns. */
@@ -293,7 +292,10 @@ export async function runV2Print(
     };
     flushWires = () => flushSessionWires(resolved.session, resolved.agent);
 
-    telemetryService.setContext({ session_id: resolved.session.id, model: resolved.telemetryModel });
+    telemetryService.setContext({
+      session_id: resolved.session.id,
+      model: resolved.telemetryModel,
+    });
     setTelemetryContext({ sessionId: resolved.session.id });
     setTelemetryModel(resolved.telemetryModel);
     setCrashPhase('runtime');
@@ -873,9 +875,7 @@ export interface PrintBackgroundPolicyInput {
  * The steer ceiling deadline is set once on entry, so goal/cron waiting
  * consumes the same budget.
  */
-export async function applyPrintBackgroundPolicy(
-  input: PrintBackgroundPolicyInput,
-): Promise<void> {
+export async function applyPrintBackgroundPolicy(input: PrintBackgroundPolicyInput): Promise<void> {
   const deadline = input.now() + input.ceilingS * 1000;
   let turns = 0;
   // Cron anti-spin guard: the last fire time seen already in the past. Two

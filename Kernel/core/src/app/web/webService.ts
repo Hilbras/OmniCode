@@ -1,20 +1,18 @@
-import {
-  OMNICODE_PROVIDER_NAME,
-  omnicodeCodeBaseUrl,
-} from '@hilbras/omnicode-auth';
-import { LifecycleScope } from '#/app/scopes';
+import { OMNICODE_PROVIDER_NAME, omnicodeCodeBaseUrl } from '@hilbras/omnicode-auth';
+
 import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IOAuthService } from '#/app/auth/auth';
 import { SERVICES_SECTION, type ServicesConfig } from '#/app/auth/configSection';
-import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
+import { LifecycleScope } from '#/app/scopes';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { IProviderService } from '#/llm-adapter/provider/provider';
 import { isOAuthCatalogVendor } from '#/llm-adapter/provider/provider-definition';
 
-import { LocalFetchURLProvider } from './providers/local-fetch-url';
 import { HilbrasFetchURLProvider } from './providers/hilbras-fetch-url';
+import { LocalFetchURLProvider } from './providers/local-fetch-url';
 import type { UrlFetcher } from './tools/fetch-url-types';
 import { IWebFetchService } from './web';
 
@@ -59,13 +57,14 @@ export class WebFetchService implements IWebFetchService {
 
   private fromManagedOAuth(): UrlFetcher | undefined {
     const provider = this.providers.get(OMNICODE_PROVIDER_NAME);
-    if (provider === undefined || !isOAuthCatalogVendor(provider.type) || provider.oauth === undefined) {
+    if (
+      provider === undefined ||
+      !isOAuthCatalogVendor(provider.type) ||
+      provider.oauth === undefined
+    ) {
       return undefined;
     }
-    const tokenProvider = this.oauth.resolveTokenProvider(
-      OMNICODE_PROVIDER_NAME,
-      provider.oauth,
-    );
+    const tokenProvider = this.oauth.resolveTokenProvider(OMNICODE_PROVIDER_NAME, provider.oauth);
     if (tokenProvider === undefined) {
       return undefined;
     }

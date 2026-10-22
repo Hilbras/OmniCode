@@ -4,9 +4,9 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { IFileSystemStorageService } from '#/persistence/interface/storage';
-import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageService';
 import { InMemoryStorageService } from '#/persistence/backends/memory/inMemoryStorageService';
+import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageService';
+import type { IFileSystemStorageService } from '#/persistence/interface/storage';
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -16,10 +16,7 @@ interface ServiceHandle {
   readonly cleanup?: () => Promise<void>;
 }
 
-function storageServiceSuite(
-  name: string,
-  setup: () => Promise<ServiceHandle>,
-): void {
+function storageServiceSuite(name: string, setup: () => Promise<ServiceHandle>): void {
   describe(name, () => {
     let service: IFileSystemStorageService;
     let cleanup: (() => Promise<void>) | undefined;
@@ -106,7 +103,7 @@ describe('FileStorageService', () => {
     try {
       const service = new FileStorageService(dir);
       await expect(
-        (service as unknown as { syncDirOnce(dir: string): Promise<void> }).syncDirOnce(
+        (service as unknown as { syncDirAfterWrite(dir: string): Promise<void> }).syncDirAfterWrite(
           join(dir, 'missing'),
         ),
       ).resolves.toBeUndefined();

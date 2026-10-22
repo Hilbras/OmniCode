@@ -9,7 +9,12 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { createProgram } from '#/cli/commands';
 import type { CLIOptions } from '#/cli/options';
-import { OptionConflictError, OUTPUT_FORMAT_ENV, resolveOutputFormat, validateOptions } from '#/cli/options';
+import {
+  OptionConflictError,
+  OUTPUT_FORMAT_ENV,
+  resolveOutputFormat,
+  validateOptions,
+} from '#/cli/options';
 
 function parse(argv: string[]): CLIOptions {
   let captured: CLIOptions | undefined;
@@ -401,7 +406,11 @@ describe('CLI options parsing', () => {
 
   describe('--agent / --agent-file', () => {
     it('describes agent selectors as new-session-only', () => {
-      const help = createProgram('0.1.0-test', () => {}, () => {}).helpInformation();
+      const help = createProgram(
+        '0.1.0-test',
+        () => {},
+        () => {},
+      ).helpInformation();
       const normalizedHelp = help.replaceAll(/\s+/g, ' ');
 
       expect(normalizedHelp).toContain('Agent profile to start the new session with.');
@@ -427,9 +436,9 @@ describe('CLI options parsing', () => {
     });
 
     it('rejects repeated --agent-file', () => {
-      expect(() =>
-        parse(['-p', 'hi', '--agent-file', 'a.md', '--agent-file', 'b.md']),
-      ).toThrow('--agent-file may only be specified once.');
+      expect(() => parse(['-p', 'hi', '--agent-file', 'a.md', '--agent-file', 'b.md'])).toThrow(
+        '--agent-file may only be specified once.',
+      );
     });
 
     it('rejects combining --agent with --agent-file', () => {
@@ -578,12 +587,17 @@ describe('CLI options parsing', () => {
         () => {},
       );
       const commandNames: string[] = program.commands
-        .filter((command) => !command.name().startsWith('__') && !(command as unknown as { _hidden?: boolean })._hidden)
+        .filter(
+          (command) =>
+            !command.name().startsWith('__') &&
+            !(command as unknown as { _hidden?: boolean })._hidden,
+        )
         .map((command) => command.name());
       expect(commandNames).toEqual([
         'export',
         'fork',
         'provider',
+        'mcp',
         'session',
         'acp',
         'web',
@@ -599,7 +613,6 @@ describe('CLI options parsing', () => {
         'upgrade',
       ]);
     });
-
   });
 
   describe('rejected flags', () => {

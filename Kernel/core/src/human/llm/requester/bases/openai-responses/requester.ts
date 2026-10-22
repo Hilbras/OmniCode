@@ -3,13 +3,11 @@ import { assign, shake } from 'radashi';
 
 import { headersToRecord } from '#/llm/errors';
 import { modelKey, type LlmModel } from '#/llm/model';
-import { toLlmSyntaxErrorMessage } from '#/llm/syntax-errors';
 import type { ProtocolBase, ProtocolRequesterOptions, TraitContext } from '#/llm/protocol/base';
 import { resolveModelConnection } from '#/llm/protocol/connection';
-import { applyThinking } from '#/llm/protocol/thinking';
 import { resolveMaxCompletionCap, type FormatRequestInput } from '#/llm/protocol/format';
 import { consumeStream, resolveTransportHeaders } from '#/llm/protocol/stream';
-import { encodeReasoningEffortFallback } from '#/llm/thinking';
+import { applyThinking } from '#/llm/protocol/thinking';
 import { resolveAuthSchemeHeaders } from '#/llm/requester/auth-scheme-headers';
 import {
   type LlmClientContext,
@@ -21,16 +19,17 @@ import {
   type LlmRequestEvent,
   type ToolCallIdPolicy,
 } from '#/llm/requester/requester';
+import { toLlmSyntaxErrorMessage } from '#/llm/syntax-errors';
+import { encodeReasoningEffortFallback } from '#/llm/thinking';
 
-import {
-  normalizeToolCallIdsForProvider,
-  sanitizeOpenAIResponsesCallId,
-} from '../tool-call-id';
 import { convertOpenAIError } from '../openai/format';
-import { isPromptCacheKeyRejection, PromptCacheKeyRejections } from '../openai/prompt-cache-key-fallback';
+import {
+  isPromptCacheKeyRejection,
+  PromptCacheKeyRejections,
+} from '../openai/prompt-cache-key-fallback';
+import { normalizeToolCallIdsForProvider, sanitizeOpenAIResponsesCallId } from '../tool-call-id';
 import { getOpenAIResponsesModelCapability } from './capability';
 import type { OpenAIResponsesRawChunk } from './contract';
-import type { OpenAIResponsesTrait } from './trait';
 import {
   applyOpenAIResponsesResponseFormat,
   assembleOpenAIResponsesRequest,
@@ -44,6 +43,7 @@ import {
   parseOpenAIResponsesUsage,
   type OpenAIResponsesRequestParams,
 } from './format';
+import type { OpenAIResponsesTrait } from './trait';
 
 const OPENAI_RESPONSES_TOOL_CALL_ID_POLICY: ToolCallIdPolicy = {
   normalize: (id) => sanitizeOpenAIResponsesCallId(id, 64),
@@ -60,8 +60,7 @@ function createClient(model: LlmModel, headers: Record<string, string> | undefin
 }
 
 export interface OpenAIResponsesRequesterOptions
-  extends ProtocolRequesterOptions<OpenAIResponsesTrait>,
-    LlmRequesterOptions<OpenAI> {}
+  extends ProtocolRequesterOptions<OpenAIResponsesTrait>, LlmRequesterOptions<OpenAI> {}
 
 export interface OpenAIResponsesRequestPreparationOptions {
   readonly trait?: OpenAIResponsesTrait;
@@ -91,7 +90,8 @@ export function prepareOpenAIResponsesRequest(
   if (cap !== undefined) {
     kwargs = {
       ...kwargs,
-      ...(trait?.encodeMaxCompletionTokens?.(cap, ctx) ?? encodeOpenAIResponsesMaxCompletionTokens(cap)),
+      ...(trait?.encodeMaxCompletionTokens?.(cap, ctx) ??
+        encodeOpenAIResponsesMaxCompletionTokens(cap)),
     };
   }
   if (input.responseFormat !== undefined) {
@@ -101,8 +101,7 @@ export function prepareOpenAIResponsesRequest(
   kwargs = shake(assign(kwargs, input.extraParams?.responses ?? {}));
 
   const lowered = lowerOpenAIResponsesMessages(input, {
-    extractText:
-      (input.toolMessageConversion ?? trait?.toolMessageConversion) === 'extract_text',
+    extractText: (input.toolMessageConversion ?? trait?.toolMessageConversion) === 'extract_text',
   });
   const merged = trait?.mergeHistory?.(lowered, ctx) ?? lowered;
   const tools = input.tools.map(

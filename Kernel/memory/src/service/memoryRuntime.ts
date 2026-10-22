@@ -79,6 +79,7 @@ export class LazyMemoryStore implements MemoryStorePort {
 
   async close(): Promise<void> {
     const store = await this.opening?.catch(() => undefined);
+    this.opening = undefined;
     await store?.close();
   }
 

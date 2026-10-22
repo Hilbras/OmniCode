@@ -5,19 +5,15 @@
  * `interactions:resolved`).
  */
 
-import { z } from 'zod';
-
 import type {
   Interaction,
   InteractionResolution,
 } from '@hilbras/omnicode-core/human/interaction/interaction';
 import type { SessionMetadataChangedEvent } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
+import { z } from 'zod';
 
 import type { EventRegistration } from '../types.js';
-import {
-  interactionResolutionSchema,
-  interactionSchema,
-} from './interaction.js';
+import { interactionResolutionSchema, interactionSchema } from './interaction.js';
 import { sessionMetadataChangedEventSchema } from './metadata.js';
 
 /**

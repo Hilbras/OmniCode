@@ -1,3 +1,15 @@
+import {
+  resolveMigrationScope,
+  runMigration as realRunMigration,
+  type AnyChoice,
+  type MigrationPlan,
+  type MigrationPromptResult,
+  type MigrationReport,
+  type MigrationScope,
+  type Prompt1Choice,
+  type Prompt2Choice,
+  type RunMigrationInput,
+} from '@hilbras/omnicode-migration';
 /**
  * MigrationScreenComponent — native pi-tui first-launch migration experience.
  *
@@ -14,20 +26,8 @@
 import { Container, matchesKey, Key, truncateToWidth, type Focusable } from '@hilbras/omnicode-tui';
 import chalk from 'chalk';
 
-import type { ColorPalette } from '#/tui/theme/colors';
 import { currentTheme } from '#/tui/theme';
-import {
-  resolveMigrationScope,
-  runMigration as realRunMigration,
-  type AnyChoice,
-  type MigrationPlan,
-  type MigrationPromptResult,
-  type MigrationReport,
-  type MigrationScope,
-  type Prompt1Choice,
-  type Prompt2Choice,
-  type RunMigrationInput,
-} from '@hilbras/omnicode-migration';
+import type { ColorPalette } from '#/tui/theme/colors';
 
 type Phase = 'ask1' | 'ask2' | 'progress' | 'result';
 
@@ -341,9 +341,7 @@ export class MigrationScreenComponent extends Container implements Focusable {
       // separate notice here reads as a migration limitation, which it is not.
       if (sum.config.droppedHooks > 0) {
         lines.push(
-          chalk.hex(colors.warning)(
-            `  ⚠ ${sum.config.droppedHooks} hooks dropped (incompatible)`,
-          ),
+          chalk.hex(colors.warning)(`  ⚠ ${sum.config.droppedHooks} hooks dropped (incompatible)`),
         );
       }
       // Conflicts and partial failures: the report records them, so surface
@@ -429,7 +427,9 @@ export class MigrationScreenComponent extends Container implements Focusable {
       }
       lines.push('');
       lines.push(
-        chalk.hex(colors.textMuted)(` Old data kept at ${this.opts.sourceHome} — omnicode-cli still works.`),
+        chalk.hex(colors.textMuted)(
+          ` Old data kept at ${this.opts.sourceHome} — omnicode-cli still works.`,
+        ),
       );
     }
     lines.push('');
@@ -458,9 +458,7 @@ export class MigrationScreenComponent extends Container implements Focusable {
     for (const [key, label] of STEP_LABELS) {
       const status = this.stepStatus.get(key) ?? 'pending';
       const mark =
-        status === 'done'
-          ? chalk.hex(colors.success)('✓')
-          : chalk.hex(colors.textDim)('◐');
+        status === 'done' ? chalk.hex(colors.success)('✓') : chalk.hex(colors.textDim)('◐');
       lines.push(`  ${mark} ${chalk.hex(colors.text)(label)}`);
     }
     lines.push('');
@@ -489,8 +487,7 @@ export class MigrationScreenComponent extends Container implements Focusable {
       const pointer = isSel ? '❯' : ' ';
       const labelStyle = isSel ? chalk.hex(colors.primary).bold : chalk.hex(colors.text);
       lines.push(
-        chalk.hex(isSel ? colors.primary : colors.textDim)(`  ${pointer} `) +
-          labelStyle(opt.label),
+        chalk.hex(isSel ? colors.primary : colors.textDim)(`  ${pointer} `) + labelStyle(opt.label),
       );
     }
     lines.push('');
@@ -570,9 +567,7 @@ function stepFor(phase: Phase, plan: MigrationPlan): StepDef {
   // the cost they are signing up for. Falls back to the singular "sessions"
   // word only (no count) when no sessions were detected.
   const sessionsLabel =
-    plan.totalSessions > 0
-      ? `Config + ${plan.totalSessions} sessions`
-      : 'Config + all sessions';
+    plan.totalSessions > 0 ? `Config + ${plan.totalSessions} sessions` : 'Config + all sessions';
   return {
     title: 'Migrate chat sessions too? (they are bulky and slower)',
     options: [

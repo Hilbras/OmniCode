@@ -2,12 +2,11 @@ import { GoogleGenAI as GenAIClient, type GenerateContentParameters } from '@goo
 import { assign, shake } from 'radashi';
 
 import type { LlmModel } from '#/llm/model';
-import { toLlmSyntaxErrorMessage } from '#/llm/syntax-errors';
 import type { ProtocolBase, ProtocolRequesterOptions, TraitContext } from '#/llm/protocol/base';
 import { resolveModelConnection } from '#/llm/protocol/connection';
-import { applyThinking } from '#/llm/protocol/thinking';
 import { resolveMaxCompletionCap, type FormatRequestInput } from '#/llm/protocol/format';
 import { consumeStream, resolveTransportHeaders } from '#/llm/protocol/stream';
+import { applyThinking } from '#/llm/protocol/thinking';
 import {
   type LlmClientContext,
   type LlmRequestConfig,
@@ -17,9 +16,9 @@ import {
   type LlmRequesterOptions,
   type LlmRequestEvent,
 } from '#/llm/requester/requester';
+import { toLlmSyntaxErrorMessage } from '#/llm/syntax-errors';
 
 import { getGoogleGenAIModelCapability } from './capability';
-import type { GoogleGenAITrait } from './trait';
 import {
   applyGoogleGenAIResponseFormat,
   assembleGoogleGenAIRequest,
@@ -32,10 +31,10 @@ import {
   defaultGoogleGenAITool,
   type GoogleGenAIRequestParams,
 } from './format';
+import type { GoogleGenAITrait } from './trait';
 
 export interface GoogleGenAIRequesterOptions
-  extends ProtocolRequesterOptions<GoogleGenAITrait>,
-    LlmRequesterOptions<GenAIClient> {
+  extends ProtocolRequesterOptions<GoogleGenAITrait>, LlmRequesterOptions<GenAIClient> {
   readonly vertexai?: boolean;
 }
 
@@ -100,19 +99,24 @@ function createAbortException(): DOMException {
   return new DOMException('The operation was aborted.', 'AbortError');
 }
 
-async function abortPromise(signal: AbortSignal): Promise<never> {
+function abortPromise(signal: AbortSignal): {
+  readonly promise: Promise<never>;
+  readonly dispose: () => void;
+} {
   if (signal.aborted) {
-    throw createAbortException();
+    return { promise: Promise.reject(createAbortException()), dispose: () => {} };
   }
-  return new Promise((_, reject) => {
-    signal.addEventListener(
-      'abort',
-      () => {
-        reject(createAbortException());
-      },
-      { once: true },
-    );
+  let dispose = (): void => {};
+  const promise = new Promise<never>((_, reject) => {
+    const onAbort = (): void => {
+      reject(createAbortException());
+    };
+    signal.addEventListener('abort', onAbort, { once: true });
+    dispose = (): void => {
+      signal.removeEventListener('abort', onAbort);
+    };
   });
+  return { promise, dispose };
 }
 
 interface GoogleGenAITransport {
@@ -139,10 +143,19 @@ async function executeGoogleGenAIRequest(
       params: GenerateContentParameters,
     ): Promise<AsyncIterable<Record<string, unknown>>>;
   };
-  const stream = await Promise.race([
-    models.generateContentStream(request.params),
-    abortPromise(signal),
-  ]);
+  const params = {
+    ...request.params,
+    ...(request.params.config === undefined
+      ? { config: { abortSignal: signal } }
+      : { config: { ...request.params.config, abortSignal: signal } }),
+  } as typeof request.params;
+  const abort = abortPromise(signal);
+  let stream;
+  try {
+    stream = await Promise.race([models.generateContentStream(params), abort.promise]);
+  } finally {
+    abort.dispose();
+  }
   await consumeStream(stream, format.createStreamParser(), onEvent, () => {
     if (signal.aborted) {
       throw createAbortException();

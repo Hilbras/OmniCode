@@ -3,10 +3,14 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SyncDescriptor } from '#/_base/di/descriptors';
 import { DisposableStore } from '#/_base/di/lifecycle';
 import { TestInstantiationService } from '#/_base/di/test';
-import { AppendLogCorruptedError, IAppendLogStore, type AppendLogTruncation } from '#/persistence/interface/appendLogStore';
-import { IFileSystemStorageService } from '#/persistence/interface/storage';
-import { AppendLogStore } from '#/persistence/backends/node-fs/appendLogStore';
 import { InMemoryStorageService } from '#/persistence/backends/memory/inMemoryStorageService';
+import { AppendLogStore } from '#/persistence/backends/node-fs/appendLogStore';
+import {
+  AppendLogCorruptedError,
+  IAppendLogStore,
+  type AppendLogTruncation,
+} from '#/persistence/interface/appendLogStore';
+import { IFileSystemStorageService } from '#/persistence/interface/storage';
 
 const enc = new TextEncoder();
 
@@ -120,9 +124,7 @@ describe('AppendLogStore', () => {
 
     await expect(record.flush()).rejects.toBe(failure);
     expect(appendAttempts).toBe(1);
-    expect(new TextDecoder().decode(await storage.read(SCOPE, KEY))).toBe(
-      '{"n":1}\n{"n":2}\n',
-    );
+    expect(new TextDecoder().decode(await storage.read(SCOPE, KEY))).toBe('{"n":1}\n{"n":2}\n');
   });
 
   it('reacquire after final release waits for retiring storage before fresh I/O', async () => {
@@ -386,9 +388,9 @@ describe('AppendLogStore', () => {
     record.append<Rec>(SCOPE, KEY, { n: 2 });
     await appendStarted;
 
-    const rewriteRejected = expect(
-      record.rewrite<Rec>(SCOPE, KEY, [{ n: 9 }]),
-    ).rejects.toBe(failure);
+    const rewriteRejected = expect(record.rewrite<Rec>(SCOPE, KEY, [{ n: 9 }])).rejects.toBe(
+      failure,
+    );
     releaseAppend();
     await rewriteRejected;
 
@@ -417,9 +419,9 @@ describe('AppendLogStore', () => {
     record.append<Rec>(SCOPE, KEY, { n: 2 });
     await appendStarted;
 
-    const invalid = expect(
-      record.rewrite<unknown>(SCOPE, KEY, [{ n: 9n }]),
-    ).rejects.toBeInstanceOf(TypeError);
+    const invalid = expect(record.rewrite<unknown>(SCOPE, KEY, [{ n: 9n }])).rejects.toBeInstanceOf(
+      TypeError,
+    );
     releaseAppend();
     await invalid;
     await record.flush();
@@ -458,9 +460,7 @@ describe('AppendLogStore', () => {
     record.append<Rec>(SCOPE, KEY, { n: 2 });
     await appendStarted;
 
-    const failedRewrite = expect(
-      record.rewrite<Rec>(SCOPE, KEY, [{ n: 9 }]),
-    ).rejects.toBe(failure);
+    const failedRewrite = expect(record.rewrite<Rec>(SCOPE, KEY, [{ n: 9 }])).rejects.toBe(failure);
     releaseAppend();
     await failedRewrite;
     await expect(record.flush()).rejects.toBe(failure);
@@ -507,9 +507,11 @@ describe('AppendLogStore', () => {
 
     const closed = record.close();
     let closeSettled = false;
-    void closed.finally(() => {
-      closeSettled = true;
-    }).catch(() => {});
+    void closed
+      .finally(() => {
+        closeSettled = true;
+      })
+      .catch(() => {});
     await Promise.resolve();
     await Promise.resolve();
     expect(closeSettled).toBe(false);

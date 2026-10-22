@@ -7,6 +7,7 @@ export const McpErrors = {
     MCP_STARTUP_FAILED: 'mcp.startup_failed',
     MCP_TOOL_NAME_COLLISION: 'mcp.tool_name_collision',
     MCP_OAUTH_FAILED: 'mcp.oauth_failed',
+    MCP_TOOL_CALL_FAILED: 'mcp.tool_call_failed',
   },
 } as const satisfies ErrorDomain;
 

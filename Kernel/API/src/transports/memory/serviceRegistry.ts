@@ -6,46 +6,46 @@
  */
 
 import type { ServiceIdentifier } from '@hilbras/omnicode-core/_base/di/instantiation';
-import { ISessionIndex } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
-import { IWorkspaceService } from '@hilbras/omnicode-core/app/workspace/workspace';
-import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
-import { IModelService } from '@hilbras/omnicode-core/llm-adapter/model/model';
-import { IModelCatalog } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
-import { IProviderDiscoveryService } from '@hilbras/omnicode-core/app/kosongConfig/discovery';
-import { IModelsDevImportService } from '@hilbras/omnicode-core/app/kosongConfig/modelsDevImport';
-import { IProviderService } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
-import {
-  IAuthSummaryService,
-  IOAuthService,
-} from '@hilbras/omnicode-core/app/auth/auth';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import { IPluginService } from '@hilbras/omnicode-core/app/plugin/plugin';
-import { ICapabilityService } from '@hilbras/omnicode-core/app/capability/capability';
-import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
-import { IEventService } from '@hilbras/omnicode-core/app/event/event';
-import { IFileService } from '@hilbras/omnicode-core/app/file/fileService';
-import { IHostFolderBrowser } from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
-import { IWorkspaceInstanceManager } from '@hilbras/omnicode-core/workspace/workspaceInstance/workspaceInstanceManager';
-import { ISessionManager } from '@hilbras/omnicode-core/app/sessionManager/sessionManager';
-import { ISessionMetadata } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
-import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
-import { ISessionTitleService } from '@hilbras/omnicode-core/session/sessionTitle/sessionTitle';
+import { IAgentCommandService } from '@hilbras/omnicode-core/agent/command/agentCommand';
+import { IAgentContextMemoryService } from '@hilbras/omnicode-core/agent/contextMemory/contextMemory';
+import { IAgentFullCompactionService } from '@hilbras/omnicode-core/agent/fullCompaction/fullCompaction';
 import { IAgentLoopService } from '@hilbras/omnicode-core/agent/loop/loop';
 import { IAgentPromptChannel } from '@hilbras/omnicode-core/agent/loop/promptChannel';
+import { IAgentMcpService } from '@hilbras/omnicode-core/agent/mcp/mcp';
 import { IAgentPermissionModeService } from '@hilbras/omnicode-core/agent/permissionMode/permissionMode';
-import { IAgentCommandService } from '@hilbras/omnicode-core/agent/command/agentCommand';
-import { IAgentRuntimeBindingService } from '@hilbras/omnicode-core/agent/runtimeBinding/runtimeBinding';
-import { IAgentContextMemoryService } from '@hilbras/omnicode-core/agent/contextMemory/contextMemory';
-import { ISessionTokenCountingService } from '@hilbras/omnicode-core/session/tokenCounting/sessionTokenCounting';
-import { ISessionActivityView } from '@hilbras/omnicode-core/session/sessionActivity/sessionActivity';
-import { IAgentPlanService } from '@hilbras/omnicode-core/features/plan/plan';
 import { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
+import { IAgentRuntimeBindingService } from '@hilbras/omnicode-core/agent/runtimeBinding/runtimeBinding';
 import { IAgentShellCommandService } from '@hilbras/omnicode-core/agent/shellCommand/shellCommand';
 import { IAgentTaskService } from '@hilbras/omnicode-core/agent/task/task';
-import { ISessionUsageService } from '@hilbras/omnicode-core/session/usage/sessionUsage';
-import { IAgentMcpService } from '@hilbras/omnicode-core/agent/mcp/mcp';
-import { IAgentFullCompactionService } from '@hilbras/omnicode-core/agent/fullCompaction/fullCompaction';
+import { IAuthSummaryService, IOAuthService } from '@hilbras/omnicode-core/app/auth/auth';
+import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
+import { ICapabilityService } from '@hilbras/omnicode-core/app/capability/capability';
+import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
+import { IConnectorCatalogService } from '@hilbras/omnicode-core/app/connectors/connectors';
+import { IEventService } from '@hilbras/omnicode-core/app/event/event';
+import { IFileService } from '@hilbras/omnicode-core/app/file/fileService';
+import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
+import { IGitHubService } from '@hilbras/omnicode-core/app/github/github';
+import { IHostFolderBrowser } from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
+import { IProviderDiscoveryService } from '@hilbras/omnicode-core/app/kosongConfig/discovery';
+import { IModelsDevImportService } from '@hilbras/omnicode-core/app/kosongConfig/modelsDevImport';
 import { IMcpManagementService } from '@hilbras/omnicode-core/app/mcpManagement/mcpManagement';
+import { IPluginService } from '@hilbras/omnicode-core/app/plugin/plugin';
+import { ISessionIndex } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
+import { ISessionManager } from '@hilbras/omnicode-core/app/sessionManager/sessionManager';
+import { IVercelService } from '@hilbras/omnicode-core/app/vercel/vercel';
+import { IWorkspaceService } from '@hilbras/omnicode-core/app/workspace/workspace';
+import { IAgentPlanService } from '@hilbras/omnicode-core/features/plan/plan';
+import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
+import { IModelCatalog } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
+import { IModelService } from '@hilbras/omnicode-core/llm-adapter/model/model';
+import { IProviderService } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
+import { ISessionActivityView } from '@hilbras/omnicode-core/session/sessionActivity/sessionActivity';
+import { ISessionMetadata } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
+import { ISessionTitleService } from '@hilbras/omnicode-core/session/sessionTitle/sessionTitle';
+import { ISessionTokenCountingService } from '@hilbras/omnicode-core/session/tokenCounting/sessionTokenCounting';
+import { ISessionUsageService } from '@hilbras/omnicode-core/session/usage/sessionUsage';
+import { IWorkspaceInstanceManager } from '@hilbras/omnicode-core/workspace/workspaceInstance/workspaceInstanceManager';
 
 /** Wire service name (decorator id string) → token. */
 export const serviceTokens: Readonly<Record<string, ServiceIdentifier<unknown>>> = {
@@ -86,6 +86,9 @@ export const serviceTokens: Readonly<Record<string, ServiceIdentifier<unknown>>>
   agentMcpService: IAgentMcpService,
   agentFullCompactionService: IAgentFullCompactionService,
   mcpManagementService: IMcpManagementService,
+  connectorCatalogService: IConnectorCatalogService,
+  githubService: IGitHubService,
+  vercelService: IVercelService,
 };
 
 export { IEventService };

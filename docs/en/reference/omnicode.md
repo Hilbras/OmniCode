@@ -516,6 +516,44 @@ omnicode provider test cline
 omnicode provider test my-gateway --model my-gateway/auto --timeout 30000
 ```
 
+### `omnicode mcp`
+
+Manage MCP servers in the shell — the non-interactive equivalent of `/mcp` and `/mcp-config` in the TUI. It reads and writes the same `mcp.json` files, so a server configured here is the server the agent connects to.
+
+```sh
+omnicode mcp <action> [options]
+```
+
+| Action | Description |
+| --- | --- |
+| `omnicode mcp list` | List the configured servers with their transport, state and source. Reads only — no server is contacted |
+| `omnicode mcp status [name]` | Connect to the servers and report whether they answer. Exits non-zero when a probe fails |
+| `omnicode mcp tools <name>` | List the tools one server advertises, from a real connection |
+| `omnicode mcp inspect <name>` | Show one server: its stored configuration and its authorization state |
+| `omnicode mcp add <name>` | Add a server to the user configuration |
+| `omnicode mcp remove <name>` | Remove a server from the user configuration |
+| `omnicode mcp enable <name>` | Enable a server without changing its configuration |
+| `omnicode mcp disable <name>` | Disable a server without removing it |
+
+`list`, `status`, `tools` and `inspect` accept `--json`; every action accepts `--cwd <dir>` to include the project-layer servers of a directory.
+
+```sh
+omnicode mcp list
+omnicode mcp status
+omnicode mcp add docs --command npx --arg -y --arg @modelcontextprotocol/server-filesystem --arg /tmp
+omnicode mcp add linear --transport http --url https://mcp.linear.app/mcp
+omnicode mcp disable docs
+omnicode mcp remove docs
+```
+
+`add` accepts `--command` with repeatable `--arg` and `--env` for a local server, or `--url` with repeatable `--header` and `--bearer-token-env` for a remote one. `--no-inherit-env` keeps the Omnicode environment out of the child process; `--allow-private-network` allows a remote endpoint on a private address. The full option list is in [Model Context Protocol](../customization/mcp.md#command-line).
+
+A stdio server is only registered here — nothing is executed until a session connects to it.
+
+::: warning
+An `--env KEY=VALUE` value is written to `mcp.json` in plaintext. Prefer `--bearer-token-env` for remote servers, and `inheritEnv: false` for local ones.
+:::
+
 ### `omnicode auth`
 
 Check whether a provider is signed in, and manage the credential behind it. Where [`omnicode provider auth`](#omnicode-provider-auth-providerid) is the scripted path — it takes a key as an argument — this is the interactive one: it reports state for every provider at a glance, and reads a new key from the terminal with the input hidden so the value never reaches your shell history, the process table, or a screenshot of your scrollback.

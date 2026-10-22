@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
 import { ScopeActivation } from '#/_base/di/instantiation';
-import {
-  _clearScopedRegistryForTests,
-  registerScopedService,
-} from '#/_base/di/scope';
+import { _clearScopedRegistryForTests, registerScopedService } from '#/_base/di/scope';
 import { createScopedTestHost, stubPair } from '#/_base/di/test';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
@@ -23,10 +20,7 @@ import { LifecycleScope } from '#/app/scopes';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { IFeatureAssemblyService } from '#/features/featureAssembly';
 import { FeatureAssemblyService } from '#/features/featureAssemblyService';
-import {
-  _clearFeatureRecipesForTests,
-  registerFeature,
-} from '#/features/featureRegistry';
+import { _clearFeatureRecipesForTests, registerFeature } from '#/features/featureRegistry';
 import { GoalFeature } from '#/features/goal/goalFeature';
 import { ISessionUsageService } from '#/session/usage/sessionUsage';
 import { IEventDispatcher } from '#/state/eventDispatcher';

@@ -420,6 +420,19 @@ export * from '#/agent/tools/task/task-stop/task-stop';
 import '#/agent/tools/task/task-stop/taskStopTool';
 export * from '#/agent/tools/task/task-wait/task-wait';
 import '#/agent/tools/task/task-wait/taskWaitTool';
+export * from '#/agent/tools/github/githubTools';
+import '#/agent/tools/github/githubGetAuthenticatedUserTool';
+import '#/agent/tools/github/githubGetPullRequestTool';
+import '#/agent/tools/github/githubListIssuesTool';
+import '#/agent/tools/github/githubListPullRequestsTool';
+import '#/agent/tools/github/githubListRepositoriesTool';
+import '#/agent/tools/github/githubListWorkflowRunsTool';
+export * from '#/agent/tools/vercel/vercelTools';
+import '#/agent/tools/vercel/vercelGetAuthenticatedUserTool';
+import '#/agent/tools/vercel/vercelGetDeploymentEventsTool';
+import '#/agent/tools/vercel/vercelGetDeploymentTool';
+import '#/agent/tools/vercel/vercelListDeploymentsTool';
+import '#/agent/tools/vercel/vercelListProjectsTool';
 export * from '#/agent/task/task';
 export * from '#/agent/task/taskOps';
 export * from '#/agent/task/types';
@@ -431,7 +444,6 @@ export * from '#/features/cron/cronService';
 export * from '#/features/cron/cronOps';
 export type { CronFiredEvent } from '#/features/cron/cronOps';
 import '#/features/cron/cronFeature';
-
 import '#/session/agentLifecycle/profile/profiles';
 export * from '#/session/agentLifecycle/agentLifecycle';
 export * from '#/session/agentLifecycle/agentLifecycleService';
@@ -439,11 +451,7 @@ export * from '#/session/agentLifecycle/forked';
 export * from '#/session/agentLifecycle/mainAgent';
 export * from '#/session/mcp/sessionMcpHandle';
 import '#/app/mcpConfig/configSection';
-export {
-  MCP_SECTION,
-  McpSectionSchema,
-  type McpSection,
-} from '#/app/mcpConfig/configSection';
+export { MCP_SECTION, McpSectionSchema, type McpSection } from '#/app/mcpConfig/configSection';
 export * from '#/app/mcpConfig/oauthStore';
 export { IMcpConfigStore } from '#/app/mcpConfig/configStore';
 import '#/app/mcpConfig/configStore';
@@ -453,6 +461,14 @@ export * from '#/app/mcpRegistry/mcpRegistry';
 import '#/app/mcpRegistry/mcpRegistryService';
 export * from '#/app/mcpManagement/mcpManagement';
 import '#/app/mcpManagement/mcpManagementService';
+export * from '#/app/connectors/connectors';
+import '#/app/connectors/connectorCatalogService';
+export * from '#/app/github/github';
+import '#/app/github/githubService';
+export * from '#/app/github/types';
+export * from '#/app/vercel/vercel';
+import '#/app/vercel/vercelService';
+export * from '#/app/vercel/types';
 export * from '#/workspace/workspaceMcpConfig/workspaceMcpConfig';
 export * from '#/workspace/workspaceMcpConfig/workspaceMcpConfigService';
 export * from '#/workspace/workspaceMcp/workspaceMcp';
@@ -579,10 +595,7 @@ export {
   resolveEffectiveImageMime,
   unsupportedImageMimeFromUrl,
 } from '#/agent/media/image-format-policy';
-export {
-  persistOriginalImage,
-  sessionMediaOriginalsDir,
-} from '#/agent/media/image-originals';
+export { persistOriginalImage, sessionMediaOriginalsDir } from '#/agent/media/image-originals';
 export * from '#/app/edit/fileEdit';
 export * from '#/app/edit/fileEditService';
 export * from '#/app/edit/editService';
@@ -733,7 +746,10 @@ import '#/agent/toolRegistry/toolRegistry';
 import '#/agent/toolRegistry/toolRegistryService';
 export { IAgentToolActivationService } from '#/agent/toolActivation/toolActivation';
 export { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
-export { registerAgentToolService, AgentToolContribution } from '#/agent/toolRegistry/toolContribution';
+export {
+  registerAgentToolService,
+  AgentToolContribution,
+} from '#/agent/toolRegistry/toolContribution';
 export type { AgentToolContributionOptions } from '#/agent/toolRegistry/toolContribution';
 export * from '#/agent/userTool/userTool';
 export * from '#/agent/userTool/userToolOps';

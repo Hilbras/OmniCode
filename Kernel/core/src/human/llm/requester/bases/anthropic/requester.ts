@@ -4,16 +4,12 @@ import { assign, shake } from 'radashi';
 import { headersToRecord } from '#/llm/errors';
 import { providerImagePolicy } from '#/llm/media/image-formats';
 import type { LlmModel } from '#/llm/model';
-import { toLlmSyntaxErrorMessage } from '#/llm/syntax-errors';
 import type { ProtocolBase, ProtocolRequesterOptions, TraitContext } from '#/llm/protocol/base';
 import { resolveModelConnection } from '#/llm/protocol/connection';
-import { applyThinking } from '#/llm/protocol/thinking';
 import { resolveMaxCompletionCap, type FormatRequestInput } from '#/llm/protocol/format';
 import { consumeStream, resolveTransportHeaders } from '#/llm/protocol/stream';
-import {
-  applyAuthScheme,
-  suppressDefaultAuthHeaders,
-} from '#/llm/requester/auth-strategy';
+import { applyThinking } from '#/llm/protocol/thinking';
+import { applyAuthScheme, suppressDefaultAuthHeaders } from '#/llm/requester/auth-strategy';
 import {
   type LlmClientContext,
   type LlmRequestConfig,
@@ -24,13 +20,10 @@ import {
   type LlmRequestEvent,
   type ToolCallIdPolicy,
 } from '#/llm/requester/requester';
+import { toLlmSyntaxErrorMessage } from '#/llm/syntax-errors';
 
-import {
-  normalizeToolCallIdsForProvider,
-  sanitizeToolCallId,
-} from '../tool-call-id';
+import { normalizeToolCallIdsForProvider, sanitizeToolCallId } from '../tool-call-id';
 import { getAnthropicModelCapability } from './capability';
-import type { AnthropicTrait } from './trait';
 import {
   applyAnthropicResponseFormat,
   applyAnthropicThinkingKeep,
@@ -47,6 +40,7 @@ import {
 } from './format';
 import { isAnthropicWireMessageEmpty } from './lower';
 import { encodeThinking, INTERLEAVED_THINKING_BETA, resolveDefaultMaxTokens } from './profile';
+import type { AnthropicTrait } from './trait';
 
 const ANTHROPIC_TOOL_CALL_ID_POLICY: ToolCallIdPolicy = {
   normalize: (id) => sanitizeToolCallId(id, 64),
@@ -54,7 +48,8 @@ const ANTHROPIC_TOOL_CALL_ID_POLICY: ToolCallIdPolicy = {
 };
 
 export interface AnthropicRequesterOptions
-  extends ProtocolRequesterOptions<AnthropicTrait>,
+  extends
+    ProtocolRequesterOptions<AnthropicTrait>,
     AnthropicFormatOptions,
     LlmRequesterOptions<Anthropic> {}
 
@@ -144,8 +139,7 @@ export function prepareAnthropicRequest(
   }
   kwargs = shake(kwargs);
 
-  const acceptedMimes =
-    trait?.acceptedImageMimes?.(ctx) ?? providerImagePolicy().acceptedMimes;
+  const acceptedMimes = trait?.acceptedImageMimes?.(ctx) ?? providerImagePolicy().acceptedMimes;
   const lowered = lowerAnthropicMessages(input, acceptedMimes);
   const converted = lowered
     .flatMap(({ source, message }) => {
@@ -261,7 +255,8 @@ export function createAnthropicBase(
 ): ProtocolBase<AnthropicTrait> {
   return {
     capability: getAnthropicModelCapability,
-    createRequester: (requesterOptions) => createAnthropicRequester({ ...options, ...requesterOptions }),
+    createRequester: (requesterOptions) =>
+      createAnthropicRequester({ ...options, ...requesterOptions }),
   };
 }
 

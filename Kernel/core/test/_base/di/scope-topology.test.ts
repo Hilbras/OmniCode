@@ -1,7 +1,11 @@
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
 
+import { createAppScope, setScopeTopology, _resetScopeTopologyForTests } from '#/_base/di/scope';
 import { BugIndicatingError } from '#/_base/errors/errors';
-import { createAppScope, setScopeTopology } from '#/_base/di/scope';
+
+beforeEach(() => {
+  _resetScopeTopologyForTests();
+});
 
 describe('Scope topology (kernel)', () => {
   it('skips the createChild order check while no topology is declared', () => {

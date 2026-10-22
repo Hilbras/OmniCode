@@ -1,9 +1,9 @@
 import { createReadStream } from 'node:fs';
 import { mkdir, open, readFile, readdir, stat, unlink } from 'node:fs/promises';
+
 import { dirname, join } from 'pathe';
 
 import { atomicWrite, atomicWriteStream, syncDir } from '#/_base/utils/fs';
-
 import type {
   IFileSystemStorageService,
   StorageAppendOptions,
@@ -21,8 +21,6 @@ function isEnoent(error: unknown): boolean {
 
 export class FileStorageService implements IFileSystemStorageService {
   declare readonly _serviceBrand: undefined;
-
-  private readonly syncedDirs = new Set<string>();
 
   constructor(
     private readonly baseDir: string,
@@ -82,7 +80,7 @@ export class FileStorageService implements IFileSystemStorageService {
     try {
       await mkdir(dirname(filePath), { recursive: true, mode: this.dirMode });
       await atomicWrite(filePath, data, undefined, this.fileMode, options.signal);
-      await this.syncDirOnce(dirname(filePath));
+      await this.syncDirAfterWrite(dirname(filePath));
     } catch (error) {
       options.signal?.throwIfAborted();
       throw toStorageIoError(error, { path: filePath, op: 'write' });
@@ -99,7 +97,7 @@ export class FileStorageService implements IFileSystemStorageService {
     try {
       await mkdir(dirname(filePath), { recursive: true, mode: this.dirMode });
       await atomicWriteStream(filePath, source, this.fileMode, options.signal);
-      await this.syncDirOnce(dirname(filePath));
+      await this.syncDirAfterWrite(dirname(filePath));
     } catch (error) {
       options.signal?.throwIfAborted();
       throw toStorageIoError(error, { path: filePath, op: 'write' });
@@ -128,7 +126,7 @@ export class FileStorageService implements IFileSystemStorageService {
       } finally {
         await fh.close();
       }
-      await this.syncDirOnce(dir);
+      await this.syncDirAfterWrite(dir);
     } catch (error) {
       throw toStorageIoError(error, { path: filePath, op: 'append' });
     }
@@ -175,8 +173,7 @@ export class FileStorageService implements IFileSystemStorageService {
     }
   }
 
-  async flush(): Promise<void> {
-  }
+  async flush(): Promise<void> {}
 
   async close(): Promise<void> {}
 
@@ -188,11 +185,9 @@ export class FileStorageService implements IFileSystemStorageService {
     return join(this.baseDir, scope);
   }
 
-  private async syncDirOnce(dir: string): Promise<void> {
-    if (this.syncedDirs.has(dir)) return;
+  private async syncDirAfterWrite(dir: string): Promise<void> {
     try {
       await syncDir(dir);
-      this.syncedDirs.add(dir);
     } catch (error) {
       if (!isEnoent(error)) throw error;
     }

@@ -1,5 +1,3 @@
-import { join } from 'node:path';
-
 import type { ContentPart } from '#human/llm/message';
 
 export type MediaKind = 'image' | 'video' | 'audio' | 'file';
@@ -53,7 +51,9 @@ const IMAGE_EXT_BY_MIME = invertMimeBySuffix(IMAGE_MIME_BY_SUFFIX);
 const VIDEO_EXT_BY_MIME = invertMimeBySuffix(VIDEO_MIME_BY_SUFFIX);
 const AUDIO_EXT_BY_MIME = invertMimeBySuffix(AUDIO_MIME_BY_SUFFIX);
 
-function invertMimeBySuffix(table: Readonly<Record<string, string>>): Readonly<Record<string, string>> {
+function invertMimeBySuffix(
+  table: Readonly<Record<string, string>>,
+): Readonly<Record<string, string>> {
   const out: Record<string, string> = {};
   for (const [suffix, mime] of Object.entries(table)) {
     out[mime] ??= suffix;
@@ -140,12 +140,6 @@ export function daemonFileRefFromPart(
     return ref === undefined ? undefined : { kind: 'video', ref };
   }
   return undefined;
-}
-
-export const SESSION_MEDIA_DIR = 'media';
-
-export function sessionMediaFilePath(sessionDir: string, fileId: string, ext: string): string {
-  return join(sessionDir, SESSION_MEDIA_DIR, `${fileId}${ext}`);
 }
 
 const MEDIA_PATH_TAG_RE = /<(image|video|audio|file)\b[^>]*?\bpath="([^"]*)"[^>]*>(?:<\/\1>)?/g;

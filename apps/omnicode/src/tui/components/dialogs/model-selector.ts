@@ -14,7 +14,6 @@ import { CURRENT_MARK, SELECT_POINTER } from '#/tui/constant/symbols';
 import { currentTheme } from '#/tui/theme';
 import { SearchableList } from '#/tui/utils/searchable-list';
 
-import type { ChoiceOption } from './choice-picker';
 
 type ThinkingAvailability = 'toggle' | 'always-on' | 'unsupported';
 
@@ -47,19 +46,6 @@ export function providerDisplayName(provider: string): string {
   if (provider.startsWith('managed:')) return provider.slice('managed:'.length);
   return provider;
 }
-
-export function createModelChoiceOptions(
-  models: Record<string, ModelAlias>,
-): readonly ChoiceOption[] {
-  return Object.entries(models).map(([alias, cfg]) => {
-    const effective = effectiveModelAlias(cfg);
-    return {
-      value: alias,
-      label: `${modelDisplayName(alias, effective)} (${providerDisplayName(effective.provider)})`,
-    };
-  });
-}
-
 export interface ModelSelectorOptions {
   readonly models: Record<string, ModelAlias>;
   readonly currentValue: string;
@@ -338,7 +324,10 @@ export class ModelSelectorComponent extends Container implements Focusable {
         const truncatedName = truncateToWidth(choice.name, nameWidth, '…');
         const namePad = ' '.repeat(Math.max(0, nameWidth - visibleWidth(truncatedName)));
         let line = currentTheme.fg(isSelected ? 'primary' : 'textDim', `  ${pointer} `);
-        line += (isSelected ? currentTheme.boldFg('primary', truncatedName) : currentTheme.fg('text', truncatedName)) + namePad;
+        line +=
+          (isSelected
+            ? currentTheme.boldFg('primary', truncatedName)
+            : currentTheme.fg('text', truncatedName)) + namePad;
         line += '  ' + currentTheme.fg('textMuted', choice.provider);
         if (isCurrent) {
           line += ' ' + currentTheme.fg('success', CURRENT_MARK);

@@ -1,31 +1,25 @@
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { type CollectionToken, type CollectionView } from '#/_base/di/collection';
 import { ScopeActivation } from '#/_base/di/instantiation';
 import { type InstantiationService } from '#/_base/di/instantiationService';
-import {
-  _clearScopedRegistryForTests,
-  registerScopedService,
-  type Scope,
-} from '#/_base/di/scope';
+import { _clearScopedRegistryForTests, registerScopedService, type Scope } from '#/_base/di/scope';
 import { createScopedTestHost } from '#/_base/di/test';
-import { type CollectionToken, type CollectionView } from '#/_base/di/collection';
+import { AgentToolContribution } from '#/agent/toolRegistry/toolContribution';
 import { IFeatureManager } from '#/app/feature/featureManager';
 import { FeatureManagerService } from '#/app/feature/featureManagerService';
 import { IFlagService } from '#/app/flag/flag';
 import { LifecycleScope } from '#/app/scopes';
-import { AgentToolContribution } from '#/agent/toolRegistry/toolContribution';
-import { IFeatureAssemblyService } from '#/features/featureAssembly';
-import { FeatureAssemblyService } from '#/features/featureAssemblyService';
-import {
-  _clearFeatureRecipesForTests,
-  registerFeature,
-} from '#/features/featureRegistry';
-import { COMPUTER_USE_FLAG_ID } from '#/features/computerUse/computerUse';
 import { ICompletionCriteriaService } from '#/features/computerUse/completionCriteriaService';
-import { IAgentRunSupervisor } from '#/features/computerUse/runSupervisor';
+import { COMPUTER_USE_FLAG_ID } from '#/features/computerUse/computerUse';
 import {
   ComputerUseFeature,
   isComputerUseFeatureAssembled,
 } from '#/features/computerUse/computerUseFeature';
-import { beforeEach, describe, expect, it } from 'vitest';
+import { IAgentRunSupervisor } from '#/features/computerUse/runSupervisor';
+import { IFeatureAssemblyService } from '#/features/featureAssembly';
+import { FeatureAssemblyService } from '#/features/featureAssemblyService';
+import { _clearFeatureRecipesForTests, registerFeature } from '#/features/featureRegistry';
 
 import { stubFlag } from '../../app/flag/stubs';
 
@@ -80,12 +74,18 @@ describe('ComputerUseFeature - experimental flag gating', () => {
     ]);
     const agent = host.child(LifecycleScope.Agent, 'agent-1');
 
-    const tools = collectionViewOf(agent, AgentToolContribution).items.map((record) =>
-      record.options.name,
+    const tools = collectionViewOf(agent, AgentToolContribution).items.map(
+      (record) => record.options.name,
     );
 
     expect(tools.toSorted()).toEqual(
-      ['ComputerApplication', 'ComputerClick', 'ComputerKey', 'ComputerScreenshot', 'ComputerType'].toSorted(),
+      [
+        'ComputerApplication',
+        'ComputerClick',
+        'ComputerKey',
+        'ComputerScreenshot',
+        'ComputerType',
+      ].toSorted(),
     );
     host.dispose();
   });

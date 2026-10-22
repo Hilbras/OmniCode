@@ -3,13 +3,20 @@
  * fallback from expiring daemon uploads to bytes retained by the TUI.
  */
 
-import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, utimesSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  utimesSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { describe, it, expect } from 'vitest';
-
 import { parseDaemonFileUrl } from '@hilbras/omnicode-api';
+import { describe, it, expect } from 'vitest';
 
 import { OMNICODE_HOME_ENV } from '#/constant/app';
 import { ImageAttachmentStore } from '#/tui/utils/image-attachment-store';
@@ -58,9 +65,7 @@ type VideoUrlPart = { type: 'video_url'; videoUrl: { url: string } };
 // bare `omnicode-file://` daemon reference (the paste was uploaded at paste
 // time); pull the url out for assertions.
 function videoUrlFromParts(parts: unknown[]): string {
-  const part = parts.find(
-    (p): p is VideoUrlPart => (p as VideoUrlPart).type === 'video_url',
-  );
+  const part = parts.find((p): p is VideoUrlPart => (p as VideoUrlPart).type === 'video_url');
   if (!part) throw new Error(`no video_url part found in: ${JSON.stringify(parts)}`);
   return part.videoUrl.url;
 }
@@ -165,17 +170,13 @@ describe('extractMediaAttachments', () => {
     const store = new ImageAttachmentStore();
     const att = store.addVideo('video/mp4', '/tmp/sample.mp4');
     att.pending = new Promise<void>(() => undefined); // never settles
-    expect(() => extractMediaAttachments(att.placeholder, store)).toThrow(
-      /still uploading/,
-    );
+    expect(() => extractMediaAttachments(att.placeholder, store)).toThrow(/still uploading/);
   });
 
   it('refuses a video whose upload failed or is missing', () => {
     const store = new ImageAttachmentStore();
     const att = store.addVideo('video/mp4', '/tmp/sample.mp4');
-    expect(() => extractMediaAttachments(att.placeholder, store)).toThrow(
-      /could not be uploaded/,
-    );
+    expect(() => extractMediaAttachments(att.placeholder, store)).toThrow(/could not be uploaded/);
   });
 
   it('refuses a video whose staged upload is too close to expiry', () => {
@@ -219,7 +220,14 @@ describe('extractMediaAttachments', () => {
     const { cleanup } = setupTempCache();
     try {
       const store = new ImageAttachmentStore();
-      const att = store.addImage(new Uint8Array([0x89, 0x50, 0x4e, 0x47]), 'image/png', 640, 480, undefined, 'file-1');
+      const att = store.addImage(
+        new Uint8Array([0x89, 0x50, 0x4e, 0x47]),
+        'image/png',
+        640,
+        480,
+        undefined,
+        'file-1',
+      );
       const r = extractMediaAttachments(`describe ${att.placeholder} please`, store);
       expect(r.hasMedia).toBe(true);
       expect(r.imageAttachmentIds).toEqual([1]);
@@ -337,7 +345,14 @@ describe('extractMediaAttachments', () => {
       // the inline (no fileId) form embeds its bytes.
       writeFileSync(getCacheDir(), 'occupied');
       const store = new ImageAttachmentStore();
-      const uploaded = store.addImage(new Uint8Array([1]), 'image/png', 10, 10, undefined, 'file-1');
+      const uploaded = store.addImage(
+        new Uint8Array([1]),
+        'image/png',
+        10,
+        10,
+        undefined,
+        'file-1',
+      );
       const plain = store.addImage(new Uint8Array([2]), 'image/png', 20, 20);
       const r = extractMediaAttachments(`${uploaded.placeholder} and ${plain.placeholder}`, store);
       expect(r.imageAttachmentIds).toEqual([1, 2]);
@@ -445,12 +460,7 @@ describe('resolveOriginalCaptions', () => {
       // The on-disk copy is the original from here on; the caption still
       // renders the original size from the retained metadata.
       expect(att.original?.bytes).toBeUndefined();
-      const again = resolveOriginalCaptions(
-        r.parts,
-        r.imageAttachmentIds,
-        store,
-        dir,
-      );
+      const again = resolveOriginalCaptions(r.parts, r.imageAttachmentIds, store, dir);
       const caption = again[0];
       if (caption?.type !== 'text') throw new Error('expected caption text part');
       expect(caption.text).toContain('2600x2600');
@@ -465,7 +475,13 @@ describe('resolveOriginalCaptions', () => {
     const dir = makeTempDir();
     try {
       const { store, att } = storeWithOriginal(
-        { bytes: new Uint8Array([9, 9]), width: 2600, height: 2600, byteLength: 2, mime: 'image/png' },
+        {
+          bytes: new Uint8Array([9, 9]),
+          width: 2600,
+          height: 2600,
+          byteLength: 2,
+          mime: 'image/png',
+        },
         'file-2',
       );
       const r = extractMediaAttachments(att.placeholder, store);
@@ -728,8 +744,7 @@ describe('rewriteMediaPlaceholders', () => {
       // Skill args pass through XML escaping, so the reference must not
       // contain any tag/attribute boundary characters.
       expect(r.text).not.toMatch(/[<>&"]/);
-      const m =
-        /^look at Attached image file: (\S+) \(open it with ReadMediaFile\)$/.exec(r.text);
+      const m = /^look at Attached image file: (\S+) \(open it with ReadMediaFile\)$/.exec(r.text);
       if (!m) throw new Error(`no plain reference found in: ${r.text}`);
       expect(m[1]!.startsWith(getCacheDir())).toBe(true);
       expect(new Uint8Array(readFileSync(m[1]!))).toEqual(bytes);
@@ -759,7 +774,7 @@ describe('rewriteMediaPlaceholders', () => {
     }
   });
 
-  it("sanitizes XML boundary chars out of plain-style video cache names", () => {
+  it('sanitizes XML boundary chars out of plain-style video cache names', () => {
     const { cleanup } = setupTempCache();
     const srcDir = makeTempDir();
     try {

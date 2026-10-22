@@ -1,15 +1,6 @@
 import { log, type Logger } from '@hilbras/omnicode-api';
 import { track as trackTelemetry, type TelemetryProperties } from '@hilbras/omnicode-telemetry';
 
-import { INTERACTIVE_UPDATE_CHECK_TIMEOUT_MS } from '#/constant/app';
-
-import {
-  isSelfUpdateDisabled,
-  refreshUpdateCache,
-  selfUpdateDisabledMessage,
-} from '#/cli/update/refresh';
-import { selectUpdateTarget } from '#/cli/update/select';
-import { detectInstallSource } from '#/cli/update/source';
 import {
   canAutoInstall,
   installCommandFor,
@@ -23,10 +14,14 @@ import {
   type InstallPromptOptions,
 } from '#/cli/update/prompt';
 import {
-  NPM_PACKAGE_NAME,
-  type InstallSource,
-  type UpdateCache,
-} from '#/cli/update/types';
+  isSelfUpdateDisabled,
+  refreshUpdateCache,
+  selfUpdateDisabledMessage,
+} from '#/cli/update/refresh';
+import { selectUpdateTarget } from '#/cli/update/select';
+import { detectInstallSource } from '#/cli/update/source';
+import { NPM_PACKAGE_NAME, type InstallSource, type UpdateCache } from '#/cli/update/types';
+import { INTERACTIVE_UPDATE_CHECK_TIMEOUT_MS } from '#/constant/app';
 
 interface WritableLike {
   write(chunk: string): boolean;
@@ -95,7 +90,9 @@ export async function handleUpgrade(
     logUpgradeInfo(deps.logger, 'manual upgrade no update', {
       currentVersion,
     });
-    deps.stdout.write(`Omnicode is already up to date (${formatDisplayVersion(currentVersion)}).\n`);
+    deps.stdout.write(
+      `Omnicode is already up to date (${formatDisplayVersion(currentVersion)}).\n`,
+    );
     return 0;
   }
 
@@ -227,7 +224,11 @@ function trackUpgradeEvent(
   }
 }
 
-function logUpgradeInfo(logger: UpgradeLogger, message: string, payload: Record<string, unknown>): void {
+function logUpgradeInfo(
+  logger: UpgradeLogger,
+  message: string,
+  payload: Record<string, unknown>,
+): void {
   try {
     logger.info(message, payload);
   } catch {
@@ -235,7 +236,11 @@ function logUpgradeInfo(logger: UpgradeLogger, message: string, payload: Record<
   }
 }
 
-function logUpgradeWarn(logger: UpgradeLogger, message: string, payload: Record<string, unknown>): void {
+function logUpgradeWarn(
+  logger: UpgradeLogger,
+  message: string,
+  payload: Record<string, unknown>,
+): void {
   try {
     logger.warn(message, payload);
   } catch {

@@ -131,13 +131,7 @@
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { encodeWorkDirKey } from '@hilbras/omnicode-core/_base/utils/workdir-slug';
-import { McpConnectionManager } from '@hilbras/omnicode-core/mcpCore/connection-manager';
-import { ITowerRateLimitService } from '@hilbras/omnicode-core/features/tower/towerRateLimit';
-import { readTowerStatusSummary } from '@hilbras/omnicode-core/features/tower/tools/status/statusReader';
-import { loadMcpServers } from '@hilbras/omnicode-core/app/mcpConfig/configLoader';
-import { fsSuggestRequestSchema } from '@hilbras/omnicode-core/workspace/workspaceFs/fs';
-import { IAppendLogStore } from '@hilbras/omnicode-core/persistence/interface/appendLogStore';
+import { assertOmnicodeHostIdentity, createOmnicodeDefaultHeaders } from '@hilbras/omnicode-auth';
 import {
   bootstrap,
   DEFAULT_AGENT_PROFILE_NAME,
@@ -194,6 +188,7 @@ import {
   IWorkspaceAliases,
   ISessionActivityView,
   IWorkspaceInstanceManager,
+  IAgentProfileRegistry,
   closeSessionById,
   followSessionLifecycles,
   getLiveSessionById,
@@ -226,21 +221,24 @@ import {
   type ServicesAccessor,
   type SessionSummary as V2SessionSummary,
 } from '@hilbras/omnicode-core';
+import { encodeWorkDirKey } from '@hilbras/omnicode-core/_base/utils/workdir-slug';
+import { loadMcpServers } from '@hilbras/omnicode-core/app/mcpConfig/configLoader';
+import { readTowerStatusSummary } from '@hilbras/omnicode-core/features/tower/tools/status/statusReader';
+import { ITowerRateLimitService } from '@hilbras/omnicode-core/features/tower/towerRateLimit';
+import { McpConnectionManager } from '@hilbras/omnicode-core/mcpCore/connection-manager';
+import { IAppendLogStore } from '@hilbras/omnicode-core/persistence/interface/appendLogStore';
 import { ISessionInitService } from '@hilbras/omnicode-core/session/sessionInit/sessionInitContract';
-import type { AgentHandle, Klient } from './core/klient';
-import type {
-  ImportCustomRegistryOptions,
-  ImportCustomRegistryResult,
-} from './core/facade/global';
-import { RPCError } from './core/errors';
+import { fsSuggestRequestSchema } from '@hilbras/omnicode-core/workspace/workspaceFs/fs';
 import { RegistryImportError } from '@hilbras/omnicode-sdk/rpc-exports';
-import { createKlient } from './transports/memory';
-import { assertOmnicodeHostIdentity, createOmnicodeDefaultHeaders } from '@hilbras/omnicode-auth';
-
 import { OmnicodeAuthFacade } from '@hilbras/omnicode-sdk/rpc-exports';
 import { ensureConfigFile, HookDefSchema } from '@hilbras/omnicode-sdk/rpc-exports';
 import type { AgentContextData } from '@hilbras/omnicode-sdk/rpc-exports';
-import { ErrorCodes, isOmnicodeErrorCode, OmnicodeError, type OmnicodeErrorCode } from '@hilbras/omnicode-sdk/rpc-exports';
+import {
+  ErrorCodes,
+  isOmnicodeErrorCode,
+  OmnicodeError,
+  type OmnicodeErrorCode,
+} from '@hilbras/omnicode-sdk/rpc-exports';
 import type { ExperimentalFeatureState } from '@hilbras/omnicode-sdk/rpc-exports';
 import { OmnicodeHarness } from '@hilbras/omnicode-sdk/rpc-exports';
 import type { BeginGlobalMcpServerAuthResult } from '@hilbras/omnicode-sdk/rpc-exports';
@@ -270,12 +268,21 @@ import type {
   AddAdditionalDirInput,
   AddAdditionalDirResult,
   AgentCommandInfo,
+  AgentProfileSummary,
   AgentRuntimeBinding,
   AppMcpServerInspection,
   BackgroundTaskInfo,
   CapabilityStatus,
   CompactOptions,
   ConfigDiagnostics,
+  ConnectorEntry,
+  GitHubConnectResult,
+  GitHubConnectionStatus,
+  GitHubDeviceFlowStart,
+  GitHubDisconnectResult,
+  VercelConnectResult,
+  VercelConnectionStatus,
+  VercelDisconnectResult,
   CreateGoalInput,
   CreateSessionOptions,
   ExportSessionInput,
@@ -345,6 +352,11 @@ import {
   v2SummaryToSessionSummary,
 } from '@hilbras/omnicode-sdk/rpc-exports';
 import { SessionEventWiring } from '@hilbras/omnicode-sdk/rpc-exports';
+
+import { RPCError } from './core/errors';
+import type { ImportCustomRegistryOptions, ImportCustomRegistryResult } from './core/facade/global';
+import type { AgentHandle, Klient } from './core/klient';
+import { createKlient } from './transports/memory';
 
 export interface SDKRpcClientV2Options {
   readonly homeDir?: string;
@@ -649,12 +661,96 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
   }
 
   /**
+   * Through the workspace handler's agent-profile registry — the same merged
+   * view (builtin / user / explicit / extra / plugin / workspace-root) the
+   * session's profile catalog folds, so the session-less list matches what a
+   * session would serve. Workspace-scoped contributions are filtered by the
+   * handler's workspace id, so a profile configured in another repository
+   * never leaks into this list.
+   */
+  override async listWorkspaceAgentProfiles(
+    workDir: string,
+  ): Promise<readonly AgentProfileSummary[]> {
+    const handler = await this.engineAccessor
+      .get(IWorkspaceInstanceManager)
+      .getOrCreate({ root: normalizeRequiredWorkDir('listWorkspaceAgentProfiles', workDir) });
+    const loaders = [
+      handler.program.agentProfiles,
+      handler.program.userAgentProfiles,
+      handler.program.pluginAgentProfiles,
+      handler.program.explicitAgentProfiles,
+      handler.program.extraAgentProfiles,
+    ];
+    await Promise.all(loaders.map((loader) => loader.ready));
+    const profiles = new Map<string, AgentProfileSummary>();
+    for (const entry of this.engineAccessor.get(IAgentProfileRegistry).entries()) {
+      if (entry.workspaceKey !== undefined && entry.workspaceKey !== handler.id) continue;
+      for (const profile of entry.contribution.profiles) {
+        if (!profiles.has(profile.name)) {
+          profiles.set(profile.name, {
+            name: profile.name,
+            description: profile.description,
+            whenToUse: profile.whenToUse,
+          });
+        }
+      }
+    }
+    return [...profiles.values()].toSorted((a, b) => a.name.localeCompare(b.name));
+  }
+
+  /**
+   * The integration catalog for `workDir` — the MCP servers the workspace can
+   * reach plus the installed plugins, composed by the engine's app-scope
+   * `IConnectorCatalogService` from the real management planes. The catalog
+   * carries no credential material: only kind, status, scope, implemented
+   * capabilities and the actions a caller may take.
+   */
+  override async listWorkspaceConnectors(workDir: string): Promise<readonly ConnectorEntry[]> {
+    const handler = await this.engineAccessor
+      .get(IWorkspaceInstanceManager)
+      .getOrCreate({ root: normalizeRequiredWorkDir('listWorkspaceConnectors', workDir) });
+    const workspaceTrusted = await handler.program.trust.get();
+    return this.klient.global.connectors.list({ cwd: handler.root, workspaceTrusted });
+  }
+
+  override async getGitHubStatus(): Promise<GitHubConnectionStatus> {
+    return this.klient.global.github.status();
+  }
+
+  override async startGitHubDeviceFlow(): Promise<GitHubDeviceFlowStart> {
+    return this.klient.global.github.startDeviceFlow();
+  }
+
+  override async pollGitHubDeviceFlow(flowId: string): Promise<GitHubConnectResult> {
+    return this.klient.global.github.pollDeviceFlow(flowId);
+  }
+
+  override async disconnectGitHub(): Promise<GitHubDisconnectResult> {
+    return this.klient.global.github.disconnect();
+  }
+
+  override async getVercelStatus(): Promise<VercelConnectionStatus> {
+    return this.klient.global.vercel.status();
+  }
+
+  override async connectVercel(token?: string): Promise<VercelConnectResult> {
+    return this.klient.global.vercel.connect(token);
+  }
+
+  override async disconnectVercel(): Promise<VercelDisconnectResult> {
+    return this.klient.global.vercel.disconnect();
+  }
+
+  /**
    * Through the workspace handler's `IWorkspaceFsService` — the same engine
    * suggest the kap-server `fs:suggest` routes serve (fuzzy scoring,
    * directories included, gitignore respected), so in-process hosts match
    * the web client's @ mention results.
    */
-  override async suggestFiles(workDir: string, input: SuggestFilesInput): Promise<SuggestFilesResult | undefined> {
+  override async suggestFiles(
+    workDir: string,
+    input: SuggestFilesInput,
+  ): Promise<SuggestFilesResult | undefined> {
     const parsed = fsSuggestRequestSchema.safeParse({
       query: input.query,
       limit: input.limit ?? 50,
@@ -663,7 +759,8 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
     });
     if (!parsed.success) {
       const issue = parsed.error.issues[0];
-      const where = issue !== undefined && issue.path.length > 0 ? `${String(issue.path[0])}: ` : '';
+      const where =
+        issue !== undefined && issue.path.length > 0 ? `${String(issue.path[0])}: ` : '';
       throw new OmnicodeError(
         ErrorCodes.REQUEST_INVALID,
         `suggestFiles ${where}${issue?.message ?? 'invalid input'}`,
@@ -973,7 +1070,10 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
    * sorted order so concurrent multi-key operations (fork A→B vs fork B→A)
    * cannot deadlock.
    */
-  private runSessionAccessAll<T>(sessionIds: readonly string[], work: () => Promise<T>): Promise<T> {
+  private runSessionAccessAll<T>(
+    sessionIds: readonly string[],
+    work: () => Promise<T>,
+  ): Promise<T> {
     const keys = [...new Set(sessionIds)].toSorted();
     let chained: () => Promise<T> = work;
     for (const key of [...keys].toReversed()) {
@@ -991,10 +1091,7 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
    * {@link runSessionAccess} — the queue is what makes the resume/close pair
    * atomic against the public lifecycle operations.
    */
-  private async withTemporarySession<T>(
-    sessionId: string,
-    action: () => Promise<T>,
-  ): Promise<T> {
+  private async withTemporarySession<T>(sessionId: string, action: () => Promise<T>): Promise<T> {
     if (this.liveSession(sessionId) !== undefined) return action();
     const handle = await resumeSessionById(this.engineAccessor, sessionId);
     if (handle === undefined) throw SDKRpcClientV2.sessionNotFound(sessionId);
@@ -1025,10 +1122,7 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
    * untrusted: a user-level write must not create a shadow that springs into
    * conflict when the workspace is trusted later.
    */
-  private async rejectProjectLayerPersistedMcpAdd(
-    cwd: string,
-    name: string,
-  ): Promise<void> {
+  private async rejectProjectLayerPersistedMcpAdd(cwd: string, name: string): Promise<void> {
     const fs = this.engineAccessor.get(IHostFileSystem);
     const [withProject, userOnly] = await Promise.all([
       loadMcpServers({ fs, cwd, homeDir: this.homeDir, includeProject: true }),
@@ -1192,12 +1286,15 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
     ]);
     const profile = agent.accessor.get(IAgentProfileService).data();
     const toolPolicy = agent.accessor.get(IAgentToolPolicyService);
-    const tools = agent.accessor.get(IAgentToolRegistryService).list().map((tool) => ({
-      name: tool.name,
-      description: tool.description,
-      active: toolPolicy.isToolActive(tool.name, tool.source),
-      source: tool.source,
-    }));
+    const tools = agent.accessor
+      .get(IAgentToolRegistryService)
+      .list()
+      .map((tool) => ({
+        name: tool.name,
+        description: tool.description,
+        active: toolPolicy.isToolActive(tool.name, tool.source),
+        source: tool.source,
+      }));
     return {
       type,
       config: {
@@ -1357,8 +1454,7 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
     const workDir = normalizeRequiredWorkDir('createSession', input.workDir);
     if (input.id !== undefined) {
       const existing =
-        this.liveSession(input.id) ??
-        (await this.engineAccessor.get(ISessionIndex).get(input.id));
+        this.liveSession(input.id) ?? (await this.engineAccessor.get(ISessionIndex).get(input.id));
       if (existing !== undefined) {
         throw new OmnicodeError(
           ErrorCodes.SESSION_ALREADY_EXISTS,
@@ -1633,15 +1729,11 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
         const sessions = this.engineAccessor
           .get(ISessionManager)
           .list()
-          .filter(
-            (session) => session.accessor.get(ISessionContext).workspaceId === handler.id,
-          );
+          .filter((session) => session.accessor.get(ISessionContext).workspaceId === handler.id);
         await Promise.all(
           sessions.map(async (session) => {
             if (session.id === excludedSessionId) return;
-            const main = session.accessor
-              .get(IAgentLifecycleService)
-              .handleOf(MAIN_AGENT_ID);
+            const main = session.accessor.get(IAgentLifecycleService).handleOf(MAIN_AGENT_ID);
             if (main === undefined) return;
             await main.accessor.get(IAgentPluginService).refreshSessionStart();
           }),
@@ -2146,9 +2238,7 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
    */
   override async activateSkill(input: ActivateSkillRpcInput): Promise<void> {
     const agent = await this.agentScope(input.sessionId);
-    await agent.accessor
-      .get(IAgentSkillService)
-      .activate({ name: input.name, args: input.args });
+    await agent.accessor.get(IAgentSkillService).activate({ name: input.name, args: input.args });
   }
 
   /**
@@ -2678,9 +2768,7 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
     },
     signal?: AbortSignal,
   ): Promise<void> {
-    return this.mcpManagement((management) =>
-      management.completeServerAuth(input, { signal }),
-    );
+    return this.mcpManagement((management) => management.completeServerAuth(input, { signal }));
   }
 
   override async cancelGlobalMcpServerAuth(flowId: string): Promise<void> {
@@ -2714,9 +2802,7 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
     name: string,
     options: { readonly cwd?: string } = {},
   ): Promise<McpTestResult> {
-    return this.mcpManagement((management) =>
-      management.testServer({ name, cwd: options.cwd }),
-    );
+    return this.mcpManagement((management) => management.testServer({ name, cwd: options.cwd }));
   }
 
   /**
@@ -2727,9 +2813,7 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
     server: McpServerConfig,
     options: { readonly cwd?: string } = {},
   ): Promise<McpTestResult> {
-    return this.mcpManagement((management) =>
-      management.testServer({ server, cwd: options.cwd }),
-    );
+    return this.mcpManagement((management) => management.testServer({ server, cwd: options.cwd }));
   }
 
   /**
@@ -2885,7 +2969,9 @@ function normalizeRequiredWorkDir(operation: string, workDir: string): string {
  */
 function restateEngineError(error: unknown): unknown {
   if (!isError2(error)) return error;
-  const code: OmnicodeErrorCode = isOmnicodeErrorCode(error.code) ? error.code : ErrorCodes.INTERNAL;
+  const code: OmnicodeErrorCode = isOmnicodeErrorCode(error.code)
+    ? error.code
+    : ErrorCodes.INTERNAL;
   return new OmnicodeError(code, error.message, {
     details: error.details as Record<string, unknown> | undefined,
     cause: error.cause,
@@ -2915,4 +3001,3 @@ const EMPTY_INSTRUCTION_SOURCES: WorkspaceTrustInstructionSources = {
   agentProfiles: [],
   paths: [],
 };
-

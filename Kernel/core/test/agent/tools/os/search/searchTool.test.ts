@@ -1,3 +1,5 @@
+import { SESSION_SEARCH_FLAG_ID } from '@hilbras/omnicode-tools/os/search/flag';
+import { SearchSessionsTool } from '@hilbras/omnicode-tools/os/search/searchTool';
 import { describe, expect, it, vi } from 'vitest';
 
 import { IFlagService } from '#/app/flag/flag';
@@ -6,8 +8,6 @@ import {
   type SessionSearchPage,
   type SessionSearchQuery,
 } from '#/features/sessionSearch/sessionSearch';
-import { SearchSessionsTool } from '@hilbras/omnicode-tools/os/search/searchTool';
-import { SESSION_SEARCH_FLAG_ID } from '@hilbras/omnicode-tools/os/search/flag';
 import type { ExecutableToolContext } from '#/tool/toolContract';
 
 const CTX = { signal: new AbortController().signal } as ExecutableToolContext;
@@ -41,7 +41,11 @@ function unavailablePage(): SessionSearchPage {
 }
 
 function makeTool(options: { enabled?: boolean; search?: ISessionSearchService } = {}) {
-  const flags = { enabled: vi.fn((id: string) => (id === SESSION_SEARCH_FLAG_ID ? (options.enabled ?? true) : false)) };
+  const flags = {
+    enabled: vi.fn((id: string) =>
+      id === SESSION_SEARCH_FLAG_ID ? (options.enabled ?? true) : false,
+    ),
+  };
   const search = options.search ?? { search: vi.fn(async () => unavailablePage()) };
   const tool = new SearchSessionsTool(
     flags as unknown as IFlagService,

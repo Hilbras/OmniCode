@@ -1,4 +1,3 @@
-import type { Component, Focusable } from '@hilbras/omnicode-tui';
 import type {
   AgentStatusUpdatedEvent,
   AssistantDeltaEvent,
@@ -32,7 +31,14 @@ import type {
   TokenUsage,
   WarningEvent,
 } from '@hilbras/omnicode-api';
+import type { Component, Focusable } from '@hilbras/omnicode-tui';
 
+import { currentTheme } from '#/tui/theme';
+import type { ColorToken } from '#/tui/theme';
+import { openUrl } from '#/utils/open-url';
+import { formatStepDebugTiming } from '#/utils/usage/debug-timing';
+
+import { createGoal as startGoalCommand } from '../commands/goal';
 import { MoonLoader } from '../components/chrome/moon-loader';
 import { buildGoalMarker } from '../components/messages/goal-markers';
 import { StatusMessageComponent } from '../components/messages/status-message';
@@ -40,47 +46,18 @@ import {
   SwarmModeMarkerComponent,
   type SwarmModeMarkerState,
 } from '../components/messages/swarm-markers';
+import { errorReportHintLine } from '../constant/feedback';
 import {
   OAUTH_LOGIN_REQUIRED_CODE,
   OAUTH_LOGIN_REQUIRED_STARTUP_NOTICE,
 } from '../constant/omnicode-tui';
-import { buildGoalCompletionMessage } from '../utils/goal-completion';
-import {
-  argsRecord,
-  formatErrorPayload,
-  formatErrorMessage,
-  isTodoItemShape,
-  serializeToolResultOutput,
-  stringValue,
-} from '../utils/event-payload';
 import {
   readGoalQueue,
   removeGoalQueueItem,
   restoreGoalQueueItem,
   type UpcomingGoal,
 } from '../goal-queue-store';
-import { formatBackgroundTaskTranscript } from '../utils/background-task-status';
-import { formatHookResultMarkdown } from '../utils/hook-result-format';
-import { McpOAuthAuthorizationUrlOpener } from '../utils/mcp-oauth';
-import {
-  formatMcpStartupStatusSummary,
-  mcpServerStatusKey,
-  type McpServerStatusSnapshot,
-  selectMcpStartupStatusRows,
-} from '../utils/mcp-server-status';
-import { openUrl } from '#/utils/open-url';
-import { currentTheme } from '#/tui/theme';
-import type { ColorToken } from '#/tui/theme';
-import { errorReportHintLine } from '../constant/feedback';
-import { formatStepDebugTiming } from '#/utils/usage/debug-timing';
-import { nextTranscriptId } from '../utils/transcript-id';
-import type { BtwPanelController } from './btw-panel';
-import { isPluginMcpToolName, PluginUpdateNotifier } from './plugin-update-notifier';
-import type { StreamingUIController } from './streaming-ui';
-import type { SurveyController } from './survey-controller';
-import type { TasksBrowserController } from './tasks-browser';
-import { SubAgentEventHandler } from './subagent-event-handler';
-import { NotifyController } from './notify';
+import type { TUIState } from '../tui-state';
 import {
   sumTokenUsage,
   type AppState,
@@ -90,8 +67,32 @@ import {
   type ToolResultBlockData,
   type TranscriptEntry,
 } from '../types';
-import type { TUIState } from '../tui-state';
-import { createGoal as startGoalCommand } from '../commands/goal';
+import { formatBackgroundTaskTranscript } from '../utils/background-task-status';
+import {
+  argsRecord,
+  formatErrorPayload,
+  formatErrorMessage,
+  isTodoItemShape,
+  serializeToolResultOutput,
+  stringValue,
+} from '../utils/event-payload';
+import { buildGoalCompletionMessage } from '../utils/goal-completion';
+import { formatHookResultMarkdown } from '../utils/hook-result-format';
+import { McpOAuthAuthorizationUrlOpener } from '../utils/mcp-oauth';
+import {
+  formatMcpStartupStatusSummary,
+  mcpServerStatusKey,
+  type McpServerStatusSnapshot,
+  selectMcpStartupStatusRows,
+} from '../utils/mcp-server-status';
+import { nextTranscriptId } from '../utils/transcript-id';
+import type { BtwPanelController } from './btw-panel';
+import { NotifyController } from './notify';
+import { isPluginMcpToolName, PluginUpdateNotifier } from './plugin-update-notifier';
+import type { StreamingUIController } from './streaming-ui';
+import { SubAgentEventHandler } from './subagent-event-handler';
+import type { SurveyController } from './survey-controller';
+import type { TasksBrowserController } from './tasks-browser';
 
 export interface SessionEventHost {
   state: TUIState;
@@ -276,48 +277,108 @@ export class SessionEventHandler {
     }
 
     switch (event.type) {
-      case 'turn.started': this.handleTurnBegin(event); break;
-      case 'turn.ended': this.handleTurnEnd(event, sendQueued); break;
-      case 'turn.step.started': this.handleStepBegin(event); break;
-      case 'turn.step.interrupted': this.handleStepInterrupted(event); break;
-      case 'turn.step.completed': this.handleStepCompleted(event); break;
-      case 'turn.step.retrying': this.handleStepRetrying(event); break;
-      case 'tool.progress': this.handleToolProgress(event); break;
-      case 'shell.output': this.host.handleShellOutput(event); break;
-      case 'shell.started': this.host.handleShellStarted(event); break;
-      case 'assistant.delta': this.handleAssistantDelta(event); break;
-      case 'hook.result': this.handleHookResult(event); break;
-      case 'thinking.delta': this.handleThinkingDelta(event); break;
-      case 'tool.call.started': this.handleToolCall(event); break;
-      case 'tool.call.delta': this.handleToolCallDelta(event); break;
-      case 'tool.result': this.handleToolResult(event); break;
-      case 'agent.status.updated': this.handleStatusUpdate(event); break;
-      case 'session.meta.updated': this.handleSessionMetaChanged(event); break;
-      case 'goal.updated': this.handleGoalUpdated(event); break;
-      case 'skill.activated': this.handleSkillActivated(event); break;
-      case 'plugin_command.activated': this.handlePluginCommandActivated(event); break;
-      case 'error': this.handleSessionError(event); break;
-      case 'warning': this.handleSessionWarning(event); break;
-      case 'compaction.started': this.handleCompactionBegin(event); break;
-      case 'compaction.completed': this.handleCompactionEnd(event, sendQueued); break;
-      case 'compaction.blocked': break;
-      case 'compaction.cancelled': this.handleCompactionCancel(event, sendQueued); break;
+      case 'turn.started':
+        this.handleTurnBegin(event);
+        break;
+      case 'turn.ended':
+        this.handleTurnEnd(event, sendQueued);
+        break;
+      case 'turn.step.started':
+        this.handleStepBegin(event);
+        break;
+      case 'turn.step.interrupted':
+        this.handleStepInterrupted(event);
+        break;
+      case 'turn.step.completed':
+        this.handleStepCompleted(event);
+        break;
+      case 'turn.step.retrying':
+        this.handleStepRetrying(event);
+        break;
+      case 'tool.progress':
+        this.handleToolProgress(event);
+        break;
+      case 'shell.output':
+        this.host.handleShellOutput(event);
+        break;
+      case 'shell.started':
+        this.host.handleShellStarted(event);
+        break;
+      case 'assistant.delta':
+        this.handleAssistantDelta(event);
+        break;
+      case 'hook.result':
+        this.handleHookResult(event);
+        break;
+      case 'thinking.delta':
+        this.handleThinkingDelta(event);
+        break;
+      case 'tool.call.started':
+        this.handleToolCall(event);
+        break;
+      case 'tool.call.delta':
+        this.handleToolCallDelta(event);
+        break;
+      case 'tool.result':
+        this.handleToolResult(event);
+        break;
+      case 'agent.status.updated':
+        this.handleStatusUpdate(event);
+        break;
+      case 'session.meta.updated':
+        this.handleSessionMetaChanged(event);
+        break;
+      case 'goal.updated':
+        this.handleGoalUpdated(event);
+        break;
+      case 'skill.activated':
+        this.handleSkillActivated(event);
+        break;
+      case 'plugin_command.activated':
+        this.handlePluginCommandActivated(event);
+        break;
+      case 'error':
+        this.handleSessionError(event);
+        break;
+      case 'warning':
+        this.handleSessionWarning(event);
+        break;
+      case 'compaction.started':
+        this.handleCompactionBegin(event);
+        break;
+      case 'compaction.completed':
+        this.handleCompactionEnd(event, sendQueued);
+        break;
+      case 'compaction.blocked':
+        break;
+      case 'compaction.cancelled':
+        this.handleCompactionCancel(event, sendQueued);
+        break;
       case 'subagent.spawned':
         this.host.surveyController.notifySubagentSpawned(event);
-        this.subAgentEventHandler.handleLifecycleEvent(event); break;
+        this.subAgentEventHandler.handleLifecycleEvent(event);
+        break;
       case 'subagent.started':
       case 'subagent.suspended':
       case 'subagent.completed':
       case 'subagent.failed':
       case 'subagent.cancelled':
-        this.subAgentEventHandler.handleLifecycleEvent(event); break;
+        this.subAgentEventHandler.handleLifecycleEvent(event);
+        break;
       case 'background.task.started':
       case 'background.task.terminated':
-        this.handleBackgroundTaskEvent(event); break;
-      case 'cron.fired': this.handleCronFired(event); break;
-      case 'mcp.server.status': this.renderMcpServerStatus(event.server); break;
-      case 'tool.list.updated': break;
-      default: break;
+        this.handleBackgroundTaskEvent(event);
+        break;
+      case 'cron.fired':
+        this.handleCronFired(event);
+        break;
+      case 'mcp.server.status':
+        this.renderMcpServerStatus(event.server);
+        break;
+      case 'tool.list.updated':
+        break;
+      default:
+        break;
     }
   }
 
@@ -652,7 +713,8 @@ export class SessionEventHandler {
     const preview = streamingUI.getStreamingToolCallPreview(event.toolCallId);
     if (
       preview !== undefined &&
-      (preview.name === 'AgentSwarm' || this.subAgentEventHandler.hasAgentSwarmProgress(event.toolCallId))
+      (preview.name === 'AgentSwarm' ||
+        this.subAgentEventHandler.hasAgentSwarmProgress(event.toolCallId))
     ) {
       this.subAgentEventHandler.handleAgentSwarmToolCallDelta(event.toolCallId, preview.args, {
         streamingArguments: preview.argumentsText,
@@ -776,9 +838,7 @@ export class SessionEventHandler {
   }
 
   private renderSwarmModeMarker(state: SwarmModeMarkerState): void {
-    this.host.state.transcriptContainer.addChild(
-      new SwarmModeMarkerComponent(state),
-    );
+    this.host.state.transcriptContainer.addChild(new SwarmModeMarkerComponent(state));
     this.host.state.ui.requestRender();
   }
 
@@ -819,9 +879,7 @@ export class SessionEventHandler {
     if (change.kind === 'lifecycle' && change.status === 'blocked') {
       void this.notifyQueuedGoalWaitingOnBlocked();
       if (change.actor === 'model' || change.reason === undefined) {
-        this.pendingModelBlockedFallback = this.currentTurnHasAssistantText
-          ? undefined
-          : change;
+        this.pendingModelBlockedFallback = this.currentTurnHasAssistantText ? undefined : change;
         return;
       }
       this.pendingModelBlockedFallback = undefined;

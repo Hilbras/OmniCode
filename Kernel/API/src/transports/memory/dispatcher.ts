@@ -14,15 +14,26 @@
  * memory behave identically by construction.
  */
 
+import { Readable } from 'node:stream';
+
 import type { ServiceIdentifier } from '@hilbras/omnicode-core/_base/di/instantiation';
 import type { IAgentScopeHandle } from '@hilbras/omnicode-core/_base/di/scope';
-import { IWorkspaceInstanceManager } from '@hilbras/omnicode-core/workspace/workspaceInstance/workspaceInstanceManager';
-import { ISessionManager } from '@hilbras/omnicode-core/app/sessionManager/sessionManager';
-import { getLiveSessionById } from '@hilbras/omnicode-core/app/sessionManager/sessionLookup';
-import { IAgentLifecycleService } from '@hilbras/omnicode-core/session/agentLifecycle/agentLifecycle';
-import { MAIN_AGENT_ID } from '@hilbras/omnicode-core/session/agentLifecycle/agentLifecycle';
-import { ensureMainAgent } from '@hilbras/omnicode-core/session/agentLifecycle/mainAgent';
+import type { SkillActivationOrigin } from '@hilbras/omnicode-core/agent/contextMemory/types';
+import { IAgentLoopService } from '@hilbras/omnicode-core/agent/loop/loop';
 import { agentContextOf } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
+import { IEventBus } from '@hilbras/omnicode-core/app/event/eventBus';
+import type { FileMeta, GetResult, SaveOptions } from '@hilbras/omnicode-core/app/file/fileService';
+import { FileErrors } from '@hilbras/omnicode-core/app/file/fileService';
+import { getLiveSessionById } from '@hilbras/omnicode-core/app/sessionManager/sessionLookup';
+import { ISessionManager } from '@hilbras/omnicode-core/app/sessionManager/sessionManager';
+import { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
+import { Error2, ErrorCodes } from '@hilbras/omnicode-core/errors';
+import type {
+  PromptWithSkillsInput,
+  SkillActivationInput,
+} from '@hilbras/omnicode-core/features/skill/skill';
+import { IAgentSkillService } from '@hilbras/omnicode-core/features/skill/skillService';
+import { interactions } from '@hilbras/omnicode-core/human/interaction/facade';
 import {
   INTERACTION_TAG_AGENT_ID,
   INTERACTION_TAG_SESSION_ID,
@@ -30,25 +41,10 @@ import {
   type InteractionKind,
   type InteractionRequest,
 } from '@hilbras/omnicode-core/human/interaction/interaction';
-import { interactions } from '@hilbras/omnicode-core/human/interaction/facade';
-import { IAgentLoopService } from '@hilbras/omnicode-core/agent/loop/loop';
-import type { SkillActivationOrigin } from '@hilbras/omnicode-core/agent/contextMemory/types';
-import { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
-import type {
-  PromptWithSkillsInput,
-  SkillActivationInput,
-} from '@hilbras/omnicode-core/features/skill/skill';
-import { IAgentSkillService } from '@hilbras/omnicode-core/features/skill/skillService';
-import { IEventBus } from '@hilbras/omnicode-core/app/event/eventBus';
-import type {
-  FileMeta,
-  GetResult,
-  SaveOptions,
-} from '@hilbras/omnicode-core/app/file/fileService';
-import { FileErrors } from '@hilbras/omnicode-core/app/file/fileService';
-import { Error2, ErrorCodes } from '@hilbras/omnicode-core/errors';
-
-import { Readable } from 'node:stream';
+import { IAgentLifecycleService } from '@hilbras/omnicode-core/session/agentLifecycle/agentLifecycle';
+import { MAIN_AGENT_ID } from '@hilbras/omnicode-core/session/agentLifecycle/agentLifecycle';
+import { ensureMainAgent } from '@hilbras/omnicode-core/session/agentLifecycle/mainAgent';
+import { IWorkspaceInstanceManager } from '@hilbras/omnicode-core/workspace/workspaceInstance/workspaceInstanceManager';
 
 import type { EventSourceRef, IDisposable, ScopeRef } from '../../core/channel.js';
 import { RPCError } from '../../core/errors.js';
@@ -133,8 +129,7 @@ function interactionServiceView(sessionId: string): Record<string, unknown> {
       }) !== undefined,
     onDidChangePending: (listener: (event: unknown) => void) =>
       interactions.onDidChangePending(listener),
-    onDidResolve: (listener: (event: unknown) => void) =>
-      interactions.onDidResolve(listener),
+    onDidResolve: (listener: (event: unknown) => void) => interactions.onDidResolve(listener),
   };
 }
 
@@ -296,7 +291,9 @@ export function createMemoryDispatcher(root: ScopeLike): MemoryDispatcher {
       return { kind: 'workspace', like: root };
     }
     if (scope.sessionId === undefined) return { kind: 'core', like: root };
-    const session = root.accessor.get(ISessionManager).get(scope.sessionId) ?? getLiveSessionById(root.accessor, scope.sessionId);
+    const session =
+      root.accessor.get(ISessionManager).get(scope.sessionId) ??
+      getLiveSessionById(root.accessor, scope.sessionId);
     if (session === undefined) {
       throw new RPCError(NOT_FOUND, `session not found: ${scope.sessionId}`);
     }
@@ -338,19 +335,28 @@ export function createMemoryDispatcher(root: ScopeLike): MemoryDispatcher {
     ) {
       const view = sessionInteractionView(resolved, service);
       if (view === undefined) {
-        throw new RPCError(REQUEST_INVALID, `service not available in ${resolved.kind} scope: ${service}`);
+        throw new RPCError(
+          REQUEST_INVALID,
+          `service not available in ${resolved.kind} scope: ${service}`,
+        );
       }
       return view;
     }
     if (service === 'agentSkillService') {
       if (resolved.kind !== 'agent') {
-        throw new RPCError(REQUEST_INVALID, `service not available in ${resolved.kind} scope: ${service}`);
+        throw new RPCError(
+          REQUEST_INVALID,
+          `service not available in ${resolved.kind} scope: ${service}`,
+        );
       }
       return agentSkillServiceView(resolved.like as IAgentScopeHandle);
     }
     if (service === 'agentLoopService') {
       if (resolved.kind !== 'agent') {
-        throw new RPCError(REQUEST_INVALID, `service not available in ${resolved.kind} scope: ${service}`);
+        throw new RPCError(
+          REQUEST_INVALID,
+          `service not available in ${resolved.kind} scope: ${service}`,
+        );
       }
       return agentLoopServiceView(resolved.like as IAgentScopeHandle);
     }

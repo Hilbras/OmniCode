@@ -1,12 +1,13 @@
 import { mkdirSync, mkdtempSync, realpathSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+
 import { join } from 'pathe';
 import { describe, expect, it } from 'vitest';
 
 import { Error2 } from '#/errors';
 import { mergeStdioEnv, StdioMcpClient, type StdioMcpClientOptions } from '#/mcpCore/client-stdio';
-import type { McpServerStdioConfig } from '#/mcpCore/config-schema';
+import { McpServerConfigSchema, type McpServerStdioConfig } from '#/mcpCore/config-schema';
 import { HostProcessService } from '#/os/backends/node-local/hostProcessService';
 import { FakeRuntime } from '#/runtime/fakeRuntime';
 
@@ -55,26 +56,29 @@ function isPostCloseTransportError(error: unknown): boolean {
 }
 
 describe('StdioMcpClient', () => {
-  it('rejects unsupported executor at construction time', () => {
-    expect(
-      () =>
-        createClient({
-          transport: 'stdio',
-          command: 'true',
-          executor: 'kaos',
-        }),
-    ).toThrow(
-      expect.objectContaining({ name: 'Error2', code: 'not_implemented' }) as unknown as Error,
-    );
+  it('rejects an unsupported executor when the config is validated', () => {
+    const parsed = McpServerConfigSchema.safeParse({
+      transport: 'stdio',
+      command: 'true',
+      executor: 'kaos',
+    });
+    expect(parsed.success).toBe(false);
+  });
 
+  it('rejects an unsupported executor at construction time', () => {
     let thrown: unknown;
     try {
-      const client = createClient({ transport: 'stdio', command: 'true', executor: 'kaos' });
+      const client = createClient({
+        transport: 'stdio',
+        command: 'true',
+        executor: 'kaos',
+      } as unknown as McpServerStdioConfig);
       void client;
     } catch (error) {
       thrown = error;
     }
     expect(thrown).toBeInstanceOf(Error2);
+    expect((thrown as { code?: string }).code).toBe('not_implemented');
   });
 
   it('uses defaultCwd when config.cwd is omitted', async () => {
@@ -180,12 +184,7 @@ describe('StdioMcpClient', () => {
     try {
       await client.connect();
       const tools = await client.listTools();
-      expect(tools.map((t) => t.name).toSorted()).toEqual([
-        'boom',
-        'echo',
-        'read_env',
-        'whoami',
-      ]);
+      expect(tools.map((t) => t.name).toSorted()).toEqual(['boom', 'echo', 'read_env', 'whoami']);
       const echo = tools.find((t) => t.name === 'echo');
       expect(echo?.description).toBe('Echoes input text');
       expect(echo?.inputSchema).toMatchObject({ type: 'object' });
@@ -369,6 +368,27 @@ describe('StdioMcpClient', () => {
     await new Promise((r) => setTimeout(r, 100));
     expect(closes).toEqual([]);
   }, 15000);
+});
+
+describe('mergeStdioEnv with a restricted environment', () => {
+  it('passes the whole parent environment through by default', () => {
+    const merged = mergeStdioEnv(undefined, { PATH: '/usr/bin', SECRET_TOKEN: 'shh' });
+    expect(merged['PATH']).toBe('/usr/bin');
+    expect(merged['SECRET_TOKEN']).toBe('shh');
+  });
+
+  it('keeps only the variables a child needs when inheritance is off', () => {
+    const merged = mergeStdioEnv(
+      { SERVER_TOKEN: 'from-config' },
+      { PATH: '/usr/bin', HOME: '/home/u', SECRET_TOKEN: 'shh', AWS_SECRET_ACCESS_KEY: 'k' },
+      false,
+    );
+    expect(merged['PATH']).toBe('/usr/bin');
+    expect(merged['HOME']).toBe('/home/u');
+    expect(merged['SERVER_TOKEN']).toBe('from-config');
+    expect(merged['SECRET_TOKEN']).toBeUndefined();
+    expect(merged['AWS_SECRET_ACCESS_KEY']).toBeUndefined();
+  });
 });
 
 describe('mergeStdioEnv', () => {

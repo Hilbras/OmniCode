@@ -5,22 +5,22 @@ import { Error2, isError2 } from '#/_base/errors/errors';
 import { DEFAULT_IDENTITY_SLUG, IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
-import {
-  resetModelsDevUpstreamForTest,
-  setModelsDevUpstreamForTest,
-} from '#/app/kosongConfig/modelsDevUpstream';
 import { MODELS_SECTION, PROVIDERS_SECTION } from '#/app/kosongConfig/configSection';
 import { ModelsDevImportErrors } from '#/app/kosongConfig/errors';
 import { IKosongConfigService } from '#/app/kosongConfig/kosongConfig';
 import { IModelsDevImportService } from '#/app/kosongConfig/modelsDevImport';
+import {
+  resetModelsDevUpstreamForTest,
+  setModelsDevUpstreamForTest,
+} from '#/app/kosongConfig/modelsDevUpstream';
 import '#/app/kosongConfig/modelsDevImportService';
 import { IModelCatalog, type ProviderCatalogItem } from '#/llm-adapter/model/catalog';
 import type { ModelsSection } from '#/llm-adapter/model/model';
 import type { ProvidersSection } from '#/llm-adapter/provider/provider';
 
 import { StubConfigService } from '../../stubs';
-import { stubBootstrap } from '../bootstrap/stubs';
 import { stubAgentIdentity } from '../agentIdentity/stubs';
+import { stubBootstrap } from '../bootstrap/stubs';
 
 const HOST_HEADERS = { 'User-Agent': 'omnicode-test/1.0' };
 
@@ -184,7 +184,11 @@ describe('IModelsDevImportService', () => {
     expect(openai?.models).toEqual([
       expect.objectContaining({ id: 'gpt-4.1', max_context_size: 1047576 }),
     ]);
-    expect(byId.get('gateway')).toMatchObject({ needs_base_url: true, wire_type: 'openai', base_url: null });
+    expect(byId.get('gateway')).toMatchObject({
+      needs_base_url: true,
+      wire_type: 'openai',
+      base_url: null,
+    });
     expect(byId.get('bedrock')).toMatchObject({
       rejected: true,
       wire_type: null,

@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { normalizeKey, parseGeometry, parseMonitors, parseWindows } from '#/features/computerUse/ubuntuBackend';
+import {
+  normalizeKey,
+  parseGeometry,
+  parseMonitors,
+  parseWindows,
+} from '#/features/computerUse/ubuntuBackend';
 
 describe('parseGeometry', () => {
   it('reads width and height from an xdotool geometry string', () => {
@@ -47,7 +52,10 @@ describe('parseMonitors', () => {
 
   it('ignores disconnected outputs', () => {
     const monitors = parseMonitors(
-      ['DP-1 disconnected (normal left inverted right x axis y axis)', 'eDP-1 connected 1366x768+0+0 (normal)'].join('\n'),
+      [
+        'DP-1 disconnected (normal left inverted right x axis y axis)',
+        'eDP-1 connected 1366x768+0+0 (normal)',
+      ].join('\n'),
     );
 
     expect(monitors.map((m) => m.name)).toEqual(['eDP-1']);
@@ -94,12 +102,11 @@ describe('parseWindows', () => {
   });
 
   it('skips a block with no window name', () => {
-    const windows = parseWindows([
-      'Window id: 0x1:',
-      '  Client Name: ghost',
-      'Window id: 0x2:',
-      '  Window Name: real',
-    ].join('\n').split('\n'));
+    const windows = parseWindows(
+      ['Window id: 0x1:', '  Client Name: ghost', 'Window id: 0x2:', '  Window Name: real']
+        .join('\n')
+        .split('\n'),
+    );
 
     expect(windows.map((w) => w.id)).toEqual(['0x2']);
   });

@@ -138,7 +138,12 @@ export class IpcChannel implements KlientChannel {
     return promise;
   }
 
-  stream(scope: ScopeRef, service: string, method: string, args: unknown[]): AsyncIterable<unknown> {
+  stream(
+    scope: ScopeRef,
+    service: string,
+    method: string,
+    args: unknown[],
+  ): AsyncIterable<unknown> {
     return {
       [Symbol.asyncIterator]: () => {
         // Simple queue: push/pull with deferred promises. `buffer` holds
@@ -203,7 +208,7 @@ export class IpcChannel implements KlientChannel {
         const ensureStarted = (): void => {
           if (started) return;
           started = true;
-          void this.ready.then(() => {
+          this.whenReady(() => {
             if (this.closed) {
               pending.error(new Error('ipc closed'));
               return;
@@ -280,17 +285,30 @@ export class IpcChannel implements KlientChannel {
       source.kind === 'stream'
         ? { ...base, event: source.name }
         : { ...base, service: source.service, event: source.event };
-    void this.ready.then(() => {
+    this.whenReady(() => {
       this.send(frame);
     });
     return {
       dispose: () => {
         if (!this.listens.delete(id)) return;
-        void this.ready.then(() => {
+        this.whenReady(() => {
           this.send({ type: 'unlisten', id });
         });
       },
     };
+  }
+
+  /**
+   * Runs `fn` once the handshake completed.
+   *
+   * `this.ready` rejects when the connection could not be established. A
+   * `.then()` on it produces a *derived* promise that nobody handles, so the
+   * rejection would escape as an unhandled rejection and take the process
+   * down. The pending calls are failed by the socket's `close` handler, so
+   * the rejection only has to be absorbed here.
+   */
+  private whenReady(fn: () => void): void {
+    void this.ready.then(fn).catch(() => {});
   }
 
   close(): Promise<void> {

@@ -3,13 +3,14 @@ import { ReadBuffer, serializeMessage } from '@modelcontextprotocol/sdk/shared/s
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js';
 
+import { proxyEnvForChild, reconcileChildNoProxy } from '#/_base/utils/proxy';
 import { ErrorCodes, Error2 } from '#/errors';
 import type { IHostProcess } from '#/os/interface/hostProcess';
 import type { IRuntimeResolver } from '#/workspace/workspaceInstance/workspaceInstanceManager';
-import { proxyEnvForChild, reconcileChildNoProxy } from '#/_base/utils/proxy';
 
 import {
   buildRequestOptions,
+  installToolListChangedHandler,
   OMNICODE_MCP_CLIENT_NAME,
   OMNICODE_MCP_CLIENT_VERSION,
   MCP_LIVENESS_PROBE_TIMEOUT_MS,
@@ -47,12 +48,16 @@ export class StdioMcpClient implements MCPClient {
   private unexpectedCloseListener: UnexpectedCloseListener | undefined;
   private lastTransportError: Error | undefined;
   private pendingUnexpectedClose: UnexpectedCloseReason | undefined;
+  private toolsChangedListener: (() => void) | undefined;
 
   static readonly stderrBufferCapacity = STDERR_BUFFER_CAPACITY;
 
   constructor(config: McpServerStdioConfig, options: StdioMcpClientOptions) {
     if (config.executor !== undefined && config.executor !== 'local') {
-      throw new Error2(ErrorCodes.NOT_IMPLEMENTED, `MCP stdio executor '${config.executor}' is not yet implemented`);
+      throw new Error2(
+        ErrorCodes.NOT_IMPLEMENTED,
+        `MCP stdio executor '${config.executor}' is not yet implemented`,
+      );
     }
     this.transport = new RuntimeStdioTransport(config, options, this.stderrBuffer);
     this.client = new Client({
@@ -105,6 +110,10 @@ export class StdioMcpClient implements MCPClient {
     return this.stderrBuffer.snapshot();
   }
 
+  onToolsChanged(listener: () => void): void {
+    this.toolsChangedListener = listener;
+  }
+
   async listTools(): Promise<MCPToolDefinition[]> {
     const result = await this.client.listTools(
       undefined,
@@ -136,6 +145,9 @@ export class StdioMcpClient implements MCPClient {
   private installTransportHooks(): void {
     if (this.hooksInstalled) return;
     this.hooksInstalled = true;
+    installToolListChangedHandler(this.client, () => {
+      this.toolsChangedListener?.();
+    });
     this.client.onclose = () => {
       if (this.closed) return;
       if (!this.ready) return;
@@ -183,13 +195,21 @@ class RuntimeStdioTransport implements Transport {
     );
     this.lease = lease;
     try {
-      const base = lease.runtime.path.resolve(this.options.defaultCwd ?? lease.runtime.environment.homeDir);
-      const cwd = this.config.cwd === undefined ? base : lease.runtime.path.resolve(base, this.config.cwd);
-      const process = lease.track(await lease.runtime.process!.spawn(
-        this.config.command,
-        this.config.args,
-        { cwd, env: mergeStdioEnv(this.config.env) },
-      ));
+      const base = lease.runtime.path.resolve(
+        this.options.defaultCwd ?? lease.runtime.environment.homeDir,
+      );
+      const cwd =
+        this.config.cwd === undefined ? base : lease.runtime.path.resolve(base, this.config.cwd);
+      const process = lease.track(
+        await lease.runtime.process!.spawn(this.config.command, this.config.args, {
+          cwd,
+          env: mergeStdioEnv(
+            this.config.env,
+            globalThis.process.env,
+            this.config.inheritEnv !== false,
+          ),
+        }),
+      );
       this.process = process;
       lease.track(this);
       process.stdin.on('error', (error: Error) => this.onerror?.(error));
@@ -216,7 +236,8 @@ class RuntimeStdioTransport implements Transport {
 
   async send(message: JSONRPCMessage): Promise<void> {
     const process = this.process;
-    if (process === undefined || this.closed) throw new Error('Runtime stdio transport is not running');
+    if (process === undefined || this.closed)
+      throw new Error('Runtime stdio transport is not running');
     const data = serializeMessage(message);
     await new Promise<void>((resolve, reject) => {
       process.stdin.write(data, (error) => {
@@ -236,9 +257,7 @@ class RuntimeStdioTransport implements Transport {
     const process = this.process;
     this.process = undefined;
     if (process !== undefined) {
-      try {
-        await process.kill();
-      } catch {}
+      await terminateHostProcess(process);
       void process.dispose();
     }
     this.readBuffer.clear();
@@ -264,11 +283,17 @@ class RuntimeStdioTransport implements Transport {
   private finish(): void {
     if (this.closed) return;
     this.closed = true;
+    const process = this.process;
     this.process = undefined;
     this.readBuffer.clear();
     const lease = this.lease;
     this.lease = undefined;
     lease?.dispose();
+    if (process !== undefined) {
+      void terminateHostProcess(process).finally(() => {
+        void process.dispose();
+      });
+    }
     this.onclose?.();
   }
 }
@@ -289,16 +314,81 @@ class BoundedTail {
   }
 }
 
+const INHERITED_ENV_ALLOWLIST: ReadonlySet<string> = new Set([
+  'PATH',
+  'HOME',
+  'LANG',
+  'LC_ALL',
+  'LC_CTYPE',
+  'TMPDIR',
+  'TMP',
+  'TEMP',
+  'SHELL',
+  'TERM',
+  'NODE_PATH',
+  'NODE_OPTIONS',
+  'SystemRoot',
+  'SYSTEMROOT',
+  'ComSpec',
+  'COMSPEC',
+  'PATHEXT',
+  'USERPROFILE',
+  'APPDATA',
+  'LOCALAPPDATA',
+  'ProgramFiles',
+  'ProgramData',
+  'windir',
+]);
+
 export function mergeStdioEnv(
   configEnv?: Record<string, string>,
   parentEnv: Readonly<Record<string, string | undefined>> = process.env,
+  inheritEnv: boolean = true,
 ): Record<string, string> {
   const merged: Record<string, string> = {};
   for (const [key, value] of Object.entries(parentEnv)) {
-    if (value !== undefined) merged[key] = value;
+    if (value === undefined) continue;
+    if (!inheritEnv && !INHERITED_ENV_ALLOWLIST.has(key)) continue;
+    merged[key] = value;
   }
   if (configEnv !== undefined) Object.assign(merged, configEnv);
   Object.assign(merged, proxyEnvForChild(merged));
   reconcileChildNoProxy(merged, configEnv);
   return merged;
+}
+
+const TERMINATE_GRACE_MS = 2_000;
+const KILL_ESCALATION_MS = 1_000;
+
+async function terminateHostProcess(process: IHostProcess): Promise<void> {
+  try {
+    process.stdin.end();
+  } catch {}
+  try {
+    await process.kill('SIGTERM');
+  } catch {}
+  if (await waitForExit(process, TERMINATE_GRACE_MS)) return;
+  try {
+    await process.kill('SIGKILL');
+  } catch {}
+  await waitForExit(process, KILL_ESCALATION_MS);
+}
+
+async function waitForExit(process: IHostProcess, timeoutMs: number): Promise<boolean> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      process.wait().then(() => true),
+      new Promise<false>((resolve) => {
+        timer = setTimeout(() => {
+          resolve(false);
+        }, timeoutMs);
+        timer.unref?.();
+      }),
+    ]);
+  } catch {
+    return true;
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
 }

@@ -1,8 +1,8 @@
 import { readdirSync, statSync } from 'node:fs';
 import { homedir } from 'node:os';
-import { basename, dirname, join, relative, resolve } from 'pathe';
 
 import type { AutocompleteItem } from '@hilbras/omnicode-tui';
+import { basename, dirname, join, relative, resolve } from 'pathe';
 
 import { completeLeadingArg, type ArgCompletionSpec } from './complete-args';
 import type { OmnicodeSlashCommand, SlashCommandAvailability } from './types';
@@ -70,7 +70,14 @@ export function addDirArgumentCompletions(argumentPrefix: string): AutocompleteI
 }
 
 function isPathLikeAddDirArgument(argumentPrefix: string): boolean {
-  return argumentPrefix === '.' || argumentPrefix === '..' || argumentPrefix.startsWith('./') || argumentPrefix.startsWith('../') || argumentPrefix.startsWith('/') || argumentPrefix.startsWith('~');
+  return (
+    argumentPrefix === '.' ||
+    argumentPrefix === '..' ||
+    argumentPrefix.startsWith('./') ||
+    argumentPrefix.startsWith('../') ||
+    argumentPrefix.startsWith('/') ||
+    argumentPrefix.startsWith('~')
+  );
 }
 
 function completeAddDirPath(argumentPrefix: string): AutocompleteItem[] | null {
@@ -89,7 +96,8 @@ function completeAddDirPath(argumentPrefix: string): AutocompleteItem[] | null {
   const items: AutocompleteItem[] = [];
   for (const entry of entries) {
     if (entry.name === '.' || entry.name === '..' || entry.name.startsWith('.')) continue;
-    if (partialName.length > 0 && !entry.name.toLowerCase().startsWith(partialName.toLowerCase())) continue;
+    if (partialName.length > 0 && !entry.name.toLowerCase().startsWith(partialName.toLowerCase()))
+      continue;
     const absolutePath = join(parentDir, entry.name);
     if (!isDirectoryPath(absolutePath, entry.isDirectory(), entry.isSymbolicLink())) continue;
     const value = formatDirectoryCompletionValue(normalizedPrefix, parentInput, entry.name);
@@ -132,7 +140,11 @@ function isDirectoryPath(path: string, isDirectory: boolean, isSymlink: boolean)
   }
 }
 
-function formatDirectoryCompletionValue(argumentPrefix: string, parentInput: string, entryName: string): string {
+function formatDirectoryCompletionValue(
+  argumentPrefix: string,
+  parentInput: string,
+  entryName: string,
+): string {
   if (argumentPrefix.startsWith('~/')) {
     const home = homedir();
     const homeRelative = relative(home, parentInput);
@@ -148,14 +160,16 @@ export const BUILTIN_SLASH_COMMANDS = [
   {
     name: 'yolo',
     aliases: ['yes'],
-    description: 'Ask When Needed mode: routine edits and commands run automatically; risky actions, questions, and plans still ask.',
+    description:
+      'Ask When Needed mode: routine edits and commands run automatically; risky actions, questions, and plans still ask.',
     priority: 101,
     availability: 'always',
   },
   {
     name: 'auto',
     aliases: [],
-    description: 'Never Ask mode: never interrupts you; everything runs and is decided automatically.',
+    description:
+      'Never Ask mode: never interrupts you; everything runs and is decided automatically.',
     priority: 99,
     availability: 'always',
   },
@@ -272,9 +286,30 @@ export const BUILTIN_SLASH_COMMANDS = [
     availability: 'always',
   },
   {
+    name: 'skills',
+    aliases: [],
+    description: 'Browse available skills',
+    priority: 80,
+    availability: 'always',
+  },
+  {
+    name: 'subagents',
+    aliases: [],
+    description: 'Browse available subagent profiles',
+    priority: 80,
+    availability: 'always',
+  },
+  {
+    name: 'connectors',
+    aliases: [],
+    description: 'Browse connected integrations (MCP servers, plugins)',
+    priority: 80,
+    availability: 'always',
+  },
+  {
     name: 'mcp',
     aliases: [],
-    description: 'Show MCP server status',
+    description: 'Manage MCP servers: add, edit, test and remove them',
     priority: 60,
     availability: 'always',
   },
@@ -479,7 +514,8 @@ export type BuiltinSlashCommand = (typeof BUILTIN_SLASH_COMMANDS)[number];
 export type BuiltinSlashCommandName = BuiltinSlashCommand['name'];
 
 export function findBuiltInSlashCommand(commandName: string): BuiltinSlashCommand | undefined {
-  const commands = BUILTIN_SLASH_COMMANDS as readonly OmnicodeSlashCommand<BuiltinSlashCommandName>[];
+  const commands =
+    BUILTIN_SLASH_COMMANDS as readonly OmnicodeSlashCommand<BuiltinSlashCommandName>[];
   return commands.find(
     (command) => command.name === commandName || command.aliases.includes(commandName),
   ) as BuiltinSlashCommand | undefined;
@@ -493,7 +529,9 @@ export function resolveSlashCommandAvailability(
   return typeof availability === 'function' ? availability(args) : availability;
 }
 
-export function sortSlashCommands(commands: readonly OmnicodeSlashCommand[]): OmnicodeSlashCommand[] {
+export function sortSlashCommands(
+  commands: readonly OmnicodeSlashCommand[],
+): OmnicodeSlashCommand[] {
   return [...commands].toSorted(
     (a, b) => (b.priority ?? 0) - (a.priority ?? 0) || a.name.localeCompare(b.name),
   );

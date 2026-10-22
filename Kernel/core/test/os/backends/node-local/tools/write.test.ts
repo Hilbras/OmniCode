@@ -1,14 +1,19 @@
-import { describe, expect, it, vi } from 'vitest';
-
-import { PathSecurityError } from '#/tool/path-access';
-import type { HostFileStat, IHostFileSystem } from '#/os/interface/hostFileSystem';
-import { stubWorkspaceContext } from '../../../../session/workspaceContext/stub-workspace-context';
 import { type WriteInput, WriteInputSchema } from '@hilbras/omnicode-tools/os/write/write';
 import { WriteTool } from '@hilbras/omnicode-tools/os/write/writeTool';
+import { describe, expect, it, vi } from 'vitest';
+
 import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
-import { FakeRuntime } from '#/runtime/fakeRuntime';
 import type { IHostEnvironment } from '#/os/interface/hostEnvironment';
-import type { ExecutableToolContext, ExecutableToolResult, ToolExecution } from '#/tool/toolContract';
+import type { HostFileStat, IHostFileSystem } from '#/os/interface/hostFileSystem';
+import { FakeRuntime } from '#/runtime/fakeRuntime';
+import { PathSecurityError } from '#/tool/path-access';
+import type {
+  ExecutableToolContext,
+  ExecutableToolResult,
+  ToolExecution,
+} from '#/tool/toolContract';
+
+import { stubWorkspaceContext } from '../../../../session/workspaceContext/stub-workspace-context';
 
 const signal = new AbortController().signal;
 const PERMISSIVE_WORKSPACE = stubWorkspaceContext('/');
@@ -52,11 +57,16 @@ function createWriteFs(options: WriteFsOptions = {}) {
   );
   const writeText = vi.fn(options.writeText ?? (async () => {}));
   const appendText = vi.fn(options.appendText ?? (async () => {}));
-  const stat = vi.fn(
-    options.stat ?? (async () => ({ isFile: false, isDirectory: true, size: 0 })),
-  );
+  const stat = vi.fn(options.stat ?? (async () => ({ isFile: false, isDirectory: true, size: 0 })));
   const mkdir = vi.fn(options.mkdir ?? (async () => {}));
-  const fs = { cwd: '/', readText, writeText, appendText, stat, mkdir } as unknown as IHostFileSystem;
+  const fs = {
+    cwd: '/',
+    readText,
+    writeText,
+    appendText,
+    stat,
+    mkdir,
+  } as unknown as IHostFileSystem;
   return { fs, readText, writeText, appendText, stat, mkdir };
 }
 
@@ -80,7 +90,9 @@ function makeTool(options: WriteFsOptions = {}, workspace = PERMISSIVE_WORKSPACE
   return { tool, ...fakes };
 }
 
-function isPromiseLike(value: ToolExecution | Promise<ToolExecution>): value is Promise<ToolExecution> {
+function isPromiseLike(
+  value: ToolExecution | Promise<ToolExecution>,
+): value is Promise<ToolExecution> {
   return typeof (value as Promise<ToolExecution>).then === 'function';
 }
 
@@ -323,10 +335,7 @@ describe('WriteTool', () => {
   });
 
   it('rejects relative traversal writes before fs I/O', async () => {
-    const { tool, writeText } = makeTool(
-      {},
-      stubWorkspaceContext('/workspace/project'),
-    );
+    const { tool, writeText } = makeTool({}, stubWorkspaceContext('/workspace/project'));
 
     const result = await execute(tool, { path: '../outside.txt', content: 'x' });
 

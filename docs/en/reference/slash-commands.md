@@ -115,8 +115,11 @@ Prompt mode exits with code `0` when the goal completes, `3` when it blocks, and
 | `/btw [question]` | — | Open a side conversation in a forked sub-Agent without affecting the current main Agent turn; without a question, opens the panel first to wait for input | Yes |
 | `/usage` | — | Show token usage, context consumption, and quota information | Yes |
 | `/status` | — | Show the current session runtime state: version, model, working directory, permission mode, etc. | Yes |
-| `/mcp` | — | List MCP servers and their connection status in the current session | Yes |
+| `/mcp` | — | Manage MCP servers: list them with their transport, authorization state and live connection status; add or edit one through a single-page form (name, transport, command or URL, arguments); enable or disable one; test a connection; or remove it | Yes |
 | `/plugins` | — | Open the interactive plugin manager | Yes |
+| `/skills` | — | Browse the skills available in the current workspace | Yes |
+| `/subagents` | — | Browse the subagent profiles available in the current workspace | Yes |
+| `/connectors` | — | Browse the integrations available to the agent (MCP servers, plugins, and first-party platforms such as GitHub and Vercel) with their kind, connection status and scope; press `Enter` on a first-party platform to connect it — your browser opens for authorization and the connection is remembered for later sessions; pressing `Enter` on a platform that cannot be connected yet explains what is missing | Yes |
 | `/version` | — | Display the Omnicode CLI version number | Yes |
 | `/feedback` | `/bug` | Submit feedback with optional diagnostic logs and codebase context | Yes |
 

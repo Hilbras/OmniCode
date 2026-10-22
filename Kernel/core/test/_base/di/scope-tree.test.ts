@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 
 import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
 import type { IDisposable } from '#/_base/di/lifecycle';
-import { LifecycleScope } from '#/app/scopes';
 import {
   ScopeActivation,
   Scope,
@@ -10,6 +9,7 @@ import {
   createAppScope,
   registerScopedService,
 } from '#/_base/di/scope';
+import { LifecycleScope } from '#/app/scopes';
 
 interface IAppSvc {
   tag: 'app';
@@ -117,15 +117,21 @@ describe('Scope tree', () => {
     _clearScopedRegistryForTests();
     class A implements ITagged {
       tag = 'A';
-      dispose(): void { events.push('A'); }
+      dispose(): void {
+        events.push('A');
+      }
     }
     class B implements ITagged {
       tag = 'B';
-      dispose(): void { events.push('B'); }
+      dispose(): void {
+        events.push('B');
+      }
     }
     class C implements ITagged {
       tag = 'C';
-      dispose(): void { events.push('C'); }
+      dispose(): void {
+        events.push('C');
+      }
     }
     registerScopedService(LifecycleScope.App, IA, A);
     registerScopedService(LifecycleScope.Session, IB, B);
@@ -196,12 +202,7 @@ describe('Scope tree', () => {
         constructions += 1;
       }
     }
-    registerScopedService(
-      LifecycleScope.Session,
-      ITagged,
-      Tagged,
-      ScopeActivation.OnDemand,
-    );
+    registerScopedService(LifecycleScope.Session, ITagged, Tagged, ScopeActivation.OnDemand);
 
     const app = createAppScope();
     const session = app.createChild(LifecycleScope.Session, 's1');
@@ -232,12 +233,7 @@ describe('Scope tree', () => {
       }
     }
     registerScopedService(LifecycleScope.Session, ITop, Top);
-    registerScopedService(
-      LifecycleScope.Session,
-      IDep,
-      Dep,
-      ScopeActivation.OnDemand,
-    );
+    registerScopedService(LifecycleScope.Session, IDep, Dep, ScopeActivation.OnDemand);
 
     const app = createAppScope();
     app.createChild(LifecycleScope.Session, 's1');

@@ -1,15 +1,14 @@
-import type {
-  FileHistoryRestoreResult,
-  FileHistoryTurnSummary,
-} from '@hilbras/omnicode-api';
+import type { FileHistoryRestoreResult, FileHistoryTurnSummary } from '@hilbras/omnicode-api';
 import { describe, expect, it, vi } from 'vitest';
 
-import { handleUndoCommand } from '#/tui/commands/undo';
-import { handleRestoreCommand } from '#/tui/commands/restore';
 import type { SlashCommandHost } from '#/tui/commands/dispatch';
+import { handleRestoreCommand } from '#/tui/commands/restore';
+import { handleUndoCommand } from '#/tui/commands/undo';
 import type { TranscriptEntry } from '#/tui/types';
 
-function entry(partial: Partial<TranscriptEntry> & Pick<TranscriptEntry, 'kind' | 'content'>): TranscriptEntry {
+function entry(
+  partial: Partial<TranscriptEntry> & Pick<TranscriptEntry, 'kind' | 'content'>,
+): TranscriptEntry {
   return {
     id: `t-${Math.random().toString(36).slice(2, 10)}`,
     turnId: undefined,
@@ -319,7 +318,10 @@ describe('/restore', () => {
 
     await handleRestoreCommand(host, '');
 
-    expect(showStatus).toHaveBeenCalledWith(expect.stringContaining('Nothing to restore'), 'warning');
+    expect(showStatus).toHaveBeenCalledWith(
+      expect.stringContaining('Nothing to restore'),
+      'warning',
+    );
     expect(restoreFiles).not.toHaveBeenCalled();
     expect(showError).not.toHaveBeenCalled();
   });
@@ -340,9 +342,7 @@ describe('/restore', () => {
     await handleRestoreCommand(host, '3');
 
     expect(restoreFiles).not.toHaveBeenCalled();
-    expect(showError).toHaveBeenCalledWith(
-      'Turn 3 cannot be restored. Restorable turns: 7, 6.',
-    );
+    expect(showError).toHaveBeenCalledWith('Turn 3 cannot be restored. Restorable turns: 7, 6.');
   });
 
   it('surfaces a failed history read instead of reporting a success', async () => {
@@ -356,9 +356,7 @@ describe('/restore', () => {
 
     expect(restoreFiles).not.toHaveBeenCalled();
     expect(showStatus).not.toHaveBeenCalled();
-    expect(showError).toHaveBeenCalledWith(
-      'Failed to read file history: file_restore is disabled',
-    );
+    expect(showError).toHaveBeenCalledWith('Failed to read file history: file_restore is disabled');
   });
 
   it('surfaces a failed restore instead of reporting a success', async () => {

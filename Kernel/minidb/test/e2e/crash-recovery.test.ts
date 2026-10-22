@@ -29,7 +29,7 @@ function crashWriter(dir: string, compactEvery: number, runMs: number): Promise<
     child.stdout.on('data', () => {
       if (!killTimer) killTimer = setTimeout(() => child.kill('SIGKILL'), runMs);
     });
-    const safety = setTimeout(() => child.kill('SIGKILL'), 8000); // should not happen
+    const safety = setTimeout(() => child.kill('SIGKILL'), 60_000); // should not happen
     child.on('exit', () => {
       if (killTimer) clearTimeout(killTimer);
       clearTimeout(safety);

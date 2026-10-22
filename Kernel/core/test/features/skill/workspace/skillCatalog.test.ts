@@ -4,56 +4,71 @@ import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createScopedTestHost, stubPair } from '#/_base/di/test';
 import { createScopedChildHandle } from '#/_base/di/scope';
-import { LifecycleScope } from '#/app/scopes';
-import {
-  _clearScopedRegistryForTests,
-  registerScopedService,
-} from '#/_base/di/scope';
+import { _clearScopedRegistryForTests, registerScopedService } from '#/_base/di/scope';
+import { createScopedTestHost, stubPair } from '#/_base/di/test';
 import { AsyncEmitter, Emitter, Event } from '#/_base/event';
+import { ILogService } from '#/_base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
+import { IConfigService } from '#/app/config/config';
+import { IFlagService } from '#/app/flag/flag';
 import { IPluginService } from '#/app/plugin/plugin';
 import { PluginService } from '#/app/plugin/pluginService';
 import type { PluginReloadEvent } from '#/app/plugin/types';
-import { ITelemetryService, noopTelemetryService } from '#/app/telemetry/telemetry';
-import { IProviderService } from '#/llm-adapter/provider/provider';
+import { LifecycleScope } from '#/app/scopes';
 import { IAppStateService } from '#/app/state/appState';
 import { AppStateService } from '#/app/state/appStateService';
-import { IWorkspaceStateService } from '#/workspace/state/workspaceState';
-import { WorkspaceStateService } from '#/workspace/state/workspaceStateService';
-import { IWorkspaceContext } from '#/workspace/workspaceContext/workspaceContext';
-import { IConfigService } from '#/app/config/config';
-import { IFlagService } from '#/app/flag/flag';
+import { ITelemetryService, noopTelemetryService } from '#/app/telemetry/telemetry';
+import {
+  BuiltinSkillSource,
+  IBuiltinSkillSource,
+} from '#/features/skill/catalog/builtinSkillSource';
 import {
   EXTRA_SKILL_DIRS_SECTION,
   MERGE_ALL_AVAILABLE_SKILLS_SECTION,
 } from '#/features/skill/catalog/configSection';
-import { BuiltinSkillSource, IBuiltinSkillSource } from '#/features/skill/catalog/builtinSkillSource';
-import { IUserFileSkillSource, UserFileSkillSource } from '#/features/skill/catalog/userFileSkillSource';
+import { FileSkillDiscovery } from '#/features/skill/catalog/fileSkillDiscovery';
 import { InMemorySkillDiscovery } from '#/features/skill/catalog/inMemorySkillDiscovery';
+import { ISkillDiscovery } from '#/features/skill/catalog/skillDiscovery';
 import type { SkillContribution } from '#/features/skill/catalog/skillSource';
+import type { SkillRoot } from '#/features/skill/catalog/types';
+import {
+  IUserFileSkillSource,
+  UserFileSkillSource,
+} from '#/features/skill/catalog/userFileSkillSource';
+import {
+  ExplicitFileSkillSource,
+  IExplicitFileSkillSource,
+} from '#/features/skill/workspace/explicitFileSkillSource';
+import {
+  ExtraFileSkillSource,
+  IExtraFileSkillSource,
+} from '#/features/skill/workspace/extraFileSkillSource';
+import {
+  IPluginSkillSource,
+  PluginSkillSource,
+} from '#/features/skill/workspace/pluginSkillSource';
+import {
+  IWorkspaceRootSkillSource,
+  WorkspaceRootSkillSource,
+} from '#/features/skill/workspace/rootFileSkillSource';
 import { IWorkspaceSkillCatalog } from '#/features/skill/workspace/workspaceSkillCatalog';
 import {
   WorkspaceSkillCatalogService,
   workspaceSkillCatalogContributionsKey,
   workspaceSkillCatalogMergedKey,
 } from '#/features/skill/workspace/workspaceSkillCatalogService';
-import { ExplicitFileSkillSource, IExplicitFileSkillSource } from '#/features/skill/workspace/explicitFileSkillSource';
-import { ExtraFileSkillSource, IExtraFileSkillSource } from '#/features/skill/workspace/extraFileSkillSource';
-import { IWorkspaceRootSkillSource, WorkspaceRootSkillSource } from '#/features/skill/workspace/rootFileSkillSource';
-import { IPluginSkillSource, PluginSkillSource } from '#/features/skill/workspace/pluginSkillSource';
-import { ISkillDiscovery } from '#/features/skill/catalog/skillDiscovery';
-import { FileSkillDiscovery } from '#/features/skill/catalog/fileSkillDiscovery';
-import type { SkillRoot } from '#/features/skill/catalog/types';
-import { ILogService } from '#/_base/log/log';
+import { IProviderService } from '#/llm-adapter/provider/provider';
+import { IWorkspaceStateService } from '#/workspace/state/workspaceState';
+import { WorkspaceStateService } from '#/workspace/state/workspaceStateService';
+import { IWorkspaceContext } from '#/workspace/workspaceContext/workspaceContext';
 import type { WatchChange, WatchOptions } from '#human/utils/watch';
 
+import { stubLog } from '../../../_base/log/stubs';
 import { stubBootstrap } from '../../../app/bootstrap/stubs';
 import { stubFlag } from '../../../app/flag/stubs';
-import { stubSkill } from '../catalog/stubs';
 import { stubProviderService } from '../../../app/provider/stubs';
-import { stubLog } from '../../../_base/log/stubs';
+import { stubSkill } from '../catalog/stubs';
 
 const watchMockState = vi.hoisted(() => ({
   calls: [] as { path: string; options?: WatchOptions }[],
@@ -104,7 +119,12 @@ function configStub(): IConfigService & {
       if (domain === MERGE_ALL_AVAILABLE_SKILLS_SECTION) return mergeAllAvailableSkills;
       return undefined;
     },
-    inspect: () => ({ value: undefined, defaultValue: undefined, userValue: undefined, memoryValue: undefined }),
+    inspect: () => ({
+      value: undefined,
+      defaultValue: undefined,
+      userValue: undefined,
+      memoryValue: undefined,
+    }),
     getAll: () => ({}),
     set: async () => {},
     replace: async () => {},
@@ -241,11 +261,7 @@ describe('WorkspaceSkillCatalogService', () => {
     registerScopedService(LifecycleScope.App, IBuiltinSkillSource, BuiltinSkillSource);
     registerScopedService(LifecycleScope.App, IUserFileSkillSource, UserFileSkillSource);
     registerScopedService(LifecycleScope.App, IPluginService, PluginService);
-    registerScopedService(
-      'program',
-      IWorkspaceSkillCatalog,
-      WorkspaceSkillCatalogService,
-    );
+    registerScopedService('program', IWorkspaceSkillCatalog, WorkspaceSkillCatalogService);
     registerScopedService('program', IExplicitFileSkillSource, ExplicitFileSkillSource);
     registerScopedService('program', IExtraFileSkillSource, ExtraFileSkillSource);
     registerScopedService('program', IWorkspaceRootSkillSource, WorkspaceRootSkillSource);
@@ -588,9 +604,7 @@ describe('WorkspaceSkillCatalogService', () => {
 
   it('fires onDidChange with the plugin source id after a plugin reload re-pulls plugin skills', async () => {
     const store = new InMemorySkillDiscovery();
-    store.setPluginSkills([
-      stubSkill('demo-skill', { source: 'extra', plugin: { id: 'demo' } }),
-    ]);
+    store.setPluginSkills([stubSkill('demo-skill', { source: 'extra', plugin: { id: 'demo' } })]);
     const reloadEmitter = new AsyncEmitter<PluginReloadEvent>();
     const pluginRoot: SkillRoot = {
       path: '/plugins/demo/skills',
@@ -681,15 +695,11 @@ describe('WorkspaceSkillCatalogService', () => {
       expect(loadCount).toBe(1);
 
       initialLoad.resolve({
-        skills: [
-          stubSkill('stale-skill', { source: 'extra', plugin: { id: 'demo' } }),
-        ],
+        skills: [stubSkill('stale-skill', { source: 'extra', plugin: { id: 'demo' } })],
       });
       await refreshedStarted.promise;
       refreshedLoad.resolve({
-        skills: [
-          stubSkill('fresh-skill', { source: 'extra', plugin: { id: 'demo' } }),
-        ],
+        skills: [stubSkill('fresh-skill', { source: 'extra', plugin: { id: 'demo' } })],
       });
       await Promise.all([loading, refreshed]);
 
@@ -713,21 +723,16 @@ describe('WorkspaceSkillCatalogService', () => {
       stubPair(IConfigService, configStub()),
       stubPair(IPluginService, pluginService),
     ]);
-    const workspace = host.child('program', 'w1', [
-      stubPair(IWorkspaceContext, ws),
-    ]);
+    const workspace = host.child('program', 'w1', [stubPair(IWorkspaceContext, ws)]);
 
     try {
       const source = workspace.accessor.get(IPluginSkillSource);
       void source.id;
       const receiver = { tag: 'receiver' };
       const seen: unknown[] = [];
-      const subscription = source.onDidChange?.(
-        function (this: unknown) {
-          seen.push(this);
-        },
-        receiver,
-      );
+      const subscription = source.onDidChange?.(function (this: unknown) {
+        seen.push(this);
+      }, receiver);
 
       await reloadEmitter.fireAsyncConcurrent(
         { added: [], removed: [], errors: [] },
@@ -762,9 +767,7 @@ describe('WorkspaceSkillCatalogService', () => {
 
     const store = new InMemorySkillDiscovery();
     store.setUserSkills([stubSkill('global-only')]);
-    store.setPluginSkills([
-      stubSkill('demo-skill', { source: 'extra', plugin: { id: 'demo' } }),
-    ]);
+    store.setPluginSkills([stubSkill('demo-skill', { source: 'extra', plugin: { id: 'demo' } })]);
     const host = createScopedTestHost([
       stubPair(IFlagService, stubFlag(true)),
       stubPair(ISkillDiscovery, store),
@@ -774,9 +777,7 @@ describe('WorkspaceSkillCatalogService', () => {
       stubPair(ITelemetryService, noopTelemetryService),
     ]);
     const ws = workspaceContextStub('/work');
-    const workspace = host.child('program', 'w1', [
-      stubPair(IWorkspaceContext, ws),
-    ]);
+    const workspace = host.child('program', 'w1', [stubPair(IWorkspaceContext, ws)]);
 
     try {
       const catalog = workspace.accessor.get(IWorkspaceSkillCatalog);
@@ -871,11 +872,7 @@ describe('WorkspaceSkillCatalogService', () => {
     };
 
     _clearScopedRegistryForTests();
-    registerScopedService(
-      'program',
-      IWorkspaceRootSkillSource,
-      WorkspaceRootSkillSource,
-    );
+    registerScopedService('program', IWorkspaceRootSkillSource, WorkspaceRootSkillSource);
     const host = createScopedTestHost([
       stubPair(IFlagService, stubFlag(true)),
       stubPair(ISkillDiscovery, discovery),
@@ -952,9 +949,7 @@ describe('WorkspaceSkillCatalogService', () => {
     const store = new InMemorySkillDiscovery();
     store.setUserSkills([stubSkill('user-skill', { description: 'v1' })]);
     store.setExtraSkills([stubSkill('extra-skill', { description: 'v1', source: 'extra' })]);
-    store.setPluginSkills([
-      stubSkill('demo-skill', { source: 'extra', plugin: { id: 'demo' } }),
-    ]);
+    store.setPluginSkills([stubSkill('demo-skill', { source: 'extra', plugin: { id: 'demo' } })]);
     store.setProjectSkills([stubSkill('project-skill')]);
     const pluginRoot: SkillRoot = {
       path: '/plugins/demo/skills',
@@ -1073,7 +1068,10 @@ describe('WorkspaceSkillCatalogService', () => {
   it('does not watch the user skill roots when explicit skillDirs are set', async () => {
     const host = createScopedTestHost([
       stubPair(IFlagService, stubFlag(true)),
-      stubPair(IBootstrapService, stubBootstrap('/home', {}, { skillDirs: ['/explicit'] }, '/os-home')),
+      stubPair(
+        IBootstrapService,
+        stubBootstrap('/home', {}, { skillDirs: ['/explicit'] }, '/os-home'),
+      ),
       stubPair(IConfigService, configStub()),
       stubPair(IPluginService, pluginStub()),
       stubPair(ILogService, stubLog()),
@@ -1128,5 +1126,4 @@ describe('WorkspaceSkillCatalogService', () => {
     host.dispose();
     expect(handles.every((handle) => handle.disposed)).toBe(true);
   });
-
 });

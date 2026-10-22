@@ -3,7 +3,6 @@ import { writeFileSync } from 'node:fs';
 import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import type { DeviceAuthorization } from '@hilbras/omnicode-auth';
 import { effectiveModelAlias, log } from '@hilbras/omnicode-api';
 import type {
   ApprovalRequest,
@@ -21,8 +20,9 @@ import type {
   TurnStartedEvent,
   WorkspaceTrustInfo,
 } from '@hilbras/omnicode-api';
-import { isTelemetryDisabledByEnv } from '@hilbras/omnicode-telemetry';
+import type { DeviceAuthorization } from '@hilbras/omnicode-auth';
 import type { MigrationPlan } from '@hilbras/omnicode-migration';
+import { isTelemetryDisabledByEnv } from '@hilbras/omnicode-telemetry';
 import {
   deleteAllKittyImages,
   type Component,
@@ -43,14 +43,15 @@ import { copyTextToClipboard } from '#/utils/clipboard/clipboard-text';
 import { appendInputHistory, loadInputHistory } from '#/utils/history/input-history';
 import { openUrl } from '#/utils/open-url';
 import { getInputHistoryFile } from '#/utils/paths';
+import { detectFdPath, ensureFdPath } from '#/utils/process/fd-detect';
 import { applyRecommendedEffort } from '#/utils/recommended-effort';
 import { getRecommendedEffortConfig } from '#/utils/recommended-effort-config';
-import { detectFdPath, ensureFdPath } from '#/utils/process/fd-detect';
 import { quoteShellArg } from '#/utils/shell-quote';
+import { startupTrace } from '#/utils/startup-trace';
 import { restoreTerminalModes } from '#/utils/terminal-restore';
 
-import { BannerProvider } from './banner/banner-provider';
 import { resolveBannerAudienceContext, type BannerAudienceContext } from './banner/audience';
+import { BannerProvider } from './banner/banner-provider';
 import { readBannerDisplayState, writeBannerDisplayState } from './banner/state';
 import {
   BUILTIN_SLASH_COMMANDS,
@@ -64,7 +65,6 @@ import {
   type SkillListSession,
 } from './commands';
 import * as slashCommands from './commands/dispatch';
-import { CacheHintController } from './controllers/cache-hint-controller';
 import { BannerComponent } from './components/chrome/banner';
 import { DeviceCodeBoxComponent } from './components/chrome/device-code-box';
 import { GutterContainer } from './components/chrome/gutter-container';
@@ -114,6 +114,7 @@ import {
 import { ActivityPaneComponent, type ActivityPaneMode } from './components/panes/activity-pane';
 import { QueuePaneComponent } from './components/panes/queue-pane';
 import type { TuiConfig } from './config';
+import { MEDIA_INGESTION_SUBMIT_WAIT_MS } from './constant/media';
 import {
   LLM_NOT_SET_MESSAGE,
   MAIN_AGENT_ID,
@@ -123,13 +124,19 @@ import {
   SESSIONLESS_STARTUP_NOTICE,
   SHUTTING_DOWN_HINT,
 } from './constant/omnicode-tui';
-import { MEDIA_INGESTION_SUBMIT_WAIT_MS } from './constant/media';
 import { CHROME_GUTTER } from './constant/rendering';
 import { MAX_TERMINAL_TITLE_LENGTH } from './constant/terminal';
 import { AuthFlowController } from './controllers/auth-flow';
 import { BtwPanelController } from './controllers/btw-panel';
+import { CacheHintController } from './controllers/cache-hint-controller';
+import {
+  ConnectorsBrowserController,
+  SkillsBrowserController,
+  SubagentsBrowserController,
+} from './controllers/catalog-browser';
 import { ClipboardImageHintController } from './controllers/clipboard-image-hint';
 import { EditorKeyboardController } from './controllers/editor-keyboard';
+import { McpManagerController } from './controllers/mcp-manager';
 import { SessionEventHandler } from './controllers/session-event-handler';
 import { SessionReplayRenderer } from './controllers/session-replay';
 import { StagingLeaseTracker, type StagingLease } from './controllers/staging-leases';
@@ -183,19 +190,22 @@ import {
 } from './utils/image-placeholder';
 import type { ExtractionResult } from './utils/image-placeholder';
 import { installInputLatencyProbe } from './utils/input-latency';
-import { combineSteerInput } from './utils/steer-input';
-import { startupTrace } from '#/utils/startup-trace';
 import { REPLAY_FETCH_TURN_LIMIT } from './utils/message-replay';
 import { hasPatchChanges } from './utils/object-patch';
-import { beginScreenTakeover, endScreenTakeover, type ScreenTakeover } from './utils/screen-takeover';
+import {
+  beginScreenTakeover,
+  endScreenTakeover,
+  type ScreenTakeover,
+} from './utils/screen-takeover';
 import { sessionRowsForPicker } from './utils/session-picker-rows';
-import { formatStepRetryDetail, formatStepRetryLabel } from './utils/step-retry';
 import { formatBashOutputForDisplay } from './utils/shell-output';
-import { thinkingEffortFromConfig } from './utils/thinking-config';
 import { combineStartupNotice, isOAuthLoginRequiredError } from './utils/startup';
+import { combineSteerInput } from './utils/steer-input';
+import { formatStepRetryDetail, formatStepRetryLabel } from './utils/step-retry';
 import { installTerminalFocusTracking } from './utils/terminal-focus';
 import { notifyTerminalOnce } from './utils/terminal-notification';
 import { installTerminalThemeTracking } from './utils/terminal-theme';
+import { thinkingEffortFromConfig } from './utils/thinking-config';
 import { detectTmuxKeyboardWarning } from './utils/tmux-keyboard';
 import {
   getTranscriptComponentEntry,
@@ -395,6 +405,10 @@ export class OmnicodeTUI {
   readonly sessionEventHandler: SessionEventHandler;
   readonly sessionReplay: SessionReplayRenderer;
   readonly tasksBrowserController: TasksBrowserController;
+  readonly skillsBrowserController: SkillsBrowserController;
+  readonly subagentsBrowserController: SubagentsBrowserController;
+  readonly connectorsBrowserController: ConnectorsBrowserController;
+  readonly mcpManagerController: McpManagerController;
   readonly surveyController: SurveyController;
   readonly editorKeyboard: EditorKeyboardController;
 
@@ -478,9 +492,7 @@ export class OmnicodeTUI {
     this.startupNotice = startupInput.startupNotice;
     this.state = createTUIState(tuiOptions);
     this.state.footer.setExpandHintProvider(() => this.toolOutputExpandHint());
-    this.state.transcriptContainer.setUnhandledClick((index) =>
-      this.toggleClickedFoldBlock(index),
-    );
+    this.state.transcriptContainer.setUnhandledClick((index) => this.toggleClickedFoldBlock(index));
     this.uninstallRainbowDance = installRainbowDance(() => {
       this.state.ui.requestRender();
     });
@@ -507,6 +519,10 @@ export class OmnicodeTUI {
     this.sessionEventHandler = new SessionEventHandler(this);
     this.sessionReplay = new SessionReplayRenderer(this);
     this.tasksBrowserController = new TasksBrowserController(this);
+    this.skillsBrowserController = new SkillsBrowserController(this);
+    this.subagentsBrowserController = new SubagentsBrowserController(this);
+    this.connectorsBrowserController = new ConnectorsBrowserController(this);
+    this.mcpManagerController = new McpManagerController(this, () => this.session);
     this.surveyController = new SurveyController(this, {
       accessToken: () => this.harness.auth.getCachedAccessToken(),
       telemetryDisabled: () => isTelemetryDisabledByEnv() || this.telemetryDisabled,
@@ -1040,6 +1056,10 @@ export class OmnicodeTUI {
     // before tearing the UI down, so they can't keep firing requestRender after
     // stop() returns (or leak when stop() runs without process.exit).
     this.tasksBrowserController.close();
+    this.skillsBrowserController.close();
+    this.subagentsBrowserController.close();
+    this.connectorsBrowserController.close();
+    this.mcpManagerController.close();
     this.btwPanelController.clear();
     this.stopActivitySpinner();
     this.streamingUI.disposeActiveCompactionBlock();
@@ -1789,18 +1809,15 @@ export class OmnicodeTUI {
               ),
             ];
       this.beginSessionRequest();
-      void this.runInlineSkillActivations(
-        session,
-        item.text,
-        item.inlineSkillActivations,
-        {
-          parts: refreshed,
-          hasMedia: refreshed.length > 0,
-          imageAttachmentIds: item.imageAttachmentIds !== undefined ? [...item.imageAttachmentIds] : [],
-          videoAttachmentIds: item.videoAttachmentIds !== undefined ? [...item.videoAttachmentIds] : [],
-          imageSnapshots: [],
-        },
-      ).catch((error: unknown) => {
+      void this.runInlineSkillActivations(session, item.text, item.inlineSkillActivations, {
+        parts: refreshed,
+        hasMedia: refreshed.length > 0,
+        imageAttachmentIds:
+          item.imageAttachmentIds !== undefined ? [...item.imageAttachmentIds] : [],
+        videoAttachmentIds:
+          item.videoAttachmentIds !== undefined ? [...item.videoAttachmentIds] : [],
+        imageSnapshots: [],
+      }).catch((error: unknown) => {
         this.failSessionRequest(`Skill activation failed: ${formatErrorMessage(error)}`);
       });
       return;
@@ -1808,11 +1825,7 @@ export class OmnicodeTUI {
     const parts =
       item.parts === undefined
         ? undefined
-        : refreshExpiringImageFileRefs(
-            item.parts,
-            item.imageAttachmentIds ?? [],
-            this.imageStore,
-          );
+        : refreshExpiringImageFileRefs(item.parts, item.imageAttachmentIds ?? [], this.imageStore);
     this.harness.withInteractiveAgent(item.agentId ?? MAIN_AGENT_ID, () => {
       this.sendMessageInternal(session, item.text, {
         parts,
@@ -1860,7 +1873,8 @@ export class OmnicodeTUI {
     // (finalizeTurn clears the id at turn end; a queued dispatch can land
     // while the goal driver's next continuation turn is already streaming).
     const runningTurnId =
-      this.state.appState.streamingPhase === 'idle' || this.state.appState.streamingPhase === 'shell'
+      this.state.appState.streamingPhase === 'idle' ||
+      this.state.appState.streamingPhase === 'shell'
         ? undefined
         : this.streamingUI.getTurnContext().turnId;
     this.beginSessionRequest();
@@ -1916,9 +1930,13 @@ export class OmnicodeTUI {
       });
       return;
     }
-    this.staging.trackDispatch(stagingLease, session.prompt(sdkInput, { promptId: submissionId }), (error) => {
-      this.failSessionRequest(`Failed to send: ${formatErrorMessage(error)}`);
-    });
+    this.staging.trackDispatch(
+      stagingLease,
+      session.prompt(sdkInput, { promptId: submissionId }),
+      (error) => {
+        this.failSessionRequest(`Failed to send: ${formatErrorMessage(error)}`);
+      },
+    );
   }
 
   sendSkillActivation(session: Session, skillName: string, skillArgs: string): void {
@@ -2279,6 +2297,31 @@ export class OmnicodeTUI {
     this.state.tasksBrowser = value;
   }
 
+  setSkillsBrowser(value: TUIState['skillsBrowser']): void {
+    this.state.skillsBrowser = value;
+  }
+
+  setSubagentsBrowser(value: TUIState['subagentsBrowser']): void {
+    this.state.subagentsBrowser = value;
+  }
+
+  setConnectorsBrowser(value: TUIState['connectorsBrowser']): void {
+    this.state.connectorsBrowser = value;
+  }
+
+  setMcpManager(value: TUIState['mcpManager']): void {
+    this.state.mcpManager = value;
+  }
+
+  /**
+   * Run a built-in slash command as if the user typed it. The connector page
+   * hands over to `/mcp` and `/plugins` this way, so the existing managers
+   * stay the single implementation.
+   */
+  runSlashCommand(command: string): void {
+    slashCommands.dispatchInput(this, `/${command}`);
+  }
+
   appendStartupNotice(extra: string): void {
     this.startupNotice = combineStartupNotice(this.startupNotice, extra);
   }
@@ -2573,8 +2616,7 @@ export class OmnicodeTUI {
       contextTokens: status.contextTokens,
       maxContextTokens: status.maxContextTokens,
       contextUsage: status.contextUsage,
-      cumulativeTokens:
-        status.usage?.total === undefined ? 0 : sumTokenUsage(status.usage.total),
+      cumulativeTokens: status.usage?.total === undefined ? 0 : sumTokenUsage(status.usage.total),
       sessionTitle: session.summary?.title ?? null,
       goal: goalResult.goal,
     });
@@ -2778,6 +2820,10 @@ export class OmnicodeTUI {
     this.streamingUI.resetToolUi();
     this.sessionEventHandler.resetRuntimeState();
     this.tasksBrowserController.close();
+    this.skillsBrowserController.close();
+    this.subagentsBrowserController.close();
+    this.connectorsBrowserController.close();
+    this.mcpManagerController.close();
     this.btwPanelController.clear();
     this.state.footer.setBackgroundCounts({ bashTasks: 0, agentTasks: 0 });
     this.streamingUI.setTodoList([]);
@@ -4082,8 +4128,7 @@ export class OmnicodeTUI {
     this.restoreEditor();
     try {
       await this.harness.trustWorkspace(workDir);
-    } catch {
-    }
+    } catch {}
     return true;
   }
 

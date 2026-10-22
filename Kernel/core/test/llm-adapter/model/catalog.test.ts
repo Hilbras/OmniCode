@@ -5,21 +5,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createScopedTestHost } from '#/_base/di/test';
 import { isErrorCode } from '#/_base/errors/codes';
 import { isError2 } from '#/_base/errors/errors';
+import { ILogService } from '#/_base/log/log';
 import { IConfigService } from '#/app/config/config';
 import { ConfigErrors } from '#/app/config/errors';
+import { HostRequestHeadersAdapter } from '#/app/kosongConfig/hostRequestHeadersAdapter';
 import { UNKNOWN_CAPABILITY } from '#/llm-adapter/contract/capability';
-import type { LlmAuthScheme, LlmModel } from '#human/llm/model';
-import { resolveAuthSchemeHeaders } from '#human/llm/requester/auth-scheme-headers';
-import { emptyUsage } from '#human/llm/usage';
-import type { LlmRequester } from '#human/llm/requester/requester';
-import { IProtocolAdapterRegistry } from '#/llm-adapter/protocol/protocol';
-import '#/llm-adapter/protocol/protocolAdapterRegistry';
-import {
-  IProviderService,
-  type ProviderConfig,
-  type ProvidersSection,
-} from '#/llm-adapter/provider/provider';
-import '#/llm-adapter/provider/provider-service';
 import {
   globalDefaultForProvider,
   IModelCatalog,
@@ -29,19 +19,30 @@ import {
   toProtocolModelFallback,
   toProtocolProvider,
 } from '#/llm-adapter/model/catalog';
-import { ModelCatalog } from '#/llm-adapter/model/catalog-service';
 import { ProviderCatalogRuntimeService } from '#/llm-adapter/model/catalog-runtime';
-import '#/llm-adapter/model/errors';
+import { ModelCatalog } from '#/llm-adapter/model/catalog-service';
 import { IHostRequestHeaders } from '#/llm-adapter/model/host-request-headers';
 import { IModelService, type ModelRecord, type ModelsSection } from '#/llm-adapter/model/model';
-import '#/llm-adapter/model/model-service';
+import '#/llm-adapter/protocol/protocolAdapterRegistry';
 import { IModelOAuthTokens } from '#/llm-adapter/model/model-oauth';
+import '#/llm-adapter/provider/provider-service';
+import { IProtocolAdapterRegistry } from '#/llm-adapter/protocol/protocol';
+import {
+  IProviderService,
+  type ProviderConfig,
+  type ProvidersSection,
+} from '#/llm-adapter/provider/provider';
+import type { LlmAuthScheme, LlmModel } from '#human/llm/model';
+import '#/llm-adapter/model/errors';
+import { resolveAuthSchemeHeaders } from '#human/llm/requester/auth-scheme-headers';
+import type { LlmRequester } from '#human/llm/requester/requester';
+import '#/llm-adapter/model/model-service';
+import { emptyUsage } from '#human/llm/usage';
 
-import { HostRequestHeadersAdapter } from '#/app/kosongConfig/hostRequestHeadersAdapter';
-
-import { StubConfigService, stubModelOAuthTokens, stubTokenProvider } from '../../stubs';
+import { stubLog } from '../../_base/log/stubs';
 import { stubAgentIdentity } from '../../app/agentIdentity/stubs';
 import { stubBootstrap } from '../../app/bootstrap/stubs';
+import { StubConfigService, stubModelOAuthTokens, stubTokenProvider } from '../../stubs';
 
 const HOST_HEADERS = { 'User-Agent': 'omnicode-test/1.0', 'X-Msh-Device-Id': 'device-1' };
 
@@ -61,6 +62,7 @@ function createHost(
   hostHeaders: { headers: Record<string, string>; identitySlug?: string } = {
     headers: HOST_HEADERS,
   },
+  log: ILogService = stubLog(),
 ): {
   host: ReturnType<typeof createScopedTestHost>;
   config: StubConfigService;
@@ -73,6 +75,7 @@ function createHost(
     [IConfigService, config],
     [IModelOAuthTokens, oauthTokens],
     [IHostRequestHeaders, hostHeadersPort(hostHeaders)],
+    [ILogService, log],
   ]);
   const providers = host.app.accessor.get(IProviderService);
   providers.loadAll(
@@ -181,7 +184,9 @@ describe('Model assembly (pure data)', () => {
       models: { gpt: { provider: 'openai', model: 'gpt-5', maxContextSize: 128000 } },
     };
     const OFFICIAL = {
-      providers: { omnicode: { type: 'omnicode', apiKey: 'sk', baseUrl: 'https://api.example.test/v1' } },
+      providers: {
+        omnicode: { type: 'omnicode', apiKey: 'sk', baseUrl: 'https://api.example.test/v1' },
+      },
       models: { k2: { provider: 'omnicode', model: 'omnicode-k2', maxContextSize: 200000 } },
     };
 
@@ -257,9 +262,16 @@ describe('Model assembly (pure data)', () => {
 
   it('keeps an explicit foreign protocol for a omnicode model (the trait path)', () => {
     const { host, catalog } = createHost({
-      providers: { omnicode: { type: 'omnicode', apiKey: 'sk', baseUrl: 'https://api.example.test/v1' } },
+      providers: {
+        omnicode: { type: 'omnicode', apiKey: 'sk', baseUrl: 'https://api.example.test/v1' },
+      },
       models: {
-        k2: { provider: 'omnicode', protocol: 'anthropic', model: 'omnicode-k2', maxContextSize: 200000 },
+        k2: {
+          provider: 'omnicode',
+          protocol: 'anthropic',
+          model: 'omnicode-k2',
+          maxContextSize: 200000,
+        },
       },
     });
     try {
@@ -313,7 +325,13 @@ describe('Model assembly (pure data)', () => {
   it('resolves provider env-bag credentials and endpoints through the registry', async () => {
     const { host, catalog } = createHost({
       providers: {
-        omnicode: { type: 'omnicode', env: { OMNICODE_API_KEY: 'env-token', OMNICODE_BASE_URL: 'https://omnicode-env.example.test/v1' } },
+        omnicode: {
+          type: 'omnicode',
+          env: {
+            OMNICODE_API_KEY: 'env-token',
+            OMNICODE_BASE_URL: 'https://omnicode-env.example.test/v1',
+          },
+        },
         openai: { type: 'openai', env: { OPENAI_API_KEY: 'sk-openai' } },
       },
       models: {
@@ -467,7 +485,10 @@ describe('Model assembly (pure data)', () => {
       }
     };
     expectInvalid(omnicodeSections, 'nope');
-    expectInvalid({ models: { ghost: { provider: 'missing', model: 'm', maxContextSize: 1 } } }, 'ghost');
+    expectInvalid(
+      { models: { ghost: { provider: 'missing', model: 'm', maxContextSize: 1 } } },
+      'ghost',
+    );
     expectInvalid(
       { models: { noname: { protocol: 'openai', baseUrl: 'https://x.test', maxContextSize: 1 } } },
       'noname',
@@ -482,7 +503,12 @@ describe('Model assembly (pure data)', () => {
     const { host, catalog } = createHost({
       ...omnicodeSections,
       models: {
-        k1: { provider: 'omnicode', model: 'omnicode-k2', aliases: ['k2-latest'], maxContextSize: 1 },
+        k1: {
+          provider: 'omnicode',
+          model: 'omnicode-k2',
+          aliases: ['k2-latest'],
+          maxContextSize: 1,
+        },
         k2: { provider: 'omnicode', name: 'shared-name', maxContextSize: 1 },
         k3: { provider: 'omnicode', model: 'shared-name', maxContextSize: 1 },
       },
@@ -502,7 +528,11 @@ describe('Model assembly (pure data)', () => {
     const { host, catalog } = createHost(
       {
         providers: {
-          omnicode: { type: 'omnicode', oauth: { storage: 'file', key: 'omnicode' }, baseUrl: 'https://api.hilbras.ai/v1' },
+          omnicode: {
+            type: 'omnicode',
+            oauth: { storage: 'file', key: 'omnicode' },
+            baseUrl: 'https://api.hilbras.ai/v1',
+          },
         },
         models: { k1: { provider: 'omnicode', model: 'omnicode-k2', maxContextSize: 1 } },
       },
@@ -510,9 +540,9 @@ describe('Model assembly (pure data)', () => {
     );
     try {
       const model = catalog.get('k1');
-      expect(model.credentialProvider?.canRecover?.(Object.assign(new Error('x'), { status: 401 }))).toBe(
-        true,
-      );
+      expect(
+        model.credentialProvider?.canRecover?.(Object.assign(new Error('x'), { status: 401 })),
+      ).toBe(true);
       await expect(model.credentialProvider?.resolve()).resolves.toEqual({ apiKey: 'tok-1' });
     } finally {
       host.dispose();
@@ -523,9 +553,15 @@ describe('Model assembly (pure data)', () => {
     vi.stubEnv('OMNICODE_TEST_ACME_ENV_KEY', 'sk-first');
     const { host, catalog } = createHost({
       providers: {
-        acme: { type: 'openai', apiKeyEnv: 'OMNICODE_TEST_ACME_ENV_KEY', baseUrl: 'https://acme.example.test/v1' },
+        acme: {
+          type: 'openai',
+          apiKeyEnv: 'OMNICODE_TEST_ACME_ENV_KEY',
+          baseUrl: 'https://acme.example.test/v1',
+        },
       },
-      models: { m: { provider: 'acme', protocol: 'openai', model: 'acme-1', maxContextSize: 1000 } },
+      models: {
+        m: { provider: 'acme', protocol: 'openai', model: 'acme-1', maxContextSize: 1000 },
+      },
     });
     try {
       const model = catalog.get('m');
@@ -540,16 +576,24 @@ describe('Model assembly (pure data)', () => {
   it('fails credential resolution with config.invalid when the declared api_key_env variable is unset or empty', () => {
     const { host, catalog } = createHost({
       providers: {
-        acme: { type: 'openai', apiKeyEnv: 'OMNICODE_TEST_ACME_ENV_KEY', baseUrl: 'https://acme.example.test/v1' },
+        acme: {
+          type: 'openai',
+          apiKeyEnv: 'OMNICODE_TEST_ACME_ENV_KEY',
+          baseUrl: 'https://acme.example.test/v1',
+        },
       },
-      models: { m: { provider: 'acme', protocol: 'openai', model: 'acme-1', maxContextSize: 1000 } },
+      models: {
+        m: { provider: 'acme', protocol: 'openai', model: 'acme-1', maxContextSize: 1000 },
+      },
     });
     try {
       const model = catalog.get('m');
       expect(() => model.credentialProvider?.resolve()).toThrowError(
         expect.objectContaining({ code: ConfigErrors.codes.CONFIG_INVALID }),
       );
-      expect(() => model.credentialProvider?.resolve()).toThrowError(/acme[\s\S]*OMNICODE_TEST_ACME_ENV_KEY/);
+      expect(() => model.credentialProvider?.resolve()).toThrowError(
+        /acme[\s\S]*OMNICODE_TEST_ACME_ENV_KEY/,
+      );
       vi.stubEnv('OMNICODE_TEST_ACME_ENV_KEY', '   ');
       expect(() => model.credentialProvider?.resolve()).toThrowError(
         expect.objectContaining({ code: ConfigErrors.codes.CONFIG_INVALID }),
@@ -563,7 +607,9 @@ describe('Model assembly (pure data)', () => {
 describe('base_url validation', () => {
   it('rejects a plain-http non-local provider base_url as config.invalid', () => {
     const { host, catalog } = createHost({
-      providers: { acme: { type: 'openai', apiKey: 'sk-a', baseUrl: 'http://acme.example.test/v1' } },
+      providers: {
+        acme: { type: 'openai', apiKey: 'sk-a', baseUrl: 'http://acme.example.test/v1' },
+      },
       models: { m: { provider: 'acme', model: 'acme-1', maxContextSize: 1000 } },
     });
     try {
@@ -604,7 +650,9 @@ describe('base_url validation', () => {
 
   it('keeps a local model server on plain http reachable', () => {
     const { host, catalog } = createHost({
-      providers: { ollama: { type: 'openai', apiKey: 'sk-a', baseUrl: 'http://localhost:11434/v1' } },
+      providers: {
+        ollama: { type: 'openai', apiKey: 'sk-a', baseUrl: 'http://localhost:11434/v1' },
+      },
       models: { m: { provider: 'ollama', model: 'llama3', maxContextSize: 8192 } },
     });
     try {
@@ -643,12 +691,21 @@ describe('ModelCatalog caching and config-event invalidation', () => {
     try {
       const k1Before = catalog.get('k1');
       const gptBefore = catalog.get('gpt');
-      await models.set('k1', { provider: 'omnicode', model: 'omnicode-k2', maxContextSize: 262144, displayName: 'K2' });
+      await models.set('k1', {
+        provider: 'omnicode',
+        model: 'omnicode-k2',
+        maxContextSize: 262144,
+        displayName: 'K2',
+      });
       expect(catalog.get('k1')).not.toBe(k1Before);
       expect(catalog.get('k1').displayName).toBe('K2');
       expect(catalog.get('gpt')).toBe(gptBefore);
 
-      await providers.set('omnicode', { type: 'omnicode', apiKey: 'sk-2', baseUrl: 'https://other.example.test/v1' });
+      await providers.set('omnicode', {
+        type: 'omnicode',
+        apiKey: 'sk-2',
+        baseUrl: 'https://other.example.test/v1',
+      });
       expect(catalog.get('k1').baseUrl).toBe('https://other.example.test/v1');
       expect(catalog.get('gpt')).toBe(gptBefore);
     } finally {
@@ -662,7 +719,12 @@ describe('ModelCatalog caching and config-event invalidation', () => {
       const before = catalog.get('k1');
 
       silentModelWrite(models, {
-        k1: { provider: 'omnicode', model: 'omnicode-k2', maxContextSize: 262144, displayName: 'silent' },
+        k1: {
+          provider: 'omnicode',
+          model: 'omnicode-k2',
+          maxContextSize: 262144,
+          displayName: 'silent',
+        },
       });
       expect(catalog.get('k1')).toBe(before);
 
@@ -763,7 +825,12 @@ describe('resolveAuthSchemeHeaders', () => {
   const HOST = { 'User-Agent': 'omnicode-test/1.0', Authorization: 'Bearer unused' };
 
   it('leaves the headers untouched when the provider declares no scheme', () => {
-    const model: LlmModel = { provider: 'p', model: 'm', capability: UNKNOWN_CAPABILITY, apiKey: 'sk' };
+    const model: LlmModel = {
+      provider: 'p',
+      model: 'm',
+      capability: UNKNOWN_CAPABILITY,
+      apiKey: 'sk',
+    };
     expect(resolveAuthSchemeHeaders(model, HOST)).toBe(HOST);
     expect(resolveAuthSchemeHeaders(model, undefined)).toBeUndefined();
   });
@@ -780,13 +847,19 @@ describe('resolveAuthSchemeHeaders', () => {
       Authorization: null,
     });
     expect(
-      resolveAuthSchemeHeaders(schemeModel({ kind: 'custom-header', header: 'x-api-key' }, 'sk-1'), {}),
+      resolveAuthSchemeHeaders(
+        schemeModel({ kind: 'custom-header', header: 'x-api-key' }, 'sk-1'),
+        {},
+      ),
     ).toEqual({ Authorization: null, 'x-api-key': 'sk-1' });
   });
 
   it('moves the key into the named header and drops Authorization for a custom-header provider', () => {
     expect(
-      resolveAuthSchemeHeaders(schemeModel({ kind: 'custom-header', header: 'x-api-key' }, 'sk-1'), HOST),
+      resolveAuthSchemeHeaders(
+        schemeModel({ kind: 'custom-header', header: 'x-api-key' }, 'sk-1'),
+        HOST,
+      ),
     ).toEqual({ 'User-Agent': 'omnicode-test/1.0', Authorization: null, 'x-api-key': 'sk-1' });
   });
 
@@ -947,7 +1020,10 @@ describe('auth_scheme on the wire', () => {
   it.each(WIRES)(
     '$type sends the key in the named header and no default credential for a custom-header provider',
     async (wire) => {
-      const headers = await pingAndCapture({ kind: 'custom-header', header: 'x-gateway-key' }, wire);
+      const headers = await pingAndCapture(
+        { kind: 'custom-header', header: 'x-gateway-key' },
+        wire,
+      );
       expect(headers['authorization']).toBeUndefined();
       expect(headers[wire.defaultAuth[0]]).toBeUndefined();
       expect(headers['x-gateway-key']).toBe('sk-wire');
@@ -957,7 +1033,9 @@ describe('auth_scheme on the wire', () => {
   it.each(WIRES)(
     '$type still sends the default credential when the provider declares no scheme',
     async (wire) => {
-      expect((await pingAndCapture(undefined, wire))[wire.defaultAuth[0]]).toBe(wire.defaultAuth[1]);
+      expect((await pingAndCapture(undefined, wire))[wire.defaultAuth[0]]).toBe(
+        wire.defaultAuth[1],
+      );
     },
   );
 
@@ -1025,6 +1103,7 @@ describe('ModelCatalog ping', () => {
         stubModelOAuthTokens(),
         registry,
         { headers: {}, thirdPartyHeaders: {} },
+        stubLog(),
       );
       const result = await catalog.ping('k1');
       expect(result).toMatchObject({ ok: true, text: 'pong', finishReason: 'completed' });
@@ -1081,7 +1160,12 @@ const catalogSections: Record<string, unknown> = {
       displayName: 'Omnicode K2',
       capabilities: ['thinking'],
     },
-    turbo: { provider: 'omnicode', model: 'omnicode-turbo', maxContextSize: 32768, displayName: 'Omnicode Turbo' },
+    turbo: {
+      provider: 'omnicode',
+      model: 'omnicode-turbo',
+      maxContextSize: 32768,
+      displayName: 'Omnicode Turbo',
+    },
     gpt4o: { provider: 'openai', model: 'gpt-4o', maxContextSize: 128000 },
   },
   defaultModel: 'k2',
@@ -1197,9 +1281,52 @@ describe('ModelCatalog enumeration', () => {
           max_context_size: 131072,
           capabilities: ['thinking'],
         },
-        { provider: 'omnicode', model: 'turbo', display_name: 'Omnicode Turbo', max_context_size: 32768 },
+        {
+          provider: 'omnicode',
+          model: 'turbo',
+          display_name: 'Omnicode Turbo',
+          max_context_size: 32768,
+        },
         { provider: 'openai', model: 'gpt4o', display_name: 'gpt-4o', max_context_size: 128000 },
       ]);
+    } finally {
+      host.dispose();
+    }
+  });
+
+  it('records why a model fell back to its raw record instead of losing the reason', async () => {
+    const warn = vi.fn();
+    const logger = {
+      _serviceBrand: undefined as undefined,
+      level: 'info' as const,
+      setLevel: () => {},
+      flush: async () => {},
+      error: () => {},
+      warn,
+      info: () => {},
+      debug: () => {},
+      child: () => logger,
+    };
+    const { host, catalog } = createHost(
+      {
+        providers: {
+          broken: { type: 'openai', baseUrl: 'not a url', apiKey: 'sk-test' },
+        },
+        models: {
+          broken: { provider: 'broken', model: 'gpt-4o', maxContextSize: 128000 },
+        },
+      },
+      stubModelOAuthTokens(),
+      { headers: HOST_HEADERS },
+      logger,
+    );
+    try {
+      const models = await catalog.listModels();
+      expect(models.map((model) => model.model)).toContain('broken');
+      expect(warn).toHaveBeenCalledWith(
+        'model catalog entry fell back to the raw record',
+        expect.objectContaining({ model: 'broken' }),
+      );
     } finally {
       host.dispose();
     }

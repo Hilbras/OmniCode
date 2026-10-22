@@ -22,7 +22,7 @@ export * from '@hilbras/omnicode-memory';
 
 export async function loadAcpServer(): Promise<typeof import('@hilbras/omnicode-acp')> {
   return import('@hilbras/omnicode-acp');
-}/**
+} /**
  * `@hilbras/omnicode-api` public surface — the transport-agnostic client facade
  * over the agent-core-v2 engine. Create a klient with one of the transport
  * entry points (`@hilbras/omnicode-api/ipc` or `/memory`); everything
@@ -54,6 +54,7 @@ export type {
   FileDownload,
   GlobalAuthFacade,
   GlobalConfigFacade,
+  GlobalConnectorsFacade,
   GlobalFacade,
   GlobalFilesFacade,
   GlobalFlagsFacade,
@@ -117,14 +118,9 @@ export type { AgentEventPayloads } from './contract/agent/events.js';
 
 // Wire types re-exported for consumer convenience (type-only; the engine is
 // not pulled in at runtime for http consumers).
-export type {
-  SessionListQuery,
-} from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
+export type { SessionListQuery } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
 export type { Page } from '@hilbras/omnicode-core/persistence/interface/queryStore';
-export type {
-  Workspace,
-  WorkspaceUpdate,
-} from '@hilbras/omnicode-core/app/workspace/workspace';
+export type { Workspace, WorkspaceUpdate } from '@hilbras/omnicode-core/app/workspace/workspace';
 export type {
   ConfigDiagnostic,
   ConfigInspectValue,
@@ -149,9 +145,7 @@ export type {
   SessionMeta,
   SessionMetaPatch,
 } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
-export type {
-  ApprovalResponse,
-} from '@hilbras/omnicode-core/agent/interaction/approval';
+export type { ApprovalResponse } from '@hilbras/omnicode-core/agent/interaction/approval';
 export type {
   QuestionRequest,
   QuestionResult,
@@ -161,6 +155,15 @@ export type {
   InteractionKind,
 } from '@hilbras/omnicode-core/human/interaction/interaction';
 export type { SkillSummary } from '@hilbras/omnicode-core/features/skill/catalog/types';
+export type { AgentProfileSummary } from '@hilbras/omnicode-sdk/rpc-exports';
+export type {
+  ConnectorAction,
+  ConnectorCapability,
+  ConnectorEntry,
+  ConnectorKind,
+  ConnectorScope,
+  ConnectorStatus,
+} from '@hilbras/omnicode-core/app/connectors/connectors';
 export type {
   GlobalMcpServerConfig,
   McpManagedServer,

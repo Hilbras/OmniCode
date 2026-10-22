@@ -1,9 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import {
-  formatRemoteControlOutput,
-  formatRemoteControlStatus,
-} from '#/cli/sub/web/remote-control';
+import { formatRemoteControlOutput, formatRemoteControlStatus } from '#/cli/sub/web/remote-control';
 
 afterEach(() => {
   vi.unstubAllEnvs();

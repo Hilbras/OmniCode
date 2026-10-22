@@ -7,7 +7,11 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
-import { createOmnicodeUserAgent, OMNICODE_PLATFORM, type OmnicodeHostIdentity } from '@hilbras/omnicode-auth';
+import {
+  createOmnicodeUserAgent,
+  OMNICODE_PLATFORM,
+  type OmnicodeHostIdentity,
+} from '@hilbras/omnicode-auth';
 
 import { CLI_USER_AGENT_PRODUCT } from '#/constant/app';
 

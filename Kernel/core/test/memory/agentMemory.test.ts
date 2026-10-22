@@ -1,13 +1,10 @@
-import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
-import { IAgentProfileService } from '#/agent/profile/profile';
 import { IMemoryService, MEMORY_SEARCH_TOOL_NAME } from '@hilbras/omnicode-memory';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  createTestAgent,
-  permissionModeServices,
-  type TestAgentContext,
-} from '../harness';
+import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
+import { IAgentProfileService } from '#/agent/profile/profile';
+
+import { createTestAgent, permissionModeServices, type TestAgentContext } from '../harness';
 
 const PROJECT = 'project-under-test';
 
@@ -26,7 +23,6 @@ describe('memory inside a real agent turn', () => {
   });
 
   async function seed(content: string, ref: string, global = false): Promise<string> {
-
     const stored = await ctx.get(IMemoryService).capture({
       content,
       tier: 'distilled',
@@ -86,7 +82,9 @@ describe('memory inside a real agent turn', () => {
       ],
       finishReason: 'tool_calls',
     });
-    ctx.mockNextProviderResponse({ parts: [{ type: 'text', text: 'It is documented in docs/release.md.' }] });
+    ctx.mockNextProviderResponse({
+      parts: [{ type: 'text', text: 'It is documented in docs/release.md.' }],
+    });
 
     await ctx.rpc.prompt({ input: [{ type: 'text', text: 'how is the release documented' }] });
     await ctx.untilTurnEnd();
@@ -111,7 +109,9 @@ describe('memory inside a real agent turn', () => {
       ],
       finishReason: 'tool_calls',
     });
-    ctx.mockNextProviderResponse({ parts: [{ type: 'text', text: 'Nothing is stored about that.' }] });
+    ctx.mockNextProviderResponse({
+      parts: [{ type: 'text', text: 'Nothing is stored about that.' }],
+    });
 
     await ctx.rpc.prompt({ input: [{ type: 'text', text: 'tell me about that' }] });
     await ctx.untilTurnEnd();

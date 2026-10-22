@@ -9,42 +9,57 @@ import { SyncDescriptor } from '#/_base/di/descriptors';
 import { popConstructionFrame, pushConstructionFrame } from '#/_base/di/fiber';
 import { DisposableStore } from '#/_base/di/lifecycle';
 import { TestInstantiationService } from '#/_base/di/test';
-import { IAgentScopeContext, makeAgentScopeContext } from '#/agent/scopeContext/scopeContext';
-import { IAgentStateService } from '#/agent/state/agentState';
+import { USER_PROMPT_ORIGIN } from '#/agent/contextMemory/types';
 import { TurnStarted } from '#/agent/loop/turnEvents';
 import { TurnEnded } from '#/agent/loop/turnOps';
-import { USER_PROMPT_ORIGIN } from '#/agent/contextMemory/types';
+import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
+import { IAgentScopeContext, makeAgentScopeContext } from '#/agent/scopeContext/scopeContext';
+import { IAgentStateService } from '#/agent/state/agentState';
 import { IEventBus, type ISessionEventBus } from '#/app/event/eventBus';
 import { EventBusService } from '#/app/event/eventBusService';
-import { IAgentFileHistoryService, type FileBackupEntry, type FileHistoryState } from '#/features/fileHistory/fileHistory';
-import { AgentFileHistoryService, countLineDiff, FILE_HISTORY_MAX_FILE_BYTES } from '#/features/fileHistory/fileHistoryService';
+import {
+  IAgentFileHistoryService,
+  type FileBackupEntry,
+  type FileHistoryState,
+} from '#/features/fileHistory/fileHistory';
 import {
   displacedCheckpoints,
   fileHistoryKey,
   FileHistoryCheckpointed,
   FileHistoryTracked,
 } from '#/features/fileHistory/fileHistoryOps';
-import type { FoldContext } from '#/state/state';
-import type { IAgentLifecycleService } from '#/session/agentLifecycle/agentLifecycle';
-import type { ToolCall } from '#human/llm/message';
-import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
+import {
+  AgentFileHistoryService,
+  countLineDiff,
+  FILE_HISTORY_MAX_FILE_BYTES,
+} from '#/features/fileHistory/fileHistoryService';
 import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
-import { AppendLogStore } from '#/persistence/backends/node-fs/appendLogStore';
 import { InMemoryStorageService } from '#/persistence/backends/memory/inMemoryStorageService';
+import { AppendLogStore } from '#/persistence/backends/node-fs/appendLogStore';
+import { JsonAtomicDocumentStore } from '#/persistence/backends/node-fs/atomicDocumentStore';
 import { BlobStoreService } from '#/persistence/backends/node-fs/blobStoreService';
 import { IAppendLogStore } from '#/persistence/interface/appendLogStore';
 import { IBlobStore } from '#/persistence/interface/blobStore';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
+import type { IAgentLifecycleService } from '#/session/agentLifecycle/agentLifecycle';
+import type { ISessionContext } from '#/session/sessionContext/sessionContext';
 import type { ISessionWorkspaceContext } from '#/session/workspaceContext/workspaceContext';
 import { IEventDispatcher } from '#/state/eventDispatcher';
-import type { ISessionContext } from '#/session/sessionContext/sessionContext';
-import { JsonAtomicDocumentStore } from '#/persistence/backends/node-fs/atomicDocumentStore';
+import type { FoldContext } from '#/state/state';
 import type { RunnableToolExecution } from '#/tool/toolContract';
+import type { ToolCall } from '#human/llm/message';
 
-import { createFakeHostFs } from '../../tools/fixtures/fake-exec';
-import { stubToolExecutorEvents, type ToolExecutorEventStubs } from '../../agent/toolExecutor/stubs';
-import { registerTestAgentWire, registerTestEventDispatcher, testWireScope } from '../../wire/stubs';
+import {
+  stubToolExecutorEvents,
+  type ToolExecutorEventStubs,
+} from '../../agent/toolExecutor/stubs';
 import { createTestAgent, homeDirServices } from '../../harness';
+import { createFakeHostFs } from '../../tools/fixtures/fake-exec';
+import {
+  registerTestAgentWire,
+  registerTestEventDispatcher,
+  testWireScope,
+} from '../../wire/stubs';
 
 const SCOPE = 'wire';
 const KEY = 'file-history-test';
@@ -108,7 +123,8 @@ describe('AgentFileHistoryService', () => {
     return createFakeHostFs({
       stat: async (path: string) => {
         const content = files.get(path);
-        if (content !== undefined) return { isFile: true, isDirectory: false, size: content.byteLength };
+        if (content !== undefined)
+          return { isFile: true, isDirectory: false, size: content.byteLength };
         if (directories.has(path)) return { isFile: false, isDirectory: true, size: 0 };
         throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
       },
@@ -147,13 +163,13 @@ describe('AgentFileHistoryService', () => {
     try {
       return disposables.add(
         new AgentFileHistoryService(
-        ctx,
-        ix.get(IAgentStateService),
-        executorEvents.executor,
-        eventBus,
-        ix.get(IEventDispatcher),
-        stubRuntime(),
-            blobs,
+          ctx,
+          ix.get(IAgentStateService),
+          executorEvents.executor,
+          eventBus,
+          ix.get(IEventDispatcher),
+          stubRuntime(),
+          blobs,
           workspace,
           {
             _serviceBrand: undefined,
@@ -184,8 +200,17 @@ describe('AgentFileHistoryService', () => {
     files.set(path, encoder.encode(content));
   }
 
-  async function fireEdit(service: AgentFileHistoryService, path: string, turnId: number): Promise<void> {
-    const toolCall: ToolCall = { type: 'function', id: `call-${String(turnId)}`, name: 'Edit', arguments: null };
+  async function fireEdit(
+    service: AgentFileHistoryService,
+    path: string,
+    turnId: number,
+  ): Promise<void> {
+    const toolCall: ToolCall = {
+      type: 'function',
+      id: `call-${String(turnId)}`,
+      name: 'Edit',
+      arguments: null,
+    };
     const execution: RunnableToolExecution = {
       approvalRule: 'Edit',
       display: { kind: 'file_io', operation: 'edit', path },
@@ -239,9 +264,7 @@ describe('AgentFileHistoryService', () => {
     startTurn(2);
     await service.settled();
     state = service.history();
-    const v2 = state.checkpoints.find(
-      (c) => c.turnId === 1 && c.phase === 'end',
-    )?.entries['a.txt'];
+    const v2 = state.checkpoints.find((c) => c.turnId === 1 && c.phase === 'end')?.entries['a.txt'];
     expect(v2?.version).toBe(2);
     expect(await blobText(v2!.key!)).toBe('one\nTWO\n');
 
@@ -316,15 +339,14 @@ describe('AgentFileHistoryService', () => {
     endTurn(2);
     startTurn(3);
     await service.settled();
-    entry = service
-      .history()
-      .checkpoints.find((c) => c.turnId === 2 && c.phase === 'end')?.entries['new.txt'];
+    entry = service.history().checkpoints.find((c) => c.turnId === 2 && c.phase === 'end')?.entries[
+      'new.txt'
+    ];
     expect(entry?.key).toBeNull();
     expect(await service.changes(2)).toEqual([
       { path: 'new.txt', status: 'deleted', additions: 0, deletions: 1 },
     ]);
   });
-
 
   it('excludes user edits between turns via the end-of-turn checkpoint', async () => {
     const service = createService();
@@ -348,7 +370,6 @@ describe('AgentFileHistoryService', () => {
     expect((await service.contentAt(1, 'a.txt', 'end'))?.content).toBe('alpha\nagent\n');
     expect(await service.contentAt(2, 'a.txt')).toBeUndefined();
   });
-
 
   it('reports an over-budget modified file as oversize with no counts', async () => {
     const service = createService();
@@ -374,7 +395,9 @@ describe('AgentFileHistoryService', () => {
     expect(countLineDiff(before, after)).toBeUndefined();
 
     const body = Array.from({ length: 3000 }, (_, i) => `line-${String(i)}`);
-    expect(countLineDiff(['moved', ...body].join('\n'), [...body, 'moved'].join('\n'))).toBeUndefined();
+    expect(
+      countLineDiff(['moved', ...body].join('\n'), [...body, 'moved'].join('\n')),
+    ).toBeUndefined();
   });
 
   it('stays inactive on subagents', async () => {
@@ -488,12 +511,10 @@ describe('AgentFileHistoryService', () => {
     endTurn(3);
     await service.settled();
 
-    const start3 = service.history().checkpoints.find(
-      (c) => c.turnId === 3 && c.phase === 'start',
-    )?.entries['s.txt'];
-    const end1 = service.history().checkpoints.find(
-      (c) => c.turnId === 1 && c.phase === 'end',
-    )?.entries['s.txt'];
+    const start3 = service.history().checkpoints.find((c) => c.turnId === 3 && c.phase === 'start')
+      ?.entries['s.txt'];
+    const end1 = service.history().checkpoints.find((c) => c.turnId === 1 && c.phase === 'end')
+      ?.entries['s.txt'];
     expect(start3?.key).toBe(end1?.key);
 
     for (let turn = 4; turn <= 7; turn += 1) {
@@ -691,7 +712,11 @@ describe('AgentFileHistoryService', () => {
   });
 
   describe('turns', () => {
-    async function turn(service: AgentFileHistoryService, path: string, turnId: number): Promise<void> {
+    async function turn(
+      service: AgentFileHistoryService,
+      path: string,
+      turnId: number,
+    ): Promise<void> {
       setFile(path, `v${String(turnId)}-before\n`);
       startTurn(turnId);
       await fireEdit(service, path, turnId);
@@ -755,8 +780,14 @@ describe('file history through real scripted turns', () => {
         arguments: JSON.stringify({ path: file }),
       };
       ctx.mockNextResponse({ type: 'text', text: 'Reading.' }, readCall);
-      ctx.mockNextResponse({ type: 'text', text: 'First edit.' }, editCall('call_e1', 'beta', 'gamma'));
-      ctx.mockNextResponse({ type: 'text', text: 'Second edit.' }, editCall('call_e2', 'gamma', 'delta'));
+      ctx.mockNextResponse(
+        { type: 'text', text: 'First edit.' },
+        editCall('call_e1', 'beta', 'gamma'),
+      );
+      ctx.mockNextResponse(
+        { type: 'text', text: 'Second edit.' },
+        editCall('call_e2', 'gamma', 'delta'),
+      );
       ctx.mockNextResponse({ type: 'text', text: 'Done.' });
       await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Edit the file twice' }] });
       await ctx.untilTurnEnd();
@@ -843,13 +874,19 @@ describe('displacedCheckpoints', () => {
   }
 
   it('returns nothing until more than five completed turns exist', () => {
-    const checkpoints = [1, 2, 3, 4, 5].flatMap((turn) => [record(turn, 'start'), record(turn, 'end')]);
+    const checkpoints = [1, 2, 3, 4, 5].flatMap((turn) => [
+      record(turn, 'start'),
+      record(turn, 'end'),
+    ]);
     expect(displacedCheckpoints(checkpoints)).toEqual([]);
     expect(displacedCheckpoints(checkpoints, 6)).toHaveLength(2);
   });
 
   it('counts completed turns, not turn ids, so ordinal gaps keep the window full', () => {
-    const checkpoints = [1, 4, 9, 12, 20, 31].flatMap((turn) => [record(turn, 'start'), record(turn, 'end')]);
+    const checkpoints = [1, 4, 9, 12, 20, 31].flatMap((turn) => [
+      record(turn, 'start'),
+      record(turn, 'end'),
+    ]);
     const displaced = displacedCheckpoints(checkpoints);
     expect(displaced.map((c) => c.turnId)).toEqual([1, 1]);
   });

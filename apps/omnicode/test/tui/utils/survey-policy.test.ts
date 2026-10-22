@@ -1,10 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import {
-  DEFAULT_SURVEY_POPUP_CONFIG,
-  type SurveyPopupConfig,
-} from '#/utils/survey-popup-config';
-import {
   buildSurveyEventProperties,
   evaluateLongContextArm,
   evaluateSurveyGate,
@@ -17,6 +13,7 @@ import {
   type SurveyGateInput,
   type SurveyMachineState,
 } from '#/tui/utils/survey-policy';
+import { DEFAULT_SURVEY_POPUP_CONFIG, type SurveyPopupConfig } from '#/utils/survey-popup-config';
 
 const CONFIG = DEFAULT_SURVEY_POPUP_CONFIG;
 
@@ -129,9 +126,7 @@ describe('evaluateSurveyGate (session arm)', () => {
       show: false,
       reason: 'sampled-out',
     });
-    expect(evaluateSurveyGate(gate({ sample: 0 }, { ...CONFIG, probability: 0 })).show).toBe(
-      false,
-    );
+    expect(evaluateSurveyGate(gate({ sample: 0 }, { ...CONFIG, probability: 0 })).show).toBe(false);
   });
 
   describe('model gate', () => {
@@ -176,9 +171,10 @@ describe('evaluateSurveyGate (session arm)', () => {
     });
 
     it('skips inside the time gap', () => {
-      expect(
-        evaluateSurveyGate(gate({ ...shown, msSinceLastShown: 3_599_999 })),
-      ).toEqual({ show: false, reason: 'pacing' });
+      expect(evaluateSurveyGate(gate({ ...shown, msSinceLastShown: 3_599_999 }))).toEqual({
+        show: false,
+        reason: 'pacing',
+      });
     });
 
     it('skips without enough new turns', () => {
@@ -443,11 +439,10 @@ describe('evaluateSurveyGate (arbitration)', () => {
   it('blocks both arms inside the shared persisted cooldown', () => {
     expect(
       evaluateSurveyGate(
-        gate(
-          { msSinceGlobalLastShown: 1000 },
-          CONFIG,
-          { ...ELIGIBLE, msSinceGlobalLastShown: 1000 },
-        ),
+        gate({ msSinceGlobalLastShown: 1000 }, CONFIG, {
+          ...ELIGIBLE,
+          msSinceGlobalLastShown: 1000,
+        }),
       ),
     ).toEqual({ show: false, reason: 'global-cooldown' });
   });
@@ -461,9 +456,7 @@ describe('evaluateSurveyGate (arbitration)', () => {
 
   it('reports the spent roll even when both arms lose', () => {
     expect(
-      evaluateSurveyGate(
-        gate({ sample: 0.9 }, CONFIG, { ...ELIGIBLE, drawMountRoll: () => 0.9 }),
-      ),
+      evaluateSurveyGate(gate({ sample: 0.9 }, CONFIG, { ...ELIGIBLE, drawMountRoll: () => 0.9 })),
     ).toEqual({
       show: false,
       reason: 'sampled-out',
@@ -536,9 +529,7 @@ describe('surveyMachineReduce', () => {
     const state: SurveyMachineState = { phase: 'pending', appearance, response: 'bad' };
     const closed = surveyMachineReduce(state, { type: 'close-silently' });
     expect(closed.state).toEqual(SURVEY_MACHINE_CLOSED);
-    expect(closed.effects).toEqual([
-      { type: 'report', eventType: 'responded', response: 'bad' },
-    ]);
+    expect(closed.effects).toEqual([{ type: 'report', eventType: 'responded', response: 'bad' }]);
   });
 
   it.each([

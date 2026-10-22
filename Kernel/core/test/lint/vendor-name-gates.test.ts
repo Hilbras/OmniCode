@@ -1,6 +1,7 @@
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
 import { describe, expect, it } from 'vitest';
 
 const __dirname = import.meta.dirname;
@@ -66,9 +67,9 @@ describe('vendor-name gates', () => {
   it('ignores comments, brand/env names, and omnicode as data', () => {
     const hits = findVendorGates(
       [
-        '// v1 `provider.type === \'omnicode\'` gate restored.',
-        ' * `provider.type === \'omnicode\'` parity): strict validation',
-        '/* legacy: provider.type === \'omnicode\' */',
+        "// v1 `provider.type === 'omnicode'` gate restored.",
+        " * `provider.type === 'omnicode'` parity): strict validation",
+        "/* legacy: provider.type === 'omnicode' */",
         'const home = process.env.OMNICODE_HOME;',
         `const event = { provider_type: 'omnicode' };`,
         `const provider = { type: 'omnicode', oauth };`,

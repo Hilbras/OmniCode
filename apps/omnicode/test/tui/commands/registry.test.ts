@@ -1,3 +1,5 @@
+import { describe, expect, it } from 'vitest';
+
 import {
   BUILTIN_SLASH_COMMANDS,
   findBuiltInSlashCommand,
@@ -9,7 +11,6 @@ import {
   towerArgumentCompletions,
   type OmnicodeSlashCommand,
 } from '#/tui/commands/index';
-import { describe, expect, it } from 'vitest';
 
 describe('parseSlashInput', () => {
   it('parses command names and trimmed args', () => {
@@ -30,6 +31,14 @@ describe('parseSlashInput', () => {
 });
 
 describe('built-in slash command registry', () => {
+  it('registers skills and subagents as always-available browser commands', () => {
+    for (const name of ['skills', 'subagents'] as const) {
+      const command = findBuiltInSlashCommand(name);
+      expect(command?.name).toBe(name);
+      expect(resolveSlashCommandAvailability(command!, '')).toBe('always');
+    }
+  });
+
   it('finds built-ins by name or alias', () => {
     expect(findBuiltInSlashCommand('exit')?.name).toBe('exit');
     expect(findBuiltInSlashCommand('quit')?.name).toBe('exit');
@@ -103,12 +112,16 @@ describe('built-in slash command registry', () => {
     expect(values('list')).toBeNull();
     const directoryCompletions = values('/') ?? [];
     expect(directoryCompletions.length).toBeGreaterThan(0);
-    expect(directoryCompletions.every((value) => value.startsWith('/') && value.endsWith('/'))).toBe(true);
+    expect(
+      directoryCompletions.every((value) => value.startsWith('/') && value.endsWith('/')),
+    ).toBe(true);
     expect(directoryCompletions.some((value) => value.startsWith('/.'))).toBe(false);
     expect(values('/.')).toBeNull();
     const homeCompletions = values('~/') ?? [];
     expect(homeCompletions.length).toBeGreaterThan(0);
-    expect(homeCompletions.every((value) => value.startsWith('~/') && value.endsWith('/'))).toBe(true);
+    expect(homeCompletions.every((value) => value.startsWith('~/') && value.endsWith('/'))).toBe(
+      true,
+    );
     expect(homeCompletions.some((value) => value.startsWith('~/.'))).toBe(false);
     expect(homeCompletions.some((value) => value.startsWith('~/sers/'))).toBe(false);
   });
@@ -169,6 +182,7 @@ describe('built-in slash command registry', () => {
         'add-dir',
         'compact',
         'btw',
+        'connectors',
         'desktop',
         'editor',
         'exit',
@@ -188,7 +202,9 @@ describe('built-in slash command registry', () => {
         'secondary-model',
         'sessions',
         'settings',
+        'skills',
         'status',
+        'subagents',
         'theme',
         'title',
         'tower',
@@ -241,5 +257,4 @@ describe('built-in slash command registry', () => {
     expect((command as OmnicodeSlashCommand).experimentalFlag).toBeUndefined();
     expect(resolveSlashCommandAvailability(command!, '')).toBe('always');
   });
-
 });

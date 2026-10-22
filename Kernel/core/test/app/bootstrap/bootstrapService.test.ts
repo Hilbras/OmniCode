@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, _clearScopedRegistryForTests, registerScopedService } from '#/_base/di/scope';
+
+import {
+  ScopeActivation,
+  _clearScopedRegistryForTests,
+  registerScopedService,
+} from '#/_base/di/scope';
 import { createScopedTestHost } from '#/_base/di/test';
 import {
   IBootstrapService,
@@ -9,6 +13,7 @@ import {
   resolveBootstrapOptions,
 } from '#/app/bootstrap/bootstrap';
 import { BootstrapService } from '#/app/bootstrap/bootstrapService';
+import { LifecycleScope } from '#/app/scopes';
 import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageService';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
 
@@ -60,8 +65,12 @@ describe('BootstrapService (scoped)', () => {
 describe('resolveBootstrapOptions', () => {
   it('prefers explicit homeDir over OMNICODE_HOME over osHomeDir', () => {
     expect(
-      resolveBootstrapOptions({ homeDir: '/a', osHomeDir: '/b', env: {}, clientIdentity: stubClientIdentity })
-        .homeDir,
+      resolveBootstrapOptions({
+        homeDir: '/a',
+        osHomeDir: '/b',
+        env: {},
+        clientIdentity: stubClientIdentity,
+      }).homeDir,
     ).toBe('/a');
     expect(
       resolveBootstrapOptions({
@@ -71,7 +80,8 @@ describe('resolveBootstrapOptions', () => {
       }).homeDir,
     ).toBe('/c');
     expect(
-      resolveBootstrapOptions({ osHomeDir: '/b', env: {}, clientIdentity: stubClientIdentity }).homeDir,
+      resolveBootstrapOptions({ osHomeDir: '/b', env: {}, clientIdentity: stubClientIdentity })
+        .homeDir,
     ).toBe('/b/.omnicode');
   });
 
@@ -84,7 +94,10 @@ describe('resolveBootstrapOptions', () => {
 
 describe('bootstrap() storage seeding', () => {
   it('seeds IFileSystemStorageService as a FileStorageService instance', () => {
-    const { app } = bootstrap({ homeDir: '/tmp/omnicode-home', clientIdentity: stubClientIdentity });
+    const { app } = bootstrap({
+      homeDir: '/tmp/omnicode-home',
+      clientIdentity: stubClientIdentity,
+    });
     try {
       const storage = app.accessor.get(IFileSystemStorageService);
       expect(storage).toBeInstanceOf(FileStorageService);

@@ -2,9 +2,7 @@ import { Service } from '#/_base/di/service';
 import { IntervalTimer } from '#/_base/utils/timer';
 import { ISessionManager } from '#/app/sessionManager/sessionManager';
 import { IModelService } from '#/llm-adapter/model/model';
-import {
-  ISessionAgentProfileCatalog,
-} from '#/session/sessionAgentProfileCatalog/sessionAgentProfileCatalog';
+import { ISessionAgentProfileCatalog } from '#/session/sessionAgentProfileCatalog/sessionAgentProfileCatalog';
 import { ISessionContext } from '#/session/sessionContext/sessionContext';
 import { ISessionMetadata } from '#/session/sessionMetadata/sessionMetadata';
 import {
@@ -24,10 +22,7 @@ type SessionStartHookSource = Exclude<SessionCreateSource, 'fork'>;
 
 const HEARTBEAT_INTERVAL_MS = 60_000;
 
-export class SessionExternalHooksService
-  extends Service
-  implements ISessionExternalHooksService
-{
+export class SessionExternalHooksService extends Service implements ISessionExternalHooksService {
   declare readonly _serviceBrand: undefined;
 
   private sessionTitle: string | undefined;
@@ -88,9 +83,7 @@ export class SessionExternalHooksService
     );
     this._register(subagents.onDidStopAgentTask((ctx) => this.notifySubagentStop(ctx)));
 
-    void this.runner.ready
-      .then(() => this.syncHeartbeat())
-      .catch(() => undefined);
+    void this.runner.ready.then(() => this.syncHeartbeat()).catch(() => undefined);
     this._register(this.runner.onDidReload(() => this.syncHeartbeat()));
   }
 

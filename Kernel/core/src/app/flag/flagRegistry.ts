@@ -27,6 +27,10 @@ export function getContributedFlags(): readonly FlagDefinitionInput[] {
   return contributedFlags;
 }
 
+export function _clearContributedFlagsForTests(): void {
+  contributedFlags.length = 0;
+}
+
 export interface IFlagRegistry {
   readonly _serviceBrand: undefined;
 

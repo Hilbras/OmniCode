@@ -10,7 +10,10 @@ import {
 } from '../components/messages/swarm-markers';
 import { LLM_NOT_SET_MESSAGE, NO_ACTIVE_SESSION_MESSAGE } from '../constant/omnicode-tui';
 import { formatErrorMessage } from '../utils/event-payload';
-import { PERMISSION_MODE_DESCRIPTIONS, PERMISSION_MODE_DISPLAY_NAMES } from '../utils/permission-mode';
+import {
+  PERMISSION_MODE_DESCRIPTIONS,
+  PERMISSION_MODE_DISPLAY_NAMES,
+} from '../utils/permission-mode';
 import type { SlashCommandHost } from './dispatch';
 
 export async function handleSwarmCommand(host: SlashCommandHost, args: string): Promise<void> {
@@ -78,7 +81,10 @@ async function startSwarmWithPermission(
   await startSwarmTask(host, prompt);
 }
 
-async function setPermissionForSwarm(host: SlashCommandHost, mode: PermissionMode): Promise<boolean> {
+async function setPermissionForSwarm(
+  host: SlashCommandHost,
+  mode: PermissionMode,
+): Promise<boolean> {
   try {
     await host.requireSession().setPermission(mode);
   } catch (error) {
@@ -114,7 +120,10 @@ async function applySwarmMode(
   }
   if (enabled && host.state.appState.permissionMode === 'manual') {
     showSwarmStartPermissionPrompt(host, commandText, 'Swarm mode not enabled.', async (choice) => {
-      if ((choice === 'auto' || choice === 'yolo') && !(await setPermissionForSwarm(host, choice))) {
+      if (
+        (choice === 'auto' || choice === 'yolo') &&
+        !(await setPermissionForSwarm(host, choice))
+      ) {
         return;
       }
       if (!(await setSwarmMode(host, true, 'manual'))) return;
@@ -152,8 +161,6 @@ function swarmModeSubcommand(input: string): boolean | undefined {
 }
 
 function renderSwarmModeMarker(host: SlashCommandHost, state: SwarmModeMarkerState): void {
-  host.state.transcriptContainer.addChild(
-    new SwarmModeMarkerComponent(state),
-  );
+  host.state.transcriptContainer.addChild(new SwarmModeMarkerComponent(state));
   host.state.ui.requestRender();
 }

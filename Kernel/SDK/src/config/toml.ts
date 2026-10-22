@@ -8,7 +8,6 @@ import { ErrorCodes, OmnicodeError } from '#/errors';
 import { atomicWrite } from '#/utils/fs';
 
 import { applyEnvModelConfig, stripEnvModelConfig } from './env-model';
-import { applySecondaryModelConfig, stripSecondaryModelConfig } from './secondary-model';
 import {
   OmnicodeConfigSchema,
   formatConfigValidationError,
@@ -31,6 +30,7 @@ import {
   type ThinkingConfig,
   validateConfig,
 } from './schema';
+import { applySecondaryModelConfig, stripSecondaryModelConfig } from './secondary-model';
 
 function snakeToCamel(str: string): string {
   return str.replaceAll(/_([a-z])/g, (_, ch: string) => ch.toUpperCase());
@@ -234,9 +234,13 @@ export function parseConfigString(tomlText: string, filePath = 'config.toml'): O
   try {
     data = parseToml(tomlText) as Record<string, unknown>;
   } catch (error) {
-    throw new OmnicodeError(ErrorCodes.CONFIG_INVALID, `Invalid TOML in ${filePath}: ${error instanceof Error ? error.message : String(error)}`, {
-      cause: error,
-    });
+    throw new OmnicodeError(
+      ErrorCodes.CONFIG_INVALID,
+      `Invalid TOML in ${filePath}: ${error instanceof Error ? error.message : String(error)}`,
+      {
+        cause: error,
+      },
+    );
   }
 
   return parseConfigData(data, filePath);
@@ -250,9 +254,13 @@ function parseConfigData(data: Record<string, unknown>, filePath: string): Omnic
   try {
     return OmnicodeConfigSchema.parse(transformed);
   } catch (error) {
-    throw new OmnicodeError(ErrorCodes.CONFIG_INVALID, `Invalid configuration in ${filePath}: ${formatConfigValidationError(error)}`, {
-      cause: error,
-    });
+    throw new OmnicodeError(
+      ErrorCodes.CONFIG_INVALID,
+      `Invalid configuration in ${filePath}: ${formatConfigValidationError(error)}`,
+      {
+        cause: error,
+      },
+    );
   }
 }
 
@@ -744,8 +752,6 @@ function setDefined(target: Record<string, unknown>, key: string, value: unknown
 
 function isFileExistsError(error: unknown): boolean {
   return (
-    typeof error === 'object' &&
-    error !== null &&
-    (error as { code?: unknown }).code === 'EEXIST'
+    typeof error === 'object' && error !== null && (error as { code?: unknown }).code === 'EEXIST'
   );
 }

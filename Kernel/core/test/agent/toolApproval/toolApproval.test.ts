@@ -4,12 +4,9 @@ import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
 import { createServices } from '#/_base/di/test';
 import type { TestInstantiationService } from '#/_base/di/test';
 import { UserCancellationError } from '#/_base/utils/abort';
-import type { ResolvedToolExecutionHookContext } from '#/agent/toolExecutor/toolHooks';
+import { type ApprovalRequest, type ApprovalResponse } from '#/agent/interaction/approval';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
-import type {
-  PermissionMode,
-  PermissionPolicyResult,
-} from '#/agent/permissionPolicy/types';
+import type { PermissionMode, PermissionPolicyResult } from '#/agent/permissionPolicy/types';
 import {
   IAgentPermissionRulesService,
   type PermissionApprovalResultRecord,
@@ -21,24 +18,21 @@ import {
   PermissionApprovalRequested,
   PermissionApprovalResolved,
 } from '#/agent/toolApproval/toolApprovalService';
+import type { ResolvedToolExecutionHookContext } from '#/agent/toolExecutor/toolHooks';
+import type { Event2 } from '#/app/event/event2';
 import { IEventBus } from '#/app/event/eventBus';
 import { EventBusService } from '#/app/event/eventBusService';
-import type { Event2 } from '#/app/event/event2';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { OrderedHookSlot } from '#/hooks';
-import type { ToolCall } from '#human/llm/message';
-import {
-  type ApprovalRequest,
-  type ApprovalResponse,
-} from '#/agent/interaction/approval';
-import { INTERACTION_TAG_SESSION_ID } from '#/human/interaction/interaction';
 import { interactions } from '#/human/interaction/facade';
+import { INTERACTION_TAG_SESSION_ID } from '#/human/interaction/interaction';
 import { ISessionContext, makeSessionContext } from '#/session/sessionContext/sessionContext';
 import { IEventDispatcher } from '#/state/eventDispatcher';
 import type { ToolInputDisplay } from '#/tool/toolInputDisplay';
+import type { ToolCall } from '#human/llm/message';
 
-import { stubPermissionModeService } from '../permissionMode/stubs';
 import { recordingTelemetry, type TelemetryRecord } from '../../app/telemetry/stubs';
+import { stubPermissionModeService } from '../permissionMode/stubs';
 
 const RETRY_GUIDANCE =
   "Try a different approach — don't retry the same call, don't attempt to bypass the restriction.";
@@ -104,7 +98,10 @@ describe('AgentToolApprovalService', () => {
           IAgentScopeContext,
           makeAgentScopeContext({ agentId: 'main', agentScope: 'main' }),
         );
-        reg.defineInstance(IAgentPermissionModeService, stubPermissionModeService(() => mode));
+        reg.defineInstance(
+          IAgentPermissionModeService,
+          stubPermissionModeService(() => mode),
+        );
         reg.defineInstance(IAgentPermissionRulesService, {
           _serviceBrand: undefined,
           rules: [],
@@ -114,14 +111,17 @@ describe('AgentToolApprovalService', () => {
             recorded.push(record);
           },
         });
-        reg.defineInstance(ISessionContext, makeSessionContext({
-          sessionId: 'test-session',
-          workspaceId: 'test-workspace',
-          sessionDir: '/tmp/test-session',
-          sessionScope: 'sessions/test-workspace/test-session',
-          metaScope: 'sessions/test-workspace/test-session/session-meta',
-          cwd: '/tmp/test-session',
-        }));
+        reg.defineInstance(
+          ISessionContext,
+          makeSessionContext({
+            sessionId: 'test-session',
+            workspaceId: 'test-workspace',
+            sessionDir: '/tmp/test-session',
+            sessionScope: 'sessions/test-workspace/test-session',
+            metaScope: 'sessions/test-workspace/test-session/session-meta',
+            cwd: '/tmp/test-session',
+          }),
+        );
         reg.defineInstance(ITelemetryService, recordingTelemetry(records));
         reg.defineInstance(IEventBus, eventBus);
         const dispatcher: IEventDispatcher = {
@@ -184,10 +184,7 @@ describe('AgentToolApprovalService', () => {
   }
 
   function useSubagentScope(): void {
-    ix.set(
-      IAgentScopeContext,
-      makeAgentScopeContext({ agentId: 'sub-1', agentScope: 'sub-1' }),
-    );
+    ix.set(IAgentScopeContext, makeAgentScopeContext({ agentId: 'sub-1', agentScope: 'sub-1' }));
     (eventBus as EventBusService).activateAgent(ix.get(IAgentScopeContext).agentContext);
   }
 
@@ -272,7 +269,11 @@ describe('AgentToolApprovalService', () => {
       const svc = make();
 
       await expect(
-        svc.requestToolApproval(makeContext('Bash', { command: 'printf first' }), ask(), 'fallback-ask'),
+        svc.requestToolApproval(
+          makeContext('Bash', { command: 'printf first' }),
+          ask(),
+          'fallback-ask',
+        ),
       ).resolves.toBeUndefined();
 
       expect(request).toHaveBeenCalledTimes(1);

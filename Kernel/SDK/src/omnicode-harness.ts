@@ -1,13 +1,12 @@
 import type { Kaos } from '@hilbras/omnicode-kaos';
 
+import type { OmnicodeAuthFacade } from '#/auth';
 import { ErrorCodes, OmnicodeError } from '#/errors';
 import type { ExperimentalFeatureState } from '#/flag';
 import type { ImageLimits } from '#/image';
-import { withTelemetryContext } from '#/telemetry';
-
-import { capabilityRpc, Session } from '#/session';
-import type { OmnicodeAuthFacade } from '#/auth';
 import type { SDKRpcClientBase } from '#/rpc';
+import { capabilityRpc, Session } from '#/session';
+import { withTelemetryContext } from '#/telemetry';
 import type {
   AuthenticateMcpServerOptions,
   AppMcpServerInspection,
@@ -32,6 +31,15 @@ import type {
   McpServerInfo,
   McpServerLocator,
   McpTestResult,
+  AgentProfileSummary,
+  ConnectorEntry,
+  GitHubConnectResult,
+  GitHubConnectionStatus,
+  GitHubDeviceFlowStart,
+  GitHubDisconnectResult,
+  VercelConnectResult,
+  VercelConnectionStatus,
+  VercelDisconnectResult,
   PluginCommandDef,
   PluginInfo,
   PluginSummary,
@@ -144,7 +152,11 @@ export class OmnicodeHarness {
     const summary =
       kaos === undefined && persistenceKaos === undefined
         ? await this.rpc.createSession(coreOptions)
-        : await this.rpc.createSessionWithKaos(coreOptions, kaos ?? persistenceKaos as Kaos, persistenceKaos);
+        : await this.rpc.createSessionWithKaos(
+            coreOptions,
+            kaos ?? (persistenceKaos as Kaos),
+            persistenceKaos,
+          );
     const session = new Session({
       id: summary.id,
       workDir: summary.workDir,
@@ -179,7 +191,11 @@ export class OmnicodeHarness {
     // the engine serializes behind that close.
     if (active !== undefined && !active.isClosed) {
       if (kaos !== undefined || persistenceKaos !== undefined) {
-        await this.rpc.resumeSessionWithKaos({ ...resumeInput, id }, kaos ?? persistenceKaos as Kaos, persistenceKaos);
+        await this.rpc.resumeSessionWithKaos(
+          { ...resumeInput, id },
+          kaos ?? (persistenceKaos as Kaos),
+          persistenceKaos,
+        );
       } else if (input.agentProfile !== undefined) {
         await this.rpc.resumeSession({ ...resumeInput, id });
       }
@@ -209,7 +225,11 @@ export class OmnicodeHarness {
     const summary =
       kaos === undefined && persistenceKaos === undefined
         ? await this.rpc.resumeSession({ ...resumeInput, id })
-        : await this.rpc.resumeSessionWithKaos({ ...resumeInput, id }, kaos ?? persistenceKaos as Kaos, persistenceKaos);
+        : await this.rpc.resumeSessionWithKaos(
+            { ...resumeInput, id },
+            kaos ?? (persistenceKaos as Kaos),
+            persistenceKaos,
+          );
     const session = new Session({
       id: summary.id,
       workDir: summary.workDir,
@@ -300,9 +320,7 @@ export class OmnicodeHarness {
 
   async renameSession(input: RenameSessionInput): Promise<void> {
     await this.rpc.renameSession(input);
-    this.activeSessions
-      .get(input.id)
-      ?.emitMetaUpdated({ title: input.title, isCustomTitle: true });
+    this.activeSessions.get(input.id)?.emitMetaUpdated({ title: input.title, isCustomTitle: true });
   }
 
   /**
@@ -342,11 +360,80 @@ export class OmnicodeHarness {
   }
 
   /**
+   * Agent profile definitions (subagent presets) configured for `workDir`,
+   * without creating a session. Scoped to that workspace.
+   */
+  async listWorkspaceAgentProfiles(workDir: string): Promise<readonly AgentProfileSummary[]> {
+    return this.rpc.listWorkspaceAgentProfiles(workDir);
+  }
+
+  /**
+   * The integration catalog for `workDir`: the MCP servers and plugins the
+   * workspace can reach, with their kind, status, scope and supported
+   * actions. Read-only; no credential material crosses this call.
+   */
+  async listWorkspaceConnectors(workDir: string): Promise<readonly ConnectorEntry[]> {
+    return this.rpc.listWorkspaceConnectors(workDir);
+  }
+
+  /**
+   * The GitHub account connection: whether a client id is configured, whether
+   * an account is connected, and the granted scopes. Never carries token
+   * material.
+   */
+  async getGitHubStatus(): Promise<GitHubConnectionStatus> {
+    return this.rpc.getGitHubStatus();
+  }
+
+  /**
+   * Starts the GitHub OAuth device flow. The user opens `verificationUri` and
+   * enters `userCode`; the returned `flowId` identifies the pending flow.
+   */
+  async startGitHubDeviceFlow(): Promise<GitHubDeviceFlowStart> {
+    return this.rpc.startGitHubDeviceFlow();
+  }
+
+  /** Polls a started GitHub device flow. */
+  async pollGitHubDeviceFlow(flowId: string): Promise<GitHubConnectResult> {
+    return this.rpc.pollGitHubDeviceFlow(flowId);
+  }
+
+  /** Removes the stored GitHub credential. */
+  async disconnectGitHub(): Promise<GitHubDisconnectResult> {
+    return this.rpc.disconnectGitHub();
+  }
+
+  /**
+   * The Vercel account connection: whether a token is available, whether an
+   * account is connected, and which account or team it is scoped to. Never
+   * carries token material.
+   */
+  async getVercelStatus(): Promise<VercelConnectionStatus> {
+    return this.rpc.getVercelStatus();
+  }
+
+  /**
+   * Connects the Vercel account. The token is taken from the argument, or
+   * from `vercel.token` / `OMNICODE_VERCEL_TOKEN` when omitted.
+   */
+  async connectVercel(token?: string): Promise<VercelConnectResult> {
+    return this.rpc.connectVercel(token);
+  }
+
+  /** Removes the stored Vercel credential. */
+  async disconnectVercel(): Promise<VercelDisconnectResult> {
+    return this.rpc.disconnectVercel();
+  }
+
+  /**
    * File suggestions for @ mention-style completion under `workDir`, no
    * session required. `undefined` on the v1 engine, which has no equivalent
    * capability; callers fall back to their own file search there.
    */
-  async suggestFiles(workDir: string, input: SuggestFilesInput): Promise<SuggestFilesResult | undefined> {
+  async suggestFiles(
+    workDir: string,
+    input: SuggestFilesInput,
+  ): Promise<SuggestFilesResult | undefined> {
     return this.rpc.suggestFiles(workDir, input);
   }
 
@@ -556,16 +643,16 @@ export class OmnicodeHarness {
     return this.rpc.removeGlobalMcpServer(name, options);
   }
 
-  async authenticateMcpServer(
-    name: string,
-    options: AuthenticateMcpServerOptions,
-  ): Promise<void> {
+  async authenticateMcpServer(name: string, options: AuthenticateMcpServerOptions): Promise<void> {
     const started = await this.rpc.beginGlobalMcpServerAuth(name, { cwd: options.cwd });
     if (started.status === 'already-authorized') return;
     try {
       const opened = await options.onAuthorizationUrl(started.authorizationUrl);
       if (opened === false) {
-        throw new OmnicodeError(ErrorCodes.REQUEST_INVALID, 'MCP OAuth authorization was cancelled');
+        throw new OmnicodeError(
+          ErrorCodes.REQUEST_INVALID,
+          'MCP OAuth authorization was cancelled',
+        );
       }
       await this.rpc.completeGlobalMcpServerAuth(
         { flowId: started.flowId, timeoutMs: options.timeoutMs },
@@ -577,10 +664,7 @@ export class OmnicodeHarness {
     }
   }
 
-  async resetMcpServerAuth(
-    name: string,
-    options: { readonly cwd?: string } = {},
-  ): Promise<void> {
+  async resetMcpServerAuth(name: string, options: { readonly cwd?: string } = {}): Promise<void> {
     return this.rpc.resetGlobalMcpServerAuth(name, options);
   }
 
@@ -598,7 +682,10 @@ export class OmnicodeHarness {
     try {
       const opened = await options.onAuthorizationUrl(started.authorizationUrl);
       if (opened === false) {
-        throw new OmnicodeError(ErrorCodes.REQUEST_INVALID, 'MCP OAuth authorization was cancelled');
+        throw new OmnicodeError(
+          ErrorCodes.REQUEST_INVALID,
+          'MCP OAuth authorization was cancelled',
+        );
       }
       await this.rpc.completeMcpServerAuth(
         { flowId: started.flowId, timeoutMs: options.timeoutMs },
@@ -618,10 +705,7 @@ export class OmnicodeHarness {
     return this.rpc.resetMcpServerAuth(locator, options);
   }
 
-  async testMcpServer(
-    name: string,
-    options: TestMcpServerOptions = {},
-  ): Promise<McpTestResult> {
+  async testMcpServer(name: string, options: TestMcpServerOptions = {}): Promise<McpTestResult> {
     return this.rpc.testGlobalMcpServer(name, options);
   }
 
@@ -637,8 +721,25 @@ export class OmnicodeHarness {
   }
 
   async close(): Promise<void> {
-    await Promise.all(Array.from(this.activeSessions.values(), (session) => session.close()));
-    await this.closeImpl();
+    // A session that fails to close must not keep the engine alive: the
+    // engine is what holds the file handles and the watchers.
+    const closed = await Promise.allSettled(
+      Array.from(this.activeSessions.values(), (session) => session.close()),
+    );
+    let closeFailure: Error | undefined;
+    try {
+      await this.closeImpl();
+    } catch (error) {
+      closeFailure = error instanceof Error ? error : new Error(String(error));
+    }
+    const failure = closed.find(
+      (result): result is PromiseRejectedResult => result.status === 'rejected',
+    );
+    if (failure !== undefined) {
+      if (failure.reason instanceof Error) throw failure.reason;
+      throw new Error(String(failure.reason));
+    }
+    if (closeFailure !== undefined) throw closeFailure;
   }
 
   private trackSessionEvent(eventSessionId: string, event: string): void {

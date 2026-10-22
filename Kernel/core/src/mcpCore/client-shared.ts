@@ -1,5 +1,11 @@
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import {
+  ErrorCode,
+  McpError,
+  ToolListChangedNotificationSchema,
+} from '@modelcontextprotocol/sdk/types.js';
+
 import { getCoreVersion } from '#/_base/version';
-import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 
 import type { MCPClient, MCPToolDefinition, MCPToolResult } from './types';
 
@@ -30,6 +36,14 @@ export const MCP_LIVENESS_PROBE_TIMEOUT_MS = 5_000;
 
 export function isMcpMalformedResultError(error: unknown): boolean {
   return error instanceof Error && error.name === 'ZodError';
+}
+
+export function installToolListChangedHandler(client: Client, listener: () => void): void {
+  client.setNotificationHandler(ToolListChangedNotificationSchema, () => {
+    try {
+      listener();
+    } catch {}
+  });
 }
 
 export async function probeMcpLiveness(client: MCPClient, signal: AbortSignal): Promise<boolean> {
@@ -63,6 +77,11 @@ interface SdkListedTool {
   readonly name: string;
   readonly description?: string;
   readonly inputSchema: Record<string, unknown>;
+  readonly annotations?: {
+    readonly readOnlyHint?: boolean;
+    readonly destructiveHint?: boolean;
+    readonly idempotentHint?: boolean;
+  };
 }
 
 export function toMcpToolDefinition(tool: SdkListedTool): MCPToolDefinition {
@@ -70,6 +89,7 @@ export function toMcpToolDefinition(tool: SdkListedTool): MCPToolDefinition {
     name: tool.name,
     description: tool.description ?? '',
     inputSchema: tool.inputSchema,
+    ...(tool.annotations === undefined ? {} : { annotations: tool.annotations }),
   };
 }
 

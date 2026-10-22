@@ -1,12 +1,17 @@
 import { release as osRelease, type as osType } from 'node:os';
 
-import type { McpServerInfo, SessionStatus, SessionUsage } from '@hilbras/omnicode-api';
+import type { SessionStatus, SessionUsage } from '@hilbras/omnicode-api';
 
-import { buildMcpStatusReportLines } from '../components/messages/mcp-status-panel';
-import { buildStatusReportLines } from '../components/messages/status-panel';
-import { buildUsageReportLines, UsagePanelComponent, type ManagedUsageReport } from '../components/messages/usage-panel';
-import { isExperimentalFlagEnabled } from './experimental-flags';
+import { openUrl } from '#/utils/open-url';
 import { quotaUsageRows } from '#/utils/usage/usage-format';
+
+import { submitFeedbackWithAttachments } from '../../feedback/feedback-attachments';
+import { buildStatusReportLines } from '../components/messages/status-panel';
+import {
+  buildUsageReportLines,
+  UsagePanelComponent,
+  type ManagedUsageReport,
+} from '../components/messages/usage-panel';
 import {
   FEEDBACK_ISSUE_URL,
   FEEDBACK_STATUS_CANCELLED,
@@ -23,11 +28,10 @@ import {
   withFeedbackVersionPrefix,
 } from '../constant/feedback';
 import { DEFAULT_OAUTH_PROVIDER_NAME, isManagedUsageProvider } from '../constant/omnicode-tui';
-import { submitFeedbackWithAttachments } from '../../feedback/feedback-attachments';
 import { formatErrorMessage } from '../utils/event-payload';
-import { openUrl } from '#/utils/open-url';
-import { promptFeedbackAttachment, promptFeedbackInput } from './prompts';
 import type { SlashCommandHost } from './dispatch';
+import { isExperimentalFlagEnabled } from './experimental-flags';
+import { promptFeedbackAttachment, promptFeedbackInput } from './prompts';
 
 // ---------------------------------------------------------------------------
 // Feedback
@@ -189,31 +193,10 @@ export async function showStatusReport(host: SlashCommandHost): Promise<void> {
     managedUsage: managedUsage?.usage,
     managedUsageError: managedUsage?.error,
   };
-  const panel = new UsagePanelComponent(() => buildStatusReportLines(reportArgs), 'primary', ' Status ');
-  host.state.transcriptContainer.addChild(panel);
-  host.state.ui.requestRender();
-}
-
-export async function showMcpServers(host: SlashCommandHost): Promise<void> {
-  let servers: readonly McpServerInfo[];
-  try {
-    if (host.session !== undefined) {
-      servers = await host.session.listMcpServers();
-    } else {
-      // v2 session-less: the MCP connection set is workspace-scoped, so it is
-      // inspectable before the first session exists.
-      servers = await host.harness.listWorkspaceMcpServers(host.state.appState.workDir);
-    }
-  } catch (error) {
-    host.showError(`Failed to load MCP servers: ${formatErrorMessage(error)}`);
-    return;
-  }
-
-  const title = servers.length > 0 ? ` MCP (${servers.length}) ` : ' MCP ';
   const panel = new UsagePanelComponent(
-    () => buildMcpStatusReportLines({ servers }),
+    () => buildStatusReportLines(reportArgs),
     'primary',
-    title,
+    ' Status ',
   );
   host.state.transcriptContainer.addChild(panel);
   host.state.ui.requestRender();
@@ -237,7 +220,9 @@ async function loadRuntimeStatusReport(host: SlashCommandHost): Promise<RuntimeS
   }
 }
 
-async function loadManagedUsageReport(host: SlashCommandHost): Promise<ManagedUsageResult | undefined> {
+async function loadManagedUsageReport(
+  host: SlashCommandHost,
+): Promise<ManagedUsageResult | undefined> {
   const alias = host.state.appState.model;
   const providerKey = host.state.appState.availableModels[alias]?.provider;
   if (!isManagedUsageProvider(providerKey)) return undefined;

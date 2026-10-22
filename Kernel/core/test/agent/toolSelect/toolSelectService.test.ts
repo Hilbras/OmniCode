@@ -1,20 +1,17 @@
+import { SelectToolsTool } from '@hilbras/omnicode-tools/select-tools/selectToolsTool';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DisposableStore, toDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import { createServices, type ServiceRegistration, type TestInstantiationService } from '#/_base/di/test';
-import { OrderedHookSlot } from '#/hooks';
-import { IEventBus } from '#/app/event/eventBus';
-import type { Event2, Event2Class } from '#/app/event/event2';
-import { IFlagService } from '#/app/flag/flag';
-import type { ModelCapability } from '#/llm-adapter/contract/capability';
-import type { ToolCall } from '#human/llm/message';
-import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
+import {
+  createServices,
+  type ServiceRegistration,
+  type TestInstantiationService,
+} from '#/_base/di/test';
 import { ContextSpliced } from '#/agent/contextMemory/contextEvents';
+import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { UndoCut } from '#/agent/contextMemory/contextOps';
-import type { ContextMessage } from '#/agent/contextMemory/types';
 import type { LoopRecordedEvent } from '#/agent/contextMemory/loopEventFold';
-import { IAgentReminderService } from '#/features/reminder/reminderService';
-import { createReminderHarness } from '../../features/reminder/stubs';
+import type { ContextMessage } from '#/agent/contextMemory/types';
 import { CompactionCompleted } from '#/agent/fullCompaction/compactionOps';
 import {
   IAgentLoopService,
@@ -27,18 +24,19 @@ import {
 } from '#/agent/loop/loop';
 import { TurnStarted } from '#/agent/loop/turnEvents';
 import { IAgentProfileService } from '#/agent/profile/profile';
-import { IAgentToolPolicyService } from '#/agent/toolPolicy/toolPolicy';
 import { IAgentScopeContext, makeAgentScopeContext } from '#/agent/scopeContext/scopeContext';
-import type {
-  ExecutableTool,
-  ToolDisclosure,
-  ToolExecution,
-} from '#/tool/toolContract';
-import { IAgentToolExecutorService, type ToolExecutionResult } from '#/agent/toolExecutor/toolExecutor';
+import {
+  IAgentToolExecutorService,
+  type ToolExecutionResult,
+} from '#/agent/toolExecutor/toolExecutor';
 import { AgentToolExecutorService } from '#/agent/toolExecutor/toolExecutorService';
+import { IAgentToolPolicyService } from '#/agent/toolPolicy/toolPolicy';
 import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { AgentToolRegistryService } from '#/agent/toolRegistry/toolRegistryService';
-import { DYNAMIC_TOOL_SCHEMA_VARIANT, LOADABLE_TOOLS_VARIANT } from '#/agent/toolSelect/dynamicTools';
+import {
+  DYNAMIC_TOOL_SCHEMA_VARIANT,
+  LOADABLE_TOOLS_VARIANT,
+} from '#/agent/toolSelect/dynamicTools';
 import { TOOL_SELECT_FLAG_ID } from '#/agent/toolSelect/flag';
 import { IAgentToolSelectService, SELECT_TOOLS_TOOL_NAME } from '#/agent/toolSelect/toolSelect';
 import { IAgentToolSelectAnnouncementsService } from '#/agent/toolSelect/toolSelectAnnouncements';
@@ -46,12 +44,21 @@ import { AgentToolSelectAnnouncementsService } from '#/agent/toolSelect/toolSele
 import { IAgentToolSelectSchemasService } from '#/agent/toolSelect/toolSelectSchemas';
 import { AgentToolSelectSchemasService } from '#/agent/toolSelect/toolSelectSchemasService';
 import { AgentToolSelectService } from '#/agent/toolSelect/toolSelectService';
-import { SelectToolsTool } from '@hilbras/omnicode-tools/select-tools/selectToolsTool';
+import type { Event2, Event2Class } from '#/app/event/event2';
+import { IEventBus } from '#/app/event/eventBus';
+import { IFlagService } from '#/app/flag/flag';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
-import { IWireService } from '#/wire/wire';
+import { IAgentReminderService } from '#/features/reminder/reminderService';
+import { OrderedHookSlot } from '#/hooks';
+import type { ModelCapability } from '#/llm-adapter/contract/capability';
 import { IEventDispatcher } from '#/state/eventDispatcher';
+import type { ExecutableTool, ToolDisclosure, ToolExecution } from '#/tool/toolContract';
+import { IWireService } from '#/wire/wire';
+import type { ToolCall } from '#human/llm/message';
+
 import { registerLogServices } from '../../_base/log/stubs';
 import { recordingTelemetry } from '../../app/telemetry/stubs';
+import { createReminderHarness } from '../../features/reminder/stubs';
 import { registerStateServices } from '../../state/stubs';
 import { stubToolExecutor, stubWire } from '../loop/stubs';
 import { registerToolResultTruncationServices } from '../toolResultTruncation/stubs';
@@ -85,10 +92,12 @@ beforeEach(() => {
 
 afterEach(() => disposables.dispose());
 
-function makeCapabilities(overrides: {
-  readonly tool_use?: boolean;
-  readonly dynamically_loaded_tools?: boolean;
-} = {}): ModelCapability {
+function makeCapabilities(
+  overrides: {
+    readonly tool_use?: boolean;
+    readonly dynamically_loaded_tools?: boolean;
+  } = {},
+): ModelCapability {
   return {
     image_in: false,
     video_in: false,
@@ -188,7 +197,8 @@ class RecordingEventBus implements IEventBus {
         if (index >= 0) this.allHandlers.splice(index, 1);
       });
     }
-    const type = typeof typeOrHandler === 'string' ? typeOrHandler : (typeOrHandler as Event2Class).type;
+    const type =
+      typeof typeOrHandler === 'string' ? typeOrHandler : (typeOrHandler as Event2Class).type;
     const list = this.typedHandlers.get(type) ?? [];
     const handler = maybeHandler!;
     list.push(handler);
@@ -354,10 +364,7 @@ function registerSharedServices(
       eventBus.publish(event);
     },
   } as unknown as IEventDispatcher);
-  reg.defineInstance(
-    IAgentReminderService,
-    createReminderHarness(loop, contextMemory, eventBus),
-  );
+  reg.defineInstance(IAgentReminderService, createReminderHarness(loop, contextMemory, eventBus));
   reg.define(IAgentToolRegistryService, AgentToolRegistryService);
   reg.define(IAgentToolSelectService, AgentToolSelectService);
   reg.define(IAgentToolSelectAnnouncementsService, AgentToolSelectAnnouncementsService);
@@ -404,7 +411,10 @@ function createExecutorHarness(): ExecutorHarness {
     additionalServices: (reg) => {
       registerSharedServices(reg, contextMemory, loop, eventBus);
       reg.defineInstance(ITelemetryService, recordingTelemetry([]));
-      reg.defineInstance(IAgentScopeContext, makeAgentScopeContext({ agentId: 'main', agentScope: '' }));
+      reg.defineInstance(
+        IAgentScopeContext,
+        makeAgentScopeContext({ agentId: 'main', agentScope: '' }),
+      );
       reg.define(IAgentToolExecutorService, AgentToolExecutorService);
       registerToolResultTruncationServices(reg);
     },
@@ -436,11 +446,7 @@ function registerBuiltin(h: Harness, tool: EchoTool): void {
   disposables.add(h.registry.register(tool, { source: 'builtin' }));
 }
 
-function registerUser(
-  h: Harness,
-  tool: EchoTool,
-  disclosure?: ToolDisclosure,
-): IDisposable {
+function registerUser(h: Harness, tool: EchoTool, disclosure?: ToolDisclosure): IDisposable {
   const registration = h.registry.register(tool, { source: 'user', disclosure });
   disposables.add(registration);
   return registration;
@@ -470,7 +476,8 @@ async function announce(h: Harness, step = 1): Promise<string | undefined> {
 
 async function announceAfterCompaction(h: Harness): Promise<string | undefined> {
   h.eventBus.publish(
-    new ContextSpliced({ agentId: 'main',
+    new ContextSpliced({
+      agentId: 'main',
       start: 0,
       deleteCount: 1,
       messages: [
@@ -691,10 +698,7 @@ describe('AgentToolSelectService view shaping (gate open)', () => {
     activeToolNames = new Set([MCP_ALPHA]);
 
     const shaped = h.sut.shapeTools(h.registry.list());
-    expect(shaped.map((entry) => entry.name)).toEqual([
-      MCP_ALPHA,
-      SELECT_TOOLS_TOOL_NAME,
-    ]);
+    expect(shaped.map((entry) => entry.name)).toEqual([MCP_ALPHA, SELECT_TOOLS_TOOL_NAME]);
   });
 
   it('hides select_tools when an explicit policy disables disclosure', () => {
@@ -747,9 +751,7 @@ describe('AgentToolSelectService view shaping (gate open)', () => {
       suggestions: {},
       loadable: [],
     });
-    expect(h.contextMemory.get()[0]?.tools?.map((tool) => tool.name)).toEqual([
-      USER_DEFERRED,
-    ]);
+    expect(h.contextMemory.get()[0]?.tools?.map((tool) => tool.name)).toEqual([USER_DEFERRED]);
   });
 
   it('shapeHistory removes a deferred schema after re-registering the user tool inline', () => {
@@ -762,9 +764,7 @@ describe('AgentToolSelectService view shaping (gate open)', () => {
     const inline = h.sut
       .shapeTools(h.registry.list())
       .find((entry) => entry.name === USER_DEFERRED);
-    expect(inline).toEqual(
-      expect.objectContaining({ name: USER_DEFERRED, disclosure: undefined }),
-    );
+    expect(inline).toEqual(expect.objectContaining({ name: USER_DEFERRED, disclosure: undefined }));
     expect(inline?.deferred).toBeUndefined();
     expect(h.sut.load([USER_DEFERRED])).toEqual({
       toLoad: [],
@@ -873,7 +873,8 @@ describe('AgentToolSelectService.load', () => {
 
     h.sut.load([MCP_ALPHA]);
     h.eventBus.publish(
-      new CompactionCompleted({ agentId: 'main',
+      new CompactionCompleted({
+        agentId: 'main',
         result: { summary: '', compactedCount: 0, tokensBefore: 0, tokensAfter: 0 },
       }),
     );
@@ -885,7 +886,9 @@ describe('AgentToolSelectService.load', () => {
     registerMcp(h, new StubMcpTool(MCP_ALPHA));
 
     h.sut.load([MCP_ALPHA]);
-    h.eventBus.publish(new ContextSpliced({ agentId: 'main', start: 0, deleteCount: 2, messages: [] }));
+    h.eventBus.publish(
+      new ContextSpliced({ agentId: 'main', start: 0, deleteCount: 2, messages: [] }),
+    );
     expect(h.sut.load([MCP_ALPHA]).toLoad).toEqual([MCP_ALPHA]);
   });
 
@@ -895,7 +898,8 @@ describe('AgentToolSelectService.load', () => {
 
     h.sut.load([MCP_ALPHA]);
     h.eventBus.publish(
-      new ContextSpliced({ agentId: 'main',
+      new ContextSpliced({
+        agentId: 'main',
         start: 0,
         deleteCount: 2,
         messages: [userMessage('Compacted summary.')],
@@ -920,7 +924,9 @@ describe('AgentToolSelectService.load', () => {
     expect(h.sut.load([MCP_BETA]).alreadyAvailable).toEqual([MCP_BETA]);
 
     h.contextMemory.history.splice(1, 1);
-    h.eventBus.publish(new ContextSpliced({ agentId: 'main', start: 1, deleteCount: 2, messages: [] }));
+    h.eventBus.publish(
+      new ContextSpliced({ agentId: 'main', start: 1, deleteCount: 2, messages: [] }),
+    );
 
     expect(h.sut.load([MCP_ALPHA]).alreadyAvailable).toEqual([MCP_ALPHA]);
     expect(h.sut.load([MCP_BETA]).toLoad).toEqual([MCP_BETA]);
@@ -932,7 +938,12 @@ describe('AgentToolSelectService.load', () => {
 
     h.sut.load([MCP_ALPHA]);
     h.eventBus.publish(
-      new ContextSpliced({ agentId: 'main', start: 3, deleteCount: 0, messages: [userMessage('x')] }),
+      new ContextSpliced({
+        agentId: 'main',
+        start: 3,
+        deleteCount: 0,
+        messages: [userMessage('x')],
+      }),
     );
     expect(h.sut.load([MCP_ALPHA]).alreadyAvailable).toEqual([MCP_ALPHA]);
   });
@@ -1043,7 +1054,7 @@ describe('AgentToolSelectService.load', () => {
       alreadyAvailable: [],
       alreadyCallable: [],
       unknown: ['MCP__SRV__ALPHA'],
-      suggestions: { 'MCP__SRV__ALPHA': [MCP_ALPHA] },
+      suggestions: { MCP__SRV__ALPHA: [MCP_ALPHA] },
       loadable: [MCP_ALPHA],
     });
   });
@@ -1057,7 +1068,7 @@ describe('AgentToolSelectService.load', () => {
       alreadyAvailable: [],
       alreadyCallable: [],
       unknown: ['mcp__alpha'],
-      suggestions: { 'mcp__alpha': [MCP_ALPHA] },
+      suggestions: { mcp__alpha: [MCP_ALPHA] },
       loadable: [MCP_ALPHA],
     });
   });
@@ -1071,7 +1082,7 @@ describe('AgentToolSelectService.load', () => {
       alreadyAvailable: [],
       alreadyCallable: [],
       unknown: ['alpha_extra'],
-      suggestions: { 'alpha_extra': [MCP_ALPHA] },
+      suggestions: { alpha_extra: [MCP_ALPHA] },
       loadable: [MCP_ALPHA],
     });
   });
@@ -1161,8 +1172,7 @@ describe('AgentToolSelectService executor interception', () => {
 
     expect(results).toHaveLength(1);
     expect(results[0]!.result).toEqual({
-      output:
-        `Tool "${MCP_ALPHA}" was loaded but is no longer active. Ask the user to enable it before calling it again.`,
+      output: `Tool "${MCP_ALPHA}" was loaded but is no longer active. Ask the user to enable it before calling it again.`,
       isError: true,
       stopTurn: false,
     });

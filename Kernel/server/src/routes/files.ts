@@ -1,18 +1,12 @@
 import multipart from '@fastify/multipart';
-
-import {
-  ErrorCodes,
-  IFileService,
-  Error2,
-  type Scope,
-} from '@hilbras/omnicode-core';
+import { ErrorCodes, IFileService, Error2, type Scope } from '@hilbras/omnicode-core';
 import { z } from 'zod';
 
-import { requestLog } from '../lib/requestLog';
 import { buildContentDisposition } from '../lib/contentDisposition';
+import { requestLog } from '../lib/requestLog';
 import { defineRoute } from '../middleware/defineRoute';
-import { ErrorCode } from '../protocol/error-codes';
 import { errEnvelope, okEnvelope } from '../protocol/envelope';
+import { ErrorCode } from '../protocol/error-codes';
 import {
   deleteFileParamSchema,
   deleteFileResponseSchema,
@@ -60,10 +54,12 @@ interface FilesReply {
   send(payload: unknown): unknown;
 }
 
+export const MAX_UPLOAD_BYTES = 64 * 1024 * 1024;
+
 export function registerFilesRoutes(app: FilesRouteHost, core: Scope): void {
   app.register(multipart, {
     limits: {
-      fileSize: Number.MAX_SAFE_INTEGER,
+      fileSize: MAX_UPLOAD_BYTES,
       files: 1,
     },
   });
@@ -206,6 +202,18 @@ function sendMappedError(reply: FilesReply, req: { id: string }, err: unknown): 
     reply.code(404).send(errEnvelope(ErrorCode.FILE_NOT_FOUND, 'file not found', requestId));
     return;
   }
+  if (isFileTooLarge(err)) {
+    reply
+      .code(413)
+      .send(
+        errEnvelope(
+          ErrorCode.FILE_TOO_LARGE,
+          `the file is larger than the ${String(MAX_UPLOAD_BYTES)} byte limit`,
+          requestId,
+        ),
+      );
+    return;
+  }
   requestLog(req)?.error({ err }, 'file request failed');
   reply
     .code(500)
@@ -216,6 +224,12 @@ function sendMappedError(reply: FilesReply, req: { id: string }, err: unknown): 
         requestId,
       ),
     );
+}
+
+function isFileTooLarge(err: unknown): boolean {
+  if (typeof err !== 'object' || err === null) return false;
+  const code = (err as { code?: unknown }).code;
+  return code === 'FST_REQ_FILE_TOO_LARGE' || code === 'FST_ERR_CTP_BODY_TOO_LARGE';
 }
 
 const fieldValueSchema = z.object({ value: z.unknown() });

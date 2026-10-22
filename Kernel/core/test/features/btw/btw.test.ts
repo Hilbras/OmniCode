@@ -2,8 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { SyncDescriptor } from '#/_base/di/descriptors';
 import { DisposableStore } from '#/_base/di/lifecycle';
-import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { TestInstantiationService } from '#/_base/di/test';
+import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentToolApprovalService } from '#/agent/toolApproval/toolApproval';
 import { IAgentToolExecutorService } from '#/agent/toolExecutor/toolExecutor';
 import {
@@ -14,11 +14,14 @@ import {
 } from '#/features/btw/btw';
 import { SessionBtwService } from '#/features/btw/btwService';
 import { IAgentReminderService } from '#/features/reminder/reminderService';
-import type { ToolCall } from '#human/llm/message';
 import { IAgentLifecycleService } from '#/session/agentLifecycle/agentLifecycle';
+import type { ToolCall } from '#human/llm/message';
 
-import { stubToolExecutorEvents, type ToolExecutorEventStubs } from '../../agent/toolExecutor/stubs';
 import { stubAgentContext } from '../../agent/agentContext/stubs';
+import {
+  stubToolExecutorEvents,
+  type ToolExecutorEventStubs,
+} from '../../agent/toolExecutor/stubs';
 
 describe('SessionBtwService', () => {
   let disposables: DisposableStore;

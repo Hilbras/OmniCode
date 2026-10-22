@@ -5,7 +5,7 @@ description: Help the user craft a well-specified `/goal` objective for goal mod
 
 # Write a good goal (write-goal)
 
-Help the user turn a rough intention into a `/goal` objective that goal mode can pursue across many turns without supervision. A goal is not a task description — it is a completion contract. It says what must become *true*, how that truth is *proven*, where the work may and may not *reach*, and when to *stop and report* instead of grinding on.
+Help the user turn a rough intention into a `/goal` objective that goal mode can pursue across many turns without supervision. A goal is not a task description — it is a completion contract. It says what must become _true_, how that truth is _proven_, where the work may and may not _reach_, and when to _stop and report_ instead of grinding on.
 
 This skill is about authoring the objective text together with the user. Drafting and starting are separate steps: you settle the wording first, and only once the user has approved it do you start the goal by calling `CreateGoal`. The user still gets a final confirmation before it runs.
 
@@ -15,7 +15,7 @@ This skill is about authoring the objective text together with the user. Draftin
 
 Goal authoring is a chain of choices — what to scope, which phrasing, whether to add a budget and how large, which permission mode to start under. For every one of them: **stop and call `AskUserQuestion`.** Batch related choices in the same `AskUserQuestion` call when that helps the user decide. Do not write a paragraph that lists options and asks the user to reply in prose. Do not say "let me know if you'd prefer A or B." Do not bundle three questions into a wall of text. If you catch yourself typing out choices for the user to answer in free text, delete it and call `AskUserQuestion` instead.
 
-A prose menu is a defect, not a style choice: it is slower for the user, easy to skim past, and usually gets a vague answer that forces another round. The only time you may ask in plain text is when `AskUserQuestion` is genuinely unavailable — auto mode, or a host that does not support it — and only then do you fall back to a short message with clearly labelled options and wait. Plain prose for *open-ended* input ("what would prove this is done?") is fine; the rule is about **choices between options**, which always use the tool.
+A prose menu is a defect, not a style choice: it is slower for the user, easy to skim past, and usually gets a vague answer that forces another round. The only time you may ask in plain text is when `AskUserQuestion` is genuinely unavailable — auto mode, or a host that does not support it — and only then do you fall back to a short message with clearly labelled options and wait. Plain prose for _open-ended_ input ("what would prove this is done?") is fine; the rule is about **choices between options**, which always use the tool.
 
 ## Rules of engagement
 
@@ -33,7 +33,7 @@ The strongest goals share one shape: they define **proof, not effort**. "Keep im
 2. **Proof** — the observable evidence that the end state holds. Prefer things the agent can run and you can inspect afterward: a command's exit code, a test count, a `grep`/`rg` with no hits, a file that now exists, a metric over a threshold.
 3. **Boundaries** — what the work may and may not touch. Name the scope (which module, which directory) and the off-limits actions (do not edit the spec, do not change unrelated files, do not make destructive data changes).
 4. **The loop** — when the work is iterative, say how to iterate: rerun the check after each change, work through the queue item by item, replay the failing cases until they pass.
-5. **The stop rule** — how to end honestly when "done" is not reachable. A "stop and ask before widening scope" clause and an explicit blocked path ("if an external service is down, record it and move on") let the agent report instead of faking a pass or looping forever. This is about *honesty*, not a spending limit — keep it separate from any budget (see below).
+5. **The stop rule** — how to end honestly when "done" is not reachable. A "stop and ask before widening scope" clause and an explicit blocked path ("if an external service is down, record it and move on") let the agent report instead of faking a pass or looping forever. This is about _honesty_, not a spending limit — keep it separate from any budget (see below).
 
 Two habits make almost any goal better:
 
@@ -81,14 +81,14 @@ Not every goal needs every line, and none of them is a turn cap — the goal sto
 
 ## Common mistakes
 
-| Mistake | Better |
-| --- | --- |
-| Starting or suggesting a goal the user did not ask for | Only draft a goal once the user asks; mention the option at most once otherwise |
-| Drafting in English when the user is writing in another language | Match the user's language (or the project / memory preference) |
-| Running the goal before the user has seen the exact text | Show the full draft and get agreement first |
-| Polishing the goal silently against the user's stated wishes | Note the trade-off once, then write the goal they asked for |
-| Burying a discrete choice in prose | Offer the options with AskUserQuestion (plain labelled options if it is unavailable) |
-| Specifying effort ("keep improving X") | Specify proof ("done when check X passes") |
+| Mistake                                                             | Better                                                                                  |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| Starting or suggesting a goal the user did not ask for              | Only draft a goal once the user asks; mention the option at most once otherwise         |
+| Drafting in English when the user is writing in another language    | Match the user's language (or the project / memory preference)                          |
+| Running the goal before the user has seen the exact text            | Show the full draft and get agreement first                                             |
+| Polishing the goal silently against the user's stated wishes        | Note the trade-off once, then write the goal they asked for                             |
+| Burying a discrete choice in prose                                  | Offer the options with AskUserQuestion (plain labelled options if it is unavailable)    |
+| Specifying effort ("keep improving X")                              | Specify proof ("done when check X passes")                                              |
 | Baking a turn cap into the objective or setting a budget unprompted | Let the goal stop on its proof; suggest a budget only when useful, framed on token cost |
-| No blocked path | Add an explicit "stop and report" rule for blockers |
-| A goal with no way to verify completion | Anchor it to tests, a search, a metric, or another inspectable check |
+| No blocked path                                                     | Add an explicit "stop and report" rule for blockers                                     |
+| A goal with no way to verify completion                             | Anchor it to tests, a search, a metric, or another inspectable check                    |

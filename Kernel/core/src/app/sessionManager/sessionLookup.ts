@@ -2,7 +2,10 @@ import type { ServicesAccessor } from '#/_base/di/instantiation';
 import type { IDisposable } from '#/_base/di/lifecycle';
 import type { ISessionScopeHandle } from '#/_base/di/scope';
 import { ISessionIndex } from '#/app/sessionIndex/sessionIndex';
-import { ISessionManager, type ISessionManager as SessionManager } from '#/app/sessionManager/sessionManager';
+import {
+  ISessionManager,
+  type ISessionManager as SessionManager,
+} from '#/app/sessionManager/sessionManager';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { isError2 } from '#/errors';
 import type { Program } from '#/program/program';

@@ -16,7 +16,6 @@ import {
 import { readCustomRegistrySource } from '@hilbras/omnicode-auth';
 
 import { createOmnicodeCodeUserAgent } from '#/cli/version';
-import { fetchCatalogOrBuiltIn } from '#/utils/catalog-fetch';
 import {
   BUILT_IN_PROVIDERS,
   getBuiltInProvider,
@@ -31,25 +30,25 @@ import {
   pruneRetiredFreeTierAliases,
   type CatalogLimit,
 } from '#/utils/builtin-model-import';
+import { fetchCatalogOrBuiltIn } from '#/utils/catalog-fetch';
 import {
   buildCustomProviderRecord,
   deriveProviderId,
   parseProviderBaseUrl,
 } from '#/utils/custom-provider';
-import { refreshAllProviderModels } from '../utils/refresh-providers';
-import type { RefreshProviderHost, RefreshResult } from '../utils/refresh-providers';
 import { refreshOmnicodeRegion } from '#/utils/region';
+
 import { ChoicePickerComponent, type ChoiceOption } from '../components/dialogs/choice-picker';
-import {
-  CustomRegistryImportDialogComponent,
-  type CustomRegistryImportResult,
-  type CustomRegistryImportValue,
-} from '../components/dialogs/custom-registry-import';
 import {
   CustomProviderDialogComponent,
   type CustomProviderResult,
   type CustomProviderValue,
 } from '../components/dialogs/custom-provider';
+import {
+  CustomRegistryImportDialogComponent,
+  type CustomRegistryImportResult,
+  type CustomRegistryImportValue,
+} from '../components/dialogs/custom-registry-import';
 import {
   ProviderManagerComponent,
   type ProviderManagerOptions,
@@ -57,14 +56,12 @@ import {
 import { TabbedModelSelectorComponent } from '../components/dialogs/tabbed-model-selector';
 import { DEFAULT_OAUTH_PROVIDER_NAME } from '../constant/omnicode-tui';
 import { formatErrorMessage } from '../utils/event-payload';
+import { refreshAllProviderModels } from '../utils/refresh-providers';
+import type { RefreshProviderHost, RefreshResult } from '../utils/refresh-providers';
 import { thinkingEffortToConfig } from '../utils/thinking-config';
 import { effectiveModelForHost } from './config';
-import {
-  promptApiKey,
-  promptBaseUrl,
-  promptCatalogProviderSelection,
-} from './prompts';
 import type { SlashCommandHost } from './dispatch';
+import { promptApiKey, promptBaseUrl, promptCatalogProviderSelection } from './prompts';
 
 // ---------------------------------------------------------------------------
 // /provider command
@@ -80,8 +77,7 @@ export async function handleProviderCommand(host: SlashCommandHost): Promise<voi
 }
 
 function buildProviderManagerOptions(host: SlashCommandHost): ProviderManagerOptions {
-  const activeProviderId =
-    host.state.appState.availableModels[host.state.appState.model]?.provider;
+  const activeProviderId = host.state.appState.availableModels[host.state.appState.model]?.provider;
   return {
     providers: host.state.appState.availableProviders,
     activeProviderId,
@@ -317,7 +313,9 @@ async function handleProviderEditKey(
     });
   } catch (error) {
     spinner.stop({ ok: false, label: 'Key saved; model refresh failed.' });
-    host.showError(`Key saved for ${label}, refreshing models failed: ${formatErrorMessage(error)}`);
+    host.showError(
+      `Key saved for ${label}, refreshing models failed: ${formatErrorMessage(error)}`,
+    );
     return;
   }
 
@@ -344,8 +342,7 @@ async function handleProviderDelete(host: SlashCommandHost, providerId: string):
     return;
   }
 
-  const activeProvider =
-    host.state.appState.availableModels[host.state.appState.model]?.provider;
+  const activeProvider = host.state.appState.availableModels[host.state.appState.model]?.provider;
   const config = await host.harness.removeProvider(providerId);
   if (activeProvider === providerId) {
     await host.authFlow.refreshConfigAfterLogout();
@@ -415,12 +412,15 @@ async function handleCustomEndpointAdd(host: SlashCommandHost): Promise<void> {
     ...BUILT_IN_PROVIDERS.map((provider) => provider.id),
   ]);
 
-  await addProviderAndSelectModel(host, { providerId, name: providerId, baseUrl: check.baseUrl }, () =>
-    saveProviderRecord(
-      host,
-      providerId,
-      buildCustomProviderRecord(check.baseUrl, value.apiKey, value.authScheme),
-    ),
+  await addProviderAndSelectModel(
+    host,
+    { providerId, name: providerId, baseUrl: check.baseUrl },
+    () =>
+      saveProviderRecord(
+        host,
+        providerId,
+        buildCustomProviderRecord(check.baseUrl, value.apiKey, value.authScheme),
+      ),
   );
 }
 
@@ -444,10 +444,7 @@ function promptCustomProvider(host: SlashCommandHost): Promise<CustomProviderVal
  * itself is delegated to the same refresh orchestrator the CLI uses, so the
  * two surfaces cannot drift.
  */
-async function handleBuiltinProviderAdd(
-  host: SlashCommandHost,
-  providerId: string,
-): Promise<void> {
+async function handleBuiltinProviderAdd(host: SlashCommandHost, providerId: string): Promise<void> {
   const builtin = getBuiltInProvider(providerId);
   if (builtin === undefined) {
     host.showError(`Unknown built-in provider "${providerId}".`);
@@ -456,17 +453,13 @@ async function handleBuiltinProviderAdd(
   }
 
   const alreadyConfigured = host.state.appState.availableProviders[builtin.id] !== undefined;
-  const apiKey = await promptApiKey(
-    host,
-    builtin.name,
-    [
-      `Get a key at ${builtin.consoleUrl}`,
-      ...(builtin.keyHint === undefined ? [] : [`Keys look like ${builtin.keyHint}…`]),
-      alreadyConfigured
-        ? `Replaces the key currently saved for "${builtin.id}".`
-        : 'Your key will be saved to ~/.omnicode/config.toml',
-    ],
-  );
+  const apiKey = await promptApiKey(host, builtin.name, [
+    `Get a key at ${builtin.consoleUrl}`,
+    ...(builtin.keyHint === undefined ? [] : [`Keys look like ${builtin.keyHint}…`]),
+    alreadyConfigured
+      ? `Replaces the key currently saved for "${builtin.id}".`
+      : 'Your key will be saved to ~/.omnicode/config.toml',
+  ]);
   if (apiKey === undefined) return;
 
   const previousFreeAliases = await snapshotFreeTierAliases(host, builtin.id);
@@ -491,7 +484,8 @@ async function handleBuiltinProviderAdd(
         // loses the vendor's off-limits list so it re-offers models the
         // gateway refuses to serve.
         protocolOverrides: builtin.protocolOverrides,
-        excludedModels: builtin.excludedModels === undefined ? undefined : [...builtin.excludedModels],
+        excludedModels:
+          builtin.excludedModels === undefined ? undefined : [...builtin.excludedModels],
       }),
   );
 }
@@ -875,9 +869,7 @@ async function handleCatalogProviderAdd(host: SlashCommandHost): Promise<void> {
   const apiKey = await promptApiKey(
     host,
     entry.name ?? providerId,
-    alreadyConfigured
-      ? [`Replaces the key currently saved for "${providerId}".`]
-      : undefined,
+    alreadyConfigured ? [`Replaces the key currently saved for "${providerId}".`] : undefined,
   );
   if (apiKey === undefined) return;
 
@@ -896,7 +888,7 @@ async function handleCatalogProviderAdd(host: SlashCommandHost): Promise<void> {
     apiKey,
     models,
     selectedModelId: '', // no default yet; user picks in the model selector
-    thinking: false,    // will be resolved by the model selector
+    thinking: false, // will be resolved by the model selector
   });
 
   await host.harness.setConfig({
@@ -1070,12 +1062,10 @@ function promptCustomRegistryImport(
   host: SlashCommandHost,
 ): Promise<CustomRegistryImportValue | undefined> {
   return new Promise((resolve) => {
-    const dialog = new CustomRegistryImportDialogComponent(
-      (result: CustomRegistryImportResult) => {
-        host.restoreEditor();
-        resolve(result.kind === 'ok' ? result.value : undefined);
-      },
-    );
+    const dialog = new CustomRegistryImportDialogComponent((result: CustomRegistryImportResult) => {
+      host.restoreEditor();
+      resolve(result.kind === 'ok' ? result.value : undefined);
+    });
     host.mountEditorReplacement(dialog);
   });
 }

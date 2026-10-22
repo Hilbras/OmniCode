@@ -7,3 +7,6 @@ for (const key of Object.keys(process.env)) {
 process.env['OMNICODE_SEARCH_WORKER'] = 'false';
 
 process.env['OMNICODE_PERSISTENCE_MINIDB_READMODEL'] = 'false';
+
+import '@hilbras/omnicode-addons';
+import '@hilbras/omnicode-tools';

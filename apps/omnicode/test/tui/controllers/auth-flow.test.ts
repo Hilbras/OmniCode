@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  AuthFlowController,
-  type AuthFlowHost,
-} from '#/tui/controllers/auth-flow';
+import { AuthFlowController, type AuthFlowHost } from '#/tui/controllers/auth-flow';
 
 function makeHost(
   options: {
@@ -35,7 +32,9 @@ function makeHost(
       createSession: vi.fn(async () => ({ id: 'ses-new', summary: { title: null } })),
       getConfig: vi.fn(async () => ({
         defaultModel: options.defaultModel,
-        models: { k2: { provider: 'managed:omnicode', model: 'omnicode-k2', maxContextSize: 200_000 } },
+        models: {
+          k2: { provider: 'managed:omnicode', model: 'omnicode-k2', maxContextSize: 200_000 },
+        },
         providers: {},
       })),
     },

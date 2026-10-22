@@ -14,13 +14,7 @@
  */
 
 import type { ModelAlias } from '@hilbras/omnicode-api';
-import {
-  Container,
-  Key,
-  matchesKey,
-  truncateToWidth,
-  type Focusable,
-} from '@hilbras/omnicode-tui';
+import { Container, Key, matchesKey, truncateToWidth, type Focusable } from '@hilbras/omnicode-tui';
 
 import { currentTheme } from '#/tui/theme';
 import { renderTabStrip } from '#/tui/utils/tab-strip';

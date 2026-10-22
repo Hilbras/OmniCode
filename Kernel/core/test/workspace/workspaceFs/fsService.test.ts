@@ -2,7 +2,7 @@ import { isAbsolute, join, relative, resolve } from 'node:path';
 import { Readable, Writable } from 'node:stream';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { LifecycleScope } from '#/app/scopes';
+
 import {
   ScopeActivation,
   _clearScopedRegistryForTests,
@@ -10,18 +10,19 @@ import {
 } from '#/_base/di/scope';
 import { createScopedTestHost, stubPair } from '#/_base/di/test';
 import { IGitService } from '#/app/git/git';
+import { LifecycleScope } from '#/app/scopes';
+import { ITelemetryService, type TelemetryProperties } from '#/app/telemetry/telemetry';
 import { ErrorCodes, Error2 } from '#/errors';
+import { IHostEnvironment } from '#/os/interface/hostEnvironment';
 import { type HostDirEntry, IHostFileSystem } from '#/os/interface/hostFileSystem';
 import { IHostProcessService, type IHostProcess } from '#/os/interface/hostProcess';
-import { IWorkspaceFsService } from '#/workspace/workspaceFs/fs';
-import { WorkspaceFsService } from '#/workspace/workspaceFs/fsService';
-import { IHostEnvironment } from '#/os/interface/hostEnvironment';
-import { IRuntimeResolver } from '#/workspace/workspaceInstance/workspaceInstanceManager';
 import { FakeRuntime } from '#/runtime/fakeRuntime';
-import { ITelemetryService, type TelemetryProperties } from '#/app/telemetry/telemetry';
 import { IWorkspaceContext } from '#/workspace/workspaceContext/workspaceContext';
 import { IWorkspaceDirs } from '#/workspace/workspaceDirs/workspaceDirs';
+import { IWorkspaceFsService } from '#/workspace/workspaceFs/fs';
+import { WorkspaceFsService } from '#/workspace/workspaceFs/fsService';
 import { IWorkspaceGitService } from '#/workspace/workspaceGit/workspaceGit';
+import { IRuntimeResolver } from '#/workspace/workspaceInstance/workspaceInstanceManager';
 
 const WORK_DIR = '/repo';
 
@@ -117,7 +118,14 @@ function fakeFs(
       };
     }
     if (symlinkSet.has(p)) {
-      return { isFile: false, isDirectory: false, isSymbolicLink: true, size: 0, mtimeMs: 1000, ino: 1 };
+      return {
+        isFile: false,
+        isDirectory: false,
+        isSymbolicLink: true,
+        size: 0,
+        mtimeMs: 1000,
+        ino: 1,
+      };
     }
     if (isDir(p)) {
       return { isFile: false, isDirectory: true, size: 0, mtimeMs: 1000, ino: 1 };
@@ -139,8 +147,7 @@ function fakeFs(
       const buf = Buffer.isBuffer(c) ? c : Buffer.from(c);
       return buf.subarray(0, n ?? buf.length);
     },
-    readLines: async function* (): AsyncGenerator<string> {
-    },
+    readLines: async function* (): AsyncGenerator<string> {},
     writeBytes: async () => {},
     createExclusive: async () => false,
     lstat: lstatImpl,
@@ -244,7 +251,11 @@ function fakeFs(
 function fakeProcess(stdout: string, stderr: string, exitCode: number): IHostProcess {
   return {
     _serviceBrand: undefined,
-    stdin: new Writable({ write(_c, _e, cb) { cb(); } }),
+    stdin: new Writable({
+      write(_c, _e, cb) {
+        cb();
+      },
+    }),
     stdout: Readable.from([stdout]),
     stderr: Readable.from([stderr]),
     pid: 1,
@@ -293,7 +304,11 @@ function makeStreamingProcess(lines: readonly string[]): {
   }
   const proc: IHostProcess = {
     _serviceBrand: undefined,
-    stdin: new Writable({ write(_c, _e, cb) { cb(); } }),
+    stdin: new Writable({
+      write(_c, _e, cb) {
+        cb();
+      },
+    }),
     stdout: Readable.from(gen()),
     stderr: Readable.from(['']),
     pid: 1,
@@ -308,7 +323,9 @@ function makeStreamingProcess(lines: readonly string[]): {
   return { proc, wasKilled: () => killed, yieldedLines: () => yielded };
 }
 
-function telemetryStub(events: Array<{ event: string; properties: Record<string, unknown> }>): ITelemetryService {
+function telemetryStub(
+  events: Array<{ event: string; properties: Record<string, unknown> }>,
+): ITelemetryService {
   return {
     _serviceBrand: undefined,
     track2: (event, properties) => {
@@ -384,7 +401,10 @@ function makeSession(
       ready: Promise.resolve(),
     }),
   ]);
-  const runtime = new FakeRuntime({ workspaceId: 'w', runtimeId: 'local', generation: 'test' }, { capabilities: ['process'], pathClass });
+  const runtime = new FakeRuntime(
+    { workspaceId: 'w', runtimeId: 'local', generation: 'test' },
+    { capabilities: ['process'], pathClass },
+  );
   Object.defineProperty(runtime, 'process', { value: runner ?? fakeRunner(handler) });
   host.app.instantiation.provide(IRuntimeResolver, {
     _serviceBrand: undefined,
@@ -488,10 +508,7 @@ describe('WorkspaceFsService.diff', () => {
 
 describe('WorkspaceFsService.search', () => {
   it('finds files by fuzzy query and respects the result cap', async () => {
-    const fs = makeSession(
-      { 'src/foo.ts': '', 'src/bar.ts': '', 'README.md': '' },
-      emptyHandler,
-    );
+    const fs = makeSession({ 'src/foo.ts': '', 'src/bar.ts': '', 'README.md': '' }, emptyHandler);
     const result = await fs.search({ query: 'foo', limit: 50, follow_gitignore: false });
     const paths = result.items.map((i) => i.path);
     expect(paths).toContain('src/foo.ts');
@@ -565,7 +582,10 @@ describe('WorkspaceFsService.suggest', () => {
     return { stdout: '', exitCode: 0 };
   }
 
-  function rgMultiRootHandler(perRoot: Record<string, readonly string[]>, captured?: string[][]): RunHandler {
+  function rgMultiRootHandler(
+    perRoot: Record<string, readonly string[]>,
+    captured?: string[][],
+  ): RunHandler {
     return (args) => {
       captured?.push([...args]);
       if (args[0] === 'rg' && args[1] === '--version') {
@@ -605,10 +625,7 @@ describe('WorkspaceFsService.suggest', () => {
   });
 
   it('allows skipping segments when consuming the query', async () => {
-    const fs = makeSession(
-      {},
-      rgLinesHandler(['apps/desktop/package.json', 'src/api/index.ts']),
-    );
+    const fs = makeSession({}, rgLinesHandler(['apps/desktop/package.json', 'src/api/index.ts']));
     const result = await fs.suggest({
       query: 'ap/de',
       limit: 50,
@@ -631,10 +648,7 @@ describe('WorkspaceFsService.suggest', () => {
   });
 
   it('ignores an empty last query segment', async () => {
-    const fs = makeSession(
-      {},
-      rgLinesHandler(['apps/desktop/package.json', 'src/app.ts']),
-    );
+    const fs = makeSession({}, rgLinesHandler(['apps/desktop/package.json', 'src/app.ts']));
     const result = await fs.suggest({
       query: 'apps/',
       limit: 50,
@@ -716,10 +730,7 @@ describe('WorkspaceFsService.suggest', () => {
   });
 
   it('hides dot-prefixed entries at any depth unless show_hidden is set', async () => {
-    const fs = makeSession(
-      {},
-      rgLinesHandler(['visible.ts', '.env.ts', 'sub/.secret/x.ts']),
-    );
+    const fs = makeSession({}, rgLinesHandler(['visible.ts', '.env.ts', 'sub/.secret/x.ts']));
     const off = await fs.suggest({
       query: 'ts',
       limit: 50,
@@ -892,7 +903,14 @@ describe('WorkspaceFsService.suggest', () => {
         throw new Error('spawn EAGAIN');
       },
     };
-    const fs = makeSession({ 'src/foo.ts': '' }, emptyHandler, events, defaultGitStub(), [], runner);
+    const fs = makeSession(
+      { 'src/foo.ts': '' },
+      emptyHandler,
+      events,
+      defaultGitStub(),
+      [],
+      runner,
+    );
     const result = await fs.suggest({
       query: 'foo',
       limit: 50,
@@ -918,7 +936,14 @@ describe('WorkspaceFsService.suggest', () => {
         return fakeProcess('', 'permission denied', 2);
       },
     };
-    const fs = makeSession({ 'src/foo.ts': '' }, emptyHandler, events, defaultGitStub(), [], runner);
+    const fs = makeSession(
+      { 'src/foo.ts': '' },
+      emptyHandler,
+      events,
+      defaultGitStub(),
+      [],
+      runner,
+    );
     const result = await fs.suggest({
       query: 'foo',
       limit: 50,
@@ -1009,7 +1034,8 @@ describe('WorkspaceFsService.suggest', () => {
     const fs = makeSession(
       { 'src/a.ts': '', '/extra/lib/util.ts': '' },
       (args) => {
-        if (args[0] === 'rg' && args[1] === '--version') return { stdout: 'ripgrep 15.0.0', exitCode: 0 };
+        if (args[0] === 'rg' && args[1] === '--version')
+          return { stdout: 'ripgrep 15.0.0', exitCode: 0 };
         if (args[0] === 'rg' && args.includes('--files')) {
           return { stdout: '/repo\\src\\a.ts\n/extra\\lib\\util.ts\n', exitCode: 0 };
         }
@@ -1023,9 +1049,19 @@ describe('WorkspaceFsService.suggest', () => {
       ['/extra'],
       'win32',
     );
-    const primary = await fs.suggest({ query: 'a.ts', limit: 50, follow_gitignore: true, show_hidden: false });
+    const primary = await fs.suggest({
+      query: 'a.ts',
+      limit: 50,
+      follow_gitignore: true,
+      show_hidden: false,
+    });
     expect(primary.items.map((i) => i.path)).toContain('src/a.ts');
-    const extra = await fs.suggest({ query: 'util', limit: 50, follow_gitignore: true, show_hidden: false });
+    const extra = await fs.suggest({
+      query: 'util',
+      limit: 50,
+      follow_gitignore: true,
+      show_hidden: false,
+    });
     expect(extra.items.map((i) => i.path)).toContain('/extra/lib/util.ts');
   });
 
@@ -1033,7 +1069,8 @@ describe('WorkspaceFsService.suggest', () => {
     const fs = makeSession(
       { 'src/a.ts': '' },
       (args) => {
-        if (args[0] === 'rg' && args[1] === '--version') return { stdout: 'ripgrep 15.0.0', exitCode: 0 };
+        if (args[0] === 'rg' && args[1] === '--version')
+          return { stdout: 'ripgrep 15.0.0', exitCode: 0 };
         if (args[0] === 'rg' && args.includes('--files')) {
           return { stdout: 'src\\a.ts\n', exitCode: 0 };
         }
@@ -1047,7 +1084,12 @@ describe('WorkspaceFsService.suggest', () => {
       [],
       'win32',
     );
-    const result = await fs.suggest({ query: 'a.ts', limit: 50, follow_gitignore: true, show_hidden: false });
+    const result = await fs.suggest({
+      query: 'a.ts',
+      limit: 50,
+      follow_gitignore: true,
+      show_hidden: false,
+    });
     expect(result.items.map((i) => i.path)).toContain('src/a.ts');
   });
 
@@ -1272,9 +1314,7 @@ describe('WorkspaceFsService.grep', () => {
   it('stops rg as soon as max_total_matches is reached', async () => {
     const TOTAL = 200;
     const CAP = 5;
-    const lines: string[] = [
-      JSON.stringify({ type: 'begin', data: { path: { text: 'big.ts' } } }),
-    ];
+    const lines: string[] = [JSON.stringify({ type: 'begin', data: { path: { text: 'big.ts' } } })];
     for (let i = 0; i < TOTAL; i++) {
       lines.push(
         JSON.stringify({
@@ -1322,10 +1362,7 @@ describe('WorkspaceFsService.grep', () => {
 
 describe('WorkspaceFsService.list', () => {
   it('lists files and directories with kinds', async () => {
-    const fs = makeSession(
-      { 'src/a.ts': '', 'src/sub/b.ts': '', 'README.md': '' },
-      emptyHandler,
-    );
+    const fs = makeSession({ 'src/a.ts': '', 'src/sub/b.ts': '', 'README.md': '' }, emptyHandler);
     const result = await fs.list({
       path: '.',
       depth: 1,
@@ -1414,7 +1451,10 @@ describe('WorkspaceFsService.read', () => {
   });
 
   it('transcodes UTF-16 text with a BOM instead of throwing fs.is_binary', async () => {
-    const utf16 = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('hello\nworld\n', 'utf16le')]);
+    const utf16 = Buffer.concat([
+      Buffer.from([0xff, 0xfe]),
+      Buffer.from('hello\nworld\n', 'utf16le'),
+    ]);
     const fs = makeSession({ 'notes.txt': utf16 }, emptyHandler);
     const result = await fs.read({ path: 'notes.txt', offset: 0, length: 1024, encoding: 'utf-8' });
     expect(result.content).toBe('hello\nworld\n');
@@ -1453,7 +1493,12 @@ describe('WorkspaceFsService.read', () => {
   it('keeps raw bytes for base64 requests on UTF-16 files', async () => {
     const utf16 = Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from('hi', 'utf16le')]);
     const fs = makeSession({ 'notes.txt': utf16 }, emptyHandler);
-    const result = await fs.read({ path: 'notes.txt', offset: 0, length: 1024, encoding: 'base64' });
+    const result = await fs.read({
+      path: 'notes.txt',
+      offset: 0,
+      length: 1024,
+      encoding: 'base64',
+    });
     expect(result.encoding).toBe('base64');
     expect(result.is_binary).toBe(true);
     expect(result.content).toBe(utf16.toString('base64'));

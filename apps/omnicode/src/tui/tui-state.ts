@@ -20,6 +20,8 @@ import type { SessionRow } from './components/dialogs/session-picker';
 import { CustomEditor } from './components/editor/custom-editor';
 import { DEFAULT_MARKDOWN_CONFIG, DEFAULT_TUI_CONFIG } from './config';
 import { CHROME_GUTTER } from './constant/rendering';
+import type { CatalogBrowserState } from './controllers/catalog-browser';
+import type { McpManagerState } from './controllers/mcp-manager';
 import type { TasksBrowserState } from './controllers/tasks-browser';
 import { currentTheme, type Theme } from './theme';
 import {
@@ -83,6 +85,10 @@ export interface TUIState {
    */
   editorReplacementMounted: boolean;
   tasksBrowser: TasksBrowserState | undefined;
+  skillsBrowser: CatalogBrowserState | undefined;
+  subagentsBrowser: CatalogBrowserState | undefined;
+  connectorsBrowser: CatalogBrowserState | undefined;
+  mcpManager: McpManagerState | undefined;
   externalEditorRunning: boolean;
   queuedMessages: QueuedMessage[];
   /**
@@ -210,6 +216,10 @@ export function createTUIState(options: OmnicodeTUIOptions): TUIState {
     activeDialog: null,
     editorReplacementMounted: false,
     tasksBrowser: undefined,
+    skillsBrowser: undefined,
+    subagentsBrowser: undefined,
+    connectorsBrowser: undefined,
+    mcpManager: undefined,
     externalEditorRunning: false,
     queuedMessages: [],
     queuedMessageDispatchPending: false,

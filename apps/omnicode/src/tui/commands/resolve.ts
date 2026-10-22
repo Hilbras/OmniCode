@@ -1,12 +1,12 @@
+import type { TUIState } from '../tui-state';
+import { isExperimentalFlagEnabled } from './experimental-flags';
+import { parseSlashInput } from './parse';
 import {
   findBuiltInSlashCommand,
   resolveSlashCommandAvailability,
   type BuiltinSlashCommand,
   type BuiltinSlashCommandName,
 } from './registry';
-import { isExperimentalFlagEnabled } from './experimental-flags';
-import { parseSlashInput } from './parse';
-import type { TUIState } from '../tui-state';
 import type {
   OmnicodeSlashCommand,
   SlashCommandBusyReason,
@@ -137,10 +137,7 @@ export function slashCommandBusyReason(
   return undefined;
 }
 
-export function slashBusyMessage(
-  commandName: string,
-  reason: SlashCommandBusyReason,
-): string {
+export function slashBusyMessage(commandName: string, reason: SlashCommandBusyReason): string {
   if (reason === 'streaming') {
     return `Cannot /${commandName} while streaming — press Esc or Ctrl-C first.`;
   }

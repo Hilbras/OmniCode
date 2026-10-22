@@ -2,17 +2,25 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { Readable } from 'node:stream';
 import type { Writable } from 'node:stream';
+
+import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { join } from 'pathe';
-import type { IHostProcess } from '#/os/interface/hostProcess';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { IAgentTaskService } from '#/agent/task/task';
+
 import { IAgentLoopService } from '#/agent/loop/loop';
+import { IAgentTaskService } from '#/agent/task/task';
 import { TERMINAL_STATUSES } from '#/agent/task/types';
 import { TaskOutputTool } from '#/agent/tools/task/task-output/taskOutputTool';
-import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
-import { createAgentTaskPersistence, type TaskServiceTestManager } from './stubs';
-import { taskServices, createTestAgent, homeDirServices, type TestAgentContext } from '../../harness';
+import type { IHostProcess } from '#/os/interface/hostProcess';
+
+import {
+  taskServices,
+  createTestAgent,
+  homeDirServices,
+  type TestAgentContext,
+} from '../../harness';
 import { executeTool, type TestExecutableToolContext } from '../../tools/fixtures/execute-tool';
+import { createAgentTaskPersistence, type TaskServiceTestManager } from './stubs';
 
 interface TaskServiceFixture {
   readonly ctx: TestAgentContext;
@@ -40,10 +48,7 @@ function registerProcess(
   return manager.registerTask(new ProcessTask(proc, command, description));
 }
 
-function toolContext<Input>(
-  toolCallId: string,
-  args: Input,
-): TestExecutableToolContext<Input> {
+function toolContext<Input>(toolCallId: string, args: Input): TestExecutableToolContext<Input> {
   return {
     turnId: 0,
     toolCallId,
@@ -73,12 +78,14 @@ async function waitForTaskNotifications(
   ctx: TestAgentContext,
   manager: TaskServiceTestManager,
 ): Promise<void> {
-  const tasks = manager.list(false).filter(
-    (task) =>
-      TERMINAL_STATUSES.has(task.status) &&
-      task.detached !== false &&
-      task.terminalNotificationSuppressed !== true,
-  );
+  const tasks = manager
+    .list(false)
+    .filter(
+      (task) =>
+        TERMINAL_STATUSES.has(task.status) &&
+        task.detached !== false &&
+        task.terminalNotificationSuppressed !== true,
+    );
   if (tasks.length === 0) return;
 
   ctx.mockNextResponse({ type: 'text', text: 'notification drain ack' });
@@ -194,12 +201,7 @@ describe('AgentTaskService — readOutput / getOutputSnapshot', () => {
   });
 
   it('readOutput returns live ring-buffer content while task is in memory', async () => {
-    const taskId = registerProcess(
-      manager,
-      immediateProcess(0, 'live content\n'),
-      'echo',
-      'demo',
-    );
+    const taskId = registerProcess(manager, immediateProcess(0, 'live content\n'), 'echo', 'demo');
 
     await waitForOutput(manager, taskId, 'live content');
 

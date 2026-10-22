@@ -5,16 +5,22 @@
  * which transport carried the bytes.
  */
 
-import type { KlientChannel, ScopeRef } from './channel.js';
-import { globalContract, isStreamingContract } from '#/contract/index';
-import { globalEvents, type KlientEventPayloads } from '#/contract/global/events';
-import { sessionEvents, type SessionEventPayloads } from '#/contract/session/events';
 import { agentEvents, type AgentEventPayloads } from '#/contract/agent/events';
+import { globalEvents, type KlientEventPayloads } from '#/contract/global/events';
+import { globalContract, isStreamingContract } from '#/contract/index';
+import { sessionEvents, type SessionEventPayloads } from '#/contract/session/events';
 import type { EventRegistration, StreamingProcedureContract } from '#/contract/types';
+
+import type { KlientChannel, ScopeRef } from './channel.js';
 import { EventHub, type KlientEvents } from './events/hub.js';
-import { createGlobalFacade, type GlobalFacade, type ScopedCaller, type ScopedStreamCaller } from './facade/global.js';
-import { createSessionFacade, type SessionFacade } from './facade/session.js';
 import { createAgentFacade, type AgentFacade } from './facade/agent.js';
+import {
+  createGlobalFacade,
+  type GlobalFacade,
+  type ScopedCaller,
+  type ScopedStreamCaller,
+} from './facade/global.js';
+import { createSessionFacade, type SessionFacade } from './facade/session.js';
 import { parseChunk, parseInput, parseOutput } from './validation.js';
 
 export interface KlientOptions {
@@ -97,28 +103,40 @@ export function createKlientFromChannel(
   };
 
   const hubs = new Set<{ close(): void }>();
+  // One hub per scope. A hub per *call* grew the set for every `session(id)` or
+  // `agent(id)` the client made, and nothing ever closed them before the
+  // client was closed.
+  const hubsByScope = new Map<string, { close(): void }>();
   const makeHub = <TPayloadMap extends object>(
     scope: ScopeRef,
     registrations: Record<string, EventRegistration>,
+    scopeKey: string,
   ): KlientEvents<TPayloadMap> => {
+    const existing = hubsByScope.get(scopeKey);
+    if (existing !== undefined) return existing as unknown as KlientEvents<TPayloadMap>;
     const hub = new EventHub<TPayloadMap>(channel, validate, scope, registrations);
     hubs.add(hub);
+    hubsByScope.set(scopeKey, hub);
     return hub;
   };
 
   return {
     global: createGlobalFacade(call, callStream),
-    events: makeHub<KlientEventPayloads>({}, globalEvents),
+    events: makeHub<KlientEventPayloads>({}, globalEvents, 'global'),
     session(sessionId: string): SessionHandle {
       const scope: ScopeRef = { sessionId };
       return {
         ...createSessionFacade(call, sessionId),
-        events: makeHub<SessionEventPayloads>(scope, sessionEvents),
+        events: makeHub<SessionEventPayloads>(scope, sessionEvents, `session:${sessionId}`),
         agent(agentId: string): AgentHandle {
           const agentScope: ScopeRef = { sessionId, agentId };
           return {
             ...createAgentFacade(call, agentScope),
-            events: makeHub<AgentEventPayloads>(agentScope, agentEvents),
+            events: makeHub<AgentEventPayloads>(
+              agentScope,
+              agentEvents,
+              `session:${sessionId}:agent:${agentId}`,
+            ),
           };
         },
       };

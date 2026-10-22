@@ -7,23 +7,92 @@
  * interfaces, so klient needs no direct dependency for most of them.
  */
 
-import type { z } from 'zod';
-
-import type { AgentContextData } from '@hilbras/omnicode-core/agent/contextMemory/types';
+import type { ISessionScopeHandle } from '@hilbras/omnicode-core/_base/di/scope';
 import type { IAgentCommandService } from '@hilbras/omnicode-core/agent/command/agentCommand';
-import type { IAgentRuntimeBindingService } from '@hilbras/omnicode-core/agent/runtimeBinding/runtimeBinding';
+import type { AgentContextData } from '@hilbras/omnicode-core/agent/contextMemory/types';
+import type {
+  CompactionBlockedEvent,
+  CompactionCancelledEvent,
+  CompactionCompletedEvent,
+  CompactionStartedEvent,
+} from '@hilbras/omnicode-core/agent/fullCompaction/compactionOps';
+import type { FullCompactionInput } from '@hilbras/omnicode-core/agent/fullCompaction/fullCompaction';
+import type {
+  ApprovalRequest,
+  ApprovalResponse,
+} from '@hilbras/omnicode-core/agent/interaction/approval';
+import type {
+  QuestionAnswers,
+  QuestionItem,
+  QuestionOption,
+  QuestionRequest,
+  QuestionResponse,
+  QuestionResult,
+} from '@hilbras/omnicode-core/agent/interaction/question';
+import type {
+  PromptLaunchResult,
+  PromptPayload,
+  SteerPayload,
+} from '@hilbras/omnicode-core/agent/loop/loop';
 import type { TurnEndReason } from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { SessionActivityState } from '@hilbras/omnicode-core/session/sessionActivity/sessionActivity';
+import type {
+  AssistantDeltaEvent,
+  ThinkingDeltaEvent,
+  TurnStartedEvent,
+} from '@hilbras/omnicode-core/agent/loop/turnEvents';
+import type { TurnEndedEvent } from '@hilbras/omnicode-core/agent/loop/turnOps';
 import type { PermissionMode } from '@hilbras/omnicode-core/agent/permissionPolicy/types';
 import type { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
-import type { PromptLaunchResult, PromptPayload, SteerPayload } from '@hilbras/omnicode-core/agent/loop/loop';
+import type {
+  PromptAbortedEvent,
+  PromptCompletedEvent,
+} from '@hilbras/omnicode-core/agent/prompt/promptEvents';
+import type { IAgentRuntimeBindingService } from '@hilbras/omnicode-core/agent/runtimeBinding/runtimeBinding';
 import type { IAgentShellCommandService } from '@hilbras/omnicode-core/agent/shellCommand/shellCommand';
-import type { IAgentSkillService } from '@hilbras/omnicode-core/features/skill/skillService';
-import type { ContentPart } from '@hilbras/omnicode-core/human/llm/message';
-import type { PlanData } from '@hilbras/omnicode-core/features/plan/plan';
+import type { TaskInfo } from '@hilbras/omnicode-core/agent/task/types';
+import type {
+  ToolCallDeltaEvent,
+  ToolCallStartedEvent,
+  ToolProgressEvent,
+} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
 import type { UsageStatus } from '@hilbras/omnicode-core/agent/usage/usage';
-import type { SkillSummary } from '@hilbras/omnicode-core/features/skill/catalog/types';
-import type { McpServerEntry } from '@hilbras/omnicode-core/mcpCore/connection-manager';
+import type { AuthStatus, IOAuthService } from '@hilbras/omnicode-core/app/auth/auth';
+import type { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
+import type {
+  CapabilityInstallProgress,
+  CapabilityStatus,
+  CapabilityStep,
+} from '@hilbras/omnicode-core/app/capability/types';
+import type {
+  ConfigDiagnostic,
+  ConfigInspectValue,
+  ConfigTarget,
+} from '@hilbras/omnicode-core/app/config/config';
+import type {
+  ConnectorAction,
+  ConnectorCapability,
+  ConnectorEntry,
+  ConnectorKind,
+  ConnectorScope,
+  ConnectorStatus,
+} from '@hilbras/omnicode-core/app/connectors/connectors';
+import type { FileMeta, SaveOptions } from '@hilbras/omnicode-core/app/file/fileService';
+import type { ExperimentalFeatureState } from '@hilbras/omnicode-core/app/flag/flag';
+import type {
+  GitHubConnectResult,
+  GitHubConnectionStatus,
+  GitHubDeviceFlowStart,
+  GitHubDisconnectResult,
+} from '@hilbras/omnicode-core/app/github/types';
+import type {
+  FsBrowseResponse,
+  FsHomeResponse,
+} from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
+import type { IProviderDiscoveryService } from '@hilbras/omnicode-core/app/kosongConfig/discovery';
+import type {
+  ImportCustomRegistryOptions,
+  ImportCustomRegistryResult,
+} from '@hilbras/omnicode-core/app/kosongConfig/modelsDevImport';
 import type {
   GlobalMcpServerConfig,
   McpAuthStatusQuery,
@@ -42,74 +111,6 @@ import type {
   McpRegistryQuery,
   McpServerSource,
 } from '@hilbras/omnicode-core/app/mcpRegistry/mcpRegistry';
-import type { McpServerConfig } from '@hilbras/omnicode-core/mcpCore/config-schema';
-import type { McpServerConfigView } from '@hilbras/omnicode-core/mcpCore/configView';
-import type { FullCompactionInput } from '@hilbras/omnicode-core/agent/fullCompaction/fullCompaction';
-import type { ISessionScopeHandle } from '@hilbras/omnicode-core/_base/di/scope';
-import type {
-  CreateChildSessionOptions,
-  CreateSessionOptions,
-  ForkSessionOptions,
-  ResumeSessionOptions,
-} from '@hilbras/omnicode-core/workspace/sessionLifecycle/sessionLifecycle';
-import type {
-  ApprovalRequest,
-  ApprovalResponse,
-} from '@hilbras/omnicode-core/agent/interaction/approval';
-import type {
-  Interaction,
-  InteractionResolution,
-} from '@hilbras/omnicode-core/human/interaction/interaction';
-import type {
-  QuestionAnswers,
-  QuestionItem,
-  QuestionOption,
-  QuestionRequest,
-  QuestionResponse,
-  QuestionResult,
-} from '@hilbras/omnicode-core/agent/interaction/question';
-import type {
-  AgentMeta,
-  SessionMeta,
-  SessionMetadataChangedEvent,
-  SessionMetaPatch,
-} from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
-import type { ISessionTitleService } from '@hilbras/omnicode-core/session/sessionTitle/sessionTitle';
-import type {
-  AuthStatus,
-  IOAuthService,
-} from '@hilbras/omnicode-core/app/auth/auth';
-import type { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
-import type {
-  ConfigDiagnostic,
-  ConfigInspectValue,
-  ConfigTarget,
-} from '@hilbras/omnicode-core/app/config/config';
-import type {
-  CapabilityInstallProgress,
-  CapabilityStatus,
-  CapabilityStep,
-} from '@hilbras/omnicode-core/app/capability/types';
-import type { ExperimentalFeatureState } from '@hilbras/omnicode-core/app/flag/flag';
-import type {
-  FileMeta,
-  SaveOptions,
-} from '@hilbras/omnicode-core/app/file/fileService';
-import type {
-  FsBrowseResponse,
-  FsHomeResponse,
-} from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
-import type { ModelRecord } from '@hilbras/omnicode-core/llm-adapter/model/model';
-import type { IModelCatalog } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
-import type { IProviderDiscoveryService } from '@hilbras/omnicode-core/app/kosongConfig/discovery';
-import type {
-  ImportCustomRegistryOptions,
-  ImportCustomRegistryResult,
-} from '@hilbras/omnicode-core/app/kosongConfig/modelsDevImport';
-import {
-  importCustomRegistryOptionsSchema,
-  importCustomRegistryResultSchema,
-} from '../src/contract/global/registryImport.js';
 import type {
   GetPluginInfoInput,
   InstallPluginInput,
@@ -128,43 +129,62 @@ import type {
   PluginUpdateStatus,
   ReloadSummary,
 } from '@hilbras/omnicode-core/app/plugin/types';
-import type { ProviderConfig } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
 import type {
   SessionListQuery,
   SessionSummary,
 } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
-import type {
-  Workspace,
-  WorkspaceUpdate,
-} from '@hilbras/omnicode-core/app/workspace/workspace';
+import type { Workspace, WorkspaceUpdate } from '@hilbras/omnicode-core/app/workspace/workspace';
+import type { WarningEvent } from '@hilbras/omnicode-core/errors';
 // Test-only: the v1 wire event types now live in agent-core-v2; importing
 // them here (never in `src/`) strengthens parity for the agent event stream.
 import type { ToolResultEvent } from '@hilbras/omnicode-core/events';
+import type { PlanData } from '@hilbras/omnicode-core/features/plan/plan';
+import type { SkillSummary } from '@hilbras/omnicode-core/features/skill/catalog/types';
+import type { IAgentSkillService } from '@hilbras/omnicode-core/features/skill/skillService';
 import type {
-  CompactionBlockedEvent,
-  CompactionCancelledEvent,
-  CompactionCompletedEvent,
-  CompactionStartedEvent,
-} from '@hilbras/omnicode-core/agent/fullCompaction/compactionOps';
+  Interaction,
+  InteractionResolution,
+} from '@hilbras/omnicode-core/human/interaction/interaction';
+import type { ContentPart } from '@hilbras/omnicode-core/human/llm/message';
+import type { IModelCatalog } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
+import type { ModelRecord } from '@hilbras/omnicode-core/llm-adapter/model/model';
+import type { ProviderConfig } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
+import type { McpServerConfig } from '@hilbras/omnicode-core/mcpCore/config-schema';
+import type { McpServerConfigView } from '@hilbras/omnicode-core/mcpCore/configView';
+import type { McpServerEntry } from '@hilbras/omnicode-core/mcpCore/connection-manager';
+import type { SessionActivityState } from '@hilbras/omnicode-core/session/sessionActivity/sessionActivity';
 import type {
-  AssistantDeltaEvent,
-  ThinkingDeltaEvent,
-  TurnStartedEvent,
-} from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { TurnEndedEvent } from '@hilbras/omnicode-core/agent/loop/turnOps';
+  AgentMeta,
+  SessionMeta,
+  SessionMetadataChangedEvent,
+  SessionMetaPatch,
+} from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
+import type { ISessionTitleService } from '@hilbras/omnicode-core/session/sessionTitle/sessionTitle';
 import type {
-  PromptAbortedEvent,
-  PromptCompletedEvent,
-} from '@hilbras/omnicode-core/agent/prompt/promptEvents';
-import type { TaskInfo } from '@hilbras/omnicode-core/agent/task/types';
-import type {
-  ToolCallDeltaEvent,
-  ToolCallStartedEvent,
-  ToolProgressEvent,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
-import type { WarningEvent } from '@hilbras/omnicode-core/errors';
+  CreateChildSessionOptions,
+  CreateSessionOptions,
+  ForkSessionOptions,
+  ResumeSessionOptions,
+} from '@hilbras/omnicode-core/workspace/sessionLifecycle/sessionLifecycle';
+import type { z } from 'zod';
 
-import { sessionActivityStateSchema } from '../src/contract/session/activity.js';
+import {
+  assistantDeltaEventSchema,
+  compactionBlockedEventSchema,
+  compactionCancelledEventSchema,
+  compactionCompletedEventSchema,
+  compactionStartedEventSchema,
+  promptAbortedEventSchema,
+  promptCompletedEventSchema,
+  thinkingDeltaEventSchema,
+  toolCallDeltaEventSchema,
+  toolCallStartedEventSchema,
+  toolProgressEventSchema,
+  toolResultEventSchema,
+  turnEndedEventSchema,
+  turnStartedEventSchema,
+  warningEventSchema,
+} from '../src/contract/agent/events.js';
 import {
   agentCommandInfoSchema,
   agentContextDataSchema,
@@ -195,59 +215,7 @@ import {
   tokenUsageSchema,
   usageStatusSchema,
 } from '../src/contract/agent/schemas.js';
-import {
-  assistantDeltaEventSchema,
-  compactionBlockedEventSchema,
-  compactionCancelledEventSchema,
-  compactionCompletedEventSchema,
-  compactionStartedEventSchema,
-  promptAbortedEventSchema,
-  promptCompletedEventSchema,
-  thinkingDeltaEventSchema,
-  toolCallDeltaEventSchema,
-  toolCallStartedEventSchema,
-  toolProgressEventSchema,
-  toolResultEventSchema,
-  turnEndedEventSchema,
-  turnStartedEventSchema,
-  warningEventSchema,
-} from '../src/contract/agent/events.js';
-import {
-  approvalRequestSchema,
-  approvalResponseSchema,
-} from '../src/contract/session/approval.js';
-import {
-  fullCompactionInputSchema,
-  mcpServerEntrySchema,
-} from '../src/contract/agent/services.js';
-import {
-  createChildSessionOptionsSchema,
-  createSessionOptionsSchema,
-  forkSessionOptionsSchema,
-  handleWireSchema,
-  resumeSessionOptionsSchema,
-} from '../src/contract/session/lifecycle.js';
-import {
-  interactionResolutionSchema,
-  interactionSchema,
-} from '../src/contract/session/interaction.js';
-import {
-  agentMetaSchema,
-  sessionMetaPatchSchema,
-  sessionMetaSchema,
-  sessionMetadataChangedEventSchema,
-} from '../src/contract/session/metadata.js';
-import {
-  questionAnswersSchema,
-  questionItemSchema,
-  questionOptionSchema,
-  questionRequestSchema,
-  questionResponseSchema,
-  questionResultSchema,
-} from '../src/contract/session/question.js';
-import { skillSummarySchema } from '../src/contract/session/skills.js';
-import { sessionTitleContract } from '../src/contract/session/title.js';
-
+import { fullCompactionInputSchema, mcpServerEntrySchema } from '../src/contract/agent/services.js';
 import {
   authStatusSchema,
   oAuthFlowSnapshotSchema,
@@ -256,11 +224,6 @@ import {
   oAuthLogoutResponseSchema,
   refreshOAuthProviderModelsResponseSchema,
 } from '../src/contract/global/auth.js';
-import {
-  configDiagnosticSchema,
-  configInspectValueSchema,
-  configTargetSchema,
-} from '../src/contract/global/config.js';
 import {
   capabilityInstallProgressSchema,
   capabilityStatusSchema,
@@ -272,19 +235,27 @@ import {
   setDefaultModelResponseSchema,
 } from '../src/contract/global/catalog.js';
 import {
-  refreshProviderModelsOptionsSchema,
-  refreshProviderModelsResponseSchema,
-} from '../src/contract/global/providerDiscovery.js';
+  configDiagnosticSchema,
+  configInspectValueSchema,
+  configTargetSchema,
+} from '../src/contract/global/config.js';
+import {
+  connectorActionSchema,
+  connectorCapabilitySchema,
+  connectorEntrySchema,
+  connectorKindSchema,
+  connectorScopeSchema,
+  connectorStatusSchema,
+} from '../src/contract/global/connectors.js';
+import { fileMetaSchema, fileSaveOptionsSchema } from '../src/contract/global/files.js';
 import { experimentalFeatureStateSchema } from '../src/contract/global/flags.js';
 import {
-  fileMetaSchema,
-  fileSaveOptionsSchema,
-} from '../src/contract/global/files.js';
-import {
-  fsBrowseResponseSchema,
-  fsHomeResponseSchema,
-} from '../src/contract/global/hostFs.js';
-import { modelConfigSchema } from '../src/contract/global/models.js';
+  githubConnectResultSchema,
+  githubConnectionStatusSchema,
+  githubDeviceFlowStartSchema,
+  githubDisconnectResultSchema,
+} from '../src/contract/global/github.js';
+import { fsBrowseResponseSchema, fsHomeResponseSchema } from '../src/contract/global/hostFs.js';
 import {
   globalMcpServerConfigSchema,
   mcpAuthStatusQuerySchema,
@@ -302,6 +273,7 @@ import {
   mcpServerTestResultSchema,
   mcpServerTestTargetSchema,
 } from '../src/contract/global/mcpManagement.js';
+import { modelConfigSchema } from '../src/contract/global/models.js';
 import {
   getPluginInfoInputSchema,
   installPluginInputSchema,
@@ -318,18 +290,48 @@ import {
   setPluginEnabledInputSchema,
   setPluginMcpServerEnabledInputSchema,
 } from '../src/contract/global/plugins.js';
+import {
+  refreshProviderModelsOptionsSchema,
+  refreshProviderModelsResponseSchema,
+} from '../src/contract/global/providerDiscovery.js';
 import { providerConfigSchema } from '../src/contract/global/providers.js';
 import {
-  sessionListQuerySchema,
-  sessionSummarySchema,
-} from '../src/contract/global/sessions.js';
+  importCustomRegistryOptionsSchema,
+  importCustomRegistryResultSchema,
+} from '../src/contract/global/registryImport.js';
+import { sessionListQuerySchema, sessionSummarySchema } from '../src/contract/global/sessions.js';
+import { workspaceSchema, workspaceUpdateSchema } from '../src/contract/global/workspaces.js';
+import { sessionActivityStateSchema } from '../src/contract/session/activity.js';
+import { approvalRequestSchema, approvalResponseSchema } from '../src/contract/session/approval.js';
 import {
-  workspaceSchema,
-  workspaceUpdateSchema,
-} from '../src/contract/global/workspaces.js';
-
-import type { AssertWire, MutableDeep } from './helpers/typeAssert.js';
+  interactionResolutionSchema,
+  interactionSchema,
+} from '../src/contract/session/interaction.js';
+import {
+  createChildSessionOptionsSchema,
+  createSessionOptionsSchema,
+  forkSessionOptionsSchema,
+  handleWireSchema,
+  resumeSessionOptionsSchema,
+} from '../src/contract/session/lifecycle.js';
+import {
+  agentMetaSchema,
+  sessionMetaPatchSchema,
+  sessionMetaSchema,
+  sessionMetadataChangedEventSchema,
+} from '../src/contract/session/metadata.js';
+import {
+  questionAnswersSchema,
+  questionItemSchema,
+  questionOptionSchema,
+  questionRequestSchema,
+  questionResponseSchema,
+  questionResultSchema,
+} from '../src/contract/session/question.js';
+import { skillSummarySchema } from '../src/contract/session/skills.js';
+import { sessionTitleContract } from '../src/contract/session/title.js';
 import type { AgentFacade } from '../src/core/facade/agent.js';
+import type { AssertWire, MutableDeep } from './helpers/typeAssert.js';
 
 /** One-directional: the engine type must be assignable TO the schema's infer. */
 type AssertEngineToWire<TSchema extends z.ZodType, TEngine> = [MutableDeep<TEngine>] extends [
@@ -346,10 +348,12 @@ type AssertWireToEngine<TSchema extends z.ZodType, TEngine> = [z.infer<TSchema>]
   : never;
 
 const _registryImportOptions: AssertWire<
-  typeof importCustomRegistryOptionsSchema, ImportCustomRegistryOptions
+  typeof importCustomRegistryOptionsSchema,
+  ImportCustomRegistryOptions
 > = true;
 const _registryImportResult: AssertWire<
-  typeof importCustomRegistryResultSchema, ImportCustomRegistryResult
+  typeof importCustomRegistryResultSchema,
+  ImportCustomRegistryResult
 > = true;
 
 // Wire shapes, derived from the engine interfaces.
@@ -496,10 +500,8 @@ const _mcpServerConfigData: AssertWire<
   typeof mcpServerConfigDataSchema,
   McpServerConfig | McpServerConfigView
 > = true;
-const _mcpServerConfigViewData: AssertWire<
-  typeof mcpServerConfigDataSchema,
-  McpServerConfigView
-> = true;
+const _mcpServerConfigViewData: AssertWire<typeof mcpServerConfigDataSchema, McpServerConfigView> =
+  true;
 const _mcpManagedServer: AssertWire<typeof mcpManagedServerSchema, McpManagedServer> = true;
 const _mcpServerTestTarget: AssertWire<typeof mcpServerTestTargetSchema, McpServerTestTarget> =
   true;
@@ -518,6 +520,29 @@ const _mcpServerAuthBeginResult: AssertWire<
 const _mcpServerAuthFlowHandle: AssertWire<
   typeof mcpServerAuthFlowHandleSchema,
   McpServerAuthFlowHandle
+> = true;
+
+// global/connectors.ts
+const _connectorKind: AssertWire<typeof connectorKindSchema, ConnectorKind> = true;
+const _connectorScope: AssertWire<typeof connectorScopeSchema, ConnectorScope> = true;
+const _connectorStatus: AssertWire<typeof connectorStatusSchema, ConnectorStatus> = true;
+const _connectorCapability: AssertWire<typeof connectorCapabilitySchema, ConnectorCapability> =
+  true;
+const _connectorAction: AssertWire<typeof connectorActionSchema, ConnectorAction> = true;
+const _connectorEntry: AssertWire<typeof connectorEntrySchema, ConnectorEntry> = true;
+const _githubConnectionStatus: AssertWire<
+  typeof githubConnectionStatusSchema,
+  GitHubConnectionStatus
+> = true;
+const _githubDeviceFlowStart: AssertWire<
+  typeof githubDeviceFlowStartSchema,
+  GitHubDeviceFlowStart
+> = true;
+const _githubConnectResult: AssertWire<typeof githubConnectResultSchema, GitHubConnectResult> =
+  true;
+const _githubDisconnectResult: AssertWire<
+  typeof githubDisconnectResultSchema,
+  GitHubDisconnectResult
 > = true;
 
 // env.ts has no named schemas; `platform` narrows to `NodeJS.Platform` in the

@@ -8,7 +8,7 @@
 # commented "# field: type" lines describe the remaining schema fields.
 # Values resolve as: default -> config.toml -> env overlay -> memory.
 
-# Index (28 sections · 2 overlay(s))
+# Index (30 sections · 2 overlay(s))
 #   background               src/agent/task/configSection.ts
 #   builtinProductSkills     src/features/skill/catalog/configSection.ts
 #   cron                     src/features/cron/configSection.ts
@@ -18,6 +18,7 @@
 #   experimental             src/app/flag/flag.ts
 #   extraAgentDirs           src/workspace/workspaceAgentProfileLoader/configSection.ts
 #   extraSkillDirs           src/features/skill/catalog/configSection.ts
+#   github                   src/app/github/configSection.ts
 #   hooks                    src/features/externalHooks/configSection.ts
 #   identity                 src/app/agentIdentity/configSection.ts
 #   image                    src/agent/media/configSection.ts
@@ -36,6 +37,7 @@
 #   thinking                 src/app/kosongConfig/configSection.ts
 #   tokenCounting            src/agent/tokenCounting/configSection.ts
 #   tools                    src/agent/toolPolicy/configSection.ts
+#   vercel                   src/app/vercel/configSection.ts
 #   watch                    src/app/watch/configSection.ts
 #   (overlay) servicesCredentialEnvOverlay  src/app/auth/configSection.ts
 #   (overlay) omnicodeModelEnvOverlay  src/app/kosongConfig/envOverlay.ts
@@ -157,6 +159,20 @@ extra_agent_dirs = []
 # ##########################################################################
 
 extra_skill_dirs = []
+
+# ##########################################################################
+# github
+#   owner: src/app/github/configSection.ts
+#   scope: core
+#   hooks: stripEnv
+#   env:
+#     client_id <- OMNICODE_GITHUB_CLIENT_ID
+#     scopes <- OMNICODE_GITHUB_SCOPES (custom parse)
+# ##########################################################################
+
+[github]
+# client_id: string
+# scopes: string[]
 
 # ##########################################################################
 # hooks
@@ -493,6 +509,22 @@ strategy = "measured+estimated"
 [tools]
 # enabled: string[]
 # disabled: string[]
+
+# ##########################################################################
+# vercel
+#   owner: src/app/vercel/configSection.ts
+#   scope: core
+#   hooks: stripEnv
+#   env:
+#     token <- OMNICODE_VERCEL_TOKEN
+#     team_id <- OMNICODE_VERCEL_TEAM_ID
+#     team_slug <- OMNICODE_VERCEL_TEAM_SLUG
+# ##########################################################################
+
+[vercel]
+# token: string
+# team_id: string
+# team_slug: string
 
 # ##########################################################################
 # watch

@@ -1,7 +1,4 @@
-import type {
-  ExperimentalFeatureState,
-  ExperimentalFlagMap,
-} from '@hilbras/omnicode-api';
+import type { ExperimentalFeatureState, ExperimentalFlagMap } from '@hilbras/omnicode-api';
 
 export function experimentalFeatureMap(
   features: readonly Pick<ExperimentalFeatureState, 'id' | 'enabled'>[],

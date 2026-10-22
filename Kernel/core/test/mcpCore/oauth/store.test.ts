@@ -1,4 +1,7 @@
-import type { OAuthClientInformationFull, OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js';
+import type {
+  OAuthClientInformationFull,
+  OAuthTokens,
+} from '@modelcontextprotocol/sdk/shared/auth.js';
 import { describe, expect, it } from 'vitest';
 
 import { McpOAuthClientProvider, type StoredMcpOAuthTokens } from '#/mcpCore/oauth/provider';
@@ -78,7 +81,9 @@ describe('MCP OAuth credential identity', () => {
     await provider.saveTokens(token('first-token'));
 
     await expect(service.hasTokens('linear', 'https://first.example.com/mcp')).resolves.toBe(true);
-    await expect(service.hasTokens('linear', 'https://second.example.com/mcp')).resolves.toBe(false);
+    await expect(service.hasTokens('linear', 'https://second.example.com/mcp')).resolves.toBe(
+      false,
+    );
   });
 
   it('stamps saved tokens with obtained_at, in cache and on disk', async () => {

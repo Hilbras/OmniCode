@@ -7,39 +7,31 @@
  */
 
 import type {
-  SessionListQuery,
-  SessionSummary,
-} from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
-import type { SessionMeta } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
-import type { Page } from '@hilbras/omnicode-core/persistence/interface/queryStore';
-import type {
-  Workspace,
-  WorkspaceUpdate,
-} from '@hilbras/omnicode-core/app/workspace/workspace';
+  AuthStatus,
+  IOAuthService,
+  OAuthLoginOptions,
+} from '@hilbras/omnicode-core/app/auth/auth';
+import type { CapabilityStatus } from '@hilbras/omnicode-core/app/capability/types';
 import type {
   ConfigDiagnostic,
   ConfigInspectValue,
   ConfigTarget,
 } from '@hilbras/omnicode-core/app/config/config';
-import type { ProviderConfig } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
-import type {
-  AuthStatus,
-  IOAuthService,
-  OAuthLoginOptions,
-} from '@hilbras/omnicode-core/app/auth/auth';
+import type { ConnectorEntry } from '@hilbras/omnicode-core/app/connectors/connectors';
+import type { FileMeta } from '@hilbras/omnicode-core/app/file/fileService';
 import type { ExperimentalFeatureState } from '@hilbras/omnicode-core/app/flag/flag';
+import type {
+  GitHubConnectResult,
+  GitHubConnectionStatus,
+  GitHubDeviceFlowStart,
+  GitHubDisconnectResult,
+} from '@hilbras/omnicode-core/app/github/types';
 import type {
   FsBrowseResponse,
   FsHomeResponse,
 } from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
-import type { FileMeta } from '@hilbras/omnicode-core/app/file/fileService';
-import type { ModelRecord } from '@hilbras/omnicode-core/llm-adapter/model/model';
-import type { IModelCatalog } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
 import type { IProviderDiscoveryService } from '@hilbras/omnicode-core/app/kosongConfig/discovery';
 import type { IModelsDevImportService } from '@hilbras/omnicode-core/app/kosongConfig/modelsDevImport';
-
-import type { McpServerConfig } from '../../contract/mcp.js';
-import type { CallOptions } from '../channel.js';
 import type {
   GlobalMcpServerConfig,
   McpManagedServer,
@@ -50,7 +42,6 @@ import type {
   McpServerTestResult,
   McpServerTestTarget,
 } from '@hilbras/omnicode-core/app/mcpManagement/mcpManagement';
-import type { AnonymousProviderInput, GenerateEvent, GenerateInput, GenerateParams, ProviderInput } from './kosong-types.js';
 import type {
   PluginCommandDef,
   PluginInfo,
@@ -58,7 +49,31 @@ import type {
   PluginUpdateStatus,
   ReloadSummary,
 } from '@hilbras/omnicode-core/app/plugin/types';
-import type { CapabilityStatus } from '@hilbras/omnicode-core/app/capability/types';
+import type {
+  SessionListQuery,
+  SessionSummary,
+} from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
+import type {
+  VercelConnectResult,
+  VercelConnectionStatus,
+  VercelDisconnectResult,
+} from '@hilbras/omnicode-core/app/vercel/types';
+import type { Workspace, WorkspaceUpdate } from '@hilbras/omnicode-core/app/workspace/workspace';
+import type { IModelCatalog } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
+import type { ModelRecord } from '@hilbras/omnicode-core/llm-adapter/model/model';
+import type { ProviderConfig } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
+import type { Page } from '@hilbras/omnicode-core/persistence/interface/queryStore';
+import type { SessionMeta } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
+
+import type { McpServerConfig } from '../../contract/mcp.js';
+import type { CallOptions } from '../channel.js';
+import type {
+  AnonymousProviderInput,
+  GenerateEvent,
+  GenerateInput,
+  GenerateParams,
+  ProviderInput,
+} from './kosong-types.js';
 
 /** Low-level caller the klient factory builds: routes + validates one service call. */
 export type Caller = (
@@ -99,12 +114,8 @@ export type OAuthLoginCancelResponse = Awaited<ReturnType<IOAuthService['cancelL
 export type OAuthLogoutResponse = Awaited<ReturnType<IOAuthService['logout']>>;
 
 export type ModelCatalogItem = Awaited<ReturnType<IModelCatalog['listModels']>>[number];
-export type ProviderCatalogItem = Awaited<
-  ReturnType<IModelCatalog['listProviders']>
->[number];
-export type SetDefaultModelResponse = Awaited<
-  ReturnType<IModelCatalog['setDefaultModel']>
->;
+export type ProviderCatalogItem = Awaited<ReturnType<IModelCatalog['listProviders']>>[number];
+export type SetDefaultModelResponse = Awaited<ReturnType<IModelCatalog['setDefaultModel']>>;
 export type RefreshProviderModelsOptions = NonNullable<
   Parameters<IProviderDiscoveryService['refreshProviderModels']>[0]
 >;
@@ -155,11 +166,7 @@ export interface GlobalConfigFacade {
   getAll(): Promise<Record<string, unknown>>;
   inspect<T = unknown>(domain: string): Promise<ConfigInspectValue<T>>;
   set(input: { domain: string; patch: unknown; target?: ConfigTargetLiteral }): Promise<void>;
-  replace(input: {
-    domain: string;
-    value: unknown;
-    target?: ConfigTargetLiteral;
-  }): Promise<void>;
+  replace(input: { domain: string; value: unknown; target?: ConfigTargetLiteral }): Promise<void>;
   /**
    * Replace several domains in ONE atomic write (the engine's
    * `IConfigService.replaceSections`): a domain mapped to `undefined` is
@@ -259,10 +266,7 @@ export interface GlobalMcpFacade {
   list(input?: { cwd?: string }): Promise<readonly McpManagedServer[]>;
   get(input: { name: string; cwd?: string }): Promise<McpManagedServer>;
   /** Add a user-level entry; a same-named read-only entry rejects. Returns the refreshed list. */
-  add(input: {
-    server: GlobalMcpServerConfig;
-    cwd?: string;
-  }): Promise<readonly McpManagedServer[]>;
+  add(input: { server: GlobalMcpServerConfig; cwd?: string }): Promise<readonly McpManagedServer[]>;
   /** Replace a user-level entry; read-only entries reject. Returns the refreshed list. */
   update(input: {
     server: GlobalMcpServerConfig;
@@ -278,19 +282,51 @@ export interface GlobalMcpFacade {
     cwd?: string;
   }): Promise<readonly McpServerInspection[]>;
   /** Per-server OAuth state; omitted `verify` detects implicit OAuth, `false` stays offline. */
-  authStatuses(input?: {
-    cwd?: string;
-    verify?: boolean;
-  }): Promise<readonly McpServerAuthStatus[]>;
+  authStatuses(input?: { cwd?: string; verify?: boolean }): Promise<readonly McpServerAuthStatus[]>;
   /** Resolve a legacy name-only auth target to its unambiguous locator. */
   resolveByName(input: { name: string; cwd?: string }): Promise<McpServerLocator>;
-  beginAuth(input: {
-    locator: McpServerLocator;
-    cwd?: string;
-  }): Promise<McpServerAuthBeginResult>;
+  beginAuth(input: { locator: McpServerLocator; cwd?: string }): Promise<McpServerAuthBeginResult>;
   completeAuth(input: { flowId: string; timeoutMs?: number }): Promise<void>;
   cancelAuth(input: { flowId: string }): Promise<void>;
   resetAuth(input: { locator: McpServerLocator; cwd?: string }): Promise<void>;
+}
+
+/** The read-only integration catalog: MCP servers and plugins, composed by the engine. */
+export interface GlobalConnectorsFacade {
+  /**
+   * Integrations visible to `cwd`; omitted `cwd` lists the account-wide view.
+   * `workspaceTrusted` decides whether a first-party provider may be
+   * connected from this workspace.
+   */
+  list(input?: { cwd?: string; workspaceTrusted?: boolean }): Promise<readonly ConnectorEntry[]>;
+}
+
+/**
+ * The first-party GitHub account connector: authorization through the OAuth
+ * device flow, and the resulting connection state.
+ */
+export interface GlobalGitHubFacade {
+  /** The current connection state; never carries token material. */
+  status(): Promise<GitHubConnectionStatus>;
+  /** Starts a device flow and returns the user code plus the flow handle. */
+  startDeviceFlow(): Promise<GitHubDeviceFlowStart>;
+  /** Polls a started device flow by its handle. */
+  pollDeviceFlow(flowId: string): Promise<GitHubConnectResult>;
+  /** Removes the local credential. */
+  disconnect(): Promise<GitHubDisconnectResult>;
+}
+
+/**
+ * The first-party Vercel account connector: the connection state, the
+ * connect action, and disconnect. The token never crosses this boundary.
+ */
+export interface GlobalVercelFacade {
+  /** The current connection state; never carries token material. */
+  status(): Promise<VercelConnectionStatus>;
+  /** Connects using the given token, or the configured one when omitted. */
+  connect(token?: string): Promise<VercelConnectResult>;
+  /** Removes the stored credential. */
+  disconnect(): Promise<VercelDisconnectResult>;
 }
 
 /** One downloaded upload: its metadata plus the buffered bytes. */
@@ -345,6 +381,9 @@ export interface GlobalFacade {
   readonly hostFs: GlobalHostFsFacade;
   readonly files: GlobalFilesFacade;
   readonly mcp: GlobalMcpFacade;
+  readonly connectors: GlobalConnectorsFacade;
+  readonly github: GlobalGitHubFacade;
+  readonly vercel: GlobalVercelFacade;
   env(): Promise<KlientEnvInfo>;
 }
 
@@ -378,8 +417,12 @@ const ENV_SCALAR_PROPERTIES = [
 const DEFAULT_AUTH_TIMEOUT_MS = 15 * 60_000;
 const AUTH_COMPLETION_MARGIN_MS = 30_000;
 
-export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStreamCaller): GlobalFacade {
-  const call: Caller = (service, method, args, options) => scoped({}, service, method, args, options);
+export function createGlobalFacade(
+  scoped: ScopedCaller,
+  scopedStream: ScopedStreamCaller,
+): GlobalFacade {
+  const call: Caller = (service, method, args, options) =>
+    scoped({}, service, method, args, options);
   const streamCall = (service: string, method: string, args: unknown[]) =>
     scopedStream({}, service, method, args);
   // The bootstrap snapshot is frozen at process start, so the aggregated
@@ -403,8 +446,7 @@ export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStr
 
   return {
     sessions: {
-      list: (query) =>
-        call('sessionIndex', 'listRecent', [query]) as Promise<Page<SessionSummary>>,
+      list: (query) => call('sessionIndex', 'listRecent', [query]) as Promise<Page<SessionSummary>>,
       get: (id) => call('sessionIndex', 'get', [id]) as Promise<SessionSummary | undefined>,
       countActive: (workspaceIds) =>
         call('sessionIndex', 'count', [{ workspaceIds }]) as Promise<number>,
@@ -440,7 +482,11 @@ export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStr
       replace: ({ domain, value, target }) =>
         // `null` is the wire encoding of "clear this domain" — JSON
         // round-trips cannot carry `undefined` (see IConfigService.replace).
-        call('configService', 'replace', [domain, value === undefined ? null : value, target]) as Promise<void>,
+        call('configService', 'replace', [
+          domain,
+          value === undefined ? null : value,
+          target,
+        ]) as Promise<void>,
       replaceSections: ({ sections, target }) =>
         call('configService', 'replaceSections', [
           Object.fromEntries(
@@ -458,11 +504,11 @@ export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStr
 
     kosong: {
       importCustomRegistry: (options) =>
-        call('modelsDevImport', 'importCustomRegistry', [options]) as Promise<ImportCustomRegistryResult>,
+        call('modelsDevImport', 'importCustomRegistry', [
+          options,
+        ]) as Promise<ImportCustomRegistryResult>,
       listProviders: () =>
-        call('modelResolver', 'listProviders', []) as Promise<
-          readonly ProviderCatalogItem[]
-        >,
+        call('modelResolver', 'listProviders', []) as Promise<readonly ProviderCatalogItem[]>,
       getProvider: (id) =>
         call('modelResolver', 'getProvider', [id]) as Promise<ProviderCatalogItem>,
       addProvider: ((
@@ -517,12 +563,17 @@ export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStr
         call('modelResolver', 'setDefaultModel', [id]) as Promise<SetDefaultModelResponse>,
 
       generate: (modelId, input, params) =>
-        streamCall('modelResolver', 'generate', [modelId, input, params]) as AsyncIterable<GenerateEvent>,
+        streamCall('modelResolver', 'generate', [
+          modelId,
+          input,
+          params,
+        ]) as AsyncIterable<GenerateEvent>,
     },
 
     auth: {
       status: (provider) => call('oauthService', 'status', [provider]) as Promise<AuthStatus>,
-      summarize: () => call('authSummaryService', 'summarize', []) as Promise<readonly AuthStatus[]>,
+      summarize: () =>
+        call('authSummaryService', 'summarize', []) as Promise<readonly AuthStatus[]>,
       ensureReady: (modelOverride) =>
         call('authSummaryService', 'ensureReady', [modelOverride]) as Promise<void>,
       startLogin: (provider, options) =>
@@ -534,11 +585,16 @@ export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStr
       logout: (provider) =>
         call('oauthService', 'logout', [provider]) as Promise<OAuthLogoutResponse>,
       refreshProviderModels: () =>
-        call('oauthService', 'refreshOAuthProviderModels', []) as Promise<RefreshProviderModelsResponse>,
+        call(
+          'oauthService',
+          'refreshOAuthProviderModels',
+          [],
+        ) as Promise<RefreshProviderModelsResponse>,
     },
 
     flags: {
-      list: () => call('flagService', 'explainAll', []) as Promise<readonly ExperimentalFeatureState[]>,
+      list: () =>
+        call('flagService', 'explainAll', []) as Promise<readonly ExperimentalFeatureState[]>,
       enabled: (id) => call('flagService', 'enabled', [id]) as Promise<boolean>,
       enabledIds: () => call('flagService', 'enabledIds', []) as Promise<readonly string[]>,
       explain: (id) =>
@@ -563,7 +619,8 @@ export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStr
     },
 
     capabilities: {
-      list: () => call('capabilityService', 'listCapabilities', []) as Promise<readonly CapabilityStatus[]>,
+      list: () =>
+        call('capabilityService', 'listCapabilities', []) as Promise<readonly CapabilityStatus[]>,
       get: (id) => call('capabilityService', 'getCapability', [id]) as Promise<CapabilityStatus>,
       install: (id) =>
         call('capabilityService', 'installCapability', [id]) as Promise<CapabilityStatus>,
@@ -606,40 +663,33 @@ export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStr
         call('mcpManagementService', 'addServer', [
           server,
           cwd === undefined ? undefined : { cwd },
-        ]) as Promise<
-          readonly McpManagedServer[]
-        >,
+        ]) as Promise<readonly McpManagedServer[]>,
       update: ({ server, cwd }) =>
         call('mcpManagementService', 'updateServer', [
           server,
           cwd === undefined ? undefined : { cwd },
-        ]) as Promise<
-          readonly McpManagedServer[]
-        >,
+        ]) as Promise<readonly McpManagedServer[]>,
       remove: ({ name, cwd }) =>
         call('mcpManagementService', 'removeServer', [
           name,
           cwd === undefined ? undefined : { cwd },
-        ]) as Promise<
-          readonly McpManagedServer[]
-        >,
+        ]) as Promise<readonly McpManagedServer[]>,
       test: (target) =>
         call('mcpManagementService', 'testServer', [target]) as Promise<McpServerTestResult>,
       inspect: (input) =>
         call('mcpManagementService', 'inspectServers', [
           input?.targets,
           input === undefined ? undefined : { cwd: input.cwd },
-        ]) as Promise<
-          readonly McpServerInspection[]
-        >,
+        ]) as Promise<readonly McpServerInspection[]>,
       authStatuses: (input) =>
         call('mcpManagementService', 'listAuthStatuses', [
           input === undefined ? undefined : { cwd: input.cwd, verify: input.verify },
         ]) as Promise<readonly McpServerAuthStatus[]>,
       resolveByName: ({ name, cwd }) =>
-        call('mcpManagementService', 'resolveServerByName', [name, { cwd }]) as Promise<
-          McpServerLocator
-        >,
+        call('mcpManagementService', 'resolveServerByName', [
+          name,
+          { cwd },
+        ]) as Promise<McpServerLocator>,
       beginAuth: ({ locator, cwd }) =>
         call('mcpManagementService', 'beginServerAuth', [
           locator,
@@ -659,6 +709,30 @@ export function createGlobalFacade(scoped: ScopedCaller, scopedStream: ScopedStr
         call('mcpManagementService', 'cancelServerAuth', [{ flowId }]) as Promise<void>,
       resetAuth: ({ locator, cwd }) =>
         call('mcpManagementService', 'resetServerAuth', [locator, { cwd }]) as Promise<void>,
+    },
+
+    vercel: {
+      status: () => call('vercelService', 'status', []) as Promise<VercelConnectionStatus>,
+      connect: (token) => call('vercelService', 'connect', [token]) as Promise<VercelConnectResult>,
+      disconnect: () => call('vercelService', 'disconnect', []) as Promise<VercelDisconnectResult>,
+    },
+
+    github: {
+      status: () => call('githubService', 'status', []) as Promise<GitHubConnectionStatus>,
+      startDeviceFlow: () =>
+        call('githubService', 'startDeviceFlow', []) as Promise<GitHubDeviceFlowStart>,
+      pollDeviceFlow: (flowId) =>
+        call('githubService', 'pollDeviceFlow', [flowId]) as Promise<GitHubConnectResult>,
+      disconnect: () => call('githubService', 'disconnect', []) as Promise<GitHubDisconnectResult>,
+    },
+
+    connectors: {
+      list: (input) =>
+        call('connectorCatalogService', 'listConnectors', [
+          input === undefined
+            ? undefined
+            : { cwd: input.cwd, workspaceTrusted: input.workspaceTrusted },
+        ]) as Promise<readonly ConnectorEntry[]>,
     },
 
     env,

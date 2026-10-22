@@ -1,7 +1,8 @@
-import type { ReplayableStateKey } from '#/state/state';
-
 import { contextMemoryKey } from '#/agent/contextMemory/contextOps';
-import { fullCompactionKey, fullCompactionWireRangesKey } from '#/agent/fullCompaction/compactionOps';
+import {
+  fullCompactionKey,
+  fullCompactionWireRangesKey,
+} from '#/agent/fullCompaction/compactionOps';
 import { interruptionReminderKey } from '#/agent/interruptionReminder/interruptionReminderOps';
 import { llmRequestTraceKey } from '#/agent/llmRequester/llmRequestOps';
 import { turnKey } from '#/agent/loop/turnOps';
@@ -21,6 +22,7 @@ import { fileHistoryKey } from '#/features/fileHistory/fileHistoryOps';
 import { planKey } from '#/features/plan/planOps';
 import { swarmKey } from '#/features/swarm/swarmOps';
 import { towerKey, towerOwnerKey } from '#/features/tower/towerOps';
+import type { ReplayableStateKey } from '#/state/state';
 
 export const BUILTIN_REPLAYABLE_STATE_KEYS: readonly ReplayableStateKey<any>[] = [
   contextMemoryKey,

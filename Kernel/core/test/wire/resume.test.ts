@@ -1,28 +1,25 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { join } from 'pathe';
 
+import { join } from 'pathe';
 import { describe, expect, it, vi } from 'vitest';
 
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
 } from '#/_base/errors/unexpectedError';
+import { IAgentLoopService } from '#/agent/loop/loop';
+import { turnKey } from '#/agent/loop/turnOps';
+import { IAgentTaskService } from '#/agent/task/task';
+import { IAgentPlanService } from '#/features/plan/plan';
 import {
   WIRE_PROTOCOL_VERSION,
   IAgentGoalService,
   type WireRecord,
   type PromptOrigin,
 } from '#/index';
-import { IAgentTaskService } from '#/agent/task/task';
-import { IAgentPlanService } from '#/features/plan/plan';
-import { IAgentLoopService } from '#/agent/loop/loop';
-import { turnKey } from '#/agent/loop/turnOps';
-import {
-  createAgentTaskPersistence,
-  type TaskServiceTestManager,
-} from '../agent/task/stubs';
-import { createFakeHostFs, createFakeProcessRunner } from '../tools/fixtures/fake-exec';
+
+import { createAgentTaskPersistence, type TaskServiceTestManager } from '../agent/task/stubs';
 import {
   DEFAULT_TEST_SYSTEM_PROMPT,
   InMemoryWireRecordPersistence,
@@ -30,6 +27,7 @@ import {
   homeDirServices,
   testAgent,
 } from '../harness';
+import { createFakeHostFs, createFakeProcessRunner } from '../tools/fixtures/fake-exec';
 
 const MOCK_PROVIDER = {
   type: 'omnicode',
@@ -317,7 +315,9 @@ describe('Agent resume', () => {
   });
 
   it('allocates monotonically increasing turnIds across multiple historical turns on resume', async () => {
-    const persistence = new RecordingAgentPersistence(multiTurnResumeHistory() as unknown as WireRecord[]);
+    const persistence = new RecordingAgentPersistence(
+      multiTurnResumeHistory() as unknown as WireRecord[],
+    );
     const ctx = testAgent({ persistence, autoConfigure: false });
 
     await ctx.restorePersisted();
@@ -336,7 +336,9 @@ describe('Agent resume', () => {
   });
 
   it('restores the turn counter past goal-continuation turns that have no turn.prompt record', async () => {
-    const persistence = new RecordingAgentPersistence(goalContinuationResumeHistory() as unknown as WireRecord[]);
+    const persistence = new RecordingAgentPersistence(
+      goalContinuationResumeHistory() as unknown as WireRecord[],
+    );
     const ctx = testAgent({ persistence, autoConfigure: false });
 
     await ctx.restorePersisted();
@@ -355,7 +357,9 @@ describe('Agent resume', () => {
   });
 
   it('keeps turnIds monotonic across repeated resume cycles', async () => {
-    const persistence = new RecordingAgentPersistence(multiTurnResumeHistory() as unknown as WireRecord[]);
+    const persistence = new RecordingAgentPersistence(
+      multiTurnResumeHistory() as unknown as WireRecord[],
+    );
     const ctx = testAgent({ persistence, autoConfigure: false });
 
     await ctx.restorePersisted();
@@ -364,7 +368,9 @@ describe('Agent resume', () => {
     await ctx.untilTurnEnd();
     expect(turnCurrentId(ctx)).toBe(2);
 
-    const persistence2 = new RecordingAgentPersistence(persistence.records as unknown as WireRecord[]);
+    const persistence2 = new RecordingAgentPersistence(
+      persistence.records as unknown as WireRecord[],
+    );
     const ctx2 = testAgent({ persistence: persistence2, autoConfigure: false });
 
     await ctx2.restorePersisted();
@@ -524,7 +530,9 @@ describe('Agent resume', () => {
   });
 
   it('replays inline skill reminders after pending tool results before the next prompt', async () => {
-    const persistence = new RecordingAgentPersistence(resumeDeferredSystemReminderHistory() as unknown as WireRecord[]);
+    const persistence = new RecordingAgentPersistence(
+      resumeDeferredSystemReminderHistory() as unknown as WireRecord[],
+    );
     const ctx = testAgent({ persistence, autoConfigure: false });
 
     await ctx.restorePersisted();
@@ -646,16 +654,11 @@ describe('Agent resume', () => {
         endedAt: 1_700_000_010,
         status: 'completed',
       });
-      await backgroundPersistence.appendTaskOutput(
-        'agent-seen0000',
-        'already delivered summary',
-      );
+      await backgroundPersistence.appendTaskOutput('agent-seen0000', 'already delivered summary');
       const steer = vi.spyOn(ctx.get(IAgentLoopService), 'steer');
 
       await ctx.restorePersisted();
-      expect(
-        ctx.context.get().some((message) => message.origin?.kind === 'task'),
-      ).toBe(false);
+      expect(ctx.context.get().some((message) => message.origin?.kind === 'task')).toBe(false);
 
       const background = ctx.get(IAgentTaskService) as TaskServiceTestManager;
       await background.loadFromDisk();
@@ -712,7 +715,6 @@ describe('Agent resume', () => {
     ]);
   });
 
-
   it('persists undelivered restored background notifications during resume', async () => {
     const persistence = new RecordingAgentPersistence([
       {
@@ -745,11 +747,12 @@ describe('Agent resume', () => {
 
       expect(steer).not.toHaveBeenCalled();
       expect(
-        ctx.context.get().some(
-          (message) =>
-            message.origin?.kind === 'task' &&
-            message.origin.taskId === 'agent-new00000',
-        ),
+        ctx.context
+          .get()
+          .some(
+            (message) =>
+              message.origin?.kind === 'task' && message.origin.taskId === 'agent-new00000',
+          ),
       ).toBe(true);
       expect(persistence.appended).toContainEqual(
         expect.objectContaining({
@@ -768,7 +771,6 @@ describe('Agent resume', () => {
       await rm(homeDir, { recursive: true, force: true });
     }
   });
-
 
   it('drops an orphan tool result whose call was never recorded', async () => {
     const persistence = new RecordingAgentPersistence([
@@ -808,11 +810,7 @@ describe('Agent resume', () => {
 
     await ctx.restorePersisted();
 
-    expect(ctx.context.get().map((message) => message.role)).toEqual([
-      'user',
-      'assistant',
-      'tool',
-    ]);
+    expect(ctx.context.get().map((message) => message.role)).toEqual(['user', 'assistant', 'tool']);
     expect(ctx.project().map((message) => message.role)).toEqual(['user', 'assistant']);
     expect(ctx.project().some((message) => message.role === 'tool')).toBe(false);
     await ctx.expectResumeMatches();
@@ -1510,7 +1508,6 @@ function goalContinuationResumeHistory(): WireRecord[] {
     ...canonicalContinuationTurn(2, 'Continuation turn two.', 3),
   ];
 }
-
 
 function findRpcEvent(
   ctxEvents: readonly { type: string; event: string; args: unknown }[],

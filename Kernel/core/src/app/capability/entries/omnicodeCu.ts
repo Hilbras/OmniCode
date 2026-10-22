@@ -38,7 +38,7 @@ const WINDOWS_DOCTOR_SCRIPT =
   "if ($env:OMNICODE_CU_WINDOWS_HOME) { $candidates += (Join-Path $env:OMNICODE_CU_WINDOWS_HOME 'omnicode-cu.exe') }; " +
   "if ($env:LOCALAPPDATA) { $candidates += (Join-Path $env:LOCALAPPDATA 'OmnicodeCU\\omnicode-cu.exe') }; " +
   "if ($env:ProgramFiles) { $candidates += (Join-Path $env:ProgramFiles 'OmnicodeCU\\omnicode-cu.exe') }; " +
-  "$exe = $candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1; " +
+  '$exe = $candidates | Where-Object { -not [string]::IsNullOrWhiteSpace($_) -and (Test-Path -LiteralPath $_ -PathType Leaf) } | Select-Object -First 1; ' +
   'if (-not $exe) { exit 3 }; & $exe doctor; exit $LASTEXITCODE';
 
 interface PluginLayerConfig {
@@ -56,7 +56,9 @@ function macPlugin(): PluginLayerConfig {
 function windowsPlugin(): PluginLayerConfig {
   return {
     id: WINDOWS_PLUGIN_ID,
-    zipUrl: omnicodeCdnContentUrl('omnicode-computer-use-windows/latest/omnicode-cu-win-plugin.zip'),
+    zipUrl: omnicodeCdnContentUrl(
+      'omnicode-computer-use-windows/latest/omnicode-cu-win-plugin.zip',
+    ),
   };
 }
 
@@ -98,24 +100,15 @@ export function windowsPowerShellPath(
   systemRoot = process.env['SystemRoot'] ?? DEFAULT_WINDOWS_SYSTEM_ROOT,
 ): string {
   const root = path.win32.isAbsolute(systemRoot) ? systemRoot : DEFAULT_WINDOWS_SYSTEM_ROOT;
-  return path.win32.join(
-    root,
-    'System32',
-    'WindowsPowerShell',
-    'v1.0',
-    'powershell.exe',
-  );
+  return path.win32.join(root, 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
 }
 
 export function windowsPowerShell7Path(
-  programFiles =
-    process.env['ProgramW6432'] ??
+  programFiles = process.env['ProgramW6432'] ??
     process.env['ProgramFiles'] ??
     DEFAULT_WINDOWS_PROGRAM_FILES,
 ): string {
-  const root = path.win32.isAbsolute(programFiles)
-    ? programFiles
-    : DEFAULT_WINDOWS_PROGRAM_FILES;
+  const root = path.win32.isAbsolute(programFiles) ? programFiles : DEFAULT_WINDOWS_PROGRAM_FILES;
   return path.win32.join(root, 'PowerShell', '7', 'pwsh.exe');
 }
 
@@ -281,9 +274,7 @@ function createMacOmnicodeCuEntry(ctx: CapabilityEntryContext): CapabilityEntry 
     }
   }
 
-  async function removeLegacyMcpRegistration(
-    legacy: LegacyMcpFile | undefined,
-  ): Promise<boolean> {
+  async function removeLegacyMcpRegistration(legacy: LegacyMcpFile | undefined): Promise<boolean> {
     if (legacy === undefined) return false;
 
     const nextServers = { ...legacy.servers };
@@ -347,12 +338,13 @@ function createMacOmnicodeCuEntry(ctx: CapabilityEntryContext): CapabilityEntry 
     } else {
       const granted =
         permissions !== undefined && permissions.accessibility && permissions.screenRecording;
-      const missingPermissions = permissions === undefined
-        ? undefined
-        : [
-            ...(permissions.accessibility ? [] : ['accessibility']),
-            ...(permissions.screenRecording ? [] : ['screenRecording']),
-          ].join(',');
+      const missingPermissions =
+        permissions === undefined
+          ? undefined
+          : [
+              ...(permissions.accessibility ? [] : ['accessibility']),
+              ...(permissions.screenRecording ? [] : ['screenRecording']),
+            ].join(',');
       steps.push({
         id: 'permissions',
         state: granted ? 'ok' : 'missing',
@@ -382,7 +374,10 @@ function createMacOmnicodeCuEntry(ctx: CapabilityEntryContext): CapabilityEntry 
     }
     await bestEffort('launchctl', ['bootout', `gui/${uid}/${LAUNCHD_LABEL}`]);
     for (const mode of ['service', 'overlay']) {
-      await bestEffort('pkill', ['-f', `${APP_BUNDLE}/Contents/MacOS/omnicode-cu[[:space:]]+${mode}`]);
+      await bestEffort('pkill', [
+        '-f',
+        `${APP_BUNDLE}/Contents/MacOS/omnicode-cu[[:space:]]+${mode}`,
+      ]);
     }
     await new Promise((resolve) => {
       setTimeout(resolve, 1_000);
@@ -446,9 +441,14 @@ function createMacOmnicodeCuEntry(ctx: CapabilityEntryContext): CapabilityEntry 
 
         report('app');
         const unzipDir = path.join(workDir, 'unzipped');
-        const unzipped = await runCommand(ctx.hostProcess, 'ditto', ['-x', '-k', zipPath, unzipDir], {
-          timeout: 120_000,
-        });
+        const unzipped = await runCommand(
+          ctx.hostProcess,
+          'ditto',
+          ['-x', '-k', zipPath, unzipDir],
+          {
+            timeout: 120_000,
+          },
+        );
         if (unzipped.code !== 0) {
           throw new Error(`Failed to unzip OmnicodeCU.app: ${unzipped.stderr || unzipped.stdout}`);
         }
@@ -481,12 +481,9 @@ function createMacOmnicodeCuEntry(ctx: CapabilityEntryContext): CapabilityEntry 
 
     if (stepStates.get('permissions') !== 'ok') {
       report('permissions');
-      await runCommand(
-        ctx.hostProcess,
-        appBin,
-        ['request-permissions', '--ax', '--screen'],
-        { timeout: PERMISSIONS_TIMEOUT_MS },
-      ).catch(() => undefined);
+      await runCommand(ctx.hostProcess, appBin, ['request-permissions', '--ax', '--screen'], {
+        timeout: PERMISSIONS_TIMEOUT_MS,
+      }).catch(() => undefined);
     }
     return undefined;
   }
@@ -506,8 +503,7 @@ function createMacOmnicodeCuEntry(ctx: CapabilityEntryContext): CapabilityEntry 
 function createWindowsOmnicodeCuEntry(ctx: CapabilityEntryContext): CapabilityEntry {
   const supported = ctx.platform === 'win32' && ctx.arch === 'x64';
   const probeTimeoutMs = ctx.detectProbeTimeoutMs ?? DETECT_PROBE_TIMEOUT_MS;
-  const installerProbeTimeoutMs =
-    ctx.detectProbeTimeoutMs ?? WINDOWS_INSTALLER_PROBE_TIMEOUT_MS;
+  const installerProbeTimeoutMs = ctx.detectProbeTimeoutMs ?? WINDOWS_INSTALLER_PROBE_TIMEOUT_MS;
   const installTimeoutMs = ctx.commandTimeoutMs ?? WINDOWS_INSTALL_TIMEOUT_MS;
   const powershellPath = windowsPowerShellPath();
   const powershell7Path = windowsPowerShell7Path();
@@ -701,5 +697,7 @@ function createWindowsOmnicodeCuEntry(ctx: CapabilityEntryContext): CapabilityEn
 }
 
 export function createOmnicodeCuEntry(ctx: CapabilityEntryContext): CapabilityEntry {
-  return ctx.platform === 'win32' ? createWindowsOmnicodeCuEntry(ctx) : createMacOmnicodeCuEntry(ctx);
+  return ctx.platform === 'win32'
+    ? createWindowsOmnicodeCuEntry(ctx)
+    : createMacOmnicodeCuEntry(ctx);
 }

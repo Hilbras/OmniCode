@@ -5,7 +5,14 @@
  * to align after the bullet.
  */
 
-import { Container, truncateToWidth, visibleWidth, type Component, type TuiMouseDispatchResult, type TuiMouseEvent } from '@hilbras/omnicode-tui';
+import {
+  Container,
+  truncateToWidth,
+  visibleWidth,
+  type Component,
+  type TuiMouseDispatchResult,
+  type TuiMouseEvent,
+} from '@hilbras/omnicode-tui';
 
 import { Markdown } from '#/tui/components/markdown/markdown';
 import { MESSAGE_INDENT } from '#/tui/constant/rendering';

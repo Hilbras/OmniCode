@@ -7,12 +7,8 @@ import { SSEServerTransport } from '@modelcontextprotocol/sdk/server/sse.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { z } from 'zod';
 
-import type { ToolDescription as KosongTool } from '#human/llm/message';
+import type { McpOAuthScheduledTask, McpOAuthScheduler } from '#/mcpCore/oauth/service';
 import type { McpOAuthStore } from '#/mcpCore/oauth/store';
-import type {
-  McpOAuthScheduledTask,
-  McpOAuthScheduler,
-} from '#/mcpCore/oauth/service';
 import type { MCPClient, MCPToolDefinition } from '#/mcpCore/types';
 import type {
   ExecutableTool,
@@ -20,6 +16,7 @@ import type {
   ExecutableToolResult,
   ToolExecution,
 } from '#/tool/toolContract';
+import type { ToolDescription as KosongTool } from '#human/llm/message';
 
 export const fixturesDir = new URL('./fixtures/', import.meta.url).pathname;
 export const stdioFixture = new URL('./fixtures/mock-stdio-server.mjs', import.meta.url).pathname;
@@ -40,6 +37,10 @@ export const crashAfterConnectFixture = new URL(
 ).pathname;
 export const stderrThenExitFixture = new URL(
   './fixtures/stderr-then-exit-stdio-server.mjs',
+  import.meta.url,
+).pathname;
+export const toolListChangedFixture = new URL(
+  './fixtures/tool-list-changed-stdio-server.mjs',
   import.meta.url,
 ).pathname;
 
@@ -107,11 +108,13 @@ export function fakeMcpClient(
         properties: { text: { type: 'string' } },
         required: ['text'],
       },
+      annotations: { readOnlyHint: true },
     },
     {
       name: 'noop',
       description: 'Does nothing',
       inputSchema: { type: 'object', properties: {} },
+      annotations: { readOnlyHint: true },
     },
   ],
 ): MCPClient {
@@ -135,6 +138,7 @@ export async function discoverTools(client: MCPClient): Promise<KosongTool[]> {
     name: d.name,
     description: d.description,
     parameters: d.inputSchema as Record<string, unknown>,
+    ...(d.annotations === undefined ? {} : { annotations: d.annotations }),
   }));
 }
 

@@ -4,10 +4,7 @@ import { join } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import {
-  readSurveyLastShownTime,
-  writeSurveyLastShownTime,
-} from '#/utils/survey-state-store';
+import { readSurveyLastShownTime, writeSurveyLastShownTime } from '#/utils/survey-state-store';
 
 describe('survey-state-store', () => {
   let dir: string;

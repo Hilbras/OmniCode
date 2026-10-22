@@ -25,11 +25,7 @@ import { persistedOmnicodeOAuthRef } from '#/utils/region';
 import { generateRemoteControlQr } from '#/utils/remote-control-qr';
 
 import { initializeServerTelemetry } from '../../telemetry';
-import {
-  createOmnicodeCodeHostIdentity,
-  getHostPackageRoot,
-  getVersion,
-} from '../../version';
+import { createOmnicodeCodeHostIdentity, getHostPackageRoot, getVersion } from '../../version';
 import {
   accessUrlLines,
   browserOpenOrigin,
@@ -178,9 +174,7 @@ export function buildWebCommand(
     .option('--no-open', 'Do not open the web UI in the default browser.', true)
     .action(async (opts: WebCliOptions) => {
       try {
-        await handleWebCommand(
-          forceRemoteControl ? { ...opts, remoteControl: true } : opts,
-        );
+        await handleWebCommand(forceRemoteControl ? { ...opts, remoteControl: true } : opts);
       } catch (error) {
         process.stderr.write(`${error instanceof Error ? error.message : String(error)}\n`);
         process.exit(1);
@@ -278,9 +272,7 @@ function formatReadyLine(
   token: string | undefined,
   dangerousBypassAuth = false,
 ): string {
-  const notice = dangerousBypassAuth
-    ? `${formatDangerNoticeLines().join('\n')}\n`
-    : '';
+  const notice = dangerousBypassAuth ? `${formatDangerNoticeLines().join('\n')}\n` : '';
   return `${notice}Omnicode server: ${buildOpenableUrl(origin, token)}\n`;
 }
 
@@ -357,9 +349,7 @@ async function runServerInProcess(
   const logger = createServerLogger({ level: options.logLevel });
   const webAssetsDir = serverWebAssetsDir();
   if (webAssetsDir === undefined) {
-    logger.info(
-      'dev mode: web assets not built; starting the API server without the web UI',
-    );
+    logger.info('dev mode: web assets not built; starting the API server without the web UI');
   }
   const v2 = await startServer({
     host: options.host,

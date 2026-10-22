@@ -4,6 +4,7 @@ import type { ServerResponse } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import type { OmnicodeHostIdentity } from '@hilbras/omnicode-auth';
 import {
   ErrorCodes,
   ILogService,
@@ -11,16 +12,12 @@ import {
   isError2,
   type Scope,
 } from '@hilbras/omnicode-core';
-import type { OmnicodeHostIdentity } from '@hilbras/omnicode-auth';
 
 import { requestLog } from '../lib/requestLog';
 import { defineRoute } from '../middleware/defineRoute';
-import { ErrorCode } from '../protocol/error-codes';
 import { errEnvelope } from '../protocol/envelope';
-import {
-  exportSessionParamsSchema,
-  exportSessionRequestSchema,
-} from '../protocol/rest-session';
+import { ErrorCode } from '../protocol/error-codes';
+import { exportSessionParamsSchema, exportSessionRequestSchema } from '../protocol/rest-session';
 
 interface SessionExportRouteHost {
   post(
@@ -112,8 +109,7 @@ export function registerSessionExportRoute(
             includeGlobalLog: true,
             includeDesktopLog: req.body.desktop === true,
             version: options.hostIdentity.version,
-            desktopVersion:
-              req.body.desktop === true ? options.hostIdentity.version : undefined,
+            desktopVersion: req.body.desktop === true ? options.hostIdentity.version : undefined,
           },
           {
             webLog: req.body.web_log,

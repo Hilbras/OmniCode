@@ -1,6 +1,6 @@
-import { describe, expect, it, vi } from 'vitest';
-import chalk from 'chalk';
 import type { CapabilityStatus, PluginSummary } from '@hilbras/omnicode-api';
+import chalk from 'chalk';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   PluginInstallTrustConfirmComponent,
@@ -14,7 +14,11 @@ import {
 } from '#/tui/components/dialogs/plugins-selector';
 import { currentTheme } from '#/tui/theme';
 import { darkColors, lightColors } from '#/tui/theme/colors';
-import { isOfficialPluginInstall, isOfficialPluginSource, pluginTrustLabel } from '#/tui/utils/plugin-source-label';
+import {
+  isOfficialPluginInstall,
+  isOfficialPluginSource,
+  pluginTrustLabel,
+} from '#/tui/utils/plugin-source-label';
 
 const ANSI_SGR = /\u001B\[[0-9;]*m/g;
 
@@ -73,7 +77,12 @@ const officialEntries = [
   },
 ];
 const thirdPartyEntries = [
-  { id: 'superpowers', tier: 'curated' as const, displayName: 'Superpowers', source: 'https://x/s.zip' },
+  {
+    id: 'superpowers',
+    tier: 'curated' as const,
+    displayName: 'Superpowers',
+    source: 'https://x/s.zip',
+  },
 ];
 const marketplaceEntries = [...officialEntries, ...thirdPartyEntries];
 
@@ -123,76 +132,88 @@ function makeCapability(overrides: Partial<CapabilityStatus> = {}): CapabilitySt
 
 describe('plugins selector dialogs', () => {
   it('trusts only built-in Omnicode CDN plugin paths', () => {
-    expect(pluginTrustLabel({
-      id: 'omnicode-datasource',
-      displayName: 'Omnicode Datasource',
-      enabled: true,
-      state: 'ok',
-      skillCount: 0,
-      mcpServerCount: 0,
-      enabledMcpServerCount: 0,
-      hookCount: 0,
-      commandCount: 0,
-      hasErrors: false,
-      source: 'zip-url',
-      originalSource: 'https://code.omnicode.com/omnicode/plugins/official/omnicode-datasource.zip',
-    })).toBe('official');
-    expect(pluginTrustLabel({
-      id: 'superpowers',
-      displayName: 'Superpowers',
-      enabled: true,
-      state: 'ok',
-      skillCount: 0,
-      mcpServerCount: 0,
-      enabledMcpServerCount: 0,
-      hookCount: 0,
-      commandCount: 0,
-      hasErrors: false,
-      source: 'zip-url',
-      originalSource: 'https://code.omnicode.com/omnicode/plugins/curated/superpowers.zip',
-    })).toBe('curated');
-    expect(pluginTrustLabel({
-      id: 'omnicode-cu',
-      displayName: 'Omnicode Computer Use',
-      enabled: true,
-      state: 'ok',
-      skillCount: 1,
-      mcpServerCount: 1,
-      enabledMcpServerCount: 1,
-      hookCount: 0,
-      commandCount: 0,
-      hasErrors: false,
-      source: 'zip-url',
-      originalSource: 'https://cdn.omnicode.com/omnicode-computer-use/latest/omnicode-cu-plugin.zip',
-    })).toBe('official');
-    expect(pluginTrustLabel({
-      id: 'demo',
-      displayName: 'Demo',
-      enabled: true,
-      state: 'ok',
-      skillCount: 0,
-      mcpServerCount: 0,
-      enabledMcpServerCount: 0,
-      hookCount: 0,
-      commandCount: 0,
-      hasErrors: false,
-      source: 'zip-url',
-      originalSource: 'https://code.omnicode.com/demo.zip',
-    })).toBe('third-party');
-    expect(pluginTrustLabel({
-      id: 'local',
-      displayName: 'Local',
-      enabled: true,
-      state: 'ok',
-      skillCount: 0,
-      mcpServerCount: 0,
-      enabledMcpServerCount: 0,
-      hookCount: 0,
-      commandCount: 0,
-      hasErrors: false,
-      source: 'local-path',
-      originalSource: 'https://code.omnicode.com/omnicode/plugins/official/local',
-    })).toBe('third-party');
+    expect(
+      pluginTrustLabel({
+        id: 'omnicode-datasource',
+        displayName: 'Omnicode Datasource',
+        enabled: true,
+        state: 'ok',
+        skillCount: 0,
+        mcpServerCount: 0,
+        enabledMcpServerCount: 0,
+        hookCount: 0,
+        commandCount: 0,
+        hasErrors: false,
+        source: 'zip-url',
+        originalSource:
+          'https://code.omnicode.com/omnicode/plugins/official/omnicode-datasource.zip',
+      }),
+    ).toBe('official');
+    expect(
+      pluginTrustLabel({
+        id: 'superpowers',
+        displayName: 'Superpowers',
+        enabled: true,
+        state: 'ok',
+        skillCount: 0,
+        mcpServerCount: 0,
+        enabledMcpServerCount: 0,
+        hookCount: 0,
+        commandCount: 0,
+        hasErrors: false,
+        source: 'zip-url',
+        originalSource: 'https://code.omnicode.com/omnicode/plugins/curated/superpowers.zip',
+      }),
+    ).toBe('curated');
+    expect(
+      pluginTrustLabel({
+        id: 'omnicode-cu',
+        displayName: 'Omnicode Computer Use',
+        enabled: true,
+        state: 'ok',
+        skillCount: 1,
+        mcpServerCount: 1,
+        enabledMcpServerCount: 1,
+        hookCount: 0,
+        commandCount: 0,
+        hasErrors: false,
+        source: 'zip-url',
+        originalSource:
+          'https://cdn.omnicode.com/omnicode-computer-use/latest/omnicode-cu-plugin.zip',
+      }),
+    ).toBe('official');
+    expect(
+      pluginTrustLabel({
+        id: 'demo',
+        displayName: 'Demo',
+        enabled: true,
+        state: 'ok',
+        skillCount: 0,
+        mcpServerCount: 0,
+        enabledMcpServerCount: 0,
+        hookCount: 0,
+        commandCount: 0,
+        hasErrors: false,
+        source: 'zip-url',
+        originalSource: 'https://code.omnicode.com/demo.zip',
+      }),
+    ).toBe('third-party');
+    expect(
+      pluginTrustLabel({
+        id: 'local',
+        displayName: 'Local',
+        enabled: true,
+        state: 'ok',
+        skillCount: 0,
+        mcpServerCount: 0,
+        enabledMcpServerCount: 0,
+        hookCount: 0,
+        commandCount: 0,
+        hasErrors: false,
+        source: 'local-path',
+        originalSource: 'https://code.omnicode.com/omnicode/plugins/official/local',
+      }),
+    ).toBe('third-party');
   });
 
   it('trusts the .ai Omnicode plugin hosts with the same path rules', () => {
@@ -212,14 +233,26 @@ describe('plugins selector dialogs', () => {
         originalSource,
       });
     // code.omnicode.ai mirrors the cdnBase rules; cdn.omnicode.ai the content-CDN ones.
-    expect(labelFor('https://code.omnicode.ai/omnicode/plugins/official/omnicode-datasource.zip')).toBe('official');
-    expect(labelFor('https://code.omnicode.ai/omnicode/plugins/curated/superpowers.zip')).toBe('curated');
-    expect(labelFor('https://cdn.omnicode.ai/omnicode-computer-use/latest/omnicode-cu-plugin.zip')).toBe('official');
-    expect(labelFor('https://cdn.omnicode.ai/omnicode-computer-use-windows/latest/omnicode-cu-win-plugin.zip')).toBe('official');
+    expect(
+      labelFor('https://code.omnicode.ai/omnicode/plugins/official/omnicode-datasource.zip'),
+    ).toBe('official');
+    expect(labelFor('https://code.omnicode.ai/omnicode/plugins/curated/superpowers.zip')).toBe(
+      'curated',
+    );
+    expect(
+      labelFor('https://cdn.omnicode.ai/omnicode-computer-use/latest/omnicode-cu-plugin.zip'),
+    ).toBe('official');
+    expect(
+      labelFor(
+        'https://cdn.omnicode.ai/omnicode-computer-use-windows/latest/omnicode-cu-win-plugin.zip',
+      ),
+    ).toBe('official');
     // Non-plugin paths on the .ai hosts, and lookalike hosts, stay third-party.
     expect(labelFor('https://code.omnicode.ai/demo.zip')).toBe('third-party');
     expect(labelFor('https://cdn.omnicode.ai/unrelated/plugin.zip')).toBe('third-party');
-    expect(labelFor('https://code.omnicode.ai.example.test/omnicode/plugins/official/x.zip')).toBe('third-party');
+    expect(labelFor('https://code.omnicode.ai.example.test/omnicode/plugins/official/x.zip')).toBe(
+      'third-party',
+    );
   });
 
   it('recognizes installed plugins by official provenance', () => {
@@ -236,37 +269,50 @@ describe('plugins selector dialogs', () => {
       hasErrors: false,
     };
     // Zip installs from the official CDN path.
-    expect(isOfficialPluginInstall({
-      ...base,
-      source: 'zip-url',
-      originalSource: 'https://code.omnicode.com/omnicode/plugins/official/omnicode-datasource.zip',
-    })).toBe(true);
-    expect(isOfficialPluginInstall({
-      ...base,
-      source: 'zip-url',
-      originalSource: 'https://code.omnicode.ai/omnicode/plugins/official/omnicode-datasource.zip',
-    })).toBe(true);
-    expect(isOfficialPluginInstall({
-      ...base,
-      id: 'omnicode-cu',
-      displayName: 'Omnicode Computer Use',
-      source: 'zip-url',
-      originalSource: 'https://cdn.omnicode.com/omnicode-computer-use/latest/omnicode-cu-plugin.zip',
-    })).toBe(true);
+    expect(
+      isOfficialPluginInstall({
+        ...base,
+        source: 'zip-url',
+        originalSource:
+          'https://code.omnicode.com/omnicode/plugins/official/omnicode-datasource.zip',
+      }),
+    ).toBe(true);
+    expect(
+      isOfficialPluginInstall({
+        ...base,
+        source: 'zip-url',
+        originalSource:
+          'https://code.omnicode.ai/omnicode/plugins/official/omnicode-datasource.zip',
+      }),
+    ).toBe(true);
+    expect(
+      isOfficialPluginInstall({
+        ...base,
+        id: 'omnicode-cu',
+        displayName: 'Omnicode Computer Use',
+        source: 'zip-url',
+        originalSource:
+          'https://cdn.omnicode.com/omnicode-computer-use/latest/omnicode-cu-plugin.zip',
+      }),
+    ).toBe(true);
     // Same manifest id from a local path, GitHub, a loopback URL, or a
     // third-party URL is not the official build.
     expect(isOfficialPluginInstall({ ...base, source: 'local-path' })).toBe(false);
     expect(isOfficialPluginInstall({ ...base, source: 'github' })).toBe(false);
-    expect(isOfficialPluginInstall({
-      ...base,
-      source: 'zip-url',
-      originalSource: 'http://127.0.0.1:58627/omnicode/plugins/official/omnicode-datasource.zip',
-    })).toBe(false);
-    expect(isOfficialPluginInstall({
-      ...base,
-      source: 'zip-url',
-      originalSource: 'https://example.test/omnicode/plugins/official/omnicode-datasource.zip',
-    })).toBe(false);
+    expect(
+      isOfficialPluginInstall({
+        ...base,
+        source: 'zip-url',
+        originalSource: 'http://127.0.0.1:58627/omnicode/plugins/official/omnicode-datasource.zip',
+      }),
+    ).toBe(false);
+    expect(
+      isOfficialPluginInstall({
+        ...base,
+        source: 'zip-url',
+        originalSource: 'https://example.test/omnicode/plugins/official/omnicode-datasource.zip',
+      }),
+    ).toBe(false);
   });
 
   it('shows installed Omnicode Computer Use and WebBridge plugins as official', () => {
@@ -276,14 +322,16 @@ describe('plugins selector dialogs', () => {
         id: 'omnicode-cu',
         displayName: 'Omnicode Computer Use',
         source: 'zip-url',
-        originalSource: 'https://cdn.omnicode.com/omnicode-computer-use/latest/omnicode-cu-plugin.zip',
+        originalSource:
+          'https://cdn.omnicode.com/omnicode-computer-use/latest/omnicode-cu-plugin.zip',
       },
       {
         ...superpowers,
         id: 'omnicode-webbridge',
         displayName: 'Omnicode Browser Extension',
         source: 'zip-url',
-        originalSource: 'https://code.omnicode.com/omnicode/plugins/official/omnicode-webbridge.zip',
+        originalSource:
+          'https://code.omnicode.com/omnicode/plugins/official/omnicode-webbridge.zip',
       },
     ];
 
@@ -297,32 +345,60 @@ describe('plugins selector dialogs', () => {
   });
 
   it('treats only the official Omnicode CDN path as a trusted install source', () => {
-    expect(isOfficialPluginSource('https://code.omnicode.com/omnicode/plugins/official/omnicode-datasource.zip')).toBe(true);
-    expect(isOfficialPluginSource('https://cdn.omnicode.com/omnicode-computer-use/latest/omnicode-cu-plugin.zip')).toBe(true);
+    expect(
+      isOfficialPluginSource(
+        'https://code.omnicode.com/omnicode/plugins/official/omnicode-datasource.zip',
+      ),
+    ).toBe(true);
+    expect(
+      isOfficialPluginSource(
+        'https://cdn.omnicode.com/omnicode-computer-use/latest/omnicode-cu-plugin.zip',
+      ),
+    ).toBe(true);
     expect(
       isOfficialPluginSource(
         'https://cdn.omnicode.com/omnicode-computer-use-windows/latest/omnicode-cu-win-plugin.zip',
       ),
     ).toBe(true);
     // The .ai region family follows the same path rules.
-    expect(isOfficialPluginSource('https://code.omnicode.ai/omnicode/plugins/official/omnicode-datasource.zip')).toBe(true);
-    expect(isOfficialPluginSource('https://cdn.omnicode.ai/omnicode-computer-use/latest/omnicode-cu-plugin.zip')).toBe(true);
+    expect(
+      isOfficialPluginSource(
+        'https://code.omnicode.ai/omnicode/plugins/official/omnicode-datasource.zip',
+      ),
+    ).toBe(true);
+    expect(
+      isOfficialPluginSource(
+        'https://cdn.omnicode.ai/omnicode-computer-use/latest/omnicode-cu-plugin.zip',
+      ),
+    ).toBe(true);
     expect(
       isOfficialPluginSource(
         'https://cdn.omnicode.ai/omnicode-computer-use-windows/latest/omnicode-cu-win-plugin.zip',
       ),
     ).toBe(true);
-    expect(isOfficialPluginSource('https://code.omnicode.ai/omnicode/plugins/curated/superpowers.zip')).toBe(false);
+    expect(
+      isOfficialPluginSource('https://code.omnicode.ai/omnicode/plugins/curated/superpowers.zip'),
+    ).toBe(false);
     expect(isOfficialPluginSource('https://cdn.omnicode.ai/unrelated/plugin.zip')).toBe(false);
     // Curated and other Omnicode CDN paths are not "official" for the install gate.
-    expect(isOfficialPluginSource('https://code.omnicode.com/omnicode/plugins/curated/superpowers.zip')).toBe(false);
-    expect(isOfficialPluginSource('https://code.omnicode.com/omnicode/plugins/foo.zip')).toBe(false);
+    expect(
+      isOfficialPluginSource('https://code.omnicode.com/omnicode/plugins/curated/superpowers.zip'),
+    ).toBe(false);
+    expect(isOfficialPluginSource('https://code.omnicode.com/omnicode/plugins/foo.zip')).toBe(
+      false,
+    );
     expect(isOfficialPluginSource('https://cdn.omnicode.com/unrelated/plugin.zip')).toBe(false);
     // Non-Omnicode hosts (loopback included), non-https schemes, local paths, and
     // GitHub sources are unofficial.
-    expect(isOfficialPluginSource('https://example.test/omnicode/plugins/official/x.zip')).toBe(false);
-    expect(isOfficialPluginSource('http://code.omnicode.com/omnicode/plugins/official/x.zip')).toBe(false);
-    expect(isOfficialPluginSource('http://127.0.0.1:58627/omnicode/plugins/official/x.zip')).toBe(false);
+    expect(isOfficialPluginSource('https://example.test/omnicode/plugins/official/x.zip')).toBe(
+      false,
+    );
+    expect(isOfficialPluginSource('http://code.omnicode.com/omnicode/plugins/official/x.zip')).toBe(
+      false,
+    );
+    expect(isOfficialPluginSource('http://127.0.0.1:58627/omnicode/plugins/official/x.zip')).toBe(
+      false,
+    );
     expect(isOfficialPluginSource('./plugins/omnicode-datasource')).toBe(false);
     expect(isOfficialPluginSource('/abs/path/to/plugin')).toBe(false);
     expect(isOfficialPluginSource('github.com/owner/repo')).toBe(false);
@@ -432,7 +508,12 @@ describe('plugins selector dialogs', () => {
   });
 
   it('renders the inline plugin hint on the installed row', () => {
-    const datasource = { ...superpowers, id: 'omnicode-datasource', displayName: 'Omnicode Datasource', skillCount: 1 };
+    const datasource = {
+      ...superpowers,
+      id: 'omnicode-datasource',
+      displayName: 'Omnicode Datasource',
+      skillCount: 1,
+    };
     const { panel } = makePanel({
       installed: [datasource],
       selectedId: 'omnicode-datasource',
@@ -480,7 +561,9 @@ describe('plugins selector dialogs', () => {
     // A custom marketplace may legitimately list an entry reusing the
     // omnicode-webbridge id: without the capability: marker it must render and
     // install as a plain plugin, not borrow capability status.
-    const capabilities = [makeCapability({ id: 'omnicode-webbridge', displayName: 'Omnicode Browser Extension' })];
+    const capabilities = [
+      makeCapability({ id: 'omnicode-webbridge', displayName: 'Omnicode Browser Extension' }),
+    ];
     const entries = [
       {
         id: 'omnicode-webbridge',
@@ -535,7 +618,10 @@ describe('plugins selector dialogs', () => {
     panel.handleInput('\r');
     expect(onSelect).toHaveBeenCalledWith({
       kind: 'install',
-      entry: expect.objectContaining({ id: 'omnicode-webbridge', source: 'capability:omnicode-webbridge' }),
+      entry: expect.objectContaining({
+        id: 'omnicode-webbridge',
+        source: 'capability:omnicode-webbridge',
+      }),
     });
   });
 
@@ -594,7 +680,10 @@ describe('plugins selector dialogs', () => {
     panel.handleInput('\r'); // index 0 → the real entry installs
     expect(onSelect).toHaveBeenCalledWith({
       kind: 'install',
-      entry: expect.objectContaining({ id: 'omnicode-webbridge', source: 'capability:omnicode-webbridge' }),
+      entry: expect.objectContaining({
+        id: 'omnicode-webbridge',
+        source: 'capability:omnicode-webbridge',
+      }),
     });
   });
 
@@ -619,7 +708,10 @@ describe('plugins selector dialogs', () => {
     panel.handleInput('\r');
     expect(onSelect).toHaveBeenCalledWith({
       kind: 'install',
-      entry: expect.objectContaining({ id: 'omnicode-webbridge', source: 'capability:omnicode-webbridge' }),
+      entry: expect.objectContaining({
+        id: 'omnicode-webbridge',
+        source: 'capability:omnicode-webbridge',
+      }),
     });
   });
 
@@ -799,9 +891,7 @@ describe('plugins selector dialogs', () => {
     const installed = [
       { ...superpowers, id: 'omnicode-cu', displayName: 'Omnicode Computer Use', version: '0.5.4' },
     ];
-    const capabilities = [
-      makeCapability({ supported: false, state: 'unsupported', steps: [] }),
-    ];
+    const capabilities = [makeCapability({ supported: false, state: 'unsupported', steps: [] })];
     const { panel, onSelect } = makePanel({ installed, capabilities });
 
     const out = strip(renderRaw(panel));
@@ -828,11 +918,24 @@ describe('plugins selector dialogs', () => {
       }),
     ];
     const installed = [
-      { ...superpowers, id: 'omnicode-webbridge', displayName: 'Omnicode Browser Extension', version: '1.11.3' },
+      {
+        ...superpowers,
+        id: 'omnicode-webbridge',
+        displayName: 'Omnicode Browser Extension',
+        version: '1.11.3',
+      },
     ];
     const { panel } = makePanel({ installed, capabilities, initialTab: 'official' });
     panel.setMarketplace(
-      [{ id: 'omnicode-webbridge', displayName: 'Omnicode Browser Extension', source: 'capability:omnicode-webbridge', tier: 'official', builtIn: true }],
+      [
+        {
+          id: 'omnicode-webbridge',
+          displayName: 'Omnicode Browser Extension',
+          source: 'capability:omnicode-webbridge',
+          tier: 'official',
+          builtIn: true,
+        },
+      ],
       '/tmp/marketplace.json',
     );
 
@@ -859,7 +962,15 @@ describe('plugins selector dialogs', () => {
     ];
     const { panel } = makePanel({ capabilities, initialTab: 'official' });
     panel.setMarketplace(
-      [{ id: 'omnicode-webbridge', displayName: 'Omnicode Browser Extension', source: 'capability:omnicode-webbridge', tier: 'official', builtIn: true }],
+      [
+        {
+          id: 'omnicode-webbridge',
+          displayName: 'Omnicode Browser Extension',
+          source: 'capability:omnicode-webbridge',
+          tier: 'official',
+          builtIn: true,
+        },
+      ],
       '/tmp/marketplace.json',
     );
 
@@ -933,7 +1044,7 @@ describe('plugins selector dialogs', () => {
         mcpServerCount: 1,
         enabledMcpServerCount: 1,
         hookCount: 0,
-      commandCount: 0,
+        commandCount: 0,
         hasErrors: false,
         source: 'local-path',
         installedAt: '2026-05-29T00:00:00.000Z',

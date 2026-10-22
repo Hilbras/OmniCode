@@ -5,8 +5,11 @@
 
 import { isAbsolute, relative, sep } from 'node:path';
 
+import type { TokenUsage } from '@hilbras/omnicode-api';
 import { Container, Spacer, Text, truncateToWidth, visibleWidth } from '@hilbras/omnicode-tui';
 import type { Component, TUI } from '@hilbras/omnicode-tui';
+
+import { isExperimentalFlagEnabled } from '#/tui/commands/experimental-flags';
 import { Markdown } from '#/tui/components/markdown/markdown';
 import { highlightLines, langFromPath } from '#/tui/components/media/code-highlight';
 import { renderDiffLinesClustered } from '#/tui/components/media/diff-preview';
@@ -26,29 +29,27 @@ import { FAILURE_MARK, STATUS_BULLET, SUCCESS_MARK } from '#/tui/constant/symbol
 import { currentTheme } from '#/tui/theme';
 import { createMarkdownTheme } from '#/tui/theme/pi-tui-theme';
 import type { ToolCallBlockData, ToolResultBlockData } from '#/tui/types';
-import type { TokenUsage } from '@hilbras/omnicode-api';
 import { appendStreamingArgsPreview } from '#/tui/utils/event-payload';
 import { createMarkdownOptions } from '#/tui/utils/markdown-options';
-import { notifyResultState } from '#/tui/utils/notify-result';
-import { isExperimentalFlagEnabled } from '#/tui/commands/experimental-flags';
 import { decodeMcpToolName } from '#/tui/utils/mcp-tool-name';
+import { notifyResultState } from '#/tui/utils/notify-result';
 import { isRenderCacheEnabled } from '#/tui/utils/render-cache';
 import { formatTokenCount } from '#/utils/usage/usage-format';
 
 import { agentSwarmResultSummaryFromOutput } from './agent-swarm-progress';
 import { PlanBoxComponent } from './plan-box';
-import { TruncatedHeaderLine, type HeaderContent } from './truncated-header-line';
 import { ShellExecutionComponent } from './shell-execution';
 import { countNonEmptyLines, pickChip } from './tool-renderers/chip';
+import { computeWriteStats } from './tool-renderers/chip';
 import { buildGoalToolHeader, parseGoalToolOutput } from './tool-renderers/goal';
 import { searchNoticeOnly } from './tool-renderers/grep-output';
 import { parseReadMediaOutput } from './tool-renderers/media';
-import { computeWriteStats } from './tool-renderers/chip';
 import { nonEmptyLines, outcomeLine, outcomeRows } from './tool-renderers/outcome';
+import { isGenericToolResult, pickResultRenderer } from './tool-renderers/registry';
 import { TruncatedOutputComponent } from './tool-renderers/truncated';
 import { isSpilledToolOutput } from './tool-renderers/types';
-import { isGenericToolResult, pickResultRenderer } from './tool-renderers/registry';
 import { buildWaitForHeader, parseWaitForOutput } from './tool-renderers/wait-for';
+import { TruncatedHeaderLine, type HeaderContent } from './truncated-header-line';
 
 const MAX_ARG_LENGTH = 60;
 const MAX_SUB_TOOL_CALLS_SHOWN = 4;
@@ -365,10 +366,7 @@ export function extractPartialStringField(text: string, key: string): string | u
 function parseArgsPreview(value: string): Record<string, unknown> {
   const previewText = value.slice(0, STREAMING_ARGS_PREVIEW_MAX_CHARS);
   if (previewText.trim().length === 0) return {};
-  if (
-    value.length <= STREAMING_ARGS_PREVIEW_MAX_CHARS &&
-    previewText.trimEnd().endsWith('}')
-  ) {
+  if (value.length <= STREAMING_ARGS_PREVIEW_MAX_CHARS && previewText.trimEnd().endsWith('}')) {
     try {
       const parsed = JSON.parse(previewText) as unknown;
       if (typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed)) {
@@ -493,8 +491,7 @@ export function extractKeyArgumentDetail(
     const val = args[key];
     if (typeof val === 'string' && val.length > 0) {
       const firstLine = val.split('\n')[0] ?? val;
-      const displayValue =
-        toolName === 'Bash' && val.includes('\n') ? `${firstLine}…` : firstLine;
+      const displayValue = toolName === 'Bash' && val.includes('\n') ? `${firstLine}…` : firstLine;
       return {
         text: displayKeyArgument(toolName, key, displayValue, workspaceDir),
         keep: PATH_KEYS.has(key) ? 'tail' : 'head',
@@ -540,7 +537,7 @@ class PrefixedWrappedLine implements Component {
     // reaches this many display rows, so a short paragraph still fills a
     // fixed-height window. Applied after `tailLines`.
     private readonly minLines?: number,
-  ) { }
+  ) {}
 
   invalidate(): void {
     this.renderCache = undefined;
@@ -755,16 +752,13 @@ export class ToolCallComponent extends Container {
       this.truncatedAtLastRender = this.children.some(
         (child, index) =>
           (child instanceof TruncatedHeaderLine &&
-            (index !== 1 ||
-              (this.toolCall.name === 'Bash' && this.toolCall.truncated !== true)) &&
+            (index !== 1 || (this.toolCall.name === 'Bash' && this.toolCall.truncated !== true)) &&
             child.wasTruncated()) ||
-          ((child instanceof TruncatedOutputComponent || child instanceof ShellExecutionComponent) &&
+          ((child instanceof TruncatedOutputComponent ||
+            child instanceof ShellExecutionComponent) &&
             child.wasTruncated()),
       );
-    } else if (
-      !this.truncatedAtLastRender &&
-      this.collapsedOutcomeClips(width)
-    ) {
+    } else if (!this.truncatedAtLastRender && this.collapsedOutcomeClips(width)) {
       this.truncatedAtLastRender = true;
     }
 
@@ -1131,7 +1125,9 @@ export class ToolCallComponent extends Container {
     const tokens =
       contextTokens && contextTokens > 0
         ? contextTokens
-        : (this.subagentUsage === undefined ? 0 : usageTotal(this.subagentUsage));
+        : this.subagentUsage === undefined
+          ? 0
+          : usageTotal(this.subagentUsage);
     const latestActivity = computeLatestActivity(
       this.ongoingSubCalls,
       this.finishedSubCalls,
@@ -1633,7 +1629,11 @@ export class ToolCallComponent extends Container {
     this.ui?.requestRender();
   }
 
-  appendSubToolLiveOutput(id: string, text: string, options?: { readonly replace?: boolean }): void {
+  appendSubToolLiveOutput(
+    id: string,
+    text: string,
+    options?: { readonly replace?: boolean },
+  ): void {
     if (text.length === 0) return;
     const activity = this.subToolActivities.get(id);
     const ongoing = this.ongoingSubCalls.get(id);
@@ -1727,7 +1727,7 @@ export class ToolCallComponent extends Container {
           ? 'Could not collect your input'
           : isBackgroundAsk
             ? 'Started background question'
-          : 'Collected your answers'
+            : 'Collected your answers'
         : isBackgroundAsk
           ? 'Starting background question'
           : 'Waiting for your input';
@@ -1811,9 +1811,7 @@ export class ToolCallComponent extends Container {
     const verb = isFinished ? 'Used' : isTruncated ? 'Truncated' : 'Using';
     const keyArg = extractKeyArgumentDetail(toolCall.name, toolCall.args, this.workspaceDir);
     const decoded = decodeMcpToolName(toolCall.name);
-    const verbStyled = isTruncated
-      ? currentTheme.fg('error', verb)
-      : verb;
+    const verbStyled = isTruncated ? currentTheme.fg('error', verb) : verb;
     const toolLabel =
       decoded !== null
         ? `${currentTheme.boldFg('primary', decoded.toolName)}${currentTheme.dim(` · MCP/${decoded.serverName}`)}`
@@ -1887,9 +1885,9 @@ export class ToolCallComponent extends Container {
       PROGRESS_URL_RE.lastIndex = 0;
       const styled = PROGRESS_URL_RE.test(raw)
         ? raw.replace(PROGRESS_URL_RE, (url) => {
-          const visible = currentTheme.underlineFg('warning', url);
-          return `\u001B]8;;${url}\u001B\\${visible}\u001B]8;;\u001B\\`;
-        })
+            const visible = currentTheme.underlineFg('warning', url);
+            return `\u001B]8;;${url}\u001B\\${visible}\u001B]8;;\u001B\\`;
+          })
         : currentTheme.dim(raw);
       PROGRESS_URL_RE.lastIndex = 0;
       this.addChild(new Text(styled, 2, 0));
@@ -1952,7 +1950,9 @@ export class ToolCallComponent extends Container {
       const suffix = this.hiddenSubCallCount > 1 ? 's' : '';
       this.addChild(
         new Text(
-          currentTheme.italic(currentTheme.dim(`    ${String(this.hiddenSubCallCount)} more tool call${suffix} …`)),
+          currentTheme.italic(
+            currentTheme.dim(`    ${String(this.hiddenSubCallCount)} more tool call${suffix} …`),
+          ),
           0,
           0,
         ),
@@ -1960,9 +1960,7 @@ export class ToolCallComponent extends Container {
     }
 
     for (const sub of this.finishedSubCalls) {
-      const mark = sub.isError
-        ? currentTheme.fg('error', '✗')
-        : currentTheme.fg('success', '•');
+      const mark = sub.isError ? currentTheme.fg('error', '✗') : currentTheme.fg('success', '•');
       const keyArg = extractKeyArgument(sub.name, sub.args, this.workspaceDir);
       const nameCol = currentTheme.fg('primary', sub.name);
       const argCol = keyArg ? currentTheme.dim(` (${keyArg})`) : '';
@@ -2125,7 +2123,9 @@ export class ToolCallComponent extends Container {
     const parts: string[] = [];
     if (this.subagentModel !== undefined) parts.push(this.subagentModel);
     if (this.subagentEffort !== undefined) parts.push(this.subagentEffort);
-    parts.push(`${String(this.subToolActivities.size)} tool${this.subToolActivities.size === 1 ? '' : 's'}`);
+    parts.push(
+      `${String(this.subToolActivities.size)} tool${this.subToolActivities.size === 1 ? '' : 's'}`,
+    );
     const elapsed = this.getSubagentElapsedSeconds();
     if (elapsed !== undefined) parts.push(formatElapsed(elapsed));
     const tokens =
@@ -2398,14 +2398,9 @@ export class ToolCallComponent extends Container {
       const allLines = highlightLines(content, lang);
       const maxLines = COMMAND_PREVIEW_LINES;
       const scrollLines =
-        allLines.length > maxLines
-          ? allLines.slice(allLines.length - maxLines)
-          : allLines;
+        allLines.length > maxLines ? allLines.slice(allLines.length - maxLines) : allLines;
       for (const [i, line] of scrollLines.entries()) {
-        const originalLineNumber =
-          allLines.length > maxLines
-            ? allLines.length - maxLines + i
-            : i;
+        const originalLineNumber = allLines.length > maxLines ? allLines.length - maxLines + i : i;
         const lineNum = currentTheme.dim(String(originalLineNumber + 1).padStart(4) + '  ');
         this.addChild(new Text(lineNum + line, 2, 0));
       }
@@ -2576,7 +2571,10 @@ export class ToolCallComponent extends Container {
 
     if (summary.completed > 0) {
       segments.push(
-        currentTheme.fg('success', `${SUCCESS_MARK.trimEnd()} ${String(summary.completed)} completed`),
+        currentTheme.fg(
+          'success',
+          `${SUCCESS_MARK.trimEnd()} ${String(summary.completed)} completed`,
+        ),
       );
     }
     if (summary.failed > 0) {

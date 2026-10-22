@@ -2,9 +2,7 @@ import { diagramKind, render, type DiagramKind, type MermaidArt, type Role } fro
 
 import { currentTheme } from '#/tui/theme';
 
-export type MermaidDrawResult =
-  | { status: 'ok'; art: MermaidArt | null }
-  | { status: 'error' };
+export type MermaidDrawResult = { status: 'ok'; art: MermaidArt | null } | { status: 'error' };
 
 export function drawMermaid(source: string): MermaidDrawResult {
   try {

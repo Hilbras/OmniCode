@@ -1,11 +1,8 @@
+import { visibleWidth } from '@hilbras/omnicode-tui';
 import chalk from 'chalk';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { visibleWidth } from '@hilbras/omnicode-tui';
 
-import {
-  SurveyPanelComponent,
-  type SurveyPanelView,
-} from '#/tui/components/panes/survey-panel';
+import { SurveyPanelComponent, type SurveyPanelView } from '#/tui/components/panes/survey-panel';
 
 function stripAnsi(text: string): string {
   return text.replaceAll(/\u001B\[[0-9;]*m/g, '');

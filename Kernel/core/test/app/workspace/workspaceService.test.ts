@@ -1,9 +1,9 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-
 import { promises as fsp } from 'node:fs';
 import os from 'node:os';
 import { join } from 'node:path';
-import { LifecycleScope } from '#/app/scopes';
+
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+
 import {
   ScopeActivation,
   _clearScopedRegistryForTests,
@@ -12,6 +12,17 @@ import {
 import { createScopedTestHost, stubPair } from '#/_base/di/test';
 import { ILogService } from '#/_base/log/log';
 import { encodeWorkDirKey, workspaceRootKey } from '#/_base/utils/workdir-slug';
+import { IBootstrapService } from '#/app/bootstrap/bootstrap';
+import { IEventService } from '#/app/event/event';
+import type { Event2 } from '#/app/event/event2';
+import { LifecycleScope } from '#/app/scopes';
+import { FileWorkspacePersistence } from '#/app/workspace/fileWorkspacePersistence';
+import { IWorkspaceService } from '#/app/workspace/workspace';
+import {
+  IWorkspacePersistence,
+  type PersistedWorkspaceEntry,
+} from '#/app/workspace/workspacePersistence';
+import { WorkspaceService } from '#/app/workspace/workspaceService';
 import { ErrorCodes, Error2 } from '#/errors';
 import { HostFileSystem } from '#/os/backends/node-local/hostFsService';
 import { IHostFileSystem } from '#/os/interface/hostFileSystem';
@@ -21,13 +32,7 @@ import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageSe
 import { IAppendLogStore } from '#/persistence/interface/appendLogStore';
 import { IAtomicDocumentStore } from '#/persistence/interface/atomicDocumentStore';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
-import { IEventService } from '#/app/event/event';
-import type { Event2 } from '#/app/event/event2';
-import { IBootstrapService } from '#/app/bootstrap/bootstrap';
-import { IWorkspaceService } from '#/app/workspace/workspace';
-import { WorkspaceService } from '#/app/workspace/workspaceService';
-import { FileWorkspacePersistence } from '#/app/workspace/fileWorkspacePersistence';
-import { IWorkspacePersistence, type PersistedWorkspaceEntry } from '#/app/workspace/workspacePersistence';
+
 import { stubBootstrap } from '../bootstrap/stubs';
 
 interface SessionIndexLine {
@@ -102,7 +107,10 @@ describe('WorkspaceService (file-backed)', () => {
     return host.app.accessor.get(IWorkspaceService);
   }
 
-  function restart(hostFs?: IHostFileSystem, storage?: IFileSystemStorageService): IWorkspaceService {
+  function restart(
+    hostFs?: IHostFileSystem,
+    storage?: IFileSystemStorageService,
+  ): IWorkspaceService {
     currentHost?.dispose();
     currentHost = undefined;
     return build(hostFs, storage);
@@ -536,9 +544,6 @@ describe('WorkspaceService (file-backed)', () => {
     expect(lower.id).not.toBe(upper.id);
     expect((await registry.list()).map((w) => w.root).toSorted()).toEqual(['/tmp/Foo', '/tmp/foo']);
   });
-
-
-
 
   it('delete tombstones every folded alias so a legacy split cannot resurface', async () => {
     const typedRoot = 'C:\\Users\\Foo\\Proj';

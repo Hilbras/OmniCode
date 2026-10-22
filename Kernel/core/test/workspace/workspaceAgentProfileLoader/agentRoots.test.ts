@@ -4,13 +4,13 @@ import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
+import { HostFileSystem } from '#/os/backends/node-local/hostFsService';
+import { HostFsError, OsFsErrors } from '#/os/interface/hostFsErrors';
 import {
   configuredAgentRoots,
   projectAgentRoots,
   userAgentRoots,
 } from '#/workspace/workspaceAgentProfileLoader/internal/agentRoots';
-import { HostFileSystem } from '#/os/backends/node-local/hostFsService';
-import { HostFsError, OsFsErrors } from '#/os/interface/hostFsErrors';
 
 const hostFs = new HostFileSystem();
 
@@ -36,9 +36,9 @@ describe('agentRoots', () => {
 
       const roots = await projectAgentRoots(hostFs, root);
 
-      expect(
-        roots.some((r) => r.path.endsWith('.omnicode/agents') && r.source === 'project'),
-      ).toBe(true);
+      expect(roots.some((r) => r.path.endsWith('.omnicode/agents') && r.source === 'project')).toBe(
+        true,
+      );
     });
 
     it('falls back to the generic .agents/agents directory', async () => {
@@ -156,10 +156,7 @@ describe('agentRoots', () => {
             return (path: string) =>
               path === blockedDir
                 ? Promise.reject(
-                    new HostFsError(
-                      OsFsErrors.codes.OS_FS_PERMISSION_DENIED,
-                      'permission denied',
-                    ),
+                    new HostFsError(OsFsErrors.codes.OS_FS_PERMISSION_DENIED, 'permission denied'),
                   )
                 : target.realpath(path);
           }

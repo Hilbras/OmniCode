@@ -1,16 +1,16 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
 import { EventEmitter } from 'node:events';
 import { PassThrough, Readable } from 'node:stream';
 
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
 import { DisposableStore } from '#/_base/di/lifecycle';
 import { createServices, type TestInstantiationService } from '#/_base/di/test';
+import { HostProcessService } from '#/os/backends/node-local/hostProcessService';
 import {
   HostProcessError,
   HostProcessErrorCode,
   IHostProcessService,
 } from '#/os/interface/hostProcess';
-import { HostProcessService } from '#/os/backends/node-local/hostProcessService';
 
 async function collect(stream: Readable): Promise<string> {
   const chunks: Buffer[] = [];
@@ -58,18 +58,20 @@ describe('HostProcessService', () => {
 
   it('throws a coded error when the command does not exist', async () => {
     const svc = ix.get(IHostProcessService);
-    await expect(svc.spawn('definitely-not-a-real-command-42')).rejects.toSatisfy((err: unknown) => {
-      expect(err).toBeInstanceOf(HostProcessError);
-      const error = err as HostProcessError;
-      expect(error.code).toBe(HostProcessErrorCode.SpawnFailed);
-      expect(error.code).toBe('os.process.spawn_failed');
-      expect(error.details).toMatchObject({
-        command: 'definitely-not-a-real-command-42',
-        errno: 'ENOENT',
-      });
-      expect(error.cause).toBeInstanceOf(Error);
-      return true;
-    });
+    await expect(svc.spawn('definitely-not-a-real-command-42')).rejects.toSatisfy(
+      (err: unknown) => {
+        expect(err).toBeInstanceOf(HostProcessError);
+        const error = err as HostProcessError;
+        expect(error.code).toBe(HostProcessErrorCode.SpawnFailed);
+        expect(error.code).toBe('os.process.spawn_failed');
+        expect(error.details).toMatchObject({
+          command: 'definitely-not-a-real-command-42',
+          errno: 'ENOENT',
+        });
+        expect(error.cause).toBeInstanceOf(Error);
+        return true;
+      },
+    );
   });
 
   it('terminates a running process with kill()', async () => {
@@ -121,10 +123,12 @@ describe('HostProcessService on Windows', () => {
   });
 
   it('stops waiting for a taskkill that never exits and terminates it', async () => {
-    const { HostProcessService: WindowsHostProcessService } = await import(
-      '#/os/backends/node-local/hostProcessService'
-    );
-    const proc = await new WindowsHostProcessService().spawn('node', ['-e', 'setTimeout(() => {}, 30000)']);
+    const { HostProcessService: WindowsHostProcessService } =
+      await import('#/os/backends/node-local/hostProcessService');
+    const proc = await new WindowsHostProcessService().spawn('node', [
+      '-e',
+      'setTimeout(() => {}, 30000)',
+    ]);
     let killed = false;
     const kill = proc.kill('SIGTERM').then(() => {
       killed = true;

@@ -1,15 +1,15 @@
 import { ErrorCodes, isOmnicodeError, type PermissionMode } from '@hilbras/omnicode-api';
 
 import {
-  GoalStartPermissionPromptComponent,
-  type GoalStartPermissionChoice,
-} from '../components/dialogs/goal-start-permission-prompt';
-import {
   GoalQueueEditDialogComponent,
   GoalQueueManagerComponent,
   type GoalQueueEditResult,
   type GoalQueueManagerAction,
 } from '../components/dialogs/goal-queue-manager';
+import {
+  GoalStartPermissionPromptComponent,
+  type GoalStartPermissionChoice,
+} from '../components/dialogs/goal-start-permission-prompt';
 import {
   GoalSetMessageComponent,
   GoalStatusMessageComponent,
@@ -25,9 +25,12 @@ import {
   type GoalQueueSnapshot,
 } from '../goal-queue-store';
 import { formatErrorMessage } from '../utils/event-payload';
-import { PERMISSION_MODE_DESCRIPTIONS, PERMISSION_MODE_DISPLAY_NAMES } from '../utils/permission-mode';
-import { canRestoreSubmittedInput } from './resolve';
+import {
+  PERMISSION_MODE_DESCRIPTIONS,
+  PERMISSION_MODE_DISPLAY_NAMES,
+} from '../utils/permission-mode';
 import type { SlashCommandHost } from './dispatch';
+import { canRestoreSubmittedInput } from './resolve';
 
 const MAX_GOAL_OBJECTIVE_LENGTH = 4000;
 const RESUME_GOAL_INPUT = 'Resume the active goal.';
@@ -266,9 +269,7 @@ async function queueNextGoal(
   }
   host.track('goal_queue_append');
   if (!hasCurrentGoal) host.requestQueuedGoalPromotion?.();
-  host.state.transcriptContainer.addChild(
-    new UpcomingGoalAddedMessageComponent(),
-  );
+  host.state.transcriptContainer.addChild(new UpcomingGoalAddedMessageComponent());
   host.state.ui.requestRender();
 }
 
@@ -329,10 +330,7 @@ async function handleGoalQueueManagerAction(
   }
 }
 
-async function showGoalQueueEditDialog(
-  host: SlashCommandHost,
-  goalId: string,
-): Promise<void> {
+async function showGoalQueueEditDialog(host: SlashCommandHost, goalId: string): Promise<void> {
   let snapshot: GoalQueueSnapshot;
   try {
     snapshot = await readGoalQueue(host.requireSession());
@@ -434,8 +432,7 @@ async function startGoalWithPermission(
   options: GoalStartOptions,
 ): Promise<void> {
   const previousMode = host.state.appState.permissionMode;
-  const switched =
-    choice !== previousMode && (choice === 'auto' || choice === 'yolo');
+  const switched = choice !== previousMode && (choice === 'auto' || choice === 'yolo');
   if (switched) {
     if (!(await setPermissionForGoal(host, choice))) return;
   }
@@ -561,9 +558,7 @@ async function showGoalStatus(host: SlashCommandHost): Promise<void> {
     host.showStatus('No goal set. Start one with `/goal <objective>`.');
     return;
   }
-  host.state.transcriptContainer.addChild(
-    new GoalStatusMessageComponent(goal),
-  );
+  host.state.transcriptContainer.addChild(new GoalStatusMessageComponent(goal));
   host.state.ui.requestRender();
 }
 

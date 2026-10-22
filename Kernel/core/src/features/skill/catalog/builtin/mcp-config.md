@@ -69,7 +69,7 @@ commands at session start, so they should only live in trusted repos.
 All three files wrap their entries the same way:
 
 ```json
-{ "mcpServers": { "<name>": { /* entry */ } } }
+{ "mcpServers": { "<name>": {/* entry */} } }
 ```
 
 A minimal stdio entry needs `command` (+ optional `args`, `env`, `cwd`).
@@ -81,11 +81,11 @@ servers that authenticate with a static bearer token from the
 environment. Servers that use OAuth take no token field — the login flow
 above handles them. `transport` is inferred from `command` vs `url`, so
 omit it. For less common fields (`enabled`, `startupTimeoutMs`,
-`toolTimeoutMs`, `enabledTools`, `disabledTools`, `headers`) the source of
-truth is `McpServerStdioConfigSchema` / `McpServerHttpConfigSchema` in
-`Kernel/SDK/src/config/schema.ts`.
+`toolTimeoutMs`, `enabledTools`, `disabledTools`, `headers`, `inheritEnv`,
+`allowPrivateNetwork`) the source of truth is `McpServerStdioConfigSchema` /
+`McpServerHttpConfigSchema` in `Kernel/core/src/mcpCore/config-schema.ts`.
 
-When the user wants to change a timeout for *every* server, don't write
+When the user wants to change a timeout for _every_ server, don't write
 `startupTimeoutMs` / `toolTimeoutMs` into each entry — the global defaults
 live in `config.toml` (`[mcp] startup_timeout_ms` / `[mcp] tool_timeout_ms`)
 or the `OMNICODE_MCP_STARTUP_TIMEOUT_MS` / `OMNICODE_MCP_TOOL_TIMEOUT_MS` env vars;
@@ -128,3 +128,12 @@ Don't store secrets (tokens, keys, passwords) as literals in
 `mcp.json` — it's a plain config file on disk. http servers should use
 `bearerTokenEnvVar` to reference an env var instead; if a stdio entry
 must inline one in `env`, warn the user before writing.
+
+A stdio server inherits the whole Omnicode environment by default, which
+includes the user's provider keys. When the user wants a server to see
+only what it needs, add `"inheritEnv": false` to its entry: the child
+process then receives just the platform basics (`PATH`, `HOME`, `TEMP`,
+`TMPDIR`) plus the entry's own `env` map, and none of the ambient
+secrets. For a remote server on a private network, `"allowPrivateNetwork":
+true` is required — private and link-local endpoints are rejected by
+default.

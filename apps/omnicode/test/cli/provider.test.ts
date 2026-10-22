@@ -4,20 +4,17 @@
  * config storage; upstream HTTP responses are stubbed.
  */
 
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { Command } from 'commander';
-import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/omnicode-api';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+
+import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/omnicode-api';
 import {
   resetModelsDevUpstreamForTest,
   setModelsDevUpstreamForTest,
 } from '@hilbras/omnicode-core/app/kosongConfig/modelsDevUpstream';
-
-import { BUILT_IN_PROVIDERS } from '#/utils/built-in-providers';
-import { syncConfiguredFreeTiers } from '#/utils/free-tier-sync';
-import { makeConfigStoreHarness, type ConfigStoreHarness } from '../helpers/config-store';
+import { Command } from 'commander';
+import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 
 import {
   handleCatalogAdd,
@@ -34,6 +31,10 @@ import {
   requestUrl,
   type ProviderDeps,
 } from '#/cli/sub/provider';
+import { BUILT_IN_PROVIDERS } from '#/utils/built-in-providers';
+import { syncConfiguredFreeTiers } from '#/utils/free-tier-sync';
+
+import { makeConfigStoreHarness, type ConfigStoreHarness } from '../helpers/config-store';
 
 // Spy on the SDK harness factory so the default-deps construction can be
 // asserted without booting a real engine. The real implementations stay in
@@ -77,9 +78,8 @@ function makeDeps(
   const stderr: string[] = [];
   const exitCodes: number[] = [];
   const deps: ProviderDeps = {
-    getHarness: () => harness as unknown as ProviderDeps extends { getHarness: () => infer R }
-      ? R
-      : never,
+    getHarness: () =>
+      harness as unknown as ProviderDeps extends { getHarness: () => infer R } ? R : never,
     stdout: {
       write: (chunk: string) => {
         stdout.push(chunk);
@@ -150,9 +150,8 @@ beforeEach(() => {
 const registryHarnesses: OmnicodeHarness[] = [];
 
 async function makeRegistryHarness(initial: OmnicodeConfig) {
-  const { createOmnicodeHarness } = await vi.importActual<typeof import('@hilbras/omnicode-api')>(
-    '@hilbras/omnicode-api',
-  );
+  const { createOmnicodeHarness } =
+    await vi.importActual<typeof import('@hilbras/omnicode-api')>('@hilbras/omnicode-api');
   const homeDir = await mkdtemp(join(tmpdir(), 'registry-cli-'));
   const harness = createOmnicodeHarness({
     homeDir,
@@ -236,9 +235,7 @@ describe('omnicode provider add', () => {
     const { harness, current } = await makeRegistryHarness({ providers: {} } as OmnicodeConfig);
     const { deps, stdout, stderr, exitCodes } = makeDeps(harness);
 
-    await tryRun(() =>
-      handleProviderAdd(deps, REGISTRY_URL, { apiKey: 'sk-test-token' }),
-    );
+    await tryRun(() => handleProviderAdd(deps, REGISTRY_URL, { apiKey: 'sk-test-token' }));
 
     expect(exitCodes).toEqual([]);
     expect(stderr.join('')).toBe('');
@@ -249,7 +246,7 @@ describe('omnicode provider add', () => {
       }),
     );
 
-    const finalConfig = (await current());
+    const finalConfig = await current();
     expect(Object.keys(finalConfig.providers).toSorted()).toEqual(['kohub', 'kohub-responses']);
     const kohub = finalConfig.providers['kohub']!;
     expect(kohub.type).toBe('anthropic');
@@ -351,7 +348,7 @@ describe('omnicode provider add', () => {
     await tryRun(() => handleProviderAdd(deps, REGISTRY_URL, {}));
 
     expect(exitCodes).toEqual([1]);
-    expect((await current())).toMatchObject(initial);
+    expect(await current()).toMatchObject(initial);
   });
 
   it('exits 1 when the registry fetch fails with an HTTP error', async () => {
@@ -359,9 +356,7 @@ describe('omnicode provider add', () => {
     const { harness } = await makeRegistryHarness({ providers: {} } as OmnicodeConfig);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
-    await tryRun(() =>
-      handleProviderAdd(deps, REGISTRY_URL, { apiKey: 'sk-bad' }),
-    );
+    await tryRun(() => handleProviderAdd(deps, REGISTRY_URL, { apiKey: 'sk-bad' }));
 
     expect(exitCodes).toEqual([1]);
     expect(stderr.join('')).toMatch(/HTTP 401/);
@@ -417,10 +412,7 @@ describe('omnicode provider add-manual', () => {
   });
 
   it('writes the provider and discovers its models from the endpoint', async () => {
-    stubModels([
-      { id: 'gw-fast', context_length: 200000 },
-      { id: 'gw-smart' },
-    ]);
+    stubModels([{ id: 'gw-fast', context_length: 200000 }, { id: 'gw-smart' }]);
     const { harness, current } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
     const { deps, stdout, stderr, exitCodes } = makeDeps(harness);
 
@@ -497,9 +489,7 @@ describe('omnicode provider add-manual', () => {
     expect(current().providers['myanth']).toMatchObject({ type: 'anthropic' });
     // The probe must hit /v1/models, not the bare host the chat path uses.
     const probed = vi.mocked(fetch).mock.calls.at(-1)?.[0];
-    expect(typeof probed === 'string' ? probed : '').toBe(
-      'https://api.anthropic.com/v1/models',
-    );
+    expect(typeof probed === 'string' ? probed : '').toBe('https://api.anthropic.com/v1/models');
   });
 
   it('rejects a non-http base url', async () => {
@@ -600,11 +590,12 @@ describe('omnicode provider add-builtin', () => {
   it('configures the built-in Cline endpoint and discovers its models', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ data: [{ id: 'anthropic/claude-x' }] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: [{ id: 'anthropic/claude-x' }] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       ),
     );
     const { harness, current } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
@@ -624,11 +615,12 @@ describe('omnicode provider add-builtin', () => {
   it('writes a built-in per-model wire override into config', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ data: [{ id: 'claude-sonnet-4' }] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: [{ id: 'claude-sonnet-4' }] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       ),
     );
     const { harness, current } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
@@ -881,11 +873,12 @@ describe('omnicode provider add-builtin', () => {
   it('writes no override map for a built-in that declares none', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ data: [{ id: 'm1' }] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: [{ id: 'm1' }] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       ),
     );
     const { harness, current } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
@@ -900,11 +893,12 @@ describe('omnicode provider add-builtin', () => {
   it('warns but does not fail when a key does not match the vendor prefix', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ data: [{ id: 'm1' }] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: [{ id: 'm1' }] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       ),
     );
     const { harness } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
@@ -921,11 +915,12 @@ describe('omnicode provider add-builtin', () => {
   it('says nothing when the key carries the vendor prefix', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ data: [{ id: 'm1' }] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: [{ id: 'm1' }] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       ),
     );
     const { harness } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
@@ -942,11 +937,12 @@ describe('omnicode provider add-builtin', () => {
     for (const builtin of BUILT_IN_PROVIDERS) {
       // Typed as `(...args: unknown[])` so the assertion below can read the
       // request URL out of the recorded call.
-      const fetchMock = vi.fn(async (..._args: unknown[]) =>
-        new Response(JSON.stringify({ data: [{ id: 'vendor/model-a' }] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      const fetchMock = vi.fn(
+        async (..._args: unknown[]) =>
+          new Response(JSON.stringify({ data: [{ id: 'vendor/model-a' }] }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       );
       vi.stubGlobal('fetch', fetchMock);
       const { harness, current } = makeHarness({ providers: {}, models: {} } as OmnicodeConfig);
@@ -959,10 +955,9 @@ describe('omnicode provider add-builtin', () => {
         type: builtin.wire,
         baseUrl: builtin.baseUrl,
       });
-      expect(
-        Object.keys(current().models ?? {}),
-        `${builtin.id} discovered no models`,
-      ).toEqual([`${builtin.id}/vendor/model-a`]);
+      expect(Object.keys(current().models ?? {}), `${builtin.id} discovered no models`).toEqual([
+        `${builtin.id}/vendor/model-a`,
+      ]);
       // The probe must go to this vendor's own endpoint, and must honour the
       // wire's version convention: the Anthropic wire's chat base is a bare
       // host, so its model list needs the `/v1` segment re-added.
@@ -1013,9 +1008,10 @@ describe('omnicode provider add-builtin', () => {
     // `vertexai` sat in this union for exactly that reason.
     const accepted = new Set<string>(MANUAL_PROVIDER_TYPES);
     for (const p of BUILT_IN_PROVIDERS) {
-      expect(accepted.has(p.wire), `${p.id} declares wire "${p.wire}", which add-manual rejects`).toBe(
-        true,
-      );
+      expect(
+        accepted.has(p.wire),
+        `${p.id} declares wire "${p.wire}", which add-manual rejects`,
+      ).toBe(true);
     }
   });
 
@@ -1104,11 +1100,12 @@ describe('omnicode provider edit', () => {
   function stubModels(ids: readonly string[]): void {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ data: ids.map((id) => ({ id })) }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: ids.map((id) => ({ id })) }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       ),
     );
   }
@@ -1140,9 +1137,7 @@ describe('omnicode provider edit', () => {
     const { harness, current } = makeHarness(EXISTING);
     const { deps } = makeDeps(harness, { env: { NEW_KEY: 'sk-env' } });
 
-    await tryRun(() =>
-      handleProviderEdit(deps, 'mygw', { apiKeyEnv: 'NEW_KEY', refresh: false }),
-    );
+    await tryRun(() => handleProviderEdit(deps, 'mygw', { apiKeyEnv: 'NEW_KEY', refresh: false }));
     expect(current().providers['mygw']).toMatchObject({ apiKeyEnv: 'NEW_KEY' });
     // The runtime rejects a record carrying both, so the old key must be gone.
     expect(current().providers['mygw']).not.toHaveProperty('apiKey');
@@ -1196,11 +1191,28 @@ describe('omnicode provider edit', () => {
     expect(current().providers['mygw']).toMatchObject({ baseUrl: 'https://old.example.test/v1' });
   });
 
+  it('rejects an auth scheme the runtime does not know', async () => {
+    const { harness } = makeHarness(EXISTING);
+    const { deps, stderr, exitCodes } = makeDeps(harness);
+
+    await tryRun(() =>
+      handleProviderEdit(deps, 'mygw', {
+        authScheme: { kind: 'carrier-pigeon' },
+        refresh: false,
+      }),
+    );
+
+    expect(exitCodes).toEqual([1]);
+    expect(stderr.join('')).toContain('Unknown auth scheme "carrier-pigeon"');
+  });
+
   it('rejects a base url carrying a pasted credential', async () => {
     const { harness, current } = makeHarness(EXISTING);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
-    await tryRun(() => handleProviderEdit(deps, 'mygw', { baseUrl: 'https://me:sk-secret@old.example.test/v1' }));
+    await tryRun(() =>
+      handleProviderEdit(deps, 'mygw', { baseUrl: 'https://me:sk-secret@old.example.test/v1' }),
+    );
 
     expect(exitCodes).toEqual([1]);
     expect(stderr.join('')).toContain('--base-url must not embed a username or password.');
@@ -1211,14 +1223,15 @@ describe('omnicode provider edit', () => {
   it('keeps the change but reports the failure when the new endpoint rejects the key', async () => {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () => new Response(JSON.stringify({ error: { message: 'bad key' } }), { status: 401 })),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ error: { message: 'bad key' } }), { status: 401 }),
+      ),
     );
     const { harness, current } = makeHarness(EXISTING);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
-    await tryRun(() =>
-      handleProviderEdit(deps, 'mygw', { apiKey: 'sk-wrong', refresh: true }),
-    );
+    await tryRun(() => handleProviderEdit(deps, 'mygw', { apiKey: 'sk-wrong', refresh: true }));
 
     expect(exitCodes).toEqual([1]);
     // The edit is saved; only the refresh failed, and the old models remain.
@@ -1240,10 +1253,9 @@ describe('omnicode provider edit', () => {
     // registerProviderCommand attaches a `provider` subcommand, so the edit
     // command is reached through it rather than off the root.
     await tryRun(() =>
-      root.parseAsync(
-        ['provider', 'edit', 'mygw', '--base-url', 'https://new.example.test/v1'],
-        { from: 'user' },
-      ),
+      root.parseAsync(['provider', 'edit', 'mygw', '--base-url', 'https://new.example.test/v1'], {
+        from: 'user',
+      }),
     );
 
     expect(exitCodes).toEqual([]);
@@ -1253,12 +1265,16 @@ describe('omnicode provider edit', () => {
   });
 
   it('skips the refresh with --no-refresh and does not touch the endpoint', async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({ data: [] }), { status: 200 }),
+    );
     vi.stubGlobal('fetch', fetchMock);
     const { harness, current } = makeHarness(EXISTING);
     const { deps, stdout } = makeDeps(harness);
 
-    await tryRun(() => handleProviderEdit(deps, 'mygw', { baseUrl: 'https://n2.test/v1', refresh: false }));
+    await tryRun(() =>
+      handleProviderEdit(deps, 'mygw', { baseUrl: 'https://n2.test/v1', refresh: false }),
+    );
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(stdout.join('')).toContain('Skipped model refresh');
@@ -1282,11 +1298,12 @@ describe('omnicode provider auth', () => {
   function stubModels(ids: readonly string[]): void {
     vi.stubGlobal(
       'fetch',
-      vi.fn(async () =>
-        new Response(JSON.stringify({ data: ids.map((id) => ({ id })) }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }),
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ data: ids.map((id) => ({ id })) }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
       ),
     );
   }
@@ -1318,7 +1335,12 @@ describe('omnicode provider auth', () => {
   });
 
   it('stores an env reference and drops the inline key', async () => {
-    const { current, exitCodes } = await runAuth(['mygw', '--api-key-env', 'MYGW_KEY', '--no-refresh']);
+    const { current, exitCodes } = await runAuth([
+      'mygw',
+      '--api-key-env',
+      'MYGW_KEY',
+      '--no-refresh',
+    ]);
 
     expect(exitCodes).toEqual([]);
     expect(current().providers['mygw']).toMatchObject({ apiKeyEnv: 'MYGW_KEY' });
@@ -1359,7 +1381,9 @@ describe('omnicode provider auth', () => {
   });
 
   it('skips the refresh with --no-refresh and does not touch the endpoint', async () => {
-    const fetchMock = vi.fn(async () => new Response(JSON.stringify({ data: [] }), { status: 200 }));
+    const fetchMock = vi.fn(
+      async () => new Response(JSON.stringify({ data: [] }), { status: 200 }),
+    );
     vi.stubGlobal('fetch', fetchMock);
     const { current, stdout, exitCodes } = await runAuth([
       'mygw',
@@ -1406,7 +1430,10 @@ describe('omnicode provider models', () => {
   }
 
   function jsonResponse(body: unknown, status = 200): Response {
-    return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   /** The `/models` shape every discoverable wire accepts. */
@@ -1843,6 +1870,30 @@ describe('omnicode provider list', () => {
       models: {},
     });
   });
+
+  // A model alias carries its own credential, independent of its provider's.
+  // Leaving that map unmasked put a live key into the very document the
+  // provider map was masked to protect.
+  it('masks a model alias that carries its own api key', async () => {
+    const SECRET = 'sk-live-abcdefghijklmnop0123456789';
+    const { harness } = makeHarness({
+      providers: { plain: { type: 'openai', baseUrl: 'https://x' } },
+      models: {
+        'plain/one': { provider: 'plain', model: 'gpt-4o', apiKey: SECRET },
+        'plain/two': { provider: 'plain', model: 'gpt-4o' },
+      },
+    } as unknown as OmnicodeConfig);
+    const { deps, stdout } = makeDeps(harness);
+
+    await tryRun(() => handleProviderList(deps, { json: true }));
+
+    const out = stdout.join('');
+    expect(out).not.toContain(SECRET);
+    expect(JSON.parse(out).models).toEqual({
+      'plain/one': { provider: 'plain', model: 'gpt-4o', apiKey: 'sk-********6789' },
+      'plain/two': { provider: 'plain', model: 'gpt-4o' },
+    });
+  });
 });
 
 describe('registerProviderCommand', () => {
@@ -1871,7 +1922,10 @@ describe('registerProviderCommand', () => {
         headers: expect.objectContaining({ Authorization: 'Bearer sk-cli' }),
       }),
     );
-    expect(Object.keys((await current()).providers).toSorted()).toEqual(['kohub', 'kohub-responses']);
+    expect(Object.keys((await current()).providers).toSorted()).toEqual([
+      'kohub',
+      'kohub-responses',
+    ]);
     expect(stdout.join('')).toContain('Imported 2 providers');
   });
 
@@ -2001,9 +2055,7 @@ describe('omnicode provider catalog add', () => {
     const { harness, current, setConfigCalls } = makeHarness(initial);
     const { deps, stdout, exitCodes } = makeDeps(harness);
 
-    await tryRun(() =>
-      handleCatalogAdd(deps, 'anthropic', { apiKey: 'sk-ant-token' }),
-    );
+    await tryRun(() => handleCatalogAdd(deps, 'anthropic', { apiKey: 'sk-ant-token' }));
 
     expect(exitCodes).toEqual([]);
     const finalConfig = current();
@@ -2093,9 +2145,7 @@ describe('omnicode provider catalog add', () => {
     const { harness, current } = makeHarness(initial);
     const { deps, exitCodes } = makeDeps(harness);
 
-    await tryRun(() =>
-      handleCatalogAdd(deps, 'anthropic', { apiKey: 'sk-rotated' }),
-    );
+    await tryRun(() => handleCatalogAdd(deps, 'anthropic', { apiKey: 'sk-rotated' }));
 
     expect(exitCodes).toEqual([]);
     expect(current().providers['anthropic']?.apiKey).toBe('sk-rotated');
@@ -2190,9 +2240,7 @@ describe('omnicode provider catalog add', () => {
     const { harness, current } = makeHarness(initial);
     const { deps, exitCodes } = makeDeps(harness);
 
-    await tryRun(() =>
-      handleCatalogAdd(deps, 'anthropic', { apiKey: 'sk-rotated' }),
-    );
+    await tryRun(() => handleCatalogAdd(deps, 'anthropic', { apiKey: 'sk-rotated' }));
 
     expect(exitCodes).toEqual([]);
     // The legacy alias must have been replaced by the catalog's models.
@@ -2320,9 +2368,7 @@ describe('omnicode provider catalog add', () => {
     const { harness } = makeHarness({ providers: {} } as OmnicodeConfig);
     const { deps, stderr, exitCodes } = makeDeps(harness);
 
-    await tryRun(() =>
-      handleCatalogAdd(deps, 'no-such-id', { apiKey: 'sk-x' }),
-    );
+    await tryRun(() => handleCatalogAdd(deps, 'no-such-id', { apiKey: 'sk-x' }));
 
     expect(exitCodes).toEqual([1]);
     expect(stderr.join('')).toContain('Provider "no-such-id" not found in catalog');
@@ -2413,7 +2459,10 @@ describe('omnicode provider catalog add', () => {
     expect(stderr.join('')).toContain('--base-url');
 
     await tryRun(() =>
-      handleCatalogAdd(deps, 'azure', { apiKey: 'sk-az', baseUrl: 'https://res.example.test/openai/v1' }),
+      handleCatalogAdd(deps, 'azure', {
+        apiKey: 'sk-az',
+        baseUrl: 'https://res.example.test/openai/v1',
+      }),
     );
     expect(current().providers['azure']).toMatchObject({
       type: 'openai',
@@ -2466,7 +2515,10 @@ describe('omnicode provider test', () => {
     return new RegExp(`^\\[${String(index)}/5\\] ${stage}\\s+${status}\\s+${detail}$`, 'm');
   }
 
-  function gatewayConfig(provider: Record<string, unknown>, models?: Record<string, unknown>): OmnicodeConfig {
+  function gatewayConfig(
+    provider: Record<string, unknown>,
+    models?: Record<string, unknown>,
+  ): OmnicodeConfig {
     return {
       providers: { mygw: { type: 'openai', baseUrl: GATEWAY, ...provider } },
       models: {
@@ -2477,7 +2529,10 @@ describe('omnicode provider test', () => {
   }
 
   function jsonResponse(body: unknown, status = 200): Response {
-    return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    });
   }
 
   /** Healthy gateway: reachable host, two listed models, a completable chat request. */
@@ -2525,7 +2580,9 @@ describe('omnicode provider test', () => {
     expect(exitCodes).toEqual([]);
     expect(stderr).toEqual([]);
     expect(out).toContain('Provider test: mygw');
-    expect(out).toMatch(stageLine(1, 'config', 'OK', `configured \\(type=openai, base_url=${GATEWAY}\\)`));
+    expect(out).toMatch(
+      stageLine(1, 'config', 'OK', `configured \\(type=openai, base_url=${GATEWAY}\\)`),
+    );
     expect(out).toMatch(stageLine(2, 'credential', 'OK', 'PRESENT \\(api_key from config.toml\\)'));
     expect(out).toMatch(stageLine(3, 'connectivity', 'OK', 'endpoint answered \\(HTTP 200\\)'));
     expect(out).toMatch(stageLine(4, 'models', 'OK', '2 models listed'));
@@ -2566,7 +2623,12 @@ describe('omnicode provider test', () => {
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
     expect(stderr.join('')).toMatch(
-      stageLine(2, 'credential', 'FAIL', 'MISSING \\(api_key_env "MYGW_KEY" is not set or is empty\\)'),
+      stageLine(
+        2,
+        'credential',
+        'FAIL',
+        'MISSING \\(api_key_env "MYGW_KEY" is not set or is empty\\)',
+      ),
     );
     // Stages 3-5 still ran: an unset variable and a dead endpoint are different bugs.
     expect(stdout.join('')).toMatch(stageLine(4, 'models', 'OK', '2 models listed'));
@@ -2582,7 +2644,9 @@ describe('omnicode provider test', () => {
 
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
-    expect(stdout.join('')).toMatch(stageLine(2, 'credential', 'OK', 'PRESENT \\(api_key_env "MYGW_KEY"\\)'));
+    expect(stdout.join('')).toMatch(
+      stageLine(2, 'credential', 'OK', 'PRESENT \\(api_key_env "MYGW_KEY"\\)'),
+    );
     expect(stdout.join('')).toContain('All stages passed (5 passed, 0 failed, 0 skipped).');
     expect(exitCodes).toEqual([]);
   });
@@ -2607,7 +2671,12 @@ describe('omnicode provider test', () => {
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
     expect(stderr.join('')).toMatch(
-      stageLine(2, 'credential', 'FAIL', 'MISSING \\(Provider "mygw" has both apiKey and apiKeyEnv set.*\\)'),
+      stageLine(
+        2,
+        'credential',
+        'FAIL',
+        'MISSING \\(Provider "mygw" has both apiKey and apiKeyEnv set.*\\)',
+      ),
     );
     expect(exitCodes).toEqual([1]);
   });
@@ -2615,7 +2684,9 @@ describe('omnicode provider test', () => {
   it('resolves an oauth credential through the harness without printing it', async () => {
     const { calls } = stubProbeFetch(happyRoute);
     const base = makeHarness({
-      providers: { mygw: { type: 'openai', baseUrl: GATEWAY, oauth: { storage: 'file', key: 'mygw' } } },
+      providers: {
+        mygw: { type: 'openai', baseUrl: GATEWAY, oauth: { storage: 'file', key: 'mygw' } },
+      },
       models: { 'mygw/quick': { provider: 'mygw', model: 'gpt-4o-mini' } },
     } as unknown as OmnicodeConfig);
     const getAccessToken = vi.fn(async () => 'oauth-access-token');
@@ -2628,57 +2699,77 @@ describe('omnicode provider test', () => {
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
     expect(getAccessToken).toHaveBeenCalledTimes(1);
-    expect(stdout.join('')).toMatch(stageLine(2, 'credential', 'OK', 'PRESENT \\(oauth token "mygw"\\)'));
-    expect(calls.find((call) => call.url.endsWith('/chat/completions'))?.headers['Authorization']).toBe(
-      'Bearer oauth-access-token',
+    expect(stdout.join('')).toMatch(
+      stageLine(2, 'credential', 'OK', 'PRESENT \\(oauth token "mygw"\\)'),
     );
+    expect(
+      calls.find((call) => call.url.endsWith('/chat/completions'))?.headers['Authorization'],
+    ).toBe('Bearer oauth-access-token');
     expect(`${stdout.join('')}${stderr.join('')}`).not.toContain('oauth-access-token');
     expect(exitCodes).toEqual([]);
   });
 
   it('classifies a 401 from model discovery as unauthorized', async () => {
-    stubProbeFetch((url) => (url.endsWith('/models') ? jsonResponse({ error: 'bad key' }, 401) : happyRoute(url)));
+    stubProbeFetch((url) =>
+      url.endsWith('/models') ? jsonResponse({ error: 'bad key' }, 401) : happyRoute(url),
+    );
     const { deps, stdout, stderr, exitCodes } = gatewayDeps();
 
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
-    expect(stderr.join('')).toMatch(stageLine(4, 'models', 'FAIL', `unauthorized \\(HTTP 401 at ${GATEWAY}/models\\)`));
+    expect(stderr.join('')).toMatch(
+      stageLine(4, 'models', 'FAIL', `unauthorized \\(HTTP 401 at ${GATEWAY}/models\\)`),
+    );
     expect(stdout.join('')).toMatch(stageLine(5, 'request', 'OK', '.*'));
     expect(exitCodes).toEqual([1]);
   });
 
   it('classifies a 429 from model discovery as rate limited', async () => {
-    stubProbeFetch((url) => (url.endsWith('/models') ? jsonResponse({ error: 'slow down' }, 429) : happyRoute(url)));
+    stubProbeFetch((url) =>
+      url.endsWith('/models') ? jsonResponse({ error: 'slow down' }, 429) : happyRoute(url),
+    );
     const { deps, stderr } = gatewayDeps();
 
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
-    expect(stderr.join('')).toMatch(stageLine(4, 'models', 'FAIL', 'rate limited \\(HTTP 429 at .*\\)'));
+    expect(stderr.join('')).toMatch(
+      stageLine(4, 'models', 'FAIL', 'rate limited \\(HTTP 429 at .*\\)'),
+    );
   });
 
   it('classifies a DNS failure by its syscall code', async () => {
     stubProbeFetch(() => {
-      throw Object.assign(new Error('getaddrinfo EAI_AGAIN gw.example.test'), { code: 'EAI_AGAIN' });
+      throw Object.assign(new Error('getaddrinfo EAI_AGAIN gw.example.test'), {
+        code: 'EAI_AGAIN',
+      });
     });
     const { deps, stderr, exitCodes } = gatewayDeps();
 
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
-    expect(stderr.join('')).toMatch(stageLine(3, 'connectivity', 'FAIL', 'unreachable: host lookup failed \\(EAI_AGAIN\\)'));
-    expect(stderr.join('')).toMatch(stageLine(4, 'models', 'FAIL', 'unreachable: host lookup failed \\(EAI_AGAIN\\)'));
+    expect(stderr.join('')).toMatch(
+      stageLine(3, 'connectivity', 'FAIL', 'unreachable: host lookup failed \\(EAI_AGAIN\\)'),
+    );
+    expect(stderr.join('')).toMatch(
+      stageLine(4, 'models', 'FAIL', 'unreachable: host lookup failed \\(EAI_AGAIN\\)'),
+    );
     expect(exitCodes).toEqual([1]);
   });
 
   it('digs the syscall code out of the cause fetch wraps it in', async () => {
     stubProbeFetch(() => {
-      const socket = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:1'), { code: 'ECONNREFUSED' });
+      const socket = Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:1'), {
+        code: 'ECONNREFUSED',
+      });
       throw new TypeError('fetch failed', { cause: socket });
     });
     const { deps, stderr, exitCodes } = gatewayDeps();
 
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
-    expect(stderr.join('')).toMatch(stageLine(3, 'connectivity', 'FAIL', 'unreachable: connection refused \\(ECONNREFUSED\\)'));
+    expect(stderr.join('')).toMatch(
+      stageLine(3, 'connectivity', 'FAIL', 'unreachable: connection refused \\(ECONNREFUSED\\)'),
+    );
     expect(stderr.join('')).not.toContain('fetch failed');
     expect(exitCodes).toEqual([1]);
   });
@@ -2691,7 +2782,9 @@ describe('omnicode provider test', () => {
 
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
-    expect(stderr.join('')).toMatch(stageLine(3, 'connectivity', 'FAIL', 'request failed: other side closed'));
+    expect(stderr.join('')).toMatch(
+      stageLine(3, 'connectivity', 'FAIL', 'request failed: other side closed'),
+    );
     expect(stderr.join('')).not.toContain('fetch failed');
     expect(exitCodes).toEqual([1]);
   });
@@ -2707,18 +2800,27 @@ describe('omnicode provider test', () => {
 
     await tryRun(() => handleProviderTest(deps, 'mygw', { timeoutMs: 5 }));
 
-    expect(stderr.join('')).toMatch(stageLine(3, 'connectivity', 'FAIL', 'timeout: no response within 5 ms'));
+    expect(stderr.join('')).toMatch(
+      stageLine(3, 'connectivity', 'FAIL', 'timeout: no response within 5 ms'),
+    );
     expect(exitCodes).toEqual([1]);
   });
 
   it('reports a discovery payload it cannot read as a malformed response', async () => {
-    stubProbeFetch((url) => (url.endsWith('/models') ? jsonResponse({ oops: true }) : happyRoute(url)));
+    stubProbeFetch((url) =>
+      url.endsWith('/models') ? jsonResponse({ oops: true }) : happyRoute(url),
+    );
     const { deps, stderr } = gatewayDeps();
 
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
     expect(stderr.join('')).toMatch(
-      stageLine(4, 'models', 'FAIL', `malformed response at ${GATEWAY}/models: Unexpected models response at .*`),
+      stageLine(
+        4,
+        'models',
+        'FAIL',
+        `malformed response at ${GATEWAY}/models: Unexpected models response at .*`,
+      ),
     );
   });
 
@@ -2748,8 +2850,12 @@ describe('omnicode provider test', () => {
 
     await tryRun(() => handleProviderTest(deps, 'nope', {}));
 
-    expect(stderr.join('')).toMatch(stageLine(1, 'config', 'FAIL', 'not configured — configured providers: mygw'));
-    expect(stdout.join('')).toMatch(stageLine(2, 'credential', 'SKIP', 'no provider record to test'));
+    expect(stderr.join('')).toMatch(
+      stageLine(1, 'config', 'FAIL', 'not configured — configured providers: mygw'),
+    );
+    expect(stdout.join('')).toMatch(
+      stageLine(2, 'credential', 'SKIP', 'no provider record to test'),
+    );
     expect(stdout.join('')).toMatch(stageLine(5, 'request', 'SKIP', 'no provider record to test'));
     expect(stderr.join('')).toContain('Provider test failed (0 passed, 1 failed, 4 skipped).');
     expect(calls).toEqual([]);
@@ -2766,7 +2872,14 @@ describe('omnicode provider test', () => {
 
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
-    expect(stdout.join('')).toMatch(stageLine(5, 'request', 'SKIP', 'unsupported API — this client cannot send a probe over the "vertexai" wire'));
+    expect(stdout.join('')).toMatch(
+      stageLine(
+        5,
+        'request',
+        'SKIP',
+        'unsupported API — this client cannot send a probe over the "vertexai" wire',
+      ),
+    );
     expect(stderr).toEqual([]);
     expect(calls.some((call) => call.url.endsWith('/chat/completions'))).toBe(false);
   });
@@ -2785,7 +2898,12 @@ describe('omnicode provider test', () => {
 
     await tryRun(() => handleProviderTest(deps, 'mygw', { model: 'mygw/quick' }));
     expect(stdout.join('')).toMatch(
-      stageLine(5, 'request', 'OK', 'minimal request succeeded via alias "mygw/quick" \\(model gpt-4o-mini, \\d+ ms\\)'),
+      stageLine(
+        5,
+        'request',
+        'OK',
+        'minimal request succeeded via alias "mygw/quick" \\(model gpt-4o-mini, \\d+ ms\\)',
+      ),
     );
     expect(stderr).toEqual([]);
   });
@@ -2825,21 +2943,30 @@ describe('omnicode provider test', () => {
 
   it('fails a 200 response whose body is not JSON', async () => {
     stubProbeFetch((url) =>
-      url.endsWith('/models') ? happyRoute(url) : new Response('<html>gateway</html>', { status: 200 }),
+      url.endsWith('/models')
+        ? happyRoute(url)
+        : new Response('<html>gateway</html>', { status: 200 }),
     );
     const { deps, stderr } = gatewayDeps();
 
     await tryRun(() => handleProviderTest(deps, 'mygw', {}));
 
     expect(stderr.join('')).toMatch(
-      stageLine(5, 'request', 'FAIL', `malformed response — ${GATEWAY}/chat/completions answered HTTP 200 with a body that is not JSON`),
+      stageLine(
+        5,
+        'request',
+        'FAIL',
+        `malformed response — ${GATEWAY}/chat/completions answered HTTP 200 with a body that is not JSON`,
+      ),
     );
   });
 
   it('sends the anthropic wire its own auth header and version segment', async () => {
     const { calls } = stubProbeFetch(happyRoute);
     const { harness } = makeHarness({
-      providers: { claude: { type: 'anthropic', baseUrl: 'https://api.example.test', apiKey: SECRET } },
+      providers: {
+        claude: { type: 'anthropic', baseUrl: 'https://api.example.test', apiKey: SECRET },
+      },
       models: { 'claude/quick': { provider: 'claude', model: 'claude-sonnet-4-5' } },
     } as unknown as OmnicodeConfig);
     const { deps, stdout, stderr } = makeDeps(harness);
@@ -2868,11 +2995,15 @@ describe('omnicode provider test', () => {
     const program = new Command('omnicode');
     registerProviderCommand(program, deps);
 
-    await tryRun(() => program.parseAsync(['node', 'omnicode', 'provider', 'test', 'mygw', '--timeout', '5']));
+    await tryRun(() =>
+      program.parseAsync(['node', 'omnicode', 'provider', 'test', 'mygw', '--timeout', '5']),
+    );
 
     // A 5 ms budget never elapses against the 10 s default, so this proves the
     // parsed option reached the handler.
-    expect(stderr.join('')).toMatch(stageLine(3, 'connectivity', 'FAIL', 'timeout: no response within 5 ms'));
+    expect(stderr.join('')).toMatch(
+      stageLine(3, 'connectivity', 'FAIL', 'timeout: no response within 5 ms'),
+    );
     expect(stdout.join('')).toContain('Provider test: mygw');
     // The test double's `exit` throws (production calls `process.exit`, which
     // never returns), so the handler's exit lands in `runAction`'s catch and

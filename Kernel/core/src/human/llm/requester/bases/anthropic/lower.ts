@@ -76,11 +76,16 @@ function parseToolArguments(args: string | null): unknown {
   if (args === null || args.trim() === '') {
     return {};
   }
+  let parsed: unknown;
   try {
-    return JSON.parse(args);
+    parsed = JSON.parse(args);
   } catch {
-    return {};
+    throw new SyntaxRequestFormatError('Tool call arguments must be valid JSON.');
   }
+  if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+    throw new SyntaxRequestFormatError('Tool call arguments must be a JSON object.');
+  }
+  return parsed;
 }
 
 export function messageContent(message: AnthropicWireMessage): AnthropicWireContentBlock[] {

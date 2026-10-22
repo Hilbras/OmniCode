@@ -1,8 +1,8 @@
-import { parseBooleanEnv } from '#/_base/utils/env';
 import { Error2 } from '#/_base/errors/errors';
-
+import { parseBooleanEnv } from '#/_base/utils/env';
 import type { ConfigEffectiveOverlay } from '#/app/config/config';
 import { registerConfigOverlay } from '#/app/config/configOverlayContributions';
+import { isPlainObject } from '#/app/config/configPure';
 import { CONFIG_INVALID_ERROR_CODE } from '#/llm-adapter/contract/errors';
 import { resolveProviderEndpoint } from '#/llm-adapter/provider/provider-definition';
 
@@ -74,9 +74,7 @@ function asRecord(value: unknown): Record<string, unknown> {
 }
 
 function withoutKey(value: unknown, key: string): unknown {
-  if (
-    !(typeof value === 'object' && value !== null && !Array.isArray(value) && key in value)
-  ) {
+  if (!(typeof value === 'object' && value !== null && !Array.isArray(value) && key in value)) {
     return value;
   }
   const out: Record<string, unknown> = { ...(value as Record<string, unknown>) };
@@ -107,7 +105,10 @@ export const omnicodeModelEnvOverlay: ConfigEffectiveOverlay = {
         maxCompletionTokens,
       });
       if (modelOverrides !== undefined) {
-        effective['modelOverrides'] = modelOverrides;
+        effective['modelOverrides'] = mergeModelOverrides(
+          effective['modelOverrides'],
+          modelOverrides,
+        );
         changed.push('modelOverrides');
       }
       return changed;
@@ -124,7 +125,8 @@ export const omnicodeModelEnvOverlay: ConfigEffectiveOverlay = {
       maxOutputRaw === undefined
         ? undefined
         : parsePositiveInt(maxOutputRaw, 'OMNICODE_MODEL_MAX_OUTPUT_SIZE');
-    const capabilities = parseCapabilities(getEnv('OMNICODE_MODEL_CAPABILITIES')) ?? DEFAULT_CAPABILITIES;
+    const capabilities =
+      parseCapabilities(getEnv('OMNICODE_MODEL_CAPABILITIES')) ?? DEFAULT_CAPABILITIES;
     const displayName = trimmed(getEnv('OMNICODE_MODEL_DISPLAY_NAME'));
     const reasoningKey = trimmed(getEnv('OMNICODE_MODEL_REASONING_KEY'));
     const adaptiveThinking = parseBooleanVar(
@@ -150,13 +152,11 @@ export const omnicodeModelEnvOverlay: ConfigEffectiveOverlay = {
 
     const providers = asRecord(effective['providers']);
     const envProvider = asRecord(providers[ENV_MODEL_PROVIDER_KEY]);
-    const providerType =
-      typeof envProvider['type'] === 'string' ? envProvider['type'] : 'omnicode';
+    const providerType = typeof envProvider['type'] === 'string' ? envProvider['type'] : 'omnicode';
     const providerBaseUrl =
       typeof envProvider['baseUrl'] === 'string' && envProvider['baseUrl'].length > 0
         ? envProvider['baseUrl']
-        :
-          resolveProviderEndpoint(providerType, envBagOf(getEnv)).baseUrl;
+        : resolveProviderEndpoint(providerType, envBagOf(getEnv)).baseUrl;
     const providerPatch: Record<string, unknown> = {};
     if (envProvider['type'] === undefined) providerPatch['type'] = 'omnicode';
     if (providerBaseUrl !== undefined && envProvider['baseUrl'] === undefined) {
@@ -180,7 +180,10 @@ export const omnicodeModelEnvOverlay: ConfigEffectiveOverlay = {
       maxCompletionTokens,
     });
     if (modelOverrides !== undefined) {
-      effective['modelOverrides'] = modelOverrides;
+      effective['modelOverrides'] = mergeModelOverrides(
+        effective['modelOverrides'],
+        modelOverrides,
+      );
       changed.push('modelOverrides');
     }
 
@@ -193,9 +196,13 @@ export const omnicodeModelEnvOverlay: ConfigEffectiveOverlay = {
         return withoutKey(value, ENV_MODEL_ALIAS_KEY);
       case 'defaultModel':
         if (value !== ENV_MODEL_ALIAS_KEY) return value;
-        return typeof rawSnake['default_model'] === 'string' ? rawSnake['default_model'] : undefined;
-      case 'modelOverrides':
-        return undefined;
+        return typeof rawSnake['default_model'] === 'string'
+          ? rawSnake['default_model']
+          : undefined;
+      case 'modelOverrides': {
+        const own = rawSnake['model_overrides'] ?? rawSnake['modelOverrides'];
+        return own === undefined ? undefined : own;
+      }
       default:
         return value;
     }
@@ -205,9 +212,12 @@ export const omnicodeModelEnvOverlay: ConfigEffectiveOverlay = {
 function envBagOf(
   getEnv: (name: string) => string | undefined,
 ): Readonly<Record<string, string | undefined>> {
-  return new Proxy<Record<string, string | undefined>>({}, {
-    get: (_target, key: string) => getEnv(key),
-  });
+  return new Proxy<Record<string, string | undefined>>(
+    {},
+    {
+      get: (_target, key: string) => getEnv(key),
+    },
+  );
 }
 
 function collectModelOverrides(input: {
@@ -224,6 +234,14 @@ function collectModelOverrides(input: {
     modelOverrides['maxCompletionTokens'] = input.maxCompletionTokens;
   }
   return Object.keys(modelOverrides).length > 0 ? modelOverrides : undefined;
+}
+
+function mergeModelOverrides(
+  existing: unknown,
+  fromEnv: Record<string, unknown>,
+): Record<string, unknown> {
+  const own = isPlainObject(existing) ? existing : {};
+  return { ...own, ...fromEnv };
 }
 
 registerConfigOverlay(omnicodeModelEnvOverlay);

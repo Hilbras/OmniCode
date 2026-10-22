@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { classifyOmnicodeQuotaError } from '#/llm-omnicode/errors';
+import { omnicodeConnection, omnicodeOpenAITrait } from '#/llm-omnicode/trait';
 import { UNKNOWN_CAPABILITY, type ModelCapability } from '#/llm/capability';
 import {
   createAssistantMessage,
@@ -9,6 +11,8 @@ import {
 } from '#/llm/message';
 import type { LlmModel } from '#/llm/model';
 import type { TraitContext } from '#/llm/protocol/base';
+import { createOpenAIRequester } from '#/llm/requester/bases/openai/requester';
+import type { LlmClientContext, LlmRequestEvent } from '#/llm/requester/requester';
 import {
   defaultThinkingEffortForModel,
   modelSupportsThinking,
@@ -16,10 +20,6 @@ import {
   resolveThinkingKeep,
   type ModelThinkingMetadata,
 } from '#/llm/thinking';
-import { omnicodeConnection, omnicodeOpenAITrait } from '#/llm-omnicode/trait';
-import { classifyOmnicodeQuotaError } from '#/llm-omnicode/errors';
-import { createOpenAIRequester } from '#/llm/requester/bases/openai/requester';
-import type { LlmClientContext, LlmRequestEvent } from '#/llm/requester/requester';
 
 const model: LlmModel = {
   provider: 'test',
@@ -157,9 +157,9 @@ describe('omnicodeOpenAITrait thinking', () => {
 
     const always = thinkingModel({ supportEfforts: ['low', 'high'], alwaysThinking: true });
     expect(resolveThinkingEffortForModel('off', undefined, always)).toBe('high');
-    expect(resolveThinkingEffortForModel(undefined, { enabled: false, effort: 'low' }, always)).toBe(
-      'low',
-    );
+    expect(
+      resolveThinkingEffortForModel(undefined, { enabled: false, effort: 'low' }, always),
+    ).toBe('low');
 
     expect(resolveThinkingKeep(undefined, undefined, 'high')).toBe('all');
     expect(resolveThinkingKeep(undefined, undefined, 'off')).toBeUndefined();
@@ -170,15 +170,13 @@ describe('omnicodeOpenAITrait thinking', () => {
   });
 
   it('preserves thinking only when keep is all and thinking is not disabled', () => {
-    expect(omnicodeOpenAITrait.thinking?.({ effort: 'on', keep: 'all' }, ctx)?.preserveThinking).toBe(
-      true,
-    );
+    expect(
+      omnicodeOpenAITrait.thinking?.({ effort: 'on', keep: 'all' }, ctx)?.preserveThinking,
+    ).toBe(true);
     expect(
       omnicodeOpenAITrait.thinking?.({ effort: 'off', keep: 'all' }, ctx)?.preserveThinking,
     ).toBeUndefined();
-    expect(
-      omnicodeOpenAITrait.thinking?.({ effort: 'on' }, ctx)?.preserveThinking,
-    ).toBeUndefined();
+    expect(omnicodeOpenAITrait.thinking?.({ effort: 'on' }, ctx)?.preserveThinking).toBeUndefined();
     expect(
       omnicodeOpenAITrait.thinking?.({ effort: 'on', keep: '1' }, ctx)?.preserveThinking,
     ).toBeUndefined();
@@ -345,7 +343,10 @@ describe('openai requester thinking', () => {
       {
         messages: [
           createUserMessage('hi'),
-          createAssistantMessage([{ type: 'think', think: 'abc' }, { type: 'text', text: 'hello' }]),
+          createAssistantMessage([
+            { type: 'think', think: 'abc' },
+            { type: 'text', text: 'hello' },
+          ]),
         ],
       },
       { signal: new AbortController().signal },
@@ -361,7 +362,10 @@ describe('openai requester thinking', () => {
       {
         messages: [
           createUserMessage('hi'),
-          createAssistantMessage([{ type: 'think', think: 'abc' }, { type: 'text', text: 'hello' }]),
+          createAssistantMessage([
+            { type: 'think', think: 'abc' },
+            { type: 'text', text: 'hello' },
+          ]),
         ],
       },
       { signal: new AbortController().signal },
@@ -587,7 +591,12 @@ describe('openai requester thinking', () => {
     });
     await preservingRequester.generate(
       { model, thinking: { effort: 'on', keep: 'all' } },
-      { messages: [createUserMessage('hi'), createAssistantMessage([{ type: 'text', text: 'hello' }])] },
+      {
+        messages: [
+          createUserMessage('hi'),
+          createAssistantMessage([{ type: 'text', text: 'hello' }]),
+        ],
+      },
       { signal: new AbortController().signal },
     );
     expect(bodyMessages(preserving.body())[1]!['reasoning_content']).toBe('');
@@ -599,7 +608,12 @@ describe('openai requester thinking', () => {
     });
     await plainRequester.generate(
       { model, thinking: { effort: 'on' } },
-      { messages: [createUserMessage('hi'), createAssistantMessage([{ type: 'text', text: 'hello' }])] },
+      {
+        messages: [
+          createUserMessage('hi'),
+          createAssistantMessage([{ type: 'text', text: 'hello' }]),
+        ],
+      },
       { signal: new AbortController().signal },
     );
     expect('reasoning_content' in bodyMessages(plain.body())[1]!).toBe(false);

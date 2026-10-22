@@ -19,20 +19,20 @@ Fetch pages with **FetchURL** before answering. All page links below are relativ
 
 ## Which page to read for which question
 
-| Question topic | Page (relative to the base URL) |
-| --- | --- |
-| What Omnicode is; Base URL / API Key; standard vs high-speed model; platform comparison | `./` (home overview) |
-| Membership plans, quota and rate limits, fuel packs | `omnicode/membership.html` |
-| Install / login / usage FAQ | `omnicode/faq.html` |
-| Error codes and their meaning (e.g. 401 for high-speed model access) | `omnicode/error-reference.html` |
-| Product news and recent changes | `omnicode/whats-new.html` |
-| Community guidelines; contact and feedback | `omnicode/community-guidelines.html`, `omnicode/contact-and-feedback.html` |
-| `config.toml` fields, providers/models, environment variables, data locations, config overrides | `omnicode-cli/configuration/` — `config-files.html`, `providers.html`, `env-vars.html`, `data-locations.html`, `overrides.html` |
-| Skills, MCP, hooks, plugins, themes, agents/sub-agents, Omnicode Datasource | `omnicode-cli/customization/` — `skills.html`, `mcp.html`, `hooks.html`, `plugins.html`, `themes.html`, `agents.html`; Omnicode Datasource lives at `plugins.html#omnicode-datasource` |
-| Getting started, sessions and context, goals, interaction and input, IDEs, migration, use cases | `omnicode-cli/guides/` — `getting-started.html`, `sessions.html`, `goals.html`, `interaction.html`, `ides.html`, `migration.html`, `use-cases.html` |
-| Slash commands, keyboard shortcuts, builtin tools, `omnicode` command flags, ACP | `omnicode-cli/reference/` — `slash-commands.html`, `keyboard.html`, `tools.html`, `omnicode-command.html`, `omnicode-acp.html` |
-| CLI changelog | `omnicode-cli/release-notes/changelog.html` |
-| Using Omnicode in Claude Code and other third-party agents | `third-party-tools/other-coding-agents.html` |
+| Question topic                                                                                  | Page (relative to the base URL)                                                                                                                                                        |
+| ----------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| What Omnicode is; Base URL / API Key; standard vs high-speed model; platform comparison         | `./` (home overview)                                                                                                                                                                   |
+| Membership plans, quota and rate limits, fuel packs                                             | `omnicode/membership.html`                                                                                                                                                             |
+| Install / login / usage FAQ                                                                     | `omnicode/faq.html`                                                                                                                                                                    |
+| Error codes and their meaning (e.g. 401 for high-speed model access)                            | `omnicode/error-reference.html`                                                                                                                                                        |
+| Product news and recent changes                                                                 | `omnicode/whats-new.html`                                                                                                                                                              |
+| Community guidelines; contact and feedback                                                      | `omnicode/community-guidelines.html`, `omnicode/contact-and-feedback.html`                                                                                                             |
+| `config.toml` fields, providers/models, environment variables, data locations, config overrides | `omnicode-cli/configuration/` — `config-files.html`, `providers.html`, `env-vars.html`, `data-locations.html`, `overrides.html`                                                        |
+| Skills, MCP, hooks, plugins, themes, agents/sub-agents, Omnicode Datasource                     | `omnicode-cli/customization/` — `skills.html`, `mcp.html`, `hooks.html`, `plugins.html`, `themes.html`, `agents.html`; Omnicode Datasource lives at `plugins.html#omnicode-datasource` |
+| Getting started, sessions and context, goals, interaction and input, IDEs, migration, use cases | `omnicode-cli/guides/` — `getting-started.html`, `sessions.html`, `goals.html`, `interaction.html`, `ides.html`, `migration.html`, `use-cases.html`                                    |
+| Slash commands, keyboard shortcuts, builtin tools, `omnicode` command flags, ACP                | `omnicode-cli/reference/` — `slash-commands.html`, `keyboard.html`, `tools.html`, `omnicode-command.html`, `omnicode-acp.html`                                                         |
+| CLI changelog                                                                                   | `omnicode-cli/release-notes/changelog.html`                                                                                                                                            |
+| Using Omnicode in Claude Code and other third-party agents                                      | `third-party-tools/other-coding-agents.html`                                                                                                                                           |
 
 If no row fits the question, fetch the docs home page and follow its navigation links.
 

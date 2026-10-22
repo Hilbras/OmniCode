@@ -21,7 +21,11 @@ export class McpServerStatus extends AgentEvent2<McpServerStatusEventPayload> {
 }
 export interface McpServerStatus extends McpServerStatusEventPayload {}
 
-export type ToolListUpdatedReason = 'mcp.connected' | 'mcp.disconnected' | 'mcp.failed';
+export type ToolListUpdatedReason =
+  | 'mcp.connected'
+  | 'mcp.disconnected'
+  | 'mcp.failed'
+  | 'mcp.tools_changed';
 
 export interface ToolListUpdatedPayload {
   readonly agentId: string;

@@ -10,7 +10,13 @@ import type {
   ToolInputDisplay,
 } from '@hilbras/omnicode-api';
 
-import type { MarkdownConfig, NotificationsConfig, StatusLineConfig, TuiMode, UpgradePreferences } from './config';
+import type {
+  MarkdownConfig,
+  NotificationsConfig,
+  StatusLineConfig,
+  TuiMode,
+  UpgradePreferences,
+} from './config';
 import type { PendingApproval, PendingQuestion } from './reverse-rpc/types';
 import type { ColorToken, ThemeName } from './theme';
 
@@ -253,12 +259,7 @@ export interface TranscriptEntry {
   pluginCommandData?: PluginCommandTranscriptData;
 }
 
-export type LivePaneMode =
-  | 'idle'
-  | 'waiting'
-  | 'thinking'
-  | 'tool'
-  | 'session';
+export type LivePaneMode = 'idle' | 'waiting' | 'thinking' | 'tool' | 'session';
 
 export interface LivePaneState {
   mode: LivePaneMode;

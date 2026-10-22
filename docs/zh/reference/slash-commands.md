@@ -115,8 +115,11 @@ Prompt 模式在目标完成时以退出码 `0` 退出，在目标阻塞时以 `
 | `/btw [问题]` | — | 在 fork 出的 subagent 中打开旁路对话，不改变当前 main agent 轮次；不带问题时会先打开面板等待输入 | 是 |
 | `/usage` | — | 显示 token 用量、上下文占用以及配额信息 | 是 |
 | `/status` | — | 显示当前会话运行时状态：版本、模型、工作目录、权限模式等 | 是 |
-| `/mcp` | — | 列出当前会话中的 MCP server 及连接状态 | 是 |
+| `/mcp` | — | 管理 MCP server ：查看列表及其传输方式、授权状态与实时连接状态 ；在同一页表单中新增或编辑（名称、传输方式、命令或 URL、参数）；启用或禁用某个 server；测试连接；或删除 | 是 |
 | `/plugins` | — | 打开交互式 plugin 管理器 | 是 |
+| `/skills` | — | 浏览当前工作区可用的 skill 列表 | 是 |
+| `/subagents` | — | 浏览当前工作区可用的 subagent profile 列表 | 是 |
+| `/connectors` | — | 浏览 agent 可用的集成（MCP server、plugin，以及 GitHub、Vercel 等官方平台），显示类型、连接状态和作用域；在官方平台上按 `Enter` 即可连接，浏览器会自动打开完成授权，连接结果会被记住，之后的会话无需重复连接；若平台暂时无法连接，按 `Enter` 会说明缺少什么 | 是 |
 | `/version` | — | 显示 Omnicode CLI 版本号 | 是 |
 | `/feedback` | `/bug` | 提交反馈，可附加诊断日志和代码库上下文 | 是 |
 

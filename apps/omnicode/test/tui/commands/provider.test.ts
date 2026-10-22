@@ -12,11 +12,7 @@ import type { Component, Focusable } from '@hilbras/omnicode-tui';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { SlashCommandHost } from '#/tui/commands';
-import {
-  formatContextSize,
-  handleContextCommand,
-  parseContextSize,
-} from '#/tui/commands/context';
+import { formatContextSize, handleContextCommand, parseContextSize } from '#/tui/commands/context';
 import { handleProviderCommand, setDefaultModel } from '#/tui/commands/provider';
 import { ApiKeyInputDialogComponent } from '#/tui/components/dialogs/api-key-input-dialog';
 import { ChoicePickerComponent } from '#/tui/components/dialogs/choice-picker';
@@ -31,6 +27,7 @@ import {
   deriveProviderId,
   parseProviderBaseUrl,
 } from '#/utils/custom-provider';
+
 import { makeConfigStoreHarness } from '../../helpers/config-store';
 
 // Model discovery is the only outbound call the add flow makes; stubbed so the
@@ -111,9 +108,9 @@ describe('setDefaultModel', () => {
     expect(host.authFlow.activateModelAfterLogin).toHaveBeenCalledWith('opus', 'xhigh');
     // The application must come after the refresh, or the persisted value
     // reactivated by refreshConfigAfterLogin would clobber the pick.
-    expect(
-      host.authFlow.activateModelAfterLogin.mock.invocationCallOrder[0]!,
-    ).toBeGreaterThan(host.authFlow.refreshConfigAfterLogin.mock.invocationCallOrder[0]!);
+    expect(host.authFlow.activateModelAfterLogin.mock.invocationCallOrder[0]!).toBeGreaterThan(
+      host.authFlow.refreshConfigAfterLogin.mock.invocationCallOrder[0]!,
+    );
     // Without a session the engine never sees the pick, so the TUI stays the
     // sole model_switch producer.
     expect(host.track).toHaveBeenCalledWith('model_switch', { model: 'opus' });
@@ -189,9 +186,9 @@ describe('setDefaultModel', () => {
     await setDefaultModel(host, 'opus', 'high');
 
     expect(host.waitForLazyCreation).toHaveBeenCalled();
-    expect(
-      host.waitForLazyCreation.mock.invocationCallOrder[0]!,
-    ).toBeLessThan(host.harness.setConfig.mock.invocationCallOrder[0]!);
+    expect(host.waitForLazyCreation.mock.invocationCallOrder[0]!).toBeLessThan(
+      host.harness.setConfig.mock.invocationCallOrder[0]!,
+    );
   });
 });
 
@@ -330,9 +327,7 @@ describe('handleProviderCommand', () => {
  * — splitting `\x1b[B` into characters would deliver a bare Escape, which
  * cancels the picker.
  */
-async function openCustomEndpointDialog(
-  rig: ReturnType<typeof makeProviderHost>,
-): Promise<void> {
+async function openCustomEndpointDialog(rig: ReturnType<typeof makeProviderHost>): Promise<void> {
   const { host, mounted } = rig;
   await handleProviderCommand(host);
   // Rows are [empty, acme, other(current), add]; one hop down lands on `add`.
@@ -389,10 +384,7 @@ async function addCustomEndpoint(
   });
 }
 
-function seedModel(
-  appState: ReturnType<typeof makeProviderHost>['appState'],
-  alias: string,
-): void {
+function seedModel(appState: ReturnType<typeof makeProviderHost>['appState'], alias: string): void {
   const [provider, model] = alias.split('/') as [string, string];
   const models = appState.availableModels as unknown as Record<string, ModelAlias>;
   models[alias] = { provider, model, maxContextSize: 200_000 };
@@ -748,16 +740,12 @@ describe('custom provider helpers', () => {
   it('derives the id from the hostname and avoids every taken id', () => {
     expect(deriveProviderId('https://api.example.com/v1', [])).toBe('api-example');
     expect(deriveProviderId('https://127.0.0.1:1234/v1', [])).toBe('127-0-0-1-1234');
-    expect(deriveProviderId('https://api.example.com/v1', ['api-example'])).toBe(
-      'api-example-2',
-    );
+    expect(deriveProviderId('https://api.example.com/v1', ['api-example'])).toBe('api-example-2');
     expect(deriveProviderId('https://api.example.com/v1', ['api-example', 'api-example-2'])).toBe(
       'api-example-3',
     );
     // A built-in id must never be shadowed by a custom row.
-    expect(deriveProviderId('https://openrouter.ai/api/v1', ['openrouter'])).toBe(
-      'openrouter-2',
-    );
+    expect(deriveProviderId('https://openrouter.ai/api/v1', ['openrouter'])).toBe('openrouter-2');
   });
 
   it('rejects a base URL that is unusable or carries the secret inline', () => {
@@ -822,9 +810,11 @@ describe('custom provider helpers', () => {
       }),
     ).toEqual({ ok: true, baseUrl: 'http://api.example.com/v1' });
     // Only the exact value opts in; a stray "true" must not.
-    expect(parseProviderBaseUrl('http://api.example.com/v1', {
-      OMNICODE_ALLOW_INSECURE_PROVIDER_HTTP: 'true',
-    }).ok).toBe(false);
+    expect(
+      parseProviderBaseUrl('http://api.example.com/v1', {
+        OMNICODE_ALLOW_INSECURE_PROVIDER_HTTP: 'true',
+      }).ok,
+    ).toBe(false);
   });
 
   it('sends no credential header only when no key was entered', () => {

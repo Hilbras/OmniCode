@@ -1,4 +1,3 @@
-import { LoopDetector, type ActionRecord, type ActionFailureClass } from '#/features/computerUse/observation';
 import {
   describeSelector,
   type BrowserBackend,
@@ -6,6 +5,11 @@ import {
   type BrowserSelector,
   type BrowserTarget,
 } from '#/features/computerUse/browser/types';
+import {
+  LoopDetector,
+  type ActionRecord,
+  type ActionFailureClass,
+} from '#/features/computerUse/observation';
 
 export interface BrowserControllerOptions {
   readonly backend: BrowserBackend;
@@ -128,7 +132,9 @@ export class BrowserController {
   }
 
   async type(target: BrowserSelector, text: string): Promise<void> {
-    return this._run('type', { target, length: text.length }, () => this._backend.type(target, text));
+    return this._run('type', { target, length: text.length }, () =>
+      this._backend.type(target, text),
+    );
   }
 
   async select(target: BrowserSelector, value: string): Promise<void> {
@@ -136,7 +142,9 @@ export class BrowserController {
   }
 
   async waitFor(target: BrowserSelector, timeoutMs?: number): Promise<boolean> {
-    return this._run('wait_for', { target, timeoutMs }, () => this._backend.waitFor(target, timeoutMs));
+    return this._run('wait_for', { target, timeoutMs }, () =>
+      this._backend.waitFor(target, timeoutMs),
+    );
   }
 
   async upload(target: BrowserSelector, filePath: string): Promise<void> {
@@ -171,7 +179,11 @@ export class BrowserController {
     return this._loops.record(action, args);
   }
 
-  private async _run<T>(action: string, args: Record<string, unknown>, fn: () => Promise<T>): Promise<T> {
+  private async _run<T>(
+    action: string,
+    args: Record<string, unknown>,
+    fn: () => Promise<T>,
+  ): Promise<T> {
     const startedAt = this._now();
     try {
       const result = await fn();

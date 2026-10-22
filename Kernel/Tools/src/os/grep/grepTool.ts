@@ -26,10 +26,10 @@ import {
 import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
 import { literalRulePattern, matchesGlobRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
 import {
-  ensureRgPath,
   rgUnavailableMessage,
   type RgProbe,
 } from '@hilbras/omnicode-core/os/backends/node-local/tools/rgLocator';
+import { resolveRgPath } from '#/os/rgResolver';
 import {
   DEFAULT_TIMEOUT_MS,
   MAX_OUTPUT_BYTES,
@@ -136,7 +136,7 @@ export class GrepTool implements IGrepTool {
     const pathClass = env.pathClass;
     let rgPath: string;
     try {
-      const resolution = await ensureRgPath(this.createRgProbe(processService), {
+      const resolution = await resolveRgPath(this.createRgProbe(processService), {
         signal,
         allowCachedFallback: true,
       });

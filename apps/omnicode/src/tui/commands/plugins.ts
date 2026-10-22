@@ -10,7 +10,16 @@ import {
 } from '@hilbras/omnicode-api';
 import { Spacer } from '@hilbras/omnicode-tui';
 
+import { OMNICODE_PLUGIN_MARKETPLACE_URL_ENV, QUOTA_CONSUMING_PLUGIN_IDS } from '#/constant/app';
 import { Markdown } from '#/tui/components/markdown/markdown';
+import { openUrl } from '#/utils/open-url';
+import {
+  loadPluginMarketplace,
+  withBuiltInEntries,
+  withMarketplaceLatestVersions,
+  type PluginMarketplace,
+  type PluginMarketplaceEntry,
+} from '#/utils/plugin-marketplace';
 
 import {
   PluginInstallTrustConfirmComponent,
@@ -36,18 +45,6 @@ import {
   isOfficialPluginInstall,
   isOfficialPluginSource,
 } from '../utils/plugin-source-label';
-import {
-  OMNICODE_PLUGIN_MARKETPLACE_URL_ENV,
-  QUOTA_CONSUMING_PLUGIN_IDS,
-} from '#/constant/app';
-import {
-  loadPluginMarketplace,
-  withBuiltInEntries,
-  withMarketplaceLatestVersions,
-  type PluginMarketplace,
-  type PluginMarketplaceEntry,
-} from '#/utils/plugin-marketplace';
-import { openUrl } from '#/utils/open-url';
 import type { SlashCommandHost } from './dispatch';
 
 interface ShowPluginsPickerOptions {
@@ -102,7 +99,10 @@ async function resolvePluginApi(host: SlashCommandHost): Promise<PluginApi> {
 }
 
 export async function handlePluginsCommand(host: SlashCommandHost, rawArgs: string): Promise<void> {
-  const args = rawArgs.trim().split(/\s+/).filter((part) => part.length > 0);
+  const args = rawArgs
+    .trim()
+    .split(/\s+/)
+    .filter((part) => part.length > 0);
   const sub = args[0];
   const rest = args.slice(1);
   const session = await resolvePluginApi(host);
@@ -126,7 +126,9 @@ export async function handlePluginsCommand(host: SlashCommandHost, rawArgs: stri
         host.showStatus('Install cancelled.');
         return;
       }
-      const spinner = host.showProgressSpinner(`Installing plugin from ${truncateForStatus(source)}…`);
+      const spinner = host.showProgressSpinner(
+        `Installing plugin from ${truncateForStatus(source)}…`,
+      );
       try {
         await installPluginFromSource(host, source);
         spinner.stop({ ok: true, label: `Install finished — see details below.` });
@@ -161,7 +163,11 @@ export async function handlePluginsCommand(host: SlashCommandHost, rawArgs: stri
       const action = rest[0];
       const id = rest[1];
       const server = rest[2];
-      if ((action !== 'enable' && action !== 'disable') || id === undefined || server === undefined) {
+      if (
+        (action !== 'enable' && action !== 'disable') ||
+        id === undefined ||
+        server === undefined
+      ) {
         host.showError('Usage: /plugins mcp enable|disable <id> <server>');
         return;
       }
@@ -233,10 +239,7 @@ function logCapabilityStatus(capability: CapabilityStatus, installed?: boolean):
     steps: capability.steps,
   };
   const hasStepIssues = capability.steps.some((step) => step.state !== 'ok');
-  if (
-    capability.install.error !== undefined ||
-    (installed !== false && hasStepIssues)
-  ) {
+  if (capability.install.error !== undefined || (installed !== false && hasStepIssues)) {
     log.warn('capability needs attention', payload);
   } else {
     log.info('capability status', payload);
@@ -536,9 +539,10 @@ async function installCapabilityFromPanel(
     // An install already running (started from another panel or client) is
     // followed, not restarted — the service rejects duplicate starts even
     // though the original is healthy.
-    const alreadyRunning = await api
-      .getCapability(entry.id)
-      .then((status) => status.install.running, () => false);
+    const alreadyRunning = await api.getCapability(entry.id).then(
+      (status) => status.install.running,
+      () => false,
+    );
     if (!alreadyRunning) {
       await api.installCapability(entry.id);
     } else {
@@ -665,7 +669,9 @@ async function applyPluginEnabled(
       ? ` Some MCP servers are disabled; re-enable with /plugins mcp enable ${id} <server>.`
       : '';
   if (showStatus) {
-    host.showStatus(`${enabled ? 'Enabled' : 'Disabled'} ${id}. Run /reload or /new to apply.${mcpHint}`);
+    host.showStatus(
+      `${enabled ? 'Enabled' : 'Disabled'} ${id}. Run /reload or /new to apply.${mcpHint}`,
+    );
   }
   const inlineMcpHint = mcpHint.length > 0 ? ' · MCP servers disabled' : '';
   return `${pluginInlineChangeHint()}${inlineMcpHint}`;
@@ -798,10 +804,7 @@ async function renderPluginInfo(host: SlashCommandHost, id: string): Promise<voi
   host.state.ui.requestRender();
 }
 
-async function installPluginFromSource(
-  host: SlashCommandHost,
-  source: string,
-): Promise<void> {
+async function installPluginFromSource(host: SlashCommandHost, source: string): Promise<void> {
   const session = await resolvePluginApi(host);
   const beforeList = await session.listPlugins();
   const summary = await session.installPlugin(
@@ -846,10 +849,7 @@ function showPluginInstallResult(
   }
 }
 
-function describeInstallAction(
-  previous: PluginSummary | undefined,
-  next: PluginSummary,
-): string {
+function describeInstallAction(previous: PluginSummary | undefined, next: PluginSummary): string {
   const sourceLabel = formatPluginSourceLabel(next);
   const versionFromTo = (prev?: string, cur?: string): string => {
     if (prev === undefined || prev === cur) return cur === undefined ? '' : ` ${cur}`;
@@ -885,7 +885,8 @@ function truncateForStatus(input: string): string {
 
 async function reloadPlugins(host: SlashCommandHost): Promise<void> {
   const summary = await (await resolvePluginApi(host)).reloadPlugins();
-  const line = `Reload: +${summary.added.length} -${summary.removed.length}` +
+  const line =
+    `Reload: +${summary.added.length} -${summary.removed.length}` +
     (summary.errors.length > 0 ? ` (${summary.errors.length} errors)` : '');
   host.showStatus(line);
   // Rebuild the TUI's plugin slash-command list from the reloaded service so

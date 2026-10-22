@@ -1,10 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import {
-  type CollectionToken,
-  type CollectionView,
-} from '#/_base/di/collection';
+import { type CollectionToken, type CollectionView } from '#/_base/di/collection';
 import { ScopeUnits } from '#/_base/di/fiber';
 import { createDecorator, ScopeActivation } from '#/_base/di/instantiation';
 import { type InstantiationService } from '#/_base/di/instantiationService';
@@ -16,15 +13,16 @@ import {
 } from '#/_base/di/scope';
 import { Service } from '#/_base/di/service';
 import { createScopedTestHost } from '#/_base/di/test';
+import { AgentToolContribution } from '#/agent/toolRegistry/toolContribution';
 import { AgentProfileContribution } from '#/app/agentProfileCatalog/agentProfileContribution';
 import { ConfigSectionContribution } from '#/app/config/configSectionContributions';
 import { IFeatureManager } from '#/app/feature/featureManager';
 import { FeatureManagerService } from '#/app/feature/featureManagerService';
 import { LifecycleScope } from '#/app/scopes';
-import { AgentToolContribution } from '#/agent/toolRegistry/toolContribution';
 import { Feature } from '#/features/feature';
 import { IFeatureAssemblyService } from '#/features/featureAssembly';
 import { FeatureAssemblyService } from '#/features/featureAssemblyService';
+import { _clearFeatureRecipesForTests, registerFeature } from '#/features/featureRegistry';
 import {
   AgentModel,
   AgentModelContribution,
@@ -32,10 +30,6 @@ import {
   SessionModelContribution,
   type SessionModelDefinition,
 } from '#/state/agentModel';
-import {
-  _clearFeatureRecipesForTests,
-  registerFeature,
-} from '#/features/featureRegistry';
 import type { AgentTool, ToolExecution } from '#/tool/toolContract';
 
 interface IGreeter {
@@ -191,10 +185,7 @@ describe('Feature — built-in capability assembly (src/features)', () => {
       collectionViewOf(host.app, SessionModelContribution),
       collectionViewOf(host.app, AgentModelContribution),
     ];
-    expect(views.map((view) => view.items)).toEqual([
-      [sessionModel],
-      [agentModel],
-    ]);
+    expect(views.map((view) => view.items)).toEqual([[sessionModel], [agentModel]]);
     expect(() => manager.provideUnit(ReplacementFeature)).toThrow(
       "Agent model 'test-feature.agent-model' already has an active provider",
     );

@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { ConfigErrors } from '#/app/config/errors';
-import {
-  assertProviderBaseUrl,
-  checkProviderBaseUrl,
-} from '#/llm-adapter/provider/base-url';
-import type { ProviderConfig } from '#/llm-adapter/provider/provider';
 import type { ModelRecord } from '#/llm-adapter/model/model';
 import {
   deriveProviderId,
@@ -14,6 +9,8 @@ import {
   resolveModelAuthMaterial,
   resolveModelForReady,
 } from '#/llm-adapter/model/model-auth';
+import { assertProviderBaseUrl, checkProviderBaseUrl } from '#/llm-adapter/provider/base-url';
+import type { ProviderConfig } from '#/llm-adapter/provider/provider';
 
 function authMaterial(args: {
   model: ModelRecord;
@@ -68,7 +65,11 @@ describe('resolveModelAuthMaterial', () => {
     expect(
       authMaterial({
         model: { model: 'm' },
-        provider: { type: 'omnicode', apiKeyEnv: 'ACME_API_KEY', env: { OMNICODE_API_KEY: 'sub-table-key' } },
+        provider: {
+          type: 'omnicode',
+          apiKeyEnv: 'ACME_API_KEY',
+          env: { OMNICODE_API_KEY: 'sub-table-key' },
+        },
       }),
     ).toEqual({ apiKeyEnv: 'ACME_API_KEY' });
   });
@@ -83,7 +84,11 @@ describe('resolveModelAuthMaterial', () => {
     expect(() =>
       authMaterial({
         model: { model: 'm' },
-        provider: { type: 'openai', apiKeyEnv: 'ACME_API_KEY', oauth: { storage: 'file', key: 'k' } },
+        provider: {
+          type: 'openai',
+          apiKeyEnv: 'ACME_API_KEY',
+          oauth: { storage: 'file', key: 'k' },
+        },
       }),
     ).toThrowError(expect.objectContaining({ code: ConfigErrors.codes.CONFIG_INVALID }));
   });
@@ -159,7 +164,10 @@ describe('effectiveModelConfig', () => {
     expect(inferred.defaultEffort).toBe('high');
     expect(inferred.capabilities).toContain('thinking');
 
-    const omnicodeRouted = effectiveModelConfig({ model: 'omnicode-k2', protocol: 'anthropic' }, 'omnicode');
+    const omnicodeRouted = effectiveModelConfig(
+      { model: 'omnicode-k2', protocol: 'anthropic' },
+      'omnicode',
+    );
     expect(omnicodeRouted.supportEfforts).toBeUndefined();
     expect(omnicodeRouted.capabilities).toBeUndefined();
   });
@@ -214,13 +222,11 @@ describe('checkProviderBaseUrl', () => {
   it('rejects embedded credentials so a pasted key cannot ride along in the URL', () => {
     expect(checkProviderBaseUrl('https://user:pass@api.example.test/v1')).toEqual({
       ok: false,
-      reason:
-        'must not embed a username or password; put the key in api_key instead.',
+      reason: 'must not embed a username or password; put the key in api_key instead.',
     });
     expect(checkProviderBaseUrl('https://sk-secret@api.example.test/v1')).toEqual({
       ok: false,
-      reason:
-        'must not embed a username or password; put the key in api_key instead.',
+      reason: 'must not embed a username or password; put the key in api_key instead.',
     });
   });
 
@@ -277,7 +283,11 @@ describe('checkProviderBaseUrl', () => {
   });
 
   it('still rejects plain http for an address just outside the private range', () => {
-    for (const baseUrl of ['http://172.32.4.2:8080/v1', 'http://11.0.0.1:8080/v1', 'http://192.169.1.1:8080/v1']) {
+    for (const baseUrl of [
+      'http://172.32.4.2:8080/v1',
+      'http://11.0.0.1:8080/v1',
+      'http://192.169.1.1:8080/v1',
+    ]) {
       expect(checkProviderBaseUrl(baseUrl)).toEqual({
         ok: false,
         reason:
@@ -289,7 +299,9 @@ describe('checkProviderBaseUrl', () => {
 
 describe('assertProviderBaseUrl', () => {
   it('throws config.invalid naming the offending field and the reason', () => {
-    expect(() => assertProviderBaseUrl('http://api.example.test/v1', 'providers.acme.base_url')).toThrowError(
+    expect(() =>
+      assertProviderBaseUrl('http://api.example.test/v1', 'providers.acme.base_url'),
+    ).toThrowError(
       expect.objectContaining({
         code: ConfigErrors.codes.CONFIG_INVALID,
         message:
@@ -317,9 +329,12 @@ describe('resolveEndpointBaseUrl', () => {
     expect(
       baseUrlOf({ model: 'm' }, { type: 'openai', baseUrl: 'https://provider.example.test/v1' }),
     ).toBe('https://provider.example.test/v1');
-    expect(baseUrlOf({ model: 'm' }, { type: 'openai', env: { OPENAI_BASE_URL: 'https://env.example.test/v1' } })).toBe(
-      'https://env.example.test/v1',
-    );
+    expect(
+      baseUrlOf(
+        { model: 'm' },
+        { type: 'openai', env: { OPENAI_BASE_URL: 'https://env.example.test/v1' } },
+      ),
+    ).toBe('https://env.example.test/v1');
     expect(baseUrlOf({ model: 'm' }, { type: 'omnicode' })).toBe('https://api.hilbras.ai/v1');
     expect(baseUrlOf({ model: 'm' }, { type: 'openai' })).toBeUndefined();
   });
@@ -329,13 +344,19 @@ describe('resolveEndpointBaseUrl', () => {
       baseUrlOf({ model: 'm' }, { type: 'openai', baseUrl: 'http://localhost:11434/v1' }),
     ).toBe('http://localhost:11434/v1');
     expect(
-      baseUrlOf({ model: 'm' }, { type: 'openai', env: { OPENAI_BASE_URL: 'http://127.0.0.1:8000/v1' } }),
+      baseUrlOf(
+        { model: 'm' },
+        { type: 'openai', env: { OPENAI_BASE_URL: 'http://127.0.0.1:8000/v1' } },
+      ),
     ).toBe('http://127.0.0.1:8000/v1');
   });
 
   it('rejects a model base URL naming models.<id>.base_url', () => {
     expect(() =>
-      baseUrlOf({ model: 'm', baseUrl: 'https://user:pass@model.example.test/v1' }, { type: 'openai' }),
+      baseUrlOf(
+        { model: 'm', baseUrl: 'https://user:pass@model.example.test/v1' },
+        { type: 'openai' },
+      ),
     ).toThrowError(
       expect.objectContaining({
         code: ConfigErrors.codes.CONFIG_INVALID,
@@ -359,7 +380,10 @@ describe('resolveEndpointBaseUrl', () => {
 
   it('rejects a base URL coming from the provider env bag, naming the env key', () => {
     expect(() =>
-      baseUrlOf({ model: 'm' }, { type: 'openai', env: { OPENAI_BASE_URL: 'ftp://gateway.example.test' } }),
+      baseUrlOf(
+        { model: 'm' },
+        { type: 'openai', env: { OPENAI_BASE_URL: 'ftp://gateway.example.test' } },
+      ),
     ).toThrowError(
       expect.objectContaining({
         code: ConfigErrors.codes.CONFIG_INVALID,
@@ -372,7 +396,7 @@ describe('resolveEndpointBaseUrl', () => {
 describe('resolveModelForReady', () => {
   const providers: Readonly<Record<string, ProviderConfig>> = {
     'prov-a': { type: 'openai', apiKey: 'sk-a' },
-    '__omnicode_env__': { type: 'omnicode', baseUrl: 'https://api.example.test/coding/v1' },
+    __omnicode_env__: { type: 'omnicode', baseUrl: 'https://api.example.test/coding/v1' },
   };
 
   it('reports no-default when the model id is missing or empty', () => {
@@ -421,9 +445,9 @@ describe('resolveModelForReady', () => {
     expect(
       resolveModelForReady('m', { m: { providerId: 'gone', model: 'gpt' } }, providers),
     ).toEqual({ resolved: false, reason: 'provider-missing' });
-    expect(
-      resolveModelForReady('m', { m: { provider: 'gone', model: 'gpt' } }, providers),
-    ).toEqual({ resolved: false, reason: 'provider-missing' });
+    expect(resolveModelForReady('m', { m: { provider: 'gone', model: 'gpt' } }, providers)).toEqual(
+      { resolved: false, reason: 'provider-missing' },
+    );
   });
 
   it('resolves a providerless flat model through its baseUrl', () => {
@@ -477,7 +501,7 @@ describe('resolveModelForReady', () => {
 
   it('resolves the env-overlay injected model against the env provider', () => {
     const models = {
-      '__omnicode_env_model__': {
+      __omnicode_env_model__: {
         provider: '__omnicode_env__',
         model: 'omnicode-for-coding',
         maxContextSize: 262144,

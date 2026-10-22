@@ -13,6 +13,7 @@
  * fire the `on*` callbacks back to the controller.
  */
 
+import type { BackgroundTaskInfo, BackgroundTaskStatus, ModelAlias } from '@hilbras/omnicode-api';
 import {
   Container,
   Key,
@@ -22,16 +23,12 @@ import {
   visibleWidth,
   type Focusable,
 } from '@hilbras/omnicode-tui';
-import type {
-  BackgroundTaskInfo,
-  BackgroundTaskStatus,
-  ModelAlias,
-} from '@hilbras/omnicode-api';
 
-import { SELECT_POINTER } from '@/tui/constant/symbols';
 import { currentTheme } from '#/tui/theme';
-import { printableChar } from '@/tui/utils/printable-key';
 import { sanitizeShellOutput } from '#/tui/utils/shell-output';
+import { SELECT_POINTER } from '@/tui/constant/symbols';
+import { printableChar } from '@/tui/utils/printable-key';
+
 import { modelDisplayName } from './model-selector';
 
 const ELLIPSIS = '…';
@@ -333,7 +330,9 @@ export class TasksBrowserApp extends Container implements Focusable {
 
     const lines: string[] = [header];
     for (let i = 0; i < bodyHeight; i++) {
-      lines.push((listFrame[i] ?? ' '.repeat(listWidth)) + (rightFrames[i] ?? ' '.repeat(rightWidth)));
+      lines.push(
+        (listFrame[i] ?? ' '.repeat(listWidth)) + (rightFrames[i] ?? ' '.repeat(rightWidth)),
+      );
     }
     lines.push(footer);
     return lines;
@@ -438,7 +437,11 @@ export class TasksBrowserApp extends Container implements Focusable {
     const lines: string[] = [top];
     for (let i = 0; i < innerHeight; i++) {
       const inner = content[i] ?? '';
-      lines.push(currentTheme.fg('primary', '│') + fitExactly(inner, innerWidth) + currentTheme.fg('primary', '│'));
+      lines.push(
+        currentTheme.fg('primary', '│') +
+          fitExactly(inner, innerWidth) +
+          currentTheme.fg('primary', '│'),
+      );
     }
     lines.push(bottom);
     return lines;
@@ -605,7 +608,9 @@ export class TasksBrowserApp extends Container implements Focusable {
       lines.push(`${label('Effort:')}${value(task.thinkingEffort)}`);
     }
     if (task.kind === 'question') {
-      lines.push(`${label('Questions:')}${currentTheme.fg('textMuted', String(task.questionCount))}`);
+      lines.push(
+        `${label('Questions:')}${currentTheme.fg('textMuted', String(task.questionCount))}`,
+      );
       if (task.toolCallId !== undefined) {
         lines.push(`${label('Tool call:')}${currentTheme.fg('textMuted', task.toolCallId)}`);
       }

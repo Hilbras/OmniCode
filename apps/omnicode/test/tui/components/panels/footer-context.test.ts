@@ -1,7 +1,11 @@
-import { describe, it, expect } from 'vitest';
 import chalk from 'chalk';
+import { describe, it, expect } from 'vitest';
 
-import { FooterComponent, formatFooterGitBadge, buildWeightedTips } from '#/tui/components/chrome/footer';
+import {
+  FooterComponent,
+  formatFooterGitBadge,
+  buildWeightedTips,
+} from '#/tui/components/chrome/footer';
 import { darkColors } from '#/tui/theme/colors';
 import type { AppState } from '#/tui/types';
 
@@ -52,9 +56,7 @@ describe('FooterComponent — context NaN resilience', () => {
   });
 
   it('undefined-ish (coerced) usage → renders 0%', () => {
-    const fc = new FooterComponent(
-      baseState({ contextUsage: undefined as unknown as number }),
-    );
+    const fc = new FooterComponent(baseState({ contextUsage: undefined as unknown as number }));
     const out = strip(fc.render(120).join(''));
     expect(out).not.toMatch(/NaN/);
     expect(out).toMatch(/context: 0%/);

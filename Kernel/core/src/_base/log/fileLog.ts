@@ -1,5 +1,6 @@
 import { appendFileSync, mkdirSync } from 'node:fs';
 import { mkdir, open, rename, stat, unlink } from 'node:fs/promises';
+
 import { dirname } from 'pathe';
 
 import { formatEntry, type FormatOptions } from './formatter';
@@ -64,8 +65,7 @@ export class RotatingFileWriter {
     this.closed = true;
     try {
       await this.flush();
-    } catch {
-    }
+    } catch {}
   }
 
   flushSync(): void {
@@ -93,12 +93,13 @@ export class RotatingFileWriter {
     const droppedLine = this.takeDroppedNotice();
     const lines = droppedLine === '' ? [...this.pending] : [...this.pending, droppedLine];
     this.pending = [];
+    let written = 0;
     try {
       await mkdir(dirname(this.options.path), { recursive: true });
       if (this.currentBytes < 0) {
         this.currentBytes = await this.statSize(this.options.path);
       }
-      await this.appendLines(lines);
+      written = await this.appendLines(lines);
 
       if (!this.directorySynced) {
         await syncDir(dirname(this.options.path));
@@ -108,7 +109,7 @@ export class RotatingFileWriter {
       return true;
     } catch (error) {
       this.noteFailure(error);
-      this.restorePending(lines);
+      this.restorePending(lines.slice(written));
       return false;
     }
   }
@@ -124,9 +125,11 @@ export class RotatingFileWriter {
     this.pending = restored.slice(overflow);
   }
 
-  private async appendLines(lines: readonly string[]): Promise<void> {
+  private async appendLines(lines: readonly string[]): Promise<number> {
     let chunk = '';
     let chunkBytes = 0;
+    let chunkLines = 0;
+    let written = 0;
     for (const line of lines) {
       const lineBytes = Buffer.byteLength(line, 'utf-8');
       if (
@@ -135,8 +138,10 @@ export class RotatingFileWriter {
           this.currentBytes + chunkBytes + lineBytes > this.options.maxBytes)
       ) {
         await this.appendChunk(chunk);
+        written += chunkLines;
         chunk = '';
         chunkBytes = 0;
+        chunkLines = 0;
       }
 
       if (
@@ -149,10 +154,13 @@ export class RotatingFileWriter {
 
       chunk += line;
       chunkBytes += lineBytes;
+      chunkLines += 1;
     }
     if (chunkBytes > 0) {
       await this.appendChunk(chunk);
+      written += chunkLines;
     }
+    return written;
   }
 
   private async appendChunk(chunk: string): Promise<void> {
@@ -185,10 +193,12 @@ export class RotatingFileWriter {
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
     }
-    try {
-      await unlink(`${path}.${files}`);
-    } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+    if (files > 1) {
+      try {
+        await unlink(`${path}.${files}`);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      }
     }
     this.currentBytes = 0;
     this.directorySynced = false;

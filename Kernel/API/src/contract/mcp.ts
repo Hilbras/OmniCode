@@ -26,8 +26,13 @@ export const mcpServerStdioConfigSchema = z.object({
   command: z.string().min(1),
   args: z.array(z.string()).optional(),
   env: stringRecordSchema.optional(),
+  /**
+   * Whether the server inherits the whole OmniCode environment. Defaults to
+   * `true`; set it to `false` so the server only sees the variables it needs.
+   */
+  inheritEnv: z.boolean().optional(),
   cwd: z.string().optional(),
-  executor: z.enum(['local', 'kaos']).optional(),
+  executor: z.literal('local').optional(),
   ...mcpServerCommonFields,
 });
 
@@ -37,6 +42,11 @@ export const mcpServerHttpConfigSchema = z.object({
   headers: stringRecordSchema.optional(),
   auth: z.literal('oauth').optional(),
   bearerTokenEnvVar: z.string().min(1).optional(),
+  /**
+   * Allow a URL that resolves to a private / link-local address. Off by
+   * default: a remote MCP server is reached over the public internet.
+   */
+  allowPrivateNetwork: z.boolean().optional(),
   ...mcpServerCommonFields,
 });
 
@@ -46,6 +56,7 @@ export const mcpServerSseConfigSchema = z.object({
   headers: stringRecordSchema.optional(),
   auth: z.literal('oauth').optional(),
   bearerTokenEnvVar: z.string().min(1).optional(),
+  allowPrivateNetwork: z.boolean().optional(),
   ...mcpServerCommonFields,
 });
 

@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  MAX_RETRY_AFTER_MS,
-  retryBackoffDelay,
-  retryDelayMs,
-} from '#/_base/utils/retry';
+import { MAX_RETRY_AFTER_MS, retryBackoffDelay, retryDelayMs } from '#/_base/utils/retry';
 import {
   MAX_RETRY_AFTER_MS as HUMAN_MAX_RETRY_AFTER_MS,
   retryBackoffDelay as humanRetryBackoffDelay,

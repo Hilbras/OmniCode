@@ -1,7 +1,4 @@
-export {
-  createServices,
-  TestInstantiationService,
-} from './testInstantiationService';
+export { createServices, TestInstantiationService } from './testInstantiationService';
 export type {
   CreateServicesOptions,
   ServiceGroup,
@@ -9,7 +6,13 @@ export type {
 } from './testInstantiationService';
 
 import { type ServiceIdentifier } from './instantiation';
-import { createAppScope, createScopedChildHandle, Scope, type ScopeKind, type ScopeSeed } from './scope';
+import {
+  createAppScope,
+  createScopedChildHandle,
+  Scope,
+  type ScopeKind,
+  type ScopeSeed,
+} from './scope';
 
 export interface ScopedTestHost {
   readonly app: Scope;

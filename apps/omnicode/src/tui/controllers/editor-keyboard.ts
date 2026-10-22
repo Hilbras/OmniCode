@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises';
 
 import type { FileMeta, OmnicodeHarness, Session } from '@hilbras/omnicode-api';
 import { compressImageForModel } from '@hilbras/omnicode-api';
+import { Key, matchesKey } from '@hilbras/omnicode-tui';
 
 import {
   ClipboardMediaError,
@@ -11,6 +12,7 @@ import {
 import { parseImageMeta } from '#/utils/image/image-mime';
 import { editInExternalEditor, resolveEditorCommand } from '#/utils/process/external-editor';
 
+import { MEDIA_STAGING_TTL_SECONDS } from '../constant/media';
 import {
   CTRL_C_HINT,
   CTRL_D_HINT,
@@ -18,8 +20,8 @@ import {
   EXIT_CONFIRM_WINDOW_MS,
   LLM_NOT_SET_MESSAGE,
 } from '../constant/omnicode-tui';
-import { Key, matchesKey } from '@hilbras/omnicode-tui';
-import { MEDIA_STAGING_TTL_SECONDS } from '../constant/media';
+import type { TUIState } from '../tui-state';
+import type { PendingExit, QueuedMessage, SteerInputItem } from '../types';
 import { formatErrorMessage } from '../utils/event-payload';
 import type {
   ImageAttachment,
@@ -28,8 +30,6 @@ import type {
 } from '../utils/image-attachment-store';
 import { extractMediaAttachments, imageExtensionForMime } from '../utils/image-placeholder';
 import { extractInlineSkillActivations } from '../utils/inline-skill-tokens';
-import type { PendingExit, QueuedMessage, SteerInputItem } from '../types';
-import type { TUIState } from '../tui-state';
 import type { BtwPanelController } from './btw-panel';
 import type { SurveyController } from './survey-controller';
 
@@ -416,10 +416,7 @@ export class EditorKeyboardController {
         // The editor draft is fresh input: gate it on the model's media
         // capabilities before splicing the queue, so a rejection leaves the
         // queue and the draft untouched.
-        if (
-          editorExtraction !== undefined &&
-          !host.validateMediaCapabilities(editorExtraction)
-        ) {
+        if (editorExtraction !== undefined && !host.validateMediaCapabilities(editorExtraction)) {
           host.releaseStagingMedia([
             ...editorExtraction.imageAttachmentIds,
             ...editorExtraction.videoAttachmentIds,
@@ -472,7 +469,8 @@ export class EditorKeyboardController {
 
     editor.onUpArrowEmpty = () => {
       if (host.btwPanelController.scroll('up')) return true;
-      if (host.state.appState.streamingPhase === 'idle' && !host.state.appState.isCompacting) return false;
+      if (host.state.appState.streamingPhase === 'idle' && !host.state.appState.isCompacting)
+        return false;
       const recalled = host.recallLastQueued();
       if (recalled !== undefined) {
         editor.setText(recalled.text);
@@ -607,12 +605,7 @@ export class EditorKeyboardController {
     // typing never waits on compression or the daemon upload. Submit gives a
     // pending ingestion a bounded wait (`pendingImageIngestions`) and falls
     // back to the inline form when it has not finished.
-    const attachment = this.imageStore.addImage(
-      media.bytes,
-      meta.mime,
-      meta.width,
-      meta.height,
-    );
+    const attachment = this.imageStore.addImage(media.bytes, meta.mime, meta.width, meta.height);
     this.host.state.editor.insertTextAtCursor?.(`${attachment.placeholder} `);
     this.host.state.ui.requestRender();
     this.host.track('shortcut_paste', { kind: 'image' });
@@ -727,9 +720,7 @@ export class EditorKeyboardController {
    * the attachment without a `fileId` — submit-time expansion then refuses
    * the submission, since a video has no inline fallback form.
    */
-  private async uploadVideoToDaemonFileStore(
-    media: ClipboardVideo,
-  ): Promise<FileMeta | undefined> {
+  private async uploadVideoToDaemonFileStore(media: ClipboardVideo): Promise<FileMeta | undefined> {
     const harness = this.host.harness;
     if (harness === undefined) return undefined;
     let bytes: Uint8Array;

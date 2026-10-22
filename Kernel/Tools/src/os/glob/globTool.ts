@@ -1,6 +1,7 @@
 import { normalize, resolve } from 'pathe';
 
-import { ensureRgPath, rgUnavailableMessage, type RgProbe } from '@hilbras/omnicode-core/os/backends/node-local/tools/rgLocator';
+import { rgUnavailableMessage, type RgProbe } from '@hilbras/omnicode-core/os/backends/node-local/tools/rgLocator';
+import { resolveRgPath } from '#/os/rgResolver';
 import {
   DEFAULT_TIMEOUT_MS,
   MAX_OUTPUT_BYTES,
@@ -171,7 +172,7 @@ export class GlobTool implements IGlobTool {
 
     let rgPath: string;
     try {
-      const resolution = await ensureRgPath(createRgProbe(processService), {
+      const resolution = await resolveRgPath(createRgProbe(processService), {
         signal,
         allowCachedFallback: true,
       });

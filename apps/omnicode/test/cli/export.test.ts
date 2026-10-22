@@ -9,19 +9,19 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { createOmnicodeDeviceId as createOmnicodeDeviceIdFn } from '@hilbras/omnicode-auth';
-import { Command } from 'commander';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import { handleExport, registerExportCommand } from '#/cli/sub/export';
-import { refreshOmnicodeRegion } from '#/utils/region';
-import type { ExportDeps } from '#/cli/sub/export';
 import type {
   ExportSessionInput,
   ExportSessionManifest,
   ExportSessionResult,
   SessionSummary,
 } from '@hilbras/omnicode-api';
+import type { createOmnicodeDeviceId as createOmnicodeDeviceIdFn } from '@hilbras/omnicode-auth';
+import { Command } from 'commander';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+import { handleExport, registerExportCommand } from '#/cli/sub/export';
+import type { ExportDeps } from '#/cli/sub/export';
+import { refreshOmnicodeRegion } from '#/utils/region';
 
 let tmp: string;
 
@@ -79,9 +79,8 @@ vi.mock('@hilbras/omnicode-api', async (importOriginal) => {
 });
 
 vi.mock('@hilbras/omnicode-auth', async () => {
-  const actual = await vi.importActual<typeof import('@hilbras/omnicode-auth')>(
-    '@hilbras/omnicode-auth',
-  );
+  const actual =
+    await vi.importActual<typeof import('@hilbras/omnicode-auth')>('@hilbras/omnicode-auth');
   return {
     ...actual,
     createOmnicodeDeviceId: mocks.createOmnicodeDeviceId,
@@ -235,7 +234,16 @@ describe('omnicode export', () => {
     expect(exitCodes).toEqual([]);
     expect(stderr).toEqual([]);
     expect(listedWorkDirs).toEqual([]);
-    expect(exportInputs).toEqual([{ id: 'ses_test123456', outputPath: output, includeGlobalLog: true, version: '1.0.0-test', installSource: 'npm-global', shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' } }]);
+    expect(exportInputs).toEqual([
+      {
+        id: 'ses_test123456',
+        outputPath: output,
+        includeGlobalLog: true,
+        version: '1.0.0-test',
+        installSource: 'npm-global',
+        shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' },
+      },
+    ]);
     expect(stdout.join('').trim()).toBe(output);
   });
 
@@ -244,7 +252,15 @@ describe('omnicode export', () => {
 
     await runExport(deps, { sessionId: 'session_default_output' });
 
-    expect(exportInputs).toEqual([{ id: 'session_default_output', includeGlobalLog: true, version: '1.0.0-test', installSource: 'npm-global', shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' } }]);
+    expect(exportInputs).toEqual([
+      {
+        id: 'session_default_output',
+        includeGlobalLog: true,
+        version: '1.0.0-test',
+        installSource: 'npm-global',
+        shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' },
+      },
+    ]);
     expect(stdout.join('').trim()).toBe(join(tmp, 'session_default_output.zip'));
   });
 
@@ -282,7 +298,16 @@ describe('omnicode export', () => {
     await runExport(deps, { output });
 
     expect(exitCodes).toEqual([]);
-    expect(exportInputs).toEqual([{ id: 'ses_fallback', outputPath: output, includeGlobalLog: true, version: '1.0.0-test', installSource: 'npm-global', shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' } }]);
+    expect(exportInputs).toEqual([
+      {
+        id: 'ses_fallback',
+        outputPath: output,
+        includeGlobalLog: true,
+        version: '1.0.0-test',
+        installSource: 'npm-global',
+        shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' },
+      },
+    ]);
     expect(stdout.join('').trim()).toBe(output);
   });
 
@@ -324,7 +349,16 @@ describe('omnicode export', () => {
     await runExport(deps, { output: join(tmp, 'yes.zip'), yes: true });
 
     expect(exitCodes).toEqual([]);
-    expect(exportInputs).toEqual([{ id: 'ses_yes', outputPath: join(tmp, 'yes.zip'), includeGlobalLog: true, version: '1.0.0-test', installSource: 'npm-global', shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' } }]);
+    expect(exportInputs).toEqual([
+      {
+        id: 'ses_yes',
+        outputPath: join(tmp, 'yes.zip'),
+        includeGlobalLog: true,
+        version: '1.0.0-test',
+        installSource: 'npm-global',
+        shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' },
+      },
+    ]);
   });
 
   it('describes the user-facing command without implementation details', () => {
@@ -350,7 +384,14 @@ describe('omnicode export', () => {
     await program.parseAsync(['node', 'omnicode', 'export', '--no-include-global-log', '-y']);
 
     expect(exitCodes).toEqual([]);
-    expect(exportInputs).toEqual([{ id: 'ses_global_log', version: '1.0.0-test', installSource: 'npm-global', shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' } }]);
+    expect(exportInputs).toEqual([
+      {
+        id: 'ses_global_log',
+        version: '1.0.0-test',
+        installSource: 'npm-global',
+        shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' },
+      },
+    ]);
     expect(stdout.join('').trim()).toBe(join(tmp, 'ses_global_log.zip'));
   });
 
@@ -373,7 +414,13 @@ describe('omnicode export', () => {
 
     expect(exitCodes).toEqual([]);
     expect(exportInputs).toEqual([
-      { id: 'ses_after_id', outputPath: output, version: '1.0.0-test', installSource: 'npm-global', shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' } },
+      {
+        id: 'ses_after_id',
+        outputPath: output,
+        version: '1.0.0-test',
+        installSource: 'npm-global',
+        shellEnv: { term: 'xterm-256color', shell: '/bin/zsh' },
+      },
     ]);
   });
 
@@ -513,9 +560,12 @@ describe('omnicode export', () => {
       }) as ExportDeps['exit'],
     });
 
-    await program.parseAsync(['node', 'omnicode', 'export', 'ses_first_launch', '--output', output], {
-      from: 'node',
-    });
+    await program.parseAsync(
+      ['node', 'omnicode', 'export', 'ses_first_launch', '--output', output],
+      {
+        from: 'node',
+      },
+    );
 
     expect(mocks.createOmnicodeDeviceId).toHaveBeenNthCalledWith(
       1,

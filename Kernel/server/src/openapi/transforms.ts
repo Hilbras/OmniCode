@@ -24,10 +24,7 @@ import {
 } from '@hilbras/omnicode-core/workspace/workspaceFs/fs';
 import { z } from 'zod';
 
-import {
-  openApiDocumentEnvelopeJsonSchema,
-  openApiDocumentJsonSchema,
-} from '../middleware/schema';
+import { openApiDocumentEnvelopeJsonSchema, openApiDocumentJsonSchema } from '../middleware/schema';
 import {
   fsOpenInRequestSchema,
   fsOpenInResponseSchema,
@@ -340,11 +337,7 @@ function appendDescription(existing: unknown, extra: string): string {
   return `${existing} ${extra}`;
 }
 
-function replacePathParamName(
-  container: Record<string, unknown>,
-  from: string,
-  to: string,
-): void {
+function replacePathParamName(container: Record<string, unknown>, from: string, to: string): void {
   const params = container['parameters'];
   if (Array.isArray(params)) {
     for (const param of params) {

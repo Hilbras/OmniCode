@@ -1,3 +1,4 @@
+import { log } from '@hilbras/omnicode-api';
 import {
   applyOpenPlatformConfig,
   fetchOpenPlatformModels,
@@ -10,23 +11,20 @@ import {
   type ManagedOmnicodeConfigShape,
   type OpenPlatformDefinition,
 } from '@hilbras/omnicode-auth';
-import { log } from '@hilbras/omnicode-api';
+
+import { OMNICODE_GLOBAL_PLATFORM_VALUE, refreshOmnicodeRegion } from '#/utils/region';
 
 import type { ChoiceOption } from '../components/dialogs/choice-picker';
 import { DEFAULT_OAUTH_PROVIDER_NAME, PRODUCT_NAME } from '../constant/omnicode-tui';
-import { formatErrorMessage } from '../utils/event-payload';
-import {
-  OMNICODE_GLOBAL_PLATFORM_VALUE,
-  refreshOmnicodeRegion,
-} from '#/utils/region';
 import type { LoginProgressSpinnerHandle } from '../types';
+import { formatErrorMessage } from '../utils/event-payload';
+import type { SlashCommandHost } from './dispatch';
 import {
   promptApiKey,
   promptLogoutProviderSelection,
   promptModelSelectionForOpenPlatform,
   promptPlatformSelection,
 } from './prompts';
-import type { SlashCommandHost } from './dispatch';
 
 // ---------------------------------------------------------------------------
 // Auth: login / logout
@@ -37,7 +35,8 @@ export async function handleLoginCommand(host: SlashCommandHost): Promise<void> 
   if (platformId === undefined) return;
 
   if (platformId === 'omnicode' || platformId === OMNICODE_GLOBAL_PLATFORM_VALUE) {
-    const region: OmnicodeRegion = platformId === OMNICODE_GLOBAL_PLATFORM_VALUE ? 'global' : 'mainland-cn';
+    const region: OmnicodeRegion =
+      platformId === OMNICODE_GLOBAL_PLATFORM_VALUE ? 'global' : 'mainland-cn';
     await handleOmnicodeCodeOAuthLogin(host, region);
     return;
   }
@@ -124,7 +123,8 @@ async function handleOpenPlatformLogin(
   platform: OpenPlatformDefinition,
 ): Promise<void> {
   const consoleHost = platform.consoleUrl?.replace(/^https?:\/\//, '') ?? '';
-  const platformName = consoleHost.length > 0 ? `Omnicode Platform (${consoleHost})` : 'Omnicode Platform';
+  const platformName =
+    consoleHost.length > 0 ? `Omnicode Platform (${consoleHost})` : 'Omnicode Platform';
   const subtitleLines = [
     `${'base_url'.padEnd(12)}${platform.baseUrl}`,
     `${'saved to'.padEnd(12)}~/.omnicode/config.toml`,
@@ -146,10 +146,7 @@ async function handleOpenPlatformLogin(
     if (controller.signal.aborted) return;
     const msg = formatErrorMessage(error);
     host.showError(`Failed to verify API key: ${msg}`);
-    if (
-      error instanceof OpenPlatformApiError &&
-      error.status === 401
-    ) {
+    if (error instanceof OpenPlatformApiError && error.status === 401) {
       host.showStatus(
         'Hint: If your API key was obtained from Omnicode, please select "Omnicode" instead.',
       );
@@ -181,9 +178,7 @@ async function handleOpenPlatformLogin(
     selectedModel: selection.model,
     thinking: selection.thinking !== 'off',
     effort:
-      selection.thinking !== 'off' && selection.thinking !== 'on'
-        ? selection.thinking
-        : undefined,
+      selection.thinking !== 'off' && selection.thinking !== 'on' ? selection.thinking : undefined,
     credential: { apiKey },
   });
 

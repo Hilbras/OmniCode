@@ -44,6 +44,7 @@ export async function runCommand(
     return { exitCode, stdout, stderr };
   } finally {
     signal?.removeEventListener('abort', onAbort);
+    void proc.dispose();
   }
 }
 

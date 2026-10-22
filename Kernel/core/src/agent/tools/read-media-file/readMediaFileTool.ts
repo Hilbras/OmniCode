@@ -1,27 +1,5 @@
-import type { ModelCapability } from '#human/llm/capability';
-import type { ContentPart } from '#human/llm/message';
-import { VideoUploadUnsupportedError } from '#/llm-adapter/contract/errors';
-import { inlineVideoPart, isMediaUploadAuthError } from '#/agent/media/videoUpload';
-import type { ITelemetryService } from '#/app/telemetry/telemetry';
-import type { ISessionMediaStore } from '#/agent/media/sessionMediaStore';
-import { isDaemonFileUrl } from '#/agent/media/mediaRef';
-import { attachmentFileSource, runtimeFileSource, withAttachmentLocation, type FileReadSource } from '#/agent/tools/fileReadSource';
-
-import { RuntimeWorkspaceView } from '#/runtime/runtimeWorkspaceView';
-import type { HostEnvironmentInfo } from '#/os/interface/hostEnvironment';
-import { inspectAgentRuntime, type IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
-import {
-  ToolAccesses,
-  type AgentTool,
-  type ExecutableToolResult,
-  type ToolExecution,
-} from '#/tool/toolContract';
-import { resolvePathAccessPath, type WorkspaceConfig } from '#/tool/path-access';
-import {
-  MEDIA_SNIFF_BYTES,
-  detectFileType,
-  sniffImageDimensions,
-} from '#/agent/media/file-type';
+import { renderPrompt } from '#/_base/utils/render-prompt';
+import { MEDIA_SNIFF_BYTES, detectFileType, sniffImageDimensions } from '#/agent/media/file-type';
 import {
   MAX_IMAGE_DECODE_BYTES,
   compressImageForModel,
@@ -37,10 +15,40 @@ import {
   buildOversizedImageConversionGuidance,
   isModelAcceptedImageMime,
 } from '#/agent/media/image-format-policy';
-import { providerImagePolicy } from '#human/llm/media/image-formats';
+import { isDaemonFileUrl } from '#/agent/media/mediaRef';
+import type { ISessionMediaStore } from '#/agent/media/sessionMediaStore';
+import { inlineVideoPart, isMediaUploadAuthError } from '#/agent/media/videoUpload';
+import {
+  inspectAgentRuntime,
+  type IAgentRuntimeService,
+} from '#/agent/runtimeBinding/agentRuntime';
+import {
+  attachmentFileSource,
+  runtimeFileSource,
+  withAttachmentLocation,
+  type FileReadSource,
+} from '#/agent/tools/fileReadSource';
+import type { ITelemetryService } from '#/app/telemetry/telemetry';
+import { VideoUploadUnsupportedError } from '#/llm-adapter/contract/errors';
+import type { HostEnvironmentInfo } from '#/os/interface/hostEnvironment';
+import { RuntimeWorkspaceView } from '#/runtime/runtimeWorkspaceView';
 import { toInputJsonSchema } from '#/tool/input-schema';
-import { literalRulePattern, matchesGlobRuleSubject, matchesPathRuleSubject } from '#/tool/rule-match';
-import { renderPrompt } from '#/_base/utils/render-prompt';
+import { resolvePathAccessPath, type WorkspaceConfig } from '#/tool/path-access';
+import {
+  literalRulePattern,
+  matchesGlobRuleSubject,
+  matchesPathRuleSubject,
+} from '#/tool/rule-match';
+import {
+  ToolAccesses,
+  type AgentTool,
+  type ExecutableToolResult,
+  type ToolExecution,
+} from '#/tool/toolContract';
+import type { ModelCapability } from '#human/llm/capability';
+import { providerImagePolicy } from '#human/llm/media/image-formats';
+import type { ContentPart } from '#human/llm/message';
+
 import {
   MAX_MEDIA_BYTES,
   MAX_MEDIA_MEGABYTES,
@@ -258,7 +266,10 @@ export class ReadMediaFileTool implements AgentTool<ReadMediaFileInput> {
         const lease = this.runtime.acquire(['fs']);
         try {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {
-            return { isError: true, output: 'Runtime changed before execution. Retry the tool call.' };
+            return {
+              isError: true,
+              output: 'Runtime changed before execution. Retry the tool call.',
+            };
           }
           return await this.execution(args, runtimeFileSource(lease.runtime.fs!, path), env);
         } finally {
@@ -276,9 +287,8 @@ export class ReadMediaFileTool implements AgentTool<ReadMediaFileInput> {
       display: { kind: 'file_io', operation: 'read', path: source.localPath ?? args.path },
       approvalRule: literalRulePattern(this.name, args.path),
       matchesRule: (ruleArgs) => matchesGlobRuleSubject(ruleArgs, args.path),
-      execute: async () => withAttachmentLocation(
-        await this.execution(args, source, { osKind: 'unknown' }), source,
-      ),
+      execute: async () =>
+        withAttachmentLocation(await this.execution(args, source, { osKind: 'unknown' }), source),
     };
   }
 
@@ -325,7 +335,11 @@ export class ReadMediaFileTool implements AgentTool<ReadMediaFileInput> {
       ) {
         return {
           isError: true,
-          output: buildImageConversionGuidance(source.localPath ?? args.path, fileType.mimeType, env.osKind),
+          output: buildImageConversionGuidance(
+            source.localPath ?? args.path,
+            fileType.mimeType,
+            env.osKind,
+          ),
         };
       }
       if (fileType.kind === 'video' && !this.capabilities.video_in) {
@@ -350,7 +364,10 @@ export class ReadMediaFileTool implements AgentTool<ReadMediaFileInput> {
         };
       }
 
-      if (fileType.kind === 'video' && (args.region !== undefined || args.full_resolution === true)) {
+      if (
+        fileType.kind === 'video' &&
+        (args.region !== undefined || args.full_resolution === true)
+      ) {
         return {
           isError: true,
           output: 'region and full_resolution apply only to image files.',
@@ -412,7 +429,10 @@ export class ReadMediaFileTool implements AgentTool<ReadMediaFileInput> {
             telemetrySource: 'read_media',
           });
           if (!outcome.ok) {
-            return { isError: true, output: `Cannot read region from "${args.path}": ${outcome.error}` };
+            return {
+              isError: true,
+              output: `Cannot read region from "${args.path}": ${outcome.error}`,
+            };
           }
           const base64 = Buffer.from(outcome.data).toString('base64');
           mediaPart = {

@@ -2,16 +2,18 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 import {
   clearManagedOmnicodeCodeConfig,
   resolveOmnicodeCodeOAuthKey,
   resolveOmnicodeCodeRuntimeAuth,
 } from '@hilbras/omnicode-auth';
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import { DisposableStore } from '#/_base/di/lifecycle';
 import { createServices, type TestInstantiationService } from '#/_base/di/test';
 import { Emitter } from '#/_base/event';
+import { ILogService } from '#/_base/log/log';
+import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IAuthSummaryService, IOAuthService, IOAuthToolkit } from '#/app/auth/auth';
 import { AuthSummaryService, OAuthService } from '#/app/auth/authService';
 import {
@@ -25,22 +27,23 @@ import { IWebSearchProviderService } from '#/app/auth/webSearch/webSearch';
 import { WebSearchProviderService } from '#/app/auth/webSearch/webSearchService';
 import { IAuthLegacyService } from '#/app/authLegacy/authLegacy';
 import { AuthLegacyService } from '#/app/authLegacy/authLegacyService';
+import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { ConfigRegistry } from '#/app/config/configService';
 import { IEventService } from '#/app/event/event';
 import type { Event2 } from '#/app/event/event2';
-import { ILogService } from '#/_base/log/log';
-import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
-import { IBootstrapService } from '#/app/bootstrap/bootstrap';
-import { IModelService, type ModelRecord } from '#/llm-adapter/model/model';
 import { MODELS_SECTION } from '#/app/kosongConfig/configSection';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
-import { IProviderService, type ProviderConfig, type ProvidersChangedEvent } from '#/llm-adapter/provider/provider';
+import { IModelService, type ModelRecord } from '#/llm-adapter/model/model';
+import {
+  IProviderService,
+  type ProviderConfig,
+  type ProvidersChangedEvent,
+} from '#/llm-adapter/provider/provider';
 
-
+import { stubAgentIdentity } from '../../app/agentIdentity/stubs';
 import { registerBootstrapServices } from '../bootstrap/stubs';
 import { registerTelemetryServices } from '../telemetry/stubs';
-import { stubAgentIdentity } from '../../app/agentIdentity/stubs';
 
 const OAUTH_PROVIDER = 'managed:omnicode';
 const NON_OAUTH_PROVIDER = 'openai-main';
@@ -98,7 +101,9 @@ describe('OAuthService', () => {
   let defaultModel: string | undefined;
   let thinking: { enabled?: boolean; effort?: string } | undefined;
   let toolkit: FakeToolkit;
-  let providerSet: ReturnType<typeof vi.fn<(name: string, config: ProviderConfig) => Promise<void>>>;
+  let providerSet: ReturnType<
+    typeof vi.fn<(name: string, config: ProviderConfig) => Promise<void>>
+  >;
   let configSet: ReturnType<typeof vi.fn>;
   let configReplace: ReturnType<typeof vi.fn<(domain: string, value: unknown) => Promise<void>>>;
   let events: Event2[];
@@ -172,7 +177,8 @@ describe('OAuthService', () => {
           get: ((name: string) => providers[name]) as IProviderService['get'],
           list: (() => providers) as IProviderService['list'],
           set: providerSet as unknown as IProviderService['set'],
-          onDidChangeProviders: providerChangedEmitter.event as IProviderService['onDidChangeProviders'],
+          onDidChangeProviders:
+            providerChangedEmitter.event as IProviderService['onDidChangeProviders'],
         });
         reg.definePartialInstance(IConfigService, {
           get: ((domain: string) => configBacking()[domain]) as IConfigService['get'],
@@ -185,8 +191,12 @@ describe('OAuthService', () => {
           set: configSet as unknown as IConfigService['set'],
           replace: configReplace as unknown as IConfigService['replace'],
           reload: vi.fn().mockResolvedValue(undefined) as unknown as IConfigService['reload'],
-          onDidChangeConfiguration: (() => ({ dispose: () => { } })) as IConfigService['onDidChangeConfiguration'],
-          onDidSectionChange: (() => ({ dispose: () => { } })) as IConfigService['onDidSectionChange'],
+          onDidChangeConfiguration: (() => ({
+            dispose: () => {},
+          })) as IConfigService['onDidChangeConfiguration'],
+          onDidSectionChange: (() => ({
+            dispose: () => {},
+          })) as IConfigService['onDidSectionChange'],
         });
         reg.definePartialInstance(ILogService, {
           info: vi.fn(),
@@ -477,7 +487,11 @@ describe('OAuthService', () => {
 
     providers[OAUTH_PROVIDER] = {
       type: 'omnicode',
-      oauth: { storage: 'file', key: OVERSEAS_SCOPED_REF.key, oauthHost: 'https://auth.omnicode.ai' },
+      oauth: {
+        storage: 'file',
+        key: OVERSEAS_SCOPED_REF.key,
+        oauthHost: 'https://auth.omnicode.ai',
+      },
     };
     expect(svc.getRegion()).toBe('global');
   });
@@ -657,7 +671,7 @@ describe('OAuthService', () => {
   it('keeps an in-flight OAuth flow alive when unrelated providers change', async () => {
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
-      return new Promise(() => { });
+      return new Promise(() => {});
     });
     const svc = createService();
     await svc.startLogin(OAUTH_PROVIDER);
@@ -671,7 +685,7 @@ describe('OAuthService', () => {
   it('aborts an in-flight OAuth flow when its provider is removed from config', async () => {
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
-      return new Promise(() => { });
+      return new Promise(() => {});
     });
     const svc = createService();
     await svc.startLogin(OAUTH_PROVIDER);
@@ -687,7 +701,7 @@ describe('OAuthService', () => {
   it('marks an in-flight OAuth flow cancelled (not vanished) when its provider config changes', async () => {
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
-      return new Promise(() => { });
+      return new Promise(() => {});
     });
     const svc = createService();
     await svc.startLogin(OAUTH_PROVIDER);
@@ -767,7 +781,7 @@ describe('OAuthService', () => {
     toolkit.login.mockImplementation((_provider, options) => {
       capturedSignal = options.signal;
       options.onDeviceCode(deviceAuth);
-      return new Promise(() => { });
+      return new Promise(() => {});
     });
     const svc = createService();
     await svc.startLogin(OAUTH_PROVIDER);
@@ -781,7 +795,7 @@ describe('OAuthService', () => {
   it('logout delegates to the toolkit and clears any pending flow', async () => {
     toolkit.login.mockImplementation((_provider, options) => {
       options.onDeviceCode(deviceAuth);
-      return new Promise(() => { });
+      return new Promise(() => {});
     });
     const svc = createService();
     await svc.startLogin(OAUTH_PROVIDER);
@@ -1031,7 +1045,12 @@ describe('OAuthService', () => {
 
   it('aborts the refresh write when the managed provider was edited mid-fetch', async () => {
     let resolveFetch!: (value: unknown) => void;
-    const fetchMock = vi.fn(() => new Promise((resolve) => { resolveFetch = resolve; }));
+    const fetchMock = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          resolveFetch = resolve;
+        }),
+    );
     vi.stubGlobal('fetch', fetchMock);
     const svc = createService();
 
@@ -1039,7 +1058,10 @@ describe('OAuthService', () => {
     await vi.waitFor(() => expect(fetchMock).toHaveBeenCalled());
     providers = {
       ...providers,
-      [OAUTH_PROVIDER]: { ...providers[OAUTH_PROVIDER]!, baseUrl: 'https://api.changed.example.com' },
+      [OAUTH_PROVIDER]: {
+        ...providers[OAUTH_PROVIDER]!,
+        baseUrl: 'https://api.changed.example.com',
+      },
     };
     resolveFetch({
       ok: true,
@@ -1121,7 +1143,9 @@ describe('OAuthService', () => {
     const svc = createService();
 
     const refresh = svc.refreshOAuthProviderModels();
-    await vi.waitFor(() => { expect(fetchMock).toHaveBeenCalled(); });
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
     await configReplace('defaultModel', 'omnicode/omnicode-k2.5');
     releaseFetch();
     const result = await refresh;
@@ -1149,7 +1173,9 @@ describe('OAuthService', () => {
     const svc = createService();
 
     const refresh = svc.refreshOAuthProviderModels();
-    await vi.waitFor(() => { expect(fetchMock).toHaveBeenCalled(); });
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
     releaseFetch();
     const result = await refresh;
 
@@ -1183,7 +1209,9 @@ describe('OAuthService', () => {
     const svc = createService();
 
     const refresh = svc.refreshOAuthProviderModels();
-    await vi.waitFor(() => { expect(fetchMock).toHaveBeenCalled(); });
+    await vi.waitFor(() => {
+      expect(fetchMock).toHaveBeenCalled();
+    });
     await configReplace('thinking', { enabled: false });
     releaseFetch();
     const result = await refresh;
@@ -1206,9 +1234,7 @@ describe('WebSearchProviderService', () => {
     disposables = new DisposableStore();
     providers = {};
     servicesConfig = undefined;
-    resolveTokenProvider = vi
-      .fn()
-      .mockReturnValue({ getAccessToken: async () => 'access-token' });
+    resolveTokenProvider = vi.fn().mockReturnValue({ getAccessToken: async () => 'access-token' });
     ix = createServices(disposables, {
       additionalServices: (reg) => {
         reg.definePartialInstance(IProviderService, {
@@ -1222,10 +1248,7 @@ describe('WebSearchProviderService', () => {
           'User-Agent': 'omnicode-cli/test',
           'X-Msh-Device-Id': 'device-test',
         };
-        reg.defineInstance(
-          IAgentIdentity,
-          stubAgentIdentity({ hostRequestHeaders: hostHeaders }),
-        );
+        reg.defineInstance(IAgentIdentity, stubAgentIdentity({ hostRequestHeaders: hostHeaders }));
         reg.definePartialInstance(IBootstrapService, {
           args: { requestHeaders: hostHeaders },
         });
@@ -1306,9 +1329,7 @@ describe('WebSearchProviderService', () => {
     expect(provider).not.toBeUndefined();
     const results = await provider!.search('hello');
 
-    expect(results).toEqual([
-      { title: 'Title', url: 'https://example.com', snippet: 'Snippet' },
-    ]);
+    expect(results).toEqual([{ title: 'Title', url: 'https://example.com', snippet: 'Snippet' }]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://api.example.com/v1/search');
@@ -1341,9 +1362,7 @@ describe('WebSearchProviderService', () => {
     expect(resolveTokenProvider).not.toHaveBeenCalled();
     const results = await provider!.search('hello');
 
-    expect(results).toEqual([
-      { title: 'Title', url: 'https://example.com', snippet: 'Snippet' },
-    ]);
+    expect(results).toEqual([{ title: 'Title', url: 'https://example.com', snippet: 'Snippet' }]);
     const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://search.example.com/search');
     const headers = init.headers as Record<string, string>;
@@ -1471,9 +1490,7 @@ describe('services config section', () => {
       hilbrasFetch: { baseUrl: 'https://api.example.com/fetch' },
       customService: { baseUrl: 'https://service.example.com', retries: 3 },
     });
-    expect(() =>
-      registry.validate(SERVICES_SECTION, { hilbrasSearch: { baseUrl: 42 } }),
-    ).toThrow();
+    expect(() => registry.validate(SERVICES_SECTION, { hilbrasSearch: { baseUrl: 42 } })).toThrow();
   });
 
   it('maps services from TOML snake_case to camelCase', () => {
@@ -1613,12 +1630,17 @@ describe('AuthSummaryService', () => {
             return undefined;
           }) as IConfigService['get'],
           reload: reload as unknown as IConfigService['reload'],
-          onDidChangeConfiguration: (() => ({ dispose: () => { } })) as IConfigService['onDidChangeConfiguration'],
-          onDidSectionChange: (() => ({ dispose: () => { } })) as IConfigService['onDidSectionChange'],
+          onDidChangeConfiguration: (() => ({
+            dispose: () => {},
+          })) as IConfigService['onDidChangeConfiguration'],
+          onDidSectionChange: (() => ({
+            dispose: () => {},
+          })) as IConfigService['onDidSectionChange'],
         });
         reg.definePartialInstance(IOAuthService, {
           status: oauthStatus as unknown as IOAuthService['status'],
-          getCachedAccessToken: getCachedAccessToken as unknown as IOAuthService['getCachedAccessToken'],
+          getCachedAccessToken:
+            getCachedAccessToken as unknown as IOAuthService['getCachedAccessToken'],
         });
         reg.definePartialInstance(ILogService, {
           info: vi.fn(),

@@ -1,8 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import { ConfigRegistry } from '#/app/config/configService';
-import { ErrorCodes, Error2 } from '#/errors';
-import { omnicodeModelEnvOverlay, ENV_MODEL_ALIAS_KEY } from '#/app/kosongConfig/envOverlay';
 import {
   ENV_MODEL_PROVIDER_KEY,
   MODELS_SECTION,
@@ -10,9 +8,10 @@ import {
   modelsFromToml,
   modelsToToml,
 } from '#/app/kosongConfig/configSection';
+import { omnicodeModelEnvOverlay, ENV_MODEL_ALIAS_KEY } from '#/app/kosongConfig/envOverlay';
+import { ErrorCodes, Error2 } from '#/errors';
 import { type ModelRecord } from '#/llm-adapter/model/model';
 import { effectiveModelConfig } from '#/llm-adapter/model/model-auth';
-
 
 describe('effectiveModelConfig', () => {
   it('clamps the input cap to the effective total window without mutating the source', () => {
@@ -333,6 +332,33 @@ describe('omnicodeModelEnvOverlay', () => {
     });
   });
 
+  it('keeps the overrides the environment does not mention', () => {
+    const { changed, effective } = applyOmnicodeModelEnvOverlay(
+      { OMNICODE_MODEL_TEMPERATURE: '0.3' },
+      { modelOverrides: { temperature: 0.9, topP: 0.8 } },
+    );
+
+    expect(changed).toEqual(['modelOverrides']);
+    expect(effective['modelOverrides']).toEqual({ temperature: 0.3, topP: 0.8 });
+  });
+
+  it('keeps the user section when the overrides are written back', () => {
+    const own = { temperature: 0.9, thinking_keep: 'all' };
+    const stripped = omnicodeModelEnvOverlay.strip?.(
+      'modelOverrides',
+      { temperature: 0.3 },
+      { model_overrides: own },
+    );
+
+    expect(stripped).toEqual(own);
+  });
+
+  it('removes the overrides when the user has no section of their own', () => {
+    const stripped = omnicodeModelEnvOverlay.strip?.('modelOverrides', { temperature: 0.3 }, {});
+
+    expect(stripped).toBeUndefined();
+  });
+
   it('synthesizes an env model alias and default model from the minimal env set', () => {
     const { changed, effective } = applyOmnicodeModelEnvOverlay({
       OMNICODE_MODEL_NAME: 'omnicode-for-coding',
@@ -432,9 +458,7 @@ describe('omnicodeModelEnvOverlay', () => {
     });
 
     expect(changed).toEqual(['models', 'providers', 'defaultModel', 'modelOverrides']);
-    expect(
-      (effective['models'] as Record<string, unknown>)[ENV_MODEL_ALIAS_KEY],
-    ).toEqual({
+    expect((effective['models'] as Record<string, unknown>)[ENV_MODEL_ALIAS_KEY]).toEqual({
       provider: ENV_MODEL_PROVIDER_KEY,
       model: 'env-model',
       maxContextSize: 1000000,
@@ -498,7 +522,9 @@ describe('omnicodeModelEnvOverlay', () => {
         default_model: 'user',
       }),
     ).toBe('user');
-    expect(omnicodeModelEnvOverlay.strip?.('modelOverrides', { temperature: 0.3 }, {})).toBeUndefined();
+    expect(
+      omnicodeModelEnvOverlay.strip?.('modelOverrides', { temperature: 0.3 }, {}),
+    ).toBeUndefined();
   });
 
   it('self-registers into ConfigRegistry without ModelService instantiation', () => {

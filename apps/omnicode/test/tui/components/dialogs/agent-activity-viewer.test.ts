@@ -1,8 +1,11 @@
-import type { Terminal } from '@hilbras/omnicode-tui';
 import type { BackgroundTaskInfo } from '@hilbras/omnicode-api';
+import type { Terminal } from '@hilbras/omnicode-tui';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AgentActivityViewer, formatSubagentActivityPreview } from '#/tui/components/dialogs/agent-activity-viewer';
+import {
+  AgentActivityViewer,
+  formatSubagentActivityPreview,
+} from '#/tui/components/dialogs/agent-activity-viewer';
 import type { SubagentActivityRecord } from '#/tui/controllers/subagent-activity-store';
 
 const ANSI_SGR = /\[[0-9;]*m/g;

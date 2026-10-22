@@ -14,8 +14,6 @@ import { BannerComponent } from '#/tui/components/chrome/banner';
 import { WelcomeComponent } from '#/tui/components/chrome/welcome';
 import { OmnicodeTUI, type OmnicodeTUIStartupInput, type TUIState } from '#/tui/omnicode-tui';
 import { REPLAY_FETCH_TURN_LIMIT } from '#/tui/utils/message-replay';
-import { copyTextToClipboard } from '#/utils/clipboard/clipboard-text';
-import { quoteShellArg } from '#/utils/shell-quote';
 import {
   DISABLE_TERMINAL_THEME_REPORTING,
   ENABLE_TERMINAL_THEME_REPORTING,
@@ -23,6 +21,8 @@ import {
   QUERY_TERMINAL_THEME,
   TERMINAL_THEME_LIGHT,
 } from '#/tui/utils/terminal-theme';
+import { copyTextToClipboard } from '#/utils/clipboard/clipboard-text';
+import { quoteShellArg } from '#/utils/shell-quote';
 
 vi.mock('#/tui/commands/prompts', async (importOriginal) => {
   const actual = await importOriginal<typeof import('#/tui/commands/prompts')>();
@@ -210,7 +210,14 @@ function makeHarness(session = makeSession(), overrides: Record<string, unknown>
     track: vi.fn(),
     setTelemetryContext: vi.fn(),
     getExperimentalFeatures: vi.fn(async () => []),
-    getWorkspaceTrustInfo: vi.fn(async () => ({ trusted: true, gatedMcpServers: [], gatedAdditionalDirs: [], additionalDirSources: [], warnings: [], instructionSources: { agentsMdPaths: [], skills: [], agentProfiles: [], paths: [] } })),
+    getWorkspaceTrustInfo: vi.fn(async () => ({
+      trusted: true,
+      gatedMcpServers: [],
+      gatedAdditionalDirs: [],
+      additionalDirSources: [],
+      warnings: [],
+      instructionSources: { agentsMdPaths: [], skills: [], agentProfiles: [], paths: [] },
+    })),
     supportsAtomicSectionReplace: vi.fn(() => false),
     auth: {
       status: vi.fn(async () => ({ providers: [] })),
@@ -227,12 +234,10 @@ function makeHarness(session = makeSession(), overrides: Record<string, unknown>
       sessionId?: string;
     }) => Promise<unknown[]>;
     Object.assign(harness, {
-      listSessionsPage: vi.fn(
-        async (input: { workDir?: string; sessionId?: string } = {}) => ({
-          items: await listSessions({ workDir: input.workDir, sessionId: input.sessionId }),
-          nextCursor: undefined,
-        }),
-      ),
+      listSessionsPage: vi.fn(async (input: { workDir?: string; sessionId?: string } = {}) => ({
+        items: await listSessions({ workDir: input.workDir, sessionId: input.sessionId }),
+        nextCursor: undefined,
+      })),
     });
   }
   return harness;
@@ -274,10 +279,7 @@ describe('OmnicodeTUI startup', () => {
         defaultPermissionMode: 'auto',
       })),
     });
-    const driver = makeDriver(
-      harness,
-      { ...makeStartupInput({ model: 'k2', yolo: true }) },
-    );
+    const driver = makeDriver(harness, { ...makeStartupInput({ model: 'k2', yolo: true }) });
 
     await expect(driver.init()).resolves.toBe(false);
 
@@ -471,13 +473,10 @@ describe('OmnicodeTUI startup', () => {
 
   it('carries the --agent/--agent-file binding for the lazy-created first session (v2)', async () => {
     const harness = makeHarness(makeSession());
-    const driver = makeDriver(
-      harness,
-      {
-        ...makeStartupInput({ model: 'k2', agentFiles: ['agent.md'] }),
-        agentProfile: 'reviewer',
-      },
-    );
+    const driver = makeDriver(harness, {
+      ...makeStartupInput({ model: 'k2', agentFiles: ['agent.md'] }),
+      agentProfile: 'reviewer',
+    });
 
     await expect(driver.init()).resolves.toBe(false);
 
@@ -968,10 +967,14 @@ describe('OmnicodeTUI startup', () => {
     await expect(driver.init()).resolves.toBe(false);
 
     await (driver as unknown as { showSessionPicker(): Promise<void> }).showSessionPicker();
-    const firstPicker = driver.state.editorContainer.children[0] as { handleInput(data: string): void };
+    const firstPicker = driver.state.editorContainer.children[0] as {
+      handleInput(data: string): void;
+    };
     firstPicker.handleInput('\u0001');
     await new Promise((resolve) => setImmediate(resolve));
-    const allPicker = driver.state.editorContainer.children[0] as { handleInput(data: string): void };
+    const allPicker = driver.state.editorContainer.children[0] as {
+      handleInput(data: string): void;
+    };
     allPicker.handleInput('\u0001');
     await new Promise((resolve) => setImmediate(resolve));
 
@@ -1197,7 +1200,10 @@ describe('OmnicodeTUI startup', () => {
     const deleteSession = vi.fn(async () => {
       deleted = true;
     });
-    const harness = makeHarness(makeSession({ id: 'ses-current' }), { listSessions, deleteSession });
+    const harness = makeHarness(makeSession({ id: 'ses-current' }), {
+      listSessions,
+      deleteSession,
+    });
     const driver = makeDriver(harness, makeStartupInput());
     await expect(driver.init()).resolves.toBe(false);
 
@@ -1247,8 +1253,10 @@ describe('OmnicodeTUI startup', () => {
     await (driver as unknown as { createNewSession(): Promise<void> }).createNewSession();
     expect(driver.state.appState.sessionId).toBe('ses-current');
     // Contentless current sessions are filtered out of picker rows; fake content so the row exists.
-    vi.spyOn(driver as unknown as { hasSessionContent(): boolean }, 'hasSessionContent')
-      .mockReturnValue(true);
+    vi.spyOn(
+      driver as unknown as { hasSessionContent(): boolean },
+      'hasSessionContent',
+    ).mockReturnValue(true);
 
     await (driver as unknown as { showSessionPicker(): Promise<void> }).showSessionPicker();
     const picker = driver.state.editorContainer.children[0] as { handleInput(data: string): void };
@@ -1289,8 +1297,10 @@ describe('OmnicodeTUI startup', () => {
     await expect(driver.init()).resolves.toBe(false);
 
     await (driver as unknown as { createNewSession(): Promise<void> }).createNewSession();
-    vi.spyOn(driver as unknown as { hasSessionContent(): boolean }, 'hasSessionContent')
-      .mockReturnValue(true);
+    vi.spyOn(
+      driver as unknown as { hasSessionContent(): boolean },
+      'hasSessionContent',
+    ).mockReturnValue(true);
 
     await (driver as unknown as { showSessionPicker(): Promise<void> }).showSessionPicker();
     const picker = driver.state.editorContainer.children[0] as { handleInput(data: string): void };
@@ -1333,8 +1343,10 @@ describe('OmnicodeTUI startup', () => {
     await expect(driver.init()).resolves.toBe(false);
 
     await (driver as unknown as { createNewSession(): Promise<void> }).createNewSession();
-    vi.spyOn(driver as unknown as { hasSessionContent(): boolean }, 'hasSessionContent')
-      .mockReturnValue(true);
+    vi.spyOn(
+      driver as unknown as { hasSessionContent(): boolean },
+      'hasSessionContent',
+    ).mockReturnValue(true);
 
     await (driver as unknown as { showSessionPicker(): Promise<void> }).showSessionPicker();
     const picker = driver.state.editorContainer.children[0] as { handleInput(data: string): void };
@@ -1370,7 +1382,10 @@ describe('OmnicodeTUI startup', () => {
       return [sesA, sesB];
     });
     const deleteSession = vi.fn(async () => {});
-    const harness = makeHarness(makeSession({ id: 'ses-current' }), { listSessions, deleteSession });
+    const harness = makeHarness(makeSession({ id: 'ses-current' }), {
+      listSessions,
+      deleteSession,
+    });
     const driver = makeDriver(harness, makeStartupInput());
     await expect(driver.init()).resolves.toBe(false);
 
@@ -1484,7 +1499,10 @@ describe('OmnicodeTUI startup', () => {
           resolveDelete = resolve;
         }),
     );
-    const harness = makeHarness(makeSession({ id: 'ses-current' }), { listSessions, deleteSession });
+    const harness = makeHarness(makeSession({ id: 'ses-current' }), {
+      listSessions,
+      deleteSession,
+    });
     const driver = makeDriver(harness, makeStartupInput());
     const mountSessionPicker = vi.spyOn(
       driver as unknown as { mountSessionPicker(options: unknown): void },
@@ -1517,7 +1535,12 @@ describe('OmnicodeTUI startup', () => {
 
   it('does not remount the picker while a selection is in flight and a scope toggle is pending', async () => {
     const picked = makeSession({ id: 'ses-2' });
-    const ses2 = { id: 'ses-2', title: 'Other session', workDir: '/tmp/proj-a', updatedAt: Date.now() };
+    const ses2 = {
+      id: 'ses-2',
+      title: 'Other session',
+      workDir: '/tmp/proj-a',
+      updatedAt: Date.now(),
+    };
     let resolveAllSessions: ((value: unknown[]) => void) | undefined;
     let resolveResume: ((value: unknown) => void) | undefined;
     const listSessions = vi.fn((input: { workDir?: string } = {}) => {
@@ -1532,7 +1555,10 @@ describe('OmnicodeTUI startup', () => {
           resolveResume = resolve;
         }),
     );
-    const harness = makeHarness(makeSession({ id: 'ses-current' }), { listSessions, resumeSession });
+    const harness = makeHarness(makeSession({ id: 'ses-current' }), {
+      listSessions,
+      resumeSession,
+    });
     const driver = makeDriver(harness, makeStartupInput());
     const mountSessionPicker = vi.spyOn(
       driver as unknown as { mountSessionPicker(options: unknown): void },
@@ -1581,8 +1607,10 @@ describe('OmnicodeTUI startup', () => {
     await (driver as unknown as { createNewSession(): Promise<void> }).createNewSession();
     expect(driver.state.appState.sessionId).toBe('ses-current');
     // Contentless current sessions are filtered out of picker rows; fake content so the row exists.
-    vi.spyOn(driver as unknown as { hasSessionContent(): boolean }, 'hasSessionContent')
-      .mockReturnValue(true);
+    vi.spyOn(
+      driver as unknown as { hasSessionContent(): boolean },
+      'hasSessionContent',
+    ).mockReturnValue(true);
     harness.createSession.mockRejectedValueOnce(new Error('create boom'));
 
     await (driver as unknown as { showSessionPicker(): Promise<void> }).showSessionPicker();
@@ -1625,8 +1653,10 @@ describe('OmnicodeTUI startup', () => {
     await (driver as unknown as { createNewSession(): Promise<void> }).createNewSession();
     expect(driver.state.appState.sessionId).toBe('ses-current');
     // Contentless current sessions are filtered out of picker rows; fake content so the row exists.
-    vi.spyOn(driver as unknown as { hasSessionContent(): boolean }, 'hasSessionContent')
-      .mockReturnValue(true);
+    vi.spyOn(
+      driver as unknown as { hasSessionContent(): boolean },
+      'hasSessionContent',
+    ).mockReturnValue(true);
     harness.createSession.mockRejectedValueOnce(new Error('create boom'));
 
     await (driver as unknown as { showSessionPicker(): Promise<void> }).showSessionPicker();
@@ -1876,15 +1906,15 @@ describe('OmnicodeTUI startup', () => {
     expect(write).toHaveBeenCalledWith(DISABLE_TERMINAL_THEME_REPORTING);
   });
 
-  it("only shows provider refresh status for added models", async () => {
+  it('only shows provider refresh status for added models', async () => {
     const harness = makeHarness();
     const driver = makeDriver(harness, makeStartupInput());
-    const showStatus = vi.spyOn(driver as any, "showStatus").mockImplementation(() => {});
-    vi.spyOn((driver as any).authFlow, "refreshProviderModels").mockResolvedValue({
+    const showStatus = vi.spyOn(driver as any, 'showStatus').mockImplementation(() => {});
+    vi.spyOn((driver as any).authFlow, 'refreshProviderModels').mockResolvedValue({
       changed: [
-        { providerId: "new-models", providerName: "New Models", added: 2, removed: 0 },
-        { providerId: "removed-models", providerName: "Removed Models", added: 0, removed: 3 },
-        { providerId: "metadata-only", providerName: "Metadata Only", added: 0, removed: 0 },
+        { providerId: 'new-models', providerName: 'New Models', added: 2, removed: 0 },
+        { providerId: 'removed-models', providerName: 'Removed Models', added: 0, removed: 3 },
+        { providerId: 'metadata-only', providerName: 'Metadata Only', added: 0, removed: 0 },
       ],
       unchanged: [],
       failed: [],
@@ -1893,12 +1923,12 @@ describe('OmnicodeTUI startup', () => {
     await (driver as any).refreshProviderModelsInBackground();
 
     expect(showStatus).toHaveBeenCalledTimes(1);
-    expect(showStatus).toHaveBeenCalledWith("New Models · +2 models.");
+    expect(showStatus).toHaveBeenCalledWith('New Models · +2 models.');
   });
 
-  it("stages provider-refresh removals and persists one atomic write on atomic-capable harnesses", async () => {
-    const registryUrl = "https://registry.example.test/v1/models/api.json";
-    const source = { kind: "apiJson", url: registryUrl, apiKey: "sk-test-token" };
+  it('stages provider-refresh removals and persists one atomic write on atomic-capable harnesses', async () => {
+    const registryUrl = 'https://registry.example.test/v1/models/api.json';
+    const source = { kind: 'apiJson', url: registryUrl, apiKey: 'sk-test-token' };
     const replaceConfigSections = vi.fn(async (_sections: Record<string, unknown>) => {});
     const removeProvider = vi.fn(async () => ({}));
     const setConfig = vi.fn(async () => ({}));
@@ -1909,56 +1939,72 @@ describe('OmnicodeTUI startup', () => {
       setConfig,
       getConfig: vi.fn(async () => ({
         providers: {
-          a: { type: "openai", baseUrl: "https://a.example.test/v1", apiKey: "sk-test-token", source },
-          b: { type: "openai", baseUrl: "https://b.example.test/v1", apiKey: "sk-test-token", source },
+          a: {
+            type: 'openai',
+            baseUrl: 'https://a.example.test/v1',
+            apiKey: 'sk-test-token',
+            source,
+          },
+          b: {
+            type: 'openai',
+            baseUrl: 'https://b.example.test/v1',
+            apiKey: 'sk-test-token',
+            source,
+          },
         },
         models: {
-          "a/m1": { provider: "a", model: "m1", maxContextSize: 100, capabilities: ["tool_use"] },
-          "b/m1": { provider: "b", model: "m1", maxContextSize: 100, capabilities: ["tool_use"] },
+          'a/m1': { provider: 'a', model: 'm1', maxContextSize: 100, capabilities: ['tool_use'] },
+          'b/m1': { provider: 'b', model: 'm1', maxContextSize: 100, capabilities: ['tool_use'] },
         },
-        defaultModel: "b/m1",
+        defaultModel: 'b/m1',
         thinking: { enabled: true },
       })),
     });
     const driver = makeDriver(harness, makeStartupInput());
     vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            a: {
-              id: "a",
-              name: "Provider A",
-              api: "https://a.example.test/v1",
-              type: "openai",
-              models: { m1: { id: "m1" } },
-            },
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } },
-        ),
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              a: {
+                id: 'a',
+                name: 'Provider A',
+                api: 'https://a.example.test/v1',
+                type: 'openai',
+                models: { m1: { id: 'm1' } },
+              },
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          ),
       ),
     );
     try {
       const result = await (driver as any).authFlow.refreshProviderModels();
 
       expect(result.failed).toEqual([]);
-      expect(result.changed).toContainEqual({ providerId: "b", providerName: "b", added: 0, removed: 1 });
+      expect(result.changed).toContainEqual({
+        providerId: 'b',
+        providerName: 'b',
+        added: 0,
+        removed: 1,
+      });
       expect(removeProvider).not.toHaveBeenCalled();
       expect(setConfig).not.toHaveBeenCalled();
       expect(replaceConfigSections).toHaveBeenCalledTimes(1);
       const sections = replaceConfigSections.mock.calls[0]?.[0] as Record<string, unknown>;
-      expect(Object.keys(sections["providers"] as object)).toEqual(["a"]);
-      expect(sections["models"]).not.toHaveProperty("b/m1");
-      expect(sections["defaultModel"]).toBeUndefined();
-      expect(sections["thinking"]).toBeUndefined();
+      expect(Object.keys(sections['providers'] as object)).toEqual(['a']);
+      expect(sections['models']).not.toHaveProperty('b/m1');
+      expect(sections['defaultModel']).toBeUndefined();
+      expect(sections['thinking']).toBeUndefined();
     } finally {
       vi.unstubAllGlobals();
     }
   });
 
-  it("keeps the two-phase removeProvider/setConfig host on harnesses without atomic replace", async () => {
-    const registryUrl = "https://registry.example.test/v1/models/api.json";
-    const source = { kind: "apiJson", url: registryUrl, apiKey: "sk-test-token" };
+  it('keeps the two-phase removeProvider/setConfig host on harnesses without atomic replace', async () => {
+    const registryUrl = 'https://registry.example.test/v1/models/api.json';
+    const source = { kind: 'apiJson', url: registryUrl, apiKey: 'sk-test-token' };
     const replaceConfigSections = vi.fn(async () => {});
     const removeProvider = vi.fn(async () => ({}));
     const setConfig = vi.fn(async (patch: Record<string, unknown>) => patch);
@@ -1968,39 +2014,50 @@ describe('OmnicodeTUI startup', () => {
       setConfig,
       getConfig: vi.fn(async () => ({
         providers: {
-          a: { type: "openai", baseUrl: "https://a.example.test/v1", apiKey: "sk-test-token", source },
-          b: { type: "openai", baseUrl: "https://b.example.test/v1", apiKey: "sk-test-token", source },
+          a: {
+            type: 'openai',
+            baseUrl: 'https://a.example.test/v1',
+            apiKey: 'sk-test-token',
+            source,
+          },
+          b: {
+            type: 'openai',
+            baseUrl: 'https://b.example.test/v1',
+            apiKey: 'sk-test-token',
+            source,
+          },
         },
         models: {
-          "a/m1": { provider: "a", model: "m1", maxContextSize: 100, capabilities: ["tool_use"] },
-          "b/m1": { provider: "b", model: "m1", maxContextSize: 100, capabilities: ["tool_use"] },
+          'a/m1': { provider: 'a', model: 'm1', maxContextSize: 100, capabilities: ['tool_use'] },
+          'b/m1': { provider: 'b', model: 'm1', maxContextSize: 100, capabilities: ['tool_use'] },
         },
-        defaultModel: "b/m1",
+        defaultModel: 'b/m1',
       })),
     });
     const driver = makeDriver(harness, makeStartupInput());
     vi.stubGlobal(
-      "fetch",
-      vi.fn(async () =>
-        new Response(
-          JSON.stringify({
-            a: {
-              id: "a",
-              name: "Provider A",
-              api: "https://a.example.test/v1",
-              type: "openai",
-              models: { m1: { id: "m1" } },
-            },
-          }),
-          { status: 200, headers: { "Content-Type": "application/json" } },
-        ),
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              a: {
+                id: 'a',
+                name: 'Provider A',
+                api: 'https://a.example.test/v1',
+                type: 'openai',
+                models: { m1: { id: 'm1' } },
+              },
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          ),
       ),
     );
     try {
       const result = await (driver as any).authFlow.refreshProviderModels();
 
       expect(result.failed).toEqual([]);
-      expect(removeProvider).toHaveBeenCalledWith("b");
+      expect(removeProvider).toHaveBeenCalledWith('b');
       expect(setConfig).toHaveBeenCalledTimes(1);
       expect(replaceConfigSections).not.toHaveBeenCalled();
     } finally {
@@ -2428,9 +2485,11 @@ describe('OmnicodeTUI startup', () => {
     const getWorkspaceTrustInfo = vi.fn(async () => ({
       trusted: true,
       gatedMcpServers: [],
-      gatedAdditionalDirs: [], additionalDirSources: [], warnings: [],
+      gatedAdditionalDirs: [],
+      additionalDirSources: [],
+      warnings: [],
       instructionSources: { agentsMdPaths: [], skills: [], agentProfiles: [], paths: [] },
-      }));
+    }));
     const harness = makeHarness(makeSession(), { getWorkspaceTrustInfo });
     const driver = makeDriver(harness, {
       ...makeStartupInput(),
@@ -2459,9 +2518,11 @@ describe('OmnicodeTUI startup', () => {
     const getWorkspaceTrustInfo = vi.fn(async () => ({
       trusted: false,
       gatedMcpServers: [],
-      gatedAdditionalDirs: [], additionalDirSources: [], warnings: [],
+      gatedAdditionalDirs: [],
+      additionalDirSources: [],
+      warnings: [],
       instructionSources: { agentsMdPaths: [], skills: [], agentProfiles: [], paths: [] },
-      }));
+    }));
     const trustWorkspace = vi.fn(async () => {});
     const harness = makeHarness(makeSession(), { getWorkspaceTrustInfo, trustWorkspace });
     const driver = makeDriver(harness, {
@@ -2533,9 +2594,11 @@ describe('OmnicodeTUI startup', () => {
     const getWorkspaceTrustInfo = vi.fn(async () => ({
       trusted: false,
       gatedMcpServers: [],
-      gatedAdditionalDirs: [], additionalDirSources: [], warnings: [],
+      gatedAdditionalDirs: [],
+      additionalDirSources: [],
+      warnings: [],
       instructionSources: { agentsMdPaths: [], skills: [], agentProfiles: [], paths: [] },
-      }));
+    }));
     const trustWorkspace = vi.fn(async (): Promise<void> => {
       throw new Error('disk full');
     });
@@ -2665,7 +2728,9 @@ describe('OmnicodeTUI startup', () => {
 
       await vi.waitFor(() => {
         expect(
-          driver.state.transcriptContainer.children.some((child) => child instanceof BannerComponent),
+          driver.state.transcriptContainer.children.some(
+            (child) => child instanceof BannerComponent,
+          ),
         ).toBe(true);
       });
 
@@ -2719,7 +2784,9 @@ describe('OmnicodeTUI startup', () => {
 
       await vi.waitFor(() => {
         expect(
-          driver.state.transcriptContainer.children.some((child) => child instanceof BannerComponent),
+          driver.state.transcriptContainer.children.some(
+            (child) => child instanceof BannerComponent,
+          ),
         ).toBe(true);
       });
 
@@ -2744,10 +2811,12 @@ describe('OmnicodeTUI startup', () => {
       display: 'always' as const,
     };
     let capturedAudience: unknown;
-    const loadSpy = vi.spyOn(BannerProvider.prototype, 'load').mockImplementation(async (options) => {
-      capturedAudience = await options?.audience;
-      return banner;
-    });
+    const loadSpy = vi
+      .spyOn(BannerProvider.prototype, 'load')
+      .mockImplementation(async (options) => {
+        capturedAudience = await options?.audience;
+        return banner;
+      });
     const session = makeSession({ id: 'ses-target' });
     const harness = makeHarness(session, {
       listSessions: vi.fn(async () => [{ id: 'ses-target', workDir: '/tmp/proj-a' }]),
@@ -2818,9 +2887,9 @@ describe('survey telemetry gate wiring', () => {
   it('treats the runtime config opt-out as telemetry-disabled', () => {
     vi.stubEnv('OMNICODE_DISABLE_TELEMETRY', '');
     try {
-      expect(
-        surveyGateTelemetryDisabled({ ...makeStartupInput(), telemetryDisabled: true }),
-      ).toBe(true);
+      expect(surveyGateTelemetryDisabled({ ...makeStartupInput(), telemetryDisabled: true })).toBe(
+        true,
+      );
       expect(surveyGateTelemetryDisabled(makeStartupInput())).toBe(false);
     } finally {
       vi.unstubAllEnvs();

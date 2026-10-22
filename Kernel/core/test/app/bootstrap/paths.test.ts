@@ -4,7 +4,11 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { ensureOmnicodeHome, resolveConfigPath, resolveOmnicodeHome } from '#/app/bootstrap/bootstrap';
+import {
+  ensureOmnicodeHome,
+  resolveConfigPath,
+  resolveOmnicodeHome,
+} from '#/app/bootstrap/bootstrap';
 
 describe('bootstrap path helpers', () => {
   describe('resolveOmnicodeHome', () => {

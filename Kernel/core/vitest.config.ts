@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
+  ssr: {
+    noExternal: [/\/Kernel\/core\//, /\/Kernel\/Tools\//],
+  },
   test: {
     name: 'omnicode-core',
     include: ['test/**/*.{test,e2e,integration}.ts', 'src/human/test/**/*.test.ts'],

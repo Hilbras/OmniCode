@@ -1,5 +1,6 @@
 import { Disposable } from '#/_base/di/lifecycle';
 import { Emitter, type Event } from '#/_base/event';
+import { ILogService } from '#/_base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { IPluginService } from '#/app/plugin/plugin';
@@ -7,13 +8,13 @@ import { ITelemetryService, noopTelemetryService } from '#/app/telemetry/telemet
 import { IHostProcessService } from '#/os/interface/hostProcess';
 
 import { HOOKS_SECTION, type HookDefConfig } from '../configSection';
+import { indexHooks, resolveDecision, runMatchedHooks } from '../internal/matchHooks';
+import type { HookRunCallbacks } from '../internal/matchHooks';
+import type { HookBlockDecision, HookDecision, HookDef, HookResult } from '../internal/types';
 import {
   IExternalHooksRunnerService,
   type ExternalHooksRunnerTriggerArgs,
 } from './externalHooksRunner';
-import { indexHooks, resolveDecision, runMatchedHooks } from '../internal/matchHooks';
-import type { HookRunCallbacks } from '../internal/matchHooks';
-import type { HookBlockDecision, HookDecision, HookDef, HookResult } from '../internal/types';
 
 export class ExternalHooksRunnerService extends Disposable implements IExternalHooksRunnerService {
   declare readonly _serviceBrand: undefined;
@@ -29,6 +30,7 @@ export class ExternalHooksRunnerService extends Disposable implements IExternalH
     @IPluginService private readonly plugins: IPluginService,
     @IBootstrapService private readonly bootstrap: IBootstrapService,
     @IHostProcessService private readonly hostProcess: IHostProcessService,
+    @ILogService private readonly log: ILogService,
     @ITelemetryService private readonly telemetry: ITelemetryService = noopTelemetryService,
     private readonly callbacks: HookRunCallbacks = {},
   ) {
@@ -108,14 +110,24 @@ export class ExternalHooksRunnerService extends Disposable implements IExternalH
     );
     if (results.length > 0) {
       const decision = resolveDecision(event, results);
+      const failed = results.filter(
+        (r) => r.timedOut === true || r.errored === true || (!!r.exitCode && r.exitCode !== 2),
+      );
       this.telemetry.track2('external_hook_resolved', {
         event,
         action: decision === undefined ? 'allow' : decision.kind,
         matched_count: results.length,
-        failed_count: results.filter(
-          (r) => r.timedOut === true || r.errored === true || (!!r.exitCode && r.exitCode !== 2),
-        ).length,
+        failed_count: failed.length,
       });
+      for (const result of failed) {
+        this.log.warn('external hook did not complete', {
+          event,
+          timedOut: result.timedOut === true,
+          errored: result.errored === true,
+          exitCode: result.exitCode,
+          stderr: result.stderr?.slice(0, 500),
+        });
+      }
     }
     return results;
   }

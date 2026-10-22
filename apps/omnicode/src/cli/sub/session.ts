@@ -6,7 +6,6 @@
  * and formats rows.
  */
 
-import { setTelemetryContext, track, withTelemetryContext } from '@hilbras/omnicode-telemetry';
 import {
   createOmnicodeHarness,
   type OmnicodeHarness,
@@ -14,6 +13,7 @@ import {
   type SessionSummary,
   type TelemetryClient,
 } from '@hilbras/omnicode-api';
+import { setTelemetryContext, track, withTelemetryContext } from '@hilbras/omnicode-telemetry';
 import type { Command } from 'commander';
 
 import { createCliTelemetryBootstrap } from '#/cli/telemetry';
@@ -68,28 +68,39 @@ export function registerSessionCommand(parent: Command, deps?: Partial<SessionLi
   session
     .command('list')
     .description('List sessions, most recently updated first.')
-    .option('--cwd <path>', 'List sessions of this working directory. Defaults to the current directory.')
+    .option(
+      '--cwd <path>',
+      'List sessions of this working directory. Defaults to the current directory.',
+    )
     .option('--all', 'List sessions across every workspace.', false)
     .option('--archived', 'Include archived sessions.', false)
     .option('--limit <n>', 'Print at most n sessions.', parseLimitOption)
     .option('--json', 'Emit the session summaries as JSON.', false)
-    .action(async (options: { cwd?: string; all?: boolean; archived?: boolean; limit?: number; json?: boolean }) => {
-      const resolved = createDefaultSessionListDeps(deps);
-      try {
-        await handleSessionList(resolved, {
-          all: options.all === true,
-          archived: options.archived === true,
-          cwd: options.cwd,
-          limit: options.limit,
-          json: options.json === true,
-        });
-      } catch (error) {
-        resolved.stderr.write(`${errorMessage(error)}\n`);
-        resolved.exit(1);
-      } finally {
-        await resolved.close();
-      }
-    });
+    .action(
+      async (options: {
+        cwd?: string;
+        all?: boolean;
+        archived?: boolean;
+        limit?: number;
+        json?: boolean;
+      }) => {
+        const resolved = createDefaultSessionListDeps(deps);
+        try {
+          await handleSessionList(resolved, {
+            all: options.all === true,
+            archived: options.archived === true,
+            cwd: options.cwd,
+            limit: options.limit,
+            json: options.json === true,
+          });
+        } catch (error) {
+          resolved.stderr.write(`${errorMessage(error)}\n`);
+          resolved.exit(1);
+        } finally {
+          await resolved.close();
+        }
+      },
+    );
 }
 
 function createDefaultSessionListDeps(

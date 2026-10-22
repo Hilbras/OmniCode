@@ -1,10 +1,14 @@
 import type { BackgroundTaskInfo, Session } from '@hilbras/omnicode-api';
 import type { ProcessTerminal, TUI } from '@hilbras/omnicode-tui';
 
-import { AgentActivityViewer, formatSubagentActivityPreview } from '../components/dialogs/agent-activity-viewer';
+import type { Theme } from '#/tui/theme';
+
+import {
+  AgentActivityViewer,
+  formatSubagentActivityPreview,
+} from '../components/dialogs/agent-activity-viewer';
 import { TaskOutputViewer } from '../components/dialogs/task-output-viewer';
 import { TasksBrowserApp, type TasksFilter } from '../components/dialogs/tasks-browser';
-import type { Theme } from '#/tui/theme';
 import type { CustomEditor } from '../components/editor/custom-editor';
 import type { AppState } from '../types';
 import {
@@ -216,9 +220,7 @@ export class TasksBrowserController {
       tasks = await session.listBackgroundTasks({ activeOnly: false });
     } catch (error) {
       if (!opts.silent) {
-        this.flash(
-          `Refresh failed: ${error instanceof Error ? error.message : String(error)}`,
-        );
+        this.flash(`Refresh failed: ${error instanceof Error ? error.message : String(error)}`);
       }
       return;
     }

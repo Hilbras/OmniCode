@@ -1,4 +1,10 @@
 import {
+  LoopDetector,
+  type ActionRecord,
+  type ActionFailureClass,
+  type ComputerState,
+} from '#/features/computerUse/observation';
+import {
   ComputerControlError,
   type ComputerBackend,
   type ComputerCapabilities,
@@ -9,12 +15,6 @@ import {
   type Screenshot,
   type WindowInfo,
 } from '#/features/computerUse/types';
-import {
-  LoopDetector,
-  type ActionRecord,
-  type ActionFailureClass,
-  type ComputerState,
-} from '#/features/computerUse/observation';
 
 export interface ComputerControllerOptions {
   readonly backend: ComputerBackend;
@@ -152,8 +152,7 @@ export class ComputerController {
       this._report(action, args, startedAt, true);
       return result;
     } catch (error) {
-      const failureClass =
-        error instanceof ComputerControlError ? error.failureClass : 'unknown';
+      const failureClass = error instanceof ComputerControlError ? error.failureClass : 'unknown';
       const message = error instanceof Error ? error.message : String(error);
       this._lastAction = action;
       this._lastFailure = { action, message };

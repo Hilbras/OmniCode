@@ -6,7 +6,7 @@ import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
 import { createServices, type TestInstantiationService } from '#/_base/di/test';
 import { Emitter } from '#/_base/event';
 import { ErrorCodes } from '#/errors';
-import { ISessionContext, makeSessionContext } from '#/session/sessionContext/sessionContext';
+import { HostTerminalService } from '#/os/backends/node-local/hostTerminalService';
 import {
   type TerminalAttachSink,
   type TerminalFrame,
@@ -14,15 +14,18 @@ import {
   type TerminalSpawnOptions,
   IHostTerminalService,
 } from '#/os/interface/terminal';
-import { HostTerminalService } from '#/os/backends/node-local/hostTerminalService';
+import { FakeRuntime } from '#/runtime/fakeRuntime';
+import type { RuntimeLease } from '#/runtime/runtime';
+import { ISessionContext, makeSessionContext } from '#/session/sessionContext/sessionContext';
 import {
   ISessionTerminalService,
   SessionTerminalService,
 } from '#/session/terminal/terminalService';
 import { ISessionWorkspaceContext } from '#/session/workspaceContext/workspaceContext';
-import type { RuntimeLease } from '#/runtime/runtime';
-import { FakeRuntime } from '#/runtime/fakeRuntime';
-import { IRuntimeResolver, type IRuntimeResolver as RuntimeResolver } from '#/workspace/workspaceInstance/workspaceInstanceManager';
+import {
+  IRuntimeResolver,
+  type IRuntimeResolver as RuntimeResolver,
+} from '#/workspace/workspaceInstance/workspaceInstanceManager';
 
 vi.mock('node-pty', () => ({
   spawn: vi.fn(),
@@ -178,11 +181,10 @@ describe('SessionTerminalService', () => {
 
   it('uses the selected non-local runtime mapping and terminal instead of the App host', async () => {
     const remoteHost = new FakeHostTerminalService();
-    resolver = new FakeRuntimeResolver(
-      remoteHost,
-      'remote',
-      (roots) => ({ ...roots, workDir: '/remote/workspace' }),
-    );
+    resolver = new FakeRuntimeResolver(remoteHost, 'remote', (roots) => ({
+      ...roots,
+      workDir: '/remote/workspace',
+    }));
     ix.set(IRuntimeResolver, resolver);
     const svc = ix.get(ISessionTerminalService);
     const terminal = await svc.create({ runtime_id: 'remote', cwd: 'sub' });
@@ -206,7 +208,7 @@ describe('SessionTerminalService', () => {
 
   it('lists and gets terminals', async () => {
     const svc = ix.get(ISessionTerminalService);
-    const created = await svc.create({ runtime_id: 'local',});
+    const created = await svc.create({ runtime_id: 'local' });
     const listed = await svc.list();
     expect(listed).toHaveLength(1);
     expect(listed[0]?.id).toBe(created.id);
@@ -242,7 +244,11 @@ describe('SessionTerminalService', () => {
 
     proc.emitData('world');
     expect(frames).toHaveLength(2);
-    expect(frames[1]).toMatchObject({ type: 'terminal_output', seq: 2, payload: { data: 'world' } });
+    expect(frames[1]).toMatchObject({
+      type: 'terminal_output',
+      seq: 2,
+      payload: { data: 'world' },
+    });
   });
 
   it('replays only frames after sinceSeq', async () => {

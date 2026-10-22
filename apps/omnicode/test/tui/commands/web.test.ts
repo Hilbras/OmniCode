@@ -1,14 +1,9 @@
+import { setCapabilities } from '@hilbras/omnicode-tui';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { setCapabilities } from '@hilbras/omnicode-tui';
-
-import { findBuiltInSlashCommand, resolveSlashCommandAvailability } from '#/tui/commands/index';
 import type { SlashCommandHost } from '#/tui/commands/dispatch';
-import {
-  handleRemoteControlCommand,
-  handleWebCommand,
-  webSessionUrl,
-} from '#/tui/commands/web';
+import { findBuiltInSlashCommand, resolveSlashCommandAvailability } from '#/tui/commands/index';
+import { handleRemoteControlCommand, handleWebCommand, webSessionUrl } from '#/tui/commands/web';
 import { renderTerminalQr } from '#/utils/remote-control-qr';
 
 const mocks = vi.hoisted(() => ({
@@ -134,9 +129,7 @@ describe('handleWebCommand', () => {
     await task(0);
 
     expect(mocks.startServerForeground).toHaveBeenCalledOnce();
-    expect(mocks.openUrl).toHaveBeenCalledWith(
-      'http://127.0.0.1:58627/sessions/ses-1#token=tok-1',
-    );
+    expect(mocks.openUrl).toHaveBeenCalledWith('http://127.0.0.1:58627/sessions/ses-1#token=tok-1');
     const written = writeSpy.mock.calls.map((call) => String(call[0])).join('');
     expect(written).toContain('Omnicode server ready');
     expect(written).toContain('Ctrl+C');
@@ -172,9 +165,7 @@ describe('handleRemoteControlCommand', () => {
       await handleRemoteControlCommand(host);
 
       expect(host.showError).toHaveBeenCalledWith(expect.stringContaining('already running'));
-      expect(host.showError).toHaveBeenCalledWith(
-        expect.stringContaining('/devices/device-1/'),
-      );
+      expect(host.showError).toHaveBeenCalledWith(expect.stringContaining('/devices/device-1/'));
       expect(host.setExitForegroundTask).not.toHaveBeenCalled();
       expect(host.stop).not.toHaveBeenCalled();
       expect(mocks.startServerForeground).not.toHaveBeenCalled();
@@ -192,8 +183,7 @@ describe('handleRemoteControlCommand', () => {
     const QRCode = await import('qrcode');
     const tempRoot = mkdtempSync(join(tmpdir(), 'omnicode-rc-qrcode-'));
     const dataDir = join(tempRoot, 'custom-home');
-    const entryUrl =
-      'https://code-rc.omnicode.com/devices/device-1/?rc=1&from=omnicode_code_cli';
+    const entryUrl = 'https://code-rc.omnicode.com/devices/device-1/?rc=1&from=omnicode_code_cli';
     const sessionUrl =
       'https://code-rc.omnicode.com/devices/device-1/sessions/ses-1?rc=1&from=omnicode_code_cli';
     const pngPath = join(dataDir, 'rc-qrcode.png');
@@ -244,9 +234,7 @@ describe('handleRemoteControlCommand', () => {
       const png = readFileSync(pngPath);
       expect(png.subarray(0, 8)).toEqual(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
       expect(png).toEqual(await QRCode.toBuffer(sessionUrl));
-      expect(written).toContain(
-        'Local UI: http://127.0.0.1:58627/#token=local-server-token',
-      );
+      expect(written).toContain('Local UI: http://127.0.0.1:58627/#token=local-server-token');
       expect(written).not.toContain(`${entryUrl}#token=`);
       expect(written).not.toContain(`${sessionUrl}#token=`);
       expect(close).toHaveBeenCalledOnce();
@@ -265,8 +253,7 @@ describe('handleRemoteControlCommand', () => {
     const QRCode = await import('qrcode');
     const tempRoot = mkdtempSync(join(tmpdir(), 'omnicode-rc-entry-'));
     const dataDir = join(tempRoot, 'custom-home');
-    const entryUrl =
-      'https://code-rc.omnicode.com/devices/device-1/?rc=1&from=omnicode_code_cli';
+    const entryUrl = 'https://code-rc.omnicode.com/devices/device-1/?rc=1&from=omnicode_code_cli';
     mocks.getDataDir.mockReturnValue(dataDir);
     mocks.tryResolveServerToken.mockReturnValue('local-server-token');
     const close = vi.fn(async () => {});
@@ -308,9 +295,7 @@ describe('handleRemoteControlCommand', () => {
       const written = writeSpy.mock.calls.map((call) => String(call[0])).join('');
       expect(written).toContain(indentedQr(entryUrl));
       expect(written).not.toContain('/sessions/');
-      expect(readFileSync(join(dataDir, 'rc-qrcode.png'))).toEqual(
-        await QRCode.toBuffer(entryUrl),
-      );
+      expect(readFileSync(join(dataDir, 'rc-qrcode.png'))).toEqual(await QRCode.toBuffer(entryUrl));
       expect(close).toHaveBeenCalledOnce();
     } finally {
       writeSpy.mockRestore();

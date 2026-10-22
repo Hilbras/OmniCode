@@ -12,10 +12,10 @@
  *    either one a test failure rather than a silent behavior change.
  */
 
-import { describe, expect, it, vi, afterEach } from 'vitest';
-import { Command } from 'commander';
 import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/omnicode-api';
 import type { OAuthTokenInspection } from '@hilbras/omnicode-auth';
+import { Command } from 'commander';
+import { describe, expect, it, vi, afterEach } from 'vitest';
 
 import {
   handleAuthList,
@@ -156,11 +156,19 @@ afterEach(() => {
 describe('omnicode auth list', () => {
   it('reports one row per configured provider without touching the network', async () => {
     const { harness, auth } = makeHarness(baseConfig(), {
-      sso: { state: 'valid', expiresAt: Date.now() + 3_600_000, hasRefreshToken: true, tokenType: 'Bearer', scope: 'x' },
+      sso: {
+        state: 'valid',
+        expiresAt: Date.now() + 3_600_000,
+        hasRefreshToken: true,
+        tokenType: 'Bearer',
+        scope: 'x',
+      },
     });
     // `wireonly` declares no credential, so the row is only worth calling
     // `MISSING` honestly when the vendor fallback it would actually use is set.
-    const { deps, stdout } = makeDeps(harness, { env: { OPENAI_API_KEY: 'vendor-fallback-value' } });
+    const { deps, stdout } = makeDeps(harness, {
+      env: { OPENAI_API_KEY: 'vendor-fallback-value' },
+    });
 
     await handleAuthList(deps, TEXT);
 
@@ -209,7 +217,13 @@ describe('omnicode auth list', () => {
 
   it('never prints a credential, in text or json', async () => {
     const { harness } = makeHarness(baseConfig(), {
-      sso: { state: 'valid', expiresAt: Date.now() + 60_000, hasRefreshToken: true, tokenType: 'Bearer', scope: 'x' },
+      sso: {
+        state: 'valid',
+        expiresAt: Date.now() + 60_000,
+        hasRefreshToken: true,
+        tokenType: 'Bearer',
+        scope: 'x',
+      },
     });
     const text = makeDeps(harness);
     await handleAuthList(text.deps, TEXT);
@@ -219,7 +233,13 @@ describe('omnicode auth list', () => {
     await handleAuthList(json.deps, JSON_OUT);
     expect(json.stdout.join('')).not.toContain(SECRET);
     const parsed = JSON.parse(json.stdout.join('')) as Array<Record<string, unknown>>;
-    expect(parsed.map((row) => row['providerId'])).toEqual(['acme', 'envkey', 'local', 'sso', 'wireonly']);
+    expect(parsed.map((row) => row['providerId'])).toEqual([
+      'acme',
+      'envkey',
+      'local',
+      'sso',
+      'wireonly',
+    ]);
     expect(parsed.map((row) => row['state'])).toEqual([
       'authenticated',
       'missing',
@@ -246,7 +266,9 @@ describe('omnicode auth status', () => {
 
     await handleAuthStatus(deps, 'acme', TEXT);
 
-    expect(stdout.join('')).toBe('acme\nStatus: authenticated\nDetail: PRESENT (api_key from config.toml)\n');
+    expect(stdout.join('')).toBe(
+      'acme\nStatus: authenticated\nDetail: PRESENT (api_key from config.toml)\n',
+    );
   });
 
   it('shows an expiry for a live oauth token', async () => {
@@ -333,7 +355,9 @@ describe('omnicode auth login', () => {
 
   it('never echoes the key back', async () => {
     const { harness } = makeHarness(baseConfig());
-    const { deps, stdout, stderr } = makeDeps(harness, { readSecret: async () => `${SECRET}-rotated` });
+    const { deps, stdout, stderr } = makeDeps(harness, {
+      readSecret: async () => `${SECRET}-rotated`,
+    });
 
     await handleAuthLogin(deps, 'acme');
 
@@ -454,10 +478,11 @@ describe('omnicode auth registration', () => {
     const program = new Command();
     registerAuthCommand(program, makeDeps(harness).deps);
 
-    const jsonFlags = (program.commands
-      .find((command) => command.name() === 'auth')
-      ?.commands.filter((command) => command.options.some((option) => option.long === '--json'))
-      .map((command) => command.name())) ?? [];
+    const jsonFlags =
+      program.commands
+        .find((command) => command.name() === 'auth')
+        ?.commands.filter((command) => command.options.some((option) => option.long === '--json'))
+        .map((command) => command.name()) ?? [];
     expect(jsonFlags).toEqual(['list', 'status']);
   });
 });

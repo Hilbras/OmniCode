@@ -13,14 +13,6 @@
  */
 
 import {
-  declaredProviderCredential,
-  DiscoveredModelsAuthError,
-  fetchDiscoveredModels,
-  normalizeDiscoveryBaseUrl,
-  type DiscoveredModelInfo,
-  type DiscoveryAuthStyle,
-} from '@hilbras/omnicode-auth';
-import {
   applyCatalogProvider,
   catalogProviderModels,
   CatalogFetchError,
@@ -37,17 +29,24 @@ import {
   type OAuthRef,
   providerEndpointEnvNames,
 } from '@hilbras/omnicode-api';
+import {
+  declaredProviderCredential,
+  DiscoveredModelsAuthError,
+  fetchDiscoveredModels,
+  normalizeDiscoveryBaseUrl,
+  type DiscoveredModelInfo,
+  type DiscoveryAuthStyle,
+} from '@hilbras/omnicode-auth';
 import type { Command } from 'commander';
 
 import { createOmnicodeCodeHostIdentity, createOmnicodeCodeUserAgent } from '#/cli/version';
-import { fetchCatalogOrBuiltIn } from '#/utils/catalog-fetch';
+import { refreshAllProviderModels, type RefreshProviderHost } from '#/tui/utils/refresh-providers';
 import {
   BUILT_IN_PROVIDERS,
   getBuiltInProvider,
   type BuiltInProvider,
   type BuiltInProviderPin,
 } from '#/utils/built-in-providers';
-import { parseProviderBaseUrl } from '#/utils/custom-provider';
 import {
   backfillCatalogLimits,
   buildFreeTierAliases,
@@ -57,11 +56,9 @@ import {
   fetchCatalogLimits,
   type CatalogLimit,
 } from '#/utils/builtin-model-import';
+import { fetchCatalogOrBuiltIn } from '#/utils/catalog-fetch';
+import { parseProviderBaseUrl } from '#/utils/custom-provider';
 import { redactProviderSecrets, writeProviderRecords } from '#/utils/provider-records';
-import {
-  refreshAllProviderModels,
-  type RefreshProviderHost,
-} from '#/tui/utils/refresh-providers';
 
 interface WritableLike {
   write(chunk: string): boolean;
@@ -226,7 +223,7 @@ export async function handleProviderEdit(
     delete patch['apiKey'];
   }
 
-  const authScheme = resolveAuthScheme(opts.authScheme);
+  const authScheme = resolveAuthScheme(deps, opts.authScheme);
   if (authScheme !== undefined) {
     patch['authScheme'] = authScheme;
   }
@@ -255,7 +252,9 @@ export async function handleProviderEdit(
   }
 
   deps.stdout.write('Refreshing models from the endpoint…\n');
-  const result = await refreshAllProviderModels(providerRefreshHost(harness, id), { providerId: id });
+  const result = await refreshAllProviderModels(providerRefreshHost(harness, id), {
+    providerId: id,
+  });
 
   const failure = result.failed.find((f) => f.provider === id);
   if (failure !== undefined) {
@@ -390,7 +389,9 @@ export async function handleProviderAddBuiltin(
   for (const alias of imported) {
     deps.stdout.write(`  - ${alias}\n`);
   }
-  deps.stdout.write(`${builtin.name} is ready — run /provider in the TUI to pick a default model.\n`);
+  deps.stdout.write(
+    `${builtin.name} is ready — run /provider in the TUI to pick a default model.\n`,
+  );
   if (imported.length > 0) {
     deps.stdout.write(
       `Routed ${imported.length} free model${imported.length === 1 ? '' : 's'} to their free tier.\n`,
@@ -552,7 +553,7 @@ export async function handleProviderAddManual(
   // Replace semantics: setConfig deep-merges and cannot delete a key, so a
   // re-add over a removed provider's aliases would resurrect stale models.
   const next = removeProviderFromConfig(existing, id);
-  const authScheme = resolveAuthScheme(opts.authScheme);
+  const authScheme = resolveAuthScheme(deps, opts.authScheme);
   next.providers = {
     ...next.providers,
     [id]: {
@@ -607,8 +608,8 @@ export async function handleProviderAddManual(
     }
   }
 
-  const models = Object.keys((await harness.getConfig({ reload: true })).models ?? {}).filter((alias) =>
-    alias.startsWith(`${id}/`),
+  const models = Object.keys((await harness.getConfig({ reload: true })).models ?? {}).filter(
+    (alias) => alias.startsWith(`${id}/`),
   );
   if (models.length === 0) {
     deps.stderr.write(
@@ -625,10 +626,7 @@ export async function handleProviderAddManual(
   );
 }
 
-export async function handleProviderRemove(
-  deps: ProviderDeps,
-  providerId: string,
-): Promise<void> {
+export async function handleProviderRemove(deps: ProviderDeps, providerId: string): Promise<void> {
   const harness = deps.getHarness();
   await harness.ensureConfigFile();
   const config = await harness.getConfig();
@@ -640,10 +638,7 @@ export async function handleProviderRemove(
   deps.stdout.write(`Removed provider "${providerId}".\n`);
 }
 
-export async function handleProviderList(
-  deps: ProviderDeps,
-  opts: ListOptions,
-): Promise<void> {
+export async function handleProviderList(deps: ProviderDeps, opts: ListOptions): Promise<void> {
   const harness = deps.getHarness();
   await harness.ensureConfigFile();
   const config = await harness.getConfig();
@@ -653,11 +648,13 @@ export async function handleProviderList(
     // `api_key` into scrollback, a pipe, or a CI log. Masking is the only thing
     // standing between `omnicode provider list --json > out.json` and a leaked key,
     // and stdout is not a place a secret is recoverable from once written.
+    // A model alias carries its own `api_key` as well as the provider's, so
+    // both maps go through the same masking.
     deps.stdout.write(
       `${JSON.stringify(
         {
           providers: redactProviderSecrets(config.providers),
-          models: config.models ?? {},
+          models: redactProviderSecrets(config.models ?? {}),
         },
         null,
         2,
@@ -693,13 +690,7 @@ export async function handleProviderList(
 }
 
 /** Ordered stage names for {@link handleProviderTest}. */
-const PROVIDER_TEST_STAGES = [
-  'config',
-  'credential',
-  'connectivity',
-  'models',
-  'request',
-] as const;
+const PROVIDER_TEST_STAGES = ['config', 'credential', 'connectivity', 'models', 'request'] as const;
 
 const DEFAULT_PROVIDER_TEST_TIMEOUT_MS = 10_000;
 
@@ -877,7 +868,16 @@ export async function handleProviderTest(
   report(2, await testEndpointReachability(base, timeoutMs));
   const discovery = await testModelDiscovery(base, provider.type, secret, timeoutMs);
   report(3, discovery.result);
-  report(4, await testMinimalRequest(base, provider, secret, pickProbeModel(config, id, opts.model), timeoutMs));
+  report(
+    4,
+    await testMinimalRequest(
+      base,
+      provider,
+      secret,
+      pickProbeModel(config, id, opts.model),
+      timeoutMs,
+    ),
+  );
 
   finishProviderTest(deps, results);
 }
@@ -928,10 +928,15 @@ export async function resolveTestCredential(
     case 'conflict':
       return { present: false, detail: `MISSING (${declared.message})` };
     case 'inline':
-      return { present: true, detail: 'PRESENT (api_key from config.toml)', secret: declared.apiKey };
+      return {
+        present: true,
+        detail: 'PRESENT (api_key from config.toml)',
+        secret: declared.apiKey,
+      };
     case 'env': {
       const fromEnv = deps.env[declared.apiKeyEnv];
-      const value = typeof fromEnv === 'string' && fromEnv.trim().length > 0 ? fromEnv.trim() : undefined;
+      const value =
+        typeof fromEnv === 'string' && fromEnv.trim().length > 0 ? fromEnv.trim() : undefined;
       return value === undefined
         ? {
             present: false,
@@ -948,7 +953,9 @@ export async function resolveTestCredential(
       const token =
         mode === 'cached'
           ? await harness.auth.getCachedAccessToken(providerId, provider.oauth)
-          : await harness.auth.resolveOAuthTokenProvider(providerId, provider.oauth).getAccessToken();
+          : await harness.auth
+              .resolveOAuthTokenProvider(providerId, provider.oauth)
+              .getAccessToken();
       return typeof token === 'string' && token.length > 0
         ? { present: true, detail: `PRESENT (oauth token "${provider.oauth.key}")`, secret: token }
         : {
@@ -966,7 +973,11 @@ export async function resolveTestCredential(
   // `auth_scheme = "none"` is how a local gateway says it wants no credential
   // at all, so a record without one is not broken.
   if (provider.authScheme?.kind === 'none') {
-    return { present: true, detail: 'PRESENT (auth_scheme = "none", no credential sent)', secret: undefined };
+    return {
+      present: true,
+      detail: 'PRESENT (auth_scheme = "none", no credential sent)',
+      secret: undefined,
+    };
   }
 
   // A record with no credential field at all is not necessarily broken: the
@@ -990,9 +1001,16 @@ export async function resolveTestCredential(
  * as-is because a `404` on an OpenAI-style `/v1` base is the healthy answer and
  * calling it a failure would train users to ignore the stage.
  */
-async function testEndpointReachability(base: string, timeoutMs: number): Promise<ProviderTestStageResult> {
+async function testEndpointReachability(
+  base: string,
+  timeoutMs: number,
+): Promise<ProviderTestStageResult> {
   try {
-    const response = await fetchWithTimeout(base, { method: 'GET', headers: { Accept: '*/*' } }, timeoutMs);
+    const response = await fetchWithTimeout(
+      base,
+      { method: 'GET', headers: { Accept: '*/*' } },
+      timeoutMs,
+    );
     return { status: 'OK', detail: `endpoint answered (HTTP ${String(response.status)})` };
   } catch (error) {
     return { status: 'FAIL', detail: describeTestFailure(error) };
@@ -1096,9 +1114,15 @@ async function testMinimalRequest(
   };
 }
 
-type ProbeModel = { readonly ok: true; readonly alias: string; readonly modelId: string } | { readonly ok: false; readonly reason: string };
+type ProbeModel =
+  | { readonly ok: true; readonly alias: string; readonly modelId: string }
+  | { readonly ok: false; readonly reason: string };
 
-function pickProbeModel(config: OmnicodeConfig, providerId: string, requested: string | undefined): ProbeModel {
+function pickProbeModel(
+  config: OmnicodeConfig,
+  providerId: string,
+  requested: string | undefined,
+): ProbeModel {
   const models = config.models ?? {};
   if (requested !== undefined) {
     const alias = models[requested];
@@ -1126,7 +1150,14 @@ function buildProbeRequest(
   provider: OmnicodeConfig['providers'][string],
   secret: string | undefined,
   modelId: string,
-): { readonly ok: true; readonly url: string; readonly headers: Record<string, string>; readonly body: string } | { readonly ok: false; readonly reason: string } {
+):
+  | {
+      readonly ok: true;
+      readonly url: string;
+      readonly headers: Record<string, string>;
+      readonly body: string;
+    }
+  | { readonly ok: false; readonly reason: string } {
   const headers = buildProbeHeaders(provider, secret);
   switch (provider.type) {
     case 'openai':
@@ -1147,7 +1178,12 @@ function buildProbeRequest(
         ok: true,
         url: `${base}/responses`,
         headers,
-        body: JSON.stringify({ model: modelId, input: 'ping', max_output_tokens: 16, stream: false }),
+        body: JSON.stringify({
+          model: modelId,
+          input: 'ping',
+          max_output_tokens: 16,
+          stream: false,
+        }),
       };
     case 'anthropic':
       return {
@@ -1233,7 +1269,9 @@ function requireProvider(
   const known = Object.keys(config.providers).toSorted();
   deps.stderr.write(
     `Provider "${id}" not found.` +
-      (known.length > 0 ? `\nConfigured providers:\n${known.map((p) => `  - ${p}\n`).join('')}` : ''),
+      (known.length > 0
+        ? `\nConfigured providers:\n${known.map((p) => `  - ${p}\n`).join('')}`
+        : ''),
   );
   deps.exit(1);
 }
@@ -1302,7 +1340,9 @@ export async function handleProviderModels(
   requireProvider(deps, config, id);
 
   if (opts.refresh) {
-    const result = await refreshAllProviderModels(providerRefreshHost(harness, id), { providerId: id });
+    const result = await refreshAllProviderModels(providerRefreshHost(harness, id), {
+      providerId: id,
+    });
     const failure = result.failed.find((entry) => entry.provider === id);
     if (failure !== undefined) {
       deps.stderr.write(`Model refresh failed: ${failure.reason}\n`);
@@ -1407,7 +1447,9 @@ async function fetchAdvertisedModels(
 ): Promise<DiscoveredModelInfo[]> {
   const baseUrl = provider.baseUrl?.trim();
   if (baseUrl === undefined || baseUrl.length === 0) {
-    deps.stderr.write('No base_url configured — set one with `omnicode provider edit --base-url`.\n');
+    deps.stderr.write(
+      'No base_url configured — set one with `omnicode provider edit --base-url`.\n',
+    );
     deps.exit(1);
   }
   const check = parseProviderBaseUrl(baseUrl, deps.env);
@@ -1437,7 +1479,9 @@ async function fetchAdvertisedModels(
       },
     });
   } catch (error) {
-    deps.stderr.write(`Could not read models: ${describeTestFailure(error, probed, credential.secret)}\n`);
+    deps.stderr.write(
+      `Could not read models: ${describeTestFailure(error, probed, credential.secret)}\n`,
+    );
     deps.exit(1);
   }
 }
@@ -1464,14 +1508,21 @@ async function fetchWithTimeout(
   }
 }
 
-function classifyTestError(error: unknown, signal: AbortSignal, timeoutMs: number): ProviderTestFailure {
+function classifyTestError(
+  error: unknown,
+  signal: AbortSignal,
+  timeoutMs: number,
+): ProviderTestFailure {
   if (signal.aborted) {
     return new ProviderTestFailure('timeout', `no response within ${String(timeoutMs)} ms`);
   }
   const coded = errorChain(error).find((entry) => errorCode(entry) !== undefined);
   if (coded !== undefined) {
     const code = errorCode(coded) ?? '';
-    return new ProviderTestFailure('unreachable', `${UNREACHABLE_REASONS[code] ?? 'host unreachable'} (${code})`);
+    return new ProviderTestFailure(
+      'unreachable',
+      `${UNREACHABLE_REASONS[code] ?? 'host unreachable'} (${code})`,
+    );
   }
   if (error instanceof ProviderTestFailure) return error;
   return new ProviderTestFailure('request failed', describeChain(error));
@@ -1562,7 +1613,11 @@ function reasonFromMessage(message: string): string {
   return 'request failed';
 }
 
-async function describeHttpFailure(response: Response, url: string, secret: string | undefined): Promise<string> {
+async function describeHttpFailure(
+  response: Response,
+  url: string,
+  secret: string | undefined,
+): Promise<string> {
   const reason = `${httpReason(response.status)} (HTTP ${String(response.status)} at ${url})`;
   const body = redactCredential(truncate(singleLine(await readBodyText(response)), 200), secret);
   return body.length === 0 ? reason : `${reason}: ${body}`;
@@ -1702,9 +1757,7 @@ export async function handleCatalogAdd(
 ): Promise<void> {
   const apiKey = resolveApiKey(opts.apiKey, deps.env);
   if (apiKey === undefined) {
-    deps.stderr.write(
-      'Missing API key. Pass --api-key <key> or set OMNICODE_REGISTRY_API_KEY.\n',
-    );
+    deps.stderr.write('Missing API key. Pass --api-key <key> or set OMNICODE_REGISTRY_API_KEY.\n');
     deps.exit(1);
   }
 
@@ -1800,8 +1853,7 @@ export async function handleCatalogAdd(
   //     non-existent alias and break the next session.
   if (opts.defaultModel === undefined) {
     const stillResolves =
-      previousDefaultModel !== undefined &&
-      config.models?.[previousDefaultModel] !== undefined;
+      previousDefaultModel !== undefined && config.models?.[previousDefaultModel] !== undefined;
     config.defaultModel = stillResolves ? previousDefaultModel : undefined;
   }
 
@@ -1891,8 +1943,14 @@ export function registerProviderCommand(parent: Command, deps?: Partial<Provider
     )
     .requiredOption('--type <type>', `Wire protocol: ${MANUAL_PROVIDER_TYPES.join(', ')}.`)
     .requiredOption('--base-url <url>', 'OpenAI-compatible base URL, e.g. https://host/v1.')
-    .option('--api-key <key>', 'API key. Falls back to OMNICODE_REGISTRY_API_KEY; omit when using --api-key-env.')
-    .option('--api-key-env <VAR>', 'Read the API key from this environment variable instead of storing it.')
+    .option(
+      '--api-key <key>',
+      'API key. Falls back to OMNICODE_REGISTRY_API_KEY; omit when using --api-key-env.',
+    )
+    .option(
+      '--api-key-env <VAR>',
+      'Read the API key from this environment variable instead of storing it.',
+    )
     .option(
       '--auth-scheme <kind>',
       `How the key is sent: ${MANUAL_AUTH_SCHEME_KINDS.join(', ')}. Default is the wire's native style.`,
@@ -1931,8 +1989,14 @@ export function registerProviderCommand(parent: Command, deps?: Partial<Provider
     .description(
       `Configure a built-in provider (${BUILT_IN_PROVIDERS.map((p) => p.id).join(', ')}).`,
     )
-    .option('--api-key <key>', 'API key. Falls back to OMNICODE_REGISTRY_API_KEY; omit when using --api-key-env.')
-    .option('--api-key-env <VAR>', 'Read the API key from this environment variable instead of storing it.')
+    .option(
+      '--api-key <key>',
+      'API key. Falls back to OMNICODE_REGISTRY_API_KEY; omit when using --api-key-env.',
+    )
+    .option(
+      '--api-key-env <VAR>',
+      'Read the API key from this environment variable instead of storing it.',
+    )
     .action(async (providerId: string, options: { apiKey?: string; apiKeyEnv?: string }) => {
       const resolved = resolveDeps(deps);
       await runAction(resolved, () =>
@@ -1946,16 +2010,16 @@ export function registerProviderCommand(parent: Command, deps?: Partial<Provider
   provider
     .command('edit <providerId>')
     .description(
-      'Change an existing provider\'s protocol, endpoint or key, then refresh its models.',
+      "Change an existing provider's protocol, endpoint or key, then refresh its models.",
     )
     .option('--type <type>', `New wire protocol: ${MANUAL_PROVIDER_TYPES.join(', ')}.`)
     .option('--base-url <url>', 'New OpenAI-compatible base URL.')
     .option('--api-key <key>', 'New API key. Falls back to OMNICODE_REGISTRY_API_KEY.')
-    .option('--api-key-env <VAR>', 'Read the key from this environment variable instead of storing it.')
     .option(
-      '--auth-scheme <kind>',
-      `How the key is sent: ${MANUAL_AUTH_SCHEME_KINDS.join(', ')}.`,
+      '--api-key-env <VAR>',
+      'Read the key from this environment variable instead of storing it.',
     )
+    .option('--auth-scheme <kind>', `How the key is sent: ${MANUAL_AUTH_SCHEME_KINDS.join(', ')}.`)
     .option('--auth-header <name>', 'Header name for custom-header / api-key auth schemes.')
     // No explicit default: commander's `--no-x` sets `x` to false only when the
     // flag is given, so the value must be left undefined or it would read
@@ -1993,15 +2057,13 @@ export function registerProviderCommand(parent: Command, deps?: Partial<Provider
 
   provider
     .command('auth <providerId>')
-    .description(
-      'Replace a provider\'s credential, leaving its protocol and endpoint untouched.',
-    )
+    .description("Replace a provider's credential, leaving its protocol and endpoint untouched.")
     .option('--api-key <key>', 'New API key. Falls back to OMNICODE_REGISTRY_API_KEY.')
-    .option('--api-key-env <VAR>', 'Read the key from this environment variable instead of storing it.')
     .option(
-      '--auth-scheme <kind>',
-      `How the key is sent: ${MANUAL_AUTH_SCHEME_KINDS.join(', ')}.`,
+      '--api-key-env <VAR>',
+      'Read the key from this environment variable instead of storing it.',
     )
+    .option('--auth-scheme <kind>', `How the key is sent: ${MANUAL_AUTH_SCHEME_KINDS.join(', ')}.`)
     .option('--auth-header <name>', 'Header name for custom-header / api-key auth schemes.')
     // Same reason as `edit`: `--no-refresh` only writes `refresh` when the
     // flag is present, so a default here would silently skip discovery.
@@ -2047,7 +2109,9 @@ export function registerProviderCommand(parent: Command, deps?: Partial<Provider
     .option('--json', 'Emit the raw providers/models config as JSON.', false)
     .action(async (options: { json?: boolean }) => {
       const resolved = resolveDeps(deps);
-      await runAction(resolved, () => handleProviderList(resolved, { json: options.json === true }));
+      await runAction(resolved, () =>
+        handleProviderList(resolved, { json: options.json === true }),
+      );
     });
 
   provider
@@ -2055,8 +2119,16 @@ export function registerProviderCommand(parent: Command, deps?: Partial<Provider
     .description(
       'Show the models a configured provider serves. Reads only, unless --refresh is passed.',
     )
-    .option('--available', 'Also list what the endpoint advertises, without writing anything.', false)
-    .option('--refresh', 'Re-read the model list from the endpoint and save it before listing.', false)
+    .option(
+      '--available',
+      'Also list what the endpoint advertises, without writing anything.',
+      false,
+    )
+    .option(
+      '--refresh',
+      'Re-read the model list from the endpoint and save it before listing.',
+      false,
+    )
     .option('--json', 'Emit the provider, its models and the advertised list as JSON.', false)
     .action(
       async (
@@ -2079,8 +2151,15 @@ export function registerProviderCommand(parent: Command, deps?: Partial<Provider
     .description(
       'Run staged config, credential, connectivity, model-discovery and minimal-request checks against a configured provider. Never prints the credential.',
     )
-    .option('--model <alias>', 'Model alias for the minimal request. Defaults to the provider\'s first configured alias.')
-    .option('--timeout <ms>', 'Per-request network timeout in milliseconds.', String(DEFAULT_PROVIDER_TEST_TIMEOUT_MS))
+    .option(
+      '--model <alias>',
+      "Model alias for the minimal request. Defaults to the provider's first configured alias.",
+    )
+    .option(
+      '--timeout <ms>',
+      'Per-request network timeout in milliseconds.',
+      String(DEFAULT_PROVIDER_TEST_TIMEOUT_MS),
+    )
     .action(async (providerId: string, options: { model?: string; timeout: string }) => {
       const resolved = resolveDeps(deps);
       await runAction(resolved, () =>
@@ -2179,17 +2258,25 @@ function resolveApiKey(flag: string | undefined, env: NodeJS.ProcessEnv): string
 const MANUAL_AUTH_SCHEME_KINDS = ['bearer', 'api-key', 'custom-header', 'none'] as const;
 
 function resolveAuthScheme(
+  deps: ProviderDeps,
   opts: { kind?: string; header?: string } | undefined,
 ): OmnicodeConfig['providers'][string]['authScheme'] | undefined {
   if (opts === undefined) return undefined;
   const kind = opts.kind?.trim();
   if (kind === undefined || kind.length === 0) return undefined;
+  // An auth scheme the runtime does not know is a mistake, not something to
+  // drop: the provider would be written with a different scheme than the one
+  // the user asked for, and they would find out at the first request.
   if (!(MANUAL_AUTH_SCHEME_KINDS as readonly string[]).includes(kind)) {
-    return undefined;
+    deps.stderr.write(
+      `Unknown auth scheme "${opts.kind}" (expected one of: ${MANUAL_AUTH_SCHEME_KINDS.join(', ')}).\n`,
+    );
+    deps.exit(1);
   }
   const header = opts.header?.trim();
   if (kind === 'custom-header' && (header === undefined || header.length === 0)) {
-    return undefined;
+    deps.stderr.write('--auth-header is required with --auth-scheme custom-header.\n');
+    deps.exit(1);
   }
   return {
     kind: kind as 'bearer' | 'api-key' | 'custom-header' | 'none',

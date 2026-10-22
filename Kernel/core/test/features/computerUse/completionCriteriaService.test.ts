@@ -8,8 +8,11 @@ import {
   CompletionCriteriaService,
   type ICompletionCriteriaService,
 } from '#/features/computerUse/completionCriteriaService';
-import { VERIFICATION_ENABLED_ENV, isVerificationEnabled } from '#/features/computerUse/verificationFlag';
 import type { Evidence } from '#/features/computerUse/goalVerifier';
+import {
+  VERIFICATION_ENABLED_ENV,
+  isVerificationEnabled,
+} from '#/features/computerUse/verificationFlag';
 
 const dirs: string[] = [];
 const saved: { readonly key: string; readonly value: string | undefined }[] = [];
@@ -73,12 +76,22 @@ describe('CompletionCriteriaService', () => {
   it('reads declared checks', async () => {
     const root = await workspace();
     await writeCriteria(root, 'g1', {
-      criteria: [{ id: 'build', description: 'the build passes', check: { kind: 'command_succeeded', command: 'true' } }],
+      criteria: [
+        {
+          id: 'build',
+          description: 'the build passes',
+          check: { kind: 'command_succeeded', command: 'true' },
+        },
+      ],
     });
     const service = new CompletionCriteriaService({ workspaceDir: root });
 
     expect(await service.criteriaFor('g1')).toEqual([
-      { id: 'build', description: 'the build passes', check: { kind: 'command_succeeded', command: 'true' } },
+      {
+        id: 'build',
+        description: 'the build passes',
+        check: { kind: 'command_succeeded', command: 'true' },
+      },
     ]);
   });
 
@@ -100,7 +113,9 @@ describe('CompletionCriteriaService', () => {
   it('keeps an explicit undecidable marker and its reason', async () => {
     const root = await workspace();
     await writeCriteria(root, 'g1', {
-      criteria: [{ id: 'taste', description: 'reads well', undecidable: true, reason: 'subjective' }],
+      criteria: [
+        { id: 'taste', description: 'reads well', undecidable: true, reason: 'subjective' },
+      ],
     });
     const service = new CompletionCriteriaService({ workspaceDir: root });
 

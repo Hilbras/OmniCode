@@ -1,4 +1,3 @@
-import type { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
 import {
   MAX_IMAGE_EDGE_PX,
   READ_IMAGE_BYTE_BUDGET,
@@ -10,6 +9,7 @@ import type {
   CompressImageResult,
   ImageCompressionCaptionInput,
 } from '@hilbras/omnicode-core/agent/media/image-compress';
+import type { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
 
 import type { ImageConfig } from '#/config/index';
 import type { TelemetryClient, TelemetryProperties } from '#/telemetry';
@@ -39,12 +39,18 @@ export class ImageLimits {
   }
 
   maxEdgePx(): number {
-    return positiveIntFromEnv(this.env, 'OMNICODE_IMAGE_MAX_EDGE_PX') ?? this.config?.maxEdgePx ?? MAX_IMAGE_EDGE_PX;
+    return (
+      positiveIntFromEnv(this.env, 'OMNICODE_IMAGE_MAX_EDGE_PX') ??
+      this.config?.maxEdgePx ??
+      MAX_IMAGE_EDGE_PX
+    );
   }
 
   readByteBudget(): number {
     return (
-      positiveIntFromEnv(this.env, 'OMNICODE_IMAGE_READ_BYTE_BUDGET') ?? this.config?.readByteBudget ?? READ_IMAGE_BYTE_BUDGET
+      positiveIntFromEnv(this.env, 'OMNICODE_IMAGE_READ_BYTE_BUDGET') ??
+      this.config?.readByteBudget ??
+      READ_IMAGE_BYTE_BUDGET
     );
   }
 }

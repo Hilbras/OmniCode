@@ -1,6 +1,6 @@
-import type { ContextMessage } from '#/agent/contextMemory/types';
-
 import { NOTIFY_USER_TOOL_NAME } from '@hilbras/omnicode-tools/features/notify/tools/notify-user/notify-user';
+
+import type { ContextMessage } from '#/agent/contextMemory/types';
 
 export const NOTIFY_USER_NUDGE_VARIANT = 'notify_user_nudge';
 export const NOTIFY_USER_NUDGE_THRESHOLD = 8;
@@ -31,7 +31,9 @@ function isToolCallRound(message: ContextMessage): boolean {
 }
 
 function isNudge(message: ContextMessage): boolean {
-  return message.origin?.kind === 'injection' && message.origin.variant === NOTIFY_USER_NUDGE_VARIANT;
+  return (
+    message.origin?.kind === 'injection' && message.origin.variant === NOTIFY_USER_NUDGE_VARIANT
+  );
 }
 
 export interface NotifyStreak {

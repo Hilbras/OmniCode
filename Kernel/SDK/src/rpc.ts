@@ -5,11 +5,7 @@ import type { Kaos } from '@hilbras/omnicode-kaos';
 
 import type { AgentContextData } from '#/context';
 import { ErrorCodes, OmnicodeError, makeErrorPayload } from '#/errors';
-import type {
-  ApprovalHandler,
-  Event,
-  QuestionHandler,
-} from '#/events';
+import type { ApprovalHandler, Event, QuestionHandler } from '#/events';
 import type { ExperimentalFeatureState } from '#/flag';
 import type {
   ApprovalRequest,
@@ -19,15 +15,25 @@ import type {
   ToolCallRequest,
   ToolCallResponse,
 } from '#/interaction';
+import { log } from '#/logging/index';
 import type { BeginGlobalMcpServerAuthResult } from '#/mcp';
 import type {
   AddAdditionalDirInput,
   AddAdditionalDirResult,
   AgentCommandInfo,
+  AgentProfileSummary,
   AgentRuntimeBinding,
   AppMcpServerInspection,
   BackgroundTaskInfo,
   ConfigDiagnostics,
+  ConnectorEntry,
+  GitHubConnectResult,
+  GitHubConnectionStatus,
+  GitHubDeviceFlowStart,
+  GitHubDisconnectResult,
+  VercelConnectResult,
+  VercelConnectionStatus,
+  VercelDisconnectResult,
   CreateSessionOptions,
   ExportSessionInput,
   ExportSessionResult,
@@ -221,6 +227,24 @@ export abstract class SDKRpcClientBase {
 
   abstract listWorkspaceSkills(workDir: string): Promise<readonly SkillSummary[]>;
 
+  abstract listWorkspaceAgentProfiles(workDir: string): Promise<readonly AgentProfileSummary[]>;
+
+  abstract listWorkspaceConnectors(workDir: string): Promise<readonly ConnectorEntry[]>;
+
+  abstract getGitHubStatus(): Promise<GitHubConnectionStatus>;
+
+  abstract startGitHubDeviceFlow(): Promise<GitHubDeviceFlowStart>;
+
+  abstract pollGitHubDeviceFlow(flowId: string): Promise<GitHubConnectResult>;
+
+  abstract disconnectGitHub(): Promise<GitHubDisconnectResult>;
+
+  abstract getVercelStatus(): Promise<VercelConnectionStatus>;
+
+  abstract connectVercel(token?: string): Promise<VercelConnectResult>;
+
+  abstract disconnectVercel(): Promise<VercelDisconnectResult>;
+
   abstract getWorkspaceTrustInfo(workDir: string): Promise<WorkspaceTrustInfo>;
 
   abstract trustWorkspace(workDir: string): Promise<void>;
@@ -311,7 +335,10 @@ export abstract class SDKRpcClientBase {
 
   abstract cancelMcpServerAuth(flowId: string): Promise<void>;
 
-  abstract resetGlobalMcpServerAuth(name: string, options?: { readonly cwd?: string }): Promise<void>;
+  abstract resetGlobalMcpServerAuth(
+    name: string,
+    options?: { readonly cwd?: string },
+  ): Promise<void>;
 
   abstract resetMcpServerAuth(
     locator: McpServerLocator,
@@ -498,8 +525,18 @@ export abstract class SDKRpcClientBase {
   }
 
   receiveEvent(event: Event): void {
-    for (const listener of this.eventListeners) {
-      listener(event);
+    // Each listener is isolated: one that throws must not stop the others
+    // from seeing the event, and must not take the engine's event pump down
+    // with it. A listener that unsubscribes while the event is delivered
+    // would otherwise change the set being iterated.
+    for (const listener of Array.from(this.eventListeners)) {
+      try {
+        listener(event);
+      } catch (error) {
+        log.warn('rpc event listener threw', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   }
 

@@ -1,12 +1,4 @@
 import {
-  loadRuntimeConfigSafe,
-  readConfigFile,
-  readConfigFileForUpdate,
-  writeConfigFile,
-  type OmnicodeConfig,
-  type OAuthRef,
-} from '#/config/index';
-import {
   applyManagedOmnicodeCodeConfig,
   applyManagedOmnicodeCodeLogoutConfig,
   OMNICODE_PROVIDER_NAME,
@@ -28,6 +20,14 @@ import {
   type OAuthTokenInspection,
 } from '@hilbras/omnicode-auth';
 
+import {
+  loadRuntimeConfigSafe,
+  readConfigFile,
+  readConfigFileForUpdate,
+  writeConfigFile,
+  type OmnicodeConfig,
+  type OAuthRef,
+} from '#/config/index';
 import { mapOAuthTokenError } from '#/oauth-error';
 
 export interface OmnicodeAuthSubmitFeedbackInput {

@@ -1,11 +1,6 @@
 import type { ServerResponse } from 'node:http';
 
-import {
-  ErrorCodes,
-  IMcpManagementService,
-  isError2,
-  type Scope,
-} from '@hilbras/omnicode-core';
+import { ErrorCodes, IMcpManagementService, isError2, type Scope } from '@hilbras/omnicode-core';
 import {
   McpServerHttpConfigSchema,
   McpServerSseConfigSchema,
@@ -234,7 +229,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.get(
     listServersRoute.path,
-    (listServersRoute.options),
+    listServersRoute.options,
     listServersRoute.handler as Parameters<V2McpRouteHost['get']>[2],
   );
 
@@ -260,7 +255,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.get(
     getServerRoute.path,
-    (getServerRoute.options),
+    getServerRoute.options,
     getServerRoute.handler as Parameters<V2McpRouteHost['get']>[2],
   );
 
@@ -287,7 +282,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.post(
     addServerRoute.path,
-    (addServerRoute.options),
+    addServerRoute.options,
     addServerRoute.handler as Parameters<V2McpRouteHost['post']>[2],
   );
 
@@ -318,7 +313,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.put(
     updateServerRoute.path,
-    (updateServerRoute.options),
+    updateServerRoute.options,
     updateServerRoute.handler as Parameters<V2McpRouteHost['put']>[2],
   );
 
@@ -345,7 +340,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.delete(
     removeServerRoute.path,
-    (removeServerRoute.options),
+    removeServerRoute.options,
     removeServerRoute.handler as Parameters<V2McpRouteHost['delete']>[2],
   );
 
@@ -371,7 +366,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.post(
     testServerRoute.path,
-    (testServerRoute.options),
+    testServerRoute.options,
     testServerRoute.handler as Parameters<V2McpRouteHost['post']>[2],
   );
 
@@ -399,7 +394,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.post(
     inspectServersRoute.path,
-    (inspectServersRoute.options),
+    inspectServersRoute.options,
     inspectServersRoute.handler as Parameters<V2McpRouteHost['post']>[2],
   );
 
@@ -428,7 +423,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.get(
     authStatusesRoute.path,
-    (authStatusesRoute.options),
+    authStatusesRoute.options,
     authStatusesRoute.handler as Parameters<V2McpRouteHost['get']>[2],
   );
 
@@ -455,7 +450,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.post(
     authBeginRoute.path,
-    (authBeginRoute.options),
+    authBeginRoute.options,
     authBeginRoute.handler as Parameters<V2McpRouteHost['post']>[2],
   );
 
@@ -490,7 +485,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.post(
     authCompleteRoute.path,
-    (authCompleteRoute.options),
+    authCompleteRoute.options,
     authCompleteRoute.handler as Parameters<V2McpRouteHost['post']>[2],
   );
 
@@ -515,7 +510,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.post(
     authCancelRoute.path,
-    (authCancelRoute.options),
+    authCancelRoute.options,
     authCancelRoute.handler as Parameters<V2McpRouteHost['post']>[2],
   );
 
@@ -542,7 +537,7 @@ export function registerV2McpRoutes(app: V2McpRouteHost, core: Scope): void {
   );
   app.post(
     authResetRoute.path,
-    (authResetRoute.options),
+    authResetRoute.options,
     authResetRoute.handler as Parameters<V2McpRouteHost['post']>[2],
   );
 }

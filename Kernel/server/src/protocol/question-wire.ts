@@ -1,8 +1,4 @@
-import type {
-  QuestionItem,
-  QuestionOption,
-  QuestionRequest,
-} from '@hilbras/omnicode-core';
+import type { QuestionItem, QuestionOption, QuestionRequest } from '@hilbras/omnicode-core';
 
 import type {
   QuestionItem as ProtocolQuestionItem,

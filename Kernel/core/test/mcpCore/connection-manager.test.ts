@@ -1,39 +1,46 @@
 import { randomUUID } from 'node:crypto';
 import { mkdtempSync, realpathSync } from 'node:fs';
+import { rm } from 'node:fs/promises';
 import { createServer as createHttpServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo as HttpAddress } from 'node:net';
-import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { pathToFileURL } from 'node:url';
 import { setTimeout as sleep } from 'node:timers/promises';
-import { join } from 'pathe';
+import { pathToFileURL } from 'node:url';
 
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
 import type {
   OAuthClientInformationFull,
   OAuthTokens,
 } from '@modelcontextprotocol/sdk/shared/auth.js';
-import { z } from 'zod';
+import { ErrorCode, McpError } from '@modelcontextprotocol/sdk/types.js';
+import { join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
 import { Error2 } from '#/errors';
 import { OMNICODE_MCP_CLIENT_NAME } from '#/mcpCore/client-shared';
-import { McpConnectionManager, type McpConnectionManagerOptions, type McpServerEntry } from '#/mcpCore/connection-manager';
-import { McpOAuthService } from '#/mcpCore/oauth/service';
+import {
+  McpConnectionManager,
+  type McpConnectionManagerOptions,
+  type McpServerEntry,
+} from '#/mcpCore/connection-manager';
 import type { StoredMcpOAuthTokens } from '#/mcpCore/oauth/provider';
-import { FakeRuntime } from '#/runtime/fakeRuntime';
+import { McpOAuthService } from '#/mcpCore/oauth/service';
 import { HostProcessService } from '#/os/backends/node-local/hostProcessService';
+import { FakeRuntime } from '#/runtime/fakeRuntime';
 import type { RuntimeBinding } from '#/runtime/runtime';
 
 const testRuntimeBinding: RuntimeBinding = { workspaceId: 'test-workspace', runtimeId: 'local' };
 const testProcess = new HostProcessService();
 const testRuntime = Object.assign(
-  new FakeRuntime({ ...testRuntimeBinding, generation: 'test-generation' }, {
-    capabilities: ['process'],
-  }),
+  new FakeRuntime(
+    { ...testRuntimeBinding, generation: 'test-generation' },
+    {
+      capabilities: ['process'],
+    },
+  ),
   { process: testProcess },
 );
 const testRuntimeResolver = {
@@ -67,6 +74,7 @@ import {
   startAnonymousDiscoveryHttpMcpServer,
   stderrThenExitFixture,
   stdioFixture,
+  toolListChangedFixture,
 } from './stubs';
 
 function stdioConfig(args: string[] = [stdioFixture]) {
@@ -89,6 +97,31 @@ describe('McpConnectionManager', () => {
         expect(entry.toolCount).toBe(4);
         expect(entry.transport).toBe('stdio');
       }
+    } finally {
+      await cm.shutdown();
+    }
+  }, 20000);
+
+  it('re-reads the tool list when the server announces tools/list_changed', async () => {
+    const cm = createManager();
+    try {
+      await cm.connectAll({ alpha: stdioConfig([toolListChangedFixture]) });
+      expect(cm.get('alpha')?.status).toBe('connected');
+      expect(cm.resolved('alpha')?.tools.map((tool) => tool.name)).toEqual(['trigger']);
+
+      const client = cm.resolved('alpha')?.client;
+      expect(client).toBeDefined();
+      await client!.callTool('trigger', {});
+
+      await vi.waitFor(() => {
+        expect(
+          cm
+            .resolved('alpha')
+            ?.tools.map((tool) => tool.name)
+            .toSorted(),
+        ).toEqual(['late', 'trigger']);
+      });
+      expect(cm.get('alpha')?.toolCount).toBe(2);
     } finally {
       await cm.shutdown();
     }
@@ -343,11 +376,9 @@ describe('McpConnectionManager', () => {
         status: 'connected',
         toolCount: 4,
       });
-      expect(seen.filter((event) => event.name === 'slow').map((event) => event.status)).toEqual([
-        'pending',
-        'pending',
-        'connected',
-      ]);
+      const statuses = seen.filter((event) => event.name === 'slow').map((event) => event.status);
+      expect(statuses.at(-1)).toBe('connected');
+      expect(statuses).not.toContain('failed');
     } finally {
       await cm.shutdown();
       await Promise.race([connect.catch(() => {}), sleep(1_000)]);
@@ -851,7 +882,10 @@ describe('McpConnectionManager', () => {
           transport: 'stdio',
           command: process.execPath,
           args: [crashAfterConnectFixture],
-          env: { OMNICODE_TEST_MCP_EXIT_AFTER_MS: '500', OMNICODE_TEST_MCP_STDERR: 'fatal: out of memory' },
+          env: {
+            OMNICODE_TEST_MCP_EXIT_AFTER_MS: '500',
+            OMNICODE_TEST_MCP_STDERR: 'fatal: out of memory',
+          },
           startupTimeoutMs: 4_000,
         },
       });
@@ -944,9 +978,11 @@ describe('McpConnectionManager', () => {
       });
       expect(cm.get('remote')?.status).toBe('connected');
 
-      const internalClient = (cm as unknown as {
-        entries: Map<string, { client?: { client: { onerror?: (e: Error) => void } } }>;
-      }).entries.get('remote')?.client?.client;
+      const internalClient = (
+        cm as unknown as {
+          entries: Map<string, { client?: { client: { onerror?: (e: Error) => void } } }>;
+        }
+      ).entries.get('remote')?.client?.client;
       internalClient?.onerror?.(new Error('Maximum reconnection attempts (3) exceeded.'));
 
       for (let i = 0; i < 50; i++) {

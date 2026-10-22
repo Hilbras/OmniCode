@@ -13,13 +13,17 @@
  * path here goes through the cached-only credential resolution.
  */
 
-import { createOmnicodeHarness, type OmnicodeConfig, type OmnicodeHarness } from '@hilbras/omnicode-api';
+import {
+  createOmnicodeHarness,
+  type OmnicodeConfig,
+  type OmnicodeHarness,
+} from '@hilbras/omnicode-api';
 import type { OAuthTokenInspection } from '@hilbras/omnicode-auth';
 import type { Command } from 'commander';
 
 import { createOmnicodeCodeHostIdentity } from '#/cli/version';
-import { writeProviderRecords } from '#/utils/provider-records';
 import { readSecretFromTerminal } from '#/utils/process/secret-input';
+import { writeProviderRecords } from '#/utils/provider-records';
 
 import { resolveTestCredential, type ProviderDeps, type TestCredential } from './provider';
 
@@ -102,13 +106,21 @@ async function collectRows(deps: AuthDeps, harness: OmnicodeHarness): Promise<Au
     if (provider === undefined) continue;
     if (provider.oauth === undefined) {
       const credential = await resolveTestCredential(deps, harness, id, provider, 'cached');
-      rows.push({ providerId: id, state: stateFromCredential(credential), detail: credential.detail });
+      rows.push({
+        providerId: id,
+        state: stateFromCredential(credential),
+        detail: credential.detail,
+      });
       continue;
     }
     try {
       rows.push(oauthRow(id, await harness.auth.inspectToken(id, provider.oauth), now));
     } catch (error) {
-      rows.push({ providerId: id, state: 'missing', detail: `MISSING (token inspection failed: ${errorMessage(error)})` });
+      rows.push({
+        providerId: id,
+        state: 'missing',
+        detail: `MISSING (token inspection failed: ${errorMessage(error)})`,
+      });
     }
   }
   return rows;
@@ -116,7 +128,9 @@ async function collectRows(deps: AuthDeps, harness: OmnicodeHarness): Promise<Au
 
 function printTable(deps: AuthDeps, rows: readonly AuthRow[]): void {
   if (rows.length === 0) {
-    deps.stdout.write('No providers are configured. Add one with `omnicode provider add-builtin` or `omnicode provider add-manual`.\n');
+    deps.stdout.write(
+      'No providers are configured. Add one with `omnicode provider add-builtin` or `omnicode provider add-manual`.\n',
+    );
     return;
   }
   const labelWidth = Math.max(...rows.map((row) => row.providerId.length));
@@ -200,7 +214,9 @@ export async function handleAuthLogin(deps: AuthDeps, providerId: string): Promi
     return;
   }
 
-  deps.stdout.write(`Enter the API key for "${id}" (input is hidden, and never stored in shell history):\n`);
+  deps.stdout.write(
+    `Enter the API key for "${id}" (input is hidden, and never stored in shell history):\n`,
+  );
   const key = await deps.readSecret(`API key for ${id}: `);
   if (key === undefined) {
     deps.stderr.write('Cancelled. No credential was stored.\n');
@@ -269,7 +285,9 @@ export async function handleAuthLogout(deps: AuthDeps, providerId: string): Prom
   // fields deleted above would survive it and the command would report success
   // with the secret still sitting in config.toml.
   await writeProviderRecords(harness, config.providers);
-  deps.stdout.write(`Cleared ${cleared.join(', ')} for "${id}". The provider itself is still configured.\n`);
+  deps.stdout.write(
+    `Cleared ${cleared.join(', ')} for "${id}". The provider itself is still configured.\n`,
+  );
 }
 
 export async function handleAuthRefresh(deps: AuthDeps, providerId: string): Promise<void> {
@@ -293,7 +311,9 @@ export async function handleAuthRefresh(deps: AuthDeps, providerId: string): Pro
 
   const result = await harness.auth.refresh(id, provider.oauth);
   if (result.token.state !== 'valid') {
-    deps.stderr.write(`Could not refresh the credential for "${id}" (state: ${result.token.state}). Run \`omnicode auth login\`.\n`);
+    deps.stderr.write(
+      `Could not refresh the credential for "${id}" (state: ${result.token.state}). Run \`omnicode auth login\`.\n`,
+    );
     deps.exit(EXIT_FAILURE);
     return;
   }
@@ -303,9 +323,7 @@ export async function handleAuthRefresh(deps: AuthDeps, providerId: string): Pro
 }
 
 export function registerAuthCommand(parent: Command, deps?: Partial<AuthDeps>): void {
-  const auth = parent
-    .command('auth')
-    .description('Inspect and manage provider credentials.');
+  const auth = parent.command('auth').description('Inspect and manage provider credentials.');
 
   const resolved = (overrides: Partial<AuthDeps> = {}): ResolvedAuthDeps =>
     resolveDeps({ ...deps, ...overrides });
@@ -315,15 +333,19 @@ export function registerAuthCommand(parent: Command, deps?: Partial<AuthDeps>): 
     .description('List every configured provider and whether it has a usable credential.')
     .option('--json', 'Emit machine-readable JSON.', false)
     .action(async (options: { json?: boolean }) => {
-      await runAction(resolved(), (runDeps) => handleAuthList(runDeps, { json: options.json === true }));
+      await runAction(resolved(), (runDeps) =>
+        handleAuthList(runDeps, { json: options.json === true }),
+      );
     });
 
   auth
     .command('status <providerId>')
-    .description('Report one provider\'s credential state.')
+    .description("Report one provider's credential state.")
     .option('--json', 'Emit machine-readable JSON.', false)
     .action(async (providerId: string, options: { json?: boolean }) => {
-      await runAction(resolved(), (runDeps) => handleAuthStatus(runDeps, providerId, { json: options.json === true }));
+      await runAction(resolved(), (runDeps) =>
+        handleAuthStatus(runDeps, providerId, { json: options.json === true }),
+      );
     });
 
   auth
@@ -335,7 +357,7 @@ export function registerAuthCommand(parent: Command, deps?: Partial<AuthDeps>): 
 
   auth
     .command('logout <providerId>')
-    .description('Clear a provider\'s stored credential, leaving the provider configured.')
+    .description("Clear a provider's stored credential, leaving the provider configured.")
     .action(async (providerId: string) => {
       await runAction(resolved(), (runDeps) => handleAuthLogout(runDeps, providerId));
     });
@@ -386,7 +408,8 @@ function resolveDeps(overrides: Partial<AuthDeps> = {}): ResolvedAuthDeps {
     exit: overrides.exit ?? ((code: number) => process.exit(code)),
     readSecret:
       overrides.readSecret ??
-      ((prompt: string) => readSecretFromTerminal({ prompt, input: process.stdin, output: process.stdout })),
+      ((prompt: string) =>
+        readSecretFromTerminal({ prompt, input: process.stdin, output: process.stdout })),
     close: async () => {
       await harness?.close();
     },

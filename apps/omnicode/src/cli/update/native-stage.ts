@@ -10,7 +10,18 @@
 
 import { createHash } from 'node:crypto';
 import { createReadStream } from 'node:fs';
-import { chmod, mkdir, open, readFile, readdir, rename, rm, rmdir, stat, unlink } from 'node:fs/promises';
+import {
+  chmod,
+  mkdir,
+  open,
+  readFile,
+  readdir,
+  rename,
+  rm,
+  rmdir,
+  stat,
+  unlink,
+} from 'node:fs/promises';
 import { basename, join } from 'node:path';
 import { createZstdDecompress } from 'node:zlib';
 
@@ -202,11 +213,7 @@ function isUpdaterOwnedStagingFile(entry: string): boolean {
   // version (.<pid>.<epoch-ms>.<n>, or the older .<pid>.<n>) — try with and
   // without stripping it (the infix is dot-numeric, which is ambiguous with
   // prerelease suffixes, so every candidate is checked).
-  const candidates = [
-    name,
-    name.replace(/\.\d+\.\d+$/, ''),
-    name.replace(/\.\d+\.\d+\.\d+$/, ''),
-  ];
+  const candidates = [name, name.replace(/\.\d+\.\d+$/, ''), name.replace(/\.\d+\.\d+\.\d+$/, '')];
   return candidates.some((candidate) => valid(candidate) !== null);
 }
 
@@ -488,9 +495,10 @@ export async function stageNativeUpdate(
   try {
     const manifest = await fetchNativeReleaseManifest(options.version, fetchImpl);
     const entry = selectPlatformEntry(manifest, platform, arch);
-    const compressed = entry.zstd === undefined
-      ? entry.compressed
-      : { filename: entry.zstd.file, checksum: entry.zstd.sha256 };
+    const compressed =
+      entry.zstd === undefined
+        ? entry.compressed
+        : { filename: entry.zstd.file, checksum: entry.zstd.sha256 };
     // Prefer the zstd-compressed artifact when the manifest carries one and
     // the runtime can inflate it (~4x smaller than the bare binary). Any
     // failure in the compressed path falls back to the bare download below.

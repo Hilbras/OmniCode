@@ -1,57 +1,58 @@
 import * as posixPath from 'node:path/posix';
 import { Readable } from 'node:stream';
 
-import { UNKNOWN_CAPABILITY, type ModelCapability } from '#/llm-adapter/contract/capability';
-import type { ContentPart } from '#human/llm/message';
-import { VideoUploadUnsupportedError } from '#/llm-adapter/contract/errors';
 import { Jimp } from 'jimp';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { Emitter } from '#/_base/event';
-import { OrderedHookSlot } from '#/hooks';
-import type { IEventDispatcher } from '#/state/eventDispatcher';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
 } from '#/_base/errors/unexpectedError';
-import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
-import type { IHostEnvironment } from '#/os/interface/hostEnvironment';
+import { Emitter } from '#/_base/event';
+import { sniffImageDimensions } from '#/agent/media/file-type';
+import {
+  MAX_IMAGE_DECODE_BYTES,
+  setConfiguredReadImageByteBudget,
+} from '#/agent/media/image-compress';
+import { AgentMediaToolsRegistrar } from '#/agent/media/mediaToolsRegistrar';
+import { createVideoUploader, registerMediaTools } from '#/agent/media/registerMediaTools';
+import type { ISessionMediaStore } from '#/agent/media/sessionMediaStore';
+import { SessionMediaStoreService } from '#/agent/media/sessionMediaStoreService';
+import type { IAgentProfileService } from '#/agent/profile/profile';
 import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
-import type { Runtime } from '#/runtime/runtime';
-import type { ITelemetryService, TelemetryProperties } from '#/app/telemetry/telemetry';
+import { AgentStateService } from '#/agent/state/agentStateService';
+import { AgentToolRegistryService } from '#/agent/toolRegistry/toolRegistryService';
 import {
   ReadMediaFileInputSchema,
   type ReadMediaFileInput,
   type VideoUploader,
 } from '#/agent/tools/read-media-file/read-media-file';
 import { ReadMediaFileTool } from '#/agent/tools/read-media-file/readMediaFileTool';
-import {
-  MAX_IMAGE_DECODE_BYTES,
-  setConfiguredReadImageByteBudget,
-} from '#/agent/media/image-compress';
-import { createVideoUploader, registerMediaTools } from '#/agent/media/registerMediaTools';
-import { AgentMediaToolsRegistrar } from '#/agent/media/mediaToolsRegistrar';
-import type { ISessionMediaStore } from '#/agent/media/sessionMediaStore';
-import { SessionMediaStoreService } from '#/agent/media/sessionMediaStoreService';
+import { AgentStatusUpdated } from '#/agent/usage/usageEvents';
+import { EventBusService } from '#/app/event/eventBusService';
+import type { ITelemetryService, TelemetryProperties } from '#/app/telemetry/telemetry';
+import { OrderedHookSlot } from '#/hooks';
+import { UNKNOWN_CAPABILITY, type ModelCapability } from '#/llm-adapter/contract/capability';
+import { VideoUploadUnsupportedError } from '#/llm-adapter/contract/errors';
+import type { IModelCatalog } from '#/llm-adapter/model/catalog';
+import type { ModelRequester } from '#/llm-adapter/model/model-requester';
+import type { IHostEnvironment } from '#/os/interface/hostEnvironment';
+import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
 import { InMemoryStorageService } from '#/persistence/backends/memory/inMemoryStorageService';
 import { JsonAtomicDocumentStore } from '#/persistence/backends/node-fs/atomicDocumentStore';
+import type { Runtime } from '#/runtime/runtime';
 import { makeSessionContext } from '#/session/sessionContext/sessionContext';
-import { AgentStateService } from '#/agent/state/agentStateService';
-import { AgentToolRegistryService } from '#/agent/toolRegistry/toolRegistryService';
+import type { ISessionWorkspaceContext } from '#/session/workspaceContext/workspaceContext';
+import type { IEventDispatcher } from '#/state/eventDispatcher';
+import type { WorkspaceConfig } from '#/tool/path-access';
 import {
   ToolAccesses,
   type ExecutableToolContext,
   type ExecutableToolResult,
   type ToolExecution,
 } from '#/tool/toolContract';
-import { EventBusService } from '#/app/event/eventBusService';
-import { AgentStatusUpdated } from '#/agent/usage/usageEvents';
-import type { IAgentProfileService } from '#/agent/profile/profile';
-import type { IModelCatalog } from '#/llm-adapter/model/catalog';
-import type { ModelRequester } from '#/llm-adapter/model/model-requester';
-import type { ISessionWorkspaceContext } from '#/session/workspaceContext/workspaceContext';
-import type { WorkspaceConfig } from '#/tool/path-access';
-import { sniffImageDimensions } from '#/agent/media/file-type';
+import type { ContentPart } from '#human/llm/message';
+
 import { stubAgentContext } from '../../agentContext/stubs';
 
 const WORKSPACE: WorkspaceConfig = { workspaceDir: '/workspace', additionalDirs: [] };
@@ -178,13 +179,18 @@ function createTestEnv(): IHostEnvironment {
   };
 }
 
-function runtimeFor(fs: IHostFileSystem, env: IHostEnvironment = createTestEnv()): IAgentRuntimeService {
+function runtimeFor(
+  fs: IHostFileSystem,
+  env: IHostEnvironment = createTestEnv(),
+): IAgentRuntimeService {
   const runtime = {
     identity: { workspaceId: 'workspace', runtimeId: 'local', generation: 'test' },
     capabilities: new Set(['fs'] as const),
     environment: env,
     path: posixPath,
-    workspace: { mapRoots: (roots: { workDir: string; additionalDirs?: readonly string[] }) => roots },
+    workspace: {
+      mapRoots: (roots: { workDir: string; additionalDirs?: readonly string[] }) => roots,
+    },
     fs,
     status: 'ready',
     onDidChangeStatus: () => ({ dispose: () => {} }),
@@ -193,7 +199,8 @@ function runtimeFor(fs: IHostFileSystem, env: IHostEnvironment = createTestEnv()
   return {
     _serviceBrand: undefined,
     onDidChange: () => ({ dispose: () => {} }),
-    isAvailable: (required = []) => required.every((capability) => runtime.capabilities.has(capability)),
+    isAvailable: (required = []) =>
+      required.every((capability) => runtime.capabilities.has(capability)),
     inspect: () => runtime,
     acquire: () => ({
       runtime,
@@ -254,7 +261,9 @@ describe('ReadMediaFileTool', () => {
     const tool = makeTool({ '/workspace/sample.png': { data: pngBuffer() } });
 
     expect(tool.name).toBe('ReadMediaFile');
-    expect(ReadMediaFileInputSchema.safeParse({ path: '/workspace/sample.png' }).success).toBe(true);
+    expect(ReadMediaFileInputSchema.safeParse({ path: '/workspace/sample.png' }).success).toBe(
+      true,
+    );
     expect(
       ReadMediaFileInputSchema.safeParse({
         path: '/workspace/sample.png',
@@ -381,10 +390,9 @@ describe('ReadMediaFileTool', () => {
   it('returns an actionable error when compression cannot meet the byte budget', async () => {
     const oversized = Buffer.concat([pngBuffer(), Buffer.alloc(256 * 1024, 1)]);
 
-    const result = await execute(
-      makeTool({ '/workspace/oversized.png': { data: oversized } }),
-      { path: '/workspace/oversized.png' },
-    );
+    const result = await execute(makeTool({ '/workspace/oversized.png': { data: oversized } }), {
+      path: '/workspace/oversized.png',
+    });
 
     expect(result).toEqual({
       isError: true,
@@ -724,7 +732,9 @@ describe('ReadMediaFileTool', () => {
   });
 
   it('falls back to an inline base64 video part when the upload fails', async () => {
-    const videoUploader = vi.fn<VideoUploader>().mockRejectedValue(new Error('404 route not found'));
+    const videoUploader = vi
+      .fn<VideoUploader>()
+      .mockRejectedValue(new Error('404 route not found'));
     const result = await execute(
       makeTool({ '/workspace/clip.mp4': { data: mp4Buffer() } }, capabilities(), videoUploader),
       { path: '/workspace/clip.mp4' },
@@ -955,7 +965,16 @@ describe('AgentMediaToolsRegistrar', () => {
     const healAlias = (alias: string): void => {
       brokenAliases.delete(alias);
     };
-    return { registry, registrar, state, onDidRestore, bindModel, setRuntimeAvailable, breakAlias, healAlias };
+    return {
+      registry,
+      registrar,
+      state,
+      onDidRestore,
+      bindModel,
+      setRuntimeAvailable,
+      breakAlias,
+      healAlias,
+    };
   }
 
   it('registers nothing until a media-capable model binds, then registers ReadMediaFile', () => {
@@ -981,8 +1000,8 @@ describe('AgentMediaToolsRegistrar', () => {
 
   it('hands the bound model provider type to ReadMediaFile', async () => {
     const heic = Buffer.from([
-      0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
-      0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00,
+      0x00, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
     ]);
     const { registry, bindModel } = createRegistrarHarness(
       { '/workspace/photo.heic': { data: heic } },
@@ -1000,8 +1019,8 @@ describe('AgentMediaToolsRegistrar', () => {
 
   it('rebuilds ReadMediaFile when a reload changes the provider type behind the same alias', async () => {
     const heic = Buffer.from([
-      0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
-      0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00,
+      0x00, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
     ]);
     const providerTypes: Record<string, string> = {};
     const { registry, bindModel } = createRegistrarHarness(
@@ -1042,12 +1061,27 @@ describe('AgentMediaToolsRegistrar', () => {
 
   it('keeps session-image reads available while the workspace runtime is unavailable', async () => {
     const storage = new InMemoryStorageService();
-    const store = new SessionMediaStoreService(makeSessionContext({
-      sessionId: 'session', workspaceId: 'workspace', cwd: '/workspace',
-      sessionDir: '/session', sessionScope: 'session',
-    }), storage, new JsonAtomicDocumentStore(storage));
-    const bytes = Buffer.from(await new Jimp({ width: 32, height: 32, color: 0x3366ccff }).getBuffer('image/png'));
-    await store.materialize({ fileId: 'f_picture', name: 'picture.png', mimeType: 'image/png', size: bytes.length, stream: () => Readable.from([bytes]) });
+    const store = new SessionMediaStoreService(
+      makeSessionContext({
+        sessionId: 'session',
+        workspaceId: 'workspace',
+        cwd: '/workspace',
+        sessionDir: '/session',
+        sessionScope: 'session',
+      }),
+      storage,
+      new JsonAtomicDocumentStore(storage),
+    );
+    const bytes = Buffer.from(
+      await new Jimp({ width: 32, height: 32, color: 0x3366ccff }).getBuffer('image/png'),
+    );
+    await store.materialize({
+      fileId: 'f_picture',
+      name: 'picture.png',
+      mimeType: 'image/png',
+      size: bytes.length,
+      stream: () => Readable.from([bytes]),
+    });
     const { registry, bindModel, setRuntimeAvailable } = createRegistrarHarness({}, {}, store);
     bindModel('vision-model', capabilities({ image_in: true, video_in: false }));
     setRuntimeAvailable(false);
@@ -1055,7 +1089,11 @@ describe('AgentMediaToolsRegistrar', () => {
     expect(tool).toBeDefined();
     const execution = await tool!.resolveExecution({ path: 'omnicode-file://f_picture' });
     if (execution.isError === true) throw new Error('expected runnable attachment read');
-    const result = await execution.execute({ turnId: 1, toolCallId: 'image', signal: new AbortController().signal });
+    const result = await execution.execute({
+      turnId: 1,
+      toolCallId: 'image',
+      signal: new AbortController().signal,
+    });
     expect(result.isError).not.toBe(true);
     expect(outputParts(result).some((part) => part.type === 'image_url')).toBe(true);
   });
@@ -1118,7 +1156,9 @@ describe('createVideoUploader', () => {
   };
   const input = { data: new Uint8Array(2048), mimeType: 'video/mp4', filename: 'clip.mp4' };
 
-  function modelWith(uploadVideo: ModelRequester['uploadVideo']): Pick<ModelRequester, 'uploadVideo'> {
+  function modelWith(
+    uploadVideo: ModelRequester['uploadVideo'],
+  ): Pick<ModelRequester, 'uploadVideo'> {
     return { uploadVideo } as Pick<ModelRequester, 'uploadVideo'>;
   }
 
@@ -1185,8 +1225,8 @@ describe('createVideoUploader', () => {
 
   function heicBytes(): Buffer {
     return Buffer.from([
-      0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
-      0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
+      0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00,
+      0x00, 0x68, 0x65, 0x69, 0x63, 0x00, 0x00, 0x00, 0x00,
     ]);
   }
 
@@ -1212,9 +1252,12 @@ describe('createVideoUploader', () => {
   }
 
   it('refuses every format outside the provider-accepted set, not just HEIC', async () => {
-    const result = await execute(makeTool({ '/workspace/photo.avif': { data: ftypBytes('avif') } }), {
-      path: '/workspace/photo.avif',
-    });
+    const result = await execute(
+      makeTool({ '/workspace/photo.avif': { data: ftypBytes('avif') } }),
+      {
+        path: '/workspace/photo.avif',
+      },
+    );
 
     expect(result.isError).toBe(true);
     expect(result.output).toContain('image/avif');

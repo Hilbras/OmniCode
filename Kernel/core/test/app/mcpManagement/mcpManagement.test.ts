@@ -3,19 +3,16 @@ import { mkdir, rm, writeFile } from 'node:fs/promises';
 import { createServer as createHttpServer, type Server as HttpServer } from 'node:http';
 import type { AddressInfo as HttpAddress } from 'node:net';
 import { tmpdir } from 'node:os';
-import { join } from 'pathe';
 
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
+import { join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import { DisposableStore } from '#/_base/di/lifecycle';
 import { createServices } from '#/_base/di/test';
 import { ILogService } from '#/_base/log/log';
+import { IAgentIdentity, type AgentIdentitySnapshot } from '#/app/agentIdentity/agentIdentity';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
-import {
-  IAgentIdentity,
-  type AgentIdentitySnapshot,
-} from '#/app/agentIdentity/agentIdentity';
 import { IConfigService } from '#/app/config/config';
 import { IMcpConfigStore, McpConfigStore } from '#/app/mcpConfig/configStore';
 import { IMcpOAuthService } from '#/app/mcpConfig/oauthService';
@@ -95,8 +92,8 @@ describe('McpManagementService', () => {
     identitySnapshot = stubAgentIdentity({ slug: 'test-agent' }).current();
     identityReady = Promise.resolve(identitySnapshot);
     trusted = true;
-    getOrCreate = vi.fn<IWorkspaceInstanceManager['getOrCreate']>(async () =>
-      ({ id: 'test-workspace' }) as unknown as WorkspaceInstance,
+    getOrCreate = vi.fn<IWorkspaceInstanceManager['getOrCreate']>(
+      async () => ({ id: 'test-workspace' }) as unknown as WorkspaceInstance,
     );
     findContaining = vi.fn<IWorkspaceInstanceManager['findContaining']>(() => undefined);
     const hostProcess = new HostProcessService();
@@ -143,7 +140,7 @@ describe('McpManagementService', () => {
           get ready() {
             return configReady;
           },
-          get: (<T = unknown,>(_domain: string): T => undefined as T) as IConfigService['get'],
+          get: (<T = unknown>(_domain: string): T => undefined as T) as IConfigService['get'],
         });
         reg.defineInstance(IAgentIdentity, {
           _serviceBrand: undefined,
@@ -339,8 +336,15 @@ describe('McpManagementService', () => {
 
       const updated = await management.updateServer(stdioServer('alpha', 'node'));
       expect(updated).toHaveLength(1);
-      expect(updated[0]?.config).toEqual({ transport: 'stdio', command: 'node' });
-      await expect(store.get('alpha')).resolves.toMatchObject({ command: 'node' });
+      expect(updated[0]?.config).toEqual({
+        transport: 'stdio',
+        command: 'node',
+        env: { TOKEN: 'abc' },
+      });
+      await expect(store.get('alpha')).resolves.toMatchObject({
+        command: 'node',
+        env: { TOKEN: 'abc' },
+      });
 
       const remaining = await management.removeServer('alpha');
       expect(remaining).toEqual([]);
@@ -1367,15 +1371,9 @@ describe('McpManagementService', () => {
       );
       const invalidate = vi.spyOn(oauth, 'invalidate').mockResolvedValue(undefined);
 
-      await management.resetServerAuth(
-        { source: 'global', name: 'oauthable' },
-        { cwd: project },
-      );
+      await management.resetServerAuth({ source: 'global', name: 'oauthable' }, { cwd: project });
 
-      expect(invalidate).toHaveBeenCalledWith(
-        'oauthable',
-        'https://project.example.test/mcp',
-      );
+      expect(invalidate).toHaveBeenCalledWith('oauthable', 'https://project.example.test/mcp');
     });
 
     it('rejects begin for entries that cannot run an OAuth flow', async () => {
@@ -1538,10 +1536,7 @@ describe('McpManagementService', () => {
 
       const first = await management.beginServerAuth({ source: 'global', name: 'oauthable' });
       const second = await management.beginServerAuth({ source: 'global', name: 'oauthable' });
-      if (
-        first.status !== 'authorization-required' ||
-        second.status !== 'authorization-required'
-      ) {
+      if (first.status !== 'authorization-required' || second.status !== 'authorization-required') {
         throw new Error('expected both flows to require authorization');
       }
       expect(second.authorizationUrl).toBe(first.authorizationUrl);
@@ -1620,7 +1615,9 @@ describe('McpManagementService', () => {
           message: 'Unknown MCP OAuth flow: unknown-flow',
         },
       );
-      await expect(management.cancelServerAuth({ flowId: 'unknown-flow' })).resolves.toBeUndefined();
+      await expect(
+        management.cancelServerAuth({ flowId: 'unknown-flow' }),
+      ).resolves.toBeUndefined();
     });
 
     it('complete rejects a timeoutMs outside the setTimeout range', async () => {
@@ -1654,9 +1651,9 @@ describe('McpManagementService', () => {
 
       await management.resetServerAuth({ source: 'global', name: 'oauthable' });
 
-      expect((await oauth.tokenState('oauthable', 'https://oauth.example.test/mcp')).hasTokens).toBe(
-        false,
-      );
+      expect(
+        (await oauth.tokenState('oauthable', 'https://oauth.example.test/mcp')).hasTokens,
+      ).toBe(false);
       expect(events).toContainEqual({
         type: 'tokens-invalidated',
         serverName: 'oauthable',

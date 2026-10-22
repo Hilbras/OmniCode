@@ -1,7 +1,15 @@
-import { z } from 'zod';
-
+import type {
+  GoalActor,
+  GoalBudgetLimits,
+  GoalBudgetReport,
+  GoalChange,
+  GoalChangeKind,
+  GoalChangeStats,
+  GoalSnapshot,
+  GoalStatus,
+  GoalToolResult,
+} from '@hilbras/omnicode-core';
 import { isoDateTimeSchema } from '@hilbras/omnicode-core/_base/utils/isoDateTime';
-import type { TurnEndReason } from '@hilbras/omnicode-core/agent/loop/turnEvents';
 import type {
   BundledSkillActivation,
   CompactionSummaryOrigin,
@@ -18,25 +26,13 @@ import type {
   TaskOrigin,
   UserPromptOrigin,
 } from '@hilbras/omnicode-core/agent/contextMemory/types';
-import { messageContentSchema } from './message';
-import type { HookResultPayload } from '@hilbras/omnicode-core/features/externalHooks/agent/agentExternalHooksService';
 import type {
   CompactionBlockedPayload,
   CompactionCompletedPayload,
   CompactionStartedPayload,
 } from '@hilbras/omnicode-core/agent/fullCompaction/compactionOps';
 import type { CompactionResult } from '@hilbras/omnicode-core/agent/fullCompaction/types';
-import type {
-  GoalActor,
-  GoalBudgetLimits,
-  GoalBudgetReport,
-  GoalChange,
-  GoalChangeKind,
-  GoalChangeStats,
-  GoalSnapshot,
-  GoalStatus,
-  GoalToolResult,
-} from '@hilbras/omnicode-core';
+import type { TurnEndReason } from '@hilbras/omnicode-core/agent/loop/turnEvents';
 import type {
   AssistantDeltaPayload,
   ThinkingDeltaPayload,
@@ -45,6 +41,7 @@ import type {
   TurnStepInterruptedPayload,
   TurnStepStartedPayload,
 } from '@hilbras/omnicode-core/agent/loop/turnEvents';
+import type { TurnStepRetryingPayload } from '@hilbras/omnicode-core/agent/loop/turnEvents';
 import type {
   McpServerStatusEventPayload,
   McpServerStatusPayload,
@@ -53,15 +50,13 @@ import type {
 } from '@hilbras/omnicode-core/agent/mcp/mcpEvents';
 import type { McpOAuthAuthorizationUrlUpdateData } from '@hilbras/omnicode-core/agent/mcp/tools/auth';
 import type { PermissionMode } from '@hilbras/omnicode-core/agent/permissionPolicy/types';
-import type { WarningEvent } from '@hilbras/omnicode-core/agent/profile/profileService';
 import type { PluginCommandActivatedPayload } from '@hilbras/omnicode-core/agent/pluginCommand/pluginCommand';
+import type { WarningEvent } from '@hilbras/omnicode-core/agent/profile/profileService';
 import type {
   ShellCompletedPayload,
   ShellOutputPayload,
   ShellStartedPayload,
 } from '@hilbras/omnicode-core/agent/shellCommand/shellCommandService';
-
-import type { TurnStepRetryingPayload } from '@hilbras/omnicode-core/agent/loop/turnEvents';
 import type { AgentTaskStatus } from '@hilbras/omnicode-core/agent/task/types';
 import type {
   ToolCallStartedPayload,
@@ -69,6 +64,8 @@ import type {
   ToolResultEventPayload,
 } from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
 import type { UsageStatus } from '@hilbras/omnicode-core/agent/usage/usage';
+import type { HookResultPayload } from '@hilbras/omnicode-core/features/externalHooks/agent/agentExternalHooksService';
+import type { SubagentSuspendedPayload } from '@hilbras/omnicode-core/features/swarm/session/sessionSwarmService';
 import type { FinishReason } from '@hilbras/omnicode-core/human/llm/finish-reason';
 import type { TokenUsage } from '@hilbras/omnicode-core/human/llm/usage';
 import type {
@@ -78,10 +75,11 @@ import type {
   SubagentSpawnedPayload,
   SubagentStartedPayload,
 } from '@hilbras/omnicode-core/session/subagent/mirrorAgentRun';
-import type { SubagentSuspendedPayload } from '@hilbras/omnicode-core/features/swarm/session/sessionSwarmService';
 import type { ToolUpdate } from '@hilbras/omnicode-core/tool/toolContract';
+import { z } from 'zod';
 
 import { ToolInputDisplaySchema } from './display';
+import { messageContentSchema } from './message';
 import { configResponseSchema } from './rest-config';
 import { sessionPendingInteractionSchema, sessionSchema } from './session';
 import { workspaceSchema } from './workspace';
@@ -108,9 +106,18 @@ export const usageStatusSchema = z.object({
   total: tokenUsageSchema.optional(),
 }) satisfies z.ZodType<UsageStatus>;
 
-export const permissionModeSchema = z.enum(['manual', 'yolo', 'auto']) satisfies z.ZodType<PermissionMode>;
+export const permissionModeSchema = z.enum([
+  'manual',
+  'yolo',
+  'auto',
+]) satisfies z.ZodType<PermissionMode>;
 
-export const skillSourceSchema = z.enum(['project', 'user', 'extra', 'builtin']) satisfies z.ZodType<SkillSource>;
+export const skillSourceSchema = z.enum([
+  'project',
+  'user',
+  'extra',
+  'builtin',
+]) satisfies z.ZodType<SkillSource>;
 
 export const bundledSkillActivationSchema = z.object({
   activationId: z.string(),
@@ -230,9 +237,19 @@ export const promptOriginSchema = z.discriminatedUnion('kind', [
   retryOriginSchema,
 ]);
 
-export const goalStatusSchema = z.enum(['active', 'paused', 'blocked', 'complete']) satisfies z.ZodType<GoalStatus>;
+export const goalStatusSchema = z.enum([
+  'active',
+  'paused',
+  'blocked',
+  'complete',
+]) satisfies z.ZodType<GoalStatus>;
 
-export const goalActorSchema = z.enum(['user', 'model', 'runtime', 'system']) satisfies z.ZodType<GoalActor>;
+export const goalActorSchema = z.enum([
+  'user',
+  'model',
+  'runtime',
+  'system',
+]) satisfies z.ZodType<GoalActor>;
 
 export const goalBudgetLimitsSchema = z.object({
   tokenBudget: z.number().optional(),
@@ -275,7 +292,10 @@ export const goalChangeStatsSchema = z.object({
   wallClockMs: z.number(),
 }) satisfies z.ZodType<GoalChangeStats>;
 
-export const goalChangeKindSchema = z.enum(['lifecycle', 'completion']) satisfies z.ZodType<GoalChangeKind>;
+export const goalChangeKindSchema = z.enum([
+  'lifecycle',
+  'completion',
+]) satisfies z.ZodType<GoalChangeKind>;
 
 export const goalChangeSchema = z.object({
   kind: goalChangeKindSchema,
@@ -478,7 +498,12 @@ export const mcpOAuthAuthorizationUrlUpdateDataSchema = z.object({
   expiresAt: z.number().optional(),
 }) satisfies z.ZodType<McpOAuthAuthorizationUrlUpdateData>;
 
-export const turnEndReasonSchema = z.enum(['completed', 'cancelled', 'failed', 'blocked']) satisfies z.ZodType<TurnEndReason>;
+export const turnEndReasonSchema = z.enum([
+  'completed',
+  'cancelled',
+  'failed',
+  'blocked',
+]) satisfies z.ZodType<TurnEndReason>;
 
 export const agentPhaseSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('idle') }),

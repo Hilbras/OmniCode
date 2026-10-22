@@ -6,10 +6,10 @@
  *   Line 2: context: N% (tokens/max)
  */
 
+import { effectiveModelAlias } from '@hilbras/omnicode-api';
 import type { Component } from '@hilbras/omnicode-tui';
 import { truncateToWidth, visibleWidth } from '@hilbras/omnicode-tui';
 import chalk from 'chalk';
-import { effectiveModelAlias } from '@hilbras/omnicode-api';
 
 import { ALL_TIPS, type ToolbarTip } from '#/tui/constant/tips';
 import { isRainbowDancing, renderDanceFooterModel } from '#/tui/easter-eggs/dance';
@@ -17,10 +17,7 @@ import { currentTheme } from '#/tui/theme';
 import type { ColorPalette } from '#/tui/theme/colors';
 import type { AppState } from '#/tui/types';
 import { PERMISSION_MODE_DISPLAY_NAMES } from '#/tui/utils/permission-mode';
-import {
-  StatusLineCommandRunner,
-  type StatusLinePayload,
-} from '#/tui/utils/status-line-command';
+import { StatusLineCommandRunner, type StatusLinePayload } from '#/tui/utils/status-line-command';
 import {
   createGitStatusCache,
   formatGitBadgeBase,
@@ -28,11 +25,7 @@ import {
   type GitStatus,
   type GitStatusCache,
 } from '#/utils/git/git-status';
-import {
-  formatTokenCount,
-  usagePercent,
-  usagePercentFromRatio,
-} from '#/utils/usage/usage-format';
+import { formatTokenCount, usagePercent, usagePercentFromRatio } from '#/utils/usage/usage-format';
 
 /** What the footer's fixed ctrl+o hint offers: expand collapsed tool output, or collapse it again. */
 export type ToolOutputExpandHint = 'expand' | 'collapse';
@@ -413,7 +406,8 @@ export class FooterComponent implements Component {
     for (const tip of tips) {
       if (visibleWidth(`${shortcut}${TIP_SEPARATOR}${tip}`) <= remaining) {
         return (
-          chalk.hex(colors.textDim)(shortcut) + chalk.hex(colors.textMuted)(`${TIP_SEPARATOR}${tip}`)
+          chalk.hex(colors.textDim)(shortcut) +
+          chalk.hex(colors.textMuted)(`${TIP_SEPARATOR}${tip}`)
         );
       }
     }
@@ -443,8 +437,10 @@ export class FooterComponent implements Component {
     }
 
     const modes: string[] = [];
-    if (state.permissionMode === 'auto') modes.push(chalk.hex(colors.warning).bold(PERMISSION_MODE_DISPLAY_NAMES.auto));
-    if (state.permissionMode === 'yolo') modes.push(chalk.hex(colors.warning).bold(PERMISSION_MODE_DISPLAY_NAMES.yolo));
+    if (state.permissionMode === 'auto')
+      modes.push(chalk.hex(colors.warning).bold(PERMISSION_MODE_DISPLAY_NAMES.auto));
+    if (state.permissionMode === 'yolo')
+      modes.push(chalk.hex(colors.warning).bold(PERMISSION_MODE_DISPLAY_NAMES.yolo));
     if (state.planMode) modes.push(chalk.hex(colors.primary).bold('plan'));
     if (state.swarmMode) modes.push(chalk.hex(colors.accent).bold('swarm'));
     if (state.towerMode) modes.push(chalk.hex(colors.accent).bold('tower'));

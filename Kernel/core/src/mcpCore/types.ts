@@ -25,10 +25,17 @@ export interface MCPToolResult {
   _meta?: Record<string, unknown>;
 }
 
+export interface MCPToolAnnotations {
+  readonly readOnlyHint?: boolean;
+  readonly destructiveHint?: boolean;
+  readonly idempotentHint?: boolean;
+}
+
 export interface MCPToolDefinition {
   name: string;
   description: string;
   inputSchema: unknown;
+  readonly annotations?: MCPToolAnnotations;
 }
 
 export interface MCPClient {
@@ -39,6 +46,7 @@ export interface MCPClient {
     signal?: AbortSignal,
   ): Promise<MCPToolResult>;
   ping(signal?: AbortSignal): Promise<void>;
+  onToolsChanged?(listener: () => void): void;
 }
 
 export function assertMcpInputSchema(

@@ -10,18 +10,21 @@ import { z } from 'zod';
 import { SyncDescriptor } from '#/_base/di/descriptors';
 import { DisposableStore } from '#/_base/di/lifecycle';
 import { TestInstantiationService } from '#/_base/di/test';
-import { resetUnexpectedErrorHandler, setUnexpectedErrorHandler } from '#/_base/errors/unexpectedError';
+import {
+  resetUnexpectedErrorHandler,
+  setUnexpectedErrorHandler,
+} from '#/_base/errors/unexpectedError';
 import { ILogService } from '#/_base/log/log';
+import { IAgentStateService } from '#/agent/state/agentState';
 import { Event2 } from '#/app/event/event2';
 import { AppendLogStore } from '#/persistence/backends/node-fs/appendLogStore';
 import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageService';
 import { IAppendLogStore } from '#/persistence/interface/appendLogStore';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
-import { IAgentStateService } from '#/agent/state/agentState';
 import { IEventDispatcher } from '#/state/eventDispatcher';
 import { defineState } from '#/state/state';
-import { WIRE_PROTOCOL_VERSION } from '#/wire/migration/migration';
 import { humanEventType } from '#/wire/human';
+import { WIRE_PROTOCOL_VERSION } from '#/wire/migration/migration';
 import { AGENT_WIRE_RECORD_KEY, type WireRecord } from '#/wire/record';
 
 import {
@@ -99,7 +102,11 @@ function captureLog(entries: CapturedLogEntry[]): ILogService {
   return logger;
 }
 
-function makeContainer(storage: IFileSystemStorageService, logKey: string, logEntries?: CapturedLogEntry[]) {
+function makeContainer(
+  storage: IFileSystemStorageService,
+  logKey: string,
+  logEntries?: CapturedLogEntry[],
+) {
   const store = new DisposableStore();
   disposables.push(store);
   const ix = store.add(new TestInstantiationService());
@@ -110,7 +117,11 @@ function makeContainer(storage: IFileSystemStorageService, logKey: string, logEn
   registerTestAgentWire(ix, testWireScope(SCOPE, logKey), { log });
   const dispatcher = registerTestEventDispatcher(ix);
   const todo = attachTodoService(ix);
-  store.add({ dispose: () => { todo.dispose(); } });
+  store.add({
+    dispose: () => {
+      todo.dispose();
+    },
+  });
   const agentState = ix.get(IAgentStateService);
   agentState.contributeState(compatCounterKey);
   agentState.contributeState(compatTagsKey);
@@ -128,7 +139,10 @@ function makeReader(storage: IFileSystemStorageService): IAppendLogStore {
 
 async function collect(log: IAppendLogStore, key: string): Promise<WireRecord[]> {
   const out: WireRecord[] = [];
-  for await (const record of log.read<WireRecord>(testWireScope(SCOPE, key), AGENT_WIRE_RECORD_KEY)) {
+  for await (const record of log.read<WireRecord>(
+    testWireScope(SCOPE, key),
+    AGENT_WIRE_RECORD_KEY,
+  )) {
     out.push(record);
   }
   return out;
@@ -209,9 +223,7 @@ describe('wire.jsonl round-trip', () => {
     expect(replayTarget.agentState.get(compatCounterKey)).toEqual(
       live.agentState.get(compatCounterKey),
     );
-    expect(replayTarget.agentState.get(compatTagsKey)).toEqual(
-      live.agentState.get(compatTagsKey),
-    );
+    expect(replayTarget.agentState.get(compatTagsKey)).toEqual(live.agentState.get(compatTagsKey));
   });
 
   it('replays a v1.0-era journal through the full migration chain and heals it to the current version', async () => {
@@ -240,9 +252,7 @@ describe('wire.jsonl round-trip', () => {
     await legacy.dispatcher.restore();
 
     expect(legacy.agentState.get(compatCounterKey)).toEqual({ value: 7 });
-    expect(legacy.todo.get()).toEqual([
-      { title: 'legacy todo', status: 'pending' },
-    ]);
+    expect(legacy.todo.get()).toEqual([{ title: 'legacy todo', status: 'pending' }]);
 
     expect(await collect(makeReader(storage), 'legacy')).toEqual([
       { type: 'metadata', protocol_version: WIRE_PROTOCOL_VERSION, created_at: 1 },

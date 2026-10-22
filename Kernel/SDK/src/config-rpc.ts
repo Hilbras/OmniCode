@@ -65,13 +65,13 @@ function toConfigValidationError(
   return new OmnicodeError(ErrorCodes.CONFIG_INVALID, message, { details });
 }
 
-function extractValidationIssues(error: unknown): readonly OmnicodeConfigValidationIssue[] | undefined {
+function extractValidationIssues(
+  error: unknown,
+): readonly OmnicodeConfigValidationIssue[] | undefined {
   const zodError = findZodError(error);
   if (zodError === undefined) return undefined;
   return zodError.issues.map((issue) => ({
-    path: issue.path.map((segment) =>
-      typeof segment === 'number' ? segment : String(segment),
-    ),
+    path: issue.path.map((segment) => (typeof segment === 'number' ? segment : String(segment))),
     message: issue.message,
   }));
 }

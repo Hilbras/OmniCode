@@ -1,18 +1,27 @@
-import { mkdtemp, readFile, readdir, rm, mkdir, writeFile, access, chmod, stat } from 'node:fs/promises';
+import {
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  mkdir,
+  writeFile,
+  access,
+  chmod,
+  stat,
+} from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-
 import { Readable, Writable } from 'node:stream';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import type { IPluginService } from '#/app/plugin/plugin';
-import type { IHostProcess, IHostProcessService } from '#/os/interface/hostProcess';
+import type { CapabilityEntryContext } from '#/app/capability/entries/context';
 import {
   __omnicodeWebbridgeInternals,
   createOmnicodeWebbridgeEntry,
 } from '#/app/capability/entries/omnicodeWebbridge';
-import type { CapabilityEntryContext } from '#/app/capability/entries/context';
+import type { IPluginService } from '#/app/plugin/plugin';
+import type { IHostProcess, IHostProcessService } from '#/os/interface/hostProcess';
 
 const DAEMON_BASE = 'http://127.0.0.1:10086';
 
@@ -39,7 +48,9 @@ interface SpawnCall {
   args: readonly string[];
 }
 
-function fakeHostProcess(script?: Array<{ match: string; code: number; stdout?: string; stderr?: string }>): {
+function fakeHostProcess(
+  script?: Array<{ match: string; code: number; stdout?: string; stderr?: string }>,
+): {
   service: IHostProcessService;
   calls: SpawnCall[];
 } {
@@ -56,7 +67,9 @@ function fakeHostProcess(script?: Array<{ match: string; code: number; stdout?: 
   return { service, calls };
 }
 
-function fakePlugins(installed: Array<{ id: string; enabled: boolean; state: string; version?: string }>): {
+function fakePlugins(
+  installed: Array<{ id: string; enabled: boolean; state: string; version?: string }>,
+): {
   service: IPluginService;
   installs: string[];
   enabledCalls: Array<{ id: string; enabled: boolean }>;
@@ -102,15 +115,15 @@ function fakePlugins(installed: Array<{ id: string; enabled: boolean; state: str
   return { service, installs, enabledCalls };
 }
 
-function fakeFetch(opts: {
-  statusSequence?: Array<object | 'error'>;
-  binary?: Uint8Array;
-}): { fetchImpl: typeof fetch } {
+function fakeFetch(opts: { statusSequence?: Array<object | 'error'>; binary?: Uint8Array }): {
+  fetchImpl: typeof fetch;
+} {
   let statusCalls = 0;
   const fetchImpl = (async (url: string | URL): Promise<Response> => {
     const u = String(url);
     if (u === `${DAEMON_BASE}/status`) {
-      const step = opts.statusSequence?.[Math.min(statusCalls, (opts.statusSequence?.length ?? 1) - 1)];
+      const step =
+        opts.statusSequence?.[Math.min(statusCalls, (opts.statusSequence?.length ?? 1) - 1)];
       statusCalls += 1;
       if (step === 'error' || step === undefined) throw new Error('connection refused');
       return new Response(JSON.stringify(step), { status: 200 });
@@ -188,7 +201,9 @@ describe('omnicode-webbridge entry', () => {
     const binPath = path.join(userHome, '.omnicode-webbridge', 'bin', 'omnicode-webbridge');
     await writeFile(binPath, 'bin');
     await chmod(binPath, 0o755);
-    const plugins = fakePlugins([{ id: 'omnicode-webbridge', enabled: true, state: 'ok', version: '1.11.3' }]);
+    const plugins = fakePlugins([
+      { id: 'omnicode-webbridge', enabled: true, state: 'ok', version: '1.11.3' },
+    ]);
     const { fetchImpl } = fakeFetch({
       statusSequence: [{ running: true, version: 'v1.11.3', extension_connected: false }],
     });
@@ -209,8 +224,13 @@ describe('omnicode-webbridge entry', () => {
     const userHome = path.join(root, 'user-home');
     await mkdir(path.join(omnicodeHome, 'skills', 'omnicode-webbridge'), { recursive: true });
     await writeFile(path.join(omnicodeHome, 'skills', 'omnicode-webbridge', 'SKILL.md'), 'old');
-    await mkdir(path.join(userHome, '.agents', 'skills', 'omnicode-webbridge'), { recursive: true });
-    await writeFile(path.join(userHome, '.agents', 'skills', 'omnicode-webbridge', 'SKILL.md'), 'old');
+    await mkdir(path.join(userHome, '.agents', 'skills', 'omnicode-webbridge'), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(userHome, '.agents', 'skills', 'omnicode-webbridge', 'SKILL.md'),
+      'old',
+    );
     const plugins = fakePlugins([{ id: 'omnicode-webbridge', enabled: true, state: 'ok' }]);
     const { fetchImpl } = fakeFetch({
       statusSequence: [{ running: true, version: 'v1.11.3', extension_connected: true }],
@@ -234,7 +254,9 @@ describe('omnicode-webbridge entry', () => {
     expect(note).toBe('user-skill-migrated');
     expect(reports).toContain('standalone-skill-migration');
     await expect(access(path.join(omnicodeHome, 'skills', 'omnicode-webbridge'))).rejects.toThrow();
-    await expect(access(path.join(userHome, '.agents', 'skills', 'omnicode-webbridge'))).rejects.toThrow();
+    await expect(
+      access(path.join(userHome, '.agents', 'skills', 'omnicode-webbridge')),
+    ).rejects.toThrow();
 
     const backupDir = path.join(omnicodeHome, 'backups', 'omnicode-webbridge-skills');
     const backups = await readdir(backupDir);
@@ -264,7 +286,13 @@ describe('omnicode-webbridge entry', () => {
 
     await entry.install((step, percent) => reports.push([step, percent]));
 
-    const binPath = path.join(root, 'user-home', '.omnicode-webbridge', 'bin', 'omnicode-webbridge');
+    const binPath = path.join(
+      root,
+      'user-home',
+      '.omnicode-webbridge',
+      'bin',
+      'omnicode-webbridge',
+    );
     await access(binPath);
     expect(host.calls.map((c) => `${c.command} ${c.args.join(' ')}`)).toEqual([`${binPath} start`]);
     expect(plugins.installs).toEqual([
@@ -318,7 +346,9 @@ describe('omnicode-webbridge entry', () => {
     const binPath = path.join(userHome, '.omnicode-webbridge', 'bin', 'omnicode-webbridge');
     await writeFile(binPath, 'old-bin');
     await chmod(binPath, 0o755);
-    const plugins = fakePlugins([{ id: 'omnicode-webbridge', enabled: true, state: 'ok', version: '1.11.3' }]);
+    const plugins = fakePlugins([
+      { id: 'omnicode-webbridge', enabled: true, state: 'ok', version: '1.11.3' },
+    ]);
     const host = fakeHostProcess();
     const { fetchImpl } = fakeFetch({
       statusSequence: [{ running: true, version: 'v1.11.3', extension_connected: true }],
@@ -429,7 +459,9 @@ describe('omnicode-webbridge entry', () => {
   });
 
   it('re-enables a previously disabled wiring plugin during setup', async () => {
-    const plugins = fakePlugins([{ id: 'omnicode-webbridge', enabled: false, state: 'ok', version: '1.11.3' }]);
+    const plugins = fakePlugins([
+      { id: 'omnicode-webbridge', enabled: false, state: 'ok', version: '1.11.3' },
+    ]);
     const { fetchImpl } = fakeFetch({
       statusSequence: [{ running: true, version: 'v1.11.3', extension_connected: true }],
     });

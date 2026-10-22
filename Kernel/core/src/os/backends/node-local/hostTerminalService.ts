@@ -1,10 +1,13 @@
 import type { IPty } from 'node-pty';
 
+import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
 import { Service } from '#/_base/di/service';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-
-import { IHostTerminalService, type TerminalProcess, type TerminalSpawnOptions } from '#/os/interface/terminal';
+import {
+  IHostTerminalService,
+  type TerminalProcess,
+  type TerminalSpawnOptions,
+} from '#/os/interface/terminal';
 
 export class HostTerminalService extends Service implements IHostTerminalService {
   declare readonly _serviceBrand: undefined;
@@ -22,7 +25,11 @@ export class HostTerminalService extends Service implements IHostTerminalService
     });
     const terminalProcess: TerminalProcess = {
       onProcessData: (listener) => proc.onData(listener),
-      onProcessExit: (listener) => proc.onExit((event) => listener({ exitCode: event.exitCode })),
+      onProcessExit: (listener) =>
+        proc.onExit((event) => {
+          this.processes.delete(terminalProcess);
+          listener({ exitCode: event.exitCode });
+        }),
       write: (data) => proc.write(data),
       resize: (cols, rows) => proc.resize(cols, rows),
       kill: () => proc.kill(),
@@ -35,8 +42,7 @@ export class HostTerminalService extends Service implements IHostTerminalService
     for (const process of this.processes) {
       try {
         process.kill();
-      } catch {
-      }
+      } catch {}
     }
     this.processes.clear();
     super.dispose();

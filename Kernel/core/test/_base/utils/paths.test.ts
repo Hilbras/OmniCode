@@ -4,7 +4,12 @@ import nodePath, { win32 } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { canonicalWorkspaceRoot, findUpwardRoot, resolvePath, subtreeWatchFilter } from '#/_base/utils/paths';
+import {
+  canonicalWorkspaceRoot,
+  findUpwardRoot,
+  resolvePath,
+  subtreeWatchFilter,
+} from '#/_base/utils/paths';
 
 describe('subtree watch filtering', () => {
   const root = '/repo';
@@ -90,10 +95,7 @@ describe('subtree watch filtering', () => {
 
   it('keeps direct sub-skill probes below a directory the scanner traversed', () => {
     const ignored = subtreeWatchFilter(root, candidates, {
-      scannedDirectories: [
-        '/repo/.agents/skills',
-        '/repo/.agents/skills/parent',
-      ],
+      scannedDirectories: ['/repo/.agents/skills', '/repo/.agents/skills/parent'],
       keepEntryFile: 'SKILL.md',
     });
     expect(ignored('/repo/.agents/skills/parent/child')).toBe(false);

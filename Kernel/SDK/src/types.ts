@@ -1,19 +1,15 @@
+import type { OmnicodeHostIdentity, OAuthRefreshOutcome } from '@hilbras/omnicode-auth';
 import type { HostUiCapability } from '@hilbras/omnicode-core';
 import type {
   ExportSessionManifest,
   ShellEnvironment,
 } from '@hilbras/omnicode-core/app/sessionExport/sessionExport';
 import type { Kaos } from '@hilbras/omnicode-kaos';
-import type { OmnicodeHostIdentity, OAuthRefreshOutcome } from '@hilbras/omnicode-auth';
 import type { ContentPart } from '@hilbras/omnicode-llm';
 
-import type { ResumeSessionResult } from '#/replay';
 import type { PermissionMode } from '#/permission';
-import type {
-  TelemetryClient,
-  TelemetryContextPatch,
-  TelemetryProperties,
-} from '#/telemetry';
+import type { ResumeSessionResult } from '#/replay';
+import type { TelemetryClient, TelemetryContextPatch, TelemetryProperties } from '#/telemetry';
 
 export type JsonPrimitive = string | number | boolean | null;
 export type JsonValue = JsonPrimitive | JsonValue[] | { readonly [key: string]: JsonValue };
@@ -33,10 +29,7 @@ export interface AgentRuntimeBinding {
 
 export type { CapabilityStatus } from '@hilbras/omnicode-core/app/capability/types';
 
-export type {
-  AgentReplayRecord,
-  ResumedAgentState,
-} from '#/replay';
+export type { AgentReplayRecord, ResumedAgentState } from '#/replay';
 export type {
   AgentBackgroundTaskInfo,
   BackgroundTaskInfo,
@@ -99,6 +92,33 @@ export type {
   ReloadSummary,
 } from '@hilbras/omnicode-core/app/plugin/types';
 export type { SkillSummary } from '@hilbras/omnicode-core/features/skill/catalog/types';
+export type {
+  ConnectorAction,
+  ConnectorCapability,
+  ConnectorEntry,
+  ConnectorKind,
+  ConnectorScope,
+  ConnectorStatus,
+} from '@hilbras/omnicode-core/app/connectors/connectors';
+export type {
+  GitHubConnectResult,
+  GitHubConnectionStatus,
+  GitHubDeviceFlowStart,
+  GitHubDisconnectResult,
+} from '@hilbras/omnicode-core/app/github/types';
+export type {
+  VercelConnectResult,
+  VercelConnectionStatus,
+  VercelDisconnectResult,
+} from '@hilbras/omnicode-core/app/vercel/types';
+
+/** Read-only summary of an agent profile definition (a subagent preset). */
+export interface AgentProfileSummary {
+  readonly name: string;
+  readonly description?: string;
+  readonly whenToUse?: string;
+}
+
 export type { ToolInfo } from '#/tool';
 export type {
   ExportSessionManifest,
@@ -390,9 +410,7 @@ export interface GetConfigOptions {
 }
 
 export interface AuthenticateMcpServerOptions {
-  readonly onAuthorizationUrl: (
-    url: string,
-  ) => void | boolean | PromiseLike<void | boolean>;
+  readonly onAuthorizationUrl: (url: string) => void | boolean | PromiseLike<void | boolean>;
   readonly signal?: AbortSignal;
   readonly timeoutMs?: number;
   readonly cwd?: string;
@@ -484,6 +502,9 @@ export interface AddAdditionalDirResult {
   readonly persisted: boolean;
 }
 
-export type ResumedSessionState = Pick<ResumeSessionResult, 'sessionMetadata' | 'agents' | 'warning'>;
+export type ResumedSessionState = Pick<
+  ResumeSessionResult,
+  'sessionMetadata' | 'agents' | 'warning'
+>;
 
-export interface ResumedSessionSummary extends SessionSummary, ResumedSessionState { }
+export interface ResumedSessionSummary extends SessionSummary, ResumedSessionState {}

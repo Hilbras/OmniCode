@@ -9,6 +9,9 @@ import {
   type ThinkingEffort,
 } from '@hilbras/omnicode-api';
 
+import type { ThemeName } from '#/tui/theme';
+import { currentTheme, isBuiltInTheme, lightColors, loadCustomThemeMerged } from '#/tui/theme';
+
 import { EditorSelectorComponent } from '../components/dialogs/editor-selector';
 import { EffortSelectorComponent } from '../components/dialogs/effort-selector';
 import {
@@ -17,24 +20,35 @@ import {
 } from '../components/dialogs/experiments-selector';
 import { MermaidPreferenceSelectorComponent } from '../components/dialogs/mermaid-preference-selector';
 import { modelDisplayName, segmentsFor } from '../components/dialogs/model-selector';
-import { TabbedModelSelectorComponent } from '../components/dialogs/tabbed-model-selector';
 import { PermissionSelectorComponent } from '../components/dialogs/permission-selector';
-import { SettingsSelectorComponent, type SettingsSelection } from '../components/dialogs/settings-selector';
+import {
+  SettingsSelectorComponent,
+  type SettingsSelection,
+} from '../components/dialogs/settings-selector';
 import { SurveyPreferenceSelectorComponent } from '../components/dialogs/survey-preference-selector';
+import { TabbedModelSelectorComponent } from '../components/dialogs/tabbed-model-selector';
 import { ThemeSelectorComponent } from '../components/dialogs/theme-selector';
 import { TuiModeSelectorComponent } from '../components/dialogs/tui-mode-selector';
 import { UpdatePreferenceSelectorComponent } from '../components/dialogs/update-preference-selector';
-import { DEFAULT_MARKDOWN_CONFIG, DEFAULT_TUI_CONFIG, saveTuiConfig, type MarkdownConfig, type TuiConfig, type TuiMode } from '../config';
-import type { ThemeName } from '#/tui/theme';
-import { currentTheme, isBuiltInTheme, lightColors, loadCustomThemeMerged } from '#/tui/theme';
+import {
+  DEFAULT_MARKDOWN_CONFIG,
+  DEFAULT_TUI_CONFIG,
+  saveTuiConfig,
+  type MarkdownConfig,
+  type TuiConfig,
+  type TuiMode,
+} from '../config';
 import { NO_ACTIVE_SESSION_MESSAGE, TUI_MODE_RESTART_NOTICE } from '../constant/omnicode-tui';
 import { formatErrorMessage } from '../utils/event-payload';
 import { setMarkdownMermaidMode, type MermaidRenderMode } from '../utils/markdown-options';
-import { PERMISSION_MODE_DESCRIPTIONS, PERMISSION_MODE_DISPLAY_NAMES } from '../utils/permission-mode';
+import {
+  PERMISSION_MODE_DESCRIPTIONS,
+  PERMISSION_MODE_DISPLAY_NAMES,
+} from '../utils/permission-mode';
 import { thinkingEffortToConfig } from '../utils/thinking-config';
-import { showUsage } from './info';
-import { setExperimentalFeatures } from './experimental-flags';
 import type { SlashCommandHost } from './dispatch';
+import { setExperimentalFeatures } from './experimental-flags';
+import { showUsage } from './info';
 
 // ---------------------------------------------------------------------------
 // Plan / Config commands
@@ -52,9 +66,7 @@ const EFFORT_SWITCH_CACHE_WARNING =
  * echoes are also 'user' transcript entries but carry an empty `bullet`, so
  * they're excluded. */
 function hasConversationHistory(host: SlashCommandHost): boolean {
-  return host.state.transcriptEntries.some(
-    (entry) => entry.kind === 'user' && entry.bullet !== '',
-  );
+  return host.state.transcriptEntries.some((entry) => entry.kind === 'user' && entry.bullet !== '');
 }
 
 export function currentTuiConfig(host: Pick<SlashCommandHost, 'state'>): TuiConfig {
@@ -62,7 +74,8 @@ export function currentTuiConfig(host: Pick<SlashCommandHost, 'state'>): TuiConf
     theme: host.state.appState.theme,
     tuiMode: host.state.appState.tuiMode,
     editorCommand: host.state.appState.editorCommand,
-    disablePasteBurst: host.state.appState.disablePasteBurst ?? DEFAULT_TUI_CONFIG.disablePasteBurst,
+    disablePasteBurst:
+      host.state.appState.disablePasteBurst ?? DEFAULT_TUI_CONFIG.disablePasteBurst,
     renderLatex: host.state.appState.renderLatex ?? DEFAULT_TUI_CONFIG.renderLatex ?? true,
     cacheExpiryHint: host.state.appState.cacheExpiryHint ?? DEFAULT_TUI_CONFIG.cacheExpiryHint,
     disableFeedbackSurvey:
@@ -115,7 +128,11 @@ export async function handlePlanCommand(host: SlashCommandHost, args: string): P
   await applyPlanMode(host, session, enabled);
 }
 
-async function applyPlanMode(host: SlashCommandHost, session: Session, enabled: boolean): Promise<void> {
+async function applyPlanMode(
+  host: SlashCommandHost,
+  session: Session,
+  enabled: boolean,
+): Promise<void> {
   try {
     await session.setPlanMode(enabled);
     host.setAppState({ planMode: enabled });
@@ -183,7 +200,10 @@ export async function handleModelCommand(host: SlashCommandHost, args: string): 
   showModelPicker(host, alias);
 }
 
-export async function handleSecondaryModelCommand(host: SlashCommandHost, args: string): Promise<void> {
+export async function handleSecondaryModelCommand(
+  host: SlashCommandHost,
+  args: string,
+): Promise<void> {
   const alias = args.trim();
   await refreshModelsForPicker(host);
   const models = pickerModelsForHost(host);
@@ -339,10 +359,7 @@ async function applyEditorChoice(host: SlashCommandHost, value: string): Promise
       editorCommand,
     });
   } catch (error) {
-    host.showStatus(
-      `Failed to save editor: ${formatErrorMessage(error)}`,
-      'error',
-    );
+    host.showStatus(`Failed to save editor: ${formatErrorMessage(error)}`, 'error');
     return;
   }
 
@@ -368,7 +385,10 @@ function pickerModelsForHost(host: SlashCommandHost): Record<string, ModelAlias>
   );
 }
 
-export function showModelPicker(host: SlashCommandHost, selectedValue: string = host.state.appState.model): void {
+export function showModelPicker(
+  host: SlashCommandHost,
+  selectedValue: string = host.state.appState.model,
+): void {
   const models = pickerModelsForHost(host);
   const entries = Object.entries(models);
   if (entries.length === 0) {
@@ -634,16 +654,12 @@ async function applyThemeChoice(host: SlashCommandHost, theme: ThemeName): Promi
       theme,
     });
   } catch (error) {
-    host.showStatus(
-      `Failed to save theme: ${formatErrorMessage(error)}`,
-      'error',
-    );
+    host.showStatus(`Failed to save theme: ${formatErrorMessage(error)}`, 'error');
     return;
   }
 
-  const resolved = theme === 'auto'
-    ? (currentTheme.palette === lightColors ? 'light' : 'dark')
-    : undefined;
+  const resolved =
+    theme === 'auto' ? (currentTheme.palette === lightColors ? 'light' : 'dark') : undefined;
   await host.applyTheme(theme, resolved);
   host.refreshTerminalThemeTracking();
   host.track('theme_switch', { theme });
@@ -698,10 +714,7 @@ export async function applyExperimentalFeatureChanges(
   changes: readonly ExperimentalFeatureDraftChange[],
 ): Promise<void> {
   if (changes.length === 0) {
-    host.showStatus(
-      'No experimental feature changes to apply.',
-      'textMuted',
-    );
+    host.showStatus('No experimental feature changes to apply.', 'textMuted');
     return;
   }
 
@@ -856,9 +869,7 @@ type SurveyPreferenceHost = {
       'theme' | 'editorCommand' | 'notifications' | 'upgrade' | 'disableFeedbackSurvey'
     >;
   };
-  setAppState(
-    patch: Pick<SlashCommandHost['state']['appState'], 'disableFeedbackSurvey'>,
-  ): void;
+  setAppState(patch: Pick<SlashCommandHost['state']['appState'], 'disableFeedbackSurvey'>): void;
   showStatus(msg: string, color?: string): void;
 };
 
@@ -878,10 +889,7 @@ export async function applySurveyPreferenceChoice(
       disableFeedbackSurvey,
     });
   } catch (error) {
-    host.showStatus(
-      `Failed to save session rating setting: ${formatErrorMessage(error)}`,
-      'error',
-    );
+    host.showStatus(`Failed to save session rating setting: ${formatErrorMessage(error)}`, 'error');
     return;
   }
 
@@ -1012,15 +1020,35 @@ export function showSettingsSelector(host: SlashCommandHost): void {
 function handleSettingsSelection(host: SlashCommandHost, value: SettingsSelection): void {
   host.restoreEditor();
   switch (value) {
-    case 'model': showModelPicker(host); return;
-    case 'permission': showPermissionPicker(host); return;
-    case 'theme': showThemePicker(host); return;
-    case 'tuiMode': showTuiModePicker(host); return;
-    case 'mermaid': showMermaidPreferencePicker(host); return;
-    case 'editor': showEditorPicker(host); return;
-    case 'survey': showSurveyPreferencePicker(host); return;
-    case 'experiments': void showExperimentsPanel(host); return;
-    case 'upgrade': showUpdatePreferencePicker(host); return;
-    case 'usage': void showUsage(host); return;
+    case 'model':
+      showModelPicker(host);
+      return;
+    case 'permission':
+      showPermissionPicker(host);
+      return;
+    case 'theme':
+      showThemePicker(host);
+      return;
+    case 'tuiMode':
+      showTuiModePicker(host);
+      return;
+    case 'mermaid':
+      showMermaidPreferencePicker(host);
+      return;
+    case 'editor':
+      showEditorPicker(host);
+      return;
+    case 'survey':
+      showSurveyPreferencePicker(host);
+      return;
+    case 'experiments':
+      void showExperimentsPanel(host);
+      return;
+    case 'upgrade':
+      showUpdatePreferencePicker(host);
+      return;
+    case 'usage':
+      void showUsage(host);
+      return;
   }
 }

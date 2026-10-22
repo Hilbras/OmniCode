@@ -3,10 +3,16 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { SyncDescriptor } from '#/_base/di/descriptors';
 import { DisposableStore } from '#/_base/di/lifecycle';
 import { TestInstantiationService } from '#/_base/di/test';
-import { IFileSystemStorageService } from '#/persistence/interface/storage';
-import { IAtomicDocumentStore, IAtomicTomlDocumentStore } from '#/persistence/interface/atomicDocumentStore';
-import { JsonAtomicDocumentStore, TomlAtomicDocumentStore } from '#/persistence/backends/node-fs/atomicDocumentStore';
 import { InMemoryStorageService } from '#/persistence/backends/memory/inMemoryStorageService';
+import {
+  JsonAtomicDocumentStore,
+  TomlAtomicDocumentStore,
+} from '#/persistence/backends/node-fs/atomicDocumentStore';
+import {
+  IAtomicDocumentStore,
+  IAtomicTomlDocumentStore,
+} from '#/persistence/interface/atomicDocumentStore';
+import { IFileSystemStorageService } from '#/persistence/interface/storage';
 
 interface State {
   readonly title?: string;
