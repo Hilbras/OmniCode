@@ -144,7 +144,7 @@ pnpm changeset version
 pnpm changeset publish
 ```
 
-The root-level `pnpm run publish` first runs typecheck, lint, sherif, test, build, and package lint, then runs `changeset publish`.
+The root-level `pnpm run publish` first runs typecheck, lint, sherif, test, build, and package lint, then publishes `@hilbras/omnicode` with `npm publish`. It does not call `changeset publish`: with pnpm as the package manager, `changeset publish` runs `pnpm publish` in the repository root instead of the package directory, so it targets the root package and never publishes the CLI.
 
 ## Notes
 
