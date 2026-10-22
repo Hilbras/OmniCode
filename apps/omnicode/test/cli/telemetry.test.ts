@@ -86,10 +86,12 @@ describe('initializeServerTelemetry', () => {
         setContext: expect.any(Function),
       }),
     );
-    // The first dynamic import pulls in the whole SDK/oauth chain (~3s idle,
-    // more under full-suite transform contention) — give it headroom past the
-    // 5s default timeout.
-  }, 20000);
+    // The first dynamic import pulls in the whole SDK/oauth chain (~3s idle).
+    // On a cold transform cache it has been measured at ~17s, and every test in
+    // this file pays it when it runs alone (a filtered run loads the graph
+    // cold), so each one gets an explicit budget far above that rather than
+    // relying on a previous test having warmed the module graph.
+  }, 60_000);
 
   it('disables telemetry when config.toml sets telemetry = false', async () => {
     mocks.loadRuntimeConfigSafe.mockReturnValue({
@@ -102,7 +104,7 @@ describe('initializeServerTelemetry', () => {
     expect(mocks.initializeTelemetry).toHaveBeenCalledWith(
       expect.objectContaining({ enabled: false }),
     );
-  });
+  }, 60_000);
 
   it('degrades to enabled with no model when config is unreadable', async () => {
     mocks.loadRuntimeConfigSafe.mockReturnValue({
@@ -115,5 +117,5 @@ describe('initializeServerTelemetry', () => {
     expect(mocks.initializeTelemetry).toHaveBeenCalledWith(
       expect.objectContaining({ enabled: true, model: undefined }),
     );
-  });
+  }, 60_000);
 });
