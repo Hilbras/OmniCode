@@ -4,7 +4,15 @@
 
 ### Patch Changes
 
-- [`de4ce5d`](https://github.com/Hilbras/OmniCode/commit/de4ce5deeb575d98a428a2aff8ee19ce164adfe0) Thanks [@lacrous](https://github.com/lacrous)! - Fix the experimental computer-use tools failing to find Chrome or Chromium that is installed outside the Playwright cache. Enable it with `OMNICODE_EXPERIMENTAL_COMPUTER_USE=1`.
+- [`c7db83c`](https://github.com/Hilbras/OmniCode/commit/c7db83c14) Thanks [@lacrous](https://github.com/lacrous)! - Publish through a dedicated release workflow instead of a root `publish` lifecycle hook, and document the correct Changesets + npm publishing steps.
+
+- [`bd5a463`](https://github.com/Hilbras/OmniCode/commit/bd5a46323) Thanks [@lacrous](https://github.com/lacrous)! - Write and verify the embedded database generation-file magic as code units instead of byte values, so a non-ASCII magic can no longer be silently miswritten.
+
+- [`8f3af76`](https://github.com/Hilbras/OmniCode/commit/8f3af76e1) Thanks [@lacrous](https://github.com/lacrous)! - Give the large-input and budget-sensitive parser tests an explicit time budget so the assertion depends on the node cap, not on how loaded the machine is.
+
+- [`9665370`](https://github.com/Hilbras/OmniCode/commit/96653705e) Thanks [@lacrous](https://github.com/lacrous)! - Give the telemetry CLI tests a budget that covers their cold-module import, so running a single telemetry test no longer times out.
+
+The experimental computer-use browser tool's Chrome/Chromium discovery fix is committed in this release cycle but the browser tool itself is not yet wired into a reachable code path, so it does not affect the shipped binary. It ships in a later release together with the browser tool.
 
 ## 1.2.0
 
