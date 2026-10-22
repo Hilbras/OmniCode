@@ -730,7 +730,6 @@ export * from '#/features/computerUse/actionLog';
 export * from '#/features/computerUse/browser/types';
 export * from '#/features/computerUse/browser/browserController';
 export * from '#/features/computerUse/browser/cdpBackend';
-export * from '#/features/computerUse/browser/browserLauncher';
 export * from '#/features/computerUse/flag';
 export * from '#/features/computerUse/tools/computer-use';
 export * from '#/features/computerUse/tools/computerUseTools';
