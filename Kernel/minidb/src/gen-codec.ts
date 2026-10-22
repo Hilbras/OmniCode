@@ -218,7 +218,8 @@ export class GenFileWriter {
     version: number,
   ) {
     const w = new ByteWriter(8);
-    for (let i = 0; i < 4; i++) w.u8(magic.codePointAt(i) ?? 0);
+    // oxlint-disable-next-line unicorn/prefer-code-point -- the magic is one byte per code unit
+    for (let i = 0; i < 4; i++) w.u8(magic.charCodeAt(i));
     w.u32(version);
     const head = w.buf.subarray(0, w.off);
     this.chunks.push(Buffer.from(head));
@@ -331,7 +332,8 @@ export async function readGenerationFile(path: string, magic: string, version: n
 export function parseGenerationBuffer(buf: Buffer, magic: string, version: number): VerifiedGenerationFile {
   if (buf.length < 8 + 4) throw new GenerationCorruptError('generation file too short');
   for (let i = 0; i < 4; i++) {
-    if (buf.readUInt8(i) !== magic.codePointAt(i)) throw new GenerationCorruptError(`bad magic (want ${magic})`);
+    // oxlint-disable-next-line unicorn/prefer-code-point -- the magic is one byte per code unit
+    if (buf.readUInt8(i) !== magic.charCodeAt(i)) throw new GenerationCorruptError(`bad magic (want ${magic})`);
   }
   if (buf.readUInt32LE(4) !== version) throw new GenerationCorruptError(`unsupported file version (want ${version})`);
   const stored = buf.readUInt32LE(buf.length - 4);
@@ -375,7 +377,8 @@ export async function readGenerationFileCheckedAsync(
   }
   if (buf.length < 8 + 4) throw new GenerationCorruptError('generation file too short');
   for (let i = 0; i < 4; i++) {
-    if (buf.readUInt8(i) !== magic.codePointAt(i)) throw new GenerationCorruptError(`bad magic (want ${magic})`);
+    // oxlint-disable-next-line unicorn/prefer-code-point -- the magic is one byte per code unit
+    if (buf.readUInt8(i) !== magic.charCodeAt(i)) throw new GenerationCorruptError(`bad magic (want ${magic})`);
   }
   if (buf.readUInt32LE(4) !== version) throw new GenerationCorruptError(`unsupported file version (want ${version})`);
   const stored = buf.readUInt32LE(buf.length - 4);
