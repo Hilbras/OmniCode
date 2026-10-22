@@ -1,5 +1,17 @@
 # @hilbras/omnicode-sdk
 
+## 0.22.0
+
+### Minor Changes
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add `OmnicodeHarness.listWorkspaceAgentProfiles(workDir)` to list the agent profile definitions available in a workspace.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add `OmnicodeHarness.listWorkspaceConnectors(workDir)` to list the integrations available in a workspace.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add `OmnicodeHarness.getVercelStatus()`, `connectVercel(token?)` and `disconnectVercel()` to read and drive the Vercel account connection.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add `OmnicodeHarness.getGitHubStatus()`, `startGitHubDeviceFlow()`, `pollGitHubDeviceFlow(flowId)` and `disconnectGitHub()` to read and drive the GitHub account connection.
+
 ## 0.21.1
 
 ### Patch Changes

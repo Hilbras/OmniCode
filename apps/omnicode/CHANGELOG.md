@@ -1,5 +1,83 @@
 # @hilbras/omnicode
 
+## 1.2.0
+
+### Minor Changes
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Change the `/mcp` command into an interactive manager that lists MCP servers with their transport, authorization state and live connection status, adds or edits a server through a single-page form, tests a connection, and removes a server.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add the `/connectors` slash command to browse the integrations available to the agent, with their kind, status and scope.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add an experimental Vercel connector that gives the agent read access to projects, deployments and build logs, and lets you connect a Vercel account from the `/connectors` page. Enable it with `OMNICODE_EXPERIMENTAL_VERCEL_CONNECTOR=1` and set `vercel.token` or `OMNICODE_VERCEL_TOKEN`.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add the `omnicode mcp` command to list, inspect, test, add, remove, enable and disable MCP servers from the shell.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Update an MCP server's tools while a session is running when the server announces that its tool list changed.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add an experimental GitHub connector that gives the agent read access to repositories, issues, pull requests and workflow runs, and lets you connect a GitHub account from the `/connectors` page. Enable it with `OMNICODE_EXPERIMENTAL_GITHUB_CONNECTOR=1`.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Show every first-party platform in `/connectors` with its connection status, and open the browser for authorization when you connect one; the connection is stored and reused in later sessions.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add the `/skills` and `/subagents` slash commands to browse the skills and subagent profiles available in the current workspace.
+
+- [`8084553`](https://github.com/Hilbras/OmniCode/commit/808455315c09d77cedc2337bbb62475ef791af5d) Thanks [@lacrous](https://github.com/lacrous)! - Add experimental persistent memory: the agent can search stored facts, preferences and past task state, and can resume an interrupted task from the next session. Enable it with `OMNICODE_EXPERIMENTAL_MEMORY=1`.
+
+### Patch Changes
+
+- [`be249a4`](https://github.com/Hilbras/OmniCode/commit/be249a412b87614383fb6fc8345d44ab4fc9f7c3) Thanks [@lacrous](https://github.com/lacrous)! - Fix conversations failing after a tool call that was interrupted before it recorded a result.
+
+- [`be249a4`](https://github.com/Hilbras/OmniCode/commit/be249a412b87614383fb6fc8345d44ab4fc9f7c3) Thanks [@lacrous](https://github.com/lacrous)! - Cap provider-requested retry delays at 15 minutes.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Make the GitHub and Vercel tools callable by the agent when their experimental flag is on; they were implemented but never registered.
+
+- [`e05d132`](https://github.com/Hilbras/OmniCode/commit/e05d132ea0963967173f3e69dfccc5d85b5da5a7) Thanks [@lacrous](https://github.com/lacrous)! - Keep prompts queued while a response is running across a restart instead of losing or replaying them.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Apply an edited `.gitignore` without restarting, instead of keeping the rules that were read when the session started.
+
+- [`83beb92`](https://github.com/Hilbras/OmniCode/commit/83beb923b9920e5f8b82bce5fa1cb543372b37a9) Thanks [@lacrous](https://github.com/lacrous)! - Stop the disabled update channel from acting on a cached release manifest.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Report a hook that failed or whose matcher is not a valid expression, instead of letting it pass unnoticed.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Reject a flag `omnicode mcp add` cannot use, and report a disabled MCP server as disabled instead of connecting to it.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Fix `omnicode mcp add` ignoring `--tool-timeout` and `--bearer-token-env`.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Keep the stored environment variables and request headers of an MCP server when it is edited, instead of clearing the values a client never saw.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Require HTTPS for remote MCP servers and refuse private-network endpoints unless the server entry sets `allowPrivateNetwork: true`; a redirect to another host no longer carries the request's credentials.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Keep a forked session in the directory its source session worked in, instead of the workspace root.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Stop repeating an MCP tool call that failed before a result arrived, unless the server marked the tool read-only; the failed call now reports that it may already have run.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Restore the transcript and the editor when the MCP manager or the connectors page is closed, instead of leaving the page on screen.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Limit a file upload to 64 MB and give a server request a five minute timeout, instead of accepting an upload of any size and never timing a request out.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Add the `inheritEnv` and `allowPrivateNetwork` options to MCP server entries.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Give an MCP tool call a 60 second timeout when no timeout is configured, instead of letting it run until the session ended.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Keep the `model_overrides` the configuration file holds when an `OMNICODE_MODEL_*` environment variable is set; the environment now overrides only the fields it names.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Stop a plugin command argument containing `$&` from splicing the command body into the prompt.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Reject an unknown `--auth-scheme` instead of writing the provider with a different one.
+
+- [`1c1299a`](https://github.com/Hilbras/OmniCode/commit/1c1299a8dbc28d31734fdeef1fb123c07f13ae90) Thanks [@lacrous](https://github.com/lacrous)! - Mask the model-level API key in `omnicode provider list --json`, which printed it in cleartext.
+
+- [`e05d132`](https://github.com/Hilbras/OmniCode/commit/e05d132ea0963967173f3e69dfccc5d85b5da5a7) Thanks [@lacrous](https://github.com/lacrous)! - Resume a run interrupted mid-tool-call after a restart, up to three attempts, instead of leaving the conversation stuck.
+
+- [`c43ca70`](https://github.com/Hilbras/OmniCode/commit/c43ca70356555da4ae8f00d2c8894f44c2489a24) Thanks [@lacrous](https://github.com/lacrous)! - Report an exhausted provider quota, an oversized request, or an over-long conversation from the provider's own error code instead of as a generic rate limit or request failure.
+
+- [`59338d0`](https://github.com/Hilbras/OmniCode/commit/59338d059cff7b12e6849d67a53203c7a1845c46) Thanks [@lacrous](https://github.com/lacrous)! - Require workspace trust before applying a project's `workspace.additional_dir` directories; trust the folder, or set `OMNICODE_TRUST_WORKSPACE=1`, to enable them. Directories added with `/add-dir` are unaffected.
+
+- [`be249a4`](https://github.com/Hilbras/OmniCode/commit/be249a412b87614383fb6fc8345d44ab4fc9f7c3) Thanks [@lacrous](https://github.com/lacrous)! - Fix truncated model responses being reported as completed.
+
+- [`942a38c`](https://github.com/Hilbras/OmniCode/commit/942a38c8f456bc84608cc24f6d935f4e82b5dc46) Thanks [@lacrous](https://github.com/lacrous)! - Stop serving the web UI on a non-loopback host without TLS unless `--insecure-no-tls` is passed.
+
+- [`942a38c`](https://github.com/Hilbras/OmniCode/commit/942a38c8f456bc84608cc24f6d935f4e82b5dc46) Thanks [@lacrous](https://github.com/lacrous)! - Rate-limit WebSocket authentication failures so a wrong password cannot be guessed indefinitely.
+
 ## 1.1.10
 
 ### Patch Changes
