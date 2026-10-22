@@ -143,6 +143,10 @@ import { StagingLeaseTracker, type StagingLease } from './controllers/staging-le
 import { StreamingUIController } from './controllers/streaming-ui';
 import { SurveyController } from './controllers/survey-controller';
 import { TasksBrowserController } from './controllers/tasks-browser';
+import {
+  UpdateRecommenderController,
+  type UpdateRecommenderState,
+} from './controllers/update-recommender';
 import { installRainbowDance } from './easter-eggs/dance';
 import { adaptPanelResponse } from './reverse-rpc/approval/adapter';
 import { ApprovalController } from './reverse-rpc/approval/controller';
@@ -409,6 +413,7 @@ export class OmnicodeTUI {
   readonly subagentsBrowserController: SubagentsBrowserController;
   readonly connectorsBrowserController: ConnectorsBrowserController;
   readonly mcpManagerController: McpManagerController;
+  readonly updateRecommenderController: UpdateRecommenderController;
   readonly surveyController: SurveyController;
   readonly editorKeyboard: EditorKeyboardController;
 
@@ -523,6 +528,7 @@ export class OmnicodeTUI {
     this.subagentsBrowserController = new SubagentsBrowserController(this);
     this.connectorsBrowserController = new ConnectorsBrowserController(this);
     this.mcpManagerController = new McpManagerController(this, () => this.session);
+    this.updateRecommenderController = new UpdateRecommenderController(this);
     this.surveyController = new SurveyController(this, {
       accessToken: () => this.harness.auth.getCachedAccessToken(),
       telemetryDisabled: () => isTelemetryDisabledByEnv() || this.telemetryDisabled,
@@ -893,6 +899,30 @@ export class OmnicodeTUI {
     }
     void this.refreshSkillCommands(this.session);
     void this.refreshPluginCommands(this.session);
+    void this.showUpdateRecommendationNotice();
+  }
+
+  /**
+   * The "update available" startup notice: the npm-registry check ran in the
+   * pre-TUI preflight (and persisted its result); this only decides whether
+   * to surface it. Purely a hint — opening the full notes panel is the
+   * user's choice via `/update`.
+   */
+  private async showUpdateRecommendationNotice(): Promise<void> {
+    try {
+      const notice = await this.updateRecommenderController.isUpdateNoticeWanted();
+      if (!notice.wanted || notice.latest === undefined) return;
+      if (this.aborted) return;
+      this.appendStartupNotice(
+        `Update available: ${this.state.appState.version} → ${notice.latest} — run /update to see what changed and install.`,
+      );
+      this.track('update_available_notice_shown', {
+        current_version: this.state.appState.version,
+        target_version: notice.latest,
+      });
+    } catch {
+      // The notice is cosmetic; startup must not fail because of it.
+    }
   }
 
   private async showSessionWarnings(session: Session): Promise<void> {
@@ -1056,6 +1086,7 @@ export class OmnicodeTUI {
     // before tearing the UI down, so they can't keep firing requestRender after
     // stop() returns (or leak when stop() runs without process.exit).
     this.tasksBrowserController.close();
+    this.updateRecommenderController.close();
     this.skillsBrowserController.close();
     this.subagentsBrowserController.close();
     this.connectorsBrowserController.close();
@@ -2309,6 +2340,10 @@ export class OmnicodeTUI {
     this.state.connectorsBrowser = value;
   }
 
+  setUpdateRecommender(value: UpdateRecommenderState | undefined): void {
+    this.state.updateRecommender = value;
+  }
+
   setMcpManager(value: TUIState['mcpManager']): void {
     this.state.mcpManager = value;
   }
@@ -2820,6 +2855,7 @@ export class OmnicodeTUI {
     this.streamingUI.resetToolUi();
     this.sessionEventHandler.resetRuntimeState();
     this.tasksBrowserController.close();
+    this.updateRecommenderController.close();
     this.skillsBrowserController.close();
     this.subagentsBrowserController.close();
     this.connectorsBrowserController.close();

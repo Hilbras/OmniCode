@@ -314,6 +314,13 @@ export const BUILTIN_SLASH_COMMANDS = [
     availability: 'always',
   },
   {
+    name: 'update',
+    aliases: [],
+    description: 'Check for updates and view release notes',
+    priority: 60,
+    availability: 'always',
+  },
+  {
     name: 'plugins',
     aliases: [],
     description: 'Manage plugins',

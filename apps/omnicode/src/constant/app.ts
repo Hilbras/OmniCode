@@ -58,6 +58,8 @@ export const OMNICODE_UPDATE_INSTALL_STATE_FILE_NAME = 'install.json';
 export const OMNICODE_UPDATE_INSTALL_LOCK_FILE_NAME = 'install.lock';
 export const OMNICODE_UPDATE_ROLLOUT_LOG_FILE_NAME = 'rollout.log';
 export const OMNICODE_PLUGIN_UPDATE_NOTICE_STATE_FILE_NAME = 'plugin-notices.json';
+export const OMNICODE_UPDATE_REGISTRY_STATE_FILE_NAME = 'registry.json';
+export const OMNICODE_UPDATE_DISMISSED_STATE_FILE_NAME = 'dismissed.json';
 // Native staged update: the staged binary + metadata live next to the running
 // executable (`<exe dir>/.staging/`); the re-exec guard env breaks the
 // swap → re-exec → swap loop.

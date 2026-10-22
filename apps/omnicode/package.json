@@ -34,6 +34,7 @@
     "dist",
     "dist-web",
     "native",
+    "CHANGELOG.md",
     "LICENSE",
     "README.md"
   ],

@@ -23,6 +23,7 @@ import { CHROME_GUTTER } from './constant/rendering';
 import type { CatalogBrowserState } from './controllers/catalog-browser';
 import type { McpManagerState } from './controllers/mcp-manager';
 import type { TasksBrowserState } from './controllers/tasks-browser';
+import type { UpdateRecommenderState } from './controllers/update-recommender';
 import { currentTheme, type Theme } from './theme';
 import {
   INITIAL_LIVE_PANE,
@@ -88,6 +89,7 @@ export interface TUIState {
   skillsBrowser: CatalogBrowserState | undefined;
   subagentsBrowser: CatalogBrowserState | undefined;
   connectorsBrowser: CatalogBrowserState | undefined;
+  updateRecommender: UpdateRecommenderState | undefined;
   mcpManager: McpManagerState | undefined;
   externalEditorRunning: boolean;
   queuedMessages: QueuedMessage[];
@@ -219,6 +221,7 @@ export function createTUIState(options: OmnicodeTUIOptions): TUIState {
     skillsBrowser: undefined,
     subagentsBrowser: undefined,
     connectorsBrowser: undefined,
+    updateRecommender: undefined,
     mcpManager: undefined,
     externalEditorRunning: false,
     queuedMessages: [],

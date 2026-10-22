@@ -11,7 +11,7 @@ import {
 import { loadTuiConfig } from '#/tui/config';
 import { resolveCommandPath } from '#/utils/process/resolve-command';
 
-import { readUpdateCache } from './cache';
+import { readUpdateCache, writeRegistryUpdateState } from './cache';
 import { tryAcquireUpdateInstallLock } from './install-lock';
 import {
   emptyUpdateInstallState,
@@ -24,7 +24,11 @@ import {
   type InstallPromptChoiceValue,
   type InstallPromptOptions,
 } from './prompt';
-import { refreshUpdateCache, isSelfUpdateChannelEnabled } from './refresh';
+import { checkRegistryForUpdate } from './registry-check';
+import {
+  refreshUpdateCache,
+  isSelfUpdateChannelEnabled,
+} from './refresh';
 import {
   appendRolloutDecisionLog,
   decidePassiveUpdateTarget,
@@ -255,6 +259,47 @@ function renderBackgroundInstallSuccessNotice(version: string): string {
 
 function refreshInBackground(): void {
   void refreshUpdateCache().catch(() => {});
+}
+
+/**
+ * Background npm-registry check, independent of the (disabled) CDN
+ * self-update channel. Persists the result so the TUI recommendation panel
+ * can read it without re-fetching; a failed check is logged, never
+ * silently dropped.
+ */
+async function checkRegistryInInBackground(
+  currentVersion: string,
+  track: RunUpdatePreflightOptions['track'],
+  logger: UpdateLogger,
+): Promise<void> {
+  const result = await checkRegistryForUpdate(currentVersion);
+  switch (result.status) {
+    case 'available':
+      await writeRegistryUpdateState({
+        latest: result.latest,
+        checkedAt: new Date().toISOString(),
+      }).catch(() => {});
+      trackUpdateEvent(track, 'update_available_check', {
+        current_version: currentVersion,
+        target_version: result.latest,
+      });
+      logUpdateInfo(logger, 'registry update check found a newer version', {
+        currentVersion,
+        targetVersion: result.latest,
+      });
+      break;
+    case 'current':
+      logUpdateInfo(logger, 'registry update check: up to date', {
+        currentVersion,
+      });
+      break;
+    case 'error':
+      logUpdateWarn(logger, 'registry update check failed', {
+        currentVersion,
+        reason: result.reason,
+      });
+      break;
+  }
 }
 
 /** Telemetry properties describing where this device sits in the rollout. */
@@ -834,6 +879,13 @@ export async function runUpdatePreflight(
   if (isAutoUpdateDisabledByEnv()) {
     return 'continue';
   }
+
+  // The npm-registry check is a separate, always-on recommendation surface:
+  // it only *recommends* (the TUI panel + `omnicode upgrade` act on it with
+  // explicit user confirmation), so it runs even when the signed-artifact
+  // self-update channel below is disabled. Fire-and-forget: it must not
+  // delay startup or affect the pre-TUI flow.
+  void checkRegistryInInBackground(currentVersion, options.track, logger);
 
   // A disabled channel is a hard gate, not a hint: the cached release
   // manifest below is the one path that never asks the CDN, so honoring it

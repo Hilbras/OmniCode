@@ -23,9 +23,11 @@ import {
   OMNICODE_PLUGIN_UPDATE_NOTICE_STATE_FILE_NAME,
   OMNICODE_RECOMMENDED_EFFORT_STATE_FILE_NAME,
   OMNICODE_SURVEY_STATE_FILE_NAME,
+  OMNICODE_UPDATE_DISMISSED_STATE_FILE_NAME,
   OMNICODE_UPDATE_INSTALL_LOCK_FILE_NAME,
   OMNICODE_UPDATE_INSTALL_STATE_FILE_NAME,
   OMNICODE_UPDATE_DIR_NAME,
+  OMNICODE_UPDATE_REGISTRY_STATE_FILE_NAME,
   OMNICODE_UPDATE_ROLLOUT_LOG_FILE_NAME,
   OMNICODE_UPDATE_STATE_FILE_NAME,
 } from '#/constant/app';
@@ -101,6 +103,21 @@ export function getPluginUpdateNoticeStateFile(): string {
     OMNICODE_UPDATE_DIR_NAME,
     OMNICODE_PLUGIN_UPDATE_NOTICE_STATE_FILE_NAME,
   );
+}
+
+/**
+ * Return the npm-registry update check state file: `<dataDir>/updates/registry.json`.
+ */
+export function getUpdateRegistryStateFile(): string {
+  return join(getDataDir(), OMNICODE_UPDATE_DIR_NAME, OMNICODE_UPDATE_REGISTRY_STATE_FILE_NAME);
+}
+
+/**
+ * Return the update recommendation dismissal state file:
+ * `<dataDir>/updates/dismissed.json`.
+ */
+export function getUpdateDismissedStateFile(): string {
+  return join(getDataDir(), OMNICODE_UPDATE_DIR_NAME, OMNICODE_UPDATE_DISMISSED_STATE_FILE_NAME);
 }
 
 /**

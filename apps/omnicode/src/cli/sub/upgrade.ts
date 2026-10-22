@@ -9,6 +9,7 @@ import {
   renderManualUpdateMessage,
 } from '#/cli/update/preflight';
 import {
+  CHANGELOG_URL,
   promptForInstallChoice,
   type InstallPromptChoiceValue,
   type InstallPromptOptions,
@@ -18,6 +19,11 @@ import {
   refreshUpdateCache,
   selfUpdateDisabledMessage,
 } from '#/cli/update/refresh';
+import {
+  notesBetweenSections,
+  parseChangelogSections,
+  readChangelogFileIfPresent,
+} from '#/cli/update/release-notes';
 import { selectUpdateTarget } from '#/cli/update/select';
 import { detectInstallSource } from '#/cli/update/source';
 import { NPM_PACKAGE_NAME, type InstallSource, type UpdateCache } from '#/cli/update/types';
@@ -146,6 +152,7 @@ export async function handleUpgrade(
   }
 
   try {
+    printReleaseNotes(deps.stdout, currentVersion, target.version);
     trackUpgradeEvent(deps.track, 'upgrade_command_install_selected', {
       current_version: currentVersion,
       target_version: target.version,
@@ -210,6 +217,48 @@ function formatDisplayVersion(version: string): string {
 
 function formatErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+/**
+ * The "what changed" section of `omnicode upgrade`: release notes from the
+ * changelog shipped with this build, newest first. Best-effort — when the
+ * bundled changelog does not cover the range (older install, SEA), only
+ * the header is printed and the URL points at the full online changelog.
+ */
+function printReleaseNotes(
+  stdout: { write(chunk: string): boolean },
+  currentVersion: string,
+  targetVersion: string,
+): void {
+  const changelog = readChangelogFileIfPresent();
+  if (changelog === undefined) {
+    stdout.write(
+      `What's new in ${NPM_PACKAGE_NAME}@${targetVersion}:\n` +
+        `Full changelog: ${CHANGELOG_URL}\n`,
+    );
+    return;
+  }
+  const parsed = parseChangelogSections(changelog);
+  const between = notesBetweenSections(parsed, currentVersion, targetVersion);
+  if (between.sections.length === 0) {
+    stdout.write(
+      `What's new in ${NPM_PACKAGE_NAME}@${targetVersion}:\n` +
+        `No release notes are bundled with this build; full changelog: ${CHANGELOG_URL}\n`,
+    );
+    return;
+  }
+  stdout.write(`What's new in ${NPM_PACKAGE_NAME}@${targetVersion}:\n`);
+  for (const section of between.sections) {
+    stdout.write(`\n v${section.version}\n`);
+    for (const item of section.items) {
+      stdout.write(`  • ${item}\n`);
+    }
+  }
+  if (between.omittedItems > 0) {
+    stdout.write(
+      `\n …and ${String(between.omittedItems)} more change${between.omittedItems === 1 ? '' : 's'} — ${CHANGELOG_URL}\n`,
+    );
+  }
 }
 
 function trackUpgradeEvent(

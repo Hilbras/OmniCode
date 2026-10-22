@@ -13,6 +13,7 @@ import type {
   SubagentsBrowserController,
 } from '../controllers/catalog-browser';
 import type { McpManagerController } from '../controllers/mcp-manager';
+import type { UpdateRecommenderController } from '../controllers/update-recommender';
 import type { StreamingUIController } from '../controllers/streaming-ui';
 import type { TasksBrowserController } from '../controllers/tasks-browser';
 import { tryHandleDanceCommand } from '../easter-eggs/dance';
@@ -226,6 +227,7 @@ export interface SlashCommandHost {
   readonly subagentsBrowserController: SubagentsBrowserController;
   readonly connectorsBrowserController: ConnectorsBrowserController;
   readonly mcpManagerController: McpManagerController;
+  readonly updateRecommenderController: UpdateRecommenderController;
   readonly authFlow: AuthFlowController;
 }
 
@@ -510,6 +512,9 @@ async function handleBuiltInSlashCommand(
       return;
     case 'mcp':
       void host.mcpManagerController.show();
+      return;
+    case 'update':
+      void host.updateRecommenderController.show();
       return;
     case 'plugins':
       // `handlePluginsCommand` throws when no session is active (its own

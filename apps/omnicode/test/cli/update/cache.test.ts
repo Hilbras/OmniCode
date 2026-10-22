@@ -9,9 +9,23 @@ import {
   readUpdateInstallState,
   writeUpdateInstallState,
 } from '#/cli/update/install-state';
-import { readUpdateCache, writeUpdateCache } from '#/cli/update/cache';
+import {
+  emptyRegistryUpdateState,
+  emptyUpdateDismissedState,
+  readRegistryUpdateState,
+  readUpdateCache,
+  readUpdateDismissedState,
+  writeRegistryUpdateState,
+  writeUpdateCache,
+  writeUpdateDismissedState,
+} from '#/cli/update/cache';
 import { emptyUpdateCache, type UpdateInstallState } from '#/cli/update/types';
-import { getUpdateInstallStateFile, getUpdateStateFile } from '#/utils/paths';
+import {
+  getUpdateDismissedStateFile,
+  getUpdateInstallStateFile,
+  getUpdateRegistryStateFile,
+  getUpdateStateFile,
+} from '#/utils/paths';
 
 const originalEnv = { ...process.env };
 
@@ -163,5 +177,43 @@ describe('update install state', () => {
 
     expect(getUpdateInstallStateFile()).toBe(join(dir, 'updates', 'install.json'));
     await expect(readUpdateInstallState()).resolves.toEqual(state);
+  });
+});
+
+describe('registry update state', () => {
+  it('returns an empty state when the file is missing', async () => {
+    await expect(readRegistryUpdateState()).resolves.toEqual(emptyRegistryUpdateState());
+  });
+
+  it('falls back to an empty state when the file is corrupt', async () => {
+    mkdirSync(join(dir, 'updates'), { recursive: true });
+    writeFileSync(getUpdateRegistryStateFile(), '{"broken"', 'utf-8');
+    await expect(readRegistryUpdateState()).resolves.toEqual(emptyRegistryUpdateState());
+  });
+
+  it('writes and reads back the state from updates/registry.json', async () => {
+    const value = { latest: '1.2.1', checkedAt: '2026-10-22T08:00:00.000Z' };
+    await writeRegistryUpdateState(value);
+    expect(getUpdateRegistryStateFile()).toBe(join(dir, 'updates', 'registry.json'));
+    await expect(readRegistryUpdateState()).resolves.toEqual(value);
+  });
+});
+
+describe('update dismissed state', () => {
+  it('returns an empty state when the file is missing', async () => {
+    await expect(readUpdateDismissedState()).resolves.toEqual(emptyUpdateDismissedState());
+  });
+
+  it('falls back to an empty state when the file is corrupt', async () => {
+    mkdirSync(join(dir, 'updates'), { recursive: true });
+    writeFileSync(getUpdateDismissedStateFile(), '{"broken"', 'utf-8');
+    await expect(readUpdateDismissedState()).resolves.toEqual(emptyUpdateDismissedState());
+  });
+
+  it('writes and reads back the state from updates/dismissed.json', async () => {
+    const value = { version: '1.2.1', dismissedAt: '2026-10-22T08:00:00.000Z' };
+    await writeUpdateDismissedState(value);
+    expect(getUpdateDismissedStateFile()).toBe(join(dir, 'updates', 'dismissed.json'));
+    await expect(readUpdateDismissedState()).resolves.toEqual(value);
   });
 });

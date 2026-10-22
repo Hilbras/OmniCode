@@ -1,6 +1,10 @@
 import { z } from 'zod';
 
-import { getUpdateStateFile } from '#/utils/paths';
+import {
+  getUpdateDismissedStateFile,
+  getUpdateRegistryStateFile,
+  getUpdateStateFile,
+} from '#/utils/paths';
 import { readJsonFile, writeJsonFile } from '#/utils/persistence';
 
 import { UpdateManifestSchema } from './cdn';
@@ -35,4 +39,77 @@ export async function writeUpdateCache(
   filePath: string = getUpdateStateFile(),
 ): Promise<void> {
   await writeJsonFile(filePath, UpdateCacheSchema, value);
+}
+
+// ---------------------------------------------------------------------------
+// npm-registry check state + recommendation dismissal.
+//
+// Both files are owned by the CLI, tiny, and `.strict()`: a malformed file
+// is treated as absent (the next successful check rewrites it).
+// ---------------------------------------------------------------------------
+
+export interface RegistryUpdateState {
+  readonly latest: string;
+  readonly checkedAt: string;
+}
+
+const RegistryUpdateStateSchema = z
+  .object({
+    latest: z.string().min(1),
+    checkedAt: z.string().min(1),
+  })
+  .strict();
+
+export function emptyRegistryUpdateState(): RegistryUpdateState {
+  return { latest: '', checkedAt: '' };
+}
+
+export async function readRegistryUpdateState(
+  filePath: string = getUpdateRegistryStateFile(),
+): Promise<RegistryUpdateState> {
+  try {
+    return await readJsonFile(filePath, RegistryUpdateStateSchema, emptyRegistryUpdateState());
+  } catch {
+    return emptyRegistryUpdateState();
+  }
+}
+
+export async function writeRegistryUpdateState(
+  value: RegistryUpdateState,
+  filePath: string = getUpdateRegistryStateFile(),
+): Promise<void> {
+  await writeJsonFile(filePath, RegistryUpdateStateSchema, value);
+}
+
+export interface UpdateDismissedState {
+  readonly version: string;
+  readonly dismissedAt: string;
+}
+
+const UpdateDismissedStateSchema = z
+  .object({
+    version: z.string().min(1),
+    dismissedAt: z.string().min(1),
+  })
+  .strict();
+
+export function emptyUpdateDismissedState(): UpdateDismissedState {
+  return { version: '', dismissedAt: '' };
+}
+
+export async function readUpdateDismissedState(
+  filePath: string = getUpdateDismissedStateFile(),
+): Promise<UpdateDismissedState> {
+  try {
+    return await readJsonFile(filePath, UpdateDismissedStateSchema, emptyUpdateDismissedState());
+  } catch {
+    return emptyUpdateDismissedState();
+  }
+}
+
+export async function writeUpdateDismissedState(
+  value: UpdateDismissedState,
+  filePath: string = getUpdateDismissedStateFile(),
+): Promise<void> {
+  await writeJsonFile(filePath, UpdateDismissedStateSchema, value);
 }
