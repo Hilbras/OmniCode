@@ -34,6 +34,20 @@ const BINARY_NAMES = [
   'headless_shell',
 ];
 
+export const SYSTEM_CHROMIUM_PATHS = [
+  '/usr/bin/google-chrome',
+  '/usr/bin/google-chrome-stable',
+  '/opt/google/chrome/chrome',
+  '/usr/bin/chromium',
+  '/usr/bin/chromium-browser',
+  '/snap/bin/chromium',
+  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+  '/Applications/Chromium.app/Contents/MacOS/Chromium',
+  'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe',
+  'C:\\Program Files\\Chromium\\Application\\chrome.exe',
+];
+
 async function exists(path: string): Promise<boolean> {
   try {
     await access(path, constants.X_OK);
@@ -41,6 +55,15 @@ async function exists(path: string): Promise<boolean> {
   } catch {
     return false;
   }
+}
+
+export async function findFirstExecutable(
+  paths: readonly string[],
+): Promise<string | undefined> {
+  for (const path of paths) {
+    if (await exists(path)) return path;
+  }
+  return undefined;
 }
 
 export async function findChromium(
@@ -67,7 +90,7 @@ export async function findChromium(
       }
     }
   }
-  return undefined;
+  return findFirstExecutable(SYSTEM_CHROMIUM_PATHS);
 }
 
 async function waitForEndpoint(

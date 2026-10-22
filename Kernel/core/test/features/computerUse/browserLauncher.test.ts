@@ -1,4 +1,4 @@
-import { mkdtemp, rm } from 'node:fs/promises';
+import { chmod, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -9,8 +9,10 @@ import { BrowserController } from '#/features/computerUse/browser/browserControl
 import {
   BrowserLaunchError,
   findChromium,
+  findFirstExecutable,
   firstPageWebSocket,
   launchBrowser,
+  SYSTEM_CHROMIUM_PATHS,
   type LaunchedBrowser,
 } from '#/features/computerUse/browser/browserLauncher';
 import { CdpBrowserBackend } from '#/features/computerUse/browser/cdpBackend';
@@ -20,12 +22,56 @@ describe('findChromium', () => {
     const found = await findChromium();
 
     if (found !== undefined) {
-      expect(found).toMatch(/chrome|headless_shell/);
+      expect(found).toMatch(/chrom(e|ium)|headless_shell/i);
     }
   }, 30_000);
 
   it('returns undefined for a path that does not exist', async () => {
     expect(await findChromium('/nonexistent/chrome')).toBeUndefined();
+  });
+});
+
+describe('findFirstExecutable', () => {
+  it('returns the first path that is an executable file', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'omnicode-chromium-probe-'));
+    const binary = join(dir, 'chrome');
+    await writeFile(binary, '#!/bin/sh\nexit 0\n');
+    await chmod(binary, 0o755);
+    try {
+      expect(await findFirstExecutable(['/nonexistent/chrome', binary])).toBe(binary);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('skips a path that is not executable', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'omnicode-chromium-probe-'));
+    const binary = join(dir, 'chrome');
+    await writeFile(binary, 'not executable');
+    await chmod(binary, 0o644);
+    try {
+      expect(await findFirstExecutable([binary])).toBeUndefined();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('returns undefined when no path exists', async () => {
+    expect(await findFirstExecutable(['/nonexistent/chrome'])).toBeUndefined();
+  });
+});
+
+describe('SYSTEM_CHROMIUM_PATHS', () => {
+  it('covers the well-known Chrome and Chromium install locations', () => {
+    expect(SYSTEM_CHROMIUM_PATHS).toContain('/usr/bin/google-chrome');
+    expect(SYSTEM_CHROMIUM_PATHS).toContain('/opt/google/chrome/chrome');
+    expect(SYSTEM_CHROMIUM_PATHS).toContain('/usr/bin/chromium');
+    expect(SYSTEM_CHROMIUM_PATHS).toContain(
+      '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+    );
+    expect(SYSTEM_CHROMIUM_PATHS).toContain(
+      'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+    );
   });
 });
 
