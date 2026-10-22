@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.2.1
+
+### Patch Changes
+
+- [`de4ce5d`](https://github.com/Hilbras/OmniCode/commit/de4ce5deeb575d98a428a2aff8ee19ce164adfe0) Thanks [@lacrous](https://github.com/lacrous)! - Fix the experimental computer-use tools failing to find Chrome or Chromium that is installed outside the Playwright cache. Enable it with `OMNICODE_EXPERIMENTAL_COMPUTER_USE=1`.
+
 ## 1.2.0
 
 ### Minor Changes
