@@ -993,14 +993,15 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 		if (data.length === 6 && data.startsWith("\u001B[M")) {
 			// X10 encoding: ESC [ M b x y — bytes 3..5 carry button/x/y, each
 			// biased by +32. firstCodePoint(data) would read the ESC byte.
-			const button = data.codePointAt(3) - 32;
+			// data.length === 6 guarantees indices 3..5 exist.
+			const button = data.codePointAt(3)! - 32;
 			if ((button & 64) === 0) return undefined;
 			const direction = button & 3;
 			if (direction !== 0 && direction !== 1) return undefined;
 			return {
 				direction: direction === 0 ? -1 : 1,
-				x: data.codePointAt(4) - 33,
-				y: data.codePointAt(5) - 33,
+				x: data.codePointAt(4)! - 33,
+				y: data.codePointAt(5)! - 33,
 				button,
 			};
 		}
