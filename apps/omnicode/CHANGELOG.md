@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.2.2
+
+### Patch Changes
+
+- [`3b7315e`](https://github.com/Hilbras/OmniCode/commit/3b7315e70a893e12cb339d07bd8d892c83b57bef) Thanks [@lacrous](https://github.com/lacrous)! - Fix Google GenAI aborted-request cleanup, npm registry update-check timeout coverage, restore-file approval-rule matching for multi-path and full-turn restores, and ACP terminal output-poll failure logging.
+
 ## 1.2.1
 
 ### Patch Changes
