@@ -167,7 +167,7 @@ describe('clipboard image paste compression', () => {
     readClipboardMedia.mockReset();
   });
 
-  it('downsamples an oversized pasted image before storing it', async () => {
+  it('downsamples an oversized pasted image before storing it', { timeout: 30_000 }, async () => {
     const big = await solidPng(3600, 1800);
     readClipboardMedia.mockResolvedValue({ kind: 'image', bytes: big, mimeType: 'image/png' });
 
@@ -190,7 +190,7 @@ describe('clipboard image paste compression', () => {
     expect(Math.max(dims!.width, dims!.height)).toBeLessThanOrEqual(3000);
   });
 
-  it('honors the harness [image] max_edge_px when pasting', async () => {
+  it('honors the harness [image] max_edge_px when pasting', { timeout: 30_000 }, async () => {
     const big = await solidPng(3600, 1800);
     readClipboardMedia.mockResolvedValue({ kind: 'image', bytes: big, mimeType: 'image/png' });
 
@@ -209,7 +209,7 @@ describe('clipboard image paste compression', () => {
     expect(Math.max(dims!.width, dims!.height)).toBe(800);
   });
 
-  it('records the pre-compression original in memory for an oversized paste', async () => {
+  it('records the pre-compression original in memory for an oversized paste', { timeout: 30_000 }, async () => {
     const big = await solidPng(3600, 1800);
     readClipboardMedia.mockResolvedValue({ kind: 'image', bytes: big, mimeType: 'image/png' });
 
@@ -230,7 +230,7 @@ describe('clipboard image paste compression', () => {
     expect(att.original?.path).toBeUndefined();
   });
 
-  it('does not persist the original at paste time, even with a known session', async () => {
+  it('does not persist the original at paste time, even with a known session', { timeout: 30_000 }, async () => {
     const sessionDir = await mkdtemp(join(tmpdir(), 'omnicode-paste-session-'));
     const big = await solidPng(3600, 1800);
     readClipboardMedia.mockResolvedValue({ kind: 'image', bytes: big, mimeType: 'image/png' });

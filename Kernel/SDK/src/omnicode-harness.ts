@@ -196,7 +196,12 @@ export class OmnicodeHarness {
           kaos ?? (persistenceKaos as Kaos),
           persistenceKaos,
         );
-      } else if (input.agentProfile !== undefined) {
+      } else if (
+        input.agentProfile !== undefined ||
+        input.additionalDirs !== undefined ||
+        (input.includeSubagents ?? false) ||
+        input.replayTurnLimit !== undefined
+      ) {
         await this.rpc.resumeSession({ ...resumeInput, id });
       }
       return active;

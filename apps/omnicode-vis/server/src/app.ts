@@ -1,6 +1,6 @@
 import { timingSafeEqual } from 'node:crypto';
 import { readFile, stat } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 
 import { Hono } from 'hono';
 
@@ -136,7 +136,9 @@ export async function createApp(options: CreateAppOptions = {}): Promise<Hono> {
         }
         if (pathname === '/' || pathname === '') pathname = '/index.html';
         const resolved = resolve(publicDir, `.${pathname}`);
-        if (!resolved.startsWith(publicDir)) {
+        // Prefix without a separator would admit a sibling directory whose
+        // name extends publicDir's (e.g. `public-evil`).
+        if (!resolved.startsWith(publicDir + sep)) {
           return c.text('forbidden', 403);
         }
         try {

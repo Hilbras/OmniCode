@@ -58,6 +58,7 @@ export function watchScopeUnits(container: InstantiationService, kind: ScopeKind
 
     let retracted = false;
     let providerEntry: LedgerEntry | undefined;
+    let foldEntry: LedgerEntry | undefined;
     const retract = (): void | Promise<void> => {
       if (retracted) {
         return undefined;
@@ -65,6 +66,10 @@ export function watchScopeUnits(container: InstantiationService, kind: ScopeKind
       retracted = true;
       providerEntry?.release();
       providerEntry = undefined;
+      if (foldLedger.isActive) {
+        foldEntry?.release();
+        foldEntry = undefined;
+      }
       materialized.delete(record.id);
       return unitLedger.teardown('unload');
     };
@@ -75,7 +80,7 @@ export function watchScopeUnits(container: InstantiationService, kind: ScopeKind
     providerEntry = record.providerBook.register(() => {
       void retract();
     }, `scope-units:${kind}`);
-    foldLedger.register(() => {
+    foldEntry = foldLedger.register(() => {
       return retract();
     }, `record:${name}`);
     materialized.set(record.id, retract);

@@ -1,4 +1,3 @@
-import { firstCodePoint } from '#/code-point';
 import {
 	AltScreenSearchComponent,
 	AltScreenSearchIndex,
@@ -60,19 +59,19 @@ import {
 	visibleWidth,
 } from "./utils";
 
-const ENTER_ALT_SCREEN = "\u001b[?1049h";
-const EXIT_ALT_SCREEN = "\x1B[?1049l";
-const DISABLE_AUTOWRAP = "\x1B[?7l";
-const ENABLE_AUTOWRAP = "\x1B[?7h";
-const ENABLE_BUTTON_MOTION_MOUSE = "\x1B[?1000h\x1B[?1002h\x1B[?1004h\x1B[?1006h";
-const ENABLE_ALL_MOTION_MOUSE = "\x1B[?1000h\x1B[?1002h\x1B[?1003h\x1B[?1004h\x1B[?1006h";
-const DISABLE_MOUSE = "\x1B[?1006l\x1B[?1004l\x1B[?1003l\x1B[?1002l\x1B[?1000l";
-const FOCUS_IN = "\x1B[I";
-const FOCUS_OUT = "\u001b[O";
-const BEGIN_SYNCHRONIZED_OUTPUT = "\x1B[?2026h";
-const END_SYNCHRONIZED_OUTPUT = "\u001b[?2026l";
-const OSC133_ZONE_PREFIX = /^(?:\x1B\]133;[ABC](?:\x07|\x1B\\))+/;
-const OSC133_PROMPT_START = /^\x1B\]133;A(?:\x07|\x1B\\)/;
+const ENTER_ALT_SCREEN = "\u001B[?1049h";
+const EXIT_ALT_SCREEN = "\u001B[?1049l";
+const DISABLE_AUTOWRAP = "\u001B[?7l";
+const ENABLE_AUTOWRAP = "\u001B[?7h";
+const ENABLE_BUTTON_MOTION_MOUSE = "\u001B[?1000h\u001B[?1002h\u001B[?1004h\u001B[?1006h";
+const ENABLE_ALL_MOTION_MOUSE = "\u001B[?1000h\u001B[?1002h\u001B[?1003h\u001B[?1004h\u001B[?1006h";
+const DISABLE_MOUSE = "\u001B[?1006l\u001B[?1004l\u001B[?1003l\u001B[?1002l\u001B[?1000l";
+const FOCUS_IN = "\u001B[I";
+const FOCUS_OUT = "\u001B[O";
+const BEGIN_SYNCHRONIZED_OUTPUT = "\u001B[?2026h";
+const END_SYNCHRONIZED_OUTPUT = "\u001B[?2026l";
+const OSC133_ZONE_PREFIX = /^(?:\u001B\]133;[ABC](?:\u0007|\u001B\\))+/;
+const OSC133_PROMPT_START = /^\u001B\]133;A(?:\u0007|\u001B\\)/;
 const PAGE_SCROLL_OVERLAP = 4;
 const ALT_WHEEL_SCROLL_MULTIPLIER = 5;
 const MAX_CACHED_OFFSCREEN_KITTY_IMAGES = 16;
@@ -270,8 +269,8 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 		this.flashes = new AltScreenFlashContainer(() => this.requestRender());
 		this.wheelScrollLines = Math.max(1, Math.floor(options.wheelScrollLines ?? 1));
 		this.mouseEnabled = options.mouse ?? true;
-		this.searchMatchStyle = options.searchMatchStyle ?? ((text) => `\x1B[4m${text}\x1B[24m`);
-		this.searchCurrentMatchStyle = options.searchCurrentMatchStyle ?? ((text) => `\x1B[1;7m${text}\x1B[22;27m`);
+		this.searchMatchStyle = options.searchMatchStyle ?? ((text) => `\u001B[4m${text}\u001B[24m`);
+		this.searchCurrentMatchStyle = options.searchCurrentMatchStyle ?? ((text) => `\u001B[1;7m${text}\u001B[22;27m`);
 		this.searchNavigationButtonStyle = options.searchNavigationButtonStyle ?? ((text) => text);
 		this.scrollToEndIndicator = options.scrollToEndIndicator;
 		this.openUrl = options.openUrl;
@@ -386,7 +385,7 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 				? ENABLE_BUTTON_MOTION_MOUSE
 				: ENABLE_ALL_MOTION_MOUSE;
 		this.terminal.write(
-			`${ENTER_ALT_SCREEN}${DISABLE_AUTOWRAP}${this.mouseEnabled ? mouseSequence : ""}\x1B[2J\x1B[H\x1B[?25l`,
+			`${ENTER_ALT_SCREEN}${DISABLE_AUTOWRAP}${this.mouseEnabled ? mouseSequence : ""}\u001B[2J\u001B[H\u001B[?25l`,
 		);
 	}
 
@@ -409,7 +408,7 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 		if (!this.altScreenActive) return;
 		this.altScreenActive = false;
 		if (options.preserveScreen) {
-			this.terminal.write(`${BEGIN_SYNCHRONIZED_OUTPUT}${EXIT_ALT_SCREEN}\x1B[?25h${END_SYNCHRONIZED_OUTPUT}`);
+			this.terminal.write(`${BEGIN_SYNCHRONIZED_OUTPUT}${EXIT_ALT_SCREEN}\u001B[?25h${END_SYNCHRONIZED_OUTPUT}`);
 		} else {
 			const width = Math.max(1, this.terminal.columns);
 			const documentLines = this.render(width).map((line) => line.replace(OSC133_ZONE_PREFIX, ""));
@@ -419,9 +418,9 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 			let buffer = `${BEGIN_SYNCHRONIZED_OUTPUT}${EXIT_ALT_SCREEN}${DISABLE_AUTOWRAP}`;
 			for (let row = 0; row < this.lastDocument.length; row++) {
 				if (row > 0) buffer += "\r\n";
-				buffer += `\r\x1B[2K${this.lastDocument[row] ?? ""}`;
+				buffer += `\r\u001B[2K${this.lastDocument[row] ?? ""}`;
 			}
-			buffer += `\x1B[0m${ENABLE_AUTOWRAP}\r\n\x1B[?25h${END_SYNCHRONIZED_OUTPUT}`;
+			buffer += `\u001B[0m${ENABLE_AUTOWRAP}\r\n\u001B[?25h${END_SYNCHRONIZED_OUTPUT}`;
 			this.terminal.write(buffer);
 		}
 		if (this.savedCapabilities) {
@@ -978,7 +977,7 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 	}
 
 	private parseWheelEvent(data: string): WheelEvent | undefined {
-		const sgr = /^\x1B\[<(\d+);(\d+);(\d+)[Mm]$/.exec(data);
+		const sgr = /^\u001B\[<(\d+);(\d+);(\d+)[Mm]$/.exec(data);
 		if (sgr) {
 			const button = Number.parseInt(sgr[1]!, 10);
 			if ((button & 64) === 0) return undefined;
@@ -991,15 +990,17 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 				button,
 			};
 		}
-		if (data.length === 6 && data.startsWith("\x1B[M")) {
-			const button = firstCodePoint(data) - 32;
+		if (data.length === 6 && data.startsWith("\u001B[M")) {
+			// X10 encoding: ESC [ M b x y — bytes 3..5 carry button/x/y, each
+			// biased by +32. firstCodePoint(data) would read the ESC byte.
+			const button = data.codePointAt(3) - 32;
 			if ((button & 64) === 0) return undefined;
 			const direction = button & 3;
 			if (direction !== 0 && direction !== 1) return undefined;
 			return {
 				direction: direction === 0 ? -1 : 1,
-				x: firstCodePoint(data) - 33,
-				y: firstCodePoint(data) - 33,
+				x: data.codePointAt(4) - 33,
+				y: data.codePointAt(5) - 33,
 				button,
 			};
 		}
@@ -1026,7 +1027,7 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 	}
 
 	private parseSgrMouseEvent(data: string): SgrMouseEvent | undefined {
-		const match = /^\x1B\[<(\d+);(\d+);(\d+)([Mm])$/.exec(data);
+		const match = /^\u001B\[<(\d+);(\d+);(\d+)([Mm])$/.exec(data);
 		if (!match) return undefined;
 		return {
 			button: Number.parseInt(match[1]!, 10),
@@ -1381,7 +1382,13 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 					return;
 				}
 			}
-			if (this.copyOnSelect) void this.copySelectionToClipboard();
+			if (this.copyOnSelect) {
+				this.copySelectionToClipboard().catch(() => {
+					// Copy-on-select is best-effort; a rejected host clipboard
+					// implementation must not surface as an unhandled rejection.
+					this.flash("Copy failed");
+				});
+			}
 			this.requestRender();
 			return;
 		}
@@ -1522,7 +1529,7 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 			this.flash(ok ? "Copied!" : "Copy failed");
 			return ok;
 		}
-		this.terminal.write(`\x1B]52;c;${Buffer.from(text).toString("base64")}\u0007`);
+		this.terminal.write(`\u001B]52;c;${Buffer.from(text).toString("base64")}\u0007`);
 		this.flash("Copied!");
 		return true;
 	}
@@ -1611,7 +1618,7 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 	}
 
 	private applySelectionHighlight(text: string): string {
-		let result = "\u001b[7m";
+		let result = "\u001B[7m";
 		let index = 0;
 		while (index < text.length) {
 			const ansi = extractAnsiCode(text, index);
@@ -1621,10 +1628,10 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 				continue;
 			}
 			result += ansi.code;
-			if (ansi.code.endsWith("m")) result += "\u001b[7m";
+			if (ansi.code.endsWith("m")) result += "\u001B[7m";
 			index += ansi.length;
 		}
-		return `${result}\u001b[27m`;
+		return `${result}\u001B[27m`;
 	}
 
 	private applySelection(screen: string[], layout = this.currentLayout): string[] {
@@ -1677,7 +1684,7 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 	}
 
 	private isMouseSequence(data: string): boolean {
-		return /^\x1B\[<\d+;\d+;\d+[Mm]$/.test(data) || (data.length === 6 && data.startsWith("\x1B[M"));
+		return /^\u001B\[<\d+;\d+;\d+[Mm]$/.test(data) || (data.length === 6 && data.startsWith("\u001B[M"));
 	}
 
 	private compositeScrollToEndIndicator(screen: string[], layout: LayoutFrame, width: number): string[] {
@@ -1782,23 +1789,23 @@ export class TuiAltScreen extends TuiBase implements ViewportTUI {
 				this.imageProtocol === "kitty" && hadUploadedKittyImages
 					? deleteAllKittyPlacements()
 					: this.deleteKittyImages();
-			buffer += `${clearImages}\x1B[2J`;
+			buffer += `${clearImages}\u001B[2J`;
 		} else if (imagesNeedRedraw) {
-			if (this.imageProtocol === "iterm2") buffer += "\x1B[2J";
+			if (this.imageProtocol === "iterm2") buffer += "\u001B[2J";
 			else if (this.imageProtocol === "kitty") buffer += deleteAllKittyPlacements();
 		}
 		buffer += preparedKittyScreen.evictedImageDeletion;
 
 		for (let row = 0; row < height; row++) {
 			if (!fullRedraw && !imagesNeedRedraw && screen[row] === this.previousScreen[row]) continue;
-			buffer += `\u001b[${row + 1};1H\u001b[2K${preparedKittyScreen.lines[row] ?? ""}`;
+			buffer += `\u001B[${row + 1};1H\u001B[2K${preparedKittyScreen.lines[row] ?? ""}`;
 		}
 
 		if (cursorPos) {
-			buffer += `\u001b[${cursorPos.row + 1};${Math.min(width, cursorPos.col) + 1}H`;
-			buffer += this.getShowHardwareCursor() ? "\u001b[?25h" : "\x1B[?25l";
+			buffer += `\u001B[${cursorPos.row + 1};${Math.min(width, cursorPos.col) + 1}H`;
+			buffer += this.getShowHardwareCursor() ? "\u001B[?25h" : "\u001B[?25l";
 		} else {
-			buffer += "\u001b[?25l";
+			buffer += "\u001B[?25l";
 		}
 		buffer += END_SYNCHRONIZED_OUTPUT;
 		this.terminal.write(buffer);

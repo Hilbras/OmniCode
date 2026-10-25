@@ -3,8 +3,11 @@
  *
  * Tracks killed (deleted) text entries. Consecutive kills can accumulate
  * into a single entry. Supports yank (paste most recent) and yank-pop
- * (cycle through older entries).
+ * (cycle through older entries). Entries persist across submissions by
+ * design; the ring is capped so a long session cannot grow it unboundedly.
  */
+const KILL_RING_MAX_ENTRIES = 60;
+
 export class KillRing {
 	private ring: string[] = [];
 
@@ -24,6 +27,9 @@ export class KillRing {
 			this.ring.push(opts.prepend ? text + last : last + text);
 		} else {
 			this.ring.push(text);
+			if (this.ring.length > KILL_RING_MAX_ENTRIES) {
+				this.ring.shift();
+			}
 		}
 	}
 

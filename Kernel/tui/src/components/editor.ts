@@ -380,7 +380,7 @@ export class Editor implements Component, Focusable {
 	private snappedFromCursorCol: number | null = null;
 
 	// Undo support
-	private undoStack = new UndoStack<EditorSnapshot>();
+	private undoStack = new UndoStack<EditorSnapshot>(100);
 
 	public onSubmit?: (text: string) => void;
 	public onChange?: (text: string) => void;
@@ -671,12 +671,12 @@ export class Editor implements Component, Focusable {
 					const afterGraphemes = [...this.segment(after, "grapheme")];
 					const firstGrapheme = afterGraphemes[0]?.segment || "";
 					const restAfter = after.slice(firstGrapheme.length);
-					const cursor = `\x1B[7m${firstGrapheme}\u001b[0m`;
+					const cursor = `\u001B[7m${firstGrapheme}\u001B[0m`;
 					displayText = before + marker + cursor + restAfter;
 					// lineVisibleWidth stays the same - we're replacing, not adding
 				} else {
 					// Cursor is at the end - add highlighted space
-					const cursor = "\u001b[7m \u001b[0m";
+					const cursor = "\u001B[7m \u001B[0m";
 					displayText = before + marker + cursor;
 					lineVisibleWidth = lineVisibleWidth + 1;
 					// If cursor overflows content width into the padding, flag it
@@ -801,16 +801,16 @@ export class Editor implements Component, Focusable {
 		}
 
 		// Handle bracketed paste mode
-		if (data.includes("\u001b[200~")) {
+		if (data.includes("\u001B[200~")) {
 			this.isInPaste = true;
 			this.pasteBuffer = "";
 			this.pasteBurst.reset();
-			data = data.replace("\u001b[200~", "");
+			data = data.replace("\u001B[200~", "");
 		}
 
 		if (this.isInPaste) {
 			this.pasteBuffer += data;
-			const endIndex = this.pasteBuffer.indexOf("\x1B[201~");
+			const endIndex = this.pasteBuffer.indexOf("\u001B[201~");
 			if (endIndex !== -1) {
 				const pasteContent = this.pasteBuffer.substring(0, endIndex);
 				if (pasteContent.length > 0) {
@@ -854,7 +854,12 @@ export class Editor implements Component, Focusable {
 				return;
 			}
 
-			if (kb.matches(data, "tui.select.up") || kb.matches(data, "tui.select.down")) {
+			if (
+				kb.matches(data, "tui.select.up") ||
+				kb.matches(data, "tui.select.down") ||
+				kb.matches(data, "tui.select.pageUp") ||
+				kb.matches(data, "tui.select.pageDown")
+			) {
 				this.autocompleteList.handleInput(data);
 				return;
 			}
@@ -988,9 +993,9 @@ export class Editor implements Component, Focusable {
 		if (
 			kb.matches(data, "tui.input.newLine") ||
 			(firstCodePoint(data) === 10 && data.length > 1) ||
-			data === "\u001b\r" ||
-			data === "\x1B[13;2~" ||
-			(data.length > 1 && data.includes("\u001b") && data.includes("\r")) ||
+			data === "\u001B\r" ||
+			data === "\u001B[13;2~" ||
+			(data.length > 1 && data.includes("\u001B") && data.includes("\r")) ||
 			(data === "\n" && data.length === 1)
 		) {
 			if (this.shouldSubmitOnBackslashEnter(data, kb)) {
@@ -1257,7 +1262,7 @@ export class Editor implements Component, Focusable {
 	 * - Expand tabs to 4 spaces
 	 */
 	private normalizeText(text: string): string {
-		return text.replaceAll(/\r\n/g, "\n").replaceAll(/\r/g, "\n").replaceAll(/\t/g, "    ");
+		return text.replaceAll('\r\n', "\n").replaceAll('\r', "\n").replaceAll('	', "    ");
 	}
 
 	/**
@@ -1390,7 +1395,7 @@ export class Editor implements Component, Focusable {
 		// (ESC [ <codepoint> ; 5 u). Decode those back to their literal byte so the
 		// per-char filter below preserves newlines instead of stripping ESC and
 		// leaking the printable tail (e.g. "[106;5u") into the editor.
-		const decodedText = pastedText.replaceAll(/\x1B\[(\d+);5u/g, (match, code) => {
+		const decodedText = pastedText.replaceAll(/\u001B\[(\d+);5u/g, (match, code) => {
 			const cp = Number(code);
 			if (cp >= 97 && cp <= 122) return String.fromCodePoint(cp - 96);
 			if (cp >= 65 && cp <= 90) return String.fromCodePoint(cp - 64);
@@ -2474,19 +2479,30 @@ export class Editor implements Component, Focusable {
 	): Promise<void> {
 		const previousTask = this.autocompleteRequestTask;
 		this.autocompleteRequestTask = (async () => {
-			await previousTask;
-			if (startToken !== this.autocompleteStartToken || !this.autocompleteProvider) {
-				return;
+			try {
+				await previousTask;
+				if (startToken !== this.autocompleteStartToken || !this.autocompleteProvider) {
+					return;
+				}
+
+				const controller = new AbortController();
+				this.autocompleteAbort = controller;
+				const requestId = ++this.autocompleteRequestId;
+				const snapshotText = this.getText();
+				const snapshotLine = this.state.cursorLine;
+				const snapshotCol = this.state.cursorCol;
+
+				await this.runAutocompleteRequest(requestId, controller, snapshotText, snapshotLine, snapshotCol, options);
+			} catch {
+				// Autocomplete is best-effort: a provider failure must not surface
+				// as an unhandled rejection (the request call is `void`ed) and must
+				// not poison the chain — every later request awaits this task.
+				// Drop the stale UI only when no newer request has taken over.
+				if (startToken === this.autocompleteStartToken) {
+					this.autocompleteAbort = undefined;
+					this.clearAutocompleteUi();
+				}
 			}
-
-			const controller = new AbortController();
-			this.autocompleteAbort = controller;
-			const requestId = ++this.autocompleteRequestId;
-			const snapshotText = this.getText();
-			const snapshotLine = this.state.cursorLine;
-			const snapshotCol = this.state.cursorCol;
-
-			await this.runAutocompleteRequest(requestId, controller, snapshotText, snapshotLine, snapshotCol, options);
 		})();
 		await this.autocompleteRequestTask;
 	}

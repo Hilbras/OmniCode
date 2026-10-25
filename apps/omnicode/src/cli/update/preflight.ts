@@ -1030,7 +1030,10 @@ export async function runUpdatePreflight(
       );
       return 'continue';
     }
-  } catch {
+  } catch (error) {
+    logUpdateWarn(logger, 'update preflight failed unexpectedly', {
+      error: formatErrorMessage(error),
+    });
     return 'continue';
   }
 }

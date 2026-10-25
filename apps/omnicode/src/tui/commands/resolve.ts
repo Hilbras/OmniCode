@@ -7,11 +7,7 @@ import {
   type BuiltinSlashCommand,
   type BuiltinSlashCommandName,
 } from './registry';
-import type {
-  OmnicodeSlashCommand,
-  SlashCommandBusyReason,
-  SlashCommandInvalidReason,
-} from './types';
+import type { OmnicodeSlashCommand, SlashCommandBusyReason } from './types';
 
 export type SlashCommandIntent =
   | { readonly kind: 'not-command' }
@@ -38,11 +34,6 @@ export type SlashCommandIntent =
       readonly kind: 'blocked';
       readonly commandName: string;
       readonly reason: SlashCommandBusyReason;
-    }
-  | {
-      readonly kind: 'invalid';
-      readonly commandName: string;
-      readonly reason: SlashCommandInvalidReason;
     };
 
 export interface ResolveSlashCommandInput {

@@ -33,7 +33,7 @@ describe('omnicode install-desktop', () => {
     await program.parseAsync(['node', 'omnicode', 'install-desktop']);
 
     expect(write).toHaveBeenCalledWith('https://example.com/code\n');
-    expect(mocks.openUrl).toHaveBeenCalledWith('https://example.com/code');
+    expect(mocks.openUrl).toHaveBeenCalledWith('https://example.com/code', expect.any(Function));
   });
 
   it('keeps install-app working as a hidden alias', async () => {
@@ -44,6 +44,6 @@ describe('omnicode install-desktop', () => {
     await program.parseAsync(['node', 'omnicode', 'install-app']);
 
     expect(write).toHaveBeenCalledWith('https://example.com/code\n');
-    expect(mocks.openUrl).toHaveBeenCalledWith('https://example.com/code');
+    expect(mocks.openUrl).toHaveBeenCalledWith('https://example.com/code', expect.any(Function));
   });
 });

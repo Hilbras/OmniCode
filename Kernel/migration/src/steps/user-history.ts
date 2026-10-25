@@ -1,4 +1,4 @@
-import { copyFile, mkdir, readdir, rename, stat } from 'node:fs/promises';
+import { copyFile, mkdir, readdir, rename, rm, stat } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import type { Stats } from 'node:fs';
 import { join } from 'node:path';
@@ -53,8 +53,13 @@ export async function migrateUserHistoryStep(
     // Copy atomically: a crash mid-copy leaves only the temp file, never a
     // truncated final file that the next run would skip as complete.
     const tmpPath = `${tgtPath}.${process.pid}.tmp`;
-    await copyFile(srcPath, tmpPath);
-    await rename(tmpPath, tgtPath);
+    try {
+      await copyFile(srcPath, tmpPath);
+      await rename(tmpPath, tgtPath);
+    } catch (error) {
+      await rm(tmpPath, { force: true }).catch(() => {});
+      throw error;
+    }
     copied++;
   }
 

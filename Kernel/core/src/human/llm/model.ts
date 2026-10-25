@@ -21,6 +21,7 @@ export interface LlmModel extends LlmConnection {
   readonly capability: ModelCapability;
   readonly maxContextSize?: number;
   readonly maxInputSize?: number;
+  readonly defaultMaxTokens?: number;
   readonly promptCacheKey?: boolean;
   readonly authScheme?: LlmAuthScheme;
   readonly opencodeFreeTier?: boolean;

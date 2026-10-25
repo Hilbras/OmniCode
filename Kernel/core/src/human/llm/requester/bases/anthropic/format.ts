@@ -229,7 +229,7 @@ export function assembleAnthropicRequest(
     parts.betaApi || input.model.betaApi === true || input.thinking?.keep !== undefined;
   const params: Record<string, unknown> = {
     model: input.model.model,
-    max_tokens: resolveDefaultMaxTokens(input.model.model),
+    max_tokens: resolveDefaultMaxTokens(input.model.model, input.model.defaultMaxTokens),
     metadata: input.cacheKey === undefined ? undefined : { user_id: input.cacheKey },
     ...restKwargs,
     system: input.systemPrompt

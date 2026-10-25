@@ -167,7 +167,7 @@ export function isFocusable(component: Component | null): component is Component
  * Components emit this at the cursor position when focused.
  * TUI finds and strips this marker, then positions the hardware cursor there.
  */
-export const CURSOR_MARKER = "\u001b_pi:c\u0007";
+export const CURSOR_MARKER = "\u001B_pi:c\u0007";
 
 export { visibleWidth };
 
@@ -386,7 +386,7 @@ export class Container implements Component {
 /**
  * TUI - Main class for managing terminal UI with differential rendering
  */
-export const SEGMENT_RESET = "\x1B[0m\x1B]8;;\x07";
+export const SEGMENT_RESET = "\u001B[0m\u001B]8;;\u0007";
 
 /** Composite overlay content into a terminal line at a fixed column. */
 export function compositeTuiLine(
@@ -895,7 +895,7 @@ export abstract class TuiBase extends Container implements TUI {
 		this.afterTerminalStart();
 		this.terminal.hideCursor();
 		if (this.terminalColorSchemeNotificationsEnabled) {
-			this.terminal.write("\x1B[?2031h");
+			this.terminal.write("\u001B[?2031h");
 		}
 		this.queryCellSize();
 		this.requestRender();
@@ -925,7 +925,7 @@ export abstract class TuiBase extends Container implements TUI {
 		}
 		this.terminalColorSchemeNotificationsEnabled = enabled;
 		if (!this.stopped) {
-			this.terminal.write(enabled ? "\x1B[?2031h" : "\x1B[?2031l");
+			this.terminal.write(enabled ? "\u001B[?2031h" : "\u001B[?2031l");
 		}
 	}
 
@@ -936,14 +936,14 @@ export abstract class TuiBase extends Container implements TUI {
 		}
 		// Query terminal for cell size in pixels: CSI 16 t
 		// Response format: CSI 6 ; height ; width t
-		this.terminal.write("\x1B[16t");
+		this.terminal.write("\u001B[16t");
 	}
 
 	stop(options: TuiStopOptions = {}): void {
 		this.stopped = true;
 		this.cancelRenderTimer();
 		if (this.terminalColorSchemeNotificationsEnabled) {
-			this.terminal.write("\u001b[?2031l");
+			this.terminal.write("\u001B[?2031l");
 		}
 		this.beforeTerminalStop(options);
 		this.terminal.showCursor();
@@ -1129,7 +1129,7 @@ export abstract class TuiBase extends Container implements TUI {
 
 	private consumeCellSizeResponse(data: string): boolean {
 		// Response format: ESC [ 6 ; height ; width t
-		const match = data.match(/^\x1B\[6;(\d+);(\d+)t$/);
+		const match = data.match(/^\u001B\[6;(\d+);(\d+)t$/);
 		if (!match) {
 			return false;
 		}
@@ -1430,10 +1430,19 @@ export abstract class TuiBase extends Container implements TUI {
 				query.timer = undefined;
 				query.resolve?.(undefined);
 				query.resolve = undefined;
+				// Drop the timed-out query object so entries cannot accumulate when
+				// the terminal never answers. The reply counter keeps counting: a
+				// late reply must still be consumed (never leak into the input
+				// stream) and then pairs with the next pending query, which asked
+				// the same question.
+				const index = this.pendingOsc11BackgroundQueries.indexOf(query);
+				if (index >= 0) {
+					this.pendingOsc11BackgroundQueries.splice(index, 1);
+				}
 			}, timeoutMs);
 			this.pendingOsc11BackgroundQueries.push(query);
 			this.pendingOsc11BackgroundReplies += 1;
-			this.terminal.write("\x1B]11;?\x07");
+			this.terminal.write("\u001B]11;?\u0007");
 		});
 	}
 
@@ -1460,7 +1469,7 @@ export abstract class TuiBase extends Container implements TUI {
 
 			unsubscribe = this.onTerminalColorSchemeChange(settle);
 			timer = setTimeout(() => settle(undefined), timeoutMs);
-			this.terminal.write("\x1B[?996n");
+			this.terminal.write("\u001B[?996n");
 		});
 	}
 }

@@ -113,4 +113,29 @@ describe("SelectList", () => {
 		assert.ok(rendered[0].includes("…"));
 		assert.equal(visibleIndexOf(rendered[0], "first"), visibleIndexOf(rendered[1], "second"));
 	});
+
+	it("moves the selection by a page on pageUp/pageDown and clamps at the ends", () => {
+		const items = Array.from({ length: 10 }, (_, index) => ({
+			value: `item-${index}`,
+			label: `item-${index}`,
+		}));
+
+		const list = new SelectList(items, 3, testTheme);
+		list.handleInput("\u001B[6~"); // pageDown
+		assert.equal(list.getSelectedItem()?.value, "item-3");
+		list.handleInput("\u001B[6~");
+		assert.equal(list.getSelectedItem()?.value, "item-6");
+		list.handleInput("\u001B[6~");
+		assert.equal(list.getSelectedItem()?.value, "item-9");
+		list.handleInput("\u001B[6~");
+		assert.equal(list.getSelectedItem()?.value, "item-9");
+
+		list.handleInput("\u001B[5~"); // pageUp
+		assert.equal(list.getSelectedItem()?.value, "item-6");
+		list.handleInput("\u001B[5~");
+		list.handleInput("\u001B[5~");
+		assert.equal(list.getSelectedItem()?.value, "item-0");
+		list.handleInput("\u001B[5~");
+		assert.equal(list.getSelectedItem()?.value, "item-0");
+	});
 });

@@ -2261,7 +2261,12 @@ export class Parser {
     if (this.source.startsWith('++', start) || this.source.startsWith('--', start)) return true;
     const isBlank = (ch: string | undefined): boolean => ch === ' ' || ch === '\t' || ch === '\r';
     let i = start;
+    let sinceTick = 0;
     while (i < end) {
+      if (++sinceTick >= SCAN_TICK_INTERVAL) {
+        this.budget.progress();
+        sinceTick = 0;
+      }
       const ch = this.source[i]!;
       if (ch === '\\') {
         i += 2;
@@ -3119,7 +3124,12 @@ export class Parser {
     let j = i;
     let sawGroup = false;
     let sawConstruct = false;
+    let sinceTick = 0;
     while (j < st.end) {
+      if (++sinceTick >= SCAN_TICK_INTERVAL) {
+        this.budget.progress();
+        sinceTick = 0;
+      }
       const ch = this.source[j]!;
       if (ch === '\\') {
         j += 2;

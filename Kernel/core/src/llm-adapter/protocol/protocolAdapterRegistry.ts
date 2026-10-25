@@ -190,6 +190,7 @@ export class ProtocolAdapterRegistry implements IProtocolAdapterRegistry {
       capability: toLlmCapability(model.capabilities),
       maxContextSize: model.maxContextSize > 0 ? model.maxContextSize : undefined,
       maxInputSize: model.maxInputSize,
+      defaultMaxTokens: model.providerOptions?.defaultMaxTokens,
       baseUrl: model.baseUrl,
       defaultHeaders: Object.keys(model.headers).length > 0 ? { ...model.headers } : undefined,
       supportEfforts: model.supportEfforts,

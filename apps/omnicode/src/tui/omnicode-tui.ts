@@ -598,14 +598,17 @@ export class OmnicodeTUI {
       try {
         const skills = await this.harness.listWorkspaceSkills(this.state.appState.workDir);
         this.applySkillCommands(skills);
-      } catch {}
+      } catch (error) {
+        log.warn('failed to refresh workspace skill commands', { error: String(error) });
+      }
       return;
     }
 
     let skills;
     try {
       skills = await session.listSkills();
-    } catch {
+    } catch (error) {
+      log.warn('failed to refresh session skill commands', { error: String(error) });
       return;
     }
     this.applySkillCommands(skills);
@@ -628,14 +631,17 @@ export class OmnicodeTUI {
       try {
         const defs = await this.harness.listPluginCommands();
         this.applyPluginCommands(defs);
-      } catch {}
+      } catch (error) {
+        log.warn('failed to refresh workspace plugin commands', { error: String(error) });
+      }
       return;
     }
 
     let defs;
     try {
       defs = await session.listPluginCommands();
-    } catch {
+    } catch (error) {
+      log.warn('failed to refresh session plugin commands', { error: String(error) });
       return;
     }
     this.applyPluginCommands(defs);

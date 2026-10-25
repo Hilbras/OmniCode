@@ -32,15 +32,20 @@ async function fetchWithTimeout(
   fetchImpl: typeof fetch,
   input: string,
   timeoutMs: number,
-): Promise<Response> {
+): Promise<{ response: Response; done: () => void }> {
   const controller = new AbortController();
   const timeout = setTimeout(() => {
     controller.abort();
   }, timeoutMs);
   try {
-    return await fetchImpl(input, { signal: controller.signal });
-  } finally {
+    const response = await fetchImpl(input, { signal: controller.signal });
+    // The timer stays armed across the body read: a stalled response body
+    // must hit the same deadline as the headers. The consumer calls `done()`
+    // once the body is settled.
+    return { response, done: () => clearTimeout(timeout) };
+  } catch (error) {
     clearTimeout(timeout);
+    throw error;
   }
 }
 
@@ -58,24 +63,28 @@ export async function fetchLatestVersionFromRegistry(
   fetchImpl: typeof fetch = fetch,
   timeoutMs: number = REGISTRY_CHECK_TIMEOUT_MS,
 ): Promise<string> {
-  const response = await fetchWithTimeout(fetchImpl, REGISTRY_DIST_TAGS_URL, timeoutMs);
-  if (!response.ok) {
-    throw new Error(`npm registry dist-tags returned HTTP ${response.status}`);
-  }
-  let body: unknown;
+  const { response, done } = await fetchWithTimeout(fetchImpl, REGISTRY_DIST_TAGS_URL, timeoutMs);
   try {
-    body = await response.json();
-  } catch {
-    throw new Error('npm registry dist-tags returned malformed JSON');
+    if (!response.ok) {
+      throw new Error(`npm registry dist-tags returned HTTP ${response.status}`);
+    }
+    let body: unknown;
+    try {
+      body = await response.json();
+    } catch {
+      throw new Error('npm registry dist-tags returned malformed JSON');
+    }
+    const parsed = NpmDistTagsSchema.safeParse(body);
+    if (!parsed.success) {
+      throw new Error('npm registry dist-tags missing a latest tag');
+    }
+    if (valid(parsed.data.latest) === null) {
+      throw new Error(`npm registry latest tag is not a valid semver: ${JSON.stringify(parsed.data.latest)}`);
+    }
+    return parsed.data.latest;
+  } finally {
+    done();
   }
-  const parsed = NpmDistTagsSchema.safeParse(body);
-  if (!parsed.success) {
-    throw new Error('npm registry dist-tags missing a latest tag');
-  }
-  if (valid(parsed.data.latest) === null) {
-    throw new Error(`npm registry latest tag is not a valid semver: ${JSON.stringify(parsed.data.latest)}`);
-  }
-  return parsed.data.latest;
 }
 
 /**

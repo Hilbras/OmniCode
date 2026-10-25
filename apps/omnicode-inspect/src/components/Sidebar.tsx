@@ -198,12 +198,20 @@ export function Sidebar({
     }
     const headers: Record<string, string> = { 'content-type': 'application/json' };
     if (token !== '') headers['authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${baseUrl}/api/v1/sessions`, {
-      method: 'POST',
-      headers,
-      body,
-    });
-    const envelope = (await res.json()) as { code: number; msg: string; data: { id: string } };
+    let envelope: { code: number; msg: string; data: { id: string } };
+    try {
+      const res = await fetch(`${baseUrl}/api/v1/sessions`, {
+        method: 'POST',
+        headers,
+        body,
+      });
+      envelope = (await res.json()) as { code: number; msg: string; data: { id: string } };
+    } catch (error) {
+      // A transport failure (offline server, non-JSON error body) must not
+      // vanish into the voided onCreate promise.
+      window.alert(`create session failed: ${String(error)}`);
+      return;
+    }
     if (envelope.code !== 0) {
       window.alert(`create session failed: ${envelope.msg}`);
       return;

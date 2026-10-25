@@ -7,9 +7,18 @@
 export class UndoStack<S> {
 	private stack: S[] = [];
 
+	/**
+	 * @param limit Maximum number of snapshots retained. When exceeded, the
+	 *   oldest snapshots are dropped (how far back undo can reach).
+	 */
+	constructor(private readonly limit?: number) {}
+
 	/** Push a deep clone of the given state onto the stack. */
 	push(state: S): void {
 		this.stack.push(structuredClone(state));
+		if (this.limit !== undefined && this.stack.length > this.limit) {
+			this.stack.splice(0, this.stack.length - this.limit);
+		}
 	}
 
 	/** Pop and return the most recent snapshot, or undefined if empty. */

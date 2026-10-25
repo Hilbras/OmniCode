@@ -59,6 +59,9 @@ export class ProxyChannel implements IChannel {
       headers,
       body,
     });
+    if (!res.ok) {
+      throw new RPCError(res.status, `${res.status} ${res.statusText} on ${command}`);
+    }
     const envelope = (await res.json()) as Envelope<T>;
     if (envelope.code !== 0) {
       throw new RPCError(envelope.code, envelope.msg, envelope.details);

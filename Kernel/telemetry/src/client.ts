@@ -219,6 +219,14 @@ class ScopedTelemetryClient extends TelemetryClient {
     this.parent.trackWithContext(event, properties, this.context);
   }
 
+  override trackWithContext(
+    event: string,
+    properties: TelemetryProperties = {},
+    context: TelemetryContextIds,
+  ): void {
+    this.parent.trackWithContext(event, properties, mergeContext(this.context, context));
+  }
+
   override getSink(): EventSink | null {
     return this.parent.getSink();
   }

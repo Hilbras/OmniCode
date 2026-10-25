@@ -25,7 +25,7 @@ import { TuiAltScreen } from "../src/tui-alt-screen";
 import { stripTerminalSequences, visibleWidth } from "../src/utils";
 import { VirtualTerminal } from "./virtual-terminal";
 
-const OSC133_ZONE_START = "\u001b]133;A\u0007";
+const OSC133_ZONE_START = "\u001B]133;A\u0007";
 
 class InputOverlay {
 	focused = false;
@@ -93,8 +93,8 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 		for (let click = 0; click < 2; click++) {
-			terminal.sendInput("\x1B[<0;2;2M");
-			terminal.sendInput("\x1B[<0;2;2m");
+			terminal.sendInput("\u001B[<0;2;2M");
+			terminal.sendInput("\u001B[<0;2;2m");
 		}
 		requested = true;
 		tui.renderNow();
@@ -137,7 +137,7 @@ describe("TuiAltScreen", () => {
 			["top 4", "five", "six"],
 		);
 		assert.strictEqual(invalidations, 0);
-		const frames = terminal.events.filter((event) => event.type === "write" && event.data.includes("\x1B[?2026h"));
+		const frames = terminal.events.filter((event) => event.type === "write" && event.data.includes("\u001B[?2026h"));
 		assert.strictEqual(frames.length, 1);
 		dispose();
 		scroll.scrollBy(-1);
@@ -185,7 +185,7 @@ describe("TuiAltScreen", () => {
 	it("retains the selected search occurrence when a layout effect shifts content rows", async () => {
 		const terminal = new RecordingTerminal(60, 6);
 		const tui = new TuiAltScreen(terminal, undefined, undefined, {
-			searchCurrentMatchStyle: (text) => `\x1B[42m${text}\x1B[49m`,
+			searchCurrentMatchStyle: (text) => `\u001B[42m${text}\u001B[49m`,
 		});
 		let searching = false;
 		let pinned = false;
@@ -211,18 +211,18 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 		terminal.events.length = 0;
 		searching = true;
-		terminal.sendInput("\x1B[102;6u");
+		terminal.sendInput("\u001B[102;6u");
 		terminal.sendInput("needle");
 		await terminal.waitForRender();
 		assert.ok(terminal.getViewport().some((line) => line.includes("1/2")));
 		assert.ok(
 			terminal.events.some(
-				(event) => event.type === "write" && event.data.includes("\x1B[42mneedle\x1B[49m first"),
+				(event) => event.type === "write" && event.data.includes("\u001B[42mneedle\u001B[49m first"),
 			),
 		);
 		assert.ok(
 			terminal.events.every(
-				(event) => event.type !== "write" || !event.data.includes("\x1B[42mneedle\x1B[49m pill"),
+				(event) => event.type !== "write" || !event.data.includes("\u001B[42mneedle\u001B[49m pill"),
 			),
 		);
 		tui.stop();
@@ -242,7 +242,7 @@ describe("TuiAltScreen", () => {
 		);
 		assert.strictEqual(tui.isFollowingOutput, true);
 
-		terminal.sendInput("\u001b[<64;1;1M");
+		terminal.sendInput("\u001B[<64;1;1M");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(
 			terminal.getViewport().map((line) => line.trimEnd()),
@@ -265,7 +265,7 @@ describe("TuiAltScreen", () => {
 	it("shows a clickable jump-to-end indicator on the transcript's last row while scrolled up", async () => {
 		const terminal = new VirtualTerminal(30, 6);
 		const tui = new TuiAltScreen(terminal, undefined, undefined, {
-			scrollToEndIndicator: () => "\x1B[7m ↓ Jump to end \x1B[27m",
+			scrollToEndIndicator: () => "\u001B[7m ↓ Jump to end \u001B[27m",
 		});
 		const transcript = new ScrollView(
 			new Text(Array.from({ length: 8 }, (_, index) => `line ${index + 1}`).join("\n"), 0, 0),
@@ -281,20 +281,20 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 		assert.ok(!terminal.getViewport().some((line) => line.includes("Jump to end")));
 
-		terminal.sendInput("\u001b[<64;1;1M");
+		terminal.sendInput("\u001B[<64;1;1M");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.isFollowingEnd, false);
 		assert.strictEqual(terminal.getViewport()[3], "line 7  ↓ Jump to end         ");
 		assert.strictEqual(terminal.getViewport()[4]?.trimEnd(), "editor");
 
 		// Pressing next to the label starts a selection instead of jumping.
-		terminal.sendInput("\x1B[<0;2;4M");
-		terminal.sendInput("\x1B[<0;2;4m");
+		terminal.sendInput("\u001B[<0;2;4M");
+		terminal.sendInput("\u001B[<0;2;4m");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.isFollowingEnd, false);
 
-		terminal.sendInput("\x1B[<0;15;4M");
-		terminal.sendInput("\x1B[<0;15;4m");
+		terminal.sendInput("\u001B[<0;15;4M");
+		terminal.sendInput("\u001B[<0;15;4m");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.isFollowingEnd, true);
 		assert.deepStrictEqual(
@@ -322,13 +322,13 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<64;1;1M");
+		terminal.sendInput("\u001B[<64;1;1M");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.isFollowingEnd, false);
 
 		// The indicator must not intercept a press on the scrollbar's last column.
-		terminal.sendInput("\u001b[<0;30;4M");
-		terminal.sendInput("\x1B[<0;30;4m");
+		terminal.sendInput("\u001B[<0;30;4M");
+		terminal.sendInput("\u001B[<0;30;4m");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.isFollowingEnd, false);
 		tui.stop();
@@ -370,7 +370,7 @@ describe("TuiAltScreen", () => {
 		);
 
 		// Wheel over the dock falls back to the primary transcript scroll view.
-		terminal.sendInput("\u001b[<64;1;6M");
+		terminal.sendInput("\u001B[<64;1;6M");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(
 			terminal.getViewport().map((line) => line.trimEnd()),
@@ -428,7 +428,36 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<64;15;1M");
+		terminal.sendInput("\u001B[<64;15;1M");
+		await terminal.waitForRender();
+		assert.strictEqual(left.scrollTop, 3);
+		assert.strictEqual(right.scrollTop, 2);
+		assert.deepStrictEqual(
+			terminal.getViewport().map((line) => line.trimEnd()),
+			["a4        b3", "a5        b4", "a6        b5", "a7        b6"],
+		);
+		tui.stop();
+	});
+
+	it("routes X10-encoded wheel input to the scroll view under the pointer", async () => {
+		const terminal = new VirtualTerminal(20, 4);
+		const tui = new TuiAltScreen(terminal);
+		const left = new ScrollView(new Text("a1\na2\na3\na4\na5\na6\na7", 0, 0), {
+			follow: "end",
+			primary: true,
+		});
+		const right = new ScrollView(new Text("b1\nb2\nb3\nb4\nb5\nb6\nb7", 0, 0), { follow: "end" });
+		tui.setLayoutRoot(
+			new HStack([
+				{ component: left, basis: 10, shrink: 0 },
+				{ component: right, basis: 10, shrink: 0 },
+			]),
+		);
+		tui.start();
+		await terminal.waitForRender();
+
+		// X10 wheel-up: ESC [ M b x y with button=64 (b=96) at col 15 (x=47), row 1 (y=33).
+		terminal.sendInput("\u001B[M" + String.fromCodePoint(96, 47, 33));
 		await terminal.waitForRender();
 		assert.strictEqual(left.scrollTop, 3);
 		assert.strictEqual(right.scrollTop, 2);
@@ -449,7 +478,7 @@ describe("TuiAltScreen", () => {
 		assert.strictEqual(tui.viewportTop, 8);
 
 		// Alt modifier sets bit 8 on the wheel button (72 = 64 + 8).
-		terminal.sendInput("\x1B[<72;1;1M");
+		terminal.sendInput("\u001B[<72;1;1M");
 		await terminal.waitForRender();
 		assert.strictEqual(tui.viewportTop, 3);
 		tui.stop();
@@ -485,8 +514,8 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\u001b[<0;15;1M");
-		terminal.sendInput("\x1B[<0;15;1m");
+		terminal.sendInput("\u001B[<0;15;1M");
+		terminal.sendInput("\u001B[<0;15;1m");
 		await terminal.waitForRender();
 		assert.strictEqual(selections, 0);
 		tui.stop();
@@ -505,7 +534,7 @@ describe("TuiAltScreen", () => {
 				.filter((event): event is { type: "write"; data: string } => event.type === "write")
 				.map((event) => event.data)
 				.join("");
-			assert.ok(directWrites.includes("\x1B[?1003h"));
+			assert.ok(directWrites.includes("\u001B[?1003h"));
 			directTui.stop();
 
 			const multiplexers = [
@@ -525,9 +554,9 @@ describe("TuiAltScreen", () => {
 					.filter((event): event is { type: "write"; data: string } => event.type === "write")
 					.map((event) => event.data)
 					.join("");
-				assert.ok(writes.includes("\x1B[?1002h"), `${name} should enable button-motion tracking`);
-				assert.ok(!writes.includes("\x1B[?1003h"), `${name} should not enable all-motion tracking`);
-				assert.ok(writes.includes("\x1B[?1006h"), `${name} should enable SGR mouse encoding`);
+				assert.ok(writes.includes("\u001B[?1002h"), `${name} should enable button-motion tracking`);
+				assert.ok(!writes.includes("\u001B[?1003h"), `${name} should not enable all-motion tracking`);
+				assert.ok(writes.includes("\u001B[?1006h"), `${name} should enable SGR mouse encoding`);
 				tui.stop();
 			}
 		} finally {
@@ -554,17 +583,17 @@ describe("TuiAltScreen", () => {
 			Object.defineProperty(process, "platform", { configurable: true, value: "win32" });
 			delete process.env.TERM_PROGRAM;
 			tui.start();
-			terminal.sendInput("\x1B[<2;1;1M");
-			terminal.sendInput("\x1B[<2;1;1m");
+			terminal.sendInput("\u001B[<2;1;1M");
+			terminal.sendInput("\u001B[<2;1;1m");
 			assert.strictEqual(pasteCount, 1);
 
 			process.env.TERM_PROGRAM = "vscode";
-			terminal.sendInput("\u001b[<2;1;1M");
+			terminal.sendInput("\u001B[<2;1;1M");
 			assert.strictEqual(pasteCount, 1);
 
 			Object.defineProperty(process, "platform", { configurable: true, value: "linux" });
 			delete process.env.TERM_PROGRAM;
-			terminal.sendInput("\x1B[<2;1;1M");
+			terminal.sendInput("\u001B[<2;1;1M");
 			assert.strictEqual(pasteCount, 1);
 		} finally {
 			tui.stop();
@@ -586,13 +615,13 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 		assert.strictEqual(scrollView.isScrollbarVisible, false);
 
-		terminal.sendInput("\x1B[<35;10;3M");
+		terminal.sendInput("\u001B[<35;10;3M");
 		await terminal.waitForRender();
 		assert.strictEqual(scrollView.isScrollbarVisible, true);
 		assert.strictEqual(scrollView.isScrollbarActive, true);
 		assert.ok(terminal.getViewport().some((line) => /[│█]/.test(line)));
 
-		terminal.sendInput("\x1B[<35;9;3M");
+		terminal.sendInput("\u001B[<35;9;3M");
 		await new Promise((resolve) => setTimeout(resolve, 40));
 		await terminal.waitForRender();
 		assert.strictEqual(scrollView.isScrollbarVisible, false);
@@ -611,17 +640,17 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 		assert.strictEqual(scrollView.scrollTop, 0);
 
-		terminal.sendInput("\x1B[<0;10;6M");
+		terminal.sendInput("\u001B[<0;10;6M");
 		await terminal.waitForRender();
 		assert.strictEqual(scrollView.scrollTop, 20);
 
-		terminal.sendInput("\x1B[<32;10;10M");
+		terminal.sendInput("\u001B[<32;10;10M");
 		await terminal.waitForRender();
 		assert.strictEqual(scrollView.scrollTop, 40);
 
-		terminal.sendInput("\x1B[<0;10;10m");
+		terminal.sendInput("\u001B[<0;10;10m");
 		await terminal.waitForRender();
-		assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1B]52;c;")));
+		assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\u001B]52;c;")));
 		tui.stop();
 	});
 
@@ -637,12 +666,12 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<65;1;1M");
+		terminal.sendInput("\u001B[<65;1;1M");
 		await terminal.waitForRender();
 		assert.strictEqual(inner.scrollTop, 3);
 		assert.strictEqual(outer.scrollTop, 0);
 
-		terminal.sendInput("\u001b[<65;1;1M");
+		terminal.sendInput("\u001B[<65;1;1M");
 		await terminal.waitForRender();
 		assert.strictEqual(inner.scrollTop, 4);
 		assert.strictEqual(outer.scrollTop, 2);
@@ -656,30 +685,30 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\u001b[57421u");
-		terminal.sendInput("\x1B[57421;1:3u");
+		terminal.sendInput("\u001B[57421u");
+		terminal.sendInput("\u001B[57421;1:3u");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(
 			terminal.getViewport().map((line) => line.trimEnd()),
 			["line 1", "line 2", "line 3", "line 4", "line 5", "line 6", "line 7", "line 8"],
 		);
 
-		terminal.sendInput("\x1B[57422u");
-		terminal.sendInput("\x1B[57422;1:3u");
+		terminal.sendInput("\u001B[57422u");
+		terminal.sendInput("\u001B[57422;1:3u");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(
 			terminal.getViewport().map((line) => line.trimEnd()),
 			["line 5", "line 6", "line 7", "line 8", "line 9", "line 10", "line 11", "line 12"],
 		);
 
-		terminal.sendInput("\x1BOH");
+		terminal.sendInput("\u001BOH");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(
 			terminal.getViewport().map((line) => line.trimEnd()),
 			["line 1", "line 2", "line 3", "line 4", "line 5", "line 6", "line 7", "line 8"],
 		);
 
-		terminal.sendInput("\x1BOF");
+		terminal.sendInput("\u001BOF");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(
 			terminal.getViewport().map((line) => line.trimEnd()),
@@ -701,7 +730,7 @@ describe("TuiAltScreen", () => {
 	});
 
 	it("maps normalized ASCII and Unicode search matches back to rendered columns", () => {
-		assert.deepStrictEqual(findAltScreenSearchMatches(["\x1B[31mfoo  bar\x1B[0m", "A界🙂éZ"], "oo   bar\nA界🙂é"), [
+		assert.deepStrictEqual(findAltScreenSearchMatches(["\u001B[31mfoo  bar\u001B[0m", "A界🙂éZ"], "oo   bar\nA界🙂é"), [
 			{
 				segments: [
 					{ row: 0, startCol: 1, endCol: 3 },
@@ -741,7 +770,7 @@ describe("TuiAltScreen", () => {
 		assert.ok(lines.every((line) => visibleWidth(line) === 48));
 		assert.match(lines[0] ?? "", /^┌─+┐$/);
 		assert.match(lines[1] ?? "", /^│ Find in transcript +│$/);
-		assert.ok(rendered[1]?.includes("\x1B[2m"));
+		assert.ok(rendered[1]?.includes("\u001B[2m"));
 		assert.match(lines[2] ?? "", /^└─+ ↑ Shift\+Enter · ↓ Enter ─┘$/);
 		const controls = lines[2] ?? "";
 		assert.strictEqual(component.getNavigationDirectionAt(2, controls.indexOf("↑")), -1);
@@ -756,20 +785,20 @@ describe("TuiAltScreen", () => {
 		const populated = populatedRender.map((line) => stripTerminalSequences(line));
 		assert.ok(populated[1]?.includes("n"));
 		assert.ok(populated[1]?.includes("1/2"));
-		assert.ok(populatedRender[1]?.includes("\x1B[2m 1/2 \x1B[22m"));
+		assert.ok(populatedRender[1]?.includes("\u001B[2m 1/2 \u001B[22m"));
 		assert.ok(!populated.some((line) => line.includes("Find in transcript")));
 	});
 
 	it("navigates transcript search with hoverable arrow buttons and toggles it with its shortcut", async () => {
 		const terminal = new RecordingTerminal(120, 6);
 		const tui = new TuiAltScreen(terminal, undefined, undefined, {
-			searchNavigationButtonStyle: (text, hovered) => `${hovered ? "\x1B[45m" : "\u001b[44m"}${text}\x1B[49m`,
+			searchNavigationButtonStyle: (text, hovered) => `${hovered ? "\u001B[45m" : "\u001B[44m"}${text}\u001B[49m`,
 		});
 		tui.addChild(new Text("needle one\nmiddle\nneedle two\nend", 0, 0));
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\u001b[102;6u");
+		terminal.sendInput("\u001B[102;6u");
 		terminal.sendInput("needle");
 		await terminal.waitForRender();
 		let viewport = terminal.getViewport();
@@ -780,14 +809,14 @@ describe("TuiAltScreen", () => {
 		let arrowColumn = viewport[arrowRow]?.lastIndexOf("Enter") ?? -1;
 		assert.ok(arrowRow >= 0 && arrowColumn >= 0);
 		const hoverEventCount = terminal.events.length;
-		terminal.sendInput(`\x1B[<35;${arrowColumn + 1};${arrowRow + 1}M`);
+		terminal.sendInput(`\u001B[<35;${arrowColumn + 1};${arrowRow + 1}M`);
 		await terminal.waitForRender();
 		assert.ok(
 			terminal.events
 				.slice(hoverEventCount)
-				.some((event) => event.type === "write" && event.data.includes("\x1B[45m↓ Enter\x1B[49m")),
+				.some((event) => event.type === "write" && event.data.includes("\u001B[45m↓ Enter\u001B[49m")),
 		);
-		terminal.sendInput(`\x1B[<0;${arrowColumn + 1};${arrowRow + 1}M`);
+		terminal.sendInput(`\u001B[<0;${arrowColumn + 1};${arrowRow + 1}M`);
 		await terminal.waitForRender();
 		viewport = terminal.getViewport();
 		assert.ok(viewport.some((line) => line.includes("2/2")));
@@ -796,12 +825,12 @@ describe("TuiAltScreen", () => {
 		arrowRow = viewport.findIndex((line) => line.includes("↑") && line.includes("↓"));
 		arrowColumn = (viewport[arrowRow]?.indexOf("Shift+Enter") ?? -3) + 3;
 		assert.ok(arrowRow >= 0 && arrowColumn >= 0);
-		terminal.sendInput(`\u001b[<0;${arrowColumn + 1};${arrowRow + 1}M`);
+		terminal.sendInput(`\u001B[<0;${arrowColumn + 1};${arrowRow + 1}M`);
 		await terminal.waitForRender();
 		assert.ok(terminal.getViewport().some((line) => line.includes("1/2")));
 		assert.ok(terminal.getViewport().some((line) => line.includes("↑ Shift+Enter · ↓ Enter")));
 
-		terminal.sendInput("\x1B[102;6u");
+		terminal.sendInput("\u001B[102;6u");
 		await terminal.waitForRender();
 		assert.ok(!terminal.getViewport().some((line) => line.includes("↑ Shift+Enter · ↓ Enter")));
 		tui.stop();
@@ -829,7 +858,7 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\u001b[102;6u");
+		terminal.sendInput("\u001B[102;6u");
 		terminal.sendInput("needle");
 		await terminal.waitForRender();
 		let viewport = terminal.getViewport();
@@ -838,7 +867,7 @@ describe("TuiAltScreen", () => {
 
 		const boxBottomRow = viewport.findIndex((line) => line.startsWith("└"));
 		assert.ok(boxBottomRow >= 0);
-		terminal.sendInput(`\x1B[<0;24;${boxBottomRow + 1}M`);
+		terminal.sendInput(`\u001B[<0;24;${boxBottomRow + 1}M`);
 		await terminal.waitForRender();
 
 		viewport = terminal.getViewport();
@@ -850,22 +879,22 @@ describe("TuiAltScreen", () => {
 	it("uses configured styles for current and non-current search matches", async () => {
 		const terminal = new RecordingTerminal(60, 4);
 		const tui = new TuiAltScreen(terminal, undefined, undefined, {
-			searchMatchStyle: (text) => `\x1B[41m${text}\u001b[49m`,
-			searchCurrentMatchStyle: (text) => `\x1B[42m${text}\x1B[49m`,
+			searchMatchStyle: (text) => `\u001B[41m${text}\u001B[49m`,
+			searchCurrentMatchStyle: (text) => `\u001B[42m${text}\u001B[49m`,
 		});
 		tui.addChild(new Text("needle first\nmiddle\nneedle second\nend", 0, 0));
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[102;6u");
+		terminal.sendInput("\u001B[102;6u");
 		terminal.sendInput("needle");
 		await terminal.waitForRender();
 
 		assert.ok(
-			terminal.events.some((event) => event.type === "write" && event.data.includes("\x1B[42mneedle\x1B[49m")),
+			terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B[42mneedle\u001B[49m")),
 		);
 		assert.ok(
-			terminal.events.some((event) => event.type === "write" && event.data.includes("\x1B[41mneedle\x1B[49m")),
+			terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B[41mneedle\u001B[49m")),
 		);
 		tui.stop();
 	});
@@ -900,7 +929,7 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[102;6u");
+		terminal.sendInput("\u001B[102;6u");
 		terminal.sendInput("needle");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.isFollowingEnd, false);
@@ -909,10 +938,10 @@ describe("TuiAltScreen", () => {
 		assert.ok(terminal.getViewport().some((line) => line.includes("line 10 needle two")));
 		assert.deepStrictEqual(editorInputs, []);
 		assert.ok(
-			terminal.events.some((event) => event.type === "write" && event.data.includes("\u001b[1;7mneedle\u001b[22;27m")),
+			terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B[1;7mneedle\u001B[22;27m")),
 		);
 
-		for (let index = 0; index < 6; index++) terminal.sendInput("\x1B[<64;1;4M");
+		for (let index = 0; index < 6; index++) terminal.sendInput("\u001B[<64;1;4M");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.scrollTop, 0);
 		assert.ok(terminal.getViewport().some((line) => line.includes("needle") && line.includes("2/2")));
@@ -922,12 +951,12 @@ describe("TuiAltScreen", () => {
 		assert.ok(terminal.getViewport().some((line) => line.includes("1/2")));
 		assert.ok(terminal.getViewport().some((line) => line.includes("line 5 needle one")));
 
-		terminal.sendInput("\x1B[103;6u");
+		terminal.sendInput("\u001B[103;6u");
 		await terminal.waitForRender();
 		assert.ok(terminal.getViewport().some((line) => line.includes("2/2")));
 		assert.ok(terminal.getViewport().some((line) => line.includes("line 10 needle two")));
 
-		terminal.sendInput("\x1B");
+		terminal.sendInput("\u001B");
 		terminal.sendInput("x");
 		await terminal.waitForRender();
 		assert.ok(!terminal.getViewport().some((line) => line.includes("↑ Shift+Enter · ↓ Enter")));
@@ -989,7 +1018,7 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		const inputs = ["\x1B[5~", "\x1B[6~", "\x1B[H", "\u001b[F"];
+		const inputs = ["\u001B[5~", "\u001B[6~", "\u001B[H", "\u001B[F"];
 		for (const input of inputs) terminal.sendInput(input);
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.scrollTop, 0);
@@ -1013,10 +1042,10 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[O"); // FOCUS_OUT
-		terminal.sendInput("\x1B[I"); // FOCUS_IN
+		terminal.sendInput("\u001B[O"); // FOCUS_OUT
+		terminal.sendInput("\u001B[I"); // FOCUS_IN
 		await terminal.waitForRender();
-		assert.deepStrictEqual(seenByApp, ["\x1B[O", "\x1B[I"]);
+		assert.deepStrictEqual(seenByApp, ["\u001B[O", "\u001B[I"]);
 
 		tui.stop();
 	});
@@ -1074,19 +1103,19 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\u001bOH");
+		terminal.sendInput("\u001BOH");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.scrollTop, 0);
 		assert.deepStrictEqual(editorInputs, []);
 
-		const modifiedInputs = ["\u001b[1;5H", "\x1B[1;5F", "\u001b[5;5~", "\x1B[6;5~", "\x1B[57423;5u"];
+		const modifiedInputs = ["\u001B[1;5H", "\u001B[1;5F", "\u001B[5;5~", "\u001B[6;5~", "\u001B[57423;5u"];
 		for (const input of modifiedInputs) terminal.sendInput(input);
-		terminal.sendInput("\x1B[57423;5:3u");
+		terminal.sendInput("\u001B[57423;5:3u");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.scrollTop, 0);
 		assert.deepStrictEqual(editorInputs, modifiedInputs);
 
-		terminal.sendInput("\x1B[6~");
+		terminal.sendInput("\u001B[6~");
 		await terminal.waitForRender();
 		assert.strictEqual(transcript.scrollTop, 1);
 		assert.deepStrictEqual(editorInputs, modifiedInputs);
@@ -1108,24 +1137,24 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 		assert.strictEqual(tui.viewportTop, 5);
 
-		terminal.sendInput("\x1B[57419;6u");
-		terminal.sendInput("\x1B[57419;6:3u");
+		terminal.sendInput("\u001B[57419;6u");
+		terminal.sendInput("\u001B[57419;6:3u");
 		await terminal.waitForRender();
 		assert.strictEqual(tui.viewportTop, 4);
 		assert.strictEqual(terminal.getViewport()[0]?.trimEnd(), "message 3");
 
-		terminal.sendInput("\x1B[1;6A");
+		terminal.sendInput("\u001B[1;6A");
 		await terminal.waitForRender();
 		assert.strictEqual(tui.viewportTop, 2);
 		assert.strictEqual(terminal.getViewport()[0]?.trimEnd(), "message 2");
 
-		terminal.sendInput("\x1B[57420;6u");
-		terminal.sendInput("\x1B[57420;6:3u");
+		terminal.sendInput("\u001B[57420;6u");
+		terminal.sendInput("\u001B[57420;6:3u");
 		await terminal.waitForRender();
 		assert.strictEqual(tui.viewportTop, 4);
 		assert.strictEqual(terminal.getViewport()[0]?.trimEnd(), "message 3");
 
-		terminal.sendInput("\x1B[1;6B");
+		terminal.sendInput("\u001B[1;6B");
 		await terminal.waitForRender();
 		assert.strictEqual(tui.viewportTop, 5);
 		assert.strictEqual(terminal.getViewport()[1]?.trimEnd(), "message 4");
@@ -1140,7 +1169,7 @@ describe("TuiAltScreen", () => {
 			const terminal = new RecordingTerminal(20, 3);
 			const tui = new TuiAltScreen(terminal);
 			tui.addChild({
-				render: () => ["\x1B]133;B\x07\x1B]133;C\x07\x1B]133;A\x07content"],
+				render: () => ["\u001B]133;B\u0007\u001B]133;C\u0007\u001B]133;A\u0007content"],
 				invalidate: () => {},
 			});
 			tui.addChild(
@@ -1155,9 +1184,9 @@ describe("TuiAltScreen", () => {
 			tui.start();
 			await terminal.waitForRender();
 			tui.stop();
-			assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1B_G")));
-			assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1B]133;")));
-			assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1B]1337;File=")));
+			assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\u001B_G")));
+			assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\u001B]133;")));
+			assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\u001B]1337;File=")));
 			assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("[Image:")));
 		} finally {
 			resetCapabilitiesCache();
@@ -1169,7 +1198,7 @@ describe("TuiAltScreen", () => {
 		try {
 			const terminal = new RecordingTerminal(20, 3);
 			const tui = new TuiAltScreen(terminal);
-			const imageLine = "\x1B]1337;File=inline=1;width=2;height=auto:AAAA\x07";
+			const imageLine = "\u001B]1337;File=inline=1;width=2;height=auto:AAAA\u0007";
 			tui.addChild({
 				render: () => [imageLine, "", "", "after", "more", "end"],
 				invalidate: () => {},
@@ -1183,7 +1212,7 @@ describe("TuiAltScreen", () => {
 			tui.scrollBy(1);
 			await terminal.waitForRender();
 			assert.ok(
-				terminal.events.slice(eventCount).some((event) => event.type === "write" && event.data.includes("\x1B[2J")),
+				terminal.events.slice(eventCount).some((event) => event.type === "write" && event.data.includes("\u001B[2J")),
 			);
 			tui.stop();
 		} finally {
@@ -1240,7 +1269,7 @@ describe("TuiAltScreen", () => {
 			);
 			tui.start();
 			await terminal.waitForRender();
-			assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\x1B_Ga=T")));
+			assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B_Ga=T")));
 
 			const eventCount = terminal.events.length;
 			label.setText("changed");
@@ -1252,10 +1281,10 @@ describe("TuiAltScreen", () => {
 				.filter((event): event is { type: "write"; data: string } => event.type === "write")
 				.map((event) => event.data)
 				.join("");
-			const placementIndex = redrawWrites.indexOf("\x1B_Ga=p,q=2");
-			assert.ok(redrawWrites.includes("\x1B_Ga=d,d=a,q=2\x1B\\"));
+			const placementIndex = redrawWrites.indexOf("\u001B_Ga=p,q=2");
+			assert.ok(redrawWrites.includes("\u001B_Ga=d,d=a,q=2\u001B\\"));
 			assert.ok(placementIndex > redrawWrites.indexOf("changed"));
-			assert.ok(!redrawWrites.includes("\x1B_Ga=T"));
+			assert.ok(!redrawWrites.includes("\u001B_Ga=T"));
 			assert.ok(redrawWrites.length < 2000, `expected placement-only redraw, got ${redrawWrites.length} bytes`);
 			assert.ok(terminal.getViewport().some((line) => line.trimEnd() === "changed"));
 			tui.stop();
@@ -1283,7 +1312,7 @@ describe("TuiAltScreen", () => {
 			);
 			tui.start();
 			await terminal.waitForRender();
-			assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\x1B_Ga=T")));
+			assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B_Ga=T")));
 
 			const eventCount = terminal.events.length;
 			tui.scrollBy(1);
@@ -1295,9 +1324,9 @@ describe("TuiAltScreen", () => {
 				.filter((event): event is { type: "write"; data: string } => event.type === "write")
 				.map((event) => event.data)
 				.join("");
-			assert.ok(reentryWrites.includes("\x1B_Ga=p,q=2"));
-			assert.ok(!reentryWrites.includes("\u001b_Ga=T"));
-			assert.ok(!reentryWrites.includes(`\x1B_Ga=d,d=I,i=${imageId},q=2\u001b\\`));
+			assert.ok(reentryWrites.includes("\u001B_Ga=p,q=2"));
+			assert.ok(!reentryWrites.includes("\u001B_Ga=T"));
+			assert.ok(!reentryWrites.includes(`\u001B_Ga=d,d=I,i=${imageId},q=2\u001B\\`));
 			tui.stop();
 		} finally {
 			resetCapabilitiesCache();
@@ -1332,7 +1361,7 @@ describe("TuiAltScreen", () => {
 			}
 			assert.ok(
 				terminal.events.some(
-					(event) => event.type === "write" && event.data.includes(`\x1B_Ga=d,d=I,i=${firstImageId},q=2\x1B\\`),
+					(event) => event.type === "write" && event.data.includes(`\u001B_Ga=d,d=I,i=${firstImageId},q=2\u001B\\`),
 				),
 			);
 
@@ -1344,7 +1373,7 @@ describe("TuiAltScreen", () => {
 				.filter((event): event is { type: "write"; data: string } => event.type === "write")
 				.map((event) => event.data)
 				.join("");
-			assert.ok(reentryWrites.includes("\u001b_Ga=T"));
+			assert.ok(reentryWrites.includes("\u001B_Ga=T"));
 			tui.stop();
 		} finally {
 			resetCapabilitiesCache();
@@ -1379,7 +1408,7 @@ describe("TuiAltScreen", () => {
 			}
 			assert.ok(
 				terminal.events.some(
-					(event) => event.type === "write" && event.data.includes(`\x1B_Ga=d,d=I,i=${firstImageId},q=2\x1B\\`),
+					(event) => event.type === "write" && event.data.includes(`\u001B_Ga=d,d=I,i=${firstImageId},q=2\u001B\\`),
 				),
 			);
 			tui.stop();
@@ -1399,7 +1428,7 @@ describe("TuiAltScreen", () => {
 		const emojiUrl = "https://example.com/emoji";
 		tui.addChild(
 			new Text(
-				`${hyperlink("link", url)}\n\x1B]8;;${belUrl}\x07link\x1B]8;;\x07\n${hyperlink("🙂", emojiUrl)}`,
+				`${hyperlink("link", url)}\n\u001B]8;;${belUrl}\u0007link\u001B]8;;\u0007\n${hyperlink("🙂", emojiUrl)}`,
 				0,
 				0,
 			),
@@ -1407,24 +1436,24 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;2;1M");
-		terminal.sendInput("\x1B[<3;2;1m");
+		terminal.sendInput("\u001B[<0;2;1M");
+		terminal.sendInput("\u001B[<3;2;1m");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(openedUrls, [url]);
 
-		terminal.sendInput("\x1B[<0;2;2M");
-		terminal.sendInput("\x1B[<0;2;2m");
+		terminal.sendInput("\u001B[<0;2;2M");
+		terminal.sendInput("\u001B[<0;2;2m");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(openedUrls, [url, belUrl]);
 
-		terminal.sendInput("\u001b[<0;2;3M");
-		terminal.sendInput("\u001b[<0;2;3m");
+		terminal.sendInput("\u001B[<0;2;3M");
+		terminal.sendInput("\u001B[<0;2;3m");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(openedUrls, [url, belUrl, emojiUrl]);
 
-		terminal.sendInput("\x1B[<0;2;1M");
-		terminal.sendInput("\x1B[<32;4;1M");
-		terminal.sendInput("\x1B[<0;4;1m");
+		terminal.sendInput("\u001B[<0;2;1M");
+		terminal.sendInput("\u001B[<32;4;1M");
+		terminal.sendInput("\u001B[<0;4;1m");
 		await terminal.waitForRender();
 		assert.deepStrictEqual(openedUrls, [url, belUrl, emojiUrl]);
 
@@ -1434,26 +1463,26 @@ describe("TuiAltScreen", () => {
 	it("selects visible text with the mouse and copies it with OSC 52 after a generic release", async () => {
 		const terminal = new RecordingTerminal(20, 4);
 		const tui = new TuiAltScreen(terminal);
-		tui.addChild(new Text("\x1B[1mal\x1B[0mpha\nbeta\ngamma\ndelta", 0, 0));
+		tui.addChild(new Text("\u001B[1mal\u001B[0mpha\nbeta\ngamma\ndelta", 0, 0));
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\x1B[<32;4;2M");
-		terminal.sendInput("\u001b[<3;4;2m");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<3;4;2m");
 		await terminal.waitForRender();
 
-		const expectedClipboardSequence = `\x1B]52;c;${Buffer.from("alpha\nbeta").toString("base64")}\u0007`;
+		const expectedClipboardSequence = `\u001B]52;c;${Buffer.from("alpha\nbeta").toString("base64")}\u0007`;
 		const clipboardWrites = terminal.events.filter(
-			(event) => event.type === "write" && event.data.includes("\x1B]52;c;"),
+			(event) => event.type === "write" && event.data.includes("\u001B]52;c;"),
 		);
 		assert.ok(
 			clipboardWrites.some((event) => event.type === "write" && event.data.includes(expectedClipboardSequence)),
 			JSON.stringify(clipboardWrites),
 		);
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\u001b[7m")));
+		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B[7m")));
 		assert.ok(
-			terminal.events.some((event) => event.type === "write" && event.data.includes("al\x1B[0m\x1B[7mpha")),
+			terminal.events.some((event) => event.type === "write" && event.data.includes("al\u001B[0m\u001B[7mpha")),
 			"selection inverse must be reapplied after a reset inside the selection",
 		);
 		assert.ok(terminal.getViewport().some((line) => line.includes("Copied!")));
@@ -1474,14 +1503,14 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\x1B[<32;4;2M");
-		terminal.sendInput("\x1B[<0;4;2m");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<0;4;2m");
 		await terminal.waitForRender();
 
 		assert.deepStrictEqual(copied, ["alpha\nbeta"]);
 		assert.ok(
-			terminal.events.every((event) => event.type !== "write" || !event.data.includes("\u001b]52;c;")),
+			terminal.events.every((event) => event.type !== "write" || !event.data.includes("\u001B]52;c;")),
 			"must not emit OSC 52 when a copySelection handler is provided",
 		);
 		assert.ok(terminal.getViewport().some((line) => line.includes("Copied!")));
@@ -1503,14 +1532,14 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\x1B[<32;4;2M");
-		terminal.sendInput("\x1B[<0;4;2m");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<0;4;2m");
 		await terminal.waitForRender();
 
 		assert.deepStrictEqual(copied, []);
 		assert.strictEqual(tui.hasActiveSelection(), true);
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\u001b[7m")));
+		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B[7m")));
 		assert.ok(terminal.getViewport().every((line) => !line.includes("Copied!")));
 
 		tui.stop();
@@ -1532,9 +1561,9 @@ describe("TuiAltScreen", () => {
 		assert.strictEqual(tui.hasActiveSelection(), false);
 		assert.strictEqual(await tui.copyActiveSelectionToClipboard(), false);
 
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\x1B[<32;4;2M");
-		terminal.sendInput("\x1B[<0;4;2m");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<0;4;2m");
 		await terminal.waitForRender();
 
 		assert.deepStrictEqual(copied, ["alpha\nbeta"]);
@@ -1559,14 +1588,14 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\x1B[<32;4;2M");
-		terminal.sendInput("\x1B[<0;4;2m");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<0;4;2m");
 		await terminal.waitForRender();
 
 		assert.ok(terminal.getViewport().some((line) => line.includes("Copy failed")));
 		assert.ok(
-			terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1B]52;c;")),
+			terminal.events.every((event) => event.type !== "write" || !event.data.includes("\u001B]52;c;")),
 			"must not emit OSC 52 when a copySelection handler is provided",
 		);
 
@@ -1580,12 +1609,12 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\x1B[<0;1;1m");
-		terminal.sendInput("\x1B[<0;3;1M");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<0;1;1m");
+		terminal.sendInput("\u001B[<0;3;1M");
 		await terminal.waitForRender();
 
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("foo\x1B[27m")));
+		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("foo\u001B[27m")));
 		tui.stop();
 	});
 
@@ -1607,10 +1636,10 @@ describe("TuiAltScreen", () => {
 			await terminal.waitForRender();
 
 			const oneBasedClickColumn = line.indexOf(needle) + 1;
-			terminal.sendInput(`\x1B[<0;${oneBasedClickColumn};1M`);
-			terminal.sendInput(`\x1B[<0;${oneBasedClickColumn};1m`);
-			terminal.sendInput(`\x1B[<0;${oneBasedClickColumn};1M`);
-			terminal.sendInput(`\x1B[<0;${oneBasedClickColumn};1m`);
+			terminal.sendInput(`\u001B[<0;${oneBasedClickColumn};1M`);
+			terminal.sendInput(`\u001B[<0;${oneBasedClickColumn};1m`);
+			terminal.sendInput(`\u001B[<0;${oneBasedClickColumn};1M`);
+			terminal.sendInput(`\u001B[<0;${oneBasedClickColumn};1m`);
 			await terminal.waitForRender();
 
 			assert.deepStrictEqual(copied, [line]);
@@ -1625,13 +1654,13 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\x1B[<0;1;1m");
-		terminal.sendInput("\x1B[<0;2;1M");
-		terminal.sendInput("\x1B[<32;4;1M");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<0;1;1m");
+		terminal.sendInput("\u001B[<0;2;1M");
+		terminal.sendInput("\u001B[<32;4;1M");
 		await terminal.waitForRender();
 
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("foo  \x1B[27m")));
+		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("foo  \u001B[27m")));
 		tui.stop();
 	});
 
@@ -1643,32 +1672,32 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 
 		// The second click lands on a different character in alpha.
-		terminal.sendInput("\x1B[<0;6;1M");
-		terminal.sendInput("\u001b[<0;6;1m");
-		terminal.sendInput("\x1B[<0;10;1M");
-		terminal.sendInput("\x1B[<0;10;1m");
+		terminal.sendInput("\u001B[<0;6;1M");
+		terminal.sendInput("\u001B[<0;6;1m");
+		terminal.sendInput("\u001B[<0;10;1M");
+		terminal.sendInput("\u001B[<0;10;1m");
 		await terminal.waitForRender();
-		const alpha = `\x1B]52;c;${Buffer.from("alpha").toString("base64")}\u0007`;
+		const alpha = `\u001B]52;c;${Buffer.from("alpha").toString("base64")}\u0007`;
 		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes(alpha)));
 
 		// A double-click drag includes each word touched, rather than partial words.
-		terminal.sendInput("\x1B[<0;12;1M");
-		terminal.sendInput("\u001b[<0;12;1m");
-		terminal.sendInput("\x1B[<0;14;1M");
-		terminal.sendInput("\x1B[<32;3;2M");
-		terminal.sendInput("\x1B[<0;3;2m");
+		terminal.sendInput("\u001B[<0;12;1M");
+		terminal.sendInput("\u001B[<0;12;1m");
+		terminal.sendInput("\u001B[<0;14;1M");
+		terminal.sendInput("\u001B[<32;3;2M");
+		terminal.sendInput("\u001B[<0;3;2m");
 		await terminal.waitForRender();
-		const words = `\x1B]52;c;${Buffer.from("beta\ngamma").toString("base64")}\u0007`;
+		const words = `\u001B]52;c;${Buffer.from("beta\ngamma").toString("base64")}\u0007`;
 		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes(words)));
 
-		terminal.sendInput("\x1B[<0;7;2M");
-		terminal.sendInput("\x1B[<0;7;2m");
-		terminal.sendInput("\x1B[<0;9;2M");
-		terminal.sendInput("\u001b[<0;9;2m");
-		terminal.sendInput("\x1B[<0;11;2M");
-		terminal.sendInput("\x1B[<0;11;2m");
+		terminal.sendInput("\u001B[<0;7;2M");
+		terminal.sendInput("\u001B[<0;7;2m");
+		terminal.sendInput("\u001B[<0;9;2M");
+		terminal.sendInput("\u001B[<0;9;2m");
+		terminal.sendInput("\u001B[<0;11;2M");
+		terminal.sendInput("\u001B[<0;11;2m");
 		await terminal.waitForRender();
-		const line = `\u001b]52;c;${Buffer.from("gamma delta").toString("base64")}\u0007`;
+		const line = `\u001B]52;c;${Buffer.from("gamma delta").toString("base64")}\u0007`;
 		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes(line)));
 
 		tui.stop();
@@ -1683,38 +1712,38 @@ describe("TuiAltScreen", () => {
 
 		const writeCount = () => terminal.events.filter((event) => event.type === "write").length;
 		const clipboardWriteCount = () =>
-			terminal.events.filter((event) => event.type === "write" && event.data.includes("\u001b]52;c;")).length;
+			terminal.events.filter((event) => event.type === "write" && event.data.includes("\u001B]52;c;")).length;
 
 		const idleWriteCount = writeCount();
-		terminal.sendInput("\x1B[O");
-		terminal.sendInput("\x1B[I");
+		terminal.sendInput("\u001B[O");
+		terminal.sendInput("\u001B[I");
 		await terminal.waitForRender();
 		assert.strictEqual(writeCount(), idleWriteCount);
 
 		// A completed click leaves a zero-width anchor, but later orphaned drag/release events must not extend it.
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\x1B[<0;1;1m");
-		terminal.sendInput("\u001b[<32;4;2M");
-		terminal.sendInput("\x1B[<0;4;2m");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<0;1;1m");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<0;4;2m");
 		await terminal.waitForRender();
 		assert.strictEqual(clipboardWriteCount(), 0);
 
 		// Losing focus after a press without a drag cancels the press without repainting.
-		terminal.sendInput("\u001b[<0;1;3M");
+		terminal.sendInput("\u001B[<0;1;3M");
 		await terminal.waitForRender();
 		const pressedWriteCount = writeCount();
-		terminal.sendInput("\x1B[O");
-		terminal.sendInput("\x1B[I");
+		terminal.sendInput("\u001B[O");
+		terminal.sendInput("\u001B[I");
 		await terminal.waitForRender();
 		assert.strictEqual(writeCount(), pressedWriteCount);
-		terminal.sendInput("\x1B[<32;4;2M");
-		terminal.sendInput("\x1B[<0;4;2m");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<0;4;2m");
 		await terminal.waitForRender();
 		assert.strictEqual(clipboardWriteCount(), 0);
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\x1B[?1004h")));
+		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B[?1004h")));
 
 		tui.stop();
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\x1B[?1004l")));
+		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B[?1004l")));
 	});
 
 	it("clears an active visible selection on focus loss and ignores orphan events", async () => {
@@ -1724,12 +1753,12 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\u001b[<32;4;2M");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<32;4;2M");
 		await terminal.waitForRender();
 		const focusLossEventCount = terminal.events.length;
-		terminal.sendInput("\x1B[O");
-		terminal.sendInput("\x1B[I");
+		terminal.sendInput("\u001B[O");
+		terminal.sendInput("\u001B[I");
 		await terminal.waitForRender();
 		const focusLossWrites = terminal.events
 			.slice(focusLossEventCount)
@@ -1738,12 +1767,12 @@ describe("TuiAltScreen", () => {
 			.join("");
 		assert.ok(focusLossWrites.includes("alpha"));
 		assert.ok(focusLossWrites.includes("beta"));
-		assert.ok(!focusLossWrites.includes("\x1B[7m"));
+		assert.ok(!focusLossWrites.includes("\u001B[7m"));
 
-		terminal.sendInput("\x1B[<32;4;2M");
-		terminal.sendInput("\u001b[<0;4;2m");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<0;4;2m");
 		await terminal.waitForRender();
-		assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\x1B]52;c;")));
+		assert.ok(terminal.events.every((event) => event.type !== "write" || !event.data.includes("\u001B]52;c;")));
 		tui.stop();
 	});
 
@@ -1754,13 +1783,13 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;1;1M");
-		terminal.sendInput("\x1B[<32;4;2M");
-		terminal.sendInput("\u001b[<0;4;2m");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<0;4;2m");
 		await terminal.waitForRender();
 		const completedWriteCount = terminal.events.filter((event) => event.type === "write").length;
-		terminal.sendInput("\x1B[O");
-		terminal.sendInput("\x1B[I");
+		terminal.sendInput("\u001B[O");
+		terminal.sendInput("\u001B[I");
 		await terminal.waitForRender();
 		assert.strictEqual(terminal.events.filter((event) => event.type === "write").length, completedWriteCount);
 
@@ -1773,7 +1802,7 @@ describe("TuiAltScreen", () => {
 			.join("");
 		assert.ok(redrawWrites.includes("alpha"));
 		assert.ok(redrawWrites.includes("beta"));
-		assert.ok(redrawWrites.includes("\x1B[7m"));
+		assert.ok(redrawWrites.includes("\u001B[7m"));
 		tui.stop();
 	});
 
@@ -1808,22 +1837,22 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 		assert.strictEqual(tui.viewportTop, 6);
 
-		terminal.sendInput("\x1B[<0;1;3M");
-		terminal.sendInput("\x1B[<32;1;1M");
+		terminal.sendInput("\u001B[<0;1;3M");
+		terminal.sendInput("\u001B[<32;1;1M");
 		await new Promise((resolve) => setTimeout(resolve, 130));
 		await terminal.waitForRender();
 
 		const selectionTop = tui.viewportTop;
 		assert.ok(selectionTop < 6, `expected auto-scroll above row 6, got ${selectionTop}`);
-		terminal.sendInput("\x1B[<0;1;1m");
+		terminal.sendInput("\u001B[<0;1;1m");
 		await terminal.waitForRender();
 
 		const selectedLines = Array.from({ length: 8 - selectionTop }, (_, index) => `line ${selectionTop + index + 1}`);
 		selectedLines.push("l");
-		const expectedClipboardSequence = `\x1B]52;c;${Buffer.from(selectedLines.join("\n")).toString("base64")}\u0007`;
+		const expectedClipboardSequence = `\u001B]52;c;${Buffer.from(selectedLines.join("\n")).toString("base64")}\u0007`;
 		assert.ok(
 			terminal.events.some((event) => event.type === "write" && event.data.includes(expectedClipboardSequence)),
-			JSON.stringify(terminal.events.filter((event) => event.type === "write" && event.data.includes("\u001b]52;c;"))),
+			JSON.stringify(terminal.events.filter((event) => event.type === "write" && event.data.includes("\u001B]52;c;"))),
 		);
 		tui.stop();
 	});
@@ -1835,29 +1864,29 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		const wideSelection = `\u001b]52;c;${Buffer.from("界🙂").toString("base64")}\u0007`;
-		terminal.sendInput("\x1B[<0;3;1M");
-		terminal.sendInput("\x1B[<32;4;1M");
-		terminal.sendInput("\x1B[<0;4;1m");
+		const wideSelection = `\u001B]52;c;${Buffer.from("界🙂").toString("base64")}\u0007`;
+		terminal.sendInput("\u001B[<0;3;1M");
+		terminal.sendInput("\u001B[<32;4;1M");
+		terminal.sendInput("\u001B[<0;4;1m");
 		await terminal.waitForRender();
 		assert.strictEqual(
 			terminal.events.filter((event) => event.type === "write" && event.data.includes(wideSelection)).length,
 			1,
 		);
 
-		terminal.sendInput("\u001b[<0;5;1M");
-		terminal.sendInput("\x1B[<32;2;1M");
-		terminal.sendInput("\x1B[<0;2;1m");
+		terminal.sendInput("\u001B[<0;5;1M");
+		terminal.sendInput("\u001B[<32;2;1M");
+		terminal.sendInput("\u001B[<0;2;1m");
 		await terminal.waitForRender();
 		assert.strictEqual(
 			terminal.events.filter((event) => event.type === "write" && event.data.includes(wideSelection)).length,
 			2,
 		);
 
-		const combiningSelection = `\u001b]52;c;${Buffer.from("éZ").toString("base64")}\u0007`;
-		terminal.sendInput("\x1B[<0;6;1M");
-		terminal.sendInput("\x1B[<32;7;1M");
-		terminal.sendInput("\x1B[<0;7;1m");
+		const combiningSelection = `\u001B]52;c;${Buffer.from("éZ").toString("base64")}\u0007`;
+		terminal.sendInput("\u001B[<0;6;1M");
+		terminal.sendInput("\u001B[<32;7;1M");
+		terminal.sendInput("\u001B[<0;7;1m");
 		await terminal.waitForRender();
 		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes(combiningSelection)));
 
@@ -1871,8 +1900,8 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<66;1;1M");
-		terminal.sendInput("\x1B[<67;1;1M");
+		terminal.sendInput("\u001B[<66;1;1M");
+		terminal.sendInput("\u001B[<67;1;1M");
 		await terminal.waitForRender();
 		assert.strictEqual(tui.viewportTop, 4);
 		assert.deepStrictEqual(
@@ -1897,17 +1926,17 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\x1B[<0;2;1M");
-		terminal.sendInput("\x1B[<0;2;1m");
+		terminal.sendInput("\u001B[<0;2;1M");
+		terminal.sendInput("\u001B[<0;2;1m");
 		await terminal.waitForRender();
 		assert.strictEqual(clicks, 1);
 
-		terminal.sendInput("\u001b[<0;1;1M");
-		terminal.sendInput("\x1B[<32;4;2M");
-		terminal.sendInput("\x1B[<0;4;2m");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<32;4;2M");
+		terminal.sendInput("\u001B[<0;4;2m");
 		await terminal.waitForRender();
 		assert.strictEqual(clicks, 1);
-		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\x1B]52;c;")));
+		assert.ok(terminal.events.some((event) => event.type === "write" && event.data.includes("\u001B]52;c;")));
 		tui.stop();
 	});
 
@@ -1927,9 +1956,9 @@ describe("TuiAltScreen", () => {
 		tui.start();
 		await terminal.waitForRender();
 
-		terminal.sendInput("\u001b[<0;1;1M");
-		terminal.sendInput("\x1B[<32;5;2M");
-		terminal.sendInput("\x1B[<0;5;2m");
+		terminal.sendInput("\u001B[<0;1;1M");
+		terminal.sendInput("\u001B[<32;5;2M");
+		terminal.sendInput("\u001B[<0;5;2m");
 		await terminal.waitForRender();
 
 		assert.deepStrictEqual(events, ["press", "drag", "release"]);
@@ -1957,8 +1986,8 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 
 		for (let count = 0; count < 3; count++) {
-			terminal.sendInput("\x1B[<0;1;1M");
-			terminal.sendInput("\x1B[<0;1;1m");
+			terminal.sendInput("\u001B[<0;1;1M");
+			terminal.sendInput("\u001B[<0;1;1m");
 		}
 		await terminal.waitForRender();
 		assert.deepStrictEqual(clickCounts, [1, 2, 3]);
@@ -1982,7 +2011,7 @@ describe("TuiAltScreen", () => {
 		const renderedBeforeMotion = renderCount;
 		const writesBeforeMotion = terminal.events.filter((event) => event.type === "write").length;
 
-		terminal.sendInput("\x1B[<35;1;1M");
+		terminal.sendInput("\u001B[<35;1;1M");
 		await terminal.waitForRender();
 		assert.strictEqual(renderCount, renderedBeforeMotion);
 		assert.strictEqual(terminal.events.filter((event) => event.type === "write").length, writesBeforeMotion);
@@ -2007,7 +2036,7 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 		const viewportTop = tui.viewportTop;
 
-		terminal.sendInput("\x1B[<64;1;1M");
+		terminal.sendInput("\u001B[<64;1;1M");
 		await terminal.waitForRender();
 		assert.strictEqual(wheelEvents, 1);
 		assert.strictEqual(tui.viewportTop, viewportTop);
@@ -2024,14 +2053,14 @@ describe("TuiAltScreen", () => {
 
 		const startIndex = terminal.events.findIndex((event) => event.type === "start");
 		const altScreenEnterIndex = terminal.events.findIndex(
-			(event) => event.type === "write" && event.data.includes("\x1B[?1049h"),
+			(event) => event.type === "write" && event.data.includes("\u001B[?1049h"),
 		);
 		const stopIndex = terminal.events.findIndex((event) => event.type === "stop");
 		const mouseDisableIndex = terminal.events.findIndex(
-			(event) => event.type === "write" && event.data.includes("\x1B[?1006l"),
+			(event) => event.type === "write" && event.data.includes("\u001B[?1006l"),
 		);
 		const mainScreenRestoreIndex = terminal.events.findIndex(
-			(event) => event.type === "write" && event.data.includes("\x1B[?1049l"),
+			(event) => event.type === "write" && event.data.includes("\u001B[?1049l"),
 		);
 		assert.ok(altScreenEnterIndex >= 0 && altScreenEnterIndex < startIndex);
 		assert.ok(mouseDisableIndex >= 0 && mouseDisableIndex < stopIndex);
@@ -2062,8 +2091,8 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 		assert.strictEqual(overlay.focused, true);
 
-		const wheel = "\x1B[<64;10;3M";
-		const keys = ["\x1B[5~", "\x1B[6~", "\x1BOH", "\x1BOF", wheel];
+		const wheel = "\u001B[<64;10;3M";
+		const keys = ["\u001B[5~", "\u001B[6~", "\u001BOH", "\u001BOF", wheel];
 		for (const key of keys) terminal.sendInput(key);
 		await terminal.waitForRender();
 
@@ -2072,7 +2101,7 @@ describe("TuiAltScreen", () => {
 
 		handle.hide();
 		await terminal.waitForRender();
-		terminal.sendInput("\x1B[5~");
+		terminal.sendInput("\u001B[5~");
 		await terminal.waitForRender();
 		assert.ok(tui.viewportTop < topBefore);
 		tui.stop();
@@ -2099,8 +2128,8 @@ describe("TuiAltScreen", () => {
 		assert.strictEqual(nonCapturing.focused, false);
 		assert.strictEqual(unfocused.focused, false);
 
-		terminal.sendInput("\u001b[5~");
-		terminal.sendInput("\x1B[<64;10;3M");
+		terminal.sendInput("\u001B[5~");
+		terminal.sendInput("\u001B[<64;10;3M");
 		await terminal.waitForRender();
 		assert.ok(tui.viewportTop < topBefore);
 		assert.deepStrictEqual(nonCapturing.inputs, []);
@@ -2116,12 +2145,12 @@ describe("TuiAltScreen", () => {
 		await terminal.waitForRender();
 		const topBefore = tui.viewportTop;
 
-		terminal.sendInput("\x1B[102;6u");
+		terminal.sendInput("\u001B[102;6u");
 		await terminal.waitForRender();
 		assert.ok(terminal.getViewport().some((line) => line.includes("↑ ↓")));
 
-		terminal.sendInput("\x1B[5~");
-		terminal.sendInput("\x1B[<64;1;4M");
+		terminal.sendInput("\u001B[5~");
+		terminal.sendInput("\u001B[<64;1;4M");
 		await terminal.waitForRender();
 		assert.ok(tui.viewportTop < topBefore);
 		assert.ok(terminal.getViewport().some((line) => line.includes("↑ ↓")));

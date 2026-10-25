@@ -134,6 +134,21 @@ export class FileSessionIndex extends Disposable implements ISessionIndex {
     };
   }
 
+  private async awaitWithDeadline(work: Promise<unknown>, deadlineMs: number): Promise<void> {
+    let timer: NodeJS.Timeout | undefined;
+    try {
+      await Promise.race([
+        work,
+        new Promise<void>((resolve) => {
+          timer = setTimeout(resolve, deadlineMs);
+          timer.unref();
+        }),
+      ]);
+    } finally {
+      if (timer !== undefined) clearTimeout(timer);
+    }
+  }
+
   private async doPrepare(deadlineMs?: number): Promise<SessionIndexStatus> {
     if (this.state === 'ready') return this.status();
     this.state = 'preparing';
@@ -144,12 +159,7 @@ export class FileSessionIndex extends Disposable implements ISessionIndex {
         if (deadlineMs === undefined) {
           await projection;
         } else {
-          await Promise.race([
-            projection,
-            new Promise((resolve) => {
-              setTimeout(resolve, deadlineMs);
-            }),
-          ]);
+          await this.awaitWithDeadline(projection, deadlineMs);
         }
       } else {
         this.generation = manifest.seq;
@@ -160,12 +170,7 @@ export class FileSessionIndex extends Disposable implements ISessionIndex {
             if (deadlineMs === undefined) {
               await reconciliation;
             } else {
-              await Promise.race([
-                reconciliation,
-                new Promise((resolve) => {
-                  setTimeout(resolve, deadlineMs);
-                }),
-              ]);
+              await this.awaitWithDeadline(reconciliation, deadlineMs);
             }
           } catch (error) {
             const published = await this.queryStore

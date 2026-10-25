@@ -85,6 +85,7 @@ class AcpTerminalProcess implements IHostProcess {
 
   private _exitCode: number | null = null;
   private emitted = 0;
+  private pumpFailureLogged = false;
   private readonly pollTimer: ReturnType<typeof setInterval>;
   private readonly waitPromise: Promise<number>;
   private released = false;
@@ -142,13 +143,22 @@ class AcpTerminalProcess implements IHostProcess {
   private async pump(): Promise<void> {
     try {
       const { output } = await this.handle.currentOutput();
+      this.pumpFailureLogged = false;
       if (output.length > this.emitted) {
         this.stdout.write(output.slice(this.emitted));
         this.emitted = output.length;
       } else if (output.length < this.emitted) {
         this.emitted = output.length;
       }
-    } catch {
+    } catch (error) {
+      // A failed terminal/output RPC would otherwise retry every 250ms with no
+      // trace while the Bash tool waits on stdout. Log the first failure (and
+      // again only after a success) so the hang is diagnosable without spamming
+      // the ACP stderr channel.
+      if (!this.pumpFailureLogged) {
+        this.pumpFailureLogged = true;
+        console.warn(`acp terminal ${this.handle.id}: output poll failed`, error);
+      }
     }
   }
 

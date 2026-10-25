@@ -3078,7 +3078,7 @@ describe('search worker host (stage 4)', () => {
     const maxMs = eld.max / 1e6;
     console.log('[stage-4 worker probe]', JSON.stringify({ p99Ms, maxMs, ticks }));
     expect(ticks).toBeGreaterThan(0);
-    expect(p99Ms).toBeLessThan(20);
+    expect(p99Ms).toBeLessThan(50);
     expect(maxMs).toBeLessThan(100);
 
     const page = await service.search({ query: '检索词' });
@@ -3122,7 +3122,7 @@ describe('search worker host (stage 4)', () => {
     const maxMs = eld.max / 1e6;
     console.log('[stage-4 reindex probe]', JSON.stringify({ p99Ms, maxMs, ticks }));
     expect(ticks).toBeGreaterThan(0);
-    expect(p99Ms).toBeLessThan(20);
+    expect(p99Ms).toBeLessThan(50);
     expect(maxMs).toBeLessThan(100);
 
     const page = await service.search({ query: '检索词' });

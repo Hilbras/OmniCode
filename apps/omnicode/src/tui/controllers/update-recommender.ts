@@ -13,7 +13,7 @@ import {
   parseChangelogSections,
   readChangelogFileIfPresent,
 } from '#/cli/update/release-notes';
-import { checkRegistryForUpdate } from '#/cli/update/registry-check';
+import { checkRegistryForUpdate, isUpdateAvailable } from '#/cli/update/registry-check';
 import { detectInstallSource } from '#/cli/update/source';
 import { type InstallSource } from '#/cli/update/types';
 import { lt } from 'semver';
@@ -94,6 +94,11 @@ export class UpdateRecommenderController {
     const current = this.host.state.appState.version;
     const ageMs = registry.checkedAt === '' ? Number.POSITIVE_INFINITY : Date.now() - Date.parse(registry.checkedAt);
     if (ageMs <= NOTICE_STATE_MAX_AGE_MS) {
+      // The persisted state predates the running version whenever the user
+      // already installed the advertised release; never re-notify for it.
+      if (!isUpdateAvailable(current, registry.latest)) {
+        return { wanted: false, latest: undefined };
+      }
       return { wanted: true, latest: registry.latest };
     }
     const check = await checkRegistryForUpdate(current, undefined, 1_500).catch(() => null);

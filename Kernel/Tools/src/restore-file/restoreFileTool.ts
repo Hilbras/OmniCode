@@ -74,15 +74,21 @@ export class RestoreFileTool implements IRestoreFileTool {
         detail: targetDetail(args),
       },
       approvalRule: literalRulePattern(this.name, args.paths?.[0] ?? 'turn'),
-      matchesRule: (ruleArgs) =>
-        targets.length === 0 ||
-        targets.some((path) =>
-          matchesPathRuleSubject(ruleArgs, path, {
-            cwd: workspace.workspaceDir,
-            pathClass: env.pathClass,
-            homeDir: env.homeDir,
-          }),
-        ),
+      // A rule must cover the whole call: a full-turn restore (no paths) is
+      // only pre-approved by a rule for the same full-turn sentinel, never by
+      // a rule recorded for some unrelated single file, and a multi-path call
+      // needs every target covered.
+      matchesRule: (ruleArgs) => {
+        const options = {
+          cwd: workspace.workspaceDir,
+          pathClass: env.pathClass,
+          homeDir: env.homeDir,
+        };
+        if (targets.length === 0) {
+          return matchesPathRuleSubject(ruleArgs, 'turn', options);
+        }
+        return targets.every((path) => matchesPathRuleSubject(ruleArgs, path, options));
+      },
       execute: async () => {
         if (!this.flags.enabled(FILE_RESTORE_FLAG_ID)) {
           return { isError: true, output: RESTORE_DISABLED };
@@ -95,7 +101,7 @@ export class RestoreFileTool implements IRestoreFileTool {
           if (lease.runtime.fs === undefined) {
             return { isError: true, output: 'This runtime has no filesystem available.' };
           }
-          return await this.restore(args);
+          return await this.restore(args, targets);
         } finally {
           lease.dispose();
         }
@@ -103,7 +109,7 @@ export class RestoreFileTool implements IRestoreFileTool {
     };
   }
 
-  private async restore(args: RestoreFileInput): Promise<ExecutableToolResult> {
+  private async restore(args: RestoreFileInput, targets: readonly string[]): Promise<ExecutableToolResult> {
     const turns = await this.fileHistory.turns();
     if (turns.length === 0) {
       return {
@@ -119,9 +125,16 @@ export class RestoreFileTool implements IRestoreFileTool {
       };
     }
 
-    const result = await this.fileHistory.restore(turn.turnId, args.paths, {
-      force: args.force ?? false,
-    });
+    // The file-history checkpoint entries are keyed by canonical paths (the
+    // same canonicalization the approval/access path uses); raw args.paths
+    // spelled differently (`./src/x`, duplicated slashes) would miss them.
+    const result = await this.fileHistory.restore(
+      turn.turnId,
+      targets.length > 0 ? targets : undefined,
+      {
+        force: args.force ?? false,
+      },
+    );
     return { output: renderResult(turn, result.files, turns, args.force ?? false) };
   }
 }

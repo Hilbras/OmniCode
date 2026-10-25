@@ -156,6 +156,23 @@ export class SelectList implements Component {
 			this.selectedIndex = this.selectedIndex === this.filteredItems.length - 1 ? 0 : this.selectedIndex + 1;
 			this.notifySelectionChange();
 		}
+		// Page up - move one page toward the top, clamped
+		else if (kb.matches(keyData, "tui.select.pageUp")) {
+			if (this.filteredItems.length > 0) {
+				this.selectedIndex = Math.max(0, this.selectedIndex - Math.max(1, this.maxVisible));
+				this.notifySelectionChange();
+			}
+		}
+		// Page down - move one page toward the bottom, clamped
+		else if (kb.matches(keyData, "tui.select.pageDown")) {
+			if (this.filteredItems.length > 0) {
+				this.selectedIndex = Math.min(
+					this.filteredItems.length - 1,
+					this.selectedIndex + Math.max(1, this.maxVisible),
+				);
+				this.notifySelectionChange();
+			}
+		}
 		// Enter
 		else if (kb.matches(keyData, "tui.select.confirm")) {
 			const selectedItem = this.filteredItems[this.selectedIndex];

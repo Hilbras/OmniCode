@@ -222,6 +222,13 @@ export async function serveKlientIpc(options: ServeKlientIpcOptions): Promise<Kl
     server.once('error', reject);
     server.listen(options.socketPath, resolve);
   });
+  // The listen-time `once('error')` above is gone once it fires. A persistent
+  // handler is required from here on: a later server error (e.g. accept
+  // failure) has no other listener and would surface as an uncaught
+  // exception, killing the host process.
+  server.on('error', (error) => {
+    console.warn(`klient ipc host error on ${options.socketPath}`, error);
+  });
 
   return {
     socketPath: options.socketPath,

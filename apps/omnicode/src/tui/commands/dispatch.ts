@@ -327,13 +327,6 @@ async function executeSlashCommand(host: SlashCommandHost, input: string): Promi
       // command line back so hand-typed input is not lost.
       host.restoreInputText(input);
       return;
-    case 'invalid':
-      host.track('input_command_invalid', {
-        reason: intent.reason,
-        command: intent.commandName,
-      });
-      host.showError(`Invalid slash command: /${intent.commandName}`);
-      return;
     case 'skill': {
       if (host.state.appState.model.trim().length === 0) {
         host.showError(LLM_NOT_SET_MESSAGE);
