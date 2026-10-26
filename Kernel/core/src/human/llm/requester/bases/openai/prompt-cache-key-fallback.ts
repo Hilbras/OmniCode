@@ -7,6 +7,8 @@ const REJECTION_PATTERNS = [
   /unknown parameter/,
   /unrecognized request argument/,
   /extra inputs are not permitted/,
+  /is unsupported/,
+  /is not supported/,
 ] as const;
 
 export function isPromptCacheKeyRejection(error: unknown): boolean {

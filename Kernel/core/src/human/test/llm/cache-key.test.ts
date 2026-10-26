@@ -235,6 +235,25 @@ describe('openai requester prompt_cache_key fallback', () => {
     expect(events).not.toContain('llm.failed.remote');
   });
 
+  it('retries when the gateway says the property is unsupported', async () => {
+    const client = rejectingOpenAIClient(
+      { status: 400, message: "property 'prompt_cache_key' is unsupported" },
+      chatCompletionChunks,
+    );
+    const requester = createOpenAIRequester({ clientFactory: client.clientFactory });
+    const events: string[] = [];
+    await requester.generate(
+      { model, cacheKey: 'session-1' },
+      { messages },
+      { signal: new AbortController().signal, onEvent: (e) => events.push(e.type) },
+    );
+    const calls = client.calls();
+    expect(calls).toHaveLength(2);
+    expect(calls[1]?.['prompt_cache_key']).toBeUndefined();
+    expect(events).toContain('llm.done');
+    expect(events).not.toContain('llm.failed.remote');
+  });
+
   it('remembers the rejection so later requests for the model skip the key', async () => {
     const client = rejectingOpenAIClient({ status: 400, message: rejected }, chatCompletionChunks);
     const requester = createOpenAIRequester({ clientFactory: client.clientFactory });
