@@ -531,22 +531,6 @@ describe('resolveModelForReady', () => {
     expect(resolveModelForReady('m', models, providers)).toEqual({ resolved: true });
   });
 
-  it('reports unresolvable when the provider-backed model lacks maxContextSize', () => {
-    const models = { m: { provider: 'prov-a', model: 'gpt' } };
-    expect(resolveModelForReady('m', models, providers)).toEqual({
-      resolved: false,
-      reason: 'unresolvable',
-    });
-  });
-
-  it('reports unresolvable when maxContextSize is not positive', () => {
-    const models = { m: { provider: 'prov-a', model: 'gpt', maxContextSize: 0 } };
-    expect(resolveModelForReady('m', models, providers)).toEqual({
-      resolved: false,
-      reason: 'unresolvable',
-    });
-  });
-
   it('reports unresolvable when a providerless flat model lacks a protocol', () => {
     const models = {
       m: { baseUrl: 'https://api.example.test/v1', model: 'gpt', maxContextSize: 4096 },

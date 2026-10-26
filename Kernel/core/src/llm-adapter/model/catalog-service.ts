@@ -351,13 +351,6 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
         `Model "${id}" must define a wire-facing name in config.toml.`,
       );
     }
-    if (model.maxContextSize === undefined) {
-      throw new Error2(
-        CONFIG_INVALID_ERROR_CODE,
-        `Model "${id}" must define a positive max_context_size in config.toml.`,
-      );
-    }
-
     const detectedCapability = this.protocolRegistry.resolveCapability(
       protocol,
       wireName,
@@ -512,7 +505,7 @@ export function resolveOutboundHeaders(
 function resolveModelCapabilities(
   declaredCapabilities: readonly string[] | undefined,
   detected: ModelCapability,
-  maxContextSize: number,
+  maxContextSize: number | undefined,
   maxInputSize: number | undefined,
 ): ModelCapability {
   const declared = new Set((declaredCapabilities ?? []).map((c) => c.trim().toLowerCase()));
@@ -522,7 +515,7 @@ function resolveModelCapabilities(
     audio_in: declared.has('audio_in') || detected.audio_in,
     thinking: declared.has('thinking') || declared.has('always_thinking') || detected.thinking,
     tool_use: declared.has('tool_use') || detected.tool_use,
-    max_context_tokens: maxContextSize,
+    max_context_tokens: maxContextSize ?? 0,
     max_input_tokens: maxInputSize,
     dynamically_loaded_tools:
       declared.has('dynamically_loaded_tools') || detected.dynamically_loaded_tools === true,

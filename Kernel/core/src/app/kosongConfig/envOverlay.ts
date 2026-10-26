@@ -10,8 +10,6 @@ import { ENV_MODEL_PROVIDER_KEY } from './configSection';
 
 export const ENV_MODEL_ALIAS_KEY = '__omnicode_env_model__';
 
-const DEFAULT_MAX_CONTEXT_SIZE = 262144;
-
 const DEFAULT_CAPABILITIES = ['image_in', 'thinking'];
 
 function trimmed(value: string | undefined): string | undefined {
@@ -117,7 +115,7 @@ export const omnicodeModelEnvOverlay: ConfigEffectiveOverlay = {
     const maxContextRaw = trimmed(getEnv('OMNICODE_MODEL_MAX_CONTEXT_SIZE'));
     const maxContextSize =
       maxContextRaw === undefined
-        ? DEFAULT_MAX_CONTEXT_SIZE
+        ? undefined
         : parsePositiveInt(maxContextRaw, 'OMNICODE_MODEL_MAX_CONTEXT_SIZE');
 
     const maxOutputRaw = trimmed(getEnv('OMNICODE_MODEL_MAX_OUTPUT_SIZE'));

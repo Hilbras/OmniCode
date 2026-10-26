@@ -89,12 +89,6 @@ export interface CustomRegistryProviderEntry {
   readonly models: Record<string, CustomRegistryModelEntry>;
 }
 
-/**
- * Tuned slightly below typical real values so the local compactor kicks in
- * before the upstream rejects with a context-overflow 4xx. Users can override
- * by editing `~/.omnicode/config.toml`.
- */
-export const CUSTOM_REGISTRY_DEFAULT_MAX_CONTEXT = 131072;
 export const CUSTOM_REGISTRY_DEFAULT_CAPABILITIES = ['tool_use'] as const;
 
 const ALLOWED_PROVIDER_TYPES: ReadonlySet<CustomRegistryProviderType> = new Set([
@@ -347,7 +341,7 @@ function hasRichCapabilityHints(model: CustomRegistryModelEntry): boolean {
   );
 }
 
-function resolveMaxContextSize(model: CustomRegistryModelEntry): number {
+function resolveMaxContextSize(model: CustomRegistryModelEntry): number | undefined {
   const context = model.limit?.context;
   const output = model.limit?.output;
   if (typeof context === 'number' && Number.isInteger(context) && context > 0) {
@@ -356,7 +350,7 @@ function resolveMaxContextSize(model: CustomRegistryModelEntry): number {
   if (typeof output === 'number' && Number.isInteger(output) && output > 0) {
     return output;
   }
-  return CUSTOM_REGISTRY_DEFAULT_MAX_CONTEXT;
+  return undefined;
 }
 
 function resolveCapabilities(model: CustomRegistryModelEntry): string[] {

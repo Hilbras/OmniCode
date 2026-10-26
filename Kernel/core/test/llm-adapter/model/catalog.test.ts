@@ -493,10 +493,6 @@ describe('Model assembly (pure data)', () => {
       { models: { noname: { protocol: 'openai', baseUrl: 'https://x.test', maxContextSize: 1 } } },
       'noname',
     );
-    expectInvalid(
-      { ...omnicodeSections, models: { noctx: { provider: 'omnicode', model: 'm' } } },
-      'noctx',
-    );
   });
 
   it('findByName matches name, model, and aliases', () => {

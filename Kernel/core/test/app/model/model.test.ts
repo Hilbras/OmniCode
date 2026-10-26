@@ -370,7 +370,7 @@ describe('omnicodeModelEnvOverlay', () => {
       [ENV_MODEL_ALIAS_KEY]: {
         provider: ENV_MODEL_PROVIDER_KEY,
         model: 'omnicode-for-coding',
-        maxContextSize: 262144,
+        maxContextSize: undefined,
         capabilities: ['image_in', 'thinking'],
       },
     });

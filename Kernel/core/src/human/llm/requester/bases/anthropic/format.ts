@@ -27,7 +27,7 @@ import { CONTEXT_MANAGEMENT_BETA } from './contract';
 import type { AnthropicRawStreamEvent, AnthropicRawUsage, AnthropicWireMessage } from './contract';
 import { lowerMessage, messageContent } from './lower';
 import { audioToPlaceholder, stripUnsignedThinking } from './patterns';
-import { resolveDefaultMaxTokens, shouldPreserveUnsignedThinking } from './profile';
+import { shouldPreserveUnsignedThinking } from './profile';
 
 const CLEAR_THINKING_EDIT = 'clear_thinking_20251015';
 
@@ -229,7 +229,7 @@ export function assembleAnthropicRequest(
     parts.betaApi || input.model.betaApi === true || input.thinking?.keep !== undefined;
   const params: Record<string, unknown> = {
     model: input.model.model,
-    max_tokens: resolveDefaultMaxTokens(input.model.model, input.model.defaultMaxTokens),
+    max_tokens: input.model.defaultMaxTokens,
     metadata: input.cacheKey === undefined ? undefined : { user_id: input.cacheKey },
     ...restKwargs,
     system: input.systemPrompt

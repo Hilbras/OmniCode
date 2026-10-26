@@ -190,7 +190,6 @@ export {
   credentialEnvHints,
   CustomRegistryApiError,
   CUSTOM_REGISTRY_DEFAULT_CAPABILITIES,
-  CUSTOM_REGISTRY_DEFAULT_MAX_CONTEXT,
   customRegistryReplacementKeys,
   fetchCustomRegistry,
   readCustomRegistrySource,

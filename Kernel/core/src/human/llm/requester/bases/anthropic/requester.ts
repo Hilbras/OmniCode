@@ -39,7 +39,7 @@ import {
   convertAnthropicError,
 } from './format';
 import { isAnthropicWireMessageEmpty } from './lower';
-import { encodeThinking, INTERLEAVED_THINKING_BETA, resolveDefaultMaxTokens } from './profile';
+import { encodeThinking, INTERLEAVED_THINKING_BETA } from './profile';
 import type { AnthropicTrait } from './trait';
 
 const ANTHROPIC_TOOL_CALL_ID_POLICY: ToolCallIdPolicy = {
@@ -127,10 +127,9 @@ export function prepareAnthropicRequest(
   }
   const cap = resolveMaxCompletionCap(input);
   if (cap !== undefined) {
-    const capped = resolveDefaultMaxTokens(ctx.model.model, cap);
     kwargs = {
       ...kwargs,
-      ...(trait?.encodeMaxCompletionTokens?.(capped, ctx) ?? encodeAnthropicMaxTokens(capped)),
+      ...(trait?.encodeMaxCompletionTokens?.(cap, ctx) ?? encodeAnthropicMaxTokens(cap)),
     };
   }
   kwargs = assign(kwargs, input.extraParams?.anthropic ?? {});

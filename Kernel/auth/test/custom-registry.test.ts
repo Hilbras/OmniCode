@@ -4,7 +4,6 @@ import {
   applyCustomRegistryEntries,
   applyCustomRegistryProvider,
   CUSTOM_REGISTRY_DEFAULT_CAPABILITIES,
-  CUSTOM_REGISTRY_DEFAULT_MAX_CONTEXT,
   capabilitiesFromCustomEntry,
   CustomRegistryApiError,
   fetchCustomRegistry,
@@ -262,10 +261,9 @@ describe('applyCustomRegistryProvider', () => {
     expect(gpt).toMatchObject({
       provider: 'registry_chat-completions',
       model: 'gpt-5.5',
-      maxContextSize: CUSTOM_REGISTRY_DEFAULT_MAX_CONTEXT,
       displayName: 'GPT 5.5',
     });
-    expect(gpt).toMatchObject({ maxContextSize: 131072 });
+    expect((gpt as { maxContextSize?: number }).maxContextSize).toBeUndefined();
     expect((gpt as { capabilities: string[] }).capabilities).toEqual([
       ...CUSTOM_REGISTRY_DEFAULT_CAPABILITIES,
     ]);
@@ -328,6 +326,35 @@ describe('applyCustomRegistryProvider', () => {
     expect(alias.maxContextSize).toBe(200000);
     expect(alias.capabilities).toEqual(expect.arrayContaining(['tool_use', 'thinking', 'image_in']));
     expect(alias.capabilities).not.toContain('image_out');
+  });
+
+  it('leaves maxContextSize absent when the model declares no limit', () => {
+    const config: ManagedOmnicodeConfigShape = { providers: {} };
+    const entry: CustomRegistryProviderEntry = {
+      id: 'limitless',
+      name: 'Limitless Provider',
+      api: 'https://limitless.example/v1',
+      type: 'openai',
+      models: {
+        'no-limit': {
+          id: 'no-limit',
+          name: 'No Limit',
+        },
+      },
+    };
+
+    applyCustomRegistryProvider(config, entry, {
+      kind: 'apiJson',
+      url: 'https://limitless.example/api.json',
+      apiKey: 'sk-limitless',
+    });
+
+    const alias = config.models?.['limitless/no-limit'] as {
+      maxContextSize?: number;
+      capabilities: string[];
+    };
+    expect(alias.maxContextSize).toBeUndefined();
+    expect(alias.capabilities).toEqual([...CUSTOM_REGISTRY_DEFAULT_CAPABILITIES]);
   });
 
   it('clears stale aliases for the same provider before re-populating', () => {

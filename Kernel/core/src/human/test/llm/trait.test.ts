@@ -833,7 +833,7 @@ describe('withMaxCompletionTokens', () => {
     );
     expect(client.body()['max_tokens']).toBe(300);
     await requester.generate({ model }, { messages }, { signal: new AbortController().signal });
-    expect(client.body()['max_tokens']).toBe(64000);
+    expect(client.body()['max_tokens']).toBeUndefined();
 
     const sonnet35 = { ...model, model: 'claude-3-5-sonnet-20241022' };
     await requester.generate(
@@ -841,19 +841,19 @@ describe('withMaxCompletionTokens', () => {
       { messages },
       { signal: new AbortController().signal },
     );
-    expect(client.body()['max_tokens']).toBe(8192);
+    expect(client.body()['max_tokens']).toBeUndefined();
     await requester.generate(
       { model: sonnet35, maxCompletionTokens: 128000 },
       { messages },
       { signal: new AbortController().signal },
     );
-    expect(client.body()['max_tokens']).toBe(8192);
+    expect(client.body()['max_tokens']).toBe(128000);
     await requester.generate(
       { model: { ...model, model: 'claude-sonnet-4-2' } },
       { messages },
       { signal: new AbortController().signal },
     );
-    expect(client.body()['max_tokens']).toBe(64000);
+    expect(client.body()['max_tokens']).toBeUndefined();
   });
 });
 
@@ -1515,7 +1515,7 @@ describe('anthropic thinking kwargs', () => {
     expect(body['output_config']).toEqual({ effort: 'high' });
     expect(body['betaFeatures']).toBeUndefined();
     expect(body['betas']).toEqual(['context-management-2025-06-27']);
-    expect(body['max_tokens']).toBe(64000);
+    expect(body['max_tokens']).toBeUndefined();
     expect(client.betaCalled()).toBe(true);
     let bodyMessages = body['messages'] as Record<string, unknown>[];
     expect(bodyMessages[0]?.['content']).toEqual([

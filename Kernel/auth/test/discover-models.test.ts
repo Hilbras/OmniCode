@@ -120,6 +120,24 @@ describe('applyDiscoveredModels protocol pin', () => {
   });
 });
 
+describe('applyDiscoveredModels context size', () => {
+  it('leaves maxContextSize absent when the endpoint declares none', () => {
+    const config: { models?: Record<string, unknown> } = {};
+    applyDiscoveredModels(config, 'zen', [{ id: 'bare-model' }]);
+
+    const alias = config.models?.['zen/bare-model'] as { maxContextSize?: number };
+    expect(alias.maxContextSize).toBeUndefined();
+  });
+
+  it('writes a declared maxContextSize onto the alias', () => {
+    const config: { models?: Record<string, unknown> } = {};
+    applyDiscoveredModels(config, 'zen', [{ id: 'big-model', maxContextSize: 200000 }]);
+
+    const alias = config.models?.['zen/big-model'] as { maxContextSize?: number };
+    expect(alias.maxContextSize).toBe(200000);
+  });
+});
+
 describe('applyModelExclusions', () => {
   it('drops ids named exactly and ids matched by a prefix glob', () => {
     const models: DiscoveredModelInfo[] = [

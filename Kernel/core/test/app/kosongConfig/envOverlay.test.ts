@@ -42,7 +42,7 @@ describe('omnicodeModelEnvOverlay.apply', () => {
     expect((effective['models'] as Record<string, unknown>)[ENV_MODEL_ALIAS_KEY]).toEqual({
       provider: ENV_MODEL_PROVIDER_KEY,
       model: 'omnicode-k2-custom',
-      maxContextSize: 262144,
+      maxContextSize: undefined,
       capabilities: ['image_in', 'thinking'],
     });
     expect((effective['providers'] as Record<string, unknown>)[ENV_MODEL_PROVIDER_KEY]).toEqual({

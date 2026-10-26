@@ -230,10 +230,6 @@ export function resolveModelForReady(
   if (nonEmpty(model.name ?? model.model) === undefined) {
     return { resolved: false, reason: 'unresolvable' };
   }
-  const maxContextSize = model.maxContextSize;
-  if (maxContextSize === undefined || maxContextSize <= 0) {
-    return { resolved: false, reason: 'unresolvable' };
-  }
   if (resolveModelProtocol(model, provider) === undefined) {
     return { resolved: false, reason: 'unresolvable' };
   }

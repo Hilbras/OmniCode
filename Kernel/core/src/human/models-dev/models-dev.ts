@@ -168,21 +168,24 @@ function normalizeModelsDevModel(
 ): CatalogModelDefinition | undefined {
   if (typeof model.id !== 'string' || model.id.length === 0) return undefined;
   const context = model.limit?.context;
-  if (typeof context !== 'number' || !Number.isInteger(context) || context <= 0) return undefined;
   if (!isUsableChatModel(model)) return undefined;
   const inputs = model.modalities?.input ?? [];
   const output = model.limit?.output;
   const thinking = modelsDevThinkingOptions(model.reasoning_options);
   const input = model.limit?.input;
+  const maxContextSize =
+    typeof context === 'number' && Number.isInteger(context) && context > 0 ? context : undefined;
   const maxInputTokens =
     typeof input === 'number' && Number.isInteger(input) && input > 0
-      ? Math.min(input, context)
+      ? maxContextSize !== undefined
+        ? Math.min(input, maxContextSize)
+        : input
       : undefined;
   return {
     provider: providerId,
     model: model.id,
     displayName: typeof model.name === 'string' && model.name.length > 0 ? model.name : undefined,
-    maxContextSize: context,
+    maxContextSize,
     maxInputSize: maxInputTokens,
     maxOutputSize: typeof output === 'number' && output > 0 ? output : undefined,
     reasoningKey: modelsDevReasoningKey(model.interleaved),

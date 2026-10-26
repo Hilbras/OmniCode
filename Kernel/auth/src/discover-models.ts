@@ -11,15 +11,13 @@
  * credentials were rejected" is wrong for a user-supplied API key.
  *
  * Metadata the endpoint does not declare (context window, capabilities) is
- * filled with the same conservative defaults the custom-registry import uses,
- * so a discovered alias is always usable even when `/models` returns bare ids.
+ * left absent rather than guessed: an undeclared context window degrades
+ * gracefully instead of imposing a wrong default, so a discovered alias stays
+ * usable even when `/models` returns bare ids.
  */
 
 import { readApiErrorMessage } from './api-error';
-import {
-  CUSTOM_REGISTRY_DEFAULT_CAPABILITIES,
-  CUSTOM_REGISTRY_DEFAULT_MAX_CONTEXT,
-} from './custom-registry';
+import { CUSTOM_REGISTRY_DEFAULT_CAPABILITIES } from './custom-registry';
 import type { ManagedOmnicodeCodeProtocol, ManagedOmnicodeModelAlias } from './managed-omnicode';
 import { CUSTOM_REGISTRY_MODEL_FIELDS, mergeRefreshedModelAlias } from './model-alias-merge';
 import { isRecord } from './utils';
@@ -226,9 +224,9 @@ function toDiscoveredModel(row: unknown): DiscoveredModelInfo | undefined {
   if (typeof rawId !== 'string' || rawId.trim().length === 0) return undefined;
   const id = stripResourcePrefix(rawId.trim());
 
-  const contextLength = positiveInt(row['context_length'] ?? row['context_window']);
   const maxContextSize =
-    contextLength ?? positiveInt(row['max_output_tokens']) ?? positiveInt(row['max_context_size']);
+    positiveInt(row['context_length'] ?? row['context_window']) ??
+    positiveInt(row['max_context_size']);
   const rawName = row['name'] ?? row['display_name'];
 
   const capabilities: string[] = [];
@@ -386,7 +384,7 @@ export function applyDiscoveredModels(
     const alias: ManagedOmnicodeModelAlias = {
       provider: providerId,
       model: model.id,
-      maxContextSize: model.maxContextSize ?? CUSTOM_REGISTRY_DEFAULT_MAX_CONTEXT,
+      maxContextSize: model.maxContextSize,
       capabilities: [...(model.capabilities ?? CUSTOM_REGISTRY_DEFAULT_CAPABILITIES)],
       displayName: model.displayName ?? model.id,
     };

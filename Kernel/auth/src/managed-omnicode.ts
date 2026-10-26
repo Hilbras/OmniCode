@@ -179,7 +179,7 @@ export interface ManagedOmnicodeModelAlias {
   model: string;
   baseUrl?: string | undefined;
   apiKey?: string | undefined;
-  maxContextSize: number;
+  maxContextSize?: number | undefined;
   capabilities?: string[] | undefined;
   supportEfforts?: readonly string[] | undefined;
   defaultEffort?: string | undefined;
