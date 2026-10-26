@@ -1,5 +1,13 @@
 # @hilbras/omnicode
 
+## 1.2.3
+
+### Patch Changes
+
+- [`b9e3bbd`](https://github.com/Hilbras/OmniCode/commit/b9e3bbd570cde32e613db2f0e6997c52279e7698) Thanks [@lacrous](https://github.com/lacrous)! - Show each model's real context window from its provider catalog instead of a flat default; a model with no declared window now says so until you set one with /context.
+
+- Requests to providers that reject the prompt_cache_key field now retry without it instead of failing.
+
 ## 1.2.2
 
 ### Patch Changes
