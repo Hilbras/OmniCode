@@ -376,6 +376,39 @@ describe('ModelSelectorComponent', () => {
     expect(text(picker)).toContain('Alt+S session-only');
   });
 
+  it('invokes onRefresh on Ctrl+R and advertises it in the hint', () => {
+    const onRefresh = vi.fn();
+    const picker = new ModelSelectorComponent({
+      models: { omnicode: model('Omnicode K2') },
+      currentValue: 'omnicode',
+      currentThinkingEffort: 'on',
+      onSelect: vi.fn(),
+      onRefresh,
+      onCancel: vi.fn(),
+    });
+
+    expect(text(picker)).toContain('Ctrl+R refresh');
+
+    // Ctrl+R is not a printable character, so the fuzzy filter never sees it.
+    picker.handleInput('\u0012');
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not react to Ctrl+R when onRefresh is not provided', () => {
+    const onSelect = vi.fn();
+    const picker = new ModelSelectorComponent({
+      models: { omnicode: model('Omnicode K2') },
+      currentValue: 'omnicode',
+      currentThinkingEffort: 'on',
+      onSelect,
+      onCancel: vi.fn(),
+    });
+
+    expect(text(picker)).not.toContain('Ctrl+R refresh');
+    picker.handleInput('\u0012');
+    expect(onSelect).not.toHaveBeenCalled();
+  });
+
   it('renders effort segments with the default effort highlighted', () => {
     const picker = new ModelSelectorComponent({
       models: { omnicode: effortModel('Omnicode K2', ['low', 'high', 'max'], 'high') },
