@@ -23,7 +23,9 @@ export function effectiveModelAlias(
   }
 
   const clamped =
-    effective.maxInputSize !== undefined && effective.maxInputSize > effective.maxContextSize
+    effective.maxInputSize !== undefined &&
+    effective.maxContextSize !== undefined &&
+    effective.maxInputSize > effective.maxContextSize
       ? { ...effective, maxInputSize: effective.maxContextSize }
       : effective;
 

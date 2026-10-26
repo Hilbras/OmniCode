@@ -516,7 +516,7 @@ describe('OmnicodeTUI resume message replay', () => {
     expect(transcript).toContain('Goal resumed');
     expect(transcript).toContain('Goal blocked');
     expect(transcript).toContain('Goal complete — done');
-    expect(transcript).toContain('Worked 1 turn over 7m15s, using 4.2k tokens.');
+    expect(transcript).toContain('Worked 1 turn over 7m15s, using 4.3k tokens.');
   });
 
   it('filters resume-normalization goal pause markers in TUI replay', async () => {
@@ -562,7 +562,7 @@ describe('OmnicodeTUI resume message replay', () => {
     expect(entry).toMatchObject({
       kind: 'assistant',
       renderMode: 'markdown',
-      content: '✓ Goal complete.\nWorked 1 turn over 7m15s, using 4.1M tokens.',
+      content: '✓ Goal complete.\nWorked 1 turn over 7m15s, using 4.3M tokens.',
     });
   });
 

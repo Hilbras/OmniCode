@@ -2462,8 +2462,13 @@ export class OmnicodeTUI {
     if (startupModel !== undefined) {
       patch.model = startupModel;
       const selected = config.models?.[startupModel];
-      if (selected?.maxContextSize !== undefined) {
-        patch.maxContextTokens = selected.maxContextSize;
+      // The engine merges `overrides` over the declared record, so the value
+      // the session will actually run with is the override when present —
+      // `/context` writes there, never the top-level field.
+      const declaredWindow =
+        selected?.overrides?.maxContextSize ?? selected?.maxContextSize;
+      if (declaredWindow !== undefined) {
+        patch.maxContextTokens = declaredWindow;
       }
     } else {
       // The default disappeared from config (edited externally): clear the

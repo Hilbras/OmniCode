@@ -955,7 +955,7 @@ describe('handleContextCommand', () => {
     await handleContextCommand(host, 'other/thing 400k');
 
     expect(host.harness.setConfig).not.toHaveBeenCalled();
-    expect(host.showStatus).toHaveBeenCalledWith(expect.stringContaining('400K'));
+    expect(host.showStatus).toHaveBeenCalledWith(expect.stringContaining('400k'));
   });
 
   it('opens a picker and prompts for the model picked with Enter', async () => {
@@ -975,9 +975,10 @@ describe('handleContextCommand', () => {
     expect(mounted[1]).toBeInstanceOf(ApiKeyInputDialogComponent);
   });
 
-  it('formats token counts with the K/M suffix', () => {
-    expect(formatContextSize(200_000)).toBe('200K tokens');
+  it('formats token counts with the k/M suffix, shared with the footer and /usage', () => {
+    expect(formatContextSize(200_000)).toBe('200k tokens');
     expect(formatContextSize(1_500_000)).toBe('1.5M tokens');
+    expect(formatContextSize(1_048_576)).toBe('1M tokens');
     expect(formatContextSize(137)).toBe('137 tokens');
   });
 

@@ -427,7 +427,6 @@ describe('refreshAllProviderModels', () => {
     expect(host.current().models?.['b/m1']).toEqual({
       provider: 'b',
       model: 'm1',
-      maxContextSize: 131072,
       capabilities: ['tool_use'],
       displayName: 'm1',
     });
@@ -624,7 +623,6 @@ describe('refreshAllProviderModels', () => {
     expect(host.current().models?.['b/m2']).toEqual({
       provider: 'b',
       model: 'm2',
-      maxContextSize: 131072,
       capabilities: ['tool_use'],
       displayName: 'm2',
     });
@@ -939,6 +937,117 @@ describe('refreshAllProviderModels', () => {
       { providerId: 'my-omnicode', providerName: 'my-omnicode', added: 1, removed: 0 },
     ]);
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('converges a legacy flat default onto the catalog window during a refresh', async () => {
+    // Aliases written before real windows were resolved carry a flat 131072.
+    // A refresh alone cannot fix that — `/models` declares no limits — so the
+    // refresh rides a models.dev read that replaces the invented number with
+    // the vendor's real one.
+    const host = makeRefreshHost({
+      providers: {
+        anthropic: {
+          type: 'anthropic',
+          baseUrl: 'https://api.anthropic.com',
+          apiKey: 'sk-ant-test',
+        },
+      },
+      models: {
+        'anthropic/claude-sonnet-4': {
+          provider: 'anthropic',
+          model: 'claude-sonnet-4',
+          maxContextSize: 131072,
+          capabilities: ['tool_use'],
+          displayName: 'claude-sonnet-4',
+        },
+      },
+    } as unknown as OmnicodeConfig);
+
+    const fetchMock = vi.fn<FetchMock>(async (input) => {
+      if (fetchInputUrl(input).includes('models.dev')) {
+        return new Response(
+          JSON.stringify({
+            anthropic: {
+              models: {
+                'claude-sonnet-4': { limit: { context: 1_000_000, output: 64_000 } },
+              },
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      return new Response(JSON.stringify({ data: [{ id: 'claude-sonnet-4' }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await refreshAllProviderModels({
+      getConfig: async () => host.current(),
+      removeProvider: host.removeProvider,
+      setConfig: host.setConfig,
+      resolveOAuthToken: vi.fn(),
+    });
+
+    expect(result.failed).toEqual([]);
+    expect(host.setConfig).toHaveBeenCalled();
+    expect(host.current().models?.['anthropic/claude-sonnet-4']).toMatchObject({
+      maxContextSize: 1_000_000,
+    });
+  });
+
+  it('leaves a hand-tuned window alone during the refresh backfill', async () => {
+    const host = makeRefreshHost({
+      providers: {
+        anthropic: {
+          type: 'anthropic',
+          baseUrl: 'https://api.anthropic.com',
+          apiKey: 'sk-ant-test',
+        },
+      },
+      models: {
+        'anthropic/claude-sonnet-4': {
+          provider: 'anthropic',
+          model: 'claude-sonnet-4',
+          maxContextSize: 512_000,
+          overrides: { maxContextSize: 200_000 },
+        },
+      },
+    } as unknown as OmnicodeConfig);
+
+    const fetchMock = vi.fn<FetchMock>(async (input) => {
+      if (fetchInputUrl(input).includes('models.dev')) {
+        return new Response(
+          JSON.stringify({
+            anthropic: {
+              models: {
+                'claude-sonnet-4': { limit: { context: 1_000_000 } },
+              },
+            },
+          }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }
+      return new Response(JSON.stringify({ data: [{ id: 'claude-sonnet-4' }] }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const result = await refreshAllProviderModels({
+      getConfig: async () => host.current(),
+      removeProvider: host.removeProvider,
+      setConfig: host.setConfig,
+      resolveOAuthToken: vi.fn(),
+    });
+
+    expect(result.failed).toEqual([]);
+    expect(host.current().models?.['anthropic/claude-sonnet-4']).toMatchObject({
+      maxContextSize: 512_000,
+      overrides: { maxContextSize: 200_000 },
+    });
   });
 
   it('discovers models for API-key providers pointing at non-managed endpoints', async () => {

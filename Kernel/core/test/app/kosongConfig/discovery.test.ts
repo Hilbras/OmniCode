@@ -895,7 +895,7 @@ describe('refreshProviderModels hand-written provider discovery', () => {
         maxContextSize: 200000,
       });
       expect(list['mygw/gw-fast']?.capabilities).toContain('tool_use');
-      expect(list['mygw/gw-smart']?.maxContextSize).toBeGreaterThan(0);
+      expect(list['mygw/gw-smart']?.maxContextSize).toBeUndefined();
       expect(list['mygw/gw-smart']?.capabilities).toContain('thinking');
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(String(fetchMock.mock.calls[0]?.[0])).toBe('https://gw.example.test/v1/models');

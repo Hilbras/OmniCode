@@ -601,19 +601,26 @@ async function routeFreeTierAliases(
     readonly previousFreeAliases?: Record<string, Record<string, unknown>>;
   },
 ): Promise<void> {
+  // Discovery wrote the paid aliases with no window (`/models` declares no
+  // limits), so the catalog read must happen for every built-in — not only
+  // those with a free tier, or the vendors that need it least would be the
+  // ones left with undeclared windows.
+  const limits =
+    target.catalogProvider === undefined
+      ? new Map<string, CatalogLimit>()
+      : await fetchCatalogLimits(target.catalogProvider);
+  if (limits.size > 0) {
+    const config = await host.harness.getConfig({ reload: true });
+    const models = { ...config.models } as Record<string, Record<string, unknown>>;
+    if (backfillCatalogLimits({ models, providerId: target.providerId, limits })) {
+      await host.harness.setConfig({ models });
+    }
+  }
+
   for (const source of target.freeTier ?? []) {
-    const limits =
-      target.catalogProvider === undefined
-        ? new Map<string, CatalogLimit>()
-        : await fetchCatalogLimits(target.catalogProvider);
     let config = await host.harness.getConfig({ reload: true });
     const models = { ...config.models } as Record<string, Record<string, unknown>>;
-    const changed = backfillCatalogLimits({ models, providerId: target.providerId, limits });
     const { ids, failure } = await fetchFreeTierModelIds(source);
-    if (changed) {
-      await host.harness.setConfig({ models });
-      config = await host.harness.getConfig({ reload: true });
-    }
     if (ids.length === 0) {
       host.showError(describeFreeTierFailure(source.baseUrl, failure));
       const preserved = target.previousFreeAliases ?? {};

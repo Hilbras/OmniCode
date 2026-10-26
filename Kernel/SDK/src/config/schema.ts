@@ -82,7 +82,11 @@ export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
 const ModelAliasBaseSchema = z.object({
   provider: z.string(),
   model: z.string(),
-  maxContextSize: z.number().int().min(1),
+  // Optional, not required: `/models` returns ids and no limits, so discovery
+  // cannot always declare a window. Requiring one here made an honest "unknown"
+  // a config validation error, which dropped every model of that provider — and
+  // a vendor that does answer with a context field stays authoritative.
+  maxContextSize: z.number().int().min(1).optional(),
   maxInputSize: z.number().int().min(1).optional(),
   maxOutputSize: z.number().int().min(1).optional(),
   capabilities: z.array(z.string()).optional(),

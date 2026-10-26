@@ -265,13 +265,13 @@ export function buildUsageReportLines(options: UsageReportOptions): string[] {
     ...buildSessionUsageSection(options.sessionUsage, options.sessionUsageError, value, muted),
   ];
 
+  lines.push('');
+  lines.push(accent('Context window'));
   if (options.maxContextTokens > 0) {
     const ratio = safeUsageRatio(options.contextUsage);
     const bar = renderProgressBar(ratio, 20);
     const pct = `${String(usagePercent(options.contextTokens, options.maxContextTokens))}%`;
     const barColoured = currentTheme.fg(severityColor(ratioSeverity(ratio)), bar);
-    lines.push('');
-    lines.push(accent('Context window'));
     lines.push(
       `  ${barColoured}  ${value(pct.padStart(6, ' '))}  ` +
         muted(
@@ -279,6 +279,11 @@ export function buildUsageReportLines(options: UsageReportOptions): string[] {
             options.maxContextTokens,
           )})`,
         ),
+    );
+  } else {
+    lines.push(
+      `  ${value(formatTokenCount(options.contextTokens))} used  ` +
+        muted('(no context window declared — set one with /context)'),
     );
   }
 

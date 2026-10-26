@@ -54,7 +54,7 @@ describe('formatStepDebugTiming', () => {
         output: 200,
       },
     });
-    expect(result).toContain('tokens in 1000');
+    expect(result).toContain('tokens in 1k');
     expect(result).toContain('cache read 0 (0%)');
     expect(result).not.toContain('/ write 0');
   });

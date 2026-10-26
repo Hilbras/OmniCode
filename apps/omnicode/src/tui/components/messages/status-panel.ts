@@ -146,7 +146,10 @@ export function buildStatusReportLines(options: StatusReportOptions): string[] {
         muted(`(${formatTokenCount(tokens)} / ${formatTokenCount(maxTokens)})`),
     );
   } else {
-    lines.push(`  ${muted('No context window data available.')}`);
+    lines.push(
+      `  ${value(formatTokenCount(tokens))} used  ` +
+        muted('(no context window declared — set one with /context)'),
+    );
   }
 
   const managedSection = buildManagedUsageReportLines({

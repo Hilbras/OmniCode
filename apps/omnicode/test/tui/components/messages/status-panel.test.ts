@@ -60,7 +60,7 @@ describe('status panel report lines', () => {
     expect(output).toContain('Title        Implement status');
     expect(output).toContain('Context window');
     expect(output).toContain('25%');
-    expect(output).toContain('(2.9k / 11.7k)');
+    expect(output).toContain('(3k / 12k)');
     expect(output).toContain('Plan usage');
     expect(output).toContain('5h limit');
     expect(output).toContain('8% used');
@@ -183,6 +183,7 @@ describe('status panel report lines', () => {
     expect(output).toContain('Model        not set');
     expect(output).toContain('Session      none');
     expect(output).toContain('Warning      No active session');
-    expect(output).toContain('No context window data available.');
+    expect(output).toContain('Context window');
+    expect(output).toContain('no context window declared');
   });
 });

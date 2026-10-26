@@ -84,7 +84,11 @@ export function catalogModelToAlias(providerId: string, model: CatalogModel): Mo
   return {
     provider: providerId,
     model: model.id,
-    maxContextSize: model.capability.max_context_tokens,
+    // A catalog entry with no declared limit normalizes to 0, which the alias
+    // schema rejects; it means "unknown" and must stay unknown rather than be
+    // written as a window of zero.
+    maxContextSize:
+      model.capability.max_context_tokens > 0 ? model.capability.max_context_tokens : undefined,
     maxInputSize: model.capability.max_input_tokens,
     maxOutputSize: model.maxOutputSize,
     // A model that always reasons advertises `always_thinking` instead of

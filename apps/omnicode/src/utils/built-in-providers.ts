@@ -165,6 +165,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     baseUrl: 'https://openrouter.ai/api/v1',
     description: 'One key for 400+ models across many providers',
     consoleUrl: 'https://openrouter.ai/keys',
+    catalogProvider: 'openrouter',
   },
   {
     id: 'opencode-zen',
@@ -203,6 +204,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     description: 'NVIDIA-hosted open models, free developer tier',
     consoleUrl: 'https://build.nvidia.com',
     keyHint: 'nvapi-',
+    catalogProvider: 'nvidia',
   },
   {
     id: 'nara',
@@ -230,6 +232,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     description: 'GPT, o-series and Codex models',
     consoleUrl: 'https://platform.openai.com/api-keys',
     keyHint: 'sk-',
+    catalogProvider: 'openai',
   },
   {
     id: 'anthropic',
@@ -240,6 +243,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     consoleUrl: 'https://console.anthropic.com/settings/keys',
     keyHint: 'sk-ant-',
     authStyle: 'x-api-key',
+    catalogProvider: 'anthropic',
   },
   {
     id: 'gemini',
@@ -250,6 +254,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     consoleUrl: 'https://aistudio.google.com/apikey',
     keyHint: 'AIza',
     authStyle: 'x-goog-api-key',
+    catalogProvider: 'google',
   },
   {
     id: 'grok',
@@ -259,6 +264,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     description: 'Grok models',
     consoleUrl: 'https://console.x.ai',
     keyHint: 'xai-',
+    catalogProvider: 'xai',
   },
   {
     id: 'groq',
@@ -268,6 +274,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     description: 'Fast open models on Groq hardware',
     consoleUrl: 'https://console.groq.com/keys',
     keyHint: 'gsk_',
+    catalogProvider: 'groq',
   },
   {
     id: 'qwen',
@@ -277,6 +284,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     description: 'Alibaba Qwen models',
     consoleUrl: 'https://bailian.console.alibabacloud.com/',
     keyHint: 'sk-',
+    catalogProvider: 'alibaba',
   },
   {
     id: 'minimax',
@@ -285,6 +293,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     baseUrl: 'https://api.minimax.io/v1',
     description: 'MiniMax models',
     consoleUrl: 'https://platform.minimax.io/user-center/basic-information/interface-key',
+    catalogProvider: 'minimax',
   },
   {
     id: 'deepseek',
@@ -294,6 +303,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     description: 'DeepSeek chat and reasoning models',
     consoleUrl: 'https://platform.deepseek.com/api_keys',
     keyHint: 'sk-',
+    catalogProvider: 'deepseek',
   },
   {
     id: 'mistral',
@@ -302,6 +312,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     baseUrl: 'https://api.mistral.ai/v1',
     description: 'Mistral and Magistral models',
     consoleUrl: 'https://console.mistral.ai/api-keys',
+    catalogProvider: 'mistral',
   },
   {
     id: 'huggingface',
@@ -311,6 +322,7 @@ export const BUILT_IN_PROVIDERS: readonly BuiltInProvider[] = [
     description: 'Open models via the Hugging Face router',
     consoleUrl: 'https://huggingface.co/settings/tokens',
     keyHint: 'hf_',
+    catalogProvider: 'huggingface',
   },
 ];
 

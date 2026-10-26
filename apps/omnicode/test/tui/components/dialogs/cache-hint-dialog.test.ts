@@ -19,7 +19,7 @@ describe('CacheHintDialogComponent', () => {
   it('renders the title with idle duration and token count', () => {
     const { lines } = renderDialog();
     expect(
-      lines.some((l) => l.includes('This session has been idle for 26d 22h and is ~286k tokens.')),
+      lines.some((l) => l.includes('This session has been idle for 26d 22h and is ~293k tokens.')),
     ).toBe(true);
   });
 

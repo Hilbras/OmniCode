@@ -758,6 +758,51 @@ describe('omnicode provider add-builtin', () => {
     expect(printed).toMatch(/Routed 2 free models to their free tier\./);
   });
 
+  it('writes real catalog windows instead of a flat default when adding a built-in', async () => {
+    // `/models` returns ids and no limits, so without the models.dev read every
+    // alias would be declared with one invented window — the "1M model shows
+    // 128K" class of wrong answer. The catalog value must land in the same add,
+    // and a model the catalog does not know stays undeclared rather than
+    // inheriting a number.
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (input: unknown) => {
+        if (String(input).includes('models.dev')) {
+          return new Response(
+            JSON.stringify({
+              anthropic: {
+                models: {
+                  'claude-sonnet-4': { limit: { context: 1_000_000, output: 64_000 } },
+                },
+              },
+            }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } },
+          );
+        }
+        return new Response(
+          JSON.stringify({ data: [{ id: 'claude-sonnet-4' }, { id: 'claude-unknown' }] }),
+          { status: 200, headers: { 'Content-Type': 'application/json' } },
+        );
+      }),
+    );
+    const { harness, current } = makeHarness({
+      providers: {},
+      models: {},
+    } as OmnicodeConfig);
+    const { deps, exitCodes, stderr } = makeDeps(harness);
+
+    await tryRun(() => handleProviderAddBuiltin(deps, 'anthropic', { apiKey: 'sk-ant-test' }));
+
+    expect(exitCodes, stderr.join('')).toEqual([]);
+    const models = current().models ?? {};
+    expect(
+      (models['anthropic/claude-sonnet-4'] as Record<string, unknown>)['maxContextSize'],
+    ).toBe(1_000_000);
+    expect(
+      (models['anthropic/claude-unknown'] as Record<string, unknown>)['maxContextSize'],
+    ).toBeUndefined();
+  });
+
   it('drops a free model the endpoint no longer offers', async () => {
     // Free aliases are exempt from provider refresh, so nothing else would ever
     // remove one the vendor has retired: it would sit in config until something
@@ -1546,7 +1591,6 @@ describe('omnicode provider models', () => {
     expect(current().models?.['mygw/m2']).toEqual({
       provider: 'mygw',
       model: 'm2',
-      maxContextSize: 131072,
       capabilities: ['tool_use'],
       displayName: 'm2',
     });
@@ -1567,7 +1611,6 @@ describe('omnicode provider models', () => {
         'mygw/m1': {
           provider: 'mygw',
           model: 'm1',
-          maxContextSize: 131072,
           capabilities: ['tool_use'],
           displayName: 'm1',
         },

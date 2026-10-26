@@ -17,27 +17,28 @@ describe('formatTokenCount', () => {
     expect(formatTokenCount(999)).toBe('999');
   });
 
-  it('switches to k at 1024 and trims a redundant ".0"', () => {
-    expect(formatTokenCount(1_000)).toBe('1000');
+  it('switches to k at 1000 and trims a redundant ".0"', () => {
+    expect(formatTokenCount(1_000)).toBe('1k');
     expect(formatTokenCount(1_024)).toBe('1k');
     expect(formatTokenCount(1_536)).toBe('1.5k');
     expect(formatTokenCount(2_048)).toBe('2k');
   });
 
   it('rounds k values to 1 decimal', () => {
-    expect(formatTokenCount(50_552)).toBe('49.4k');
-    expect(formatTokenCount(262_144)).toBe('256k');
+    expect(formatTokenCount(50_552)).toBe('50.6k');
+    expect(formatTokenCount(262_144)).toBe('262k');
   });
 
   it('rounds k values at or above 100k to whole k', () => {
-    expect(formatTokenCount(102_400)).toBe('100k');
-    expect(formatTokenCount(999_999)).toBe('977k');
+    expect(formatTokenCount(102_400)).toBe('102k');
+    expect(formatTokenCount(999_999)).toBe('1M');
   });
 
-  it('switches to M at 1024*1024', () => {
+  it('switches to M where a 1000-based reading rounds up', () => {
+    expect(formatTokenCount(1_000_000)).toBe('1M');
     expect(formatTokenCount(1_048_576)).toBe('1M');
-    expect(formatTokenCount(1_572_864)).toBe('1.5M');
-    expect(formatTokenCount(10_485_760)).toBe('10M');
+    expect(formatTokenCount(1_572_864)).toBe('1.6M');
+    expect(formatTokenCount(10_485_760)).toBe('10.5M');
   });
 
   it('clamps negatives and NaN to 0', () => {

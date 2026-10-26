@@ -45,7 +45,7 @@ describe('UsagePanelComponent', () => {
       }).map(strip);
 
       expect(lines).toContain('Session usage');
-      expect(lines).toContain('  omnicode  input 2k  output 250  total 2.2k');
+      expect(lines).toContain('  omnicode  input 2k  output 250  total 2.3k');
       expect(lines).toContain('Context window');
       expect(lines.join('\n')).toContain('25%');
       expect(lines).toContain('Plan usage');
@@ -177,6 +177,19 @@ describe('UsagePanelComponent', () => {
 
       expect(lines).not.toContain('Extra Usage');
     }
+  });
+
+  it('keeps the context window section visible when no window is declared', () => {
+    const lines = buildUsageReportLines({
+      sessionUsage: { byModel: {} },
+      contextUsage: 0,
+      contextTokens: 3_500,
+      maxContextTokens: 0,
+    }).map(strip);
+
+    expect(lines).toContain('Context window');
+    expect(lines.join('\n')).toContain('no context window declared');
+    expect(lines.join('\n')).toContain('3.5k used');
   });
 
   it('formats extra usage with CNY currency', () => {

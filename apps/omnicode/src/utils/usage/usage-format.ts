@@ -8,15 +8,15 @@
 import { type ManagedQuota, type ManagedQuotaEntry } from '@hilbras/omnicode-auth';
 
 /**
- * Format a token count in 1024-based units: context sizes are powers of
- * two, so 262144 reads as "256k", not "262.1k". k values at or above
- * 100 are rounded to whole numbers ("977k").
+ * Format a token count in the 1000-based units vendors declare contexts with,
+ * so a 1,000,000-token window reads "1M" rather than "977k". A value that
+ * rounds up into the next unit is promoted to it, so 999,999 never reads "1000k".
  */
 export function formatTokenCount(n: number): string {
   if (!Number.isFinite(n) || n < 0) return '0';
-  if (n >= 1024 * 1024) return `${trimDecimal(n / (1024 * 1024))}M`;
-  if (n >= 1024) {
-    const k = n / 1024;
+  if (n >= 1_000 && Math.round(n / 1_000) >= 1_000) return `${trimDecimal(n / 1_000_000)}M`;
+  if (n >= 1_000) {
+    const k = n / 1_000;
     return `${k >= 100 ? Math.round(k) : trimDecimal(k)}k`;
   }
   return String(n);

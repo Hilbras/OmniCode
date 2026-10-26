@@ -43,6 +43,17 @@ function userExtras(
   return out;
 }
 
+function preservedMaxContextSize(
+  current: Record<string, unknown>,
+  remote: ManagedOmnicodeModelAlias,
+): number | undefined {
+  if (remote.maxContextSize !== undefined) return undefined;
+  const existing = current['maxContextSize'];
+  return typeof existing === 'number' && Number.isFinite(existing) && existing > 0
+    ? existing
+    : undefined;
+}
+
 export function mergeRefreshedModelAlias(
   existing: unknown,
   remote: ManagedOmnicodeModelAlias,
@@ -54,9 +65,11 @@ export function mergeRefreshedModelAlias(
       ? (current['overrides'] as ManagedOmnicodeModelAliasOverrides)
       : undefined,
   );
+  const carried = preservedMaxContextSize(current, remote);
   return {
     ...userExtras(current, remoteOwnedFields),
     ...remote,
+    maxContextSize: remote.maxContextSize ?? carried,
     ...(overrides !== undefined ? { overrides } : {}),
   };
 }

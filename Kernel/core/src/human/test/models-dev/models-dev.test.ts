@@ -205,7 +205,7 @@ describe('modelsDevProviderModels', () => {
     expect(models.has('alpha-model')).toBe(false);
     expect(models.has('text-embedding-3')).toBe(false);
     expect(models.has('image-only')).toBe(false);
-    expect(models.has('no-limit')).toBe(false);
+    expect(models.has('no-limit')).toBe(true);
     const gateway = byId(
       modelsDevProviderModels('zenmux', {
         id: 'zenmux',

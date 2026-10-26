@@ -1,6 +1,7 @@
 import { DEFAULT_CATALOG_URL } from '@hilbras/omnicode-api';
 
 import { fetchCatalogOrBuiltIn } from './catalog-fetch';
+import { getBuiltInProvider } from './built-in-providers';
 
 export const DEFAULT_MAX_CONTEXT = 131072;
 
@@ -204,9 +205,37 @@ export function backfillCatalogLimits(input: {
     if (id === undefined) continue;
     const limit = input.limits.get(id);
     if (limit === undefined) continue;
-    if (record['maxContextSize'] !== DEFAULT_MAX_CONTEXT) continue;
+    const current = record['maxContextSize'];
+    if (current !== undefined && current !== DEFAULT_MAX_CONTEXT) continue;
     input.models[key] = { ...record, maxContextSize: limit.context };
     touched = true;
+  }
+  return touched;
+}
+
+/**
+ * Fills real context windows onto every configured built-in provider's aliases.
+ *
+ * Runs after a provider refresh: `/models` answers with ids and no limits, so a
+ * refresh that preserves an alias keeps whatever it already held — including a
+ * flat default written by an older release. Without this pass a config written
+ * before real values were resolved never converges on them, and the user has to
+ * re-add the provider to see a real context window.
+ *
+ * Providers with no `catalogProvider`, and an unreachable catalog, are no-ops.
+ */
+export async function backfillBuiltInContextWindows(input: {
+  readonly models: Record<string, Record<string, unknown>>;
+  readonly providerIds: readonly string[];
+  readonly fetchImpl?: typeof fetch;
+}): Promise<boolean> {
+  let touched = false;
+  for (const providerId of input.providerIds) {
+    const catalogProvider = getBuiltInProvider(providerId)?.catalogProvider;
+    if (catalogProvider === undefined) continue;
+    const limits = await fetchCatalogLimits(catalogProvider, input.fetchImpl ?? fetch);
+    if (limits.size === 0) continue;
+    if (backfillCatalogLimits({ models: input.models, providerId, limits })) touched = true;
   }
   return touched;
 }

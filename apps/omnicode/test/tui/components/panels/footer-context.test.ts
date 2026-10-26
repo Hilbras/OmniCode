@@ -80,7 +80,7 @@ describe('FooterComponent — context NaN resilience', () => {
     expect(out).toMatch(/context: 1%/);
   });
 
-  it('valid tokens/maxTokens → percent from tokens, counts in 1024 units', () => {
+  it('valid tokens/maxTokens → percent from tokens, counts in the 1000 units vendors declare', () => {
     const fc = new FooterComponent(
       baseState({
         contextUsage: 0.427,
@@ -89,7 +89,15 @@ describe('FooterComponent — context NaN resilience', () => {
       }),
     );
     const out = strip(fc.render(200).join(''));
-    expect(out).toMatch(/context: 42% \(420k\/1M\)/);
+    expect(out).toMatch(/context: 42% \(430k\/1M\)/);
+  });
+
+  it('a 1,000,000-token window reads as 1M, not 977k', () => {
+    const fc = new FooterComponent(
+      baseState({ contextUsage: 0.5, contextTokens: 500_000, maxContextTokens: 1_000_000 }),
+    );
+    const out = strip(fc.render(200).join(''));
+    expect(out).toMatch(/context: 50% \(500k\/1M\)/);
   });
 
   it('tokens provided but max=0 → falls back to percent-only, no division-by-zero artefact', () => {

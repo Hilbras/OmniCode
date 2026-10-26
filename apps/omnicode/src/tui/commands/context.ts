@@ -15,6 +15,8 @@
  */
 import { SECONDARY_DERIVED_MODEL_ALIAS } from '@hilbras/omnicode-api';
 
+import { formatTokenCount } from '#/utils/usage/usage-format';
+
 import {
   ApiKeyInputDialogComponent,
   type ApiKeyInputResult,
@@ -45,10 +47,13 @@ export function parseContextSize(raw: string): number | undefined {
   return value;
 }
 
+/**
+ * The same 1000-based reading the footer and `/usage` use, so one window is
+ * written identically wherever it appears — and a value that is not a round
+ * thousand (1,048,576) reads as a unit instead of "1048.576K".
+ */
 export function formatContextSize(tokens: number): string {
-  if (tokens >= 1_000_000 && tokens % 100_000 === 0) return `${String(tokens / 1_000_000)}M tokens`;
-  if (tokens >= 1_000) return `${String(tokens / 1_000)}K tokens`;
-  return `${String(tokens)} tokens`;
+  return `${formatTokenCount(tokens)} tokens`;
 }
 
 export async function handleContextCommand(host: SlashCommandHost, args: string): Promise<void> {
