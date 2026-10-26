@@ -35,6 +35,7 @@ import {
   fingerprintKey,
   idempotencyKey,
   MEMORY_SCHEMA_VERSION,
+  PHRASE_PREFIX,
   pointerIds,
   recordKey,
   referenceKeys,
@@ -432,6 +433,40 @@ export class MemoryService extends Disposable implements IMemoryService {
       if (await this.commit([{ op: 'set', key: recordKey(id), value: next }])) updated += 1;
     }
     return updated;
+  }
+
+  async recordPhrase(scope: MemoryScope, ngram: string): Promise<void> {
+    if (!this.available()) return;
+    const scopeKey = scopeKeyFor(scope);
+    if (scopeKey === undefined) return;
+    const key = `${PHRASE_PREFIX}${scopeKey}:${encodeURIComponent(ngram)}`;
+    const existing = await this.store.get(key);
+    const now = this.now();
+    const count =
+      typeof existing === 'object' && existing !== null && typeof (existing as Record<string, unknown>)['count'] === 'number'
+        ? ((existing as Record<string, unknown>)['count'] as number) + 1
+        : 1;
+    await this.store.commit([{ op: 'set', key, value: { ngram, count, lastSeenAt: now } }]);
+  }
+
+  async topPhrases(
+    scope: MemoryScope,
+    limit: number,
+  ): Promise<readonly { readonly ngram: string; readonly count: number; readonly lastSeenAt: number }[]> {
+    if (!this.available()) return [];
+    const scopeKey = scopeKeyFor(scope);
+    if (scopeKey === undefined) return [];
+    const prefix = `${PHRASE_PREFIX}${scopeKey}:`;
+    const keys = await this.store.prefixKeys(prefix, 1000);
+    const values = await this.store.getMany(keys);
+    const out: { ngram: string; count: number; lastSeenAt: number }[] = [];
+    for (const value of values.values()) {
+      if (typeof value !== 'object' || value === null) continue;
+      const rec = value as Record<string, unknown>;
+      if (typeof rec['ngram'] !== 'string' || typeof rec['count'] !== 'number' || typeof rec['lastSeenAt'] !== 'number') continue;
+      out.push({ ngram: rec['ngram'], count: rec['count'], lastSeenAt: rec['lastSeenAt'] });
+    }
+    return out.toSorted((a, b) => b.count - a.count || b.lastSeenAt - a.lastSeenAt).slice(0, Math.max(0, limit));
   }
 
   async resetAccessCount(id: string): Promise<MemoryMutationResult> {

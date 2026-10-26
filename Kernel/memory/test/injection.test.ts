@@ -9,6 +9,7 @@ import type { MemoryInjectionDisclosure } from '#/context/memoryInjectionService
 import type { IMemoryService, MemoryTaskStateInput } from '#/contracts/memoryContract';
 
 import type { MemoryStorePort } from '#/storage/memoryStore';
+import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
 
 import {
   captureInput,
@@ -64,12 +65,24 @@ function compose(options: {
     cwd: '/tmp/project',
   } as never;
 
+  const flags = {
+    enabled: () => false,
+    registry: {} as never,
+    snapshot: () => ({}),
+    enabledIds: () => [] as never,
+    exposedIds: () => [] as never,
+    explain: () => undefined,
+    explainAll: () => [] as never,
+    setConfigOverrides: () => undefined,
+    _serviceBrand: undefined,
+  } as unknown as IFlagService;
   const service = new AgentMemoryInjectionService(
     harness.log as never,
     memory,
     session,
     context,
     reminders,
+    flags,
   );
   expect(service).toBeInstanceOf(AgentMemoryInjectionService);
   return { harness, registrations, memory };

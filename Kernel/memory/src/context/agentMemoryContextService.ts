@@ -24,6 +24,8 @@ export const IAgentMemoryContextService = createDecorator<IAgentMemoryContextSer
 
 export const MEMORY_INJECTION_VARIANT = 'memory_canonical';
 export const MEMORY_RESTORE_VARIANT = 'memory_task_restore';
+export const MEMORY_PREFERENCES_VARIANT = 'memory_preferences';
+export const MEMORY_PHRASES_VARIANT = 'memory_phrases';
 
 export class AgentMemoryContextService extends Service implements IAgentMemoryContextService {
   declare readonly _serviceBrand: undefined;

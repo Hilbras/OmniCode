@@ -9,6 +9,7 @@ export const SCOPE_PREFIX = 's:';
 export const SUBJECT_PREFIX = 'k:';
 export const REVIEW_PREFIX = 'q:';
 export const IDEMPOTENCY_PREFIX = 'x:';
+export const PHRASE_PREFIX = 'ph:';
 
 export const ALL_SCOPE_PREFIXES: readonly string[] = Object.freeze([
   `${SCOPE_PREFIX}g:`,

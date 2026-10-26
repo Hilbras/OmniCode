@@ -245,6 +245,12 @@ export interface IMemoryService {
   diagnostics(): Promise<MemoryDiagnostics>;
 
   resetAccessCount(id: string): Promise<MemoryMutationResult>;
+
+  recordPhrase(scope: MemoryScope, ngram: string): Promise<void>;
+
+  topPhrases(scope: MemoryScope, limit: number): Promise<
+    readonly { readonly ngram: string; readonly count: number; readonly lastSeenAt: number }[]
+  >;
 }
 
 export const IMemoryService = createDecorator<IMemoryService>('memoryService');
