@@ -1303,7 +1303,7 @@ export interface ProviderModelsOptions {
 interface ProviderModelRow {
   readonly alias: string;
   readonly model: string;
-  readonly maxContextSize: number;
+  readonly maxContextSize?: number;
   readonly protocol?: string;
   readonly displayName?: string;
 }
