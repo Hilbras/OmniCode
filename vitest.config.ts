@@ -7,7 +7,6 @@ export default defineConfig({
       'apps/omnicode',
       'apps/omnicode-vis/server',
       'apps/omnicode-vis/web',
-      'apps/omnicode-web',
     ],
     coverage: {
       provider: 'v8',

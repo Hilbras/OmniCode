@@ -85,7 +85,6 @@
         ./apps/omnicode-vis
         ./apps/omnicode-vis/server
         ./apps/omnicode-vis/web
-        ./apps/omnicode-web
         ./docs
       ];
 
@@ -113,7 +112,6 @@
         "@hilbras/omnicode-vis"
         "@hilbras/omnicode-vis-server"
         "@hilbras/omnicode-vis-web"
-        "@hilbras/omnicode-web"
         "omnicode-docs"
       ];
     in
