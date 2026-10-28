@@ -169,4 +169,26 @@ describe('TabbedModelSelectorComponent', () => {
     expect(lines[stripIdx + 1]).toBe(''); // blank between tabs and list
     expect(lines.findIndex((l) => l.includes('Omnicode K2'))).toBeGreaterThan(stripIdx);
   });
+
+  it('forwards onRefresh to the inner selectors and renders the hint', () => {
+    const onRefresh = vi.fn();
+    const onSelect = vi.fn();
+    const component = new TabbedModelSelectorComponent({
+      models: {
+        k2: model('Omnicode K2', 'managed:omnicode'),
+        gpt: model('GPT-5', 'openai'),
+      },
+      currentValue: 'k2',
+      currentThinkingEffort: 'off',
+      onSelect,
+      onRefresh,
+      onCancel: vi.fn(),
+    });
+
+    const out = strip(component.render(120).join('\n'));
+    expect(out).toContain('Ctrl+R refresh');
+
+    component.handleInput('\u0012'); // Ctrl+R
+    expect(onRefresh).toHaveBeenCalledTimes(1);
+  });
 });

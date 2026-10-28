@@ -11,3 +11,5 @@ catalog:
 overrides:
   "ssh2@1.17.0>cpu-features": "-"
   "ssh2@1.17.0>nan": "-"
+  "protobufjs@<7.6.6": "^7.6.6"
+  "dompurify@<3.4.17": "^3.4.17"

@@ -9,6 +9,9 @@ export interface CatalogLimit {
   readonly context: number;
   readonly input?: number;
   readonly output?: number;
+  /** What the model can do, as the catalog states it: `image_in`, `video_in`,
+   * `audio_in`, `thinking` (or `always_thinking`), `tool_use`. */
+  readonly capabilities?: readonly string[];
 }
 
 export interface ImportedModel {
@@ -17,6 +20,7 @@ export interface ImportedModel {
   readonly maxContextSize: number;
   readonly maxInputSize?: number;
   readonly maxOutputSize?: number;
+  readonly capabilities?: readonly string[];
 }
 
 /**
@@ -37,21 +41,111 @@ function positiveInt(value: unknown): number | undefined {
     : undefined;
 }
 
-function readLimit(entry: unknown): CatalogLimit | undefined {
+/**
+ * The input modalities a catalog model accepts.
+ *
+ * The catalog is the only source that knows whether a model reads images, and
+ * a model without `image_in` never gets the image tool — so the flags are read
+ * from the catalog instead of being assumed per provider.
+ */
+function readInputModalities(modalities: unknown): readonly string[] {
+  if (typeof modalities !== 'object' || modalities === null) return [];
+  const input = (modalities as Record<string, unknown>)['input'];
+  if (!Array.isArray(input)) return [];
+  return input.filter((value): value is string => typeof value === 'string');
+}
+
+/**
+ * Whether the catalog marks the model as reasoning, and whether reasoning can
+ * be switched off. A model whose effort levels have no "none" tier always
+ * reasons, so the UI locks thinking on for it.
+ */
+function readThinkingCapability(rec: Record<string, unknown>): 'always' | 'toggle' | undefined {
+  const options = rec['reasoning_options'];
+  const list = Array.isArray(options) ? options : [];
+  let hasSelectable = false;
+  let hasOff = false;
+  let hasToggle = false;
+  for (const option of list) {
+    if (typeof option !== 'object' || option === null) continue;
+    const opt = option as Record<string, unknown>;
+    if (opt['type'] === 'toggle') {
+      hasToggle = true;
+      continue;
+    }
+    if (opt['type'] !== 'effort') continue;
+    const values = opt['values'];
+    if (!Array.isArray(values)) continue;
+    if (values.some((value) => value === null)) hasOff = true;
+    for (const value of values) {
+      if (typeof value !== 'string' || value.length === 0) continue;
+      if (value.toLowerCase() === 'none') {
+        hasOff = true;
+        continue;
+      }
+      hasSelectable = true;
+    }
+  }
+  if (hasSelectable && !hasOff && !hasToggle) return 'always';
+  if (rec['reasoning'] === true || hasSelectable || hasToggle) return 'toggle';
+  return undefined;
+}
+
+function readCapabilities(entry: unknown): readonly string[] | undefined {
+  if (typeof entry !== 'object' || entry === null) return undefined;
+  const rec = entry as Record<string, unknown>;
+  const inputs = readInputModalities(rec['modalities']);
+  const caps: string[] = [];
+  if (inputs.includes('image')) caps.push('image_in');
+  if (inputs.includes('video')) caps.push('video_in');
+  if (inputs.includes('audio')) caps.push('audio_in');
+  const thinking = readThinkingCapability(rec);
+  if (thinking === 'always') caps.push('always_thinking');
+  else if (thinking === 'toggle') caps.push('thinking');
+  if (rec['tool_call'] !== false) caps.push('tool_use');
+  if (rec['dynamically_loaded_tools'] === true) caps.push('dynamically_loaded_tools');
+  return caps.length > 0 ? caps : undefined;
+}
+
+/**
+ * Anthropic and Omnicode protocols reason on every request, so a model marked
+ * "always thinking" there still offers the thinking switch. The engine drops
+ * the same flag for those wires; the alias must agree with it.
+ */
+function withoutAlwaysThinking(
+  caps: readonly string[],
+  catalogProvider: string,
+): readonly string[] {
+  if (catalogProvider !== 'anthropic' && catalogProvider !== 'omnicode') return caps;
+  return caps.map((cap) => (cap === 'always_thinking' ? 'thinking' : cap));
+}
+
+function readLimit(entry: unknown, catalogProvider: string): CatalogLimit | undefined {
   if (typeof entry !== 'object' || entry === null) return undefined;
   const limit = (entry as { limit?: Record<string, unknown> }).limit;
   if (typeof limit !== 'object' || limit === null) return undefined;
   const rec = limit as Record<string, unknown>;
   const context = positiveInt(rec['context']);
   if (context === undefined) return undefined;
-  return { context, input: positiveInt(rec['input']), output: positiveInt(rec['output']) };
+  const capabilities = readCapabilities(entry);
+  return {
+    context,
+    input: positiveInt(rec['input']),
+    output: positiveInt(rec['output']),
+    capabilities:
+      capabilities === undefined
+        ? undefined
+        : withoutAlwaysThinking(capabilities, catalogProvider),
+  };
 }
 
 /**
- * Real context windows from models.dev, keyed by model id.
+ * Real context windows, output limits and capabilities from models.dev, keyed
+ * by model id.
  *
- * Neither `/models` route returns a context field, so without this every model
- * is declared with one flat default. A missing catalog is not an error: the
+ * Neither `/models` route returns a limit field, so without this every model
+ * is declared with one flat default — and a compaction request then asks for a
+ * 128k output the model never allowed. A missing catalog is not an error: the
  * caller falls back to the default rather than failing the add.
  */
 export async function fetchCatalogLimits(
@@ -64,7 +158,7 @@ export async function fetchCatalogLimits(
     const models = catalog?.[catalogProvider]?.models;
     if (models === undefined) return out;
     for (const [id, entry] of Object.entries(models)) {
-      const limit = readLimit(entry);
+      const limit = readLimit(entry, catalogProvider);
       if (limit !== undefined) out.set(id, limit);
     }
   } catch {
@@ -147,6 +241,7 @@ export function buildImportedModels(input: {
       maxContextSize: limit?.context ?? DEFAULT_MAX_CONTEXT,
       maxInputSize: limit?.input,
       maxOutputSize: limit?.output,
+      capabilities: limit?.capabilities,
     };
   });
 }
@@ -179,18 +274,40 @@ export function buildFreeTierAliases(input: {
       maxContextSize: imported.maxContextSize,
       maxInputSize: imported.maxInputSize,
       maxOutputSize: imported.maxOutputSize,
-      capabilities: ['tool_use'],
+      capabilities: imported.capabilities ?? ['tool_use'],
       displayName: imported.id,
     };
   }
   return out;
 }
 /**
- * Fills real context windows from the models.dev catalog onto aliases that
- * discovery already wrote, so both add surfaces produce the same config.
+ * Merges the catalog's capabilities into what an alias already declares.
  *
- * Only aliases still holding the flat default are touched: one the user
- * hand-tuned keeps whatever they chose. Returns whether anything changed.
+ * The merge only adds: a capability the user declared by hand is never
+ * dropped, and a model the catalog does not know keeps the flags it has.
+ */
+function mergeCapabilities(existing: unknown, incoming: readonly string[] | undefined): unknown {
+  const current = Array.isArray(existing)
+    ? existing.filter((value): value is string => typeof value === 'string')
+    : [];
+  if (incoming === undefined) return existing;
+  const merged = [...current];
+  for (const cap of incoming) {
+    if (!merged.includes(cap)) merged.push(cap);
+  }
+  return merged;
+}
+
+/**
+ * Fills the real limits and capabilities from the models.dev catalog onto
+ * aliases that discovery already wrote, so both add surfaces produce the same
+ * config.
+ *
+ * The context window is only replaced while it still holds the flat default:
+ * one the user hand-tuned keeps whatever they chose. Input/output limits and
+ * capabilities are filled in whenever the alias does not carry them yet, and
+ * capabilities are merged rather than replaced. Returns whether anything
+ * changed.
  */
 export function backfillCatalogLimits(input: {
   readonly models: Record<string, Record<string, unknown>>;
@@ -205,16 +322,29 @@ export function backfillCatalogLimits(input: {
     if (id === undefined) continue;
     const limit = input.limits.get(id);
     if (limit === undefined) continue;
+    const next: Record<string, unknown> = { ...record };
     const current = record['maxContextSize'];
-    if (current !== undefined && current !== DEFAULT_MAX_CONTEXT) continue;
-    input.models[key] = { ...record, maxContextSize: limit.context };
+    if (current === undefined || current === DEFAULT_MAX_CONTEXT) {
+      next['maxContextSize'] = limit.context;
+    }
+    if (limit.input !== undefined && record['maxInputSize'] === undefined) {
+      next['maxInputSize'] = limit.input;
+    }
+    if (limit.output !== undefined && record['maxOutputSize'] === undefined) {
+      next['maxOutputSize'] = limit.output;
+    }
+    const capabilities = mergeCapabilities(record['capabilities'], limit.capabilities);
+    if (capabilities !== undefined) next['capabilities'] = capabilities;
+    if (JSON.stringify(next) === JSON.stringify(record)) continue;
+    input.models[key] = next;
     touched = true;
   }
   return touched;
 }
 
 /**
- * Fills real context windows onto every configured built-in provider's aliases.
+ * Fills the real limits and capabilities onto every configured built-in
+ * provider's aliases.
  *
  * Runs after a provider refresh: `/models` answers with ids and no limits, so a
  * refresh that preserves an alias keeps whatever it already held — including a
@@ -224,7 +354,7 @@ export function backfillCatalogLimits(input: {
  *
  * Providers with no `catalogProvider`, and an unreachable catalog, are no-ops.
  */
-export async function backfillBuiltInContextWindows(input: {
+export async function backfillBuiltInModelMetadata(input: {
   readonly models: Record<string, Record<string, unknown>>;
   readonly providerIds: readonly string[];
   readonly fetchImpl?: typeof fetch;

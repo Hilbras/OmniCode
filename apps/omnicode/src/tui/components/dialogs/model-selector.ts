@@ -73,6 +73,9 @@ export interface ModelSelectorOptions {
   /** When provided, Alt+S invokes this instead of onSelect — used to apply the
    * choice to the current session only, without persisting it as the default. */
   readonly onSessionOnlySelect?: (selection: ModelSelection) => void;
+  /** When provided, Ctrl+R invokes it to refresh the model list without leaving
+   * the picker. Non-printable (safe alongside type-to-search). */
+  readonly onRefresh?: () => void;
   readonly onCancel: () => void;
 }
 
@@ -213,6 +216,11 @@ export class ModelSelectorComponent extends Container implements Focusable {
       return;
     }
 
+    if (matchesKey(data, Key.ctrl('r')) && this.opts.onRefresh !== undefined) {
+      this.opts.onRefresh();
+      return;
+    }
+
     // ↑/↓, PgUp/PgDn, and — when searchable — typing + Backspace.
     if (this.list.handleKey(data)) {
       return;
@@ -284,6 +292,7 @@ export class ModelSelectorComponent extends Container implements Focusable {
     if (searchable && view.query.length > 0) hintParts.push('Backspace clear');
     hintParts.push('Enter select');
     if (this.opts.onSessionOnlySelect !== undefined) hintParts.push('Alt+S session-only');
+    if (this.opts.onRefresh !== undefined) hintParts.push('Ctrl+R refresh');
     hintParts.push('Esc cancel');
 
     const lines: string[] = [

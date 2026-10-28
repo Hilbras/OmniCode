@@ -17,6 +17,7 @@ export const COMPACT_USER_MESSAGE_MAX_TOKENS = 20_000;
 export const COMPACT_USER_MESSAGE_HEAD_TOKENS = 2_000;
 export const COMPACTION_ELISION_VARIANT = 'compaction_elision';
 export const COMPACTION_CONTINUATION_VARIANT = 'compaction_continuation';
+export const COMPACTION_RECENT_CONTEXT_VARIANT = 'compaction_recent_context';
 
 type MessageLike = ContextMessage;
 
@@ -43,6 +44,7 @@ export interface ContextCompactionShapeInput {
   readonly summary: string;
   readonly legacySummaryMessage?: ContextMessage;
   readonly contextSummary?: string;
+  readonly recentContext?: string;
   readonly compactedCount: number;
   readonly tokensBefore: number;
   readonly tokensAfter?: number;
@@ -105,11 +107,15 @@ export function buildContextCompactionShape(
       : [...selection.head, elisionMessage, ...selection.tail];
   const contextSummary = input.contextSummary ?? input.summary;
   const continuationMessage = createCompactionContinuationMessage();
+  const recentContextMessages =
+    input.recentContext === undefined || input.recentContext.length === 0
+      ? []
+      : [createCompactionRecentContextMessage(input.recentContext)];
   const tokensAfter =
     input.tokensAfter ??
     (input.requestOverheadTokens ?? 0) +
       (input.summaryOutputTokens ?? estimate.text(contextSummary)) +
-      estimate.messages([...keptMessages, continuationMessage]);
+      estimate.messages([...keptMessages, ...recentContextMessages, continuationMessage]);
   const keptUserMessageCount =
     input.keptUserMessageCount ?? selection.head.length + selection.tail.length;
   const keptHeadUserMessageCount =
@@ -127,6 +133,7 @@ export function buildContextCompactionShape(
     messages: [
       ...keptMessages,
       createCompactionSummaryMessage(contextSummary),
+      ...recentContextMessages,
       continuationMessage,
     ],
   };
@@ -167,6 +174,15 @@ export function createCompactionContinuationMessage(): ContextMessage {
     content: [{ type: 'text', text: buildCompactionContinuationText() }],
     toolCalls: [],
     origin: { kind: 'injection', variant: COMPACTION_CONTINUATION_VARIANT },
+  };
+}
+
+export function createCompactionRecentContextMessage(text: string): ContextMessage {
+  return {
+    role: 'user',
+    content: [{ type: 'text', text }],
+    toolCalls: [],
+    origin: { kind: 'injection', variant: COMPACTION_RECENT_CONTEXT_VARIANT },
   };
 }
 

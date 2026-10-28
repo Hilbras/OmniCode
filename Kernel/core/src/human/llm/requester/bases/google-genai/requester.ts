@@ -1,7 +1,7 @@
 import { GoogleGenAI as GenAIClient, type GenerateContentParameters } from '@google/genai';
 import { assign, shake } from 'radashi';
 
-import type { LlmModel } from '#/llm/model';
+import { modelKey, type LlmModel } from '#/llm/model';
 import type { ProtocolBase, ProtocolRequesterOptions, TraitContext } from '#/llm/protocol/base';
 import { resolveModelConnection } from '#/llm/protocol/connection';
 import { resolveMaxCompletionCap, type FormatRequestInput } from '#/llm/protocol/format';
@@ -18,6 +18,12 @@ import {
 } from '#/llm/requester/requester';
 import { toLlmSyntaxErrorMessage } from '#/llm/syntax-errors';
 
+import {
+  degradeRequestConfig,
+  isOpaqueRejection,
+  OpaqueRejectionRecoveries,
+  recoverFromOpaqueRejection,
+} from '../opaque-rejection';
 import { getGoogleGenAIModelCapability } from './capability';
 import {
   applyGoogleGenAIResponseFormat,
@@ -169,6 +175,7 @@ export function createGoogleGenAIRequester(options?: GoogleGenAIRequesterOptions
   const classifyError = options?.classifyError;
   const format = createGoogleGenAIFormat();
   const vertexai = options?.vertexai === true;
+  const opaqueRejections = new OpaqueRejectionRecoveries();
   const resolveClient =
     options?.clientFactory ??
     ((request: LlmClientContext) =>
@@ -180,18 +187,21 @@ export function createGoogleGenAIRequester(options?: GoogleGenAIRequesterOptions
       control: LlmRequestControl,
     ): Promise<void> {
       const model = resolveModelConnection(config.model, connection);
-      const { tools = [] } = config;
       const { messages } = content;
       const { signal, onEvent } = control;
       const ctx: TraitContext = { model };
+      const key = modelKey(model);
+      const working = opaqueRejections.workingStep(key);
+      const effectiveConfig =
+        working === undefined ? config : (degradeRequestConfig(config, working) ?? config);
       let request: GoogleGenAIRequestParams;
       try {
         request = prepareGoogleGenAIRequest(
           {
-            ...config,
+            ...effectiveConfig,
             model,
             messages,
-            tools,
+            tools: effectiveConfig.tools ?? [],
             usedContextTokens: content.usedContextTokens,
           },
           { trait },
@@ -210,9 +220,44 @@ export function createGoogleGenAIRequester(options?: GoogleGenAIRequesterOptions
           onEvent,
         });
       } catch (error) {
+        if (!isOpaqueRejection(error)) {
+          onEvent?.({
+            type: 'llm.failed.remote',
+            error: convertGoogleGenAIError(error, (e) => classifyError?.(e)),
+          });
+          return;
+        }
+        const outcome = await recoverFromOpaqueRejection({
+          modelKey: key,
+          config: effectiveConfig,
+          error,
+          recoveries: opaqueRejections,
+          onRetry: () => onEvent?.({ type: 'llm.request.retrying' }),
+          send: async (degraded) => {
+            const degradedRequest = prepareGoogleGenAIRequest(
+              {
+                ...degraded,
+                model,
+                messages,
+                tools: degraded.tools ?? [],
+                usedContextTokens: content.usedContextTokens,
+              },
+              { trait },
+            );
+            await executeGoogleGenAIRequest(degradedRequest, {
+              connection,
+              ctx,
+              format,
+              resolveClient,
+              signal,
+              onEvent,
+            });
+          },
+        });
+        if (outcome.ok) return;
         onEvent?.({
           type: 'llm.failed.remote',
-          error: convertGoogleGenAIError(error, (e) => classifyError?.(e)),
+          error: convertGoogleGenAIError(outcome.error, (e) => classifyError?.(e)),
         });
       }
     },

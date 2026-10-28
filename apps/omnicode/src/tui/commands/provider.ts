@@ -213,11 +213,67 @@ function handleProviderSelectSource(
         host.showError(`Set default model failed: ${formatErrorMessage(error)}`);
       });
     },
+    onRefresh: () => {
+      void refreshAndRemountProviderPicker(host, providerIds, label);
+    },
     onCancel: () => {
       host.restoreEditor();
     },
   });
   host.mountEditorReplacement(selector);
+}
+
+async function refreshAndRemountProviderPicker(
+  host: SlashCommandHost,
+  providerIds: readonly string[],
+  label: string,
+): Promise<void> {
+  const spinner = host.showLoginProgressSpinner(`Refreshing models for ${label}`);
+  try {
+    const refreshed = await refreshAllProviderModels(buildDiscoveryHost(host), {});
+    for (const failure of refreshed.failed) {
+      host.showStatus(`Skipped refreshing ${failure.provider}: ${failure.reason}`, 'warning');
+    }
+    spinner.stop({ ok: true, label: 'Models refreshed.' });
+    const models = { ...host.state.appState.availableModels };
+    delete models[SECONDARY_DERIVED_MODEL_ALIAS];
+    const ids = new Set(providerIds);
+    const aliases = Object.entries(models)
+      .filter(([, model]) => ids.has(model.provider))
+      .map(([alias]) => alias);
+    if (aliases.length === 0) {
+      spinner.stop({ ok: false, label: 'No models found.' });
+      host.showError(
+        `${label} has no models yet. Re-add it to fetch its model list, or declare one under [models."${providerIds[0]}/…"] in config.toml.`,
+      );
+      reopenProviderManager(host);
+      return;
+    }
+    const selected = host.state.appState.model;
+    host.mountEditorReplacement(
+      new TabbedModelSelectorComponent({
+        models,
+        currentValue: selected,
+        selectedValue: aliases.includes(selected) ? selected : aliases[0],
+        currentThinkingEffort: host.state.appState.thinkingEffort,
+        onSelect: ({ alias, thinking }) => {
+          host.restoreEditor();
+          void setDefaultModel(host, alias, thinking).catch((error: unknown) => {
+            host.showError(`Set default model failed: ${formatErrorMessage(error)}`);
+          });
+        },
+        onRefresh: () => {
+          void refreshAndRemountProviderPicker(host, providerIds, label);
+        },
+        onCancel: () => {
+          host.restoreEditor();
+        },
+      }),
+    );
+  } catch (error) {
+    spinner.stop({ ok: false, label: 'Model refresh failed.' });
+    host.showError(`Refreshing models for ${label} failed: ${formatErrorMessage(error)}.`);
+  }
 }
 
 async function handleProviderManagerDeleteSource(

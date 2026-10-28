@@ -1,5 +1,33 @@
 # @hilbras/omnicode
 
+## 1.3.0
+
+### Minor Changes
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`f05a199`](https://github.com/Hilbras/OmniCode/commit/f05a19985e876661fadd7f380c017e9af474af8b) Thanks [@lacrous](https://github.com/lacrous)! - Add a Ctrl+R shortcut in the model picker to refresh the provider's advertised models, and add a refresh button in the provider picker.
+
+### Patch Changes
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`f05a199`](https://github.com/Hilbras/OmniCode/commit/f05a19985e876661fadd7f380c017e9af474af8b) Thanks [@lacrous](https://github.com/lacrous)! - Show the real context window, input cap, and output cap for catalog models, and surface image support so image tools are offered only when the model can actually use them.
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`f05a199`](https://github.com/Hilbras/OmniCode/commit/f05a19985e876661fadd7f380c017e9af474af8b) Thanks [@lacrous](https://github.com/lacrous)! - Add two experimental memory layers behind OMNICODE_EXPERIMENTAL_MEMORY_PREFERENCES and OMNICODE_EXPERIMENTAL_MEMORY_PHRASES: learn user preferences from explicit statements and inject them as trusted context, and track the phrases the user repeats and inject them as vocabulary context.
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`f05a199`](https://github.com/Hilbras/OmniCode/commit/f05a19985e876661fadd7f380c017e9af474af8b) Thanks [@lacrous](https://github.com/lacrous)! - Retry a request that fails with an empty 400 body by dropping the prompt cache key, then the output cap, then tools, then thinking, remembering the working shape per model.
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`fe82398`](https://github.com/Hilbras/OmniCode/commit/fe82398e709190c7d3aed1f8657350d7bd958d8c) Thanks [@lacrous](https://github.com/lacrous)! - Add a `[compaction]` config section: `auto` turns automatic compaction on or off, `model` picks a separate model for writing summaries, `keep_tokens` caps how much recent assistant and tool output is kept verbatim after compaction, and `tool_output_max_chars` caps each tool output in that slice; each can also be set with `OMNICODE_COMPACTION_AUTO`, `OMNICODE_COMPACTION_MODEL`, `OMNICODE_COMPACTION_KEEP_TOKENS`, or `OMNICODE_COMPACTION_TOOL_OUTPUT_MAX_CHARS`.
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`fe82398`](https://github.com/Hilbras/OmniCode/commit/fe82398e709190c7d3aed1f8657350d7bd958d8c) Thanks [@lacrous](https://github.com/lacrous)! - Fix context compaction failing when the provider rejects the summary request as too large or with an empty 400 error near the context window.
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`fe82398`](https://github.com/Hilbras/OmniCode/commit/fe82398e709190c7d3aed1f8657350d7bd958d8c) Thanks [@lacrous](https://github.com/lacrous)! - Keep a short verbatim slice of the most recent assistant and tool exchanges after context compaction.
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`c058220`](https://github.com/Hilbras/OmniCode/commit/c05822032c39015972570a0c4d515c63911153b8) Thanks [@lacrous](https://github.com/lacrous)! - Add an Add project button to the web UI sidebar's Sessions header. Click it to pick a folder and add it as a project.
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`c058220`](https://github.com/Hilbras/OmniCode/commit/c05822032c39015972570a0c4d515c63911153b8) Thanks [@lacrous](https://github.com/lacrous)! - Open the web UI on a new session instead of reopening your most recent one; session links still open their session, and automatic reopening of the last session is no longer available.
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`c058220`](https://github.com/Hilbras/OmniCode/commit/c05822032c39015972570a0c4d515c63911153b8) Thanks [@lacrous](https://github.com/lacrous)! - Restyle the web UI with warm neutral backgrounds and a gold accent in light and dark mode; the previous blue accent is no longer available.
+
+- [#1](https://github.com/Hilbras/OmniCode/pull/1) [`c058220`](https://github.com/Hilbras/OmniCode/commit/c05822032c39015972570a0c4d515c63911153b8) Thanks [@lacrous](https://github.com/lacrous)! - Show the OmniCode wordmark instead of the old Kimi Code logo on the web UI's loading and new-session screens.
+
 ## 1.2.3
 
 ### Patch Changes

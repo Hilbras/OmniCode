@@ -329,11 +329,13 @@ class WireReplayFoldState {
   private applyCompaction(record: WireRecord): void {
     const summary = readCompactionSummary(record);
     const contextSummary = readString(record, 'contextSummary') ?? summary;
+    const recentContext = readString(record, 'recentContext');
     const compactedCount = readNumber(record, 'compactedCount') ?? readNumber(record, 'count') ?? 0;
     const keptTail = this.selectLegacyKeptTail(record);
     const result: CompactionResult = {
       summary,
       contextSummary,
+      recentContext,
       compactedCount,
       tokensBefore: readNumber(record, 'tokensBefore') ?? 0,
       tokensAfter:

@@ -163,21 +163,24 @@ async function applyContextSize(
 
   const text = raw.trim();
   const isReset = text.length === 0 || text.toLowerCase() === 'reset';
-  let target: number | undefined;
-  if (!isReset) {
-    target = parseContextSize(text);
-    if (target === undefined) {
+  let next: number;
+  if (isReset) {
+    if (base.maxContextSize === undefined) {
+      host.showError(`Model ${alias} declares no context window to reset to.`);
+      return;
+    }
+    next = base.maxContextSize;
+  } else {
+    const parsed = parseContextSize(text);
+    if (parsed === undefined) {
       host.showError(
         `"${text}" is not a context window — use a token count like 200000, 200k or 1M, or "reset".`,
       );
       return;
     }
-  } else if (base.maxContextSize === undefined) {
-    host.showError(`Model ${alias} declares no context window to reset to.`);
-    return;
+    next = parsed;
   }
 
-  const next = target ?? base.maxContextSize;
   if (!isReset && effectiveModelForHost(host, base).maxContextSize === next) {
     host.showStatus(`${alias} already uses ${formatContextSize(next)}.`);
     return;

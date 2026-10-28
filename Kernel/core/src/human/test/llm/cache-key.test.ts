@@ -297,3 +297,81 @@ describe('openai requester prompt_cache_key fallback', () => {
     expect(events).toContain('llm.failed.remote');
   });
 });
+
+function bodylessRejectingOpenAIClient(chunks: readonly Record<string, unknown>[]): {
+  clientFactory: (request: LlmClientContext) => never;
+  calls: () => Record<string, unknown>[];
+} {
+  const captured: Record<string, unknown>[] = [];
+  return {
+    clientFactory: () =>
+      ({
+        chat: {
+          completions: {
+            create: (params: Record<string, unknown>) => {
+              captured.push(params);
+              if (captured.length === 1) {
+                return {
+                  withResponse: async () => {
+                    throw new APIError(400, undefined, undefined, undefined);
+                  },
+                };
+              }
+              return {
+                withResponse: async () => ({
+                  data: createAsyncStream(chunks),
+                  response: new Response(null),
+                }),
+              };
+            },
+          },
+        },
+      }) as never,
+    calls: () => captured,
+  };
+}
+
+describe('openai requester body-less rejection recovery', () => {
+  it('retries without the cache key when the gateway answers a body-less 400', async () => {
+    const client = bodylessRejectingOpenAIClient(chatCompletionChunks);
+    const requester = createOpenAIRequester({ clientFactory: client.clientFactory });
+    const events: string[] = [];
+    await requester.generate(
+      { model, cacheKey: 'session-1' },
+      { messages },
+      { signal: new AbortController().signal, onEvent: (e) => events.push(e.type) },
+    );
+    const calls = client.calls();
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.['prompt_cache_key']).toBe('session-1');
+    expect(calls[1]?.['prompt_cache_key']).toBeUndefined();
+    expect(events).toContain('llm.request.retrying');
+    expect(events).toContain('llm.done');
+    expect(events).not.toContain('llm.failed.remote');
+  });
+
+  it('drops the output cap when the body-less 400 names nothing', async () => {
+    const client = bodylessRejectingOpenAIClient(chatCompletionChunks);
+    const requester = createOpenAIRequester({ clientFactory: client.clientFactory });
+    await requester.generate(
+      { model, maxCompletionTokens: 4096 },
+      { messages },
+      { signal: new AbortController().signal },
+    );
+    const calls = client.calls();
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.['max_tokens']).toBe(4096);
+    expect(calls[1]?.['max_tokens']).toBeUndefined();
+  });
+
+  it('remembers the working shape for later requests of the same model', async () => {
+    const client = bodylessRejectingOpenAIClient(chatCompletionChunks);
+    const requester = createOpenAIRequester({ clientFactory: client.clientFactory });
+    const signal = new AbortController().signal;
+    await requester.generate({ model, cacheKey: 'session-1' }, { messages }, { signal });
+    await requester.generate({ model, cacheKey: 'session-2' }, { messages }, { signal });
+    const calls = client.calls();
+    expect(calls).toHaveLength(3);
+    expect(calls[2]?.['prompt_cache_key']).toBeUndefined();
+  });
+});

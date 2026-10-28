@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@antfu/utils": "^9.3.0",
-    "@modelcontextprotocol/sdk": "^1.29.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
     "immer": "^11.1.0",
     "smol-toml": "^1.6.1",
     "yazl": "^3.3.1",

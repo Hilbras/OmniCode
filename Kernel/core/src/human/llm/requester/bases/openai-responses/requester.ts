@@ -27,6 +27,12 @@ import {
   isPromptCacheKeyRejection,
   PromptCacheKeyRejections,
 } from '../openai/prompt-cache-key-fallback';
+import {
+  degradeRequestConfig,
+  isOpaqueRejection,
+  OpaqueRejectionRecoveries,
+  recoverFromOpaqueRejection,
+} from '../opaque-rejection';
 import { normalizeToolCallIdsForProvider, sanitizeOpenAIResponsesCallId } from '../tool-call-id';
 import { getOpenAIResponsesModelCapability } from './capability';
 import type { OpenAIResponsesRawChunk } from './contract';
@@ -157,6 +163,7 @@ export function createOpenAIResponsesRequester(
   const classifyError = options?.classifyError;
   const format = createOpenAIResponsesFormat();
   const promptCacheKeyRejections = new PromptCacheKeyRejections();
+  const opaqueRejections = new OpaqueRejectionRecoveries();
   const resolveClient =
     options?.clientFactory ??
     ((request: LlmClientContext) => createClient(request.model, request.headers));
@@ -167,20 +174,23 @@ export function createOpenAIResponsesRequester(
       control: LlmRequestControl,
     ): Promise<void> {
       const model = resolveModelConnection(config.model, connection);
-      const { tools = [] } = config;
       const { messages } = content;
       const { signal, onEvent } = control;
       const ctx: TraitContext = { model };
+      const key = modelKey(model);
+      const policy = trait?.toolCallIdPolicy ?? OPENAI_RESPONSES_TOOL_CALL_ID_POLICY;
+      const working = opaqueRejections.workingStep(key);
+      const effectiveConfig =
+        working === undefined ? config : (degradeRequestConfig(config, working) ?? config);
       let request: OpenAIResponsesRequestParams;
       try {
-        const policy = trait?.toolCallIdPolicy ?? OPENAI_RESPONSES_TOOL_CALL_ID_POLICY;
         request = prepareOpenAIResponsesRequest(
           {
-            ...config,
-            cacheKey: promptCacheKeyRejections.has(modelKey(model)) ? undefined : config.cacheKey,
+            ...effectiveConfig,
+            cacheKey: promptCacheKeyRejections.has(key) ? undefined : effectiveConfig.cacheKey,
             model,
             messages: normalizeToolCallIdsForProvider(messages, policy),
-            tools,
+            tools: effectiveConfig.tools ?? [],
             usedContextTokens: content.usedContextTokens,
           },
           { trait },
@@ -201,23 +211,55 @@ export function createOpenAIResponsesRequester(
       try {
         await executeOpenAIResponsesRequest(request, transport);
       } catch (error) {
-        if (request.params.prompt_cache_key === undefined || !isPromptCacheKeyRejection(error)) {
+        if (request.params.prompt_cache_key !== undefined && isPromptCacheKeyRejection(error)) {
+          promptCacheKeyRejections.mark(key);
+          const { prompt_cache_key: _rejected, ...withoutCacheKey } = request.params;
+          try {
+            await executeOpenAIResponsesRequest({ ...request, params: withoutCacheKey }, transport);
+          } catch (retryError) {
+            onEvent?.({
+              type: 'llm.failed.remote',
+              error: convertOpenAIError(retryError, (e) => classifyError?.(e)),
+            });
+          }
+          return;
+        }
+        if (!isOpaqueRejection(error)) {
           onEvent?.({
             type: 'llm.failed.remote',
             error: convertOpenAIError(error, (e) => classifyError?.(e)),
           });
           return;
         }
-        promptCacheKeyRejections.mark(modelKey(model));
-        const { prompt_cache_key: _rejected, ...withoutCacheKey } = request.params;
-        try {
-          await executeOpenAIResponsesRequest({ ...request, params: withoutCacheKey }, transport);
-        } catch (retryError) {
-          onEvent?.({
-            type: 'llm.failed.remote',
-            error: convertOpenAIError(retryError, (e) => classifyError?.(e)),
-          });
+        const outcome = await recoverFromOpaqueRejection({
+          modelKey: key,
+          config: effectiveConfig,
+          error,
+          recoveries: opaqueRejections,
+          onRetry: () => onEvent?.({ type: 'llm.request.retrying' }),
+          send: async (degraded) => {
+            const degradedRequest = prepareOpenAIResponsesRequest(
+              {
+                ...degraded,
+                cacheKey: promptCacheKeyRejections.has(key) ? undefined : degraded.cacheKey,
+                model,
+                messages: normalizeToolCallIdsForProvider(messages, policy),
+                tools: degraded.tools ?? [],
+                usedContextTokens: content.usedContextTokens,
+              },
+              { trait },
+            );
+            await executeOpenAIResponsesRequest(degradedRequest, transport);
+          },
+        });
+        if (outcome.ok) {
+          if (outcome.step === 'drop-cache-key') promptCacheKeyRejections.mark(key);
+          return;
         }
+        onEvent?.({
+          type: 'llm.failed.remote',
+          error: convertOpenAIError(outcome.error, (e) => classifyError?.(e)),
+        });
       }
     },
   };

@@ -27,6 +27,12 @@ import {
 import { toLlmSyntaxErrorMessage } from '#/llm/syntax-errors';
 import { encodeReasoningEffortFallback } from '#/llm/thinking';
 
+import {
+  degradeRequestConfig,
+  isOpaqueRejection,
+  OpaqueRejectionRecoveries,
+  recoverFromOpaqueRejection,
+} from '../opaque-rejection';
 import { normalizeToolCallIdsForProvider, sanitizeToolCallId } from '../tool-call-id';
 import { getOpenAILegacyModelCapability } from './capability';
 import type { OpenAIWireMessage } from './contract';
@@ -209,6 +215,7 @@ export function createOpenAIRequester(options?: OpenAIRequesterOptions): LlmRequ
     ((request: LlmClientContext) => createClient(request.model, request.headers));
   const reasoningByModel = new Map<string, ReasoningKeyDialect>();
   const promptCacheKeyRejections = new PromptCacheKeyRejections();
+  const opaqueRejections = new OpaqueRejectionRecoveries();
   const reasoningFor = (ctx: TraitContext): ReasoningKeyDialect => {
     const key = modelKey(ctx.model);
     let reasoning = reasoningByModel.get(key);
@@ -225,22 +232,25 @@ export function createOpenAIRequester(options?: OpenAIRequesterOptions): LlmRequ
       control: LlmRequestControl,
     ): Promise<void> {
       const model = resolveModelConnection(config.model, connection);
-      const { tools = [] } = config;
       const { messages } = content;
       const { signal, onEvent } = control;
       const ctx: TraitContext = { model };
+      const key = modelKey(model);
+      const policy = trait?.toolCallIdPolicy ?? OPENAI_CHAT_TOOL_CALL_ID_POLICY;
+      const working = opaqueRejections.workingStep(key);
+      const effectiveConfig =
+        working === undefined ? config : (degradeRequestConfig(config, working) ?? config);
       let reasoning: ReasoningKeyDialect;
       let request: OpenAIRequestParams;
       try {
         reasoning = reasoningFor(ctx);
-        const policy = trait?.toolCallIdPolicy ?? OPENAI_CHAT_TOOL_CALL_ID_POLICY;
         request = prepareOpenAIRequest(
           {
-            ...config,
-            cacheKey: promptCacheKeyRejections.has(modelKey(model)) ? undefined : config.cacheKey,
+            ...effectiveConfig,
+            cacheKey: promptCacheKeyRejections.has(key) ? undefined : effectiveConfig.cacheKey,
             model,
             messages: normalizeToolCallIdsForProvider(messages, policy),
-            tools,
+            tools: effectiveConfig.tools ?? [],
             usedContextTokens: content.usedContextTokens,
           },
           { trait, reasoningKey: reasoning.outboundKey() },
@@ -259,27 +269,58 @@ export function createOpenAIRequester(options?: OpenAIRequesterOptions): LlmRequ
         signal,
         onEvent,
       };
-      const key = modelKey(model);
       try {
         await executeOpenAIRequest(request, transport);
       } catch (error) {
-        if (request.params.prompt_cache_key === undefined || !isPromptCacheKeyRejection(error)) {
+        if (request.params.prompt_cache_key !== undefined && isPromptCacheKeyRejection(error)) {
+          promptCacheKeyRejections.mark(key);
+          const { prompt_cache_key: _rejected, ...withoutCacheKey } = request.params;
+          try {
+            await executeOpenAIRequest({ ...request, params: withoutCacheKey }, transport);
+          } catch (retryError) {
+            onEvent?.({
+              type: 'llm.failed.remote',
+              error: convertOpenAIError(retryError, (e) => classifyError?.(e)),
+            });
+          }
+          return;
+        }
+        if (!isOpaqueRejection(error)) {
           onEvent?.({
             type: 'llm.failed.remote',
             error: convertOpenAIError(error, (e) => classifyError?.(e)),
           });
           return;
         }
-        promptCacheKeyRejections.mark(key);
-        const { prompt_cache_key: _rejected, ...withoutCacheKey } = request.params;
-        try {
-          await executeOpenAIRequest({ ...request, params: withoutCacheKey }, transport);
-        } catch (retryError) {
-          onEvent?.({
-            type: 'llm.failed.remote',
-            error: convertOpenAIError(retryError, (e) => classifyError?.(e)),
-          });
+        const outcome = await recoverFromOpaqueRejection({
+          modelKey: key,
+          config: effectiveConfig,
+          error,
+          recoveries: opaqueRejections,
+          onRetry: () => onEvent?.({ type: 'llm.request.retrying' }),
+          send: async (degraded) => {
+            const degradedRequest = prepareOpenAIRequest(
+              {
+                ...degraded,
+                cacheKey: promptCacheKeyRejections.has(key) ? undefined : degraded.cacheKey,
+                model,
+                messages: normalizeToolCallIdsForProvider(messages, policy),
+                tools: degraded.tools ?? [],
+                usedContextTokens: content.usedContextTokens,
+              },
+              { trait, reasoningKey: reasoning.outboundKey() },
+            );
+            await executeOpenAIRequest(degradedRequest, transport);
+          },
+        });
+        if (outcome.ok) {
+          if (outcome.step === 'drop-cache-key') promptCacheKeyRejections.mark(key);
+          return;
         }
+        onEvent?.({
+          type: 'llm.failed.remote',
+          error: convertOpenAIError(outcome.error, (e) => classifyError?.(e)),
+        });
       }
     },
   };

@@ -199,7 +199,10 @@ function recoverFoldedLength(
   const keptHeadUserMessageCount = readNumber(record, 'keptHeadUserMessageCount');
   const compactedCount = readNumber(record, 'compactedCount');
   if (keptUserMessageCount !== undefined) {
-    return keptUserMessageCount + (keptHeadUserMessageCount === undefined ? 2 : 3);
+    const recentContextCount = hasRecentContextMessage(record) ? 1 : 0;
+    return (
+      keptUserMessageCount + (keptHeadUserMessageCount === undefined ? 2 : 3) + recentContextCount
+    );
   }
   if (compactedCount !== undefined && compactedCount < foldedLength) {
     return 1 + (foldedLength - compactedCount);
@@ -209,6 +212,12 @@ function recoverFoldedLength(
     COMPACT_USER_MESSAGE_MAX_TOKENS,
   );
   return keptUserMessages.length + 1;
+}
+
+function hasRecentContextMessage(record: WireRecord): boolean {
+  if (record['legacyTail'] === true) return false;
+  const recentContext = record['recentContext'];
+  return typeof recentContext === 'string' && recentContext.length > 0;
 }
 
 function readCompactionSummaryText(record: WireRecord): string {

@@ -3,7 +3,7 @@ import { assign, shake } from 'radashi';
 
 import { headersToRecord } from '#/llm/errors';
 import { providerImagePolicy } from '#/llm/media/image-formats';
-import type { LlmModel } from '#/llm/model';
+import { modelKey, type LlmModel } from '#/llm/model';
 import type { ProtocolBase, ProtocolRequesterOptions, TraitContext } from '#/llm/protocol/base';
 import { resolveModelConnection } from '#/llm/protocol/connection';
 import { resolveMaxCompletionCap, type FormatRequestInput } from '#/llm/protocol/format';
@@ -22,6 +22,12 @@ import {
 } from '#/llm/requester/requester';
 import { toLlmSyntaxErrorMessage } from '#/llm/syntax-errors';
 
+import {
+  degradeRequestConfig,
+  isOpaqueRejection,
+  OpaqueRejectionRecoveries,
+  recoverFromOpaqueRejection,
+} from '../opaque-rejection';
 import { normalizeToolCallIdsForProvider, sanitizeToolCallId } from '../tool-call-id';
 import { getAnthropicModelCapability } from './capability';
 import {
@@ -199,6 +205,7 @@ export function createAnthropicRequester(options?: AnthropicRequesterOptions): L
   const trait = options?.trait;
   const classifyError = options?.classifyError;
   const format = createAnthropicFormat();
+  const opaqueRejections = new OpaqueRejectionRecoveries();
   const resolveClient =
     options?.clientFactory ??
     ((request: LlmClientContext) => createClient(request.model, request.headers));
@@ -209,19 +216,22 @@ export function createAnthropicRequester(options?: AnthropicRequesterOptions): L
       control: LlmRequestControl,
     ): Promise<void> {
       const model = resolveModelConnection(config.model, connection);
-      const { tools = [] } = config;
       const { messages } = content;
       const { signal, onEvent } = control;
       const ctx: TraitContext = { model };
+      const key = modelKey(model);
+      const policy = trait?.toolCallIdPolicy ?? ANTHROPIC_TOOL_CALL_ID_POLICY;
+      const working = opaqueRejections.workingStep(key);
+      const effectiveConfig =
+        working === undefined ? config : (degradeRequestConfig(config, working) ?? config);
       let request: AnthropicRequestParams;
       try {
-        const policy = trait?.toolCallIdPolicy ?? ANTHROPIC_TOOL_CALL_ID_POLICY;
         request = prepareAnthropicRequest(
           {
-            ...config,
+            ...effectiveConfig,
             model,
             messages: normalizeToolCallIdsForProvider(messages, policy),
-            tools,
+            tools: effectiveConfig.tools ?? [],
             usedContextTokens: content.usedContextTokens,
           },
           { trait, betaApi: options?.betaApi },
@@ -240,9 +250,44 @@ export function createAnthropicRequester(options?: AnthropicRequesterOptions): L
           onEvent,
         });
       } catch (error) {
+        if (!isOpaqueRejection(error)) {
+          onEvent?.({
+            type: 'llm.failed.remote',
+            error: convertAnthropicError(error, (e) => classifyError?.(e)),
+          });
+          return;
+        }
+        const outcome = await recoverFromOpaqueRejection({
+          modelKey: key,
+          config: effectiveConfig,
+          error,
+          recoveries: opaqueRejections,
+          onRetry: () => onEvent?.({ type: 'llm.request.retrying' }),
+          send: async (degraded) => {
+            const degradedRequest = prepareAnthropicRequest(
+              {
+                ...degraded,
+                model,
+                messages: normalizeToolCallIdsForProvider(messages, policy),
+                tools: degraded.tools ?? [],
+                usedContextTokens: content.usedContextTokens,
+              },
+              { trait, betaApi: options?.betaApi },
+            );
+            await executeAnthropicRequest(degradedRequest, {
+              connection,
+              ctx,
+              format,
+              resolveClient,
+              signal,
+              onEvent,
+            });
+          },
+        });
+        if (outcome.ok) return;
         onEvent?.({
           type: 'llm.failed.remote',
-          error: convertAnthropicError(error, (e) => classifyError?.(e)),
+          error: convertAnthropicError(outcome.error, (e) => classifyError?.(e)),
         });
       }
     },

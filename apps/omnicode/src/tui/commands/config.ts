@@ -55,6 +55,7 @@ import { showUsage } from './info';
 // ---------------------------------------------------------------------------
 
 const MODEL_PICKER_REFRESH_TIMEOUT_MS = 2_000;
+const MODEL_PICKER_EXPLICIT_REFRESH_TIMEOUT_MS = 15_000;
 
 const MODEL_SWITCH_CACHE_WARNING =
   'Note: Switching models invalidates the existing prompt cache. Use /new to avoid extra token costs.';
@@ -390,14 +391,21 @@ export function showModelPicker(
   selectedValue: string = host.state.appState.model,
 ): void {
   const models = pickerModelsForHost(host);
-  const entries = Object.entries(models);
-  if (entries.length === 0) {
+  if (Object.keys(models).length === 0) {
     host.showNotice(
       'No models configured',
       'Run /login to sign in to Omnicode, or /provider to add another provider from a model catalog.',
     );
     return;
   }
+  mountModelPicker(host, models, selectedValue);
+}
+
+function mountModelPicker(
+  host: SlashCommandHost,
+  models: Record<string, ModelAlias>,
+  selectedValue: string,
+): void {
   host.mountEditorReplacement(
     new TabbedModelSelectorComponent({
       models,
@@ -413,11 +421,36 @@ export function showModelPicker(
         host.restoreEditor();
         void performModelSwitch(host, alias, thinking, false);
       },
+      onRefresh: () => {
+        void refreshAndRemountPicker(host, selectedValue);
+      },
       onCancel: () => {
         host.restoreEditor();
       },
     }),
   );
+}
+
+async function refreshAndRemountPicker(host: SlashCommandHost, selectedValue: string): Promise<void> {
+  const spinner = host.showProgressSpinner('Refreshing models…');
+  try {
+    const result = await withTimeout(
+      host.authFlow.refreshProviderModels(),
+      MODEL_PICKER_EXPLICIT_REFRESH_TIMEOUT_MS,
+    );
+    spinner.stop({ ok: true, label: 'Models refreshed.' });
+    if (result === undefined) {
+      host.showStatus('Skipped refreshing models: timed out.', 'warning');
+      return;
+    }
+    for (const failure of result.failed) {
+      host.showStatus(`Skipped refreshing ${failure.provider}: ${failure.reason}`, 'warning');
+    }
+    mountModelPicker(host, pickerModelsForHost(host), selectedValue);
+  } catch (error) {
+    spinner.stop({ ok: false, label: 'Model refresh failed.' });
+    host.showError(`Model refresh failed: ${formatErrorMessage(error)}`);
+  }
 }
 
 async function performModelSwitch(
@@ -577,11 +610,43 @@ function showSecondaryModelPicker(
         host.restoreEditor();
         void performSecondaryModelSave(host, alias);
       },
+      onRefresh: () => {
+        void refreshAndMountSecondaryPicker(host, models, currentValue, selectedValue);
+      },
       onCancel: () => {
         host.restoreEditor();
       },
     }),
   );
+}
+
+async function refreshAndMountSecondaryPicker(
+  host: SlashCommandHost,
+  models: Record<string, ModelAlias>,
+  currentValue: string,
+  selectedValue?: string,
+): Promise<void> {
+  const spinner = host.showProgressSpinner('Refreshing models…');
+  try {
+    const result = await withTimeout(
+      host.authFlow.refreshProviderModels(),
+      MODEL_PICKER_EXPLICIT_REFRESH_TIMEOUT_MS,
+    );
+    spinner.stop({ ok: true, label: 'Models refreshed.' });
+    if (result === undefined) {
+      host.showStatus('Skipped refreshing models: timed out.', 'warning');
+      return;
+    }
+    for (const failure of result.failed) {
+      host.showStatus(`Skipped refreshing ${failure.provider}: ${failure.reason}`, 'warning');
+    }
+    const refreshed = { ...pickerModelsForHost(host) };
+    delete refreshed[PRIMARY_SUBAGENT_MODEL_CHOICE];
+    showSecondaryModelPicker(host, refreshed, currentValue, selectedValue);
+  } catch (error) {
+    spinner.stop({ ok: false, label: 'Model refresh failed.' });
+    host.showError(`Model refresh failed: ${formatErrorMessage(error)}`);
+  }
 }
 
 /**

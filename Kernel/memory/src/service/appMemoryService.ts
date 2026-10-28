@@ -27,7 +27,7 @@ import type {
   MemoryTaskStateInput,
   MemoryUpdatePatch,
 } from '#/contracts/memoryContract';
-import type { MemoryRecord, MemoryTier } from '#/contracts/memoryTypes';
+import type { MemoryRecord, MemoryScope, MemoryTier } from '#/contracts/memoryTypes';
 import type { RetrievalResult } from '#/contracts/retrieval';
 
 import { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
@@ -154,6 +154,17 @@ export class AppMemoryService extends Disposable implements IMemoryService {
 
   noteAccess(ids: readonly string[], at: number): Promise<number> {
     return this.delegate.noteAccess(ids, at);
+  }
+
+  recordPhrase(scope: MemoryScope, ngram: string): Promise<void> {
+    return this.delegate.recordPhrase(scope, ngram);
+  }
+
+  topPhrases(
+    scope: MemoryScope,
+    limit: number,
+  ): Promise<readonly { readonly ngram: string; readonly count: number; readonly lastSeenAt: number }[]> {
+    return this.delegate.topPhrases(scope, limit);
   }
 
   resetAccessCount(id: string): Promise<MemoryMutationResult> {

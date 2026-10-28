@@ -7,7 +7,7 @@ import {
 } from '@hilbras/omnicode-auth';
 import type { OmnicodeConfig, OmnicodeConfigPatch, OAuthRef } from '@hilbras/omnicode-api';
 
-import { backfillBuiltInContextWindows } from '#/utils/builtin-model-import';
+import { backfillBuiltInModelMetadata } from '#/utils/builtin-model-import';
 import { syncConfiguredFreeTiers } from '#/utils/free-tier-sync';
 
 /**
@@ -46,7 +46,7 @@ export async function refreshAllProviderModels(
     },
     options,
   );
-  await backfillContextWindows(host, options.providerId);
+  await backfillModelMetadata(host, options.providerId);
   await syncConfiguredFreeTiers(
     { getConfig: () => host.getConfig(), setConfig: (patch) => host.setConfig(patch) },
     options.providerId,
@@ -56,14 +56,14 @@ export async function refreshAllProviderModels(
 
 /**
  * Upgrades aliases that still carry a flat default, or no declared window at
- * all, to the real context window from the models.dev catalog.
+ * all, to the real limits and capabilities from the models.dev catalog.
  *
  * A refresh merges the endpoint's own fields over each alias, and `/models`
  * declares no limits — so a value written by an older release survives the
  * refresh unchanged forever. Only re-running the catalog read converges it,
  * which is why this rides along with every refresh rather than only at add.
  */
-async function backfillContextWindows(
+async function backfillModelMetadata(
   host: RefreshProviderHost,
   providerId?: string,
 ): Promise<void> {
@@ -71,7 +71,7 @@ async function backfillContextWindows(
   const models = { ...config.models } as Record<string, Record<string, unknown>>;
   const ids = Object.keys(config.providers ?? {});
   const targets = providerId === undefined ? ids : ids.filter((id) => id === providerId);
-  const touched = await backfillBuiltInContextWindows({ models, providerIds: targets });
+  const touched = await backfillBuiltInModelMetadata({ models, providerIds: targets });
   if (touched) {
     await host.setConfig({ models: models as OmnicodeConfig['models'] });
   }

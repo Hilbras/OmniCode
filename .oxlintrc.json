@@ -179,6 +179,7 @@
     "coverage/",
     "node_modules/",
     "apps/*/scripts/",
+    "apps/omnicode-web/",
     "docs/smoke-archive/",
     "packages/omnicode-tui/",
     "*.generated.ts"
