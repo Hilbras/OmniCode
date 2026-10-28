@@ -215,7 +215,7 @@ evidence item carries `state: 'changed'`.
 ### Measured ranking quality
 
 `test/evaluation.test.ts` scores the labelled corpus in
-`src/retrieval/evaluation.ts` (10 memories, 10 queries) with `recall@k`,
+`src/retrieval/evaluation.ts` (15 memories, 15 queries) with `recall@k`,
 `precision@k` and reciprocal rank. Current measurement at k=5:
 
 | Metric | Before phase 4 | Measured now | Floor asserted |
@@ -226,12 +226,27 @@ evidence item carries `state: 'changed'`.
 
 The gains come from the relevance gate, not from better ranking: with coverage
 enforced, a query returns the memory it is about and drops the partial matches
-that used to fill the remaining slots. Cost per query on this corpus is 1.6 ms
-and 281 characters of injected context, both measured alongside the metrics.
+that used to fill the remaining slots. The corpus covers facts, a preference,
+numbers and a negated question, and the same file also runs three real-world
+scenarios end to end: a contradicted fact that retires its predecessor, a fact
+whose cited file changed that leaves search, and two projects storing the same
+fact without either answering for the other.
 
 The floors are regression guards, not aspirations; the numbers are measured on
 every run. The evaluation also refuses to score a case with no relevant memory
 rather than reporting a perfect 1.0.
+
+### Measured injection cost
+
+Automatic injection runs under `AUTO_INJECT_RETRIEVAL_BUDGET` (5 results, 1500
+context characters, 300 per memory). Measured over the labelled queries against
+the whole corpus: 278 characters of injected context on average, 292 at the
+maximum, and 0.3–1.1 ms per query once warm (about 16 ms for the first pass,
+which pays for opening the store and building the index). `evaluation.test.ts`
+asserts the maximum stays inside the budget, the average stays at or below 400
+characters, and a query stays under 250 ms — ceilings loose enough that a slow
+CI machine does not fail the build, tight enough that an unbounded injection
+does.
 
 `test/scale.test.ts` repeats the labelled queries against a 400-memory corpus
 (390 generated distractors plus the labelled set) and checks that recall holds,
@@ -384,7 +399,7 @@ memory package has all four.
 | `concurrency.test.ts` | two openers on one store: the second reads, its writes fail loudly, the lock comes back |
 | `process.test.ts` | a real second OS process holding the lock, via `test/fixtures/hold-store.mts` |
 | `scale.test.ts` | 400 memories, on both the in-memory store and real minidb, including a reopen |
-| `evaluation.test.ts` | measured ranking quality against the labelled corpus, morphological recall, and the no-match guarantee |
+| `evaluation.test.ts` | measured ranking quality and injection cost against the labelled corpus, morphological recall, the no-match guarantee, and the real-world cases: contradictions, stale citations, cross-project isolation |
 | `evidence.test.ts` | evidence freshness: changed, unchanged, unreadable, foreign, budgeted; the watcher's debounce, bound, cleanup and real `fs.watch` port |
 
 ## Known limitations

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { AUTO_INJECT_RETRIEVAL_BUDGET } from '#/contracts/retrieval';
 import {
   EVAL_CORPUS,
   EVAL_QUERIES,
@@ -8,8 +9,18 @@ import {
   type RankingMetrics,
   evaluate,
 } from '#/retrieval/evaluation';
+import { evidenceForFile } from '#/service/evidence';
 
-import { captureInput, createHarness, evidenceFor, globalScope, REPO_A, repoScope, seedCorpus } from './helpers';
+import {
+  captureInput,
+  createHarness,
+  evidenceFor,
+  globalScope,
+  REPO_A,
+  REPO_B,
+  repoScope,
+  seedCorpus,
+} from './helpers';
 
 const K = 5;
 
@@ -155,5 +166,86 @@ describe('retrieval evaluation', () => {
     const scoped = EVAL_CORPUS.find((entry: LabelledMemory) => !entry.global);
     expect(scoped).toBeDefined();
     expect((await harness.service.get(ids.get(scoped!.corpusId) as string))?.scope).toEqual(repoScope(REPO_A));
+  });
+
+  it('keeps automatic injection inside its token and latency budget', async () => {
+    const harness = createHarness();
+    await seedCorpus(harness.service, EVAL_CORPUS);
+    const sizes: number[] = [];
+    const started = performance.now();
+    for (const { query } of EVAL_QUERIES) {
+      const result = await harness.service.search({
+        query,
+        projectId: REPO_A,
+        purpose: 'auto_inject',
+        includeUntrusted: true,
+      });
+      sizes.push(result.context.length);
+    }
+    const elapsed = performance.now() - started;
+    const perQuery = elapsed / EVAL_QUERIES.length;
+    const average = sizes.reduce((sum, size) => sum + size, 0) / sizes.length;
+    expect(sizes.reduce((largest, size) => Math.max(largest, size), 0)).toBeLessThanOrEqual(
+      AUTO_INJECT_RETRIEVAL_BUDGET.maxContextChars,
+    );
+    expect(
+      average,
+      `average injected context ${average.toFixed(0)} chars, ${perQuery.toFixed(1)} ms per query`,
+    ).toBeLessThanOrEqual(400);
+    expect(perQuery).toBeLessThan(250);
+  });
+});
+
+describe('real-world memory cases', () => {
+  it('retires a contradicted fact instead of returning both', async () => {
+    const harness = createHarness();
+    const original = await harness.service.capture(
+      captureInput('the test runner is vitest', { category: 'fact', evidence: evidenceFor('package.json') }),
+    );
+    const correction = await harness.service.capture(
+      captureInput('the test runner is jest', {
+        category: 'fact',
+        sourceType: 'user_correction',
+        origin: 'user',
+      }),
+    );
+    expect(original.record?.subject).toBe('test.runner');
+    expect(correction.record?.supersedes).toBe(original.id as string);
+
+    const result = await harness.service.search({ query: 'which test runner do we use', projectId: REPO_A });
+    expect(result.memories.map((memory) => memory.record.id)).toEqual([correction.id]);
+  });
+
+  it('drops a fact whose cited file changed out of search', async () => {
+    const contents = new Map([['docs/plan.md', 'we ship on fridays']]);
+    const harness = createHarness({ readEvidence: async (ref) => contents.get(ref) });
+    const stored = await harness.service.capture(
+      captureInput('we ship on fridays', {
+        category: 'fact',
+        evidence: [evidenceForFile('docs/plan.md', 'we ship on fridays', 1)],
+      }),
+    );
+    expect((await harness.service.search({ query: 'when do we ship', projectId: REPO_A })).memories).toHaveLength(1);
+
+    contents.set('docs/plan.md', 'we ship on mondays');
+    await harness.service.refreshEvidence({ projectId: REPO_A });
+
+    const after = await harness.service.search({ query: 'when do we ship', projectId: REPO_A });
+    expect(after.memories).toHaveLength(0);
+    expect((await harness.service.get(stored.id as string))?.trust).toBe('unverified');
+  });
+
+  it('answers from the current project only when two projects store the same fact', async () => {
+    const harness = createHarness();
+    const mine = await harness.service.capture(
+      captureInput('the api listens on port 8080', { scope: repoScope(REPO_A), evidence: evidenceFor('api/config.ts') }),
+    );
+    const theirs = await harness.service.capture(
+      captureInput('the api listens on port 8080', { scope: repoScope(REPO_B), evidence: evidenceFor('api/config.ts') }),
+    );
+    const here = await harness.service.search({ query: 'which port does the api listen on', projectId: REPO_A });
+    const there = await harness.service.search({ query: 'which port does the api listen on', projectId: REPO_B });
+    expect(here.memories.map((memory) => memory.record.id)).toEqual([mine.id]);
+    expect(there.memories.map((memory) => memory.record.id)).toEqual([theirs.id]);
   });
 });

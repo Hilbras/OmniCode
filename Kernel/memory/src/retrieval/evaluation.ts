@@ -98,6 +98,11 @@ export const EVAL_CORPUS: readonly LabelledMemory[] = [
   { corpusId: 'search-index', subject: 'search.index', content: 'the global search index is sharded across sixteen minidb instances', category: 'fact', sourceType: 'repository_file', origin: 'application', global: false },
   { corpusId: 'cache-policy', subject: 'runtime.cache', content: 'the telemetry buffer flushes every five hundred milliseconds', category: 'fact', sourceType: 'repository_file', origin: 'application', global: false },
   { corpusId: 'permission-model', subject: 'security.permissions', content: 'a tool approval rule is required before any write outside the workspace', category: 'fact', sourceType: 'repository_file', origin: 'application', global: false },
+  { corpusId: 'node-version', subject: 'runtime.node', content: 'the workspace requires node twenty four and pnpm ten', category: 'fact', sourceType: 'repository_file', origin: 'application', global: false },
+  { corpusId: 'deploy-flow', subject: 'deploy.staging', content: 'every deploy lands in staging before it reaches production', category: 'fact', sourceType: 'repository_file', origin: 'application', global: false },
+  { corpusId: 'error-style', subject: 'errors.style', content: 'the user prefers error messages that name the failing file and line', category: 'preference', sourceType: 'user_statement', origin: 'user', global: true },
+  { corpusId: 'retry-policy', subject: 'http.retries', content: 'network calls retry three times with exponential backoff', category: 'fact', sourceType: 'repository_file', origin: 'application', global: false },
+  { corpusId: 'db-choice', subject: 'storage.engine', content: 'the service keeps its index in an embedded minidb store', category: 'fact', sourceType: 'repository_file', origin: 'application', global: false },
 ];
 
 export const EVAL_QUERIES: readonly { readonly query: string; readonly corpusId: string }[] = [
@@ -111,4 +116,9 @@ export const EVAL_QUERIES: readonly { readonly query: string; readonly corpusId:
   { query: 'how many shards does the search index use', corpusId: 'search-index' },
   { query: 'telemetry flush interval', corpusId: 'cache-policy' },
   { query: 'when do we need approval for writes', corpusId: 'permission-model' },
+  { query: 'which node version does the workspace need', corpusId: 'node-version' },
+  { query: 'do deploys go straight to production', corpusId: 'deploy-flow' },
+  { query: 'how should error messages read', corpusId: 'error-style' },
+  { query: 'how many times do network calls retry', corpusId: 'retry-policy' },
+  { query: 'where does the service keep its index', corpusId: 'db-choice' },
 ];
