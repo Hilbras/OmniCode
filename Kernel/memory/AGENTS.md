@@ -18,7 +18,7 @@ step and no `dist`, matching `Kernel/Addons` and `Kernel/Tools`.
 | `src/retrieval/` | normalize → scope → lexical → gates → rank → budget → explanation |
 | `src/service/` | the `IMemoryService` implementation, record factory, runtime wiring, maintenance scheduler |
 | `src/context/` | agent-scope project identity and the reminder providers |
-| `src/tool/` | the `memory_search` agent tool |
+| `src/tool/` | the `memory_search`, `memory_save` and `memory_forget` agent tools |
 | `src/feature/` | the `Feature`, the `[memory]` config section, the experimental flag |
 
 ## Data model
@@ -262,6 +262,13 @@ them. Nothing in core depends on memory, so there is nothing to activate there.
 - Agent tool `memory_search`: read-only, its own approval rule, returns the
   status, provenance, flags and the truncation notice. It is gated by the flag's
   `when` predicate, so with the feature off the model is never offered it.
+- Agent tools `memory_save` and `memory_forget`, gated the same way and each with
+  its own approval rule. `memory_save` captures a `working` memory as
+  `origin: 'model'` / `agent_observation` in the repository (default), session
+  or global scope, keyed for idempotency on `<sessionId>:<toolCallId>`; the trust
+  policy keeps it `unverified`, so the tool cannot mint trusted memory.
+  `memory_forget` only invalidates (never deletes) a record whose scope is
+  visible to the current session (`isScopeVisible`).
 - Reminder variants `memory_canonical` (canonical tier only, minimum trust
   `trusted`, auto-inject budget) and `memory_task_restore` (once per session).
 
@@ -288,7 +295,7 @@ memory package has all four.
 | `maintenance.test.ts` | the scheduler: startup drain, debounce, poll, retention, overlap |
 | `integration.test.ts` | the real DI graph: feature assembly, flag on/off, a real store on disk, queued work draining unattended |
 | `Kernel/core/test/memory/agentMemory.test.ts` | a real agent turn: the model calls `memory_search` through the actual engine loop and sees the result |
-| `tool.test.ts` | the `memory_search` contract, schema, approval rule and access counting |
+| `tool.test.ts` | the `memory_search` contract, schema, approval rule and access counting; `memory_save` trust ceiling, idempotency and scopes; `memory_forget` visibility and invalidation |
 | `concurrency.test.ts` | two openers on one store: the second reads, its writes fail loudly, the lock comes back |
 | `process.test.ts` | a real second OS process holding the lock, via `test/fixtures/hold-store.mts` |
 | `scale.test.ts` | 400 memories, on both the in-memory store and real minidb, including a reopen |
