@@ -9,6 +9,7 @@ import { AgentMemoryInjectionService, IMemoryInjectionService } from '#/context/
 import { IMemoryService } from '#/contracts/memoryContract';
 import { AppMemoryService } from '#/service/appMemoryService';
 import { IMemorySearchTool, MemorySearchTool } from '#/tool/memorySearchTool';
+import { IMemoryForgetTool, IMemorySaveTool, MemoryForgetTool, MemorySaveTool } from '#/tool/memoryWriteTools';
 
 import { MEMORY_FLAG_ID } from './flag';
 
@@ -28,6 +29,16 @@ export class MemoryFeature extends Feature {
     });
     this.contributeTool(IMemorySearchTool, MemorySearchTool, {
       name: 'memory_search',
+      domain: 'memory',
+      when: (accessor) => accessor.get(IFlagService).enabled(MEMORY_FLAG_ID),
+    });
+    this.contributeTool(IMemorySaveTool, MemorySaveTool, {
+      name: 'memory_save',
+      domain: 'memory',
+      when: (accessor) => accessor.get(IFlagService).enabled(MEMORY_FLAG_ID),
+    });
+    this.contributeTool(IMemoryForgetTool, MemoryForgetTool, {
+      name: 'memory_forget',
       domain: 'memory',
       when: (accessor) => accessor.get(IFlagService).enabled(MEMORY_FLAG_ID),
     });

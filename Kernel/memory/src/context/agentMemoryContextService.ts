@@ -6,9 +6,12 @@ import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/s
 import { IAgentContextMemoryService } from '@hilbras/omnicode-core/agent/contextMemory/contextMemory';
 
 import type { MemorySearchQuery } from '#/contracts/memoryContract';
+import type { MemoryScope, MemoryScopeTier } from '#/contracts/memoryTypes';
 import type { RetrievalResult } from '#/contracts/retrieval';
 import { IMemoryService } from '#/contracts/memoryContract';
 import { resolveProjectIdentity } from '#/service/projectIdentity';
+
+export type MemoryWriteScopeTier = Exclude<MemoryScopeTier, 'task'>;
 
 export interface IAgentMemoryContextService {
   readonly _serviceBrand: undefined;
@@ -16,6 +19,9 @@ export interface IAgentMemoryContextService {
   projectId(): Promise<string | undefined>;
   projectRoot(): string | undefined;
   lastUserPrompt(): string | undefined;
+  sessionId(): string;
+  workspaceId(): string;
+  scopeFor(tier: MemoryWriteScopeTier): Promise<MemoryScope | undefined>;
 }
 
 export const IAgentMemoryContextService = createDecorator<IAgentMemoryContextService>(
@@ -66,6 +72,23 @@ export class AgentMemoryContextService extends Service implements IAgentMemoryCo
   async search(query: MemorySearchQuery): Promise<RetrievalResult> {
     const projectId = await this.projectId();
     return this.memory.search({ workspaceId: this.session.workspaceId, projectId, ...query });
+  }
+
+  sessionId(): string {
+    return this.session.sessionId;
+  }
+
+  workspaceId(): string {
+    return this.session.workspaceId;
+  }
+
+  async scopeFor(tier: MemoryWriteScopeTier): Promise<MemoryScope | undefined> {
+    if (tier === 'global') return { tier };
+    if (tier === 'workspace') return { tier, workspaceId: this.session.workspaceId };
+    const projectId = await this.projectId();
+    if (projectId === undefined) return undefined;
+    if (tier === 'repository') return { tier, workspaceId: this.session.workspaceId, projectId };
+    return { tier, workspaceId: this.session.workspaceId, projectId, sessionId: this.session.sessionId };
   }
 
   lastUserPrompt(): string | undefined {

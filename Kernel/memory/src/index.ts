@@ -165,3 +165,18 @@ export {
   renderResult,
 } from '#/tool/memorySearchTool';
 export type { IMemorySearchTool as IMemorySearchToolContract, MemorySearchInput } from '#/tool/memorySearchTool';
+export {
+  IMemoryForgetTool,
+  IMemorySaveTool,
+  isScopeVisible,
+  MEMORY_FORGET_DESCRIPTION,
+  MEMORY_FORGET_TOOL_NAME,
+  MEMORY_SAVE_DESCRIPTION,
+  MEMORY_SAVE_TOOL_NAME,
+  MemoryForgetInputSchema,
+  MemoryForgetTool,
+  MemorySaveInputSchema,
+  MemorySaveTool,
+  renderCapture,
+} from '#/tool/memoryWriteTools';
+export type { MemoryForgetInput, MemorySaveInput } from '#/tool/memoryWriteTools';

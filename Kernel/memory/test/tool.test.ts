@@ -10,11 +10,32 @@ import {
   MemorySearchTool,
 } from '#/tool/memorySearchTool';
 
-import type { IAgentMemoryContextService } from '#/context/agentMemoryContextService';
-import type { MemoryRecord } from '#/contracts/memoryTypes';
+import type { IAgentMemoryContextService, MemoryWriteScopeTier } from '#/context/agentMemoryContextService';
+import type { MemoryRecord, MemoryScope } from '#/contracts/memoryTypes';
 import type { IMemoryService, MemorySearchQuery, RetrievalResult } from '#/contracts/memoryContract';
 
-import { captureInput, createHarness, evidenceFor, REPO_A } from './helpers';
+import {
+  isScopeVisible,
+  MEMORY_FORGET_TOOL_NAME,
+  MEMORY_SAVE_TOOL_NAME,
+  MemoryForgetInputSchema,
+  MemoryForgetTool,
+  MemorySaveInputSchema,
+  MemorySaveTool,
+} from '#/tool/memoryWriteTools';
+
+import {
+  captureInput,
+  createHarness,
+  evidenceFor,
+  globalScope,
+  REPO_A,
+  REPO_B,
+  repoScope,
+  SESSION,
+  sessionScope,
+  WORKSPACE,
+} from './helpers';
 
 function stubResult(overrides: Partial<RetrievalResult> = {}): RetrievalResult {
   return {
@@ -250,5 +271,180 @@ describe('memory_search tool contract', () => {
     const output = await run(buildTool(real).tool, { query: 'pnpm workspace layout' });
     expect(output).toContain('memory search status: complete');
     expect(output).toContain(record.tier);
+  });
+});
+
+async function runTool(
+  tool: { resolveExecution: (args: never) => ReturnType<MemorySaveTool['resolveExecution']> },
+  args: unknown,
+  toolCallId = 'call-1',
+): Promise<{ output: string; isError: boolean }> {
+  const resolved = (tool.resolveExecution as (a: unknown) => ReturnType<MemorySaveTool['resolveExecution']>)(args);
+  if (resolved === null || typeof resolved !== 'object' || !('execute' in resolved)) {
+    const output = typeof resolved === 'object' && resolved !== null && 'output' in resolved ? resolved.output : '';
+    return { output: typeof output === 'string' ? output : JSON.stringify(output), isError: true };
+  }
+  const result = await resolved.execute({ turnId: 1, toolCallId, signal: new AbortController().signal });
+  return {
+    output: typeof result.output === 'string' ? result.output : JSON.stringify(result.output),
+    isError: result.isError === true,
+  };
+}
+
+function writeContext(knownProject: string | null = REPO_A): IAgentMemoryContextService {
+  const projectId = knownProject ?? undefined;
+  return {
+    sessionId: () => SESSION,
+    workspaceId: () => WORKSPACE,
+    projectId: async () => projectId,
+    scopeFor: async (tier: MemoryWriteScopeTier): Promise<MemoryScope | undefined> => {
+      if (tier === 'global') return globalScope();
+      if (tier === 'workspace') return { tier, workspaceId: WORKSPACE };
+      if (projectId === undefined) return undefined;
+      return tier === 'repository' ? repoScope(projectId) : sessionScope(SESSION, projectId);
+    },
+  } as unknown as IAgentMemoryContextService;
+}
+
+describe('memory_save tool', () => {
+  it('stores a model-authored working memory that stays unverified', async () => {
+    const harness = createHarness();
+    const tool = new MemorySaveTool(writeContext(), harness.service);
+    const { output, isError } = await runTool(tool, {
+      content: 'The dev server listens on port 5173.',
+      category: 'fact',
+      subject: 'devserver.port',
+    });
+    expect(isError).toBe(false);
+    expect(output).toContain('memory save status: stored');
+    const [record] = await harness.service.list({ projectId: REPO_A, workspaceId: WORKSPACE });
+    expect(record).toMatchObject({
+      tier: 'working',
+      category: 'fact',
+      trust: 'unverified',
+      origin: 'model',
+      sourceType: 'agent_observation',
+      scope: { tier: 'repository', projectId: REPO_A },
+    });
+  });
+
+  it('cannot raise its own trust by claiming a preference', async () => {
+    const harness = createHarness();
+    const tool = new MemorySaveTool(writeContext(), harness.service);
+    await runTool(tool, { content: 'The user prefers tabs over spaces.', category: 'preference' });
+    const [record] = await harness.service.list({ projectId: REPO_A, workspaceId: WORKSPACE });
+    expect(record?.trust).toBe('unverified');
+  });
+
+  it('is idempotent for a replayed tool call', async () => {
+    const harness = createHarness();
+    const tool = new MemorySaveTool(writeContext(), harness.service);
+    const args = { content: 'Tests run with vitest.', category: 'fact' };
+    await runTool(tool, args, 'call-7');
+    await runTool(tool, args, 'call-7');
+    expect(await harness.service.list({ projectId: REPO_A, workspaceId: WORKSPACE })).toHaveLength(1);
+  });
+
+  it('honours session and global scopes', async () => {
+    const harness = createHarness();
+    const tool = new MemorySaveTool(writeContext(), harness.service);
+    await runTool(tool, { content: 'Only for this session.', category: 'task', scope: 'session' }, 'call-a');
+    await runTool(tool, { content: 'Applies everywhere.', category: 'preference', scope: 'global' }, 'call-b');
+    const records = await harness.service.list({ projectId: REPO_A, workspaceId: WORKSPACE, sessionId: SESSION });
+    expect(records.map((record) => record.scope.tier).toSorted()).toEqual(['global', 'session']);
+  });
+
+  it('refuses a repository memory when the project cannot be identified', async () => {
+    const harness = createHarness();
+    const tool = new MemorySaveTool(writeContext(null), harness.service);
+    const { output, isError } = await runTool(tool, { content: 'Something about the repo.', category: 'fact' });
+    expect(isError).toBe(true);
+    expect(output).toContain('could not be identified');
+    expect(await harness.service.list({ workspaceId: WORKSPACE })).toHaveLength(0);
+  });
+
+  it('says plainly when memory is disabled and stores nothing', async () => {
+    const harness = createHarness({ available: () => false });
+    const tool = new MemorySaveTool(writeContext(), harness.service);
+    const { output } = await runTool(tool, { content: 'Should not be stored.', category: 'fact' });
+    expect(output).toContain('Memory is disabled');
+  });
+
+  it('requires its own approval rule and validates input', () => {
+    const tool = new MemorySaveTool(writeContext(), createHarness().service);
+    const resolved = tool.resolveExecution({ content: 'x', category: 'fact' });
+    if (resolved === null || typeof resolved !== 'object' || !('execute' in resolved)) {
+      throw new Error('expected a runnable execution');
+    }
+    expect(resolved.approvalRule).toBe(MEMORY_SAVE_TOOL_NAME);
+    expect(MemorySaveInputSchema.safeParse({ content: 'x', category: 'fact' }).success).toBe(true);
+    expect(MemorySaveInputSchema.safeParse({ content: 'x', category: 'policy' }).success).toBe(false);
+    expect(MemorySaveInputSchema.safeParse({ content: 'x', category: 'fact', subject: 'Has Spaces' }).success).toBe(
+      false,
+    );
+    expect(MemorySaveInputSchema.safeParse({ content: '', category: 'fact' }).success).toBe(false);
+  });
+});
+
+describe('memory_forget tool', () => {
+  it('invalidates a visible memory so search no longer returns it', async () => {
+    const harness = createHarness();
+    const stored = await harness.service.capture(
+      captureInput('the build uses tsdown', { evidence: evidenceFor('package.json') }),
+    );
+    const tool = new MemoryForgetTool(writeContext(), harness.service);
+    const { output, isError } = await runTool(tool, { id: stored.id, reason: 'the build moved to vite' });
+    expect(isError).toBe(false);
+    expect(output).toContain('memory forget status: invalidated');
+    expect((await harness.service.get(stored.id ?? ''))?.lifecycle).toBe('invalidated');
+    const after = await harness.service.search({ query: 'build uses tsdown', projectId: REPO_A });
+    expect(after.memories).toHaveLength(0);
+  });
+
+  it('refuses a memory that belongs to another project', async () => {
+    const harness = createHarness();
+    const stored = await harness.service.capture(captureInput('repo beta fact', { scope: repoScope(REPO_B) }));
+    const tool = new MemoryForgetTool(writeContext(), harness.service);
+    const { output, isError } = await runTool(tool, { id: stored.id, reason: 'not mine' });
+    expect(isError).toBe(true);
+    expect(output).toContain('is visible to this session');
+    expect((await harness.service.get(stored.id ?? ''))?.lifecycle).toBe('active');
+  });
+
+  it('reports an already-forgotten memory without changing it again', async () => {
+    const harness = createHarness();
+    const stored = await harness.service.capture(captureInput('old fact'));
+    const tool = new MemoryForgetTool(writeContext(), harness.service);
+    await runTool(tool, { id: stored.id, reason: 'outdated' }, 'call-1');
+    const second = await runTool(tool, { id: stored.id, reason: 'outdated' }, 'call-2');
+    expect(second.output).toContain('already invalidated');
+  });
+
+  it('requires its own approval rule and both fields', () => {
+    const tool = new MemoryForgetTool(writeContext(), createHarness().service);
+    const resolved = tool.resolveExecution({ id: 'mem_1', reason: 'r' });
+    if (resolved === null || typeof resolved !== 'object' || !('execute' in resolved)) {
+      throw new Error('expected a runnable execution');
+    }
+    expect(resolved.approvalRule).toBe(MEMORY_FORGET_TOOL_NAME);
+    expect(MemoryForgetInputSchema.safeParse({ id: 'mem_1' }).success).toBe(false);
+  });
+});
+
+describe('memory write scope visibility', () => {
+  const current = { workspaceId: WORKSPACE, projectId: REPO_A, sessionId: SESSION };
+
+  it('allows global, own workspace, own repository and own session', () => {
+    expect(isScopeVisible(globalScope(), current)).toBe(true);
+    expect(isScopeVisible({ tier: 'workspace', workspaceId: WORKSPACE }, current)).toBe(true);
+    expect(isScopeVisible(repoScope(REPO_A), current)).toBe(true);
+    expect(isScopeVisible(sessionScope(SESSION, REPO_A), current)).toBe(true);
+  });
+
+  it('rejects other workspaces, projects and sessions', () => {
+    expect(isScopeVisible({ tier: 'workspace', workspaceId: 'other' }, current)).toBe(false);
+    expect(isScopeVisible(repoScope(REPO_B), current)).toBe(false);
+    expect(isScopeVisible(sessionScope('session-2', REPO_A), current)).toBe(false);
+    expect(isScopeVisible(repoScope(REPO_A), { ...current, projectId: undefined })).toBe(false);
   });
 });
