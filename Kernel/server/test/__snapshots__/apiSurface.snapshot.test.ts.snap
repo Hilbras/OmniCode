@@ -134,6 +134,14 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "GET",
+      "/api/v1/memory",
+    ],
+    [
+      "GET",
+      "/api/v1/memory/{memory_id}",
+    ],
+    [
+      "GET",
       "/api/v1/meta",
     ],
     [
@@ -379,6 +387,14 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     [
       "POST",
       "/api/v1/mcp/servers/{tail}",
+    ],
+    [
+      "POST",
+      "/api/v1/memory/{memory_id}/confirm",
+    ],
+    [
+      "POST",
+      "/api/v1/memory/{memory_id}/forget",
     ],
     [
       "POST",

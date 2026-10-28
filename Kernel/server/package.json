@@ -39,6 +39,7 @@
     "@hilbras/omnicode-remote": "workspace:^",
     "@hilbras/omnicode-tools": "workspace:^",
     "@hilbras/omnicode-transcript": "workspace:^",
+    "@hilbras/omnicode-memory": "workspace:^",
     "bcryptjs": "^2.4.3",
     "fastify": "^5.1.0",
     "pino": "^9.5.0",

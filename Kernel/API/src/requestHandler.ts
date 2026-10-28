@@ -353,6 +353,27 @@ import {
 } from '@hilbras/omnicode-sdk/rpc-exports';
 import { SessionEventWiring } from '@hilbras/omnicode-sdk/rpc-exports';
 
+import {
+  confirmMemory,
+  exportVisibleMemories,
+  forgetMemory,
+  getVisibleMemory,
+  IAgentMemoryContextService,
+  IMemoryService,
+  listVisibleMemories,
+  memoryViewerOf,
+  type MemoryControlMutation,
+  type MemoryExportView,
+  type MemoryGetView,
+  type MemoryListView,
+  type MemoryViewer,
+} from '@hilbras/omnicode-memory';
+
+import type {
+  MemoryForgetRpcInput,
+  MemoryGetRpcInput,
+  MemoryListRpcInput,
+} from '@hilbras/omnicode-sdk/rpc-exports';
 import { RPCError } from './core/errors';
 import type { ImportCustomRegistryOptions, ImportCustomRegistryResult } from './core/facade/global';
 import type { AgentHandle, Klient } from './core/klient';
@@ -1977,6 +1998,45 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
   override async getUsage(input: SessionIdRpcInput): Promise<SessionUsage> {
     const agent = await this.agentFacade(input.sessionId);
     return agent.getUsage();
+  }
+
+  private async memoryControl(
+    sessionId: string,
+  ): Promise<{ service: IMemoryService; viewer: MemoryViewer }> {
+    const agent = await this.agentScope(sessionId);
+    return {
+      service: this.app.accessor.get(IMemoryService),
+      viewer: await memoryViewerOf(agent.accessor.get(IAgentMemoryContextService)),
+    };
+  }
+
+  override async listMemories(input: MemoryListRpcInput): Promise<MemoryListView> {
+    const { service, viewer } = await this.memoryControl(input.sessionId);
+    return listVisibleMemories(service, viewer, {
+      scope: input.scope,
+      status: input.status,
+      limit: input.limit,
+    });
+  }
+
+  override async getMemory(input: MemoryGetRpcInput): Promise<MemoryGetView> {
+    const { service, viewer } = await this.memoryControl(input.sessionId);
+    return getVisibleMemory(service, viewer, input.id);
+  }
+
+  override async confirmMemory(input: MemoryGetRpcInput): Promise<MemoryControlMutation> {
+    const { service, viewer } = await this.memoryControl(input.sessionId);
+    return confirmMemory(service, viewer, input.id);
+  }
+
+  override async forgetMemory(input: MemoryForgetRpcInput): Promise<MemoryControlMutation> {
+    const { service, viewer } = await this.memoryControl(input.sessionId);
+    return forgetMemory(service, viewer, input.id, input.reason);
+  }
+
+  override async exportMemories(input: SessionIdRpcInput): Promise<MemoryExportView> {
+    const { service, viewer } = await this.memoryControl(input.sessionId);
+    return exportVisibleMemories(service, viewer);
   }
 
   /**

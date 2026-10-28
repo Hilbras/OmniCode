@@ -19,6 +19,7 @@ step and no `dist`, matching `Kernel/Addons` and `Kernel/Tools`.
 | `src/service/` | the `IMemoryService` implementation, record factory, runtime wiring, maintenance scheduler |
 | `src/context/` | agent-scope project identity and the reminder providers |
 | `src/tool/` | the `memory_search`, `memory_save` and `memory_forget` agent tools |
+| `src/control/` | the user-facing read/confirm/forget/export surface, shared by the REST routes and the CLI |
 | `src/feature/` | the `Feature`, the `[memory]` config section, the experimental flag |
 
 ## Data model
@@ -220,6 +221,27 @@ Suspicion detection is defence in depth. It is a list of regular expressions in
 `src/security/suspicion.ts`, not a parser, and it will both miss and over-match;
 the trust and approval gates do not depend on it.
 
+## User control surface
+
+`src/control/memoryControl.ts` is the one implementation behind both the
+`/memory` CLI command and the server's `/api/v1/memory` routes. Every entry
+point resolves a `MemoryViewer` (workspace, project, session) and filters
+through `isScopeVisible`, so another project's or session's record is
+`not_found` rather than readable — the same rule `memory_forget` uses.
+
+- `list` / `get` return a `MemoryView`: the record minus derived fields, with
+  evidence reduced to `{kind, ref, state, observedAt}`.
+- `confirm` is the user-authority promotion: `unverified → trusted` with
+  `origin: 'user'`. It is idempotent (`unchanged` once already trusted) and
+  refuses a record that is not active. No tool can reach this path.
+- `forget` invalidates and keeps the reason as evidence; nothing is
+  hard-deleted.
+- `export` wraps every visible record in a versioned envelope
+  (`omnicode.memory.export`, version 1).
+
+With the flag off the control functions report `enabled: false` / `disabled`
+instead of reading the store, and the CLI command is hidden.
+
 ## Background processing
 
 `runReview()` is driven by `MemoryMaintenanceScheduler`, owned by the
@@ -295,7 +317,7 @@ memory package has all four.
 | `maintenance.test.ts` | the scheduler: startup drain, debounce, poll, retention, overlap |
 | `integration.test.ts` | the real DI graph: feature assembly, flag on/off, a real store on disk, queued work draining unattended |
 | `Kernel/core/test/memory/agentMemory.test.ts` | a real agent turn: the model calls `memory_search` through the actual engine loop and sees the result |
-| `tool.test.ts` | the `memory_search` contract, schema, approval rule and access counting; `memory_save` trust ceiling, idempotency and scopes; `memory_forget` visibility and invalidation |
+| `tool.test.ts` | the `memory_search` contract, schema, approval rule and access counting; `memory_save` trust ceiling, idempotency and scopes; `memory_forget` visibility and invalidation; the user control surface (list, show, confirm, forget, export, cross-scope refusal) |
 | `concurrency.test.ts` | two openers on one store: the second reads, its writes fail loudly, the lock comes back |
 | `process.test.ts` | a real second OS process holding the lock, via `test/fixtures/hold-store.mts` |
 | `scale.test.ts` | 400 memories, on both the in-memory store and real minidb, including a reopen |

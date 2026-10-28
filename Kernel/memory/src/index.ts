@@ -180,3 +180,31 @@ export {
   renderCapture,
 } from '#/tool/memoryWriteTools';
 export type { MemoryForgetInput, MemorySaveInput } from '#/tool/memoryWriteTools';
+export {
+  confirmMemory,
+  exportVisibleMemories,
+  forgetMemory,
+  getVisibleMemory,
+  listVisibleMemories,
+  MEMORY_CONTROL_SCOPES,
+  MEMORY_CONTROL_STATUSES,
+  MEMORY_EXPORT_FORMAT,
+  MEMORY_EXPORT_VERSION,
+  MEMORY_LIST_DEFAULT_LIMIT,
+  MEMORY_LIST_MAX_LIMIT,
+  memoryViewerOf,
+  toMemoryView,
+} from '#/control/memoryControl';
+export type {
+  MemoryControlMutation,
+  MemoryControlMutationStatus,
+  MemoryControlScope,
+  MemoryControlStatus,
+  MemoryEvidenceView,
+  MemoryExportView,
+  MemoryGetView,
+  MemoryListOptions,
+  MemoryListView,
+  MemoryView,
+  MemoryViewer,
+} from '#/control/memoryControl';

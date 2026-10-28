@@ -2,6 +2,14 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 
 import type { SwarmModeTrigger } from '@hilbras/omnicode-core/features/swarm/agent/swarm';
 import type { Kaos } from '@hilbras/omnicode-kaos';
+import type {
+  MemoryControlMutation,
+  MemoryControlScope,
+  MemoryControlStatus,
+  MemoryExportView,
+  MemoryGetView,
+  MemoryListView,
+} from '@hilbras/omnicode-memory';
 
 import type { AgentContextData } from '#/context';
 import { ErrorCodes, OmnicodeError, makeErrorPayload } from '#/errors';
@@ -104,6 +112,20 @@ export interface SessionIdRpcInput {
 export interface ImportContextRpcInput extends SessionIdRpcInput {
   readonly content: string;
   readonly source: string;
+}
+
+export interface MemoryListRpcInput extends SessionIdRpcInput {
+  readonly scope?: MemoryControlScope;
+  readonly status?: MemoryControlStatus;
+  readonly limit?: number;
+}
+
+export interface MemoryGetRpcInput extends SessionIdRpcInput {
+  readonly id: string;
+}
+
+export interface MemoryForgetRpcInput extends MemoryGetRpcInput {
+  readonly reason?: string;
 }
 
 export interface ReloadSessionRpcInput extends SessionIdRpcInput {
@@ -433,6 +455,16 @@ export abstract class SDKRpcClientBase {
   abstract getUsage(input: SessionIdRpcInput): Promise<SessionUsage>;
 
   abstract getStatus(input: SessionIdRpcInput): Promise<SessionStatus>;
+
+  abstract listMemories(input: MemoryListRpcInput): Promise<MemoryListView>;
+
+  abstract getMemory(input: MemoryGetRpcInput): Promise<MemoryGetView>;
+
+  abstract confirmMemory(input: MemoryGetRpcInput): Promise<MemoryControlMutation>;
+
+  abstract forgetMemory(input: MemoryForgetRpcInput): Promise<MemoryControlMutation>;
+
+  abstract exportMemories(input: SessionIdRpcInput): Promise<MemoryExportView>;
 
   abstract listSkills(input: SessionIdRpcInput): Promise<readonly SkillSummary[]>;
 

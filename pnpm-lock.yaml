@@ -191,6 +191,9 @@ importers:
       '@hilbras/omnicode-llm':
         specifier: workspace:^
         version: link:../llm
+      '@hilbras/omnicode-memory':
+        specifier: workspace:^
+        version: link:../memory
       '@hilbras/omnicode-tools':
         specifier: workspace:^
         version: link:../Tools
@@ -466,6 +469,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-memory':
+        specifier: workspace:^
+        version: link:../memory
       '@hilbras/omnicode-minidb':
         specifier: workspace:*
         version: link:../minidb

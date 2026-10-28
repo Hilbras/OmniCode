@@ -10,3 +10,4 @@ process.env['OMNICODE_PERSISTENCE_MINIDB_READMODEL'] = 'false';
 
 import '@hilbras/omnicode-addons';
 import '@hilbras/omnicode-tools';
+import '@hilbras/omnicode-memory';

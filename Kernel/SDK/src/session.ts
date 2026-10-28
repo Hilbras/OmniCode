@@ -1,4 +1,12 @@
 import type { SwarmModeTrigger } from '@hilbras/omnicode-core/features/swarm/agent/swarm';
+import type {
+  MemoryControlMutation,
+  MemoryControlScope,
+  MemoryControlStatus,
+  MemoryExportView,
+  MemoryGetView,
+  MemoryListView,
+} from '@hilbras/omnicode-memory';
 
 import type { AgentContextData } from '#/context';
 import { ErrorCodes, OmnicodeError, type OmnicodeErrorCode } from '#/errors';
@@ -442,6 +450,35 @@ export class Session {
   async getStatus(): Promise<SessionStatus> {
     this.ensureOpen();
     return this.rpc.getStatus({ sessionId: this.id });
+  }
+
+  async listMemories(options?: {
+    readonly scope?: MemoryControlScope;
+    readonly status?: MemoryControlStatus;
+    readonly limit?: number;
+  }): Promise<MemoryListView> {
+    this.ensureOpen();
+    return this.rpc.listMemories({ sessionId: this.id, ...options });
+  }
+
+  async getMemory(id: string): Promise<MemoryGetView> {
+    this.ensureOpen();
+    return this.rpc.getMemory({ sessionId: this.id, id });
+  }
+
+  async confirmMemory(id: string): Promise<MemoryControlMutation> {
+    this.ensureOpen();
+    return this.rpc.confirmMemory({ sessionId: this.id, id });
+  }
+
+  async forgetMemory(id: string, reason?: string): Promise<MemoryControlMutation> {
+    this.ensureOpen();
+    return this.rpc.forgetMemory({ sessionId: this.id, id, reason });
+  }
+
+  async exportMemories(): Promise<MemoryExportView> {
+    this.ensureOpen();
+    return this.rpc.exportMemories({ sessionId: this.id });
   }
 
   async listSkills(): Promise<readonly SkillSummary[]> {

@@ -28,6 +28,7 @@ export { handleFeedbackCommand, showStatusReport, showUsage } from './info';
 export { handlePluginsCommand } from './plugins';
 export { handleReloadCommand, handleReloadTuiCommand } from './reload';
 export { handleGoalCommand, parseGoalCommand, goalObjectiveLengthWarning } from './goal';
+export { handleMemoryCommand, parseMemoryCommand } from './memory';
 export { goalArgumentCompletions } from './registry';
 export { handleForkCommand, handleInitCommand, handleTitleCommand } from './session';
 export { handleUndoCommand } from './undo';

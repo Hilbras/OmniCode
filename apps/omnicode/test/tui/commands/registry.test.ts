@@ -52,6 +52,14 @@ describe('built-in slash command registry', () => {
     expect(findBuiltInSlashCommand('unknown')).toBeUndefined();
   });
 
+  it('gates /memory behind the memory experimental flag', () => {
+    const memory = findBuiltInSlashCommand('memory') as OmnicodeSlashCommand | undefined;
+    expect(memory?.name).toBe('memory');
+    expect(memory?.experimentalFlag).toBe('memory');
+    expect(resolveSlashCommandAvailability(memory!, '')).toBe('always');
+    expect(resolveSlashCommandAvailability(memory!, 'confirm mem_1')).toBe('always');
+  });
+
   it('marks plan clear as idle-only while normal plan toggles are always available', () => {
     const plan = findBuiltInSlashCommand('plan');
     expect(plan).toBeDefined();

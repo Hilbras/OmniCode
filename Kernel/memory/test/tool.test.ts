@@ -25,6 +25,15 @@ import {
 } from '#/tool/memoryWriteTools';
 
 import {
+  confirmMemory,
+  exportVisibleMemories,
+  forgetMemory,
+  getVisibleMemory,
+  listVisibleMemories,
+  MEMORY_EXPORT_FORMAT,
+} from '#/control/memoryControl';
+
+import {
   captureInput,
   createHarness,
   evidenceFor,
@@ -446,5 +455,126 @@ describe('memory write scope visibility', () => {
     expect(isScopeVisible(repoScope(REPO_B), current)).toBe(false);
     expect(isScopeVisible(sessionScope('session-2', REPO_A), current)).toBe(false);
     expect(isScopeVisible(repoScope(REPO_A), { ...current, projectId: undefined })).toBe(false);
+  });
+});
+
+describe('memory user control', () => {
+  const viewer = { workspaceId: WORKSPACE, projectId: REPO_A, sessionId: SESSION };
+  const modelAuthored = { tier: 'working' as const, sourceType: 'agent_observation' as const, origin: 'model' as const };
+
+  async function seeded() {
+    const harness = createHarness();
+    const own = await harness.service.capture(captureInput('the dev server uses port 5173', modelAuthored));
+    const global = await harness.service.capture(
+      captureInput('prefer small focused commits', { ...modelAuthored, scope: globalScope() }),
+    );
+    const session = await harness.service.capture(
+      captureInput('this session is refactoring auth', { ...modelAuthored, scope: sessionScope(SESSION, REPO_A) }),
+    );
+    const foreignRepo = await harness.service.capture(
+      captureInput('repo beta uses jest', { ...modelAuthored, scope: repoScope(REPO_B) }),
+    );
+    const foreignSession = await harness.service.capture(
+      captureInput('another session note', { ...modelAuthored, scope: sessionScope('session-2', REPO_A) }),
+    );
+    const ids = {
+      own: own.id ?? '',
+      global: global.id ?? '',
+      session: session.id ?? '',
+      foreignRepo: foreignRepo.id ?? '',
+      foreignSession: foreignSession.id ?? '',
+    };
+    return { harness, ids };
+  }
+
+  it('lists only the memories visible to the viewer', async () => {
+    const { harness, ids } = await seeded();
+    const listed = await listVisibleMemories(harness.service, viewer);
+    expect(listed.enabled).toBe(true);
+    expect(listed.memories.map((memory) => memory.id).toSorted()).toEqual([ids.own, ids.global, ids.session].toSorted());
+    expect(listed.memories.every((memory) => memory.trust === 'unverified')).toBe(true);
+    expect(listed.memories[0]).not.toHaveProperty('searchText');
+  });
+
+  it('filters by scope and status', async () => {
+    const { harness, ids } = await seeded();
+    expect((await listVisibleMemories(harness.service, viewer, { scope: 'global' })).memories.map((m) => m.id)).toEqual([
+      ids.global,
+    ]);
+    await forgetMemory(harness.service, viewer, ids.own);
+    const active = await listVisibleMemories(harness.service, viewer, { scope: 'repository' });
+    expect(active.memories).toHaveLength(0);
+    const invalidated = await listVisibleMemories(harness.service, viewer, { scope: 'repository', status: 'invalidated' });
+    expect(invalidated.memories.map((m) => m.id)).toEqual([ids.own]);
+    expect((await listVisibleMemories(harness.service, viewer, { status: 'all' })).memories).toHaveLength(3);
+  });
+
+  it('reports truncation when the limit cuts the list', async () => {
+    const { harness } = await seeded();
+    const listed = await listVisibleMemories(harness.service, viewer, { limit: 1 });
+    expect(listed.memories.length).toBeLessThanOrEqual(1);
+    expect(listed.truncated).toBe(true);
+  });
+
+  it('hides foreign records from show, confirm and forget', async () => {
+    const { harness, ids } = await seeded();
+    for (const id of [ids.foreignRepo, ids.foreignSession]) {
+      expect((await getVisibleMemory(harness.service, viewer, id)).memory).toBeUndefined();
+      expect((await confirmMemory(harness.service, viewer, id)).status).toBe('not_found');
+      expect((await forgetMemory(harness.service, viewer, id)).status).toBe('not_found');
+      const stored = await harness.service.get(id);
+      expect(stored?.trust).toBe('unverified');
+      expect(stored?.lifecycle).toBe('active');
+    }
+    expect((await getVisibleMemory(harness.service, { ...viewer, projectId: undefined }, ids.own)).memory).toBeUndefined();
+  });
+
+  it('confirms an unverified memory to trusted as a user decision', async () => {
+    const { harness, ids } = await seeded();
+    const confirmed = await confirmMemory(harness.service, viewer, ids.own);
+    expect(confirmed.status).toBe('confirmed');
+    expect(confirmed.memory?.trust).toBe('trusted');
+    expect((await harness.service.get(ids.own))?.trustReason).toContain('explicit confirmation');
+    const revision = (await harness.service.get(ids.own))?.revision;
+    const again = await confirmMemory(harness.service, viewer, ids.own);
+    expect(again.status).toBe('unchanged');
+    expect((await harness.service.get(ids.own))?.revision).toBe(revision);
+  });
+
+  it('does not confirm a forgotten memory', async () => {
+    const { harness, ids } = await seeded();
+    await forgetMemory(harness.service, viewer, ids.own, 'outdated');
+    const confirmed = await confirmMemory(harness.service, viewer, ids.own);
+    expect(confirmed.status).toBe('not_active');
+    expect((await harness.service.get(ids.own))?.trust).toBe('unverified');
+  });
+
+  it('forgets by invalidating and keeps the reason for audit', async () => {
+    const { harness, ids } = await seeded();
+    const forgotten = await forgetMemory(harness.service, viewer, ids.own, 'port changed');
+    expect(forgotten.status).toBe('forgotten');
+    const stored = await harness.service.get(ids.own);
+    expect(stored?.lifecycle).toBe('invalidated');
+    expect(stored?.evidence.at(-1)?.ref).toBe('forgotten by the user: port changed');
+    expect((await forgetMemory(harness.service, viewer, ids.own)).status).toBe('not_active');
+  });
+
+  it('exports every visible memory with a versioned envelope', async () => {
+    const { harness, ids } = await seeded();
+    await forgetMemory(harness.service, viewer, ids.session);
+    const exported = await exportVisibleMemories(harness.service, viewer, 42);
+    expect(exported.format).toBe(MEMORY_EXPORT_FORMAT);
+    expect(exported.version).toBe(1);
+    expect(exported.exportedAt).toBe(42);
+    expect(exported.memories.map((m) => m.id).toSorted()).toEqual([ids.own, ids.global, ids.session].toSorted());
+  });
+
+  it('reports disabled without touching the store', async () => {
+    const harness = createHarness({ available: () => false });
+    expect(await listVisibleMemories(harness.service, viewer)).toEqual({ enabled: false, memories: [], truncated: false });
+    expect((await getVisibleMemory(harness.service, viewer, 'mem_x')).enabled).toBe(false);
+    expect((await confirmMemory(harness.service, viewer, 'mem_x')).status).toBe('disabled');
+    expect((await forgetMemory(harness.service, viewer, 'mem_x')).status).toBe('disabled');
+    expect((await exportVisibleMemories(harness.service, viewer)).enabled).toBe(false);
   });
 });

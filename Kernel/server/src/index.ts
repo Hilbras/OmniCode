@@ -1,5 +1,6 @@
 import '@hilbras/omnicode-addons';
 import '@hilbras/omnicode-tools';
+import '@hilbras/omnicode-memory';
 
 export { startServer } from './start';
 export type { ServerHostIdentity, ServerStartOptions, RunningServer } from './start';

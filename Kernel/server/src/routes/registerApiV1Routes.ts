@@ -28,6 +28,7 @@ import { registerOAuthRoutes } from './oauth';
 import { registerPluginsRoutes } from './plugins';
 import { registerPromptsRoutes } from './prompts';
 import { registerQuestionsRoutes } from './questions';
+import { registerMemoryRoutes } from './memory';
 import { registerRemoteControlRoutes, type RemoteControlRouteOptions } from './remoteControl';
 import { registerRuntimeRoutes } from './runtime';
 import { registerSearchRoutes } from './search';
@@ -124,6 +125,7 @@ export async function registerApiV1Routes(
         { sessionEventCursor: (sessionId) => opts.broadcaster.getCursor(sessionId) },
       );
       registerRuntimeRoutes(apiV1 as unknown as Parameters<typeof registerRuntimeRoutes>[0], core);
+      registerMemoryRoutes(apiV1 as unknown as Parameters<typeof registerMemoryRoutes>[0], core);
       registerSessionExportRoute(
         apiV1 as unknown as Parameters<typeof registerSessionExportRoute>[0],
         core,

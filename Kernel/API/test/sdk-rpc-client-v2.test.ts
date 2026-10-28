@@ -2708,6 +2708,34 @@ describe('removeProviderFromConfig', () => {
 
     expect(next.secondaryModel).toEqual({ defaultModel: 'a/m1' });
   });
+
+  it('serves the memory control surface through Session', async () => {
+    const previous = process.env['OMNICODE_EXPERIMENTAL_MEMORY'];
+    process.env['OMNICODE_EXPERIMENTAL_MEMORY'] = '1';
+    const { harness } = await makeHarness();
+    const workDir = await mkdtemp(join(tmpdir(), 'omnicode-sdk-v2-work-'));
+    tempDirs.push(workDir);
+    try {
+      const session = await harness.createSession({ id: 'ses_memory', workDir });
+
+      const listed = await session.listMemories();
+      expect(listed).toEqual({ enabled: true, memories: [], truncated: false });
+
+      expect((await session.getMemory('mem_missing')).memory).toBeUndefined();
+      expect((await session.confirmMemory('mem_missing')).status).toBe('not_found');
+      expect((await session.forgetMemory('mem_missing')).status).toBe('not_found');
+      expect(await session.exportMemories()).toMatchObject({
+        enabled: true,
+        format: 'omnicode.memory.export',
+        version: 1,
+        memories: [],
+      });
+    } finally {
+      await harness.close();
+      if (previous === undefined) delete process.env['OMNICODE_EXPERIMENTAL_MEMORY'];
+      else process.env['OMNICODE_EXPERIMENTAL_MEMORY'] = previous;
+    }
+  });
 });
 
 async function writeSkill(dir: string, name: string): Promise<void> {  await mkdir(dir, { recursive: true });

@@ -48,6 +48,7 @@ import { handleContextCommand } from './context';
 import { handleCopyCommand } from './copy';
 import { handleDesktopCommand } from './desktop';
 import { handleGoalCommand } from './goal';
+import { handleMemoryCommand } from './memory';
 import { handleFeedbackCommand, showStatusReport, showUsage } from './info';
 import { parseSlashInput } from './parse';
 import { handlePluginsCommand } from './plugins';
@@ -106,6 +107,7 @@ export { handleFeedbackCommand, showStatusReport, showUsage } from './info';
 export { handlePluginsCommand } from './plugins';
 export { handleReloadCommand, handleReloadTuiCommand } from './reload';
 export { handleGoalCommand } from './goal';
+export { handleMemoryCommand } from './memory';
 export {
   handleExportDebugZipCommand,
   handleExportMdCommand,
@@ -593,6 +595,9 @@ async function handleBuiltInSlashCommand(
       return;
     case 'goal':
       await handleGoalCommand(host, args);
+      return;
+    case 'memory':
+      await handleMemoryCommand(host, args);
       return;
     case 'init':
       await handleInitCommand(host);

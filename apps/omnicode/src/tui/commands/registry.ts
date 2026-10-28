@@ -37,6 +37,14 @@ const ADD_DIR_ARG_COMPLETIONS: readonly ArgCompletionSpec[] = [
   { value: 'list', description: 'Show configured additional workspace directories' },
 ];
 
+const MEMORY_ARG_COMPLETIONS: readonly ArgCompletionSpec[] = [
+  { value: 'list', description: 'List the memories visible to this session' },
+  { value: 'show', description: 'Show one memory by id' },
+  { value: 'confirm', description: 'Trust a memory the agent saved' },
+  { value: 'forget', description: 'Invalidate a memory' },
+  { value: 'export', description: 'Export the visible memories to JSON' },
+];
+
 /** Argument autocompletion for the `/goal` command (subcommands). */
 export function goalArgumentCompletions(argumentPrefix: string): AutocompleteItem[] | null {
   const nextMatch = argumentPrefix.match(/^next\s+(\S*)$/i);
@@ -49,6 +57,11 @@ export function goalArgumentCompletions(argumentPrefix: string): AutocompleteIte
     );
   }
   return completeLeadingArg(GOAL_ARG_COMPLETIONS, argumentPrefix);
+}
+
+/** Argument autocompletion for the `/memory` command (subcommands). */
+export function memoryArgumentCompletions(argumentPrefix: string): AutocompleteItem[] | null {
+  return completeLeadingArg(MEMORY_ARG_COMPLETIONS, argumentPrefix);
 }
 
 /** Argument autocompletion for the `/swarm` command (subcommands). */
@@ -380,6 +393,16 @@ export const BUILTIN_SLASH_COMMANDS = [
         ? 'always'
         : 'idle-only';
     },
+  },
+  {
+    name: 'memory',
+    aliases: [],
+    description: 'Review, confirm and forget the memories saved for this project',
+    priority: 60,
+    availability: 'always',
+    experimentalFlag: 'memory',
+    argumentHint: '[list [scope] [status]] | show <id> | confirm <id> | forget <id> [reason] | export [path]',
+    completeArgs: memoryArgumentCompletions,
   },
   {
     name: 'init',
