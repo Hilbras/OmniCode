@@ -100,6 +100,7 @@ export interface MemoryListQuery {
 export interface MemoryTaskState {
   readonly objective: string;
   readonly completed: readonly string[];
+  readonly active?: readonly string[];
   readonly decisions: readonly string[];
   readonly failedAttempts: readonly string[];
   readonly blockers: readonly string[];

@@ -4,6 +4,10 @@ import { LifecycleScope } from '@hilbras/omnicode-core/app/scopes';
 import { Feature } from '@hilbras/omnicode-core/features/feature';
 import { registerFeature } from '@hilbras/omnicode-core/features/featureRegistry';
 
+import {
+  AgentMemoryCompactionCapture,
+  IMemoryCompactionCapture,
+} from '#/capture/compactionCaptureService';
 import { AgentMemoryContextService, IAgentMemoryContextService } from '#/context/agentMemoryContextService';
 import { AgentMemoryInjectionService, IMemoryInjectionService } from '#/context/memoryInjectionService';
 import { IMemoryService } from '#/contracts/memoryContract';
@@ -25,6 +29,9 @@ export class MemoryFeature extends Feature {
       activation: ScopeActivation.OnDemand,
     });
     this.contributeAgentService(IMemoryInjectionService, AgentMemoryInjectionService, {
+      activation: ScopeActivation.OnScopeCreated,
+    });
+    this.contributeAgentService(IMemoryCompactionCapture, AgentMemoryCompactionCapture, {
       activation: ScopeActivation.OnScopeCreated,
     });
     this.contributeTool(IMemorySearchTool, MemorySearchTool, {

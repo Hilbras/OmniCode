@@ -999,6 +999,7 @@ function renderTaskState(state: MemoryTaskState): string {
     for (const value of values) lines.push(`- ${value}`);
   };
   section('Completed', state.completed);
+  section('Active', state.active ?? []);
   section('Decisions', state.decisions);
   section('Failed attempts', state.failedAttempts);
   section('Blockers', state.blockers);

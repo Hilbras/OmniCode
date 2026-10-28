@@ -181,6 +181,13 @@ export {
 } from '#/tool/memoryWriteTools';
 export type { MemoryForgetInput, MemorySaveInput } from '#/tool/memoryWriteTools';
 export {
+  captureCompactionTaskState,
+  parseCompactionSummary,
+  toTaskStateInput,
+} from '#/capture/compactionSummary';
+export type { CompactionTaskState } from '#/capture/compactionSummary';
+export { AgentMemoryCompactionCapture, IMemoryCompactionCapture } from '#/capture/compactionCaptureService';
+export {
   confirmMemory,
   exportVisibleMemories,
   forgetMemory,

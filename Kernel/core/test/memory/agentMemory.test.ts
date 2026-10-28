@@ -3,6 +3,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IAgentProfileService } from '#/agent/profile/profile';
+import { CompactionCompleted } from '#/agent/fullCompaction/compactionOps';
+import { IEventBus } from '#/app/event/eventBus';
+import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
+import { ISessionContext } from '#/session/sessionContext/sessionContext';
 
 import { createTestAgent, permissionModeServices, type TestAgentContext } from '../harness';
 
@@ -93,6 +97,88 @@ describe('memory inside a real agent turn', () => {
     expect(rendered).toContain('memory search status:');
     expect(rendered).toContain('the release process is documented in docs/release.md');
     expect(rendered).toContain('provenance=file:docs/release.md');
+  });
+
+  it('captures a compaction summary as the session task state', async () => {
+    const agentId = ctx.get(IAgentScopeContext).agentId;
+    const sessionId = ctx.get(ISessionContext).sessionId;
+    const memory = ctx.get(IMemoryService);
+
+    ctx.get(IEventBus).publish(
+      new CompactionCompleted({
+        agentId,
+        result: {
+          summary: [
+            '## Objective',
+            '- Finish the memory upgrade plan.',
+            '',
+            '## Decisions',
+            '- Store the summary as the session task state.',
+            '',
+            '## Work State',
+            '### Completed',
+            '- Added the user control surface.',
+            '### Active',
+            '- Capturing compaction summaries.',
+            '### Blocked',
+            '- (none)',
+            '',
+            '## Next Move',
+            '1. Run the full suite.',
+          ].join('\n'),
+          compactedCount: 12,
+          tokensBefore: 9000,
+          tokensAfter: 1200,
+        },
+      }),
+    );
+
+    const deadline = Date.now() + 5000;
+    let record = (await memory.list({ sessionId, categories: ['task'], lifecycle: ['active'] }))[0];
+    while (record === undefined && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      record = (await memory.list({ sessionId, categories: ['task'], lifecycle: ['active'] }))[0];
+    }
+    expect(record).toBeDefined();
+
+    const restored = await memory.restoreTaskState({
+      taskId: sessionId,
+      scope: record?.scope ?? { tier: 'session', workspaceId: ctx.get(ISessionContext).workspaceId, sessionId },
+      objective: '',
+      completed: [],
+      decisions: [],
+      failedAttempts: [],
+      blockers: [],
+      fileRefs: [],
+    });
+    expect(restored.status).toBe('restored');
+    expect(restored.record?.content).toContain('Finish the memory upgrade plan.');
+    expect(restored.record?.content).toContain('Run the full suite.');
+    expect(restored.record?.trust).toBe('unverified');
+  });
+
+  it('writes no task state from a compaction while the flag is off', async () => {
+    const agentId = ctx.get(IAgentScopeContext).agentId;
+    const sessionId = ctx.get(ISessionContext).sessionId;
+    const memory = ctx.get(IMemoryService);
+    process.env['OMNICODE_EXPERIMENTAL_MEMORY'] = 'false';
+    try {
+      ctx.get(IEventBus).publish(
+        new CompactionCompleted({
+          agentId,
+          result: {
+            summary: '## Objective\n- Should not be stored.\n\n## Next Move\n1. Nothing.',
+            compactedCount: 3,
+            tokensBefore: 100,
+            tokensAfter: 10,
+          },
+        }),
+      );
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(await memory.list({ sessionId, categories: ['task'] })).toHaveLength(0);
+    } finally {
+      process.env['OMNICODE_EXPERIMENTAL_MEMORY'] = 'true';
+    }
   });
 
   it('tells the agent when a search found nothing instead of inventing one', async () => {

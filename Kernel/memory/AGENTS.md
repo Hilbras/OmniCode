@@ -20,6 +20,7 @@ step and no `dist`, matching `Kernel/Addons` and `Kernel/Tools`.
 | `src/context/` | agent-scope project identity and the reminder providers |
 | `src/tool/` | the `memory_search`, `memory_save` and `memory_forget` agent tools |
 | `src/control/` | the user-facing read/confirm/forget/export surface, shared by the REST routes and the CLI |
+| `src/capture/` | compaction-summary parsing and the agent-scoped capture that stores it as task state |
 | `src/feature/` | the `Feature`, the `[memory]` config section, the experimental flag |
 
 ## Data model
@@ -242,6 +243,28 @@ through `isScopeVisible`, so another project's or session's record is
 With the flag off the control functions report `enabled: false` / `disabled`
 instead of reading the store, and the CLI command is hidden.
 
+## Capture at compaction
+
+`AgentMemoryCompactionCapture` subscribes to the agent-scoped `IEventBus` for
+`CompactionCompleted` — the one seam that carries the summary without core
+importing this package. The agent view only delivers that agent's events, so a
+subagent's compaction cannot overwrite the main agent's task state.
+
+`parseCompactionSummary` reads the headings the compaction instruction fixes
+(`Objective`, `Decisions`, `Work State` → `Completed`/`Active`/`Blocked`,
+`Next Move`, `Relevant Files`); prose outside them is ignored, `(none)` is
+dropped, and a summary that follows no template yields `undefined` so nothing is
+written rather than an empty task state. The result goes through
+`saveTaskState`, which upserts on `task_state:<sessionId>` in the session
+scope: a second compaction replaces the first record instead of appending, and
+the existing `memory_task_restore` provider injects it on the next session.
+
+The record is `category: 'task'`, `origin: 'application'`, and stays
+`unverified` — the trust policy gives an application-origin write no promotion.
+Evidence is the session itself (`observation`, `session:<id>`); the compaction
+event does not expose a turn id, so no turn range is recorded. With the flag off
+the handler returns before touching the store.
+
 ## Background processing
 
 `runReview()` is driven by `MemoryMaintenanceScheduler`, owned by the
@@ -312,7 +335,7 @@ memory package has all four.
 | `lifecycle.test.ts` | expiry vs invalidation vs supersession vs deletion, canonical approval |
 | `security.test.ts` | injection, cross-project isolation, redaction, authority forgery, unapproved promotion |
 | `capture.test.ts` | idempotency, the review queue, retry/backoff, failure reporting |
-| `continuity.test.ts` | task state save/restore, stale evidence, tool-output honesty |
+| `continuity.test.ts` | task state save/restore, stale evidence, tool-output honesty, compaction-summary parsing and the upsert that replaces prior task state |
 | `injection.test.ts` | what actually reaches the model through the reminder providers |
 | `maintenance.test.ts` | the scheduler: startup drain, debounce, poll, retention, overlap |
 | `integration.test.ts` | the real DI graph: feature assembly, flag on/off, a real store on disk, queued work draining unattended |

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { captureCompactionTaskState, parseCompactionSummary } from '#/capture/compactionSummary';
 import type { MemoryTaskStateInput } from '#/contracts/memoryContract';
 import { RETRIEVAL_NOTICE_INCOMPLETE } from '#/contracts/retrieval';
 import { MEMORY_SEARCH_TOOL_NAME, renderResult } from '#/tool/memorySearchTool';
@@ -239,6 +240,117 @@ describe('tool output honesty', () => {
       await harness.service.search({ query: 'retry budget attempts', projectId: REPO_A, includeUntrusted: true }),
     );
     expect(rendered).toContain('flags=conflicts:');
+  });
+});
+
+const COMPACTION_SUMMARY = [
+  '## Objective',
+  '- Ship the memory upgrade plan phase 3.',
+  '',
+  '## Requirements',
+  '- Keep the flag off by default.',
+  '',
+  '## Decisions',
+  '- Store the summary as the session task state instead of a new record kind.',
+  '',
+  '## Work State',
+  '### Completed',
+  '- Added the user control surface.',
+  '',
+  '### Active',
+  '- Wiring the compaction capture.',
+  '',
+  '### Blocked',
+  '- (none)',
+  '',
+  '## Next Move',
+  '1. Add the capture tests.',
+  '2. Run the server suite.',
+  '',
+  '## Relevant Files',
+  '- `Kernel/memory/src/capture/compactionSummary.ts`: the parser.',
+  '- `Kernel/core/src/agent/fullCompaction/compactionInstruction.md`: the section headings.',
+  '',
+  '## Important Context',
+  '- The flag is OMNICODE_EXPERIMENTAL_MEMORY.',
+].join('\n');
+
+describe('compaction capture', () => {
+  it('extracts the sections the compaction instruction asks for', () => {
+    const parsed = parseCompactionSummary(COMPACTION_SUMMARY);
+    expect(parsed).toBeDefined();
+    expect(parsed?.objective).toBe('Ship the memory upgrade plan phase 3.');
+    expect(parsed?.decisions).toEqual([
+      'Store the summary as the session task state instead of a new record kind.',
+    ]);
+    expect(parsed?.completed).toEqual(['Added the user control surface.']);
+    expect(parsed?.active).toEqual(['Wiring the compaction capture.']);
+    expect(parsed?.blockers).toEqual([]);
+    expect(parsed?.nextSteps).toEqual(['Add the capture tests.', 'Run the server suite.']);
+    expect(parsed?.fileRefs).toEqual([
+      'Kernel/memory/src/capture/compactionSummary.ts',
+      'Kernel/core/src/agent/fullCompaction/compactionInstruction.md',
+    ]);
+  });
+
+  it('refuses to invent task state from a summary that does not follow the template', () => {
+    expect(parseCompactionSummary('We talked about a lot of things.')).toBeUndefined();
+    expect(parseCompactionSummary('')).toBeUndefined();
+    expect(
+      parseCompactionSummary('## Decisions\n- (none)\n\n### Completed\n- (none)'),
+    ).toBeUndefined();
+  });
+
+  it('stores the summary as the session task state and restores it', async () => {
+    const harness = createHarness();
+    const scope = sessionScope(SESSION, REPO_A);
+    const stored = await captureCompactionTaskState(harness.service, {
+      taskId: SESSION,
+      scope,
+      summary: COMPACTION_SUMMARY,
+      evidence: [
+        { kind: 'observation', ref: `session:${SESSION}`, state: 'present', observedAt: harness.clock.now() },
+      ],
+    });
+    expect(stored?.status).toBe('stored');
+    expect(stored?.record?.category).toBe('task');
+    expect(stored?.record?.origin).toBe('application');
+    expect(stored?.record?.trust).toBe('unverified');
+    expect(stored?.record?.content).toContain('Active:');
+
+    const restored = await harness.service.restoreTaskState({
+      ...buildInput({ taskId: SESSION, scope }),
+    });
+    expect(restored.status).toBe('restored');
+    expect(restored.record?.content).toContain('Ship the memory upgrade plan phase 3.');
+    expect(restored.record?.content).toContain('Add the capture tests.; Run the server suite.');
+  });
+
+  it('replaces the previous task state instead of piling up records', async () => {
+    const harness = createHarness();
+    const scope = sessionScope(SESSION, REPO_A);
+    await captureCompactionTaskState(harness.service, {
+      taskId: SESSION,
+      scope,
+      summary: COMPACTION_SUMMARY,
+    });
+    const second = await captureCompactionTaskState(harness.service, {
+      taskId: SESSION,
+      scope,
+      summary: '## Objective\n- The second objective.\n\n## Next Move\n1. Finish.',
+    });
+    expect(second?.status).toBe('stored');
+
+    const active = await harness.service.list({
+      sessionId: SESSION,
+      projectId: REPO_A,
+      scopes: ['session'],
+      categories: ['task'],
+      lifecycle: ['active'],
+    });
+    expect(active).toHaveLength(1);
+    expect(active[0]?.content).toContain('The second objective.');
+    expect(active[0]?.content).not.toContain('Ship the memory upgrade plan');
   });
 });
 
