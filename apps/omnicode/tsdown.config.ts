@@ -16,7 +16,6 @@ export default defineConfig({
   hash: false,
   banner: {
     js: [
-      '#!/usr/bin/env node',
       "import { fileURLToPath as __cjsShimFileURLToPath } from 'node:url';",
       "import { dirname as __cjsShimDirname } from 'node:path';",
       'const __filename = __cjsShimFileURLToPath(import.meta.url);',
@@ -35,6 +34,6 @@ export default defineConfig({
   },
   outputOptions: {
     codeSplitting: false,
-    entryFileNames: 'main.mjs',
+    entryFileNames: 'cli.mjs',
   },
 });

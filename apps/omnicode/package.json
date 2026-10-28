@@ -55,7 +55,7 @@
     "provenance": false
   },
   "scripts": {
-    "build": "tsdown && tsdown --config tsdown.dist-worker.config.ts && node scripts/copy-native-assets.mjs && node scripts/check-web-assets.mjs",
+    "build": "tsdown && tsdown --config tsdown.dist-worker.config.ts && tsdown --config tsdown.dist-loader.config.ts && node scripts/copy-native-assets.mjs && node scripts/check-web-assets.mjs",
     "prebuild": "node scripts/build-vis-asset.mjs",
     "catalog:update": "node scripts/update-catalog.mjs --out dist/built-in-catalog.json",
     "smoke": "node scripts/smoke.mjs",
