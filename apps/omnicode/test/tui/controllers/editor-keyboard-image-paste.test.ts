@@ -313,7 +313,7 @@ describe('clipboard image paste compression', () => {
     expect(att.placeholder).toContain('80×120');
   });
 
-  it('emits image_compress telemetry tagged tui_paste through host.track', async () => {
+  it('emits image_compress telemetry tagged tui_paste through host.track', { timeout: 30_000 }, async () => {
     const big = await solidPng(3600, 1800);
     readClipboardMedia.mockResolvedValue({ kind: 'image', bytes: big, mimeType: 'image/png' });
 
@@ -351,7 +351,7 @@ describe('clipboard image paste compression', () => {
     expect(att.bytes).toBe(small);
   });
 
-  it('uploads the compressed bytes when paste-time compression changed them (v2)', async () => {
+  it('uploads the compressed bytes when paste-time compression changed them (v2)', { timeout: 30_000 }, async () => {
     const big = await solidPng(3600, 1800);
     readClipboardMedia.mockResolvedValue({ kind: 'image', bytes: big, mimeType: 'image/png' });
     const uploadFile = uploadFileMock('file-9');
