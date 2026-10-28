@@ -247,6 +247,7 @@ function createService(
   const measuredCalls: { readonly messages: number; readonly usage: TokenUsage }[] = [];
   const tokenCounting = {
     get: () => ({ size: 0, measured: 0, estimated: 0 }),
+    requestSize: () => 0,
     measured: (
       _agent: AgentContext,
       input: readonly Message[],

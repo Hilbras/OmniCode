@@ -101,6 +101,7 @@ export class AgentContextMemoryService extends Disposable implements IAgentConte
         agentId: this.scopeContext.agentId,
         summary: result.summary,
         contextSummary: result.contextSummary,
+        recentContext: input.recentContext,
         compactedCount: result.compactedCount,
         tokensBefore: result.tokensBefore,
         tokensAfter: result.tokensAfter,

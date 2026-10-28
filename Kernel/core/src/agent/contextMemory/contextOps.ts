@@ -135,6 +135,7 @@ export function readContextCompactionShapeInput(
     summary: readContextCompactionRawSummary(fields),
     legacySummaryMessage: readLegacySummaryMessage(fields),
     contextSummary: readOptionalString(fields, 'contextSummary'),
+    recentContext: readOptionalString(fields, 'recentContext'),
     compactedCount: readContextCompactedCount(fields),
     tokensBefore: readOptionalNumber(fields, 'tokensBefore') ?? 0,
     tokensAfter: readOptionalNumber(fields, 'tokensAfter'),

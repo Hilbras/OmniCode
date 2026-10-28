@@ -18,6 +18,7 @@ import {
 } from '#/agent/contextProjector/contextProjector';
 import { IAgentMediaResolverService } from '#/agent/media/mediaResolver';
 import { IAgentProfileService, type ProfileModelContext } from '#/agent/profile/profile';
+import { profileModelContextFor } from '#/agent/profile/modelContext';
 import { WarningIssued } from '#/agent/profile/profileOps';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentStateService } from '#/agent/state/agentState';
@@ -55,7 +56,10 @@ import {
   type ModelRequestTiming,
 } from '#/llm-adapter/model/model-requester';
 import type { ModelOverrides } from '#/llm-adapter/model/model.types';
-import { resolveThinkingKeep, type ThinkingConfig } from '#/llm-adapter/model/thinking';
+import {
+  resolveThinkingKeep,
+  type ThinkingConfig,
+} from '#/llm-adapter/model/thinking';
 import type { Protocol } from '#/llm-adapter/protocol/protocol';
 import { ISessionTokenCountingService } from '#/session/tokenCounting/sessionTokenCounting';
 import { ISessionUsageService } from '#/session/usage/sessionUsage';
@@ -96,6 +100,8 @@ const EMPTY_TOOL_PARAMETERS: Record<string, unknown> = {
   type: 'object',
   properties: {},
 };
+
+const OPERATION_CONTEXT_ESTIMATE_ERROR = 0.15;
 
 const noopOnPart: AgentLLMRequestPartHandler = () => {};
 
@@ -692,15 +698,32 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
 
   private resolveRequest(overrides: AgentLLMRequestOverrides): ResolvedLLMRequest {
     const turnConfig = this.resolveTurnConfig(overrides.source);
-    const resolved = turnConfig?.resolved ?? this.profile.resolveModelContext();
+    const overrideAlias = overrides.modelAlias;
+    const overrideModel =
+      overrideAlias === undefined ? undefined : this.modelCatalog.get(overrideAlias);
+    const resolved =
+      overrideAlias === undefined || overrideModel === undefined
+        ? (turnConfig?.resolved ?? this.profile.resolveModelContext())
+        : profileModelContextFor(overrideModel, overrideAlias);
     const baseParams = turnConfig?.params ?? this.profile.resolveRequestParams();
+    const requestParams =
+      overrideModel === undefined
+        ? baseParams
+        : { ...baseParams, thinkingEffort: resolved.thinkingLevel };
     const requester = this.modelCatalog.getRequester(resolved.modelAlias);
     const maxCompletionTokensCap =
       this.config.get<ModelOverrides>('modelOverrides')?.maxCompletionTokens;
+    const messages = overrides.messages ?? this.context.get();
+    const systemPrompt =
+      overrides.systemPrompt ?? turnConfig?.systemPrompt ?? this.profile.getSystemPrompt();
+    const tools = [...(overrides.tools ?? this.defaultTools())];
     const usedContextTokens =
       overrides.messages === undefined
         ? this.tokenCounting.get(this.scopeContext.agentContext).size
-        : undefined;
+        : Math.ceil(
+            this.tokenCounting.requestSize({ systemPrompt, tools, messages }) *
+              (1 + OPERATION_CONTEXT_ESTIMATE_ERROR),
+          );
     const budgetParams = completionBudgetParams({
       budget: resolveCompletionBudget({
         maxOutputSize: overrides.maxOutputSize ?? resolved.maxOutputSize,
@@ -711,21 +734,19 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     });
     const optedOut = maxCompletionTokensCap !== undefined && maxCompletionTokensCap <= 0;
 
-    const messages = overrides.messages ?? this.context.get();
     return {
       requester,
       model: requester.model,
       params: {
-        ...baseParams,
+        ...requestParams,
         ...budgetParams,
         ...(usedContextTokens === undefined ? {} : { usedContextTokens }),
         ...(optedOut ? { maxCompletionTokens: maxCompletionTokensCap } : {}),
       },
       modelAlias: resolved.modelAlias,
       thinkingEffort: resolved.thinkingLevel,
-      systemPrompt:
-        overrides.systemPrompt ?? turnConfig?.systemPrompt ?? this.profile.getSystemPrompt(),
-      tools: [...(overrides.tools ?? this.defaultTools())],
+      systemPrompt,
+      tools,
       messages: [...messages],
       source: overrides.source,
       logFields: logFieldsForSource(overrides.source),

@@ -298,11 +298,16 @@ describe('FullCompaction', () => {
         role: 'user',
         text: expect.stringContaining('Compacted summary.'),
       },
+      { role: 'user', text: expect.stringContaining('[Assistant]: old assistant one') },
       { role: 'user', text: buildCompactionContinuationText() },
     ]);
-    expect(ctx.context.get().at(-2)?.content[0]).toMatchObject({
+    expect(ctx.context.get().at(-3)?.content[0]).toMatchObject({
       type: 'text',
       text: expect.stringContaining('The conversation so far has been compacted'),
+    });
+    expect(ctx.context.get().at(-2)).toMatchObject({
+      role: 'user',
+      origin: { kind: 'injection', variant: 'compaction_recent_context' },
     });
     expect(ctx.context.get().at(-1)).toMatchObject({
       role: 'user',
@@ -319,7 +324,7 @@ describe('FullCompaction', () => {
         compacted_count: 6,
         retry_count: 0,
         thinking_effort: 'off',
-        input_tokens: 1192,
+        input_tokens: 1395,
         output_tokens: 8,
         input_cache_read: 0,
         input_cache_creation: 0,
@@ -540,6 +545,7 @@ describe('FullCompaction', () => {
         role: 'user',
         text: expect.stringContaining('Recovered compacted summary.'),
       },
+      { role: 'user', text: expect.stringContaining('[Assistant]: old assistant one') },
       { role: 'user', text: buildCompactionContinuationText() },
     ]);
     await ctx.expectResumeMatches();
@@ -845,6 +851,7 @@ describe('FullCompaction', () => {
       { role: 'user', text: 'old user one' },
       { role: 'user', text: 'recent user two' },
       { role: 'user', text: `${COMPACTION_SUMMARY_PREFIX}\nRecovered compacted summary.` },
+      { role: 'user', text: expect.stringContaining('[Assistant]: old assistant one') },
       { role: 'user', text: buildCompactionContinuationText() },
     ]);
     expect(ctx.allEvents.filter((event) => event.event === 'compaction.completed')).toEqual([
@@ -896,6 +903,7 @@ describe('FullCompaction', () => {
       { role: 'user', text: 'old user one' },
       { role: 'user', text: 'recent user two' },
       { role: 'user', text: `${COMPACTION_SUMMARY_PREFIX}\nRecovered compacted summary.` },
+      { role: 'user', text: expect.stringContaining('[Assistant]: old assistant one') },
       { role: 'user', text: buildCompactionContinuationText() },
     ]);
     vi.useRealTimers();
@@ -1644,6 +1652,7 @@ describe('FullCompaction', () => {
       'user',
       'user',
       'user',
+      'user',
     ]);
     await ctx.dispatch({
       type: 'context.append_loop_event',
@@ -1655,6 +1664,7 @@ describe('FullCompaction', () => {
       },
     });
     expect(ctx.context.get().map((message) => message.role)).toEqual([
+      'user',
       'user',
       'user',
       'user',
@@ -1717,8 +1727,14 @@ describe('FullCompaction', () => {
         },
         {
           "role": "user",
-          "text": "The conversation so far has been compacted to free up context. What follows is your own working summary of this task — use it to continue your train of thought rather than starting over. Treat it as notes, not proof: where it says a step was done, tests passed, or a fix worked, verify that yourself before relying on it. Any user messages earlier in this context are preserved verbatim from the compacted conversation; where a system-reminder note among them marks an omitted middle section, the user messages it replaced are covered by this summary. The summary records which earlier requests were already addressed.
+          "text": "The conversation so far has been compacted to free up context. What follows is your own working summary of this task — use it to continue your train of thought rather than starting over. Treat it as notes, not proof: where it says a step was done, tests passed, or a fix worked, verify that yourself before relying on it. Any user messages earlier in this context are preserved verbatim from the compacted conversation; where a system-reminder note among them marks an omitted middle section, the user messages it replaced are covered by this summary. A short verbatim slice of the most recent assistant and tool exchanges follows this summary. The summary records which earlier requests were already addressed.
       Compacted prefix.",
+        },
+        {
+          "role": "user",
+          "text": "[Assistant]: old assistant one
+
+      [Assistant]: recent assistant two",
         },
         {
           "role": "user",
@@ -1961,7 +1977,8 @@ describe('FullCompaction', () => {
       call 2:
         messages:
           user: text "old user one\\n\\nold user two\\n\\nrecent user three\\n\\nAnswer after compacting"
-          user: text "The conversation so far has been compacted to free up context. What follows is your own working summary of this task — use it to continue your train of thought rather than starting over. Treat it as notes, not proof: where it says a step was done, tests passed, or a fix worked, verify that yourself before relying on it. Any user messages earlier in this context are preserved verbatim from the compacted conversation; where a system-reminder note among them marks an omitted middle section, the user messages it replaced are covered by this summary. The summary records which earlier requests were already addressed.\\nAuto compacted summary."
+          user: text "The conversation so far has been compacted to free up context. What follows is your own working summary of this task — use it to continue your train of thought rather than starting over. Treat it as notes, not proof: where it says a step was done, tests passed, or a fix worked, verify that yourself before relying on it. Any user messages earlier in this context are preserved verbatim from the compacted conversation; where a system-reminder note among them marks an omitted middle section, the user messages it replaced are covered by this summary. A short verbatim slice of the most recent assistant and tool exchanges follows this summary. The summary records which earlier requests were already addressed.\\nAuto compacted summary."
+          user: text "[Assistant]: old assistant one\\n\\n[Assistant]: old assistant two\\n\\n[Assistant]: recent assistant three"
           user: text "<system-reminder>\\nContext compaction is complete — continue the work that was in progress when it began.\\n</system-reminder>"
     `);
     expect(records).toContainEqual({
@@ -1969,7 +1986,7 @@ describe('FullCompaction', () => {
       properties: expect.objectContaining({
         source: 'auto',
         tokens_before: 6_142,
-        tokens_after: 6_159,
+        tokens_after: 6_185,
         compacted_count: 7,
         retry_count: 0,
       }),
@@ -2066,8 +2083,18 @@ describe('FullCompaction', () => {
     await ctx.rpc.beginCompaction({});
     await compacted;
 
-    expect(ctx.context.get().map((m) => m.role)).toEqual(['user', 'user', 'user', 'user']);
-    expect(ctx.context.get().at(-2)?.origin).toEqual({ kind: 'compaction_summary' });
+    expect(ctx.context.get().map((m) => m.role)).toEqual([
+      'user',
+      'user',
+      'user',
+      'user',
+      'user',
+    ]);
+    expect(ctx.context.get().at(-3)?.origin).toEqual({ kind: 'compaction_summary' });
+    expect(ctx.context.get().at(-2)?.origin).toEqual({
+      kind: 'injection',
+      variant: 'compaction_recent_context',
+    });
     expect(ctx.context.get().at(-1)?.origin).toEqual({
       kind: 'injection',
       variant: 'compaction_continuation',
@@ -2091,7 +2118,13 @@ describe('FullCompaction', () => {
         result: { output: 'two result' },
       },
     });
-    expect(ctx.context.get().map((m) => m.role)).toEqual(['user', 'user', 'user', 'user']);
+    expect(ctx.context.get().map((m) => m.role)).toEqual([
+      'user',
+      'user',
+      'user',
+      'user',
+      'user',
+    ]);
   });
 
   it('keeps a deferred system reminder behind a partially resolved tool exchange across compaction', async () => {
@@ -2130,8 +2163,18 @@ describe('FullCompaction', () => {
     await ctx.rpc.beginCompaction({});
     await compacted;
 
-    expect(ctx.context.get().map((m) => m.role)).toEqual(['user', 'user', 'user', 'user']);
-    expect(ctx.context.get().at(-2)?.origin).toEqual({ kind: 'compaction_summary' });
+    expect(ctx.context.get().map((m) => m.role)).toEqual([
+      'user',
+      'user',
+      'user',
+      'user',
+      'user',
+    ]);
+    expect(ctx.context.get().at(-3)?.origin).toEqual({ kind: 'compaction_summary' });
+    expect(ctx.context.get().at(-2)?.origin).toEqual({
+      kind: 'injection',
+      variant: 'compaction_recent_context',
+    });
     expect(ctx.context.get().at(-1)?.origin).toEqual({
       kind: 'injection',
       variant: 'compaction_continuation',
@@ -2146,7 +2189,13 @@ describe('FullCompaction', () => {
         result: { output: 'two result' },
       },
     });
-    expect(ctx.context.get().map((m) => m.role)).toEqual(['user', 'user', 'user', 'user']);
+    expect(ctx.context.get().map((m) => m.role)).toEqual([
+      'user',
+      'user',
+      'user',
+      'user',
+      'user',
+    ]);
   });
 
   it('compacts a single user message and keeps it ahead of the summary', async () => {
@@ -2207,6 +2256,7 @@ describe('FullCompaction', () => {
         role: 'user',
         text: expect.stringContaining('Compacted after single-message compact.'),
       },
+      { role: 'user', text: expect.stringContaining('[Assistant]: old assistant one') },
       { role: 'user', text: buildCompactionContinuationText() },
     ]);
     await ctx.expectResumeMatches();
@@ -2495,84 +2545,76 @@ describe('FullCompaction', () => {
           "user: old user one",
           "assistant: old assistant one",
           "user: Retry after provider overflow",
-          "user: You are about to run out of context. Create a handoff summary for the
-      model that will resume this task after the earlier conversation is cleared.
+          "user: You are about to run out of context. Create a handoff summary for the model
+      that will resume this task after the earlier conversation is cleared.
 
       --- This message is a direct task, not part of the above conversation ---
 
-      Do not impose rigid section headings; let the shape follow the task. Write it
-      in the same language the conversation has been using — do not switch to English
-      just because these instructions happen to be in English.
+      Write the summary in the same language the conversation has been using — do not
+      switch to English just because these instructions happen to be in English.
 
       Make the summary self-sufficient: the next turn will see only the preserved
-      messages and this summary — every other assistant message, tool call, and tool
-      result above will be gone. In your own words, preserve what you genuinely need
-      to continue:
+      messages, this summary, and a short verbatim slice of the most recent
+      exchanges — every other assistant message, tool call, and tool result above
+      will be gone. Use the section headings below, in this order. Omit a section
+      only when it genuinely does not apply; write "(none)" when it applies but is
+      empty.
 
-      - What the latest request is actually asking for: your reading of its intent and
-        any ambiguity you have already resolved — not a re-transcription, since what
-        fits is kept verbatim in the preserved messages. But those kept messages are
-        size-capped, so a long request is truncated there: if the latest request is
-        large (a big paste or file), preserve the parts at risk of being dropped —
-        above all the actual ask. If several requests are in play, say which one governs
-        the next move, and re-quote any still-relevant earlier request that may have
-        scrolled out of the kept messages.
-      - The instructions and constraints currently in force (user preferences,
-        project rules, environment and tooling limits) — condensed to what still
-        matters, keeping decisions you have already settled (what you chose and why)
-        separate from questions still open, so you neither silently reopen a closed
-        choice nor treat an undecided point as decided.
-      - What has actually been done, at high fidelity: keep the exact commands that
-        were run, the exact file paths touched, and whether each succeeded or failed —
-        and the results themselves, not just the commands: the concrete values
-        returned, the key lines or error text, the schema or signature a lookup
-        revealed, since re-running to recover them may be slow or impossible. Keep only
-        the final working version of any code; drop intermediate attempts and
-        already-resolved errors.
-      - What you still don't know: context the next step depends on that this
-        conversation never established — files or paths referenced but not yet read,
-        schemas or APIs assumed but unseen, questions the user has not answered. Name
-        these gaps so the next turn goes and checks them instead of assuming.
-      - The forward plan — and this is the moment to invest in it. Right now you
-        hold more context on this task than you ever will again; the next turn
-        resumes with less, so the plan you commit here is the one it will follow.
-        Give the exact next command or tool call, but don't stop at the next step:
-        set out the remaining sequence to finish, the decisions you have already
-        made for those upcoming steps (so the next turn doesn't reopen them), the
-        obstacles or edge cases you can already foresee and how you mean to handle
-        them, and any work you can commit to now — the exact patch, query, or shape
-        of the final answer you already know you will produce. Anything you settle
-        here is one less thing the next turn must rediscover. Include any required
-        format for the final answer.
+      ## Objective
+      - [one or two brief sentences describing what the user is trying to accomplish]
 
-      This conversation's event log stays on disk and a recovery pointer is appended below this summary automatically, so you need not reproduce long outputs verbatim — keep exact identifiers, key values and error lines, and name anything the next turn should look up.
+      ## Requirements
+      - [constraints, preferences, requirements, and scope boundaries stated by the user, or "(none)"]
 
-      Your TODO list is re-attached automatically below this summary from its live
-      source, so do not transcribe it — copying it wastes space and can contradict the
-      live version. What that list cannot hold is the reasoning between tasks — why one
-      was reordered or dropped, or a decision on one that constrains another — so
-      record that instead.
+      ## Decisions
+      - [decisions already made and why, or "(none)"]
 
-      Be honest about uncertainty. If an earlier step claimed something was done but
-      was never verified (tests "passing", a fix "working", a file "created"), say so
-      plainly and treat it as unverified rather than fact — re-check before relying
-      on it.
+      ## Work State
+      Break the objective into smaller goals and report which are completed, which are being worked on, and which are blocked.
+      ### Completed
+      - [goals that have been completed; otherwise "(none)"]
 
-      Be concise, and keep the summary proportional to the task: a long multi-step
-      task warrants detail, but a trivial or nearly finished exchange needs only a
-      sentence or two — do not pad it out. Include the critical data, identifiers, and
-      references needed to continue, and omit anything that does not change the next
-      move.
+      ### Active
+      - [goals currently being worked on; otherwise "(none)"]
 
-      Respond with text only. Do not call any tools — you already have everything you
-      need in the conversation history.",
+      ### Blocked
+      - [anything blocking progress, and why; otherwise "(none)"]
+
+      ## Next Move
+      1. [ordered list of next actions, or "(none)"]
+
+      ## Relevant Files
+      List the files and directories, other than the current working directory, that another agent would need to open to continue this work. Include at most 15, most important first. Do not list every file that was read or changed. Include paths outside the current working directory when relevant. If none, write "(none)".
+      - \`[file or directory path]\`: [brief reason it matters]
+
+      ## Important Context
+      - [facts the next agent cannot continue without and cannot easily find on its own; or "(none)"]
+
+      Rules:
+      - Keep each section concise. Use terse, single-line bullets, not prose paragraphs or nested lists.
+      - Prefer short references over detailed restatement. It is fine to leave out information the next agent can recover from the code or the files listed above.
+      - Preserve exact file paths, symbols, commands, error strings, URLs, and identifiers.
+      - Carry forward only user questions or requests that remain unanswered or require further action. Do not repeat ones that newer history has answered or resolved. Preserve exact wording when carrying one forward.
+      - Preserve consequential workflow state, including whether changes are uncommitted, committed, pushed, under review, or merged.
+      - What the latest request is actually asking for: your reading of its intent and any ambiguity you have already resolved — not a re-transcription, since what fits is kept verbatim in the preserved messages. But those kept messages are size-capped, so a long request is truncated there: if the latest request is large (a big paste or file), preserve the parts at risk of being dropped — above all the actual ask.
+      - What has actually been done, at high fidelity: keep the exact commands that were run, the exact file paths touched, and whether each succeeded or failed — and the results themselves, not just the commands. Keep only the final working version of any code; drop intermediate attempts and already-resolved errors.
+      - What you still don't know: context the next step depends on that this conversation never established — files or paths referenced but not yet read, schemas or APIs assumed but unseen, questions the user has not answered. Name these gaps so the next turn goes and checks them instead of assuming.
+      - The forward plan — and this is the moment to invest in it. Right now you hold more context on this task than you ever will again; the next turn resumes with less, so the plan you commit here is the one it will follow. Give the exact next command or tool call, but don't stop at the next step: set out the remaining sequence, the decisions you have already made for those steps, the obstacles you can foresee, and any work you can commit to now. Include any required format for the final answer.
+      - This conversation's event log stays on disk and a recovery pointer is appended below this summary automatically, so you need not reproduce long outputs verbatim — keep exact identifiers, key values and error lines, and name anything the next turn should look up.
+      - Your TODO list is re-attached automatically below this summary from its live source, so do not transcribe it. What that list cannot hold is the reasoning between tasks — why one was reordered or dropped, or a decision on one that constrains another — so record that instead.
+      - Be honest about uncertainty. If an earlier step claimed something was done but was never verified (tests "passing", a fix "working", a file "created"), say so plainly and treat it as unverified rather than fact — re-check before relying on it.
+      - Be concise, and keep the summary proportional to the task: a long multi-step task warrants detail, but a trivial or nearly finished exchange needs only a sentence or two — do not pad it out.
+      - Do not mention the summary process or that context was compacted.
+
+      Respond with text only. Do not call any tools — you already have everything you need in the conversation history.",
         ],
         [
           "user: old user one
 
       Retry after provider overflow",
-          "user: The conversation so far has been compacted to free up context. What follows is your own working summary of this task — use it to continue your train of thought rather than starting over. Treat it as notes, not proof: where it says a step was done, tests passed, or a fix worked, verify that yourself before relying on it. Any user messages earlier in this context are preserved verbatim from the compacted conversation; where a system-reminder note among them marks an omitted middle section, the user messages it replaced are covered by this summary. The summary records which earlier requests were already addressed.
+          "user: The conversation so far has been compacted to free up context. What follows is your own working summary of this task — use it to continue your train of thought rather than starting over. Treat it as notes, not proof: where it says a step was done, tests passed, or a fix worked, verify that yourself before relying on it. Any user messages earlier in this context are preserved verbatim from the compacted conversation; where a system-reminder note among them marks an omitted middle section, the user messages it replaced are covered by this summary. A short verbatim slice of the most recent assistant and tool exchanges follows this summary. The summary records which earlier requests were already addressed.
       Overflow compacted summary.",
+          "user: [Assistant]: old assistant one",
           "user: <system-reminder>
       Context compaction is complete — continue the work that was in progress when it began.
       </system-reminder>",
@@ -3153,23 +3195,11 @@ describe('FullCompaction', () => {
   );
 
   it('honors maxOutputSize from model config during compaction', async () => {
-    let callCount = 0;
     const compactionMaxCompletionTokens: unknown[] = [];
     const generate: GenerateFn = requesterFromGenerateFn(
-      async (_provider, _system, _tools, _history, callbacks, options) => {
-        callCount += 1;
-        if (callCount === 1) {
-          throw new APIContextOverflowError(400, 'Context length exceeded', 'req-max-output');
-        }
-        if (callCount === 2) {
-          compactionMaxCompletionTokens.push(options?.maxCompletionTokens);
-          return textResult('Max output compacted summary.');
-        }
-        await callbacks?.onMessagePart?.({
-          type: 'text',
-          text: 'Recovered with max output.',
-        });
-        return textResult('Recovered with max output.');
+      async (_provider, _system, _tools, _history, _callbacks, options) => {
+        compactionMaxCompletionTokens.push(options?.maxCompletionTokens);
+        return textResult('Max output compacted summary.');
       },
     );
     const ctx = testAgent({ generate });
@@ -3184,33 +3214,20 @@ describe('FullCompaction', () => {
     };
     ctx.notifyModelConfigChanged();
     ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
-    ctx.newEvents();
+    const completed = ctx.once('compaction.completed');
 
-    await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Retry with max output' }] });
-    await ctx.untilTurnEnd();
+    await ctx.rpc.beginCompaction({});
+    await completed;
 
-    expect(callCount).toBe(3);
     expect(compactionMaxCompletionTokens).toEqual([64_000]);
   });
 
   it('uses default 128k hardCap when maxOutputSize is not configured', async () => {
-    let callCount = 0;
     const compactionMaxCompletionTokens: unknown[] = [];
     const generate: GenerateFn = requesterFromGenerateFn(
-      async (_provider, _system, _tools, _history, callbacks, options) => {
-        callCount += 1;
-        if (callCount === 1) {
-          throw new APIContextOverflowError(400, 'Context length exceeded', 'req-default-cap');
-        }
-        if (callCount === 2) {
-          compactionMaxCompletionTokens.push(options?.maxCompletionTokens);
-          return textResult('Default cap compacted summary.');
-        }
-        await callbacks?.onMessagePart?.({
-          type: 'text',
-          text: 'Recovered with default cap.',
-        });
-        return textResult('Recovered with default cap.');
+      async (_provider, _system, _tools, _history, _callbacks, options) => {
+        compactionMaxCompletionTokens.push(options?.maxCompletionTokens);
+        return textResult('Default cap compacted summary.');
       },
     );
     const ctx = testAgent({ generate });
@@ -3219,13 +3236,119 @@ describe('FullCompaction', () => {
       modelCapabilities: CATALOGUED_MODEL_CAPABILITIES,
     });
     ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+    const completed = ctx.once('compaction.completed');
+
+    await ctx.rpc.beginCompaction({});
+    await completed;
+
+    expect(compactionMaxCompletionTokens).toEqual([128 * 1024]);
+  });
+
+  it('fits the compaction output budget to the room left in the context window', async () => {
+    const maxContextTokens = 200_000;
+    let callCount = 0;
+    const compactionRequests: {
+      readonly maxCompletionTokens: number;
+      readonly inputTokens: number;
+    }[] = [];
+    const generate: GenerateFn = requesterFromGenerateFn(
+      async (_provider, _system, _tools, history, _callbacks, options) => {
+        callCount += 1;
+        if (callCount === 1) {
+          throw new APIContextOverflowError(400, 'Context length exceeded', 'req-window-fit');
+        }
+        if (callCount === 2) {
+          compactionRequests.push({
+            maxCompletionTokens: options?.maxCompletionTokens ?? 0,
+            inputTokens: estimateTokensForMessages(history),
+          });
+          return textResult('Window fitted summary.');
+        }
+        await _callbacks?.onMessagePart?.({
+          type: 'text',
+          text: 'Recovered with a fitted window.',
+        });
+        return textResult('Recovered with a fitted window.');
+      },
+    );
+    const ctx = testAgent({ generate });
+    ctx.configure({
+      provider: CATALOGUED_PROVIDER,
+      modelCapabilities: {
+        ...CATALOGUED_MODEL_CAPABILITIES,
+        max_context_tokens: maxContextTokens,
+      },
+    });
+    ctx.appendExchange(1, 'old user one', `old assistant one ${'x'.repeat(600_000)}`, 150_000);
     ctx.newEvents();
 
-    await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Retry with default cap' }] });
+    await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Retry with a fitted window' }] });
     await ctx.untilTurnEnd();
 
-    expect(callCount).toBe(3);
-    expect(compactionMaxCompletionTokens).toEqual([128 * 1024]);
+    expect(compactionRequests).toHaveLength(1);
+    const request = compactionRequests[0]!;
+    expect(request.maxCompletionTokens).toBeGreaterThan(0);
+    expect(request.maxCompletionTokens).toBeLessThan(128 * 1024);
+    expect(request.inputTokens + request.maxCompletionTokens).toBeLessThanOrEqual(
+      maxContextTokens,
+    );
+  });
+
+  it('shrinks the compaction payload when a near-window request is rejected without a context-length message', async () => {
+    const maxContextTokens = 200_000;
+    let callCount = 0;
+    const compactionInputTokens: number[] = [];
+    const generate: GenerateFn = requesterFromGenerateFn(
+      async (_provider, _system, _tools, history, callbacks, options) => {
+        callCount += 1;
+        if (callCount === 1) {
+          throw new APIContextOverflowError(400, 'Context length exceeded', 'req-bodyless-400');
+        }
+        if (callCount === 2) {
+          compactionInputTokens.push(estimateTokensForMessages(history));
+          throw new APIStatusError(400, '400 status code (no body)', 'req-bodyless-400');
+        }
+        if (callCount === 3) {
+          compactionInputTokens.push(estimateTokensForMessages(history));
+          return textResult('Shrunk summary.');
+        }
+        await callbacks?.onMessagePart?.({
+          type: 'text',
+          text: 'Recovered after a bodyless 400.',
+        });
+        return textResult('Recovered after a bodyless 400.');
+      },
+    );
+    const ctx = testAgent({ generate });
+    ctx.configure({
+      provider: CATALOGUED_PROVIDER,
+      modelCapabilities: {
+        ...CATALOGUED_MODEL_CAPABILITIES,
+        max_context_tokens: maxContextTokens,
+      },
+    });
+    ctx.appendExchange(1, 'old user one', `old assistant one ${'x'.repeat(600_000)}`, 150_000);
+    ctx.newEvents();
+
+    await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Retry after a bodyless 400' }] });
+    const events = await ctx.untilTurnEnd();
+
+    expect(compactionInputTokens).toHaveLength(2);
+    expect(compactionInputTokens[1]!).toBeLessThan(compactionInputTokens[0]!);
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        event: 'compaction.completed',
+        args: expect.objectContaining({
+          result: expect.objectContaining({ summary: 'Shrunk summary.' }),
+        }),
+      }),
+    );
+    expect(events).toContainEqual(
+      expect.objectContaining({
+        event: 'turn.ended',
+        args: expect.objectContaining({ turnId: 0, reason: 'completed' }),
+      }),
+    );
   });
 
   it('ignores filtered assistant placeholders when checking the retained overflow suffix', async () => {
@@ -3318,158 +3441,141 @@ describe('FullCompaction', () => {
           "user: old user one",
           "assistant: old assistant one",
           "user: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-          "user: You are about to run out of context. Create a handoff summary for the
-      model that will resume this task after the earlier conversation is cleared.
+          "user: You are about to run out of context. Create a handoff summary for the model
+      that will resume this task after the earlier conversation is cleared.
 
       --- This message is a direct task, not part of the above conversation ---
 
-      Do not impose rigid section headings; let the shape follow the task. Write it
-      in the same language the conversation has been using — do not switch to English
-      just because these instructions happen to be in English.
+      Write the summary in the same language the conversation has been using — do not
+      switch to English just because these instructions happen to be in English.
 
       Make the summary self-sufficient: the next turn will see only the preserved
-      messages and this summary — every other assistant message, tool call, and tool
-      result above will be gone. In your own words, preserve what you genuinely need
-      to continue:
+      messages, this summary, and a short verbatim slice of the most recent
+      exchanges — every other assistant message, tool call, and tool result above
+      will be gone. Use the section headings below, in this order. Omit a section
+      only when it genuinely does not apply; write "(none)" when it applies but is
+      empty.
 
-      - What the latest request is actually asking for: your reading of its intent and
-        any ambiguity you have already resolved — not a re-transcription, since what
-        fits is kept verbatim in the preserved messages. But those kept messages are
-        size-capped, so a long request is truncated there: if the latest request is
-        large (a big paste or file), preserve the parts at risk of being dropped —
-        above all the actual ask. If several requests are in play, say which one governs
-        the next move, and re-quote any still-relevant earlier request that may have
-        scrolled out of the kept messages.
-      - The instructions and constraints currently in force (user preferences,
-        project rules, environment and tooling limits) — condensed to what still
-        matters, keeping decisions you have already settled (what you chose and why)
-        separate from questions still open, so you neither silently reopen a closed
-        choice nor treat an undecided point as decided.
-      - What has actually been done, at high fidelity: keep the exact commands that
-        were run, the exact file paths touched, and whether each succeeded or failed —
-        and the results themselves, not just the commands: the concrete values
-        returned, the key lines or error text, the schema or signature a lookup
-        revealed, since re-running to recover them may be slow or impossible. Keep only
-        the final working version of any code; drop intermediate attempts and
-        already-resolved errors.
-      - What you still don't know: context the next step depends on that this
-        conversation never established — files or paths referenced but not yet read,
-        schemas or APIs assumed but unseen, questions the user has not answered. Name
-        these gaps so the next turn goes and checks them instead of assuming.
-      - The forward plan — and this is the moment to invest in it. Right now you
-        hold more context on this task than you ever will again; the next turn
-        resumes with less, so the plan you commit here is the one it will follow.
-        Give the exact next command or tool call, but don't stop at the next step:
-        set out the remaining sequence to finish, the decisions you have already
-        made for those upcoming steps (so the next turn doesn't reopen them), the
-        obstacles or edge cases you can already foresee and how you mean to handle
-        them, and any work you can commit to now — the exact patch, query, or shape
-        of the final answer you already know you will produce. Anything you settle
-        here is one less thing the next turn must rediscover. Include any required
-        format for the final answer.
+      ## Objective
+      - [one or two brief sentences describing what the user is trying to accomplish]
 
-      This conversation's event log stays on disk and a recovery pointer is appended below this summary automatically, so you need not reproduce long outputs verbatim — keep exact identifiers, key values and error lines, and name anything the next turn should look up.
+      ## Requirements
+      - [constraints, preferences, requirements, and scope boundaries stated by the user, or "(none)"]
 
-      Your TODO list is re-attached automatically below this summary from its live
-      source, so do not transcribe it — copying it wastes space and can contradict the
-      live version. What that list cannot hold is the reasoning between tasks — why one
-      was reordered or dropped, or a decision on one that constrains another — so
-      record that instead.
+      ## Decisions
+      - [decisions already made and why, or "(none)"]
 
-      Be honest about uncertainty. If an earlier step claimed something was done but
-      was never verified (tests "passing", a fix "working", a file "created"), say so
-      plainly and treat it as unverified rather than fact — re-check before relying
-      on it.
+      ## Work State
+      Break the objective into smaller goals and report which are completed, which are being worked on, and which are blocked.
+      ### Completed
+      - [goals that have been completed; otherwise "(none)"]
 
-      Be concise, and keep the summary proportional to the task: a long multi-step
-      task warrants detail, but a trivial or nearly finished exchange needs only a
-      sentence or two — do not pad it out. Include the critical data, identifiers, and
-      references needed to continue, and omit anything that does not change the next
-      move.
+      ### Active
+      - [goals currently being worked on; otherwise "(none)"]
 
-      Respond with text only. Do not call any tools — you already have everything you
-      need in the conversation history.",
+      ### Blocked
+      - [anything blocking progress, and why; otherwise "(none)"]
+
+      ## Next Move
+      1. [ordered list of next actions, or "(none)"]
+
+      ## Relevant Files
+      List the files and directories, other than the current working directory, that another agent would need to open to continue this work. Include at most 15, most important first. Do not list every file that was read or changed. Include paths outside the current working directory when relevant. If none, write "(none)".
+      - \`[file or directory path]\`: [brief reason it matters]
+
+      ## Important Context
+      - [facts the next agent cannot continue without and cannot easily find on its own; or "(none)"]
+
+      Rules:
+      - Keep each section concise. Use terse, single-line bullets, not prose paragraphs or nested lists.
+      - Prefer short references over detailed restatement. It is fine to leave out information the next agent can recover from the code or the files listed above.
+      - Preserve exact file paths, symbols, commands, error strings, URLs, and identifiers.
+      - Carry forward only user questions or requests that remain unanswered or require further action. Do not repeat ones that newer history has answered or resolved. Preserve exact wording when carrying one forward.
+      - Preserve consequential workflow state, including whether changes are uncommitted, committed, pushed, under review, or merged.
+      - What the latest request is actually asking for: your reading of its intent and any ambiguity you have already resolved — not a re-transcription, since what fits is kept verbatim in the preserved messages. But those kept messages are size-capped, so a long request is truncated there: if the latest request is large (a big paste or file), preserve the parts at risk of being dropped — above all the actual ask.
+      - What has actually been done, at high fidelity: keep the exact commands that were run, the exact file paths touched, and whether each succeeded or failed — and the results themselves, not just the commands. Keep only the final working version of any code; drop intermediate attempts and already-resolved errors.
+      - What you still don't know: context the next step depends on that this conversation never established — files or paths referenced but not yet read, schemas or APIs assumed but unseen, questions the user has not answered. Name these gaps so the next turn goes and checks them instead of assuming.
+      - The forward plan — and this is the moment to invest in it. Right now you hold more context on this task than you ever will again; the next turn resumes with less, so the plan you commit here is the one it will follow. Give the exact next command or tool call, but don't stop at the next step: set out the remaining sequence, the decisions you have already made for those steps, the obstacles you can foresee, and any work you can commit to now. Include any required format for the final answer.
+      - This conversation's event log stays on disk and a recovery pointer is appended below this summary automatically, so you need not reproduce long outputs verbatim — keep exact identifiers, key values and error lines, and name anything the next turn should look up.
+      - Your TODO list is re-attached automatically below this summary from its live source, so do not transcribe it. What that list cannot hold is the reasoning between tasks — why one was reordered or dropped, or a decision on one that constrains another — so record that instead.
+      - Be honest about uncertainty. If an earlier step claimed something was done but was never verified (tests "passing", a fix "working", a file "created"), say so plainly and treat it as unverified rather than fact — re-check before relying on it.
+      - Be concise, and keep the summary proportional to the task: a long multi-step task warrants detail, but a trivial or nearly finished exchange needs only a sentence or two — do not pad it out.
+      - Do not mention the summary process or that context was compacted.
+
+      Respond with text only. Do not call any tools — you already have everything you need in the conversation history.",
         ],
         [
           "user: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-          "user: You are about to run out of context. Create a handoff summary for the
-      model that will resume this task after the earlier conversation is cleared.
+          "user: You are about to run out of context. Create a handoff summary for the model
+      that will resume this task after the earlier conversation is cleared.
 
       --- This message is a direct task, not part of the above conversation ---
 
-      Do not impose rigid section headings; let the shape follow the task. Write it
-      in the same language the conversation has been using — do not switch to English
-      just because these instructions happen to be in English.
+      Write the summary in the same language the conversation has been using — do not
+      switch to English just because these instructions happen to be in English.
 
       Make the summary self-sufficient: the next turn will see only the preserved
-      messages and this summary — every other assistant message, tool call, and tool
-      result above will be gone. In your own words, preserve what you genuinely need
-      to continue:
+      messages, this summary, and a short verbatim slice of the most recent
+      exchanges — every other assistant message, tool call, and tool result above
+      will be gone. Use the section headings below, in this order. Omit a section
+      only when it genuinely does not apply; write "(none)" when it applies but is
+      empty.
 
-      - What the latest request is actually asking for: your reading of its intent and
-        any ambiguity you have already resolved — not a re-transcription, since what
-        fits is kept verbatim in the preserved messages. But those kept messages are
-        size-capped, so a long request is truncated there: if the latest request is
-        large (a big paste or file), preserve the parts at risk of being dropped —
-        above all the actual ask. If several requests are in play, say which one governs
-        the next move, and re-quote any still-relevant earlier request that may have
-        scrolled out of the kept messages.
-      - The instructions and constraints currently in force (user preferences,
-        project rules, environment and tooling limits) — condensed to what still
-        matters, keeping decisions you have already settled (what you chose and why)
-        separate from questions still open, so you neither silently reopen a closed
-        choice nor treat an undecided point as decided.
-      - What has actually been done, at high fidelity: keep the exact commands that
-        were run, the exact file paths touched, and whether each succeeded or failed —
-        and the results themselves, not just the commands: the concrete values
-        returned, the key lines or error text, the schema or signature a lookup
-        revealed, since re-running to recover them may be slow or impossible. Keep only
-        the final working version of any code; drop intermediate attempts and
-        already-resolved errors.
-      - What you still don't know: context the next step depends on that this
-        conversation never established — files or paths referenced but not yet read,
-        schemas or APIs assumed but unseen, questions the user has not answered. Name
-        these gaps so the next turn goes and checks them instead of assuming.
-      - The forward plan — and this is the moment to invest in it. Right now you
-        hold more context on this task than you ever will again; the next turn
-        resumes with less, so the plan you commit here is the one it will follow.
-        Give the exact next command or tool call, but don't stop at the next step:
-        set out the remaining sequence to finish, the decisions you have already
-        made for those upcoming steps (so the next turn doesn't reopen them), the
-        obstacles or edge cases you can already foresee and how you mean to handle
-        them, and any work you can commit to now — the exact patch, query, or shape
-        of the final answer you already know you will produce. Anything you settle
-        here is one less thing the next turn must rediscover. Include any required
-        format for the final answer.
+      ## Objective
+      - [one or two brief sentences describing what the user is trying to accomplish]
 
-      This conversation's event log stays on disk and a recovery pointer is appended below this summary automatically, so you need not reproduce long outputs verbatim — keep exact identifiers, key values and error lines, and name anything the next turn should look up.
+      ## Requirements
+      - [constraints, preferences, requirements, and scope boundaries stated by the user, or "(none)"]
 
-      Your TODO list is re-attached automatically below this summary from its live
-      source, so do not transcribe it — copying it wastes space and can contradict the
-      live version. What that list cannot hold is the reasoning between tasks — why one
-      was reordered or dropped, or a decision on one that constrains another — so
-      record that instead.
+      ## Decisions
+      - [decisions already made and why, or "(none)"]
 
-      Be honest about uncertainty. If an earlier step claimed something was done but
-      was never verified (tests "passing", a fix "working", a file "created"), say so
-      plainly and treat it as unverified rather than fact — re-check before relying
-      on it.
+      ## Work State
+      Break the objective into smaller goals and report which are completed, which are being worked on, and which are blocked.
+      ### Completed
+      - [goals that have been completed; otherwise "(none)"]
 
-      Be concise, and keep the summary proportional to the task: a long multi-step
-      task warrants detail, but a trivial or nearly finished exchange needs only a
-      sentence or two — do not pad it out. Include the critical data, identifiers, and
-      references needed to continue, and omit anything that does not change the next
-      move.
+      ### Active
+      - [goals currently being worked on; otherwise "(none)"]
 
-      Respond with text only. Do not call any tools — you already have everything you
-      need in the conversation history.",
+      ### Blocked
+      - [anything blocking progress, and why; otherwise "(none)"]
+
+      ## Next Move
+      1. [ordered list of next actions, or "(none)"]
+
+      ## Relevant Files
+      List the files and directories, other than the current working directory, that another agent would need to open to continue this work. Include at most 15, most important first. Do not list every file that was read or changed. Include paths outside the current working directory when relevant. If none, write "(none)".
+      - \`[file or directory path]\`: [brief reason it matters]
+
+      ## Important Context
+      - [facts the next agent cannot continue without and cannot easily find on its own; or "(none)"]
+
+      Rules:
+      - Keep each section concise. Use terse, single-line bullets, not prose paragraphs or nested lists.
+      - Prefer short references over detailed restatement. It is fine to leave out information the next agent can recover from the code or the files listed above.
+      - Preserve exact file paths, symbols, commands, error strings, URLs, and identifiers.
+      - Carry forward only user questions or requests that remain unanswered or require further action. Do not repeat ones that newer history has answered or resolved. Preserve exact wording when carrying one forward.
+      - Preserve consequential workflow state, including whether changes are uncommitted, committed, pushed, under review, or merged.
+      - What the latest request is actually asking for: your reading of its intent and any ambiguity you have already resolved — not a re-transcription, since what fits is kept verbatim in the preserved messages. But those kept messages are size-capped, so a long request is truncated there: if the latest request is large (a big paste or file), preserve the parts at risk of being dropped — above all the actual ask.
+      - What has actually been done, at high fidelity: keep the exact commands that were run, the exact file paths touched, and whether each succeeded or failed — and the results themselves, not just the commands. Keep only the final working version of any code; drop intermediate attempts and already-resolved errors.
+      - What you still don't know: context the next step depends on that this conversation never established — files or paths referenced but not yet read, schemas or APIs assumed but unseen, questions the user has not answered. Name these gaps so the next turn goes and checks them instead of assuming.
+      - The forward plan — and this is the moment to invest in it. Right now you hold more context on this task than you ever will again; the next turn resumes with less, so the plan you commit here is the one it will follow. Give the exact next command or tool call, but don't stop at the next step: set out the remaining sequence, the decisions you have already made for those steps, the obstacles you can foresee, and any work you can commit to now. Include any required format for the final answer.
+      - This conversation's event log stays on disk and a recovery pointer is appended below this summary automatically, so you need not reproduce long outputs verbatim — keep exact identifiers, key values and error lines, and name anything the next turn should look up.
+      - Your TODO list is re-attached automatically below this summary from its live source, so do not transcribe it. What that list cannot hold is the reasoning between tasks — why one was reordered or dropped, or a decision on one that constrains another — so record that instead.
+      - Be honest about uncertainty. If an earlier step claimed something was done but was never verified (tests "passing", a fix "working", a file "created"), say so plainly and treat it as unverified rather than fact — re-check before relying on it.
+      - Be concise, and keep the summary proportional to the task: a long multi-step task warrants detail, but a trivial or nearly finished exchange needs only a sentence or two — do not pad it out.
+      - Do not mention the summary process or that context was compacted.
+
+      Respond with text only. Do not call any tools — you already have everything you need in the conversation history.",
         ],
         [
           "user: old user one
 
       xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-          "user: The conversation so far has been compacted to free up context. What follows is your own working summary of this task — use it to continue your train of thought rather than starting over. Treat it as notes, not proof: where it says a step was done, tests passed, or a fix worked, verify that yourself before relying on it. Any user messages earlier in this context are preserved verbatim from the compacted conversation; where a system-reminder note among them marks an omitted middle section, the user messages it replaced are covered by this summary. The summary records which earlier requests were already addressed.
+          "user: The conversation so far has been compacted to free up context. What follows is your own working summary of this task — use it to continue your train of thought rather than starting over. Treat it as notes, not proof: where it says a step was done, tests passed, or a fix worked, verify that yourself before relying on it. Any user messages earlier in this context are preserved verbatim from the compacted conversation; where a system-reminder note among them marks an omitted middle section, the user messages it replaced are covered by this summary. A short verbatim slice of the most recent assistant and tool exchanges follows this summary. The summary records which earlier requests were already addressed.
       Placeholder compacted summary.",
+          "user: [Assistant]: old assistant one",
           "user: <system-reminder>
       Context compaction is complete — continue the work that was in progress when it began.
       </system-reminder>",
@@ -3505,7 +3611,7 @@ describe('FullCompaction', () => {
     await completed;
 
     const history = ctx.compactHistory();
-    expect(history).toHaveLength(4);
+    expect(history).toHaveLength(5);
     expect(history[0]).toMatchObject({
       role: 'user',
       text: 'old user one',
@@ -3522,9 +3628,13 @@ describe('FullCompaction', () => {
     });
     expect(history[3]).toMatchObject({
       role: 'user',
+      text: expect.stringContaining('[Assistant]: old assistant one'),
+    });
+    expect(history[4]).toMatchObject({
+      role: 'user',
       text: buildCompactionContinuationText(),
     });
-    expect(ctx.context.get().at(-2)?.content[0]).toMatchObject({
+    expect(ctx.context.get().at(-3)?.content[0]).toMatchObject({
       type: 'text',
       text: expect.stringContaining('The conversation so far has been compacted'),
     });
@@ -3580,7 +3690,7 @@ describe('FullCompaction context recovery pointer', () => {
   }
 
   function noteText(ctx: TestAgentContext): string {
-    const part = ctx.context.get().at(-2)?.content[0];
+    const part = ctx.context.get().at(-3)?.content[0];
     return part?.type === 'text' ? part.text : '';
   }
 
@@ -3728,7 +3838,7 @@ describe('FullCompaction context recovery pointer', () => {
     expect(withPointer).toContain(
       'a recovery pointer is appended below this summary automatically',
     );
-    expect(withPointer).toContain('format for the final answer.\n\nThis conversation');
+    expect(withPointer).toContain('Include any required format for the final answer.');
     expect(withPointer).not.toContain('${');
     expect(withCustom).toContain('Optional user instruction:\nkeep the API facts');
   });

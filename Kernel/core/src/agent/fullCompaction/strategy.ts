@@ -4,6 +4,8 @@ import { estimateTokensForMessage } from '#/llm-adapter/contract/tokens';
 
 import type { CompactionSource } from './types';
 
+export const RECENT_CONTEXT_SIZE_RATIO = 0.2;
+
 export interface CompactionConfig {
   triggerRatio: number;
   blockRatio: number;
@@ -24,7 +26,7 @@ export const DEFAULT_COMPACTION_CONFIG: CompactionConfig = {
   maxOverflowCompactionAttempts: 3,
   maxRecentMessages: 4,
   maxRecentUserMessages: Infinity,
-  maxRecentSizeRatio: 0.2,
+  maxRecentSizeRatio: RECENT_CONTEXT_SIZE_RATIO,
   minOverflowReductionRatio: 0.05,
 };
 

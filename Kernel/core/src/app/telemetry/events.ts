@@ -245,6 +245,7 @@ export interface CompactionFinishedEvent {
   retry_count: number;
   round: number;
   thinking_effort: string;
+  summary_template_matched?: boolean;
   input_tokens?: number;
   output_tokens?: number;
   input_cache_read?: number;
@@ -900,6 +901,8 @@ export const telemetryEventDefinitions = {
       retry_count: 'Number of retries attempted',
       round: 'Compaction round index',
       thinking_effort: 'Thinking effort level in effect',
+      summary_template_matched:
+        'Whether the compaction summary used the section headings the summary prompt asks for',
       input_tokens: 'Total input tokens (other + cache read + cache creation)',
       output_tokens: 'Output tokens',
       input_cache_read: 'Cache-read input tokens',

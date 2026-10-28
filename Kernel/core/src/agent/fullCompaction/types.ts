@@ -1,6 +1,7 @@
 export interface CompactionResult {
   summary: string;
   contextSummary?: string;
+  recentContext?: string;
   compactedCount: number;
   tokensBefore: number;
   tokensAfter: number;
