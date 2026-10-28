@@ -1,4 +1,4 @@
-import { isAbsolute, join } from 'node:path';
+import { dirname, isAbsolute, join } from 'node:path';
 
 import { Disposable, toDisposable } from '@hilbras/omnicode-core/_base/di/lifecycle';
 import type { IDisposable } from '@hilbras/omnicode-core/_base/di/lifecycle';
@@ -32,6 +32,7 @@ import type { RetrievalResult } from '#/contracts/retrieval';
 
 import { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
 
+import { EvidenceWatcher, createNodeEvidenceWatchPort } from './evidenceWatcher';
 import { MemoryMaintenanceScheduler } from './memoryMaintenance';
 import { resolveProjectIdentity, type ProjectIdentity } from './projectIdentity';
 import { MemoryService } from './memoryService';
@@ -42,11 +43,22 @@ export class AppMemoryService extends Disposable implements IMemoryService {
 
   private readonly delegate: MemoryService;
   private readonly maintenance: MemoryMaintenanceScheduler;
+  private readonly evidenceWatcher: EvidenceWatcher;
   private readonly runtimeEnabled: () => boolean;
   private readonly canonicalInjectionEnabled: () => boolean;
   private readonly identity: Promise<ProjectIdentity | undefined>;
   private evidenceProjectId(): string | undefined {
     return this.resolvedProjectId;
+  }
+
+  private async citedDirectories(cwd: string): Promise<readonly string[]> {
+    if (!this.enabled) return [];
+    const directories = new Set<string>();
+    for (const ref of await this.delegate.citedFileRefs(MAX_EVIDENCE_RECORDS)) {
+      const path = resolveEvidencePath(cwd, ref);
+      if (path !== undefined) directories.add(dirname(path));
+    }
+    return [...directories];
   }
 
   private resolvedProjectId: string | undefined;
@@ -85,9 +97,19 @@ export class AppMemoryService extends Disposable implements IMemoryService {
       evidenceProjectId: () => this.evidenceProjectId(),
     });
     this.maintenance.start();
+    this.evidenceWatcher = new EvidenceWatcher({
+      listDirectories: () => this.citedDirectories(bootstrap.cwd),
+      refresh: () => this.delegate.refreshEvidence({ projectId: this.evidenceProjectId() }),
+      watch: createNodeEvidenceWatchPort(),
+      log,
+      enabled: runtime.available,
+    });
+    this.evidenceWatcher.start();
     const delegate = this.delegate;
     const maintenance = this.maintenance;
+    const evidenceWatcher = this.evidenceWatcher;
     this._register(toDisposable(() => {
+      evidenceWatcher.dispose();
       maintenance.dispose();
       delegate.dispose();
     }));
@@ -112,6 +134,9 @@ export class AppMemoryService extends Disposable implements IMemoryService {
   capture(input: MemoryCaptureInput): Promise<MemoryCaptureResult> {
     return this.delegate.capture(input).then((result) => {
       if (result.status === 'queued') this.maintenance.notifyQueued();
+      if (result.status === 'stored' && input.evidence?.some((item) => item.kind === 'file')) {
+        this.evidenceWatcher.notify();
+      }
       return result;
     });
   }
@@ -212,9 +237,14 @@ export class AppMemoryService extends Disposable implements IMemoryService {
 }
 
 export type IMemoryRuntimeState = IDisposable & { readonly enabled: boolean };
-async function readProjectFile(fs: IHostFileSystem, cwd: string, ref: string): Promise<string | undefined> {
+function resolveEvidencePath(cwd: string, ref: string): string | undefined {
   if (ref.length === 0 || ref.includes('..')) return undefined;
-  const path = isAbsolute(ref) ? ref : join(cwd, ref);
+  return isAbsolute(ref) ? ref : join(cwd, ref);
+}
+
+async function readProjectFile(fs: IHostFileSystem, cwd: string, ref: string): Promise<string | undefined> {
+  const path = resolveEvidencePath(cwd, ref);
+  if (path === undefined) return undefined;
   try {
     const stat = await fs.stat(path);
     if (!stat.isFile || stat.size > MAX_EVIDENCE_BYTES) return undefined;
@@ -225,3 +255,4 @@ async function readProjectFile(fs: IHostFileSystem, cwd: string, ref: string): P
 }
 
 const MAX_EVIDENCE_BYTES = 1024 * 1024;
+const MAX_EVIDENCE_RECORDS = 200;

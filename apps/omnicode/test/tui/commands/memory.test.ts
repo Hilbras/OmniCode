@@ -27,6 +27,7 @@ function memoryView(overrides: Partial<MemoryView> = {}): MemoryView {
     suspicious: false,
     suspicionReasons: [],
     redactionCount: 0,
+    stale: false,
     evidence: [],
     ...overrides,
   };
@@ -105,6 +106,24 @@ describe('handleMemoryCommand', () => {
       expect.stringContaining('mem_0001  session:01234567:s-1  unverified  observation'),
     );
     expect(host.showError).not.toHaveBeenCalled();
+  });
+
+  it('marks a memory whose cited file changed as stale', async () => {
+    const host = makeHost({
+      listMemories: vi.fn(async () => ({
+        enabled: true,
+        memories: [memoryView({ stale: true })],
+        truncated: false,
+      })),
+      getMemory: vi.fn(async () => ({ enabled: true, memory: memoryView({ stale: true }) })),
+    });
+
+    await handleMemoryCommand(host, 'list');
+    expect(host.showNotice).toHaveBeenCalledWith('Memories (1)', expect.stringContaining('unverified (stale)'));
+
+    await handleMemoryCommand(host, 'show mem_0001');
+    const detail = vi.mocked(host.showNotice).mock.calls.at(-1)?.[1] ?? '';
+    expect(detail).toContain('stale: a cited file changed since capture');
   });
 
   it('says so when memory is disabled', async () => {

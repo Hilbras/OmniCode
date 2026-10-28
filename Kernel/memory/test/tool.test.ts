@@ -33,6 +33,8 @@ import {
   MEMORY_EXPORT_FORMAT,
 } from '#/control/memoryControl';
 
+import { evidenceForFile } from '#/service/evidence';
+
 import {
   captureInput,
   createHarness,
@@ -507,6 +509,26 @@ describe('memory user control', () => {
     const invalidated = await listVisibleMemories(harness.service, viewer, { scope: 'repository', status: 'invalidated' });
     expect(invalidated.memories.map((m) => m.id)).toEqual([ids.own]);
     expect((await listVisibleMemories(harness.service, viewer, { status: 'all' })).memories).toHaveLength(3);
+  });
+
+  it('flags a memory whose cited file changed instead of hiding the change', async () => {
+    const contents = new Map([['docs/plan.md', 'the original plan']]);
+    const harness = createHarness({ readEvidence: async (ref) => contents.get(ref) });
+    const stored = await harness.service.capture(
+      captureInput('the plan ships on fridays', {
+        evidence: [evidenceForFile('docs/plan.md', 'the original plan', 1)],
+      }),
+    );
+    const before = await getVisibleMemory(harness.service, viewer, stored.id ?? '');
+    expect(before.memory?.stale).toBe(false);
+
+    contents.set('docs/plan.md', 'a completely different plan');
+    await harness.service.refreshEvidence({ projectId: REPO_A });
+
+    const after = await getVisibleMemory(harness.service, viewer, stored.id ?? '');
+    expect(after.memory?.stale).toBe(true);
+    expect(after.memory?.trust).toBe('unverified');
+    expect(after.memory?.evidence[0]?.state).toBe('changed');
   });
 
   it('reports truncation when the limit cuts the list', async () => {

@@ -60,6 +60,7 @@ export const MemoryViewSchema = z.object({
   suspicious: z.boolean(),
   suspicion_reasons: z.array(z.string().min(1)),
   redaction_count: z.number().int().nonnegative(),
+  stale: z.boolean(),
   approval: MemoryApprovalSchema.optional(),
   evidence: z.array(MemoryEvidenceSchema),
 });

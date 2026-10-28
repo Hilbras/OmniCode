@@ -16,7 +16,7 @@ step and no `dist`, matching `Kernel/Addons` and `Kernel/Tools`.
 | `src/security/` | secret redaction (wraps core) and instruction-like-content detection |
 | `src/storage/` | the `MemoryStorePort` seam, an in-memory store, and the minidb store |
 | `src/retrieval/` | normalize → scope → lexical → gates → rank → budget → explanation |
-| `src/service/` | the `IMemoryService` implementation, record factory, runtime wiring, maintenance scheduler |
+| `src/service/` | the `IMemoryService` implementation, record factory, runtime wiring, maintenance scheduler, evidence watcher |
 | `src/context/` | agent-scope project identity and the reminder providers |
 | `src/tool/` | the `memory_search`, `memory_save` and `memory_forget` agent tools |
 | `src/control/` | the user-facing read/confirm/forget/export surface, shared by the REST routes and the CLI |
@@ -186,8 +186,31 @@ store.
 fingerprints (`sha256:`-prefixed, produced by `fingerprintText`), and delegates
 to `markStale()`. Evidence whose fingerprint did not come from that scheme is
 skipped, and a file that cannot be read counts as *unknown* rather than changed —
-an unreadable file never demotes anything. The scheduler runs it on a 15-minute
-cadence against the current project only, bounded per pass.
+an unreadable file never demotes anything. Demotion sets trust to `unverified`,
+which is what removes the record from injection and from search.
+
+Two mechanisms feed it:
+
+- `EvidenceWatcher` (`src/service/evidenceWatcher.ts`) watches the directories
+  that hold cited files through an injectable `EvidenceWatchPort`; the production
+  port is `node:fs.watch` with `persistent: false`. A change debounces 300 ms and
+  then runs a bounded refresh, so an edited file demotes its memory within a
+  second. The watch set is reconciled against `citedFileRefs()` on a 60-second
+  tick and immediately after a capture that stored file evidence; at most 64
+  directories are watched, one handle each, and `dispose()` closes every handle
+  and timer. The feature flag is checked before each reconciliation, so turning
+  memory off drops all watches.
+- The scheduler's 15-minute sweep stays as the fallback: a watcher sees nothing
+  that happened while the process was not running.
+
+The watcher is deliberately not a git integration. A blob hash is the same
+content hash the fingerprint already is, and it would add a git dependency plus a
+separate path for repositories without one, while the exit criterion is only
+"stale within seconds" — which content fingerprints already reach. `repoRevision`
+is still recorded on capture for provenance.
+
+`/memory list` appends `(stale)` and `/memory show` adds a line when any
+evidence item carries `state: 'changed'`.
 
 ### Measured ranking quality
 
@@ -362,7 +385,7 @@ memory package has all four.
 | `process.test.ts` | a real second OS process holding the lock, via `test/fixtures/hold-store.mts` |
 | `scale.test.ts` | 400 memories, on both the in-memory store and real minidb, including a reopen |
 | `evaluation.test.ts` | measured ranking quality against the labelled corpus, morphological recall, and the no-match guarantee |
-| `evidence.test.ts` | evidence freshness: changed, unchanged, unreadable, foreign, budgeted |
+| `evidence.test.ts` | evidence freshness: changed, unchanged, unreadable, foreign, budgeted; the watcher's debounce, bound, cleanup and real `fs.watch` port |
 
 ## Known limitations
 
@@ -376,10 +399,11 @@ memory package has all four.
 - Conflict detection needs a `subject`. One is inferred only for a short
   `fact`/`preference` statement with a compound key; every other contradiction
   is stored side by side and only surfaced if the caller supplied a key.
-- Evidence freshness is polled every 15 minutes against the files memories
-  actually cite, not watched. A file edited between polls is detected late, and
-  a file outside those references is never checked at all. `resetAccessCount()`
-  is exposed for operators rather than wired to a schedule.
+- Evidence freshness covers the directories that hold cited files, capped at 64
+  of them, plus a 15-minute sweep. A file outside those references is never
+  checked, and a change made while no process is running is noticed by the next
+  sweep rather than immediately. `resetAccessCount()` is exposed for operators
+  rather than wired to a schedule.
 - The store is single-writer (minidb holds an exclusive lock). A second Omnicode
   instance opens the memory store read-only: reads still work, writes fail with
   `memory.storage_write_failed` and `capture` returns `failed`, and

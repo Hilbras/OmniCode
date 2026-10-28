@@ -76,6 +76,7 @@ interface WireMemoryView {
   readonly suspicious: boolean;
   readonly suspicion_reasons: readonly string[];
   readonly redaction_count: number;
+  readonly stale: boolean;
   readonly approval?: MemoryView['approval'];
   readonly evidence: readonly Record<string, unknown>[];
 }
@@ -108,6 +109,7 @@ function toWireMemory(view: MemoryView): WireMemoryView {
     suspicious: view.suspicious,
     suspicion_reasons: view.suspicionReasons,
     redaction_count: view.redactionCount,
+    stale: view.stale,
     approval: view.approval,
     evidence: view.evidence.map((item) => ({
       kind: item.kind,

@@ -61,6 +61,7 @@ export interface MemoryView {
   readonly suspicious: boolean;
   readonly suspicionReasons: readonly string[];
   readonly redactionCount: number;
+  readonly stale: boolean;
   readonly approval?: MemoryApproval;
   readonly evidence: readonly MemoryEvidenceView[];
 }
@@ -137,6 +138,7 @@ export function toMemoryView(record: MemoryRecord): MemoryView {
     suspicious: record.suspicious,
     suspicionReasons: record.suspicionReasons,
     redactionCount: record.redactionCount,
+    stale: record.evidence.some((item) => item.state === 'changed'),
     approval: record.approval,
     evidence: record.evidence.map((item) => ({
       kind: item.kind,

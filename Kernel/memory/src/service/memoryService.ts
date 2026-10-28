@@ -606,6 +606,23 @@ export class MemoryService extends Disposable implements IMemoryService {
     return { status: 'checked', checked, marked: new Set(findings.map((finding) => finding.memoryId)).size, findings };
   }
 
+  async citedFileRefs(limit: number): Promise<readonly string[]> {
+    if (!this.available()) return [];
+    const records = await this.listAll({
+      tiers: MEMORY_TIERS,
+      lifecycle: ['active'],
+      limit: Math.max(1, limit),
+    });
+    const refs = new Set<string>();
+    for (const record of records) {
+      for (const item of record.evidence) {
+        if (item.kind !== 'file' || item.fingerprint === undefined) continue;
+        refs.add(item.ref);
+      }
+    }
+    return [...refs];
+  }
+
   async refreshEvidence(
     options: MemoryEvidenceRefreshOptions = {},
   ): Promise<MemoryEvidenceRefreshReport> {

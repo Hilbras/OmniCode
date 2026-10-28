@@ -1,6 +1,16 @@
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+import type { IDisposable } from '@hilbras/omnicode-core/_base/di/lifecycle';
 import { describe, expect, it } from 'vitest';
 
 import { evidenceForFile, fingerprintText, isFingerprintOfKind } from '#/service/evidence';
+import {
+  createNodeEvidenceWatchPort,
+  EvidenceWatcher,
+  type EvidenceWatchPort,
+} from '#/service/evidenceWatcher';
 
 import { captureInput, createHarness, evidenceFor, FakeTimers, REPO_A, REPO_B, repoScope } from './helpers';
 import { MemoryMaintenanceScheduler } from '#/service/memoryMaintenance';
@@ -152,6 +162,160 @@ describe('evidence refresh', () => {
     }
     const report = await harness.service.refreshEvidence({ projectId: REPO_A, limit: 5 });
     expect(report.checked).toBeLessThanOrEqual(5);
+  });
+});
+
+class FakeWatchPort implements EvidenceWatchPort {
+  readonly watched = new Map<string, () => void>();
+  readonly closed: string[] = [];
+  readonly unwatchable = new Set<string>();
+
+  watch(directory: string, onChange: () => void): IDisposable {
+    if (this.unwatchable.has(directory)) throw new Error('no watch handles left');
+    this.watched.set(directory, onChange);
+    return {
+      dispose: () => {
+        this.closed.push(directory);
+        this.watched.delete(directory);
+      },
+    };
+  }
+
+  change(directory: string): void {
+    this.watched.get(directory)?.();
+  }
+}
+
+async function withTimeout(promise: Promise<void>, ms: number): Promise<void> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error(`no watch event within ${String(ms)}ms`));
+    }, ms);
+  });
+  try {
+    await Promise.race([promise, timeout]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
+
+describe('evidence watcher', () => {
+  async function watched(initial: Record<string, string>, directories: readonly string[]) {
+    const disk = files(initial);
+    const harness = createHarness({ readEvidence: disk.read });
+    const port = new FakeWatchPort();
+    const timers = new FakeTimers();
+    const watcher = new EvidenceWatcher({
+      listDirectories: async () => directories,
+      refresh: () => harness.service.refreshEvidence({ projectId: REPO_A }),
+      watch: port,
+      log: harness.log,
+      timers,
+      syncMs: 100_000,
+    });
+    return { disk, harness, port, timers, watcher };
+  }
+
+  it('demotes a memory as soon as a watched directory changes', async () => {
+    const { disk, harness, port, timers, watcher } = await watched({ 'docs/plan.md': 'the original plan' }, [
+      '/repo/docs',
+    ]);
+    const stored = await harness.service.capture(
+      captureInput('the plan ships on fridays', {
+        evidence: [evidenceForFile('docs/plan.md', 'the original plan', 1)],
+      }),
+    );
+    watcher.start();
+    await watcher.whenIdle();
+    expect(watcher.directories).toEqual(['/repo/docs']);
+
+    disk.write('docs/plan.md', 'a completely different plan');
+    port.change('/repo/docs');
+    await timers.fireAll();
+    await watcher.whenIdle();
+
+    const after = await harness.service.get(stored.id as string);
+    expect(after?.trust).toBe('unverified');
+    expect(after?.evidence[0]?.state).toBe('changed');
+    watcher.dispose();
+  });
+
+  it('caps the number of watched directories', async () => {
+    const { port, harness } = await watched({}, []);
+    const bounded = new EvidenceWatcher({
+      listDirectories: async () => ['/repo/c', '/repo/a', '/repo/b'],
+      refresh: () => harness.service.refreshEvidence({ projectId: REPO_A }),
+      watch: port,
+      log: harness.log,
+      maxDirectories: 2,
+    });
+    await bounded.sync();
+    expect(bounded.directories).toEqual(['/repo/a', '/repo/b']);
+    bounded.dispose();
+  });
+
+  it('releases every watcher and timer on dispose', async () => {
+    const { port, timers, watcher } = await watched({}, ['/repo/a', '/repo/b']);
+    watcher.start();
+    await watcher.whenIdle();
+    expect(port.watched.size).toBe(2);
+
+    watcher.dispose();
+    expect(port.watched.size).toBe(0);
+    expect(port.closed).toEqual(['/repo/a', '/repo/b']);
+    expect(timers.size).toBe(0);
+
+    port.change('/repo/a');
+    await timers.fireAll();
+    expect(timers.size).toBe(0);
+  });
+
+  it('keeps watching the directories it can when one cannot be watched', async () => {
+    const { port, watcher } = await watched({}, ['/repo/a', '/repo/b']);
+    port.unwatchable.add('/repo/a');
+    await watcher.sync();
+    expect(watcher.directories).toEqual(['/repo/b']);
+    watcher.dispose();
+  });
+
+  it('stops watching when the feature is turned off', async () => {
+    const { harness, port, watcher } = await watched({}, ['/repo/a']);
+    await watcher.sync();
+    expect(port.watched.size).toBe(1);
+
+    const disabled = new EvidenceWatcher({
+      listDirectories: async () => ['/repo/a'],
+      refresh: () => harness.service.refreshEvidence({ projectId: REPO_A }),
+      watch: port,
+      log: harness.log,
+      enabled: () => false,
+    });
+    await disabled.sync();
+    expect(disabled.directories).toEqual([]);
+    disabled.dispose();
+    watcher.dispose();
+  });
+
+  it('reacts to a real directory change through the node port', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'omnicode-evidence-watch-'));
+    const port = createNodeEvidenceWatchPort();
+    let handle: IDisposable | undefined;
+    let fired = false;
+    try {
+      const changed = new Promise<void>((resolve) => {
+        handle = port.watch(dir, () => {
+          fired = true;
+          resolve();
+        });
+      });
+      await writeFile(join(dir, 'plan.md'), 'the original plan', 'utf8');
+      await withTimeout(changed, 5000);
+      expect(fired).toBe(true);
+    } finally {
+      handle?.dispose();
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });
 

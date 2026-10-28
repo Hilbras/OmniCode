@@ -127,7 +127,10 @@ function describeScope(memory: MemoryView): string {
 }
 
 function describeTrust(memory: MemoryView): string {
-  return memory.suspicious ? `${memory.trust} (flagged)` : memory.trust;
+  const flags: string[] = [];
+  if (memory.suspicious) flags.push('flagged');
+  if (memory.stale) flags.push('stale');
+  return flags.length === 0 ? memory.trust : `${memory.trust} (${flags.join(', ')})`;
 }
 
 function renderList(host: SlashCommandHost, listed: MemoryListView): void {
@@ -176,6 +179,7 @@ function renderShow(host: SlashCommandHost, view: { enabled: boolean; memory?: M
       `evidence: ${memory.evidence.map((item) => `${item.kind} ${item.ref} (${item.state})`).join('; ')}`,
     );
   }
+  if (memory.stale) lines.push('stale: a cited file changed since capture');
   if (memory.suspicious) lines.push(`flagged: ${memory.suspicionReasons.join(', ')}`);
   host.showNotice('Memory', lines.join('\n'));
 }
