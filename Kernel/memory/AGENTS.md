@@ -76,8 +76,13 @@ is how "a security policy cannot live in working memory" is enforced.
 
 ## Conflicts
 
-`subject` is an optional caller-supplied conflict key (`devserver.port`). When a
-new record lands on a subject that already has an active record:
+`subject` is a conflict key (`devserver.port`). A caller may supply it; when it
+is missing, `capture` derives one for a short `fact`/`preference` statement
+shaped like "<key> is/uses/requires/defaults to <value>" (`src/service/subjectInference.ts`).
+The inferred key must name at least two words or a dotted name, so "the devserver
+port is 5173" keys as `devserver.port` while "the cli is bundled with tsup" gets
+no key at all: a one-word key would retire an unrelated statement about the same
+noun. When a new record lands on a subject that already has an active record:
 
 - it supersedes the sibling when it has strictly higher trust, or when it is a
   `user_correction` and the sibling is not;
@@ -131,7 +136,7 @@ search(query)
   ├─ normalizeQuery        NFKC, control chars, 512-char cap, stopword filter
   ├─ scope filtering      exact scope keys derived from the request ids
   ├─ lexical              searchBounded over the allowed keys only
-  ├─ gates                scope · tier · lifecycle · expiry · trust · category · suspicion
+  ├─ gates                scope · tier · lifecycle · expiry · trust · category · suspicion · relevance
   ├─ ranking              lexical + trust + scope + bounded reinforcement
   ├─ budget               maxResults · maxContextChars · maxMemoryChars · maxCandidates · maxPostingsVisits
   ├─ explanation          per-hit components, gate decisions, evidence
@@ -151,16 +156,29 @@ partial.
 Reinforcement is capped at `0.3` and weighted `0.1` against a lexical weight of
 `1.0`, so a heavily retrieved memory cannot outrank a directly relevant one.
 
-### Morphology
+### Morphology and query groups
 
-`src/retrieval/stem.ts` applies a conservative English suffix stripper on both
-sides of the match. Each record carries a derived `searchText` field holding the
-token set plus its stems; the text index covers `['searchText', 'content']`, so
-records written before this field existed still match on their raw content with
-no migration. A query is stemmed the same way. This is justified by measurement,
-not fashion: the evaluation corpus showed `linter` failing to retrieve
-`linting`, which §10 makes the trigger for going beyond exact tokens. No
-embeddings, no vector store.
+`src/retrieval/stem.ts` builds both sides of the match from four additive
+mechanisms, so a token always matches itself even when a transform is wrong:
+
+1. Identifier splitting before tokenization: `MemoryService` → `memory service`,
+   `parse_http_response` already splits on the separator.
+2. A conservative English suffix stripper (`linting`/`linter` → `lint`), with
+   `ies` → `y` so `repositories` and `repository` meet, and `es` stripped only
+   after a sibilant so `writes` → `write` rather than `writ`.
+3. A small synonym table (`src/retrieval/synonyms.ts`) for coding shorthand —
+   `repo`/`repository`, `db`/`database`, `docs`/`documentation`. Every entry
+   expands the index and the query alike, so the two sides stay symmetric.
+4. `searchText`: each record's derived token set. The text index covers
+   `['searchText', 'content']`, so records written before the field existed
+   still match on raw content with no migration.
+
+A query is also grouped by `stem` (canonicalized through the synonym table), and
+the relevance gate counts coverage per group: `linter linting` is one word, not
+two. A query of one or two groups needs one match; three or more need two, so a
+record that shares one incidental word with a long question is rejected with a
+`relevance` gate decision instead of ranked last. No embeddings, no vector
+store.
 
 ### Evidence freshness
 
@@ -174,14 +192,19 @@ cadence against the current project only, bounded per pass.
 ### Measured ranking quality
 
 `test/evaluation.test.ts` scores the labelled corpus in
-`src/retrieval/evaluation.ts` (10 memories, 9 queries) with `recall@k`,
+`src/retrieval/evaluation.ts` (10 memories, 10 queries) with `recall@k`,
 `precision@k` and reciprocal rank. Current measurement at k=5:
 
-| Metric | Measured | Floor asserted |
-|---|---|---|
-| recall@5 | 1.000 | 1.0 |
-| precision@5 | 0.783 | 0.6 |
-| MRR | 0.950 | 0.9 |
+| Metric | Before phase 4 | Measured now | Floor asserted |
+|---|---|---|---|
+| recall@5 | 1.000 | 1.000 | 1.0 |
+| precision@5 | 0.783 | 1.000 | 0.9 |
+| MRR | 0.950 | 1.000 | 0.95 |
+
+The gains come from the relevance gate, not from better ranking: with coverage
+enforced, a query returns the memory it is about and drops the partial matches
+that used to fill the remaining slots. Cost per query on this corpus is 1.6 ms
+and 281 characters of injected context, both measured alongside the metrics.
 
 The floors are regression guards, not aspirations; the numbers are measured on
 every run. The evaluation also refuses to score a case with no relevant memory
@@ -192,12 +215,6 @@ rather than reporting a perfect 1.0.
 that the work stays bounded, and that a second repository stays invisible. The
 candidate budget is enforced **globally** across scope prefixes, not per prefix,
 so a query cannot examine five times its intended work by matching five scopes.
-
-**Known lexical limit:** the index matches tokens, not morphology. "which linter
-do we use" does not retrieve "linting runs oxlint..." because `linter` and
-`linting` are different tokens. That miss is pinned by a test, and the query
-returns `no_match` with no invented result. Closing it means stemming or
-embeddings, which §19 keeps out of V1.
 
 ## Security boundaries
 
@@ -329,9 +346,9 @@ memory package has all four.
 
 | File | Covers |
 |---|---|
-| `trust.test.ts` | the promotion rules and tier admission, plus the same through `capture` |
+| `trust.test.ts` | the promotion rules and tier admission, plus the same through `capture`; conflict resolution and subject inference |
 | `storage.test.ts` | record integrity, corrupt records, failed writes, and the minidb backend on a real temp dir |
-| `retrieval.test.ts` | recall, scopes, gates, ranking, budgets and every retrieval status |
+| `retrieval.test.ts` | recall, scopes, gates, ranking, budgets and every retrieval status; synonym expansion, identifier splitting, query grouping and the relevance gate |
 | `lifecycle.test.ts` | expiry vs invalidation vs supersession vs deletion, canonical approval |
 | `security.test.ts` | injection, cross-project isolation, redaction, authority forgery, unapproved promotion |
 | `capture.test.ts` | idempotency, the review queue, retry/backoff, failure reporting |
@@ -344,7 +361,7 @@ memory package has all four.
 | `concurrency.test.ts` | two openers on one store: the second reads, its writes fail loudly, the lock comes back |
 | `process.test.ts` | a real second OS process holding the lock, via `test/fixtures/hold-store.mts` |
 | `scale.test.ts` | 400 memories, on both the in-memory store and real minidb, including a reopen |
-| `evaluation.test.ts` | measured ranking quality against the labelled corpus, stemming, and the no-match guarantee |
+| `evaluation.test.ts` | measured ranking quality against the labelled corpus, morphological recall, and the no-match guarantee |
 | `evidence.test.ts` | evidence freshness: changed, unchanged, unreadable, foreign, budgeted |
 
 ## Known limitations
@@ -356,8 +373,9 @@ memory package has all four.
 - A review that is queued and then killed with the process stays queued. The
   scheduler drains on the next start, so nothing is lost, but nothing guarantees
   completion before exit.
-- Conflict detection needs an explicit `subject`. Without one, contradictions
-  are stored side by side and only surfaced if the caller supplied a key.
+- Conflict detection needs a `subject`. One is inferred only for a short
+  `fact`/`preference` statement with a compound key; every other contradiction
+  is stored side by side and only surfaced if the caller supplied a key.
 - Evidence freshness is polled every 15 minutes against the files memories
   actually cite, not watched. A file edited between polls is detected late, and
   a file outside those references is never checked at all. `resetAccessCount()`

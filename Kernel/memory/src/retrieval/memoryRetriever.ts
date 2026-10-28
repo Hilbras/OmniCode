@@ -18,6 +18,21 @@ import type { MemoryStorePort } from '#/storage/memoryStore';
 import { applyBudget, CONTEXT_HEADER, resolveBudget } from './budget';
 import { normalizeQuery } from './normalize';
 import { composeScore, normalizeLexical } from './ranking';
+import { searchTextFor, termsOfStoredText, type QueryGroup } from './stem';
+
+/**
+ * How many distinct query words a record must contain to be a result. A
+ * one-word query needs that word; anything longer needs two, so a record that
+ * shares one incidental word with a five-word question is rejected instead of
+ * ranked last. Measured against the evaluation corpus before it was added.
+ */
+const MIN_COVERAGE_SHORT_QUERY = 1;
+const MIN_COVERAGE_LONG_QUERY = 2;
+const LONG_QUERY_WORDS = 3;
+
+function requiredCoverage(groups: number): number {
+  return groups < LONG_QUERY_WORDS ? MIN_COVERAGE_SHORT_QUERY : MIN_COVERAGE_LONG_QUERY;
+}
 
 const STOPWORDS: ReadonlySet<string> = new Set([
   'a', 'an', 'and', 'are', 'as', 'at', 'be', 'but', 'by', 'did', 'do', 'does', 'for', 'from', 'had',
@@ -39,7 +54,11 @@ export class MemoryRetriever {
     const resolved = resolveBudget(purpose, query.budget, query.limit);
     const normalized = normalizeQuery(query.query);
     const significantTerms = normalized.terms.filter((term) => !STOPWORDS.has(term));
-    const indexQuery = significantTerms.length > 0 ? significantTerms.join(' ') : normalized.text;
+    const significantGroups = normalized.groups.filter((group) => !STOPWORDS.has(group.key));
+    const indexQuery =
+      significantGroups.length > 0
+        ? [...new Set(significantGroups.flatMap((group) => group.forms))].join(' ')
+        : normalized.text;
 
     const diagnostics: MutableDiagnostics = {
       normalizedQuery: normalized.text,
@@ -76,7 +95,7 @@ export class MemoryRetriever {
 
       const eligible: { record: MemoryRecord; lexical: number; gates: RetrievalGateDecision[] }[] = [];
       for (const [key, record] of records) {
-        const gates = this.evaluateGates(record, prefixes, query);
+        const gates = this.evaluateGates(record, prefixes, query, significantGroups);
         const blocked = gates.filter((gate) => !gate.allowed);
         if (blocked.length > 0) {
           diagnostics.rejected.push(...blocked);
@@ -276,6 +295,7 @@ export class MemoryRetriever {
     record: MemoryRecord,
     prefixes: readonly string[],
     query: MemorySearchQuery,
+    groups: readonly QueryGroup[],
   ): readonly RetrievalGateDecision[] {
     const prefix = scopePrefix(record.scope);
     const scopeAllowed = prefix !== undefined && prefixes.includes(prefix);
@@ -312,7 +332,22 @@ export class MemoryRetriever {
           ? `suspicious content: ${record.suspicionReasons.join(', ')}${approvedCanonical ? ' (explicitly approved)' : ''}`
           : 'no injection signals',
       },
+      ...(groups.length === 0 ? [] : [this.relevanceGate(record, groups)]),
     ];
+  }
+
+  private relevanceGate(record: MemoryRecord, groups: readonly QueryGroup[]): RetrievalGateDecision {
+    const stored = termsOfStoredText(record.searchText ?? searchTextFor(record.content));
+    let matched = 0;
+    for (const group of groups) {
+      if (group.forms.some((form) => stored.has(form))) matched += 1;
+    }
+    const required = requiredCoverage(groups.length);
+    return {
+      gate: 'relevance',
+      allowed: matched >= required,
+      detail: `matched ${String(matched)}/${String(groups.length)} query words (needs ${String(required)})`,
+    };
   }
 }
 

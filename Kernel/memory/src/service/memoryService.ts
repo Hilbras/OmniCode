@@ -52,6 +52,7 @@ import { checkTierAdmission, evaluatePromotion } from '#/trust/trustPolicy';
 import { fingerprintText, isFingerprintOfKind } from './evidence';
 import { buildRecord, withUpdated } from './memoryRecordFactory';
 import { DEFAULT_MEMORY_SETTINGS, type MemoryPolicySettings } from './memorySettings';
+import { subjectFor } from './subjectInference';
 
 export interface MemoryServiceDeps {
   readonly store: MemoryStorePort;
@@ -149,7 +150,7 @@ export class MemoryService extends Disposable implements IMemoryService {
       };
     }
 
-    const draft = { ...input, content };
+    const draft = { ...input, content, subject: subjectFor(input, content) };
     const now = this.now();
     const built = buildRecord(draft, this.newId(), now);
     const violations = checkTierAdmission({
@@ -170,7 +171,7 @@ export class MemoryService extends Disposable implements IMemoryService {
       }
     }
 
-    if (input.review === 'queued') return this.enqueueReview(input, now);
+    if (input.review === 'queued') return this.enqueueReview(draft, now);
 
     const duplicate = await this.findDuplicate(built.record);
     if (duplicate !== undefined) {

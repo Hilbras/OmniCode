@@ -87,7 +87,8 @@ export interface RetrievalGateDecision {
     | 'trust'
     | 'category'
     | 'suspicion'
-    | 'integrity';
+    | 'integrity'
+    | 'relevance';
   readonly allowed: boolean;
   readonly detail: string;
 }

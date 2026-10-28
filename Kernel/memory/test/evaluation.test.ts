@@ -63,8 +63,8 @@ describe('retrieval evaluation', () => {
       `recall@${K}=${metrics.recallAtK.toFixed(3)} precision@${K}=${metrics.precisionAtK.toFixed(3)} mrr=${metrics.meanReciprocalRank.toFixed(3)}`,
     ).toMatchObject({ queries: EVAL_QUERIES.length, noResult: 0 });
     expect(metrics.recallAtK).toBeGreaterThanOrEqual(1);
-    expect(metrics.precisionAtK).toBeGreaterThanOrEqual(0.6);
-    expect(metrics.meanReciprocalRank).toBeGreaterThanOrEqual(0.9);
+    expect(metrics.precisionAtK).toBeGreaterThanOrEqual(0.9);
+    expect(metrics.meanReciprocalRank).toBeGreaterThanOrEqual(0.95);
     for (const entry of cases) {
       expect(
         entry.ranked.some((judgement) => judgement.relevant),

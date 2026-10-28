@@ -323,4 +323,37 @@ describe('capture-level trust enforcement', () => {
     expect(superseded?.lifecycle).toBe('superseded');
     expect(superseded?.supersededBy).toBe(strong.id);
   });
+
+  it('derives a conflict key from a compound statement so a correction retires it', async () => {
+    const harness = createHarness();
+    const older = await harness.service.capture(
+      captureInput('the devserver port is 5173', { category: 'fact', evidence: evidenceFor('vite.config.ts') }),
+    );
+    expect(older.record?.subject).toBe('devserver.port');
+
+    const correction = await harness.service.capture(
+      captureInput('the devserver port is 3000', {
+        category: 'fact',
+        sourceType: 'user_correction',
+        origin: 'user',
+      }),
+    );
+    expect(correction.record?.subject).toBe('devserver.port');
+    expect(correction.record?.supersedes).toBe(older.id as string);
+    expect((await harness.service.get(older.id as string))?.lifecycle).toBe('superseded');
+  });
+
+  it('leaves a one-word subject uninferred so unrelated statements do not conflict', async () => {
+    const harness = createHarness();
+    const first = await harness.service.capture(
+      captureInput('the cli is bundled with tsup', { category: 'fact', evidence: evidenceFor('package.json') }),
+    );
+    expect(first.record?.subject).toBeUndefined();
+
+    const second = await harness.service.capture(
+      captureInput('the cli is written in typescript', { category: 'fact', evidence: evidenceFor('package.json') }),
+    );
+    expect(second.record?.lifecycle).toBe('active');
+    expect(second.record?.conflictsWith).toHaveLength(0);
+  });
 });

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { AUTO_INJECT_RETRIEVAL_BUDGET, RETRIEVAL_NOTICE_INCOMPLETE } from '#/contracts/retrieval';
 import { composeScore, reinforcementWeight } from '#/retrieval/ranking';
+import { queryGroups } from '#/retrieval/stem';
 
 import {
   captureInput,
@@ -277,6 +278,61 @@ describe('retrieval: budget and honest status', () => {
     expect(result.memories).toHaveLength(1);
     expect(result.budget.constraints).toContain('text_index_building');
     store.textIndexState = original;
+  });
+});
+
+describe('retrieval: query morphology and relevance', () => {
+  it('matches the short and long form of a term through the synonym table', async () => {
+    const { service } = createHarness();
+    const stored = await service.capture(
+      captureInput('the database holds the write lock while a process is open', { evidence: evidenceFor('docs/db.md') }),
+    );
+    const short = await service.search({ query: 'db write lock', projectId: REPO_A });
+    expect(short.memories[0]?.record.id).toBe(stored.id);
+
+    const repo = await service.capture(
+      captureInput('the repository keeps a single lock file at the root', { evidence: evidenceFor('docs/repo.md') }),
+    );
+    const long = await service.search({ query: 'repo lock file', projectId: REPO_A });
+    expect(long.memories[0]?.record.id).toBe(repo.id);
+  });
+
+  it('counts variants of one word as a single query word', async () => {
+    const groups = queryGroups('repo repositories repository');
+    expect(groups).toHaveLength(1);
+    expect(queryGroups('linter linting').map((group) => group.key)).toEqual(['lint']);
+  });
+
+  it('splits identifiers so camelCase, snake_case and prose match each other', async () => {
+    const { service } = createHarness();
+    const camel = await service.capture(
+      captureInput('MemoryService resolves the store through the accessor', { evidence: evidenceFor('src/memoryService.ts') }),
+    );
+    const spaced = await service.search({ query: 'memory service store', projectId: REPO_A });
+    expect(spaced.memories[0]?.record.id).toBe(camel.id);
+
+    const snake = await service.capture(
+      captureInput('parse_http_response returns the body', { evidence: evidenceFor('src/http.ts') }),
+    );
+    const asIdentifier = await service.search({ query: 'parseHttpResponse', projectId: REPO_A });
+    expect(asIdentifier.memories[0]?.record.id).toBe(snake.id);
+  });
+
+  it('rejects a record that shares only one word with a longer query', async () => {
+    const { service } = createHarness();
+    const stored = await service.capture(
+      captureInput('the release tag is prefixed with v', { evidence: evidenceFor('docs/release.md') }),
+    );
+    const incidental = await service.search({
+      query: 'kubernetes operator release reconciliation',
+      projectId: REPO_A,
+    });
+    expect(incidental.status).toBe('no_match');
+    expect(incidental.memories).toHaveLength(0);
+    expect(incidental.diagnostics.rejected.some((gate) => gate.gate === 'relevance')).toBe(true);
+
+    const direct = await service.search({ query: 'release tag', projectId: REPO_A });
+    expect(direct.memories[0]?.record.id).toBe(stored.id);
   });
 });
 
