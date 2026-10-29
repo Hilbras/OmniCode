@@ -2127,6 +2127,87 @@ Deletes every stored value (mirrors `localStorage.clear`). No parameters.
 
 On success, `data` is `null`.
 
+### Memory
+
+Review and control the experimental memory store. Every endpoint takes a `session_id` and answers from that session's point of view: a memory outside the session's scopes is reported as `40421`, exactly as if it did not exist, so one project cannot probe another's memories. All four endpoints answer `40925` when memory is disabled, whether the experimental flag is off or `[memory] enabled` is `false`.
+
+| Method and path | Description |
+| --- | --- |
+| `GET /api/v1/memory` | List memories visible to a session |
+| `GET /api/v1/memory/{memory_id}` | Show one memory |
+| `POST /api/v1/memory/{memory_id}/confirm` | Promote `unverified` to `trusted` |
+| `POST /api/v1/memory/{memory_id}/forget` | Invalidate a memory |
+
+The shape of a memory is described once under [Memory object](#memory-object).
+
+#### `GET /api/v1/memory`
+
+| Parameter | In | Type | Description |
+| --- | --- | --- | --- |
+| `session_id` | query | string | **Required.** Session whose scopes decide what is visible |
+| `scope` | query | string | `global`, `workspace`, `repository`, or `session` |
+| `status` | query | string | `active` (default), `superseded`, `expired`, `invalidated`, or `all` |
+| `limit` | query | integer | 1–1000, default 200 |
+
+On success, `data` is `{ enabled, memories, truncated }`. `truncated` is `true` when more memories matched than the limit returned; the filter is applied before the limit, so a truncated list is a short list, never a filtered one.
+
+#### `GET /api/v1/memory/{memory_id}`
+
+| Parameter | In | Type | Description |
+| --- | --- | --- | --- |
+| `memory_id` | path | string | **Required.** Memory id |
+| `session_id` | query | string | **Required.** Session whose scopes decide what is visible |
+
+On success, `data` is `{ enabled, memory }`. A memory that exists but is outside the session's scopes answers `40421`.
+
+#### `POST /api/v1/memory/{memory_id}/confirm`
+
+Promotes an `unverified` memory to `trusted` with an approval record naming `user` as the authority. This is the only path that raises trust from a user action; no tool call can reach it.
+
+| Parameter | In | Type | Description |
+| --- | --- | --- | --- |
+| `memory_id` | path | string | **Required.** Memory id |
+| `session_id` | body | string | **Required.** Session whose scopes decide what is visible |
+
+On success, `data` is `{ status, memory, reason? }`. `status` is `confirmed`, or `unchanged` when the memory was already at least `trusted` — confirming twice is not an error. A memory that is no longer active answers `40930`.
+
+#### `POST /api/v1/memory/{memory_id}/forget`
+
+Invalidates a memory. The record stays for auditability and stops being injected or returned by search; nothing here hard-deletes.
+
+| Parameter | In | Type | Description |
+| --- | --- | --- | --- |
+| `memory_id` | path | string | **Required.** Memory id |
+| `session_id` | body | string | **Required.** Session whose scopes decide what is visible |
+| `reason` | body | string | Optional, 1–500 characters, stored on the record |
+
+On success, `data` is `{ status, memory, reason? }` with `status` `forgotten` or `unchanged` (already invalidated). A memory that is not active answers `40930`.
+
+#### Memory object
+
+| Field | Type | Description |
+| --- | --- | --- |
+| `id` | string | Memory id |
+| `content` | string | The stored text |
+| `category` | string | `fact`, `preference`, `observation`, or `task` |
+| `tier` | string | `working`, `distilled`, or `canonical` |
+| `trust` | string | `unverified`, `trusted`, `verified`, or `system` |
+| `trust_reason` | string | Why the record sits at that level |
+| `origin` | string | `user`, `model`, or `application` |
+| `source_type` | string | What produced it: `command`, `tool_result`, `test_result`, `agent_observation`, `model_inference`, or `derived` |
+| `scope` | object | `{ tier, workspace_id?, project_id?, session_id?, task_id? }` |
+| `lifecycle` | string | `active`, `superseded`, `expired`, `invalidated`, or `deleted` |
+| `subject` | string | Optional conflict key, such as `devserver.port` |
+| `created_at` / `updated_at` | integer | Unix milliseconds |
+| `expires_at` | integer | Optional Unix milliseconds |
+| `supersedes` / `superseded_by` | string | Optional ids on either side of a conflict |
+| `conflicts_with` | string[] | Ids of records this one contradicts |
+| `suspicious` / `suspicion_reasons` | boolean / string[] | Secret-scan verdict and why |
+| `redaction_count` | integer | Secrets redacted before storing |
+| `stale` | boolean | A cited file changed after capture; the record is also demoted to `unverified` |
+| `approval` | object | Optional `{ by, at, reason }` |
+| `evidence` | object[] | `{ kind, ref, state, observed_at }` items, where `state` is `present`, `missing`, or `changed` |
+
 ### Global search and misc
 
 | Method and path | Description |

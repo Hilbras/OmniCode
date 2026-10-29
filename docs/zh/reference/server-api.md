@@ -2127,6 +2127,87 @@ PTY 终端接口；仅在 loopback 绑定时挂载（非 loopback 绑定会跳�
 
 成功时 `data` 为 `null`。
 
+### 记忆
+
+查看和管理实验性的记忆存储。所有端点都接收 `session_id`，并以该会话的视角作答：超出会话作用域的记忆一律返回 `40421`，与不存在完全一样，因此一个项目无法探测另一个项目的记忆。记忆未启用时（实验开关关闭或 `[memory] enabled` 为 `false`），四个端点都返回 `40925`。
+
+| 方法与路径 | 说明 |
+| --- | --- |
+| `GET /api/v1/memory` | 列出会话可见的记忆 |
+| `GET /api/v1/memory/{memory_id}` | 查看单条记忆 |
+| `POST /api/v1/memory/{memory_id}/confirm` | 把 `unverified` 提升为 `trusted` |
+| `POST /api/v1/memory/{memory_id}/forget` | 使一条记忆失效 |
+
+记忆对象的字段见 [记忆对象](#记忆对象)。
+
+#### `GET /api/v1/memory`
+
+| 参数 | 位置 | 类型 | 说明 |
+| --- | --- | --- | --- |
+| `session_id` | query | string | **必填。** 由该会话的作用域决定可见范围 |
+| `scope` | query | string | `global`、`workspace`、`repository` 或 `session` |
+| `status` | query | string | `active`（默认）、`superseded`、`expired`、`invalidated` 或 `all` |
+| `limit` | query | integer | 1–1000，默认 200 |
+
+成功时 `data` 为 `{ enabled, memories, truncated }`。匹配数量超过限制时 `truncated` 为 `true`；过滤在截断之前完成，所以被截断的列表只是变短，不会漏掉符合过滤条件的记录。
+
+#### `GET /api/v1/memory/{memory_id}`
+
+| 参数 | 位置 | 类型 | 说明 |
+| --- | --- | --- | --- |
+| `memory_id` | path | string | **必填。** 记忆 id |
+| `session_id` | query | string | **必填。** 由该会话的作用域决定可见范围 |
+
+成功时 `data` 为 `{ enabled, memory }`。记忆存在但超出会话作用域时返回 `40421`。
+
+#### `POST /api/v1/memory/{memory_id}/confirm`
+
+把 `unverified` 的记忆提升为 `trusted`，并写入一条以 `user` 为授权方的审批记录。这是用户操作提升信任等级的唯一路径，任何工具调用都无法到达。
+
+| 参数 | 位置 | 类型 | 说明 |
+| --- | --- | --- | --- |
+| `memory_id` | path | string | **必填。** 记忆 id |
+| `session_id` | body | string | **必填。** 由该会话的作用域决定可见范围 |
+
+成功时 `data` 为 `{ status, memory, reason? }`。`status` 为 `confirmed`；记忆已经是 `trusted` 或更高时为 `unchanged`，重复确认不算错误。记忆不再处于活动状态时返回 `40930`。
+
+#### `POST /api/v1/memory/{memory_id}/forget`
+
+使一条记忆失效。记录会保留以便追溯，不再被注入，也不再出现在搜索结果中；这里不会硬删除任何数据。
+
+| 参数 | 位置 | 类型 | 说明 |
+| --- | --- | --- | --- |
+| `memory_id` | path | string | **必填。** 记忆 id |
+| `session_id` | body | string | **必填。** 由该会话的作用域决定可见范围 |
+| `reason` | body | string | 可选，1–500 字符，记录在记忆上 |
+
+成功时 `data` 为 `{ status, memory, reason? }`，`status` 为 `forgotten` 或 `unchanged`（已失效）。记忆不处于活动状态时返回 `40930`。
+
+#### 记忆对象
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | string | 记忆 id |
+| `content` | string | 保存的文本 |
+| `category` | string | `fact`、`preference`、`observation` 或 `task` |
+| `tier` | string | `working`、`distilled` 或 `canonical` |
+| `trust` | string | `unverified`、`trusted`、`verified` 或 `system` |
+| `trust_reason` | string | 处于该等级的原因 |
+| `origin` | string | `user`、`model` 或 `application` |
+| `source_type` | string | 来源：`command`、`tool_result`、`test_result`、`agent_observation`、`model_inference` 或 `derived` |
+| `scope` | object | `{ tier, workspace_id?, project_id?, session_id?, task_id? }` |
+| `lifecycle` | string | `active`、`superseded`、`expired`、`invalidated` 或 `deleted` |
+| `subject` | string | 可选的冲突键，例如 `devserver.port` |
+| `created_at` / `updated_at` | integer | Unix 毫秒 |
+| `expires_at` | integer | 可选的 Unix 毫秒 |
+| `supersedes` / `superseded_by` | string | 冲突两侧的可选 id |
+| `conflicts_with` | string[] | 与这条记忆矛盾的记录 id |
+| `suspicious` / `suspicion_reasons` | boolean / string[] | 敏感信息扫描结论及原因 |
+| `redaction_count` | integer | 存储前被脱敏的敏感信息数量 |
+| `stale` | boolean | 采集后被引用的文件发生变化；该记录同时被降级为 `unverified` |
+| `approval` | object | 可选的 `{ by, at, reason }` |
+| `evidence` | object[] | `{ kind, ref, state, observed_at }` 数组，`state` 为 `present`、`missing` 或 `changed` |
+
 ### 全局搜索与其他
 
 | 方法与路径 | 说明 |
