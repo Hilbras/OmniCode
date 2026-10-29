@@ -351,9 +351,12 @@ not even in `test/setup.ts`. Core's DI tests assert that no scope topology has
 been declared at import time, and any import that reaches `app/scopes` breaks
 them. Nothing in core depends on memory, so there is nothing to activate there.
 
-- Flag: `OMNICODE_EXPERIMENTAL_MEMORY`, id `memory`, **default off**. With the
+- Flag: `OMNICODE_EXPERIMENTAL_MEMORY`, id `memory`, **default on**. With the
   flag off, capture is rejected, retrieval reports `unavailable`, and the store
-  is never opened.
+  is never opened. Three independent ways to turn it off:
+  `OMNICODE_EXPERIMENTAL_MEMORY=0`, `[experimental] memory = false`, and
+  `[memory] enabled = false`; the flag itself is still registered as
+  experimental, so `OMNICODE_EXPERIMENTAL_FLAG` and `explain` keep working.
 - Config `[memory]`: `enabled`, `dir`, `maxContentChars`, `workingTtlMs`,
   `workingGraceMs`, `injectCanonical`, `reviewMaxAttempts`, `reviewBackoffMs`,
   `maxQueuedReviews`. Env: `OMNICODE_MEMORY_ENABLED`, `OMNICODE_MEMORY_DIR`,

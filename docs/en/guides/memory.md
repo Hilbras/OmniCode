@@ -1,6 +1,6 @@
 # Memory
 
-Memory lets Omnicode carry facts, preferences, and unfinished work from one session to the next, so a new session starts from what the project already knows instead of from nothing. It is experimental and off by default.
+Memory lets Omnicode carry facts, preferences, and unfinished work from one session to the next, so a new session starts from what the project already knows instead of from nothing. It is experimental and on by default; the next section shows how to turn it off.
 
 ## What memory keeps
 
@@ -10,22 +10,22 @@ Memory lets Omnicode carry facts, preferences, and unfinished work from one sess
 
 Every memory records where it came from, which project it belongs to, and how much it is trusted. Stored memory is context, not instructions: it cannot change permissions, skip approvals, or grant tool access.
 
-## Turning memory on
+## Turning memory off and on
 
-Set the experimental flag for one run:
+Memory is on unless you turn it off. Turn it off for one run:
 
 ```sh
-OMNICODE_EXPERIMENTAL_MEMORY=1 omnicode
+OMNICODE_EXPERIMENTAL_MEMORY=0 omnicode
 ```
 
-Or enable it in `$OMNICODE_HOME/config.toml`:
+Or turn it off in `$OMNICODE_HOME/config.toml`:
 
 ```toml
 [experimental]
-memory = true
+memory = false
 ```
 
-The environment variable wins over the config file, so `OMNICODE_EXPERIMENTAL_MEMORY=0` turns memory off for one run without editing the file.
+The environment variable wins over the config file, so `OMNICODE_EXPERIMENTAL_MEMORY=1` turns memory back on for one run without editing the file.
 
 ```toml
 [memory]

@@ -94,7 +94,7 @@ describe('feature activation', () => {
   it('registers the experimental flag with the documented env name', () => {
     const flag = getContributedFlags().find((definition) => definition.id === MEMORY_FLAG_ID);
     expect(flag?.env).toBe(MEMORY_FLAG_ENV);
-    expect(flag?.default).toBe(false);
+    expect(flag?.default).toBe(true);
     expect(flag?.surface).toBe('both');
   });
 

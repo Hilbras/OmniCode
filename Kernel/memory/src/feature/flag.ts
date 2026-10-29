@@ -18,7 +18,7 @@ export const memoryFlag: FlagDefinitionInput = {
   description:
     'Enable persistent memory: trust-gated capture, lexical retrieval with honest budgets, and resumable task state.',
   env: MEMORY_FLAG_ENV,
-  default: false,
+  default: true,
   surface: 'both',
 };
 

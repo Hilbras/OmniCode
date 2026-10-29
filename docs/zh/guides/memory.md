@@ -1,6 +1,6 @@
 # 记忆
 
-记忆（memory）让 Omnicode 把事实、偏好和未完成的工作从一个「会话」带到下一个会话，新会话可以从项目已知的内容开始，而不是从零开始。该功能仍在实验中，默认关闭。
+记忆（memory）让 Omnicode 把事实、偏好和未完成的工作从一个「会话」带到下一个会话，新会话可以从项目已知的内容开始，而不是从零开始。该功能仍在实验中，默认开启；下一节说明如何关闭。
 
 ## 记忆会保存什么
 
@@ -10,22 +10,22 @@
 
 每条记忆都记录来源、所属项目以及可信程度。记忆是上下文，不是指令：它不能改变权限、跳过审批，也不能授予工具访问权。
 
-## 开启记忆
+## 关闭与开启记忆
 
-为单次运行打开实验开关：
+记忆默认开启，除非你主动关闭。为单次运行关闭：
 
 ```sh
-OMNICODE_EXPERIMENTAL_MEMORY=1 omnicode
+OMNICODE_EXPERIMENTAL_MEMORY=0 omnicode
 ```
 
-或在 `$OMNICODE_HOME/config.toml` 中开启：
+或在 `$OMNICODE_HOME/config.toml` 中关闭：
 
 ```toml
 [experimental]
-memory = true
+memory = false
 ```
 
-环境变量优先于配置文件，因此 `OMNICODE_EXPERIMENTAL_MEMORY=0` 可以在不改文件的情况下为单次运行关闭记忆。
+环境变量优先于配置文件，因此 `OMNICODE_EXPERIMENTAL_MEMORY=1` 可以在不改文件的情况下为单次运行重新打开记忆。
 
 ```toml
 [memory]
