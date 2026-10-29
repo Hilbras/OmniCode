@@ -431,7 +431,9 @@ describe('server-v2 GET /api/v1/sessions/:id/snapshot', () => {
 
     emit(sid, {
       type: 'turn.started',
+      agentId: 'main',
       turnId: 1,
+      origin: { kind: 'user' },
     } as unknown as Event2<any>);
     emit(sid, { type: 'assistant.delta', turnId: 1, delta: 'Hello' } as unknown as Event2<any>);
 
