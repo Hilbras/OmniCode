@@ -1719,6 +1719,17 @@ describe('server-v2 /api/v1 prompts', () => {
     });
     const promptId = submitted.body.data.prompt_id;
 
+    await vi.waitFor(
+      async () => {
+        const listed = await call<{ active: unknown; queued: unknown[] }>(
+          'GET',
+          `/api/v1/sessions/${id}/prompts`,
+        );
+        expect(listed.body.data).toMatchObject({ active: null, queued: [] });
+      },
+      { timeout: 5000 },
+    );
+
     const aborted = await call<{ aborted: boolean }>(
       'POST',
       `/api/v1/sessions/${id}/prompts/${promptId}:abort`,
