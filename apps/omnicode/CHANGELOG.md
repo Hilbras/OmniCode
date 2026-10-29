@@ -1,5 +1,23 @@
 # @hilbras/omnicode
 
+## 1.4.0
+
+### Minor Changes
+
+- [`4104699`](https://github.com/Hilbras/OmniCode/commit/41046995e9046e5121f4f34f167dbe88b482bad7) Thanks [@lacrous](https://github.com/lacrous)! - Keep the objective, decisions and next move of a compacted conversation as resumable task state, so a resumed session picks up where it left off.
+
+- [`bc0d684`](https://github.com/Hilbras/OmniCode/commit/bc0d684b0a6ff708b3d538a7d61999fc3ff5699a) Thanks [@lacrous](https://github.com/lacrous)! - Memory is now on by default: sessions keep their task state across compaction, and trusted memories are injected without setting `OMNICODE_EXPERIMENTAL_MEMORY`. Turn it off with `OMNICODE_EXPERIMENTAL_MEMORY=0`, `[experimental] memory = false`, or `[memory] enabled = false`.
+
+- [`afa1b0d`](https://github.com/Hilbras/OmniCode/commit/afa1b0d05aff9df55386525b5892288fd2fd8f6c) Thanks [@lacrous](https://github.com/lacrous)! - Notice a memory going stale in seconds: editing a file that a memory cites demotes that memory instead of waiting for the fifteen-minute sweep, and `/memory list` marks it `(stale)`.
+
+- [`8a745d7`](https://github.com/Hilbras/OmniCode/commit/8a745d7b53b96efd4aaf36ad95d2657133f9d92f) Thanks [@lacrous](https://github.com/lacrous)! - Recall more of what memory stored: retrieval now matches word variants and common shorthand (`linter`/`linting`, `repo`/`repository`), camelCase and snake_case identifiers, and drops records that share only one incidental word with a long query.
+
+- [`cc6a71a`](https://github.com/Hilbras/OmniCode/commit/cc6a71a196cc493dc852d3fce03240e0fd81b3c4) Thanks [@lacrous](https://github.com/lacrous)! - Add the /memory command to review, confirm and forget the memories the agent saved.
+
+### Patch Changes
+
+- [#3](https://github.com/Hilbras/OmniCode/pull/3) [`e8041d0`](https://github.com/Hilbras/OmniCode/commit/e8041d02beddb90fdc1ebc28fe0cab18feaeac0a) Thanks [@lacrous](https://github.com/lacrous)! - Let the agent save and forget memories with the new memory_save and memory_forget tools; memories the agent saves are marked unverified.
+
 ## 1.3.0
 
 ### Minor Changes

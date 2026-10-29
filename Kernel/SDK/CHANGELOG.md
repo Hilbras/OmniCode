@@ -1,5 +1,13 @@
 # @hilbras/omnicode-sdk
 
+## 0.23.0
+
+### Minor Changes
+
+- [`cc6a71a`](https://github.com/Hilbras/OmniCode/commit/cc6a71a196cc493dc852d3fce03240e0fd81b3c4) Thanks [@lacrous](https://github.com/lacrous)! - Add the Session memory methods listMemories, getMemory, confirmMemory, forgetMemory and exportMemories, backed by the memory control surface.
+
+- [`afa1b0d`](https://github.com/Hilbras/OmniCode/commit/afa1b0d05aff9df55386525b5892288fd2fd8f6c) Thanks [@lacrous](https://github.com/lacrous)! - Add `stale` to the memory view returned by `listMemories`, `getMemory`, `confirmMemory` and `forgetMemory`, so a caller can tell that a memory's cited evidence changed.
+
 ## 0.22.0
 
 ### Minor Changes
