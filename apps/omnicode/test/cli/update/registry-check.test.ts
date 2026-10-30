@@ -32,6 +32,16 @@ describe('isUpdateAvailable', () => {
 });
 
 describe('checkRegistryForUpdate', () => {
+  it('queries the npm dist-tags endpoint for the package', async () => {
+    const urls: string[] = [];
+    const fetchImpl = async (input: string | URL | Request): Promise<Response> => {
+      urls.push(input instanceof Request ? input.url : input.toString());
+      return jsonResponse({ latest: '1.2.1' });
+    };
+    await checkRegistryForUpdate('1.2.1', fetchImpl as typeof fetch);
+    expect(urls).toEqual(['https://registry.npmjs.org/-/package/@hilbras%2Fomnicode/dist-tags']);
+  });
+
   it('reports an available update when the registry latest is newer', async () => {
     const fetchImpl = async (): Promise<Response> => jsonResponse({ latest: '99.0.0' });
     await expect(checkRegistryForUpdate('1.2.1', fetchImpl)).resolves.toEqual({

@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { NPM_PACKAGE_NAME } from '#/constant/app';
 
-const REGISTRY_DIST_TAGS_URL = `https://registry.npmjs.org/${encodeURIComponent(
+const REGISTRY_DIST_TAGS_URL = `https://registry.npmjs.org/-/package/${encodeURIComponent(
   NPM_PACKAGE_NAME,
 ).replace('%40', '@')}/dist-tags`;
 

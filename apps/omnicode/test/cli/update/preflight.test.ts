@@ -14,6 +14,7 @@ import { promptForInstallChoice } from '#/cli/update/prompt';
 import type * as PromptModule from '#/cli/update/prompt';
 import { _setSelfUpdateChannelEnabledForTests, refreshUpdateCache } from '#/cli/update/refresh';
 import type * as RefreshModule from '#/cli/update/refresh';
+import type * as RegistryCheckModule from '#/cli/update/registry-check';
 import type * as RolloutModule from '#/cli/update/rollout';
 import { detectInstallSource } from '#/cli/update/source';
 import {
@@ -49,6 +50,16 @@ vi.mock('#/utils/process/resolve-command', () => ({
 vi.mock('../../../src/cli/update/cache', () => ({
   readUpdateCache: mocks.readUpdateCache,
 }));
+
+vi.mock('../../../src/cli/update/registry-check', async () => {
+  const actual = await vi.importActual<typeof RegistryCheckModule>(
+    '../../../src/cli/update/registry-check.js',
+  );
+  return {
+    ...actual,
+    checkRegistryForUpdate: async () => ({ status: 'error', reason: 'offline in tests' }),
+  };
+});
 
 vi.mock('../../../src/cli/update/install-lock', () => ({
   tryAcquireUpdateInstallLock: mocks.tryAcquireUpdateInstallLock,
