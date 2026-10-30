@@ -374,7 +374,7 @@ describe('server-v2 GET /api/v1/sessions/:id/snapshot', () => {
       server = undefined;
     }
     if (home !== undefined) {
-      await rm(home, { recursive: true, force: true });
+      await rm(home, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
       home = undefined;
     }
   });
