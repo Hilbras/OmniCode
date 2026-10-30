@@ -1,5 +1,13 @@
 # @hilbras/omnicode
 
+## 1.4.1
+
+### Patch Changes
+
+- [`8fc3c94`](https://github.com/Hilbras/OmniCode/commit/8fc3c94bdbc35651c992d048eae485703461e02d) Thanks [@lacrous](https://github.com/lacrous)! - Replace older tool outputs with short placeholders once a conversation fills half the context window, so the model no longer sees their full text; set `[compaction] clear_tool_results = false` or `OMNICODE_COMPACTION_CLEAR_TOOL_RESULTS=0` to keep sending them in full.
+
+- [`7d33d4c`](https://github.com/Hilbras/OmniCode/commit/7d33d4ce2d56ac121d620c226b263dd1f3d5ace1) Thanks [@lacrous](https://github.com/lacrous)! - Fix `/update` always failing with "Update check failed" instead of showing the latest version.
+
 ## 1.4.0
 
 ### Minor Changes
