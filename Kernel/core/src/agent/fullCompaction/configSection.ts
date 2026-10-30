@@ -15,12 +15,14 @@ export const COMPACTION_AUTO_ENV = 'OMNICODE_COMPACTION_AUTO';
 export const COMPACTION_MODEL_ENV = 'OMNICODE_COMPACTION_MODEL';
 export const COMPACTION_KEEP_TOKENS_ENV = 'OMNICODE_COMPACTION_KEEP_TOKENS';
 export const COMPACTION_TOOL_OUTPUT_MAX_CHARS_ENV = 'OMNICODE_COMPACTION_TOOL_OUTPUT_MAX_CHARS';
+export const COMPACTION_CLEAR_TOOL_RESULTS_ENV = 'OMNICODE_COMPACTION_CLEAR_TOOL_RESULTS';
 
 export interface CompactionSectionConfig {
   readonly auto?: boolean;
   readonly model?: string;
   readonly keepTokens?: number;
   readonly toolOutputMaxChars?: number;
+  readonly clearToolResults?: boolean;
 }
 
 export interface ResolvedCompactionConfig {
@@ -28,6 +30,7 @@ export interface ResolvedCompactionConfig {
   readonly model: string | undefined;
   readonly keepTokens: number;
   readonly toolOutputMaxChars: number;
+  readonly clearToolResults: boolean;
 }
 
 export const CompactionSectionSchema: ConfigSchema<CompactionSectionConfig> = z.object({
@@ -35,6 +38,7 @@ export const CompactionSectionSchema: ConfigSchema<CompactionSectionConfig> = z.
   model: z.string().optional(),
   keepTokens: z.number().int().min(1).optional(),
   toolOutputMaxChars: z.number().int().min(0).optional(),
+  clearToolResults: z.boolean().optional(),
 });
 
 export const DEFAULT_COMPACTION_SECTION_CONFIG: ResolvedCompactionConfig = {
@@ -42,6 +46,7 @@ export const DEFAULT_COMPACTION_SECTION_CONFIG: ResolvedCompactionConfig = {
   model: undefined,
   keepTokens: 15000,
   toolOutputMaxChars: 1250,
+  clearToolResults: true,
 };
 
 export function resolveCompactionConfig(
@@ -53,6 +58,8 @@ export function resolveCompactionConfig(
     keepTokens: config?.keepTokens ?? DEFAULT_COMPACTION_SECTION_CONFIG.keepTokens,
     toolOutputMaxChars:
       config?.toolOutputMaxChars ?? DEFAULT_COMPACTION_SECTION_CONFIG.toolOutputMaxChars,
+    clearToolResults:
+      config?.clearToolResults ?? DEFAULT_COMPACTION_SECTION_CONFIG.clearToolResults,
   };
 }
 
@@ -85,6 +92,7 @@ export const compactionEnvBindings: EnvBindings<CompactionSectionConfig> = envBi
       env: COMPACTION_TOOL_OUTPUT_MAX_CHARS_ENV,
       parse: parseNonNegativeInt,
     },
+    clearToolResults: { env: COMPACTION_CLEAR_TOOL_RESULTS_ENV, parse: parseBooleanEnv },
   },
 );
 

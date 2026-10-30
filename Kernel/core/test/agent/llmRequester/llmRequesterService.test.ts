@@ -14,6 +14,10 @@ import {
   type ProjectionPolicy,
 } from '#/agent/contextProjector/contextProjector';
 import { AgentContextProjectorService } from '#/agent/contextProjector/contextProjectorService';
+import {
+  COMPACTION_SECTION,
+  type CompactionSectionConfig,
+} from '#/agent/fullCompaction/configSection';
 import { IAgentLLMRequesterService } from '#/agent/llmRequester/llmRequester';
 import {
   AgentLLMRequesterService,
@@ -217,6 +221,7 @@ function createService(
     readonly mediaResolver?: Partial<IAgentMediaResolverService>;
     readonly contextMessages?: Message[];
     readonly env?: Record<string, string>;
+    readonly compaction?: CompactionSectionConfig;
   } = {},
 ) {
   const ix = disposables.add(new TestInstantiationService());
@@ -263,7 +268,8 @@ function createService(
   };
   const tools = { list: () => [] };
   const config: Partial<IConfigService> = {
-    get: (() => undefined) as IConfigService['get'],
+    get: ((section: string) =>
+      section === COMPACTION_SECTION ? options.compaction : undefined) as IConfigService['get'],
   };
   const log = { info: () => undefined, warn: () => undefined };
   const telemetryRecords: TelemetryRecord[] = [];
@@ -360,6 +366,74 @@ describe('AgentLLMRequesterService measured anchors', () => {
 
     expect(measuredCalls).toHaveLength(1);
     expect(measuredCalls[0]?.usage.inputOther).toBe(40);
+  });
+});
+
+describe('AgentLLMRequesterService tool result clearing', () => {
+  function toolHistory(count: number): Message[] {
+    const messages: Message[] = [
+      { role: 'user', content: [{ type: 'text', text: 'start' }], toolCalls: [] },
+    ];
+    for (let i = 0; i < count; i++) {
+      messages.push({
+        role: 'assistant',
+        content: [],
+        toolCalls: [{ type: 'function', id: `call-${String(i)}`, name: 'Read', arguments: `{"i":${String(i)}}` }],
+      });
+      messages.push({
+        role: 'tool',
+        content: [{ type: 'text', text: `${String(i)}:${'x'.repeat(1_200)}` }],
+        toolCalls: [],
+        toolCallId: `call-${String(i)}`,
+      });
+    }
+    return messages;
+  }
+
+  function capturingProjector(seen: (readonly ContextMessage[])[]) {
+    return { project: (messages: readonly ContextMessage[]) => (seen.push(messages), messages) };
+  }
+
+  function clearedIds(messages: readonly ContextMessage[]): string[] {
+    return messages.flatMap((message) =>
+      message.role === 'tool' &&
+      message.content.some(
+        (part) => part.type === 'text' && part.text.startsWith('[Earlier tool result cleared'),
+      )
+        ? [message.toolCallId!]
+        : [],
+    );
+  }
+
+  it('clears stale tool results on turn requests by default', async () => {
+    const seen: (readonly ContextMessage[])[] = [];
+    const { service } = createService(createRequester({ value: 0 }, null), capturingProjector(seen));
+
+    await service.request({ messages: toolHistory(6), source: { type: 'turn', turnId: 1 } });
+
+    expect(clearedIds(seen[0]!)).toEqual(['call-0', 'call-1', 'call-2']);
+  });
+
+  it('sends tool results unchanged when clearToolResults is off', async () => {
+    const seen: (readonly ContextMessage[])[] = [];
+    const { service } = createService(createRequester({ value: 0 }, null), capturingProjector(seen), {
+      compaction: { clearToolResults: false },
+    });
+    const messages = toolHistory(6);
+
+    await service.request({ messages, source: { type: 'turn', turnId: 1 } });
+
+    expect(seen[0]).toEqual(messages);
+  });
+
+  it('leaves operation requests unchanged', async () => {
+    const seen: (readonly ContextMessage[])[] = [];
+    const { service } = createService(createRequester({ value: 0 }, null), capturingProjector(seen));
+    const messages = toolHistory(6);
+
+    await service.request({ messages, source: { type: 'operation' } });
+
+    expect(seen[0]).toEqual(messages);
   });
 });
 

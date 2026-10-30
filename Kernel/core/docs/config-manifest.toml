@@ -88,6 +88,7 @@ builtin_product_skills = true
 #     model <- OMNICODE_COMPACTION_MODEL (custom parse)
 #     keep_tokens <- OMNICODE_COMPACTION_KEEP_TOKENS (custom parse)
 #     tool_output_max_chars <- OMNICODE_COMPACTION_TOOL_OUTPUT_MAX_CHARS (custom parse)
+#     clear_tool_results <- OMNICODE_COMPACTION_CLEAR_TOOL_RESULTS (custom parse)
 # ##########################################################################
 
 [compaction]
@@ -95,6 +96,7 @@ auto = true
 # model: string
 keep_tokens = 15000
 tool_output_max_chars = 1250
+clear_tool_results = true
 
 # ##########################################################################
 # cron

@@ -11,6 +11,12 @@ import {
   sleepForRetry,
 } from '#/_base/utils/retry';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
+import type { ContextMessage } from '#/agent/contextMemory/types';
+import {
+  COMPACTION_SECTION,
+  type CompactionSectionConfig,
+  resolveCompactionConfig,
+} from '#/agent/fullCompaction/configSection';
 import {
   IAgentContextProjectorService,
   type MediaStripSnapshot,
@@ -95,6 +101,7 @@ import {
   type LlmRequestPayload,
   type LlmRequestToolSchema,
 } from './llmRequestOps';
+import { ToolResultClearer } from './toolResultClearing';
 
 const EMPTY_TOOL_PARAMETERS: Record<string, unknown> = {
   type: 'object',
@@ -164,6 +171,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
   declare readonly _serviceBrand: undefined;
 
   private readonly toolCallIdNormalizer = new ToolCallIdNormalizer();
+  private readonly toolResultClearer = new ToolResultClearer();
 
   constructor(
     @IAgentContextMemoryService private readonly context: IAgentContextMemoryService,
@@ -332,6 +340,22 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     return traceId;
   }
 
+  private clearStaleToolResults(
+    messages: readonly ContextMessage[],
+    source: AgentLLMRequestSource | undefined,
+  ): readonly ContextMessage[] {
+    if (source?.type !== 'turn') return messages;
+    const compaction = resolveCompactionConfig(
+      this.config.get<CompactionSectionConfig>(COMPACTION_SECTION),
+    );
+    if (!compaction.clearToolResults) return messages;
+    const capability = this.profile.data().modelCapabilities;
+    return this.toolResultClearer.apply(
+      messages,
+      capability.max_input_tokens ?? capability.max_context_tokens,
+    );
+  }
+
   private tryGetModel(): Model | undefined {
     const modelAlias = this.profile.data().modelAlias;
     if (modelAlias === undefined) return undefined;
@@ -350,7 +374,10 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     onAttemptRetry: (() => void) | undefined,
   ): Promise<AgentLLMRequestFinish> {
     this.toolCallIdNormalizer.seedFrom(this.context.get());
-    const shaped = this.toolSelect.shapeHistory(request.messages);
+    const shaped = this.clearStaleToolResults(
+      this.toolSelect.shapeHistory(request.messages),
+      request.source,
+    );
     const recoveredStrip = this.mediaStripSnapshotForTurn(request.source);
     let policy: ProjectionPolicy | undefined =
       recoveredStrip !== undefined
