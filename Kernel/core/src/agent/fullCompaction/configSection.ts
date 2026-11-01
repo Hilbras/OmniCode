@@ -44,8 +44,8 @@ export const CompactionSectionSchema: ConfigSchema<CompactionSectionConfig> = z.
 export const DEFAULT_COMPACTION_SECTION_CONFIG: ResolvedCompactionConfig = {
   auto: true,
   model: undefined,
-  keepTokens: 15000,
-  toolOutputMaxChars: 1250,
+  keepTokens: 30000,
+  toolOutputMaxChars: 4096,
   clearToolResults: true,
 };
 

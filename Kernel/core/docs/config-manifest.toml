@@ -8,7 +8,7 @@
 # commented "# field: type" lines describe the remaining schema fields.
 # Values resolve as: default -> config.toml -> env overlay -> memory.
 
-# Index (31 sections · 2 overlay(s))
+# Index (33 sections · 2 overlay(s))
 #   background               src/agent/task/configSection.ts
 #   builtinProductSkills     src/features/skill/catalog/configSection.ts
 #   compaction               src/agent/fullCompaction/configSection.ts
@@ -30,6 +30,7 @@
 #   models                   src/app/kosongConfig/configSection.ts
 #   permission               src/agent/permissionRules/configSection.ts
 #   providers                src/app/kosongConfig/configSection.ts
+#   references               src/features/references/configSection.ts
 #   secondaryModel           src/session/subagent/configSection.ts
 #   services                 src/app/auth/configSection.ts
 #   subagent                 src/session/subagent/configSection.ts
@@ -40,6 +41,7 @@
 #   tools                    src/agent/toolPolicy/configSection.ts
 #   vercel                   src/app/vercel/configSection.ts
 #   watch                    src/app/watch/configSection.ts
+#   webSearch                src/app/auth/webSearch/configSection.ts
 #   (overlay) servicesCredentialEnvOverlay  src/app/auth/configSection.ts
 #   (overlay) omnicodeModelEnvOverlay  src/app/kosongConfig/envOverlay.ts
 
@@ -94,8 +96,8 @@ builtin_product_skills = true
 [compaction]
 auto = true
 # model: string
-keep_tokens = 15000
-tool_output_max_chars = 1250
+keep_tokens = 30000
+tool_output_max_chars = 4096
 clear_tool_results = true
 
 # ##########################################################################
@@ -391,6 +393,16 @@ merge_all_available_skills = true
   # source: record<string, any>
   # protocol_overrides: record<string, "anthropic" | "openai" | "openai_responses" | "google-genai">
   # excluded_models: string[]
+  # disabled: boolean
+
+# ##########################################################################
+# references
+#   owner: src/features/references/configSection.ts
+#   scope: core
+# ##########################################################################
+
+[references]
+# <name>: object | object
 
 # ##########################################################################
 # secondaryModel (config.toml: secondary_model)
@@ -453,10 +465,12 @@ merge_all_available_skills = true
 #   hooks: stripEnv
 #   env:
 #     timeout_ms <- OMNICODE_SUBAGENT_TIMEOUT_MS (custom parse)
+#     max_depth <- OMNICODE_SUBAGENT_MAX_DEPTH (custom parse)
 # ##########################################################################
 
 [subagent]
 timeout_ms = 7200000
+# max_depth: integer
 
 # ##########################################################################
 # swarm
@@ -558,3 +572,13 @@ strategy = "measured+estimated"
 
 [watch]
 # enabled: boolean
+
+# ##########################################################################
+# webSearch (config.toml: web_search)
+#   owner: src/app/auth/webSearch/configSection.ts
+#   scope: core
+# ##########################################################################
+
+[web_search]
+# provider: "tavily" | "exa" | "brave"
+# api_key: string
