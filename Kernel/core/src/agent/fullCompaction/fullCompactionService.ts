@@ -758,6 +758,8 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
                 messages: [...messages],
                 modelAlias: compactionModelAlias,
                 maxOutputSize: requestMaxOutputSize,
+                systemPrompt: '',
+                tools: [],
                 source: {
                   type: 'operation',
                   turnId: active.originTurnId,

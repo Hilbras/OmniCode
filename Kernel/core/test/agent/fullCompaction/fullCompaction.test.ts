@@ -279,8 +279,8 @@ describe('FullCompaction', () => {
     });
     expect(completeEvent?.args).toEqual({ agentId: 'main', time: '<time>' });
     expect(ctx.lastLlmInput()).toMatchInlineSnapshot(`
-      system: <system-prompt>
-      tools: Agent, AgentSwarm, CronCreate, CronDelete, CronList, EnterPlanMode, ExitPlanMode
+      system: ""
+      tools: []
       messages:
         user: text "old user one"
         assistant: text "old assistant one"
@@ -771,6 +771,32 @@ describe('FullCompaction', () => {
     expect(attempts).toBe(2);
     expect(sawMedia).toBe(true);
     expect(sawStrippedResend).toBe(true);
+    await ctx.expectResumeMatches();
+  });
+
+  it('sends the summarizer an empty system prompt and no tools', async () => {
+    let sawSummaryRequest = false;
+    const generate: GenerateFn = requesterFromGenerateFn(async (_provider, system, tools) => {
+      sawSummaryRequest = true;
+      expect(system).toBe('');
+      expect(tools).toHaveLength(0);
+      return textResult('Compacted summary without tools.');
+    });
+    const ctx = testAgent({ generate });
+    ctx.configure({
+      provider: CATALOGUED_PROVIDER,
+      modelCapabilities: CATALOGUED_MODEL_CAPABILITIES,
+    });
+    ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+    ctx.appendExchange(2, 'recent user two', 'recent assistant two', 80);
+    const compacted = ctx.once('full_compaction.complete');
+    const completed = ctx.once('compaction.completed');
+
+    await ctx.rpc.beginCompaction({});
+    await compacted;
+    await completed;
+
+    expect(sawSummaryRequest).toBe(true);
     await ctx.expectResumeMatches();
   });
 
@@ -1636,8 +1662,8 @@ describe('FullCompaction', () => {
     await completed;
 
     expect(ctx.lastLlmInput()).toMatchInlineSnapshot(`
-      system: <system-prompt>
-      tools: Agent, AgentSwarm, CronCreate, CronDelete, CronList, EnterPlanMode, ExitPlanMode
+      system: ""
+      tools: []
       messages:
         user: text "old user one"
         assistant: text "old assistant one"
@@ -1702,8 +1728,8 @@ describe('FullCompaction', () => {
       ]),
     );
     expect(ctx.lastLlmInput()).toMatchInlineSnapshot(`
-      system: <system-prompt>
-      tools: Agent, AgentSwarm, CronCreate, CronDelete, CronList, EnterPlanMode, ExitPlanMode
+      system: ""
+      tools: []
       messages:
         user: text "old user one"
         assistant: text "old assistant one"
@@ -1875,8 +1901,8 @@ describe('FullCompaction', () => {
     expect(countEvents(events, 'context.apply_compaction')).toBe(0);
     expect(countEvents(events, 'full_compaction.complete')).toBe(0);
     expect(ctx.lastLlmInput()).toMatchInlineSnapshot(`
-      system: <system-prompt>
-      tools: Agent, AgentSwarm, CronCreate, CronDelete, CronList, EnterPlanMode, ExitPlanMode
+      system: ""
+      tools: []
       messages:
         user: text "old user one"
         assistant: text "old assistant one"
@@ -1962,8 +1988,8 @@ describe('FullCompaction', () => {
     );
     expect(ctx.llmInputs()).toMatchInlineSnapshot(`
       call 1:
-        system: <system-prompt>
-        tools: Agent, AgentSwarm, CronCreate, CronDelete, CronList, EnterPlanMode, ExitPlanMode
+        system: ""
+        tools: []
         messages:
           user: text "old user one"
           assistant: text "old assistant one"
@@ -1975,6 +2001,8 @@ describe('FullCompaction', () => {
           user: text <compaction-instruction>
 
       call 2:
+        system: <system-prompt>
+        tools: Agent, AgentSwarm, CronCreate, CronDelete, CronList, EnterPlanMode, ExitPlanMode
         messages:
           user: text "old user one\\n\\nold user two\\n\\nrecent user three\\n\\nAnswer after compacting"
           user: text "The conversation so far has been compacted to free up context. What follows is your own working summary of this task — use it to continue your train of thought rather than starting over. Treat it as notes, not proof: where it says a step was done, tests passed, or a fix worked, verify that yourself before relying on it. Any user messages earlier in this context are preserved verbatim from the compacted conversation; where a system-reminder note among them marks an omitted middle section, the user messages it replaced are covered by this summary. A short verbatim slice of the most recent assistant and tool exchanges follows this summary. The summary records which earlier requests were already addressed.\\nAuto compacted summary."
