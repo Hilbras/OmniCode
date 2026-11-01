@@ -1,0 +1,61 @@
+appId: com.hilbras.omnicode
+productName: Omnicode
+copyright: Copyright © Hilbras
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist/**
+  - package.json
+extraResources:
+  - from: ../omnicode/dist-native/bin/${platform}-${arch}
+    to: server
+    filter:
+      - omnicode
+      - omnicode.exe
+  - from: build/icon.png
+    to: icon.png
+  - from: build/icon-dark.png
+    to: icon-dark.png
+  - from: build/icon-light.png
+    to: icon-light.png
+  - from: build/update-badge.png
+    to: update-badge.png
+asar: true
+publish:
+  provider: generic
+  url: https://github.com/Hilbras/OmniCode/releases/download/desktop-latest
+  channel: latest
+releaseInfo:
+  releaseNotesFile: build/release-notes.md
+artifactName: omnicode-desktop-${version}-${arch}.${ext}
+linux:
+  target:
+    - deb
+  category: Development
+  icon: build/icon.png
+  executableName: omnicode-desktop
+  syncDesktopName: true
+  synopsis: Omnicode coding agent desktop app
+deb:
+  depends:
+    - libgtk-3-0
+    - libnotify4
+    - libnss3
+    - libxss1
+    - libxtst6
+    - xdg-utils
+    - libatspi2.0-0
+    - libuuid1
+    - libsecret-1-0
+win:
+  target:
+    - nsis
+  icon: build/icon.png
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: Omnicode

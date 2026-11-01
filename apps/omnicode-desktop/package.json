@@ -1,0 +1,29 @@
+{
+  "name": "@hilbras/omnicode-desktop",
+  "version": "1.4.1",
+  "private": true,
+  "description": "Omnicode desktop app",
+  "license": "MIT",
+  "author": {
+    "name": "Hilbras",
+    "email": "noreply@example.com"
+  },
+  "homepage": "https://github.com/hilbras/omnicode",
+  "type": "module",
+  "main": "dist/main.cjs",
+  "desktopName": "omnicode-desktop.desktop",
+  "scripts": {
+    "build": "tsdown",
+    "build:server": "pnpm -C ../omnicode run build && pnpm -C ../omnicode run build:native:sea",
+    "dev": "tsdown && electron .",
+    "dist:deb": "tsdown && node scripts/check-server-binary.mjs && node scripts/release-notes.mjs && electron-builder --linux deb --publish never",
+    "dist:win": "tsdown && node scripts/check-server-binary.mjs && node scripts/release-notes.mjs && electron-builder --win nsis --publish never",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist release"
+  },
+  "devDependencies": {
+    "electron": "45.1.0",
+    "electron-builder": "26.18.0",
+    "electron-updater": "6.8.10"
+  }
+}
