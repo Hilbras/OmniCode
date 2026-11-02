@@ -6,6 +6,10 @@ import { type ServerHandle, startServer } from './server';
 import { resourceImage, startUpdater, type UpdateStatus, type Updater } from './updater';
 import { decorateWindow, titleBarOverlay } from './window-chrome';
 
+app.commandLine.appendSwitch('disable-features', 'Translate,MediaRouter,OptimizationHints,InterestFeedContentSuggestions');
+app.commandLine.appendSwitch('disable-component-update');
+app.commandLine.appendSwitch('disable-breakpad');
+
 let server: ServerHandle | undefined;
 let mainWindow: BrowserWindow | undefined;
 let updater: Updater | undefined;
@@ -149,7 +153,7 @@ function createWindow(running: ServerHandle): BrowserWindow {
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      spellcheck: true,
+      spellcheck: false,
       backgroundThrottling: true,
     },
   });
