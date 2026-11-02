@@ -1331,6 +1331,20 @@ ${vn}`)}const De=ze.join(`
     context: ZH ? '上下文' : 'Context',
     tokens: ZH ? '令牌' : 'tokens',
     counted: (n) => (ZH ? '已统计 ' + n + ' 个会话' : 'Counted ' + n + ' sessions'),
+    saverTitle: ZH ? '令牌节省:节省前后' : 'Token saver: before vs after',
+    breakdownTitle: ZH ? '明细对比' : 'Cost breakdown',
+    perSessionTitle: ZH ? '各会话明细' : 'Per session',
+    kind: ZH ? '类型' : 'Kind',
+    tokens: ZH ? '令牌' : 'tokens',
+    beforePay: ZH ? '节省前(计费)' : 'Before (billed)',
+    afterPay: ZH ? '节省后(计费)' : 'After (billed)',
+    fullPrice: ZH ? '全价' : 'full price',
+    discount: ZH ? '约 1 折' : '~10%',
+    premium: ZH ? '约 1.25 倍' : '~1.25×',
+    session: ZH ? '会话' : 'Session',
+    inputHintShort: ZH ? '全价计费' : 'full price',
+    cacheReadHintShort: ZH ? '缓存命中,约 1 折' : 'cache hits, ~10%',
+    cacheWriteHintShort: ZH ? '写入缓存,约 1.25 倍' : 'cache writes, ~1.25×',
   };
   var SOURCE_ORDER = ['user', 'project', 'plugin', 'builtin'];
   function ensureStyle() {
@@ -1366,6 +1380,34 @@ ${vn}`)}const De=ze.join(`
       '.omni-usage-bar > div{height:100%;background:var(--color-accent,#b87f24);border-radius:999px;transition:width .3s ease;}',
       '.omni-usage-value{font-size:13px;font-weight:475;color:var(--color-text,#1c1a16);font-variant-numeric:tabular-nums;white-space:nowrap;}',
       '.omni-usage-saved .omni-usage-value{color:var(--color-accent,#b87f24);}',
+      '.ui-dialog__body:has(> .sd .omni-usage-panel),.ui-dialog__body:has(.sd .omni-usage-panel){width:min(1240px,calc(100vw - 48px)) !important;max-width:calc(100vw - 48px) !important;}',
+      '.sd:has(.omni-usage-panel){width:min(1240px,calc(100vw - 48px)) !important;grid-template-columns:184px minmax(0,1fr) !important;}',
+      '.sd:has(.omni-usage-panel) .settings-region{min-width:0;}',
+      '.ui-dialog__body:has(> .sd){width:min(1240px,calc(100vw - 48px)) !important;max-width:calc(100vw - 48px) !important;}',
+      '.sd{width:min(1240px,calc(100vw - 48px)) !important;grid-template-columns:184px minmax(0,1fr) !important;}',
+      '.omni-usage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding:16px;}',
+      '.omni-usage-card{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:12px;background:var(--color-surface,#fff);border:1px solid var(--color-line,#e6e3da);min-width:0;}',
+      '.omni-usage-card .omni-usage-k{font-size:11px;font-weight:475;color:var(--color-text-muted,#8c887d);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.omni-usage-card .omni-usage-v{font-size:18px;font-weight:600;color:var(--color-text,#1c1a16);font-variant-numeric:tabular-nums;line-height:1.25;}',
+      '.omni-usage-card .omni-usage-s{font-size:11px;color:var(--color-text-faint,#8c887d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
+      '.omni-usage-card.is-saved{border-color:color-mix(in srgb,var(--color-accent,#b87f24) 45%,transparent);background:color-mix(in srgb,var(--color-accent,#b87f24) 8%,var(--color-surface,#fff));}',
+      '.omni-usage-card.is-saved .omni-usage-v{color:var(--color-accent,#b87f24);}',
+      '.omni-usage-flow{display:flex;flex-direction:column;gap:10px;padding:16px;}',
+      '.omni-usage-flow-row{display:flex;align-items:center;gap:12px;}',
+      '.omni-usage-flow-label{flex:0 0 128px;font-size:12px;font-weight:475;color:var(--color-text,#1c1a16);}',
+      '.omni-usage-flow-track{flex:1;height:22px;border-radius:6px;background:var(--color-line,#ece9e0);overflow:hidden;display:flex;min-width:0;}',
+      '.omni-usage-flow-seg{height:100%;}',
+      '.omni-usage-flow-val{flex:0 0 150px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:var(--color-text,#1c1a16);}',
+      '.omni-usage-legend{display:flex;flex-wrap:wrap;gap:14px;padding:0 16px 16px;}',
+      '.omni-usage-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--color-text-muted,#8c887d);}',
+      '.omni-usage-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;}',
+      '.omni-usage-tbl{width:100%;border-collapse:collapse;font-size:12px;}',
+      '.omni-usage-tbl th{text-align:left;font-weight:475;color:var(--color-text-muted,#8c887d);padding:8px 16px;border-bottom:1px solid var(--color-line,#e6e3da);font-size:11px;text-transform:uppercase;letter-spacing:.03em;}',
+      '.omni-usage-tbl td{padding:8px 16px;border-bottom:1px solid var(--color-line,#f0ede6);font-variant-numeric:tabular-nums;color:var(--color-text,#1c1a16);}',
+      '.omni-usage-tbl tr:last-child td{border-bottom:none;}',
+      '.omni-usage-tbl td.num{text-align:right;}',
+      '.omni-usage-tbl .cur{font-weight:600;}',
+      '.omni-usage-tbl .muted{color:var(--color-text-faint,#8c887d);}',
     ].join('');
     document.head.appendChild(st);
   }
@@ -1704,20 +1746,47 @@ ${vn}`)}const De=ze.join(`
     secU.appendChild(usageGroups);
     usagePanel.appendChild(secU);
     bodyHost.appendChild(usagePanel);
-    var usage = { sessions: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, current: undefined };
+    var usage = { sessions: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, current: undefined, rows: [] };
     function fmt(n) {
       if (n >= 1e9) return (n / 1e9).toFixed(2) + 'G';
       if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
       if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
       return String(Math.round(n));
     }
-    function mkUsageRow(label, hint, valueText, cls) {
-      var row = sc(el('div', 'row'));
-      if (cls) row.classList.add(cls);
-      var l = sc(el('span', 'rlabel', label + ' '));
-      l.appendChild(sc(el('span', 'hint', hint)));
-      row.appendChild(l);
-      row.appendChild(el('span', 'omni-usage-value', valueText));
+    var COLORS = {
+      output: '#4f8cff',
+      input: '#b87f24',
+      cacheRead: '#3f9f6f',
+      cacheWrite: '#8b6fd4',
+    };
+    function pctOf(part, whole) {
+      return whole > 0 ? Math.max(0, Math.min(100, (part / whole) * 100)) : 0;
+    }
+    function mkSec(title) {
+      var sec = sc(el('section', 'sec'));
+      sec.appendChild(sc(el('h3', 'sec-title', title)));
+      return sec;
+    }
+    function mkCard(k, v, s, cls) {
+      var card = el('div', 'omni-usage-card' + (cls ? ' ' + cls : ''));
+      card.appendChild(el('div', 'omni-usage-k', k));
+      card.appendChild(el('div', 'omni-usage-v', v));
+      if (s) card.appendChild(el('div', 'omni-usage-s', s));
+      return card;
+    }
+    function mkFlowRow(label, segments, total, totalLabel) {
+      var row = el('div', 'omni-usage-flow-row');
+      row.appendChild(el('div', 'omni-usage-flow-label', label));
+      var track = el('div', 'omni-usage-flow-track');
+      for (var i = 0; i < segments.length; i++) {
+        var seg = el('div', 'omni-usage-flow-seg');
+        seg.style.width = pctOf(segments[i].v, total) + '%';
+        seg.style.background = segments[i].c;
+        seg.title = segments[i].n + ': ' + fmt(segments[i].v);
+        track.appendChild(seg);
+      }
+      row.appendChild(track);
+      row.appendChild(el('div', 'omni-usage-flow-val', totalLabel));
       return row;
     }
     function renderUsage() {
@@ -1727,44 +1796,166 @@ ${vn}`)}const De=ze.join(`
         stateU.textContent = U.noSessions;
         return;
       }
-      var secT = sc(el('section', 'sec'));
-      secT.appendChild(sc(el('h3', 'sec-title', U.allSessions(usage.sessions))));
-      var gT = sc(el('div', 'settings-group'));
-      gT.appendChild(mkUsageRow(U.output, U.outputHint, fmt(usage.output)));
-      gT.appendChild(mkUsageRow(U.input, U.inputHint, fmt(usage.input)));
-      gT.appendChild(mkUsageRow(U.cacheRead, U.cacheReadHint, fmt(usage.cacheRead)));
-      gT.appendChild(mkUsageRow(U.cacheWrite, U.cacheWriteHint, fmt(usage.cacheWrite)));
-      secT.appendChild(gT);
-      usageGroups.appendChild(secT);
+      var model = usage.current ? usage.current.model || '—' : '—';
+      var ctx = usage.current ? usage.current.context_tokens || 0 : 0;
+      var limit = usage.current ? usage.current.context_limit || 0 : 0;
+      var ctxPct = limit > 0 ? Math.round(pctOf(ctx, limit)) : 0;
+      var secK = mkSec(U.allSessions(usage.sessions));
+      var grid = el('div', 'omni-usage-grid');
+      grid.appendChild(mkCard(U.output, fmt(usage.output), usage.sessions + ' ' + (ZH ? '个会话' : 'sessions')));
+      grid.appendChild(mkCard(U.input, fmt(usage.input), U.inputHintShort || ''));
+      grid.appendChild(mkCard(U.cacheRead, fmt(usage.cacheRead), U.cacheReadHintShort || ''));
+      grid.appendChild(mkCard(U.cacheWrite, fmt(usage.cacheWrite), U.cacheWriteHintShort || ''));
+      secK.appendChild(grid);
+      usageGroups.appendChild(secK);
       var before = usage.input + usage.output + usage.cacheRead + usage.cacheWrite;
-      var after = usage.input + usage.output + usage.cacheWrite + usage.cacheRead * 0.1;
+      var cacheSaved = usage.cacheRead * 0.9;
+      var cacheWriteCost = usage.cacheWrite * 0.25;
+      var after = before - cacheSaved + cacheWriteCost;
       var saved = before - after;
       var pct = before > 0 ? Math.round((saved / before) * 100) : 0;
-      var secS = sc(el('section', 'sec'));
-      secS.appendChild(sc(el('h3', 'sec-title', ZH ? '令牌节省' : 'Token saver')));
-      var gS = sc(el('div', 'settings-group'));
-      gS.appendChild(mkUsageRow(U.before, U.beforeHint, fmt(before)));
-      gS.appendChild(mkUsageRow(U.after, U.afterHint, fmt(after)));
-      gS.appendChild(mkUsageRow(U.saved, U.savedHint, fmt(saved) + ' (' + pct + '%)', 'omni-usage-saved'));
-      secS.appendChild(gS);
+      var secS = mkSec(U.saverTitle || (ZH ? '令牌节省前后' : 'Token saver: before vs after'));
+      var flow = el('div', 'omni-usage-flow');
+      flow.appendChild(
+        mkFlowRow(U.before, [
+          { n: U.input, v: usage.input, c: COLORS.input },
+          { n: U.output, v: usage.output, c: COLORS.output },
+          { n: U.cacheRead, v: usage.cacheRead, c: COLORS.cacheRead },
+          { n: U.cacheWrite, v: usage.cacheWrite, c: COLORS.cacheWrite },
+        ], before, fmt(before) + ' ' + U.tokens),
+      );
+      flow.appendChild(
+        mkFlowRow(U.after, [
+          { n: U.input, v: usage.input, c: COLORS.input },
+          { n: U.output, v: usage.output, c: COLORS.output },
+          { n: U.cacheRead + ' ×0.1', v: usage.cacheRead * 0.1, c: COLORS.cacheRead },
+          { n: U.cacheWrite + ' ×1.25', v: usage.cacheWrite * 1.25, c: COLORS.cacheWrite },
+        ], before, fmt(after) + ' ' + U.tokens),
+      );
+      flow.appendChild(
+        mkFlowRow(U.saved, [{ n: U.saved, v: saved, c: 'var(--color-accent,#b87f24)' }], before, fmt(saved) + ' (' + pct + '%)'),
+      );
+      secS.appendChild(flow);
+      var legend = el('div', 'omni-usage-legend');
+      var legendItems = [
+        [COLORS.input, U.input],
+        [COLORS.output, U.output],
+        [COLORS.cacheRead, U.cacheRead],
+        [COLORS.cacheWrite, U.cacheWrite],
+      ];
+      for (var li = 0; li < legendItems.length; li++) {
+        var item = document.createElement('span');
+        var dot = document.createElement('i');
+        dot.style.background = legendItems[li][0];
+        item.appendChild(dot);
+        item.appendChild(document.createTextNode(legendItems[li][1]));
+        legend.appendChild(item);
+      }
+      secS.appendChild(legend);
       usageGroups.appendChild(secS);
+      var secB = mkSec(U.breakdownTitle || (ZH ? '明细' : 'Breakdown'));
+      var tbl = document.createElement('table');
+      tbl.className = 'omni-usage-tbl';
+      var thead = document.createElement('thead');
+      var hr = document.createElement('tr');
+      for (var h = 0; h < 4; h++) {
+        var th = document.createElement('th');
+        th.textContent = [U.kind, U.tokens, U.beforePay, U.afterPay][h];
+        if (h > 0) th.className = 'num';
+        hr.appendChild(th);
+      }
+      thead.appendChild(hr);
+      tbl.appendChild(thead);
+      var tbody = document.createElement('tbody');
+      var rowsData = [
+        [U.input, usage.input, usage.input, U.fullPrice, false],
+        [U.output, usage.output, usage.output, U.fullPrice, false],
+        [U.cacheRead, usage.cacheRead, usage.cacheRead * 0.1, U.discount, true],
+        [U.cacheWrite, usage.cacheWrite, usage.cacheWrite * 1.25, U.premium, true],
+      ];
+      for (var r = 0; r < rowsData.length; r++) {
+        var tr = document.createElement('tr');
+        var td0 = document.createElement('td');
+        td0.textContent = rowsData[r][0];
+        tr.appendChild(td0);
+        for (var c2 = 1; c2 <= 3; c2++) {
+          var td = document.createElement('td');
+          td.className = 'num';
+          td.textContent = c2 === 1 ? fmt(rowsData[r][c2]) : c2 === 2 ? fmt(rowsData[r][c2]) : fmt(rowsData[r][c2]);
+          tr.appendChild(td);
+        }
+        if (rowsData[r][4]) tr.querySelectorAll('td')[2].classList.add('muted');
+        tbody.appendChild(tr);
+      }
+      var totTr = document.createElement('tr');
+      var tot0 = document.createElement('td');
+      tot0.className = 'cur';
+      tot0.textContent = ZH ? '合计' : 'Total';
+      totTr.appendChild(tot0);
+      [before, before, after].forEach(function (v, idx) {
+        var td = document.createElement('td');
+        td.className = 'num cur';
+        td.textContent = fmt(v);
+        totTr.appendChild(td);
+      });
+      tbody.appendChild(totTr);
+      tbl.appendChild(tbody);
+      var tblWrap = el('div');
+      tblWrap.appendChild(tbl);
+      secB.appendChild(tblWrap);
+      usageGroups.appendChild(secB);
+      if (usage.rows && usage.rows.length > 0) {
+        var secR = mkSec(U.perSessionTitle || (ZH ? '各会话' : 'Per session'));
+        var t2 = document.createElement('table');
+        t2.className = 'omni-usage-tbl';
+        var hd = document.createElement('thead');
+        var hr2 = document.createElement('tr');
+        var heads = [U.session, U.input, U.cache, U.output, U.context];
+        for (var h2 = 0; h2 < heads.length; h2++) {
+          var th2 = document.createElement('th');
+          th2.textContent = heads[h2];
+          if (h2 > 0) th2.className = 'num';
+          hr2.appendChild(th2);
+        }
+        hd.appendChild(hr2);
+        t2.appendChild(hd);
+        var tb2 = document.createElement('tbody');
+        for (var si = 0; si < usage.rows.length; si++) {
+          var sr = usage.rows[si];
+          var tr2 = document.createElement('tr');
+          var c0 = document.createElement('td');
+          c0.textContent = sr.title || sr.id.slice(0, 8);
+          if (sr.current) c0.className = 'cur';
+          tr2.appendChild(c0);
+          [sr.input, sr.cacheRead, sr.output].forEach(function (v) {
+            var td = document.createElement('td');
+            td.className = 'num';
+            td.textContent = fmt(v);
+            tr2.appendChild(td);
+          });
+          var tdC = document.createElement('td');
+          tdC.className = 'num';
+          tdC.textContent = sr.limit > 0 ? Math.round((sr.context / sr.limit) * 100) + '%' : '—';
+          tr2.appendChild(tdC);
+          tb2.appendChild(tr2);
+        }
+        t2.appendChild(tb2);
+        secR.appendChild(t2);
+        usageGroups.appendChild(secR);
+      }
       if (usage.current) {
-        var ctx = usage.current.context_tokens || 0;
-        var limit = usage.current.context_limit || 0;
-        var secC = sc(el('section', 'sec'));
-        secC.appendChild(sc(el('h3', 'sec-title', U.context)));
+        var secC = mkSec(U.context);
         var gC = sc(el('div', 'settings-group'));
         var rowC = sc(el('div', 'row'));
-        var lC = sc(el('span', 'rlabel', (usage.current.model || '—') + ' '));
-        var hintC = sc(el('span', 'hint', fmt(ctx) + ' / ' + (limit ? fmt(limit) : '—') + ' ' + U.tokens));
-        lC.appendChild(hintC);
+        var lC = sc(el('span', 'rlabel', model + ' '));
+        lC.appendChild(sc(el('span', 'hint', fmt(ctx) + ' / ' + (limit ? fmt(limit) : '—') + ' ' + U.tokens + ' · ' + ctxPct + '%')));
         rowC.appendChild(lC);
         gC.appendChild(rowC);
         var barRow = sc(el('div', 'row'));
         var barWrap = el('div', 'omni-usage-bar');
         barWrap.style.flex = '1';
         var barFill = el('div');
-        barFill.style.width = limit > 0 ? Math.min(100, Math.round((ctx / limit) * 100)) + '%' : '0%';
+        barFill.style.width = ctxPct + '%';
         barWrap.appendChild(barFill);
         barRow.appendChild(barWrap);
         gC.appendChild(barRow);
@@ -1799,7 +1990,7 @@ ${vn}`)}const De=ze.join(`
               });
           }),
         );
-        var totals = { sessions: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, current: undefined };
+        var totals = { sessions: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, current: undefined, rows: [] };
         for (var i = 0; i < snaps.length; i++) {
           var uj = snaps[i].data;
           var u = uj && uj.usage;
@@ -1809,6 +2000,17 @@ ${vn}`)}const De=ze.join(`
           totals.output += u.output_tokens || 0;
           totals.cacheRead += u.cache_read_tokens || 0;
           totals.cacheWrite += u.cache_creation_tokens || 0;
+          totals.rows.push({
+            id: snaps[i].id,
+            title: (top[i] && top[i].title) || '',
+            current: currentId !== undefined && snaps[i].id === currentId,
+            input: u.input_tokens || 0,
+            output: u.output_tokens || 0,
+            cacheRead: u.cache_read_tokens || 0,
+            cacheWrite: u.cache_creation_tokens || 0,
+            context: u.context_tokens || 0,
+            limit: u.context_limit || 0,
+          });
           var model = uj.model || '';
           if (totals.current === undefined && (currentId === undefined || snaps[i].id === currentId)) {
             totals.current = { model: model, context_tokens: u.context_tokens, context_limit: u.context_limit };
