@@ -17,8 +17,10 @@ import { defineRoute } from '../middleware/defineRoute';
 import { ErrorCode } from '../protocol/error-codes';
 import {
   sessionSnapshotResponseSchema,
+  sessionUsageResponseSchema,
   type InFlightTurn,
   type SessionSnapshotResponse,
+  type SessionUsageResponse,
 } from '../protocol/rest-snapshot';
 import { emptySessionUsage, type SessionUsage } from '../protocol/session';
 import {
@@ -92,6 +94,64 @@ export function registerSnapshotRoutes(app: SnapshotRouteHost, deps: SnapshotRou
     },
   );
   app.get(route.path, route.options, route.handler as Parameters<SnapshotRouteHost['get']>[2]);
+
+  const usageRoute = defineRoute(
+    {
+      method: 'GET',
+      path: '/sessions/{session_id}/usage',
+      params: sessionIdParamSchema,
+      success: { data: sessionUsageResponseSchema },
+      errors: {
+        [ErrorCode.SESSION_NOT_FOUND]: {},
+        [ErrorCode.INTERNAL_ERROR]: {},
+      },
+      description:
+        'Token usage for one session without loading its message history: input, output, cache read/write counts, context usage and the active model.',
+      tags: ['sessions'],
+    },
+    async (req, reply) => {
+      const { session_id } = req.params;
+      try {
+        const data = await assembleSessionUsage(core, session_id);
+        reply.send(okEnvelope(data, req.id));
+      } catch (error) {
+        if (error instanceof SnapshotNotFoundError) {
+          reply.send(errEnvelope(ErrorCode.SESSION_NOT_FOUND, error.message, req.id, error.stack));
+          return;
+        }
+        throw error;
+      }
+    },
+  );
+  app.get(
+    usageRoute.path,
+    usageRoute.options,
+    usageRoute.handler as Parameters<SnapshotRouteHost['get']>[2],
+  );
+}
+
+async function assembleSessionUsage(
+  core: Scope,
+  sessionId: string,
+): Promise<SessionUsageResponse> {
+  const handle = await resumeSessionById(core.accessor, sessionId);
+  if (handle === undefined) {
+    throw new SnapshotNotFoundError(sessionId);
+  }
+  const main = await ensureMainAgent(handle);
+  const status = readLegacyStatus(main);
+  const usage = toSnapshotUsage(status);
+  return {
+    usage: {
+      input_tokens: usage.input_tokens,
+      output_tokens: usage.output_tokens,
+      cache_read_tokens: usage.cache_read_tokens,
+      cache_creation_tokens: usage.cache_creation_tokens,
+      context_tokens: usage.context_tokens,
+      context_limit: usage.context_limit,
+    },
+    model: status?.model ?? '',
+  };
 }
 
 async function assembleSnapshot(

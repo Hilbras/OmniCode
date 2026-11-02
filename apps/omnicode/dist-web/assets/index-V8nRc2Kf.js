@@ -1259,6 +1259,8 @@ ${vn}`)}const De=ze.join(`
     '</svg>';
   var ICON_SEARCH =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11.5 3C16.1944 3 20 6.80558 20 11.5C20 13.523 19.2933 15.381 18.1132 16.8404L21.1364 19.8636C21.4879 20.2151 21.4879 20.7849 21.1364 21.1364C20.7849 21.4879 20.2151 21.4879 19.8636 21.1364L16.8404 18.1132C15.381 19.2933 13.523 20 11.5 20C6.80558 20 3 16.1944 3 11.5C3 6.80558 6.80558 3 11.5 3ZM11.5 18.2C15.2003 18.2 18.2 15.2003 18.2 11.5C18.2 7.79969 15.2003 4.8 11.5 4.8C7.79969 4.8 4.8 7.79969 4.8 11.5C4.8 15.2003 7.79969 18.2 11.5 18.2Z" fill="currentColor"></path></svg>';
+  var ICON_HISTOGRAM =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="kw-icon" aria-hidden="true" data-v-' + SDV + '><path d="M4 3.33203C4.55224 3.33203 4.99993 3.7798 5 4.33203V18.0908H20.0674C20.6195 18.0908 21.0671 18.5388 21.0674 19.0908C21.0674 19.6431 20.6197 20.0908 20.0674 20.0908H5C3.89543 20.0908 3 19.1954 3 18.0908V4.33203C3.00007 3.7798 3.44776 3.33203 4 3.33203ZM8.19922 9.28418C8.7515 9.28418 9.19922 9.73189 9.19922 10.2842V15.6045C9.19908 16.1567 8.75142 16.6045 8.19922 16.6045C7.64719 16.6043 7.19936 16.1565 7.19922 15.6045V10.2842C7.19922 9.73202 7.6471 9.28438 8.19922 9.28418ZM17.2227 6.85645C17.7748 6.85658 18.2226 7.3043 18.2227 7.85645V15.6045C18.2225 16.1566 17.7747 16.6044 17.2227 16.6045C16.6705 16.6045 16.2228 16.1566 16.2227 15.6045V7.85645C16.2227 7.30422 16.6704 6.85645 17.2227 6.85645ZM12.7109 3.96387C13.2631 3.96387 13.7107 4.41175 13.7109 4.96387V15.6035C13.7109 16.1558 13.2632 16.6035 12.7109 16.6035C12.1587 16.6035 11.7109 16.1558 11.7109 15.6035V4.96387C11.7111 4.41175 12.1588 3.96387 12.7109 3.96387Z" fill="currentColor"></path></svg>';
   var de = document.documentElement;
   var ZH = !!de && (de.lang || '').toLowerCase().startsWith('zh');
   var S = {
@@ -1302,6 +1304,34 @@ ${vn}`)}const De=ze.join(`
       builtin: ZH ? '内置技能' : 'Builtin skills',
     },
   };
+  var U = {
+    tab: ZH ? '用量' : 'Usage',
+    title: ZH ? '令牌用量' : 'Token usage',
+    desc: ZH
+      ? '查看当前会话与最近会话的输入、缓存和输出令牌,以及令牌节省前后的对比。'
+      : 'Input, cache and output tokens for the current and recent sessions, before and after the token saver.',
+    refresh: ZH ? '刷新' : 'Refresh',
+    loading: ZH ? '加载中…' : 'Loading…',
+    noSessions: ZH ? '没有可统计的会话。' : 'No sessions to report yet.',
+    allSessions: (n) => (ZH ? '全部会话(最近 ' + n + ' 个)' : 'All sessions (last ' + n + ')'),
+    output: ZH ? '输出令牌' : 'Output tokens',
+    outputHint: ZH ? '模型生成的令牌' : 'Tokens the model generated',
+    input: ZH ? '输入令牌(全价)' : 'Input tokens (full price)',
+    inputHint: ZH ? '按全价计费的输入处理' : 'Input processed at full price',
+    cacheRead: ZH ? '缓存读取(折扣价)' : 'Cache read (discounted)',
+    cacheReadHint: ZH ? '命中提示缓存的输入,按约 1 折计费' : 'Prompt-cache hits, billed at roughly 10%',
+    cacheWrite: ZH ? '缓存写入' : 'Cache write',
+    cacheWriteHint: ZH ? '写入提示缓存的输入' : 'Input written to the prompt cache',
+    before: ZH ? '节省前(无缓存折扣)' : 'Before saver (no cache discount)',
+    beforeHint: ZH ? '所有输入都按全价处理' : 'All input processed at full price',
+    after: ZH ? '节省后(含缓存折扣,估算)' : 'After saver (with cache discount, est.)',
+    afterHint: ZH ? '缓存读取按 1 折估算' : 'Cache reads estimated at 10% cost',
+    saved: ZH ? '节省' : 'Saved',
+    savedHint: ZH ? '缓存折扣带来的节省' : 'Savings from the cache discount',
+    context: ZH ? '上下文' : 'Context',
+    tokens: ZH ? '令牌' : 'tokens',
+    counted: (n) => (ZH ? '已统计 ' + n + ' 个会话' : 'Counted ' + n + ' sessions'),
+  };
   var SOURCE_ORDER = ['user', 'project', 'plugin', 'builtin'];
   function ensureStyle() {
     if (document.getElementById(STYLE_ID)) return;
@@ -1332,6 +1362,10 @@ ${vn}`)}const De=ze.join(`
       '.omni-pv.pp-row{position:relative;padding-right:96px;}',
       '.omni-pv .omni-pv-sw{position:absolute;right:44px;top:50%;transform:translateY(-50%);z-index:2;margin:0;}',
       '.omni-pv-off.pp-row{opacity:.5;}',
+      '.omni-usage-bar{height:6px;border-radius:999px;background:var(--color-line,#e6e3da);overflow:hidden;margin-top:8px;}',
+      '.omni-usage-bar > div{height:100%;background:var(--color-accent,#b87f24);border-radius:999px;transition:width .3s ease;}',
+      '.omni-usage-value{font-size:13px;font-weight:475;color:var(--color-text,#1c1a16);font-variant-numeric:tabular-nums;white-space:nowrap;}',
+      '.omni-usage-saved .omni-usage-value{color:var(--color-accent,#b87f24);}',
     ].join('');
     document.head.appendChild(st);
   }
@@ -1550,6 +1584,15 @@ ${vn}`)}const De=ze.join(`
     var anchor = allTabs.length > 2 ? allTabs[2] : allTabs[allTabs.length - 1];
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(tab, anchor.nextSibling);
     else return;
+    var usageTab = el('button', 'tab');
+    usageTab.type = 'button';
+    usageTab.setAttribute('role', 'tab');
+    usageTab.setAttribute('aria-selected', 'false');
+    usageTab.setAttribute('data-omni-usage', 'tab');
+    sc(usageTab);
+    usageTab.innerHTML = ICON_HISTOGRAM;
+    usageTab.appendChild(sc(el('span', '', U.tab)));
+    tab.parentNode.insertBefore(usageTab, tab.nextSibling);
     var bodyHost = sdialog.querySelector('.body') || sdialog;
     var panel = el('section', 'panel');
     panel.setAttribute('data-omni-skills', 'panel');
@@ -1636,6 +1679,159 @@ ${vn}`)}const De=ze.join(`
     secCreate.appendChild(createGroup);
     panel.appendChild(secCreate);
     bodyHost.appendChild(panel);
+    var usagePanel = el('section', 'panel');
+    usagePanel.setAttribute('data-omni-usage', 'panel');
+    sc(usagePanel);
+    usagePanel.style.display = 'none';
+    var secU = sc(el('section', 'sec'));
+    secU.setAttribute('data-omni-usage-list', '');
+    var groupU = sc(el('div', 'settings-group'));
+    var uActionRow = sc(el('div', 'row'));
+    var uLabel = sc(el('span', 'rlabel', U.title + ' '));
+    uLabel.appendChild(sc(el('span', 'hint', U.desc)));
+    uActionRow.appendChild(uLabel);
+    var uActions = el('div', 'omni-sk-actions');
+    var refreshBtn = appButton('secondary', U.refresh);
+    uActions.appendChild(refreshBtn);
+    uActionRow.appendChild(uActions);
+    groupU.appendChild(uActionRow);
+    var stateU = el('div', 'omni-sk-state', U.loading);
+    stateU.hidden = true;
+    groupU.appendChild(stateU);
+    secU.appendChild(groupU);
+    var usageGroups = el('div', 'omni-sk-groups');
+    usageGroups.setAttribute('data-omni-usage-groups', '');
+    secU.appendChild(usageGroups);
+    usagePanel.appendChild(secU);
+    bodyHost.appendChild(usagePanel);
+    var usage = { sessions: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, current: undefined };
+    function fmt(n) {
+      if (n >= 1e9) return (n / 1e9).toFixed(2) + 'G';
+      if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+      if (n >= 1e3) return (n / 1e3).toFixed(1) + 'K';
+      return String(Math.round(n));
+    }
+    function mkUsageRow(label, hint, valueText, cls) {
+      var row = sc(el('div', 'row'));
+      if (cls) row.classList.add(cls);
+      var l = sc(el('span', 'rlabel', label + ' '));
+      l.appendChild(sc(el('span', 'hint', hint)));
+      row.appendChild(l);
+      row.appendChild(el('span', 'omni-usage-value', valueText));
+      return row;
+    }
+    function renderUsage() {
+      usageGroups.replaceChildren();
+      stateU.hidden = usage.sessions > 0;
+      if (usage.sessions === 0) {
+        stateU.textContent = U.noSessions;
+        return;
+      }
+      var secT = sc(el('section', 'sec'));
+      secT.appendChild(sc(el('h3', 'sec-title', U.allSessions(usage.sessions))));
+      var gT = sc(el('div', 'settings-group'));
+      gT.appendChild(mkUsageRow(U.output, U.outputHint, fmt(usage.output)));
+      gT.appendChild(mkUsageRow(U.input, U.inputHint, fmt(usage.input)));
+      gT.appendChild(mkUsageRow(U.cacheRead, U.cacheReadHint, fmt(usage.cacheRead)));
+      gT.appendChild(mkUsageRow(U.cacheWrite, U.cacheWriteHint, fmt(usage.cacheWrite)));
+      secT.appendChild(gT);
+      usageGroups.appendChild(secT);
+      var before = usage.input + usage.output + usage.cacheRead + usage.cacheWrite;
+      var after = usage.input + usage.output + usage.cacheWrite + usage.cacheRead * 0.1;
+      var saved = before - after;
+      var pct = before > 0 ? Math.round((saved / before) * 100) : 0;
+      var secS = sc(el('section', 'sec'));
+      secS.appendChild(sc(el('h3', 'sec-title', ZH ? '令牌节省' : 'Token saver')));
+      var gS = sc(el('div', 'settings-group'));
+      gS.appendChild(mkUsageRow(U.before, U.beforeHint, fmt(before)));
+      gS.appendChild(mkUsageRow(U.after, U.afterHint, fmt(after)));
+      gS.appendChild(mkUsageRow(U.saved, U.savedHint, fmt(saved) + ' (' + pct + '%)', 'omni-usage-saved'));
+      secS.appendChild(gS);
+      usageGroups.appendChild(secS);
+      if (usage.current) {
+        var ctx = usage.current.context_tokens || 0;
+        var limit = usage.current.context_limit || 0;
+        var secC = sc(el('section', 'sec'));
+        secC.appendChild(sc(el('h3', 'sec-title', U.context)));
+        var gC = sc(el('div', 'settings-group'));
+        var rowC = sc(el('div', 'row'));
+        var lC = sc(el('span', 'rlabel', (usage.current.model || '—') + ' '));
+        var hintC = sc(el('span', 'hint', fmt(ctx) + ' / ' + (limit ? fmt(limit) : '—') + ' ' + U.tokens));
+        lC.appendChild(hintC);
+        rowC.appendChild(lC);
+        gC.appendChild(rowC);
+        var barRow = sc(el('div', 'row'));
+        var barWrap = el('div', 'omni-usage-bar');
+        barWrap.style.flex = '1';
+        var barFill = el('div');
+        barFill.style.width = limit > 0 ? Math.min(100, Math.round((ctx / limit) * 100)) + '%' : '0%';
+        barWrap.appendChild(barFill);
+        barRow.appendChild(barWrap);
+        gC.appendChild(barRow);
+        secC.appendChild(gC);
+        usageGroups.appendChild(secC);
+      }
+    }
+    async function loadUsage() {
+      stateU.hidden = false;
+      stateU.textContent = U.loading;
+      try {
+        var m = /\/sessions\/([^/?]+)/.exec(location.pathname);
+        var currentId = m ? m[1] : undefined;
+        var res = await api('/api/v1/sessions');
+        var j = await res.json();
+        var items = (j.data && (j.data.items || j.data)) || [];
+        items = items.slice().sort(function (a, b) {
+          return String(b.updated_at || '').localeCompare(String(a.updated_at || ''));
+        });
+        var top = items.slice(0, 10);
+        var snaps = await Promise.all(
+          top.map(function (s) {
+            return api('/api/v1/sessions/' + encodeURIComponent(s.id) + '/usage')
+              .then(function (r) {
+                return r.json();
+              })
+              .then(function (sj) {
+                return { id: s.id, data: sj.data };
+              })
+              .catch(function () {
+                return { id: s.id, data: null };
+              });
+          }),
+        );
+        var totals = { sessions: 0, input: 0, output: 0, cacheRead: 0, cacheWrite: 0, current: undefined };
+        for (var i = 0; i < snaps.length; i++) {
+          var uj = snaps[i].data;
+          var u = uj && uj.usage;
+          if (!u) continue;
+          totals.sessions += 1;
+          totals.input += u.input_tokens || 0;
+          totals.output += u.output_tokens || 0;
+          totals.cacheRead += u.cache_read_tokens || 0;
+          totals.cacheWrite += u.cache_creation_tokens || 0;
+          var model = uj.model || '';
+          if (totals.current === undefined && (currentId === undefined || snaps[i].id === currentId)) {
+            totals.current = { model: model, context_tokens: u.context_tokens, context_limit: u.context_limit };
+          }
+        }
+        if (totals.current === undefined && snaps[0] && snaps[0].data) {
+          var u0 = snaps[0].data.usage;
+          totals.current = { model: snaps[0].data.model || '', context_tokens: u0.context_tokens, context_limit: u0.context_limit };
+        }
+        usage = totals;
+        if (usage.sessions > 0) renderUsage();
+        else {
+          stateU.hidden = false;
+          stateU.textContent = U.noSessions;
+        }
+      } catch (err) {
+        stateU.hidden = false;
+        stateU.textContent = U.noSessions;
+      }
+    }
+    refreshBtn.addEventListener('click', function () {
+      void loadUsage();
+    });
     function showError(err) {
       errors.textContent = err && err.message ? err.message : String(err);
       errors.hidden = false;
@@ -1867,6 +2063,7 @@ ${vn}`)}const De=ze.join(`
       for (var i = 0; i < panels.length; i++) {
         var p = panels[i];
         if (p.hasAttribute('data-omni-skills')) continue;
+        if (p.hasAttribute('data-omni-usage')) continue;
         if (!p.hasAttribute('data-omni-sk-prev')) {
           p.setAttribute('data-omni-sk-prev', p.style.display);
         }
@@ -1882,6 +2079,7 @@ ${vn}`)}const De=ze.join(`
     }
     function activate() {
       hideVuePanels();
+      deactivateUsage();
       closeCreate();
       panel.style.display = '';
       tab.classList.add('on');
@@ -1896,13 +2094,41 @@ ${vn}`)}const De=ze.join(`
       if (!state.loaded) void load();
       else render();
     }
-    function deactivate() {
+    function hideSkills() {
       if (panel.style.display === 'none') return;
       closeCreate();
       panel.style.display = 'none';
       tab.classList.remove('on');
       tab.setAttribute('aria-selected', 'false');
+    }
+    function deactivate() {
+      hideSkills();
+      hideUsage();
       restoreVuePanels();
+    }
+    function activateUsage() {
+      hideVuePanels();
+      hideSkills();
+      usagePanel.style.display = '';
+      usageTab.classList.add('on');
+      usageTab.setAttribute('aria-selected', 'true');
+      var tabs = sdialog.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) {
+        if (tabs[i] !== usageTab) {
+          tabs[i].classList.remove('on');
+          tabs[i].setAttribute('aria-selected', 'false');
+        }
+      }
+      void loadUsage();
+    }
+    function hideUsage() {
+      if (usagePanel.style.display === 'none') return;
+      usagePanel.style.display = 'none';
+      usageTab.classList.remove('on');
+      usageTab.setAttribute('aria-selected', 'false');
+    }
+    function deactivateUsage() {
+      hideUsage();
     }
     sdialog.addEventListener(
       'click',
@@ -1912,6 +2138,9 @@ ${vn}`)}const De=ze.join(`
         if (clicked === tab) {
           event.stopPropagation();
           activate();
+        } else if (clicked === usageTab) {
+          event.stopPropagation();
+          activateUsage();
         } else {
           deactivate();
         }

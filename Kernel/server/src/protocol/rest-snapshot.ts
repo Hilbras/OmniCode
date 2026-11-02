@@ -56,3 +56,16 @@ export const sessionSnapshotResponseSchema = z.object({
   pending_questions: z.array(questionRequestSchema),
 });
 export type SessionSnapshotResponse = z.infer<typeof sessionSnapshotResponseSchema>;
+
+export const sessionUsageResponseSchema = z.object({
+  usage: z.object({
+    input_tokens: z.number().int().nonnegative(),
+    output_tokens: z.number().int().nonnegative(),
+    cache_read_tokens: z.number().int().nonnegative(),
+    cache_creation_tokens: z.number().int().nonnegative(),
+    context_tokens: z.number().int().nonnegative(),
+    context_limit: z.number().int().nonnegative().optional(),
+  }),
+  model: z.string(),
+});
+export type SessionUsageResponse = z.infer<typeof sessionUsageResponseSchema>;
