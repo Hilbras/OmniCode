@@ -1245,31 +1245,39 @@ ${vn}`)}const De=ze.join(`
   for (var k = 0; k < existing.length; k++) enhance(existing[k]);
 })();
 ;(function () {
-  if (window.__omniSkillsTab) return;
-  window.__omniSkillsTab = true;
+  if (window.__omniSettingsEnh) return;
+  window.__omniSettingsEnh = true;
   var STYLE_ID = 'omni-skills-style';
   var SDV = '62337b62';
   var BTV = 'e1f48763';
+  var SWV = '3cf7b836';
   var ICON_SPARKLES =
     '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="kw-icon" aria-hidden="true" data-v-' + SDV + '>' +
     '<path fill-rule="evenodd" clip-rule="evenodd" d="M18.9893 6.60743C20.5897 6.60757 21.8877 7.8926 21.8877 9.47736C21.8877 10.7416 21.0607 11.8129 19.9141 12.1955V14.257C19.914 15.8428 18.6152 17.1288 17.0137 17.1289H12.8438V20.1381C12.8437 20.6301 12.4412 21.0293 11.9443 21.0296C11.4473 21.0296 11.044 20.6302 11.0439 20.1381V16.4356C11.0441 15.8343 11.5363 15.3461 12.1436 15.3458H17.0137C17.6211 15.3457 18.1133 14.8585 18.1133 14.257V12.2129C16.9408 11.8451 16.0909 10.7598 16.0908 9.47736C16.0908 7.89251 17.3887 6.60743 18.9893 6.60743ZM18.9893 8.38953C18.3828 8.38953 17.8906 8.87684 17.8906 9.47736C17.8907 10.0778 18.3828 10.5642 18.9893 10.5642C19.5956 10.5641 20.0869 10.0777 20.0869 9.47736C20.0869 8.87693 19.5956 8.38967 18.9893 8.38953Z" fill="currentColor"></path>' +
     '<path fill-rule="evenodd" clip-rule="evenodd" d="M4.89844 6.60743C6.49899 6.60747 7.79688 7.89254 7.79688 9.47736C7.79684 10.7388 6.97371 11.8078 5.83105 12.1926V14.4021C5.83105 15.0036 6.32315 15.4918 6.93066 15.4918H8.37109C8.86789 15.492 9.27038 15.8905 9.27051 16.3824C9.27051 16.8744 8.86797 17.2737 8.37109 17.2739H6.93066C5.32904 17.2739 4.03027 15.9879 4.03027 14.4021V12.2158C2.85382 11.8504 2.00004 10.7627 2 9.47736C2 7.89251 3.29784 6.60743 4.89844 6.60743ZM4.89844 8.38953C4.29196 8.38953 3.7998 8.87684 3.7998 9.47736C3.79985 10.0778 4.29198 10.5642 4.89844 10.5642C5.50485 10.5642 5.99605 10.0778 5.99609 9.47736C5.99609 8.87687 5.50488 8.38958 4.89844 8.38953Z" fill="currentColor"></path>' +
     '<path fill-rule="evenodd" clip-rule="evenodd" d="M11.9434 2.9707C13.5439 2.97075 14.8418 4.25581 14.8418 5.84063C14.8418 7.11413 14.0035 8.1923 12.8438 8.56745V13.0135C12.8436 13.5056 12.4403 13.9041 11.9434 13.9041C11.4466 13.9039 11.0431 13.5055 11.043 13.0135V8.56745C9.8836 8.19209 9.04496 7.11387 9.04492 5.84063C9.04492 4.25592 10.343 2.97093 11.9434 2.9707ZM11.9434 4.75281C11.3371 4.75303 10.8447 5.24026 10.8447 5.84063C10.8448 6.44097 11.3371 6.92726 11.9434 6.92749C12.5498 6.92745 13.041 6.44108 13.041 5.84063C13.041 5.24014 12.5498 4.75285 11.9434 4.75281Z" fill="currentColor"></path>' +
     '</svg>';
+  var ICON_SEARCH =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M11.5 3C16.1944 3 20 6.80558 20 11.5C20 13.523 19.2933 15.381 18.1132 16.8404L21.1364 19.8636C21.4879 20.2151 21.4879 20.7849 21.1364 21.1364C20.7849 21.4879 20.2151 21.4879 19.8636 21.1364L16.8404 18.1132C15.381 19.2933 13.523 20 11.5 20C6.80558 20 3 16.1944 3 11.5C3 6.80558 6.80558 3 11.5 3ZM11.5 18.2C15.2003 18.2 18.2 15.2003 18.2 11.5C18.2 7.79969 15.2003 4.8 11.5 4.8C7.79969 4.8 4.8 7.79969 4.8 11.5C4.8 15.2003 7.79969 18.2 11.5 18.2Z" fill="currentColor"></path></svg>';
   var de = document.documentElement;
   var ZH = !!de && (de.lang || '').toLowerCase().startsWith('zh');
   var S = {
     tab: ZH ? '技能' : 'Skills',
     title: ZH ? '技能' : 'Skills',
     desc: ZH
-      ? '查看已安装的技能(内置、用户、项目、插件),可新建、导入或导出。'
-      : 'View installed skills (builtin, user, project, plugin), or create, import and export them.',
+      ? '查看已安装的技能,可新建、导入、导出,或单独启用/停用。'
+      : 'View installed skills, create, import, export, or enable and disable each one.',
     manage: ZH ? '管理技能' : 'Manage skills',
+    searchPh: ZH ? '搜索技能…' : 'Search skills…',
     importBtn: ZH ? '导入 ZIP' : 'Import ZIP',
     exportBtn: ZH ? '导出全部' : 'Export all',
     newBtn: ZH ? '新建技能' : 'New skill',
     cancel: ZH ? '取消' : 'Cancel',
     create: ZH ? '创建' : 'Create',
+    enableTitle: ZH ? '启用技能' : 'Enable skill',
+    disableTitle: ZH ? '停用技能' : 'Disable skill',
+    enableProvider: ZH ? '启用提供商' : 'Enable provider',
+    disableProvider: ZH ? '停用提供商' : 'Disable provider',
     name: ZH ? '名称' : 'Name',
     descField: ZH ? '描述' : 'Description',
     content: ZH ? '内容(SKILL.md 正文)' : 'Content (SKILL.md body)',
@@ -1278,17 +1286,23 @@ ${vn}`)}const De=ze.join(`
     contentPh: ZH ? '# My Skill\n\n步骤……' : '# My Skill\n\nSteps…',
     loading: ZH ? '加载中…' : 'Loading…',
     empty: ZH ? '暂无已安装的技能。' : 'No skills installed.',
+    noMatch: ZH ? '没有匹配的技能。' : 'No matching skills.',
     required: ZH ? '名称、描述和内容均为必填。' : 'Name, description and content are all required.',
     notSignedIn: ZH ? '未登录,无法访问技能目录。' : 'Not signed in — cannot reach the skills catalog.',
     imported: (n) => (ZH ? '已导入 ' + n + ' 项' : 'Imported ' + n),
     skipped: (n) => (ZH ? '跳过 ' + n + ' 项' : 'Skipped ' + n),
     errors: (n) => (ZH ? '错误 ' + n + ' 项' : 'Errors ' + n),
-    foot: (u, p) =>
-      ZH ? '用户技能 ' + u + ' · 项目技能 ' + p : u + ' user · ' + p + ' project',
+    stats: (t, on, off) =>
+      ZH ? '共 ' + t + ' 项 · 已启用 ' + on + ' · 已停用 ' + off : t + ' installed · ' + on + ' enabled · ' + off + ' disabled',
     exportFail: ZH ? '导出失败' : 'Export failed',
-    enableTitle: ZH ? '启用技能' : 'Enable skill',
-    disableTitle: ZH ? '停用技能' : 'Disable skill',
+    src: {
+      user: ZH ? '用户技能' : 'User skills',
+      project: ZH ? '项目技能' : 'Project skills',
+      plugin: ZH ? '插件技能' : 'Plugin skills',
+      builtin: ZH ? '内置技能' : 'Builtin skills',
+    },
   };
+  var SOURCE_ORDER = ['user', 'project', 'plugin', 'builtin'];
   function ensureStyle() {
     if (document.getElementById(STYLE_ID)) return;
     var st = document.createElement('style');
@@ -1299,6 +1313,9 @@ ${vn}`)}const De=ze.join(`
       '.row[data-omni-sk-row] .rlabel{min-width:0;flex:1;}',
       '.row[data-omni-sk-row] .hint{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}',
       '.row[data-omni-sk-row].is-off .rlabel{opacity:.45;}',
+      '.omni-sk-searchbox{display:flex;align-items:center;gap:8px;flex:1;min-width:0;background:var(--color-surface,#fff);border:1px solid var(--color-line,#e6e3da);border-radius:10px;padding:7px 12px;color:var(--color-text-muted,#8c887d);}',
+      '.omni-sk-searchbox input{flex:1;min-width:0;border:none;outline:none;background:transparent;font:inherit;font-size:13px;color:var(--color-text,#1c1a16);padding:0;}',
+      '.omni-sk-searchbox:focus-within{border-color:var(--color-accent,#b87f24);}',
       '.omni-sk-state{padding:16px;font-size:12px;line-height:18px;color:var(--color-text-muted,#8c887d);}',
       '.omni-sk-foot{margin:10px 2px 0;font-size:12px;line-height:18px;color:var(--color-text-muted,#8c887d);}',
       '.omni-sk-summary{display:flex;gap:12px;margin:10px 2px 0;font-size:12px;line-height:18px;color:var(--color-text-muted,#8c887d);}',
@@ -1311,6 +1328,10 @@ ${vn}`)}const De=ze.join(`
       '.omni-sk-form input:focus,.omni-sk-form textarea:focus{border-color:var(--color-accent,#b87f24);}',
       '.omni-sk-form textarea{min-height:160px;resize:vertical;font-family:var(--font-mono,ui-monospace,SFMono-Regular,monospace);}',
       '.omni-sk-form-foot{display:flex;justify-content:flex-end;gap:8px;}',
+      '.omni-sk-groups{display:contents;}',
+      '.omni-pv.pp-row{position:relative;padding-right:96px;}',
+      '.omni-pv .omni-pv-sw{position:absolute;right:44px;top:50%;transform:translateY(-50%);z-index:2;margin:0;}',
+      '.omni-pv-off.pp-row{opacity:.5;}',
     ].join('');
     document.head.appendChild(st);
   }
@@ -1365,7 +1386,8 @@ ${vn}`)}const De=ze.join(`
     } catch (e) {}
     return undefined;
   }
-  var state = { skills: [], cwd: undefined, loaded: false };
+  var state = { skills: [], cwd: undefined, loaded: false, filter: '' };
+  var pvState = { byId: undefined, loading: undefined };
   function el(tag, cls, text) {
     var e = document.createElement(tag);
     if (cls) e.className = cls;
@@ -1386,7 +1408,134 @@ ${vn}`)}const De=ze.join(`
     b.appendChild(s);
     return b;
   }
+  function makeSwitch(on, title, onToggle) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ui-switch' + (on ? ' is-on' : '');
+    b.setAttribute('role', 'switch');
+    b.setAttribute('aria-checked', on ? 'true' : 'false');
+    b.setAttribute('data-v-' + SWV, '');
+    b.title = title;
+    var thumb = el('span', 'ui-switch__thumb');
+    thumb.setAttribute('data-v-' + SWV, '');
+    b.appendChild(thumb);
+    b.addEventListener('click', function (event) {
+      event.stopPropagation();
+      event.preventDefault();
+      if (b.hasAttribute('data-omni-busy')) return;
+      b.setAttribute('data-omni-busy', '');
+      Promise.resolve()
+        .then(onToggle)
+        .catch(function (err) {
+          var message = err && err.message ? err.message : String(err);
+          window.alert(message);
+        })
+        .finally(function () {
+          b.removeAttribute('data-omni-busy');
+        });
+    });
+    return b;
+  }
+  function setSwitchState(b, on) {
+    b.classList.toggle('is-on', on);
+    b.setAttribute('aria-checked', on ? 'true' : 'false');
+  }
+  async function loadProviders() {
+    if (pvState.byId !== undefined || pvState.loading !== undefined) {
+      return pvState.loading;
+    }
+    pvState.loading = api('/api/v1/providers')
+      .then(function (res) {
+        return res.json();
+      })
+      .then(function (j) {
+        var items = ((j && j.data) || {}).items || [];
+        var byId = {};
+        for (var i = 0; i < items.length; i++) byId[String(items[i].id).toLowerCase()] = items[i];
+        pvState.byId = byId;
+        return byId;
+      })
+      .catch(function () {
+        pvState.byId = {};
+        return pvState.byId;
+      })
+      .finally(function () {
+        pvState.loading = undefined;
+      });
+    return pvState.loading;
+  }
+  async function injectProviderSwitches(pp) {
+    var byId = await loadProviders();
+    var rows = pp.querySelectorAll('.pp-row');
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var candidates = [];
+      var pbi = row.querySelector('.pbi');
+      if (pbi) {
+        var pm = /pbi-([a-z0-9][a-z0-9-]*)$/.exec(pbi.className.trim());
+        if (pm) candidates.push(pm[1]);
+      }
+      var idEl = row.querySelector('.pp-id');
+      if (idEl) candidates.push(idEl.textContent.trim().toLowerCase());
+      var pv;
+      var pvId;
+      for (var c = 0; c < candidates.length; c++) {
+        var hit = byId[candidates[c].toLowerCase()];
+        if (hit) {
+          pv = hit;
+          pvId = candidates[c].toLowerCase();
+          break;
+        }
+      }
+      if (!pv) continue;
+      row.classList.add('omni-pv');
+      var existing = row.querySelector(':scope > .omni-pv-sw');
+      if (existing) {
+        setSwitchState(existing, pv.disabled !== true);
+        row.classList.toggle('omni-pv-off', pv.disabled === true);
+        continue;
+      }
+      var sw = makeSwitch(pv.disabled !== true, pv.disabled === true ? S.enableProvider : S.disableProvider, function () {
+        var enabling = pv.disabled === true;
+        return api('/api/v1/providers/' + encodeURIComponent(pvId) + '/enabled', {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ enabled: enabling }),
+        })
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function () {
+            pv.disabled = !enabling;
+            setSwitchState(sw, enabling);
+            row.classList.toggle('omni-pv-off', !enabling);
+            sw.title = !enabling ? S.enableProvider : S.disableProvider;
+          });
+      });
+      sw.classList.add('omni-pv-sw');
+      row.appendChild(sw);
+      row.classList.toggle('omni-pv-off', pv.disabled === true);
+    }
+  }
+  function watchProviders(pp) {
+    pp.setAttribute('data-omni-pv-watched', '');
+    var timer;
+    var run = function () {
+      clearTimeout(timer);
+      timer = setTimeout(function () {
+        injectProviderSwitches(pp).catch(function () {});
+      }, 150);
+    };
+    var obs = new MutationObserver(run);
+    obs.observe(pp, { childList: true, subtree: true });
+    injectProviderSwitches(pp).catch(function () {});
+  }
+  function watchProvidersIfPresent(sdialog) {
+    var pp = sdialog.querySelector('.pp');
+    if (pp && !pp.hasAttribute('data-omni-pv-watched')) watchProviders(pp);
+  }
   function enhance(sdialog) {
+    watchProvidersIfPresent(sdialog);
     if (sdialog.querySelector('[data-omni-skills]')) return;
     ensureStyle();
     var tab = el('button', 'tab');
@@ -1407,9 +1556,9 @@ ${vn}`)}const De=ze.join(`
     sc(panel);
     panel.style.display = 'none';
     var sec = sc(el('section', 'sec'));
+    sec.setAttribute('data-omni-sk-list', '');
     sec.appendChild(sc(el('h3', 'sec-title', S.title)));
     var group = sc(el('div', 'settings-group'));
-    sec.appendChild(group);
     var actionRow = sc(el('div', 'row'));
     var manageLabel = sc(el('span', 'rlabel', S.manage + ' '));
     manageLabel.appendChild(sc(el('span', 'hint', S.desc)));
@@ -1423,6 +1572,16 @@ ${vn}`)}const De=ze.join(`
     actions.appendChild(exportBtn);
     actionRow.appendChild(actions);
     group.appendChild(actionRow);
+    var searchRow = sc(el('div', 'row'));
+    var searchBox = el('div', 'omni-sk-searchbox');
+    searchBox.innerHTML = ICON_SEARCH;
+    var searchInput = document.createElement('input');
+    searchInput.type = 'text';
+    searchInput.placeholder = S.searchPh;
+    searchInput.setAttribute('aria-label', S.searchPh);
+    searchBox.appendChild(searchInput);
+    searchRow.appendChild(searchBox);
+    group.appendChild(searchRow);
     var fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = '.zip,application/zip';
@@ -1431,6 +1590,10 @@ ${vn}`)}const De=ze.join(`
     var stateRow = el('div', 'omni-sk-state', S.loading);
     stateRow.hidden = true;
     group.appendChild(stateRow);
+    sec.appendChild(group);
+    var groupsHost = el('div', 'omni-sk-groups');
+    groupsHost.setAttribute('data-omni-sk-groups', '');
+    sec.appendChild(groupsHost);
     var summary = el('div', 'omni-sk-summary');
     summary.hidden = true;
     var errors = el('div', 'omni-sk-errors');
@@ -1481,84 +1644,101 @@ ${vn}`)}const De=ze.join(`
       errors.hidden = true;
       errors.textContent = '';
     }
-    function makeSwitch(sk) {
-      var b = document.createElement('button');
-      b.type = 'button';
-      b.className = 'ui-switch' + (sk.disabled === true ? '' : ' is-on');
-      b.setAttribute('role', 'switch');
-      b.setAttribute('aria-checked', sk.disabled === true ? 'false' : 'true');
-      b.setAttribute('aria-label', sk.name);
-      b.setAttribute('data-v-3cf7b836', '');
-      b.title = sk.disabled === true ? S.enableTitle : S.disableTitle;
-      var thumb = el('span', 'ui-switch__thumb');
-      thumb.setAttribute('data-v-3cf7b836', '');
-      b.appendChild(thumb);
-      b.addEventListener('click', function () {
-        if (b.hasAttribute('data-omni-sk-busy')) return;
-        b.setAttribute('data-omni-sk-busy', '');
-        var turningOff = sk.disabled !== true;
-        api(
-          '/api/v2/skills/' + encodeURIComponent(sk.name) + (turningOff ? '/disable' : '/enable'),
+    function makeSkillSwitch(sk) {
+      return makeSwitch(sk.disabled !== true, sk.disabled === true ? S.enableTitle : S.disableTitle, function () {
+        var enabling = sk.disabled === true;
+        return api(
+          '/api/v2/skills/' + encodeURIComponent(sk.name) + (enabling ? '/enable' : '/disable'),
           { method: 'POST' },
-        )
-          .then(function (res) {
-            return res.json();
-          })
-          .then(function () {
-            sk.disabled = turningOff;
-            render();
-          })
-          .catch(showError)
-          .finally(function () {
-            b.removeAttribute('data-omni-sk-busy');
-          });
+        ).then(function (res) {
+          return res.json();
+        }).then(function () {
+          sk.disabled = !enabling;
+          render();
+        });
       });
-      return b;
     }
     function render() {
       clearError();
-      var skills = state.skills.slice().sort(function (a, b) {
+      var filter = state.filter.trim().toLowerCase();
+      var skills = state.skills.filter(function (sk) {
+        if (!filter) return true;
+        return (
+          sk.name.toLowerCase().includes(filter) ||
+          (sk.description || '').toLowerCase().includes(filter) ||
+          (sk.source || '').toLowerCase().includes(filter)
+        );
+      });
+      skills.sort(function (a, b) {
         var da = a.disabled === true ? 1 : 0;
         var db = b.disabled === true ? 1 : 0;
         if (da !== db) return da - db;
-        var order = { user: 0, project: 1 };
-        var ta = order[a.source] === undefined ? 2 : order[a.source];
-        var tb = order[b.source] === undefined ? 2 : order[b.source];
-        return ta - tb || a.name.localeCompare(b.name);
+        return a.name.localeCompare(b.name);
       });
-      var prev = group.querySelectorAll('[data-omni-sk-row]');
-      for (var pi = 0; pi < prev.length; pi++) prev[pi].remove();
-      var user = 0;
-      var project = 0;
-      for (var i = 0; i < skills.length; i++) {
-        var sk = skills[i];
-        if (sk.source === 'user') user++;
-        if (sk.source === 'project') project++;
-        var row = sc(el('div', 'row'));
-        row.setAttribute('data-omni-sk-row', '');
-        if (sk.disabled === true) row.classList.add('is-off');
-        var label = sc(el('span', 'rlabel', sk.name + ' '));
-        var hintText = sk.description || sk.path || '';
-        if (hintText) {
-          hintText = hintText + ' · ' + sk.source;
-        } else {
-          hintText = sk.source;
-        }
-        label.appendChild(sc(el('span', 'hint', hintText)));
-        row.appendChild(label);
-        row.appendChild(makeSwitch(sk));
-        group.appendChild(row);
+      groupsHost.replaceChildren();
+      var on = 0;
+      var off = 0;
+      for (var si = 0; si < state.skills.length; si++) {
+        if (state.skills[si].disabled === true) off++;
+        else on++;
       }
-      stateRow.hidden = skills.length > 0;
-      stateRow.textContent = S.empty;
-      foot.hidden = skills.length === 0;
-      foot.textContent = S.foot(user, project);
+      foot.hidden = false;
+      foot.textContent = S.stats(state.skills.length, on, off);
+      var bySource = {};
+      for (var i = 0; i < skills.length; i++) {
+        var src = skills[i].source || 'other';
+        (bySource[src] = bySource[src] || []).push(skills[i]);
+      }
+      var first = true;
+      for (var g = 0; g < SOURCE_ORDER.length; g++) {
+        var list = bySource[SOURCE_ORDER[g]];
+        if (!list || list.length === 0) continue;
+        var secSrc = sc(el('section', 'sec'));
+        secSrc.appendChild(sc(el('h3', 'sec-title', (S.src[SOURCE_ORDER[g]] || SOURCE_ORDER[g]) + ' · ' + list.length)));
+        var groupSrc = sc(el('div', 'settings-group'));
+        for (var r = 0; r < list.length; r++) {
+          var sk = list[r];
+          var row = sc(el('div', 'row'));
+          row.setAttribute('data-omni-sk-row', '');
+          if (!first) row.setAttribute('data-omni-sk-cont', '');
+          if (sk.disabled === true) row.classList.add('is-off');
+          var label = sc(el('span', 'rlabel', sk.name + ' '));
+          var hintText = sk.description || sk.path || '';
+          if (hintText) label.appendChild(sc(el('span', 'hint', hintText)));
+          row.appendChild(label);
+          row.appendChild(makeSkillSwitch(sk));
+          groupSrc.appendChild(row);
+        }
+        secSrc.appendChild(groupSrc);
+        groupsHost.appendChild(secSrc);
+        first = false;
+      }
+      for (var other in bySource) {
+        if (SOURCE_ORDER.indexOf(other) !== -1) continue;
+        var secO = sc(el('section', 'sec'));
+        secO.appendChild(sc(el('h3', 'sec-title', other + ' · ' + bySource[other].length)));
+        var groupO = sc(el('div', 'settings-group'));
+        for (var r2 = 0; r2 < bySource[other].length; r2++) {
+          var sk2 = bySource[other][r2];
+          var rowO = sc(el('div', 'row'));
+          rowO.setAttribute('data-omni-sk-row', '');
+          if (sk2.disabled === true) rowO.classList.add('is-off');
+          var labelO = sc(el('span', 'rlabel', sk2.name + ' '));
+          if (sk2.description || sk2.path) labelO.appendChild(sc(el('span', 'hint', sk2.description || sk2.path)));
+          rowO.appendChild(labelO);
+          rowO.appendChild(makeSkillSwitch(sk2));
+          groupO.appendChild(rowO);
+        }
+        secO.appendChild(groupO);
+        groupsHost.appendChild(secO);
+      }
+      stateRow.hidden = !(skills.length === 0);
+      stateRow.textContent = state.skills.length === 0 ? S.empty : S.noMatch;
     }
     async function load() {
       stateRow.hidden = false;
       stateRow.textContent = S.loading;
-      var prevRows = group.querySelectorAll('[data-omni-sk-row]');
-      for (var ri = 0; ri < prevRows.length; ri++) prevRows[ri].remove();
+      groupsHost.replaceChildren();
       foot.hidden = true;
       clearError();
       try {
@@ -1575,6 +1755,10 @@ ${vn}`)}const De=ze.join(`
         showError(err);
       }
     }
+    searchInput.addEventListener('input', function () {
+      state.filter = searchInput.value;
+      if (state.loaded) render();
+    });
     importBtn.addEventListener('click', function () {
       fileInput.click();
     });
@@ -1737,7 +1921,9 @@ ${vn}`)}const De=ze.join(`
   }
   var observer = new MutationObserver(function () {
     var sdialog = document.querySelector('.sd');
-    if (sdialog) enhance(sdialog);
+    if (!sdialog) return;
+    watchProvidersIfPresent(sdialog);
+    enhance(sdialog);
   });
   function boot() {
     if (!document.documentElement) {
