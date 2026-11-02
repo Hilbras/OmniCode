@@ -1,7 +1,8 @@
 import { type ChildProcess, spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { homedir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { delimiter, dirname, join, resolve } from 'node:path';
 
 const READY_TIMEOUT_MS = 60_000;
 const DESKTOP_SERVER_PORT = 58637;
@@ -36,17 +37,36 @@ export function parseReadyUrl(line: string): string | undefined {
   return READY_URL_PATTERN.exec(line.replace(ANSI_PATTERN, ''))?.[1];
 }
 
+function bundledFfmpegDir(opts: StartServerOptions): string | undefined {
+  try {
+    const exe = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+    if (opts.packaged) {
+      const dir = join(opts.resourcesPath, 'ffmpeg');
+      return existsSync(join(dir, exe)) ? dir : undefined;
+    }
+    const req = createRequire(__filename);
+    return dirname(req.resolve('ffmpeg-static'));
+  } catch {
+    return undefined;
+  }
+}
+
 export async function startServer(opts: StartServerOptions): Promise<ServerHandle> {
   const binary = resolveServerBinary(opts);
   if (!existsSync(binary)) {
     throw new Error(`Omnicode server binary not found at ${binary}.`);
+  }
+  const env: NodeJS.ProcessEnv = { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' };
+  const ffmpegDir = bundledFfmpegDir(opts);
+  if (ffmpegDir !== undefined && !(env['PATH'] ?? '').includes(ffmpegDir)) {
+    env['PATH'] = ffmpegDir + delimiter + (env['PATH'] ?? '');
   }
   const child = spawn(
     binary,
     ['web', '--no-open', '--port', String(DESKTOP_SERVER_PORT), '--log-level', 'warn', '--web-title', 'Omnicode'],
     {
       cwd: homedir(),
-      env: { ...process.env, NO_COLOR: '1', FORCE_COLOR: '0' },
+      env,
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     },
