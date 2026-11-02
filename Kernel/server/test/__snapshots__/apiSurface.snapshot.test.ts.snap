@@ -314,6 +314,14 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "GET",
+      "/api/v2/agents",
+    ],
+    [
+      "GET",
+      "/api/v2/agents{export}",
+    ],
+    [
+      "GET",
       "/api/v2/mcp/auth-statuses",
     ],
     [
@@ -322,11 +330,23 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "GET",
+      "/api/v2/mcp/servers{export}",
+    ],
+    [
+      "GET",
       "/api/v2/mcp/servers/{name}",
     ],
     [
       "GET",
       "/api/v2/sessions",
+    ],
+    [
+      "GET",
+      "/api/v2/skills",
+    ],
+    [
+      "GET",
+      "/api/v2/skills{export}",
     ],
     [
       "GET",
@@ -542,6 +562,14 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "POST",
+      "/api/v2/agents",
+    ],
+    [
+      "POST",
+      "/api/v2/agents{import}",
+    ],
+    [
+      "POST",
       "/api/v2/mcp/auth:begin",
     ],
     [
@@ -570,6 +598,10 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "POST",
+      "/api/v2/mcp/servers{import}",
+    ],
+    [
+      "POST",
       "/api/v2/sessions:archive",
     ],
     [
@@ -577,8 +609,28 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
       "/api/v2/sessions:restore",
     ],
     [
+      "POST",
+      "/api/v2/skills",
+    ],
+    [
+      "POST",
+      "/api/v2/skills{import}",
+    ],
+    [
+      "POST",
+      "/api/v2/skills/{name}/disable",
+    ],
+    [
+      "POST",
+      "/api/v2/skills/{name}/enable",
+    ],
+    [
       "PUT",
       "/api/v1/providers/{provider_id}",
+    ],
+    [
+      "PUT",
+      "/api/v1/providers/{provider_id}/enabled",
     ],
     [
       "PUT",

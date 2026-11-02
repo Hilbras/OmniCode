@@ -1,5 +1,6 @@
 import type { Scope } from '@hilbras/omnicode-core';
 
+import { registerV2CatalogRoutes } from './v2/catalog';
 import { registerV2McpRoutes } from './v2/mcp';
 import { registerV2SessionsRoutes } from './v2/sessions';
 
@@ -15,6 +16,7 @@ export async function registerApiV2Routes(app: ApiV2AppHost, core: Scope): Promi
     async (apiV2) => {
       registerV2SessionsRoutes(apiV2 as Parameters<typeof registerV2SessionsRoutes>[0], core);
       registerV2McpRoutes(apiV2 as Parameters<typeof registerV2McpRoutes>[0], core);
+      registerV2CatalogRoutes(apiV2 as Parameters<typeof registerV2CatalogRoutes>[0], core);
     },
     { prefix: '/api/v2' },
   );

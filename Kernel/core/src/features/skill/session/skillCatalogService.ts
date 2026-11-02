@@ -1,7 +1,12 @@
 import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
 import { Service } from '#/_base/di/service';
 import { Emitter, type Event } from '#/_base/event';
+import { IConfigService } from '#/app/config/config';
 import { LifecycleScope } from '#/app/scopes';
+import {
+  DISABLED_SKILLS_SECTION,
+  type DisabledSkillsConfig,
+} from '#/features/skill/catalog/configSection';
 import { InMemorySkillCatalog } from '#/features/skill/catalog/registry';
 import type { SkillContribution } from '#/features/skill/catalog/skillSource';
 import {
@@ -36,6 +41,7 @@ export class SessionSkillCatalogService
   constructor(
     @ISessionSkillCatalogData private readonly data: ISessionSkillCatalogData,
     @ISessionStateService private readonly states: ISessionStateService,
+    @IConfigService private readonly configService: IConfigService,
   ) {
     super();
     this.states.contributeState(skillCatalogContributionsKey);
@@ -48,6 +54,10 @@ export class SessionSkillCatalogService
     );
     this.remerge();
     this.ready = this.data.ready.then(() => this.remerge());
+    void this.configService.ready.then(() => {
+      this.remerge();
+      this.onDidChangeEmitter.fire('config');
+    });
   }
 
   private get contributions(): Map<
@@ -96,15 +106,29 @@ export class SessionSkillCatalogService
     this.onDidChangeEmitter.fire(id);
   }
 
+  private disabledSkills(): ReadonlySet<string> {
+    try {
+      const list = this.configService.get<DisabledSkillsConfig>(DISABLED_SKILLS_SECTION) ?? [];
+      return new Set(list.map((name) => name.toLowerCase()));
+    } catch {
+      return new Set();
+    }
+  }
+
   private remerge(): void {
     const m = new InMemorySkillCatalog();
+    const disabled = this.disabledSkills();
     const base = this.data.catalog;
-    for (const skill of base.listSkills()) m.register(skill, { replace: true });
+    for (const skill of base.listSkills()) {
+      if (!disabled.has(skill.name.toLowerCase())) m.register(skill, { replace: true });
+    }
     m.addRoots(base.getSkillRoots());
     m.recordSkipped(base.getSkippedByPolicy());
     const ordered = [...this.contributions.values()].toSorted((a, b) => a.priority - b.priority);
     for (const { c } of ordered) {
-      for (const skill of c.skills) m.register(skill, { replace: true });
+      for (const skill of c.skills) {
+        if (!disabled.has(skill.name.toLowerCase())) m.register(skill, { replace: true });
+      }
       m.addRoots(c.scannedRoots ?? []);
       m.recordSkipped(c.skipped ?? []);
     }

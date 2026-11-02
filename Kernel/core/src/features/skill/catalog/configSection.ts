@@ -17,6 +17,14 @@ registerConfigSection(EXTRA_SKILL_DIRS_SECTION, ExtraSkillDirsConfigSchema, {
   defaultValue: [],
 });
 
+export const DISABLED_SKILLS_SECTION = 'disabledSkills';
+export const DisabledSkillsConfigSchema = z.array(z.string()).optional();
+export type DisabledSkillsConfig = z.infer<typeof DisabledSkillsConfigSchema>;
+
+registerConfigSection(DISABLED_SKILLS_SECTION, DisabledSkillsConfigSchema, {
+  defaultValue: [],
+});
+
 export const MERGE_ALL_AVAILABLE_SKILLS_SECTION = 'mergeAllAvailableSkills';
 export const MergeAllAvailableSkillsConfigSchema = z.boolean().optional();
 export type MergeAllAvailableSkillsConfig = z.infer<typeof MergeAllAvailableSkillsConfigSchema>;

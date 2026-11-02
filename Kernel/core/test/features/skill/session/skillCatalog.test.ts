@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { _clearScopedRegistryForTests, registerScopedService } from '#/_base/di/scope';
 import { createScopedTestHost, stubPair } from '#/_base/di/test';
 import { Emitter } from '#/_base/event';
+import { IConfigService } from '#/app/config/config';
 import { LifecycleScope } from '#/app/scopes';
 import { InMemorySkillCatalog } from '#/features/skill/catalog/registry';
 import type { SkillCatalog } from '#/features/skill/catalog/types';
@@ -17,6 +18,7 @@ import { SessionStateService } from '#/session/state/sessionStateService';
 import { IWorkspaceStateService } from '#/workspace/state/workspaceState';
 import { WorkspaceStateService } from '#/workspace/state/workspaceStateService';
 
+import { StubConfigService } from '../../../stubs';
 import { stubSkill } from '../catalog/stubs';
 
 function dataSeed(initial: InMemorySkillCatalog): {
@@ -55,11 +57,12 @@ describe('SessionSkillCatalogService (seed view)', () => {
     registerScopedService(LifecycleScope.Session, ISessionSkillCatalog, SessionSkillCatalogService);
   });
 
-  function makeSession(data: ISessionSkillCatalogData) {
+  function makeSession(data: ISessionSkillCatalogData, config: IConfigService = new StubConfigService()) {
     const host = createScopedTestHost([]);
     const session = host.child(LifecycleScope.Session, 's1', [
       stubPair(ISessionSkillCatalogData, data),
       stubPair(IWorkspaceStateService, new WorkspaceStateService()),
+      stubPair(IConfigService, config),
     ]);
     return { host, catalog: session.accessor.get(ISessionSkillCatalog) };
   }
@@ -147,6 +150,67 @@ describe('SessionSkillCatalogService (seed view)', () => {
     });
     expect(Object.keys(seeded ?? {})).not.toContain('content');
     expect(summaries.some((summary) => summary.name === 'adhoc-only')).toBe(true);
+    host.dispose();
+  });
+
+  it('excludes skills named in disabledSkills config from seed and sink contributions', async () => {
+    const seed = dataSeed(catalogOf(stubSkill('blocked-seed'), stubSkill('allowed')));
+    const config = new StubConfigService({ disabledSkills: ['Blocked-Seed', 'BLOCKED-SINK'] });
+    const { host, catalog } = makeSession(seed.data, config);
+    await catalog.load();
+
+    const sink = catalog as unknown as ISkillCatalogSink;
+    sink.set(
+      'adhoc',
+      { skills: [stubSkill('blocked-sink'), stubSkill('adhoc-allowed')] },
+      { priority: 40 },
+    );
+
+    expect(catalog.catalog.getSkill('blocked-seed')).toBeUndefined();
+    expect(catalog.catalog.getSkill('blocked-sink')).toBeUndefined();
+    expect(catalog.catalog.getSkill('allowed')).toBeDefined();
+    expect(catalog.catalog.getSkill('adhoc-allowed')).toBeDefined();
+
+    const summaries = await catalog.list();
+    expect(summaries.map((summary) => summary.name).toSorted()).toEqual([
+      'adhoc-allowed',
+      'allowed',
+    ]);
+    host.dispose();
+  });
+
+  it('treats unreadable config as no disabled skills', async () => {
+    const seed = dataSeed(catalogOf(stubSkill('present')));
+    const config = new StubConfigService();
+    config.get = () => {
+      throw new Error('config not ready');
+    };
+    const { host, catalog } = makeSession(seed.data, config);
+    await catalog.load();
+    expect(catalog.catalog.getSkill('present')).toBeDefined();
+    host.dispose();
+  });
+
+  it('re-merges and fires onDidChange once config becomes ready', async () => {
+    let release!: () => void;
+    const gate = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const seed = dataSeed(catalogOf(stubSkill('late-blocked'), stubSkill('late-allowed')));
+    const config = new StubConfigService({ disabledSkills: ['late-blocked'] });
+    Object.defineProperty(config, 'ready', { value: gate });
+    const { host, catalog } = makeSession(seed.data, config);
+    await catalog.load();
+
+    const seen: string[] = [];
+    const subscription = catalog.onDidChange((sourceId) => seen.push(sourceId));
+    release();
+    await gate;
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(catalog.catalog.getSkill('late-blocked')).toBeUndefined();
+    expect(seen).toEqual(['config']);
+    subscription.dispose();
     host.dispose();
   });
 });

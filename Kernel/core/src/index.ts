@@ -236,6 +236,9 @@ export { parseAgentFileText } from '#/workspace/workspaceAgentProfileLoader/inte
 export { resolveAgentPath } from '#/workspace/workspaceAgentProfileLoader/internal/paths';
 export * from '#/workspace/workspaceAgentProfileLoader/userAgentProfileLoader';
 export * from '#/workspace/workspaceAgentProfileLoader/userAgentProfileLoaderService';
+export * from '#/app/catalogManagement/catalogManagement';
+export * from '#/app/catalogManagement/catalogManagementService';
+export * from '#/app/catalogManagement/catalogArchive';
 export * from '#/app/plugin/types';
 export * from '#/app/plugin/commands';
 export * from '#/app/plugin/manifest';
