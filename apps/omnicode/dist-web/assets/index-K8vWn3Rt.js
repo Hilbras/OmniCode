@@ -1244,3 +1244,509 @@ ${vn}`)}const De=ze.join(`
   var existing = document.querySelectorAll('.model-dropdown');
   for (var k = 0; k < existing.length; k++) enhance(existing[k]);
 })();
+;(function () {
+  if (window.__omniSkillsTab) return;
+  window.__omniSkillsTab = true;
+  var STYLE_ID = 'omni-skills-style';
+  var SDV = '62337b62';
+  var BTV = 'e1f48763';
+  var ICON_SPARKLES =
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" class="kw-icon" aria-hidden="true" data-v-' + SDV + '>' +
+    '<path fill-rule="evenodd" clip-rule="evenodd" d="M18.9893 6.60743C20.5897 6.60757 21.8877 7.8926 21.8877 9.47736C21.8877 10.7416 21.0607 11.8129 19.9141 12.1955V14.257C19.914 15.8428 18.6152 17.1288 17.0137 17.1289H12.8438V20.1381C12.8437 20.6301 12.4412 21.0293 11.9443 21.0296C11.4473 21.0296 11.044 20.6302 11.0439 20.1381V16.4356C11.0441 15.8343 11.5363 15.3461 12.1436 15.3458H17.0137C17.6211 15.3457 18.1133 14.8585 18.1133 14.257V12.2129C16.9408 11.8451 16.0909 10.7598 16.0908 9.47736C16.0908 7.89251 17.3887 6.60743 18.9893 6.60743ZM18.9893 8.38953C18.3828 8.38953 17.8906 8.87684 17.8906 9.47736C17.8907 10.0778 18.3828 10.5642 18.9893 10.5642C19.5956 10.5641 20.0869 10.0777 20.0869 9.47736C20.0869 8.87693 19.5956 8.38967 18.9893 8.38953Z" fill="currentColor"></path>' +
+    '<path fill-rule="evenodd" clip-rule="evenodd" d="M4.89844 6.60743C6.49899 6.60747 7.79688 7.89254 7.79688 9.47736C7.79684 10.7388 6.97371 11.8078 5.83105 12.1926V14.4021C5.83105 15.0036 6.32315 15.4918 6.93066 15.4918H8.37109C8.86789 15.492 9.27038 15.8905 9.27051 16.3824C9.27051 16.8744 8.86797 17.2737 8.37109 17.2739H6.93066C5.32904 17.2739 4.03027 15.9879 4.03027 14.4021V12.2158C2.85382 11.8504 2.00004 10.7627 2 9.47736C2 7.89251 3.29784 6.60743 4.89844 6.60743ZM4.89844 8.38953C4.29196 8.38953 3.7998 8.87684 3.7998 9.47736C3.79985 10.0778 4.29198 10.5642 4.89844 10.5642C5.50485 10.5642 5.99605 10.0778 5.99609 9.47736C5.99609 8.87687 5.50488 8.38958 4.89844 8.38953Z" fill="currentColor"></path>' +
+    '<path fill-rule="evenodd" clip-rule="evenodd" d="M11.9434 2.9707C13.5439 2.97075 14.8418 4.25581 14.8418 5.84063C14.8418 7.11413 14.0035 8.1923 12.8438 8.56745V13.0135C12.8436 13.5056 12.4403 13.9041 11.9434 13.9041C11.4466 13.9039 11.0431 13.5055 11.043 13.0135V8.56745C9.8836 8.19209 9.04496 7.11387 9.04492 5.84063C9.04492 4.25592 10.343 2.97093 11.9434 2.9707ZM11.9434 4.75281C11.3371 4.75303 10.8447 5.24026 10.8447 5.84063C10.8448 6.44097 11.3371 6.92726 11.9434 6.92749C12.5498 6.92745 13.041 6.44108 13.041 5.84063C13.041 5.24014 12.5498 4.75285 11.9434 4.75281Z" fill="currentColor"></path>' +
+    '</svg>';
+  var de = document.documentElement;
+  var ZH = !!de && (de.lang || '').toLowerCase().startsWith('zh');
+  var S = {
+    tab: ZH ? '技能' : 'Skills',
+    title: ZH ? '技能' : 'Skills',
+    desc: ZH
+      ? '查看已安装的技能(内置、用户、项目、插件),可新建、导入或导出。'
+      : 'View installed skills (builtin, user, project, plugin), or create, import and export them.',
+    manage: ZH ? '管理技能' : 'Manage skills',
+    importBtn: ZH ? '导入 ZIP' : 'Import ZIP',
+    exportBtn: ZH ? '导出全部' : 'Export all',
+    newBtn: ZH ? '新建技能' : 'New skill',
+    cancel: ZH ? '取消' : 'Cancel',
+    create: ZH ? '创建' : 'Create',
+    name: ZH ? '名称' : 'Name',
+    descField: ZH ? '描述' : 'Description',
+    content: ZH ? '内容(SKILL.md 正文)' : 'Content (SKILL.md body)',
+    namePh: 'my-skill',
+    descPh: ZH ? '这个技能做什么' : 'What this skill does',
+    contentPh: ZH ? '# My Skill\n\n步骤……' : '# My Skill\n\nSteps…',
+    loading: ZH ? '加载中…' : 'Loading…',
+    empty: ZH ? '暂无已安装的技能。' : 'No skills installed.',
+    required: ZH ? '名称、描述和内容均为必填。' : 'Name, description and content are all required.',
+    notSignedIn: ZH ? '未登录,无法访问技能目录。' : 'Not signed in — cannot reach the skills catalog.',
+    imported: (n) => (ZH ? '已导入 ' + n + ' 项' : 'Imported ' + n),
+    skipped: (n) => (ZH ? '跳过 ' + n + ' 项' : 'Skipped ' + n),
+    errors: (n) => (ZH ? '错误 ' + n + ' 项' : 'Errors ' + n),
+    foot: (u, p) =>
+      ZH ? '用户技能 ' + u + ' · 项目技能 ' + p : u + ' user · ' + p + ' project',
+    exportFail: ZH ? '导出失败' : 'Export failed',
+    enableTitle: ZH ? '启用技能' : 'Enable skill',
+    disableTitle: ZH ? '停用技能' : 'Disable skill',
+  };
+  function ensureStyle() {
+    if (document.getElementById(STYLE_ID)) return;
+    var st = document.createElement('style');
+    st.id = STYLE_ID;
+    st.textContent = [
+      '.omni-sk-actions{display:flex;align-items:center;gap:8px;flex:none;}',
+      '.row[data-omni-sk-row]{border-top:1px solid var(--color-line,#e6e3da);}',
+      '.row[data-omni-sk-row] .rlabel{min-width:0;flex:1;}',
+      '.row[data-omni-sk-row] .hint{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}',
+      '.row[data-omni-sk-row].is-off .rlabel{opacity:.45;}',
+      '.omni-sk-state{padding:16px;font-size:12px;line-height:18px;color:var(--color-text-muted,#8c887d);}',
+      '.omni-sk-foot{margin:10px 2px 0;font-size:12px;line-height:18px;color:var(--color-text-muted,#8c887d);}',
+      '.omni-sk-summary{display:flex;gap:12px;margin:10px 2px 0;font-size:12px;line-height:18px;color:var(--color-text-muted,#8c887d);}',
+      '.omni-sk-summary .is-error{color:var(--color-danger,#c7402d);}',
+      '.omni-sk-errors{margin:10px 2px 0;font-size:12px;line-height:18px;color:var(--color-danger,#c7402d);white-space:pre-wrap;}',
+      '.omni-sk-create[hidden]{display:none;}',
+      '.omni-sk-form{display:flex;flex-direction:column;gap:14px;padding:16px;}',
+      '.omni-sk-form label{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:475;color:var(--color-text,#1c1a16);}',
+      '.omni-sk-form input,.omni-sk-form textarea{font:inherit;font-size:13px;font-weight:400;color:var(--color-text,#1c1a16);background:var(--color-surface,#fff);border:1px solid var(--color-line,#e6e3da);border-radius:10px;padding:8px 12px;outline:none;}',
+      '.omni-sk-form input:focus,.omni-sk-form textarea:focus{border-color:var(--color-accent,#b87f24);}',
+      '.omni-sk-form textarea{min-height:160px;resize:vertical;font-family:var(--font-mono,ui-monospace,SFMono-Regular,monospace);}',
+      '.omni-sk-form-foot{display:flex;justify-content:flex-end;gap:8px;}',
+    ].join('');
+    document.head.appendChild(st);
+  }
+  function omniToken() {
+    try {
+      var raw = localStorage.getItem('omnicode-web.server-credential');
+      if (!raw) return undefined;
+      if (raw.trimStart().charAt(0) === '{') {
+        var rec = JSON.parse(raw);
+        if (typeof rec.credential === 'string' && rec.credential.length > 0) {
+          if (typeof rec.expiresAt === 'number' && rec.expiresAt <= Date.now()) return undefined;
+          return rec.credential;
+        }
+        return undefined;
+      }
+      return raw.length > 0 ? raw : undefined;
+    } catch (e) {
+      return undefined;
+    }
+  }
+  async function api(path, opts) {
+    var token = omniToken();
+    if (!token) throw new Error(S.notSignedIn);
+    var headers = {};
+    if (opts && opts.headers) {
+      for (var k in opts.headers) headers[k] = opts.headers[k];
+    }
+    headers['Authorization'] = 'Bearer ' + token;
+    var res = await fetch(path, Object.assign({}, opts, { headers: headers }));
+    if (!res.ok) {
+      var msg = 'HTTP ' + res.status;
+      try {
+        var j = await res.json();
+        if (j && typeof j.msg === 'string' && j.msg) msg = j.msg;
+      } catch (e) {}
+      throw new Error(msg);
+    }
+    return res;
+  }
+  async function resolveCwd() {
+    var m = /\/sessions\/([^/?]+)/.exec(location.pathname);
+    if (!m) return undefined;
+    try {
+      var s = await (await api('/api/v1/sessions/' + encodeURIComponent(m[1]))).json();
+      var wsId = s && s.data && s.data.workspace_id;
+      if (!wsId) return undefined;
+      var ws = await (await api('/api/v1/workspaces')).json();
+      var items = (ws.data && ws.data.items) || [];
+      for (var i = 0; i < items.length; i++) {
+        if (items[i].id === wsId && items[i].root) return items[i].root;
+      }
+    } catch (e) {}
+    return undefined;
+  }
+  var state = { skills: [], cwd: undefined, loaded: false };
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+  function sc(e) {
+    e.setAttribute('data-v-' + SDV, '');
+    return e;
+  }
+  function appButton(variant, text) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'ui-button ui-button--' + variant + ' ui-button--sm';
+    b.setAttribute('data-v-' + BTV, '');
+    var s = el('span', 'ui-button__content', text);
+    s.setAttribute('data-v-' + BTV, '');
+    b.appendChild(s);
+    return b;
+  }
+  function enhance(sdialog) {
+    if (sdialog.querySelector('[data-omni-skills]')) return;
+    ensureStyle();
+    var tab = el('button', 'tab');
+    tab.type = 'button';
+    tab.setAttribute('role', 'tab');
+    tab.setAttribute('aria-selected', 'false');
+    tab.setAttribute('data-omni-skills', 'tab');
+    sc(tab);
+    tab.innerHTML = ICON_SPARKLES;
+    tab.appendChild(sc(el('span', '', S.tab)));
+    var allTabs = sdialog.querySelectorAll('.tab');
+    var anchor = allTabs.length > 2 ? allTabs[2] : allTabs[allTabs.length - 1];
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(tab, anchor.nextSibling);
+    else return;
+    var bodyHost = sdialog.querySelector('.body') || sdialog;
+    var panel = el('section', 'panel');
+    panel.setAttribute('data-omni-skills', 'panel');
+    sc(panel);
+    panel.style.display = 'none';
+    var sec = sc(el('section', 'sec'));
+    sec.appendChild(sc(el('h3', 'sec-title', S.title)));
+    var group = sc(el('div', 'settings-group'));
+    sec.appendChild(group);
+    var actionRow = sc(el('div', 'row'));
+    var manageLabel = sc(el('span', 'rlabel', S.manage + ' '));
+    manageLabel.appendChild(sc(el('span', 'hint', S.desc)));
+    actionRow.appendChild(manageLabel);
+    var actions = el('div', 'omni-sk-actions');
+    var newBtn = appButton('primary', S.newBtn);
+    var importBtn = appButton('secondary', S.importBtn);
+    var exportBtn = appButton('secondary', S.exportBtn);
+    actions.appendChild(newBtn);
+    actions.appendChild(importBtn);
+    actions.appendChild(exportBtn);
+    actionRow.appendChild(actions);
+    group.appendChild(actionRow);
+    var fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = '.zip,application/zip';
+    fileInput.style.display = 'none';
+    panel.appendChild(fileInput);
+    var stateRow = el('div', 'omni-sk-state', S.loading);
+    stateRow.hidden = true;
+    group.appendChild(stateRow);
+    var summary = el('div', 'omni-sk-summary');
+    summary.hidden = true;
+    var errors = el('div', 'omni-sk-errors');
+    errors.hidden = true;
+    var foot = el('p', 'omni-sk-foot');
+    foot.hidden = true;
+    sec.appendChild(summary);
+    sec.appendChild(errors);
+    sec.appendChild(foot);
+    panel.appendChild(sec);
+    var secCreate = sc(el('section', 'sec omni-sk-create'));
+    secCreate.hidden = true;
+    secCreate.appendChild(sc(el('h3', 'sec-title', S.newBtn)));
+    var createGroup = sc(el('div', 'settings-group'));
+    var form = el('form', 'omni-sk-form');
+    var nameLabel = el('label', '', S.name);
+    var nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.placeholder = S.namePh;
+    nameLabel.appendChild(nameInput);
+    var descLabel = el('label', '', S.descField);
+    var descInput = document.createElement('input');
+    descInput.type = 'text';
+    descInput.placeholder = S.descPh;
+    descLabel.appendChild(descInput);
+    var contentLabel = el('label', '', S.content);
+    var contentInput = document.createElement('textarea');
+    contentInput.placeholder = S.contentPh;
+    contentLabel.appendChild(contentInput);
+    var formFoot = el('div', 'omni-sk-form-foot');
+    var cancelBtn = appButton('secondary', S.cancel);
+    var createBtn = appButton('primary', S.create);
+    formFoot.appendChild(cancelBtn);
+    formFoot.appendChild(createBtn);
+    form.appendChild(nameLabel);
+    form.appendChild(descLabel);
+    form.appendChild(contentLabel);
+    form.appendChild(formFoot);
+    createGroup.appendChild(form);
+    secCreate.appendChild(createGroup);
+    panel.appendChild(secCreate);
+    bodyHost.appendChild(panel);
+    function showError(err) {
+      errors.textContent = err && err.message ? err.message : String(err);
+      errors.hidden = false;
+    }
+    function clearError() {
+      errors.hidden = true;
+      errors.textContent = '';
+    }
+    function makeSwitch(sk) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'ui-switch' + (sk.disabled === true ? '' : ' is-on');
+      b.setAttribute('role', 'switch');
+      b.setAttribute('aria-checked', sk.disabled === true ? 'false' : 'true');
+      b.setAttribute('aria-label', sk.name);
+      b.setAttribute('data-v-3cf7b836', '');
+      b.title = sk.disabled === true ? S.enableTitle : S.disableTitle;
+      var thumb = el('span', 'ui-switch__thumb');
+      thumb.setAttribute('data-v-3cf7b836', '');
+      b.appendChild(thumb);
+      b.addEventListener('click', function () {
+        if (b.hasAttribute('data-omni-sk-busy')) return;
+        b.setAttribute('data-omni-sk-busy', '');
+        var turningOff = sk.disabled !== true;
+        api(
+          '/api/v2/skills/' + encodeURIComponent(sk.name) + (turningOff ? '/disable' : '/enable'),
+          { method: 'POST' },
+        )
+          .then(function (res) {
+            return res.json();
+          })
+          .then(function () {
+            sk.disabled = turningOff;
+            render();
+          })
+          .catch(showError)
+          .finally(function () {
+            b.removeAttribute('data-omni-sk-busy');
+          });
+      });
+      return b;
+    }
+    function render() {
+      clearError();
+      var skills = state.skills.slice().sort(function (a, b) {
+        var da = a.disabled === true ? 1 : 0;
+        var db = b.disabled === true ? 1 : 0;
+        if (da !== db) return da - db;
+        var order = { user: 0, project: 1 };
+        var ta = order[a.source] === undefined ? 2 : order[a.source];
+        var tb = order[b.source] === undefined ? 2 : order[b.source];
+        return ta - tb || a.name.localeCompare(b.name);
+      });
+      var prev = group.querySelectorAll('[data-omni-sk-row]');
+      for (var pi = 0; pi < prev.length; pi++) prev[pi].remove();
+      var user = 0;
+      var project = 0;
+      for (var i = 0; i < skills.length; i++) {
+        var sk = skills[i];
+        if (sk.source === 'user') user++;
+        if (sk.source === 'project') project++;
+        var row = sc(el('div', 'row'));
+        row.setAttribute('data-omni-sk-row', '');
+        if (sk.disabled === true) row.classList.add('is-off');
+        var label = sc(el('span', 'rlabel', sk.name + ' '));
+        var hintText = sk.description || sk.path || '';
+        if (hintText) {
+          hintText = hintText + ' · ' + sk.source;
+        } else {
+          hintText = sk.source;
+        }
+        label.appendChild(sc(el('span', 'hint', hintText)));
+        row.appendChild(label);
+        row.appendChild(makeSwitch(sk));
+        group.appendChild(row);
+      }
+      stateRow.hidden = skills.length > 0;
+      stateRow.textContent = S.empty;
+      foot.hidden = skills.length === 0;
+      foot.textContent = S.foot(user, project);
+    }
+    async function load() {
+      stateRow.hidden = false;
+      stateRow.textContent = S.loading;
+      var prevRows = group.querySelectorAll('[data-omni-sk-row]');
+      for (var ri = 0; ri < prevRows.length; ri++) prevRows[ri].remove();
+      foot.hidden = true;
+      clearError();
+      try {
+        if (state.cwd === undefined) state.cwd = await resolveCwd();
+        var q = state.cwd ? '?cwd=' + encodeURIComponent(state.cwd) : '';
+        var res = await api('/api/v2/skills' + q);
+        var j = await res.json();
+        state.skills = (j && j.data) || [];
+        state.loaded = true;
+        render();
+      } catch (err) {
+        stateRow.hidden = false;
+        stateRow.textContent = S.empty;
+        showError(err);
+      }
+    }
+    importBtn.addEventListener('click', function () {
+      fileInput.click();
+    });
+    fileInput.addEventListener('change', function () {
+      var file = fileInput.files && fileInput.files[0];
+      fileInput.value = '';
+      if (!file) return;
+      clearError();
+      summary.hidden = true;
+      var fd = new FormData();
+      fd.append('file', file);
+      importBtn.disabled = true;
+      api('/api/v2/skills:import', { method: 'POST', body: fd })
+        .then(function (res) {
+          return res.json();
+        })
+        .then(function (j) {
+          var d = (j && j.data) || {};
+          var parts = [S.imported((d.imported || []).length)];
+          if ((d.skipped || []).length > 0) parts.push(S.skipped(d.skipped.length));
+          if ((d.errors || []).length > 0) parts.push(S.errors(d.errors.length));
+          summary.replaceChildren();
+          for (var i = 0; i < parts.length; i++) {
+            var span = el('span', '', parts[i]);
+            if (i === 2) span.className = 'is-error';
+            summary.appendChild(span);
+          }
+          summary.hidden = false;
+          if ((d.errors || []).length > 0) showError(new Error(d.errors.join('\n')));
+          return load();
+        })
+        .catch(showError)
+        .finally(function () {
+          importBtn.disabled = false;
+        });
+    });
+    exportBtn.addEventListener('click', function () {
+      clearError();
+      exportBtn.disabled = true;
+      api('/api/v2/skills:export')
+        .then(function (res) {
+          return res.blob().then(function (blob) {
+            var cd = res.headers.get('content-disposition') || '';
+            var fm = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cd);
+            var name = fm ? decodeURIComponent(fm[1]) : 'omnicode-skills.zip';
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = name;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(function () {
+              URL.revokeObjectURL(url);
+            }, 4000);
+          });
+        })
+        .catch(function (err) {
+          showError(new Error(S.exportFail + ': ' + (err && err.message)));
+        })
+        .finally(function () {
+          exportBtn.disabled = false;
+        });
+    });
+    function openCreate() {
+      clearError();
+      sec.style.display = 'none';
+      secCreate.hidden = false;
+      nameInput.focus();
+    }
+    function closeCreate() {
+      sec.style.display = '';
+      secCreate.hidden = true;
+      nameInput.value = '';
+      descInput.value = '';
+      contentInput.value = '';
+    }
+    newBtn.addEventListener('click', openCreate);
+    cancelBtn.addEventListener('click', closeCreate);
+    createBtn.addEventListener('click', function () {
+      var name = nameInput.value.trim();
+      var description = descInput.value.trim();
+      var content = contentInput.value.trim();
+      if (!name || !description || !content) {
+        showError(new Error(S.required));
+        return;
+      }
+      clearError();
+      createBtn.disabled = true;
+      api('/api/v2/skills', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ name: name, description: description, content: content }),
+      })
+        .then(function () {
+          closeCreate();
+          return load();
+        })
+        .catch(showError)
+        .finally(function () {
+          createBtn.disabled = false;
+        });
+    });
+    function hideVuePanels() {
+      var panels = sdialog.querySelectorAll('.panel');
+      for (var i = 0; i < panels.length; i++) {
+        var p = panels[i];
+        if (p.hasAttribute('data-omni-skills')) continue;
+        if (!p.hasAttribute('data-omni-sk-prev')) {
+          p.setAttribute('data-omni-sk-prev', p.style.display);
+        }
+        p.style.display = 'none';
+      }
+    }
+    function restoreVuePanels() {
+      var panels = sdialog.querySelectorAll('.panel[data-omni-sk-prev]');
+      for (var i = 0; i < panels.length; i++) {
+        panels[i].style.display = panels[i].getAttribute('data-omni-sk-prev') || '';
+        panels[i].removeAttribute('data-omni-sk-prev');
+      }
+    }
+    function activate() {
+      hideVuePanels();
+      closeCreate();
+      panel.style.display = '';
+      tab.classList.add('on');
+      tab.setAttribute('aria-selected', 'true');
+      var tabs = sdialog.querySelectorAll('.tab');
+      for (var i = 0; i < tabs.length; i++) {
+        if (tabs[i] !== tab) {
+          tabs[i].classList.remove('on');
+          tabs[i].setAttribute('aria-selected', 'false');
+        }
+      }
+      if (!state.loaded) void load();
+      else render();
+    }
+    function deactivate() {
+      if (panel.style.display === 'none') return;
+      closeCreate();
+      panel.style.display = 'none';
+      tab.classList.remove('on');
+      tab.setAttribute('aria-selected', 'false');
+      restoreVuePanels();
+    }
+    sdialog.addEventListener(
+      'click',
+      function (event) {
+        var clicked = event.target && event.target.closest ? event.target.closest('.tab') : null;
+        if (!clicked) return;
+        if (clicked === tab) {
+          event.stopPropagation();
+          activate();
+        } else {
+          deactivate();
+        }
+      },
+      true,
+    );
+  }
+  var observer = new MutationObserver(function () {
+    var sdialog = document.querySelector('.sd');
+    if (sdialog) enhance(sdialog);
+  });
+  function boot() {
+    if (!document.documentElement) {
+      setTimeout(boot, 30);
+      return;
+    }
+    observer.observe(document.documentElement, { childList: true, subtree: true });
+    var existing = document.querySelector('.sd');
+    if (existing) enhance(existing);
+  }
+  boot();
+})();
