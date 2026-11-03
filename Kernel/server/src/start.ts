@@ -80,6 +80,7 @@ import { registerWsDebug, WS_DEBUG_PATH } from './transport/ws/debug/registerWsD
 import type { ConfigWarningItem } from './transport/ws/v1/events';
 import { registerWsV1, WS_PATH as WS_PATH_V1 } from './transport/ws/v1/registerWsV1';
 import { SessionEventBroadcaster } from './transport/ws/v1/sessionEventBroadcaster';
+import { seedBundledSkills } from './skills/seedBundledSkills';
 import { getServerVersion } from './version';
 import './search/sessionSearchAdapter';
 
@@ -161,6 +162,15 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
     exposureClass === 'loopback' ? undefined : createAuthFailureLimiter({ logger });
 
   const configPath = resolveConfigPath({ homeDir, configPath: opts.configPath });
+  try {
+    await seedBundledSkills({
+      sourceDir: process.env['OMNICODE_BUNDLED_SKILLS_DIR'],
+      userSkillsDir: join(homeDir, 'skills'),
+      log: (message, payload) => logger.info(payload, message),
+    });
+  } catch (error) {
+    logger.warn({ error: String(error) }, 'bundled skill installation failed');
+  }
   const guiStore = new GuiStoreService(homeDir, logger);
   let authTokenService: IAuthTokenService;
   let passwordConfigured = false;

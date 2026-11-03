@@ -51,6 +51,13 @@ function bundledFfmpegDir(opts: StartServerOptions): string | undefined {
   }
 }
 
+function bundledSkillsDirectory(opts: StartServerOptions): string | undefined {
+  const dir = opts.packaged
+    ? join(opts.resourcesPath, 'skills')
+    : resolve(opts.appPath, 'resources', 'skills');
+  return existsSync(dir) ? dir : undefined;
+}
+
 export async function startServer(opts: StartServerOptions): Promise<ServerHandle> {
   const binary = resolveServerBinary(opts);
   if (!existsSync(binary)) {
@@ -60,6 +67,10 @@ export async function startServer(opts: StartServerOptions): Promise<ServerHandl
   const ffmpegDir = bundledFfmpegDir(opts);
   if (ffmpegDir !== undefined && !(env['PATH'] ?? '').includes(ffmpegDir)) {
     env['PATH'] = ffmpegDir + delimiter + (env['PATH'] ?? '');
+  }
+  const bundledSkillsDir = bundledSkillsDirectory(opts);
+  if (bundledSkillsDir !== undefined) {
+    env['OMNICODE_BUNDLED_SKILLS_DIR'] = bundledSkillsDir;
   }
   const child = spawn(
     binary,

@@ -18,6 +18,8 @@ extraResources:
     filter:
       - ffmpeg
       - ffmpeg.exe
+  - from: resources/skills
+    to: skills
   - from: build/icon.png
     to: icon.png
   - from: build/icon-dark.png
