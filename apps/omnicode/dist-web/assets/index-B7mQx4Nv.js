@@ -1381,24 +1381,27 @@ ${vn}`)}const De=ze.join(`
       '.omni-usage-value{font-size:13px;font-weight:475;color:var(--color-text,#1c1a16);font-variant-numeric:tabular-nums;white-space:nowrap;}',
       '.omni-usage-saved .omni-usage-value{color:var(--color-accent,#b87f24);}',
       '.ui-dialog__body:has(> .sd .omni-usage-panel),.ui-dialog__body:has(.sd .omni-usage-panel){width:min(1240px,calc(100vw - 48px)) !important;max-width:calc(100vw - 48px) !important;}',
-      '.sd:has(.omni-usage-panel){width:min(1240px,calc(100vw - 48px)) !important;grid-template-columns:184px minmax(0,1fr) !important;}',
+      '.sd:has(.omni-usage-panel){width:min(1240px,calc(100vw - 48px)) !important;height:min(860px,calc(100vh - 48px)) !important;grid-template-columns:184px minmax(0,1fr) !important;}',
       '.sd:has(.omni-usage-panel) .settings-region{min-width:0;}',
       '.ui-dialog__body:has(> .sd){width:min(1240px,calc(100vw - 48px)) !important;max-width:calc(100vw - 48px) !important;}',
-      '.sd{width:min(1240px,calc(100vw - 48px)) !important;grid-template-columns:184px minmax(0,1fr) !important;}',
-      '.omni-usage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding:16px;}',
-      '.omni-usage-card{display:flex;flex-direction:column;gap:2px;padding:12px 14px;border-radius:12px;background:var(--color-surface,#fff);border:1px solid var(--color-line,#e6e3da);min-width:0;}',
+      '.ui-dialog:has(> .ui-dialog__body > .sd){width:min(1240px,calc(100vw - 48px)) !important;height:min(880px,calc(100vh - 48px)) !important;max-height:calc(100vh - 48px) !important;}',
+      '.ui-dialog:has(> .ui-dialog__body > .sd) > .ui-dialog__body{height:100% !important;}',
+      '.sd{width:min(1240px,calc(100vw - 48px)) !important;height:min(860px,calc(100vh - 48px)) !important;grid-template-columns:184px minmax(0,1fr) !important;}',
+      '.omni-usage-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;padding:10px 16px 6px;}',
+      '.omni-usage-card{display:flex;flex-direction:column;gap:1px;padding:9px 12px;border-radius:12px;background:var(--color-surface,#fff);border:1px solid var(--color-line,#e6e3da);min-width:0;}',
       '.omni-usage-card .omni-usage-k{font-size:11px;font-weight:475;color:var(--color-text-muted,#8c887d);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
-      '.omni-usage-card .omni-usage-v{font-size:18px;font-weight:600;color:var(--color-text,#1c1a16);font-variant-numeric:tabular-nums;line-height:1.25;}',
+      '.omni-usage-card .omni-usage-v{font-size:17px;font-weight:600;color:var(--color-text,#1c1a16);font-variant-numeric:tabular-nums;line-height:1.25;}',
       '.omni-usage-card .omni-usage-s{font-size:11px;color:var(--color-text-faint,#8c887d);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}',
       '.omni-usage-card.is-saved{border-color:color-mix(in srgb,var(--color-accent,#b87f24) 45%,transparent);background:color-mix(in srgb,var(--color-accent,#b87f24) 8%,var(--color-surface,#fff));}',
       '.omni-usage-card.is-saved .omni-usage-v{color:var(--color-accent,#b87f24);}',
-      '.omni-usage-flow{display:flex;flex-direction:column;gap:10px;padding:16px;}',
+      '.omni-usage-flow{display:flex;flex-direction:column;gap:8px;padding:12px 16px;}',
+      '.omni-usage-flow-track{height:18px;}',
       '.omni-usage-flow-row{display:flex;align-items:center;gap:12px;}',
       '.omni-usage-flow-label{flex:0 0 128px;font-size:12px;font-weight:475;color:var(--color-text,#1c1a16);}',
       '.omni-usage-flow-track{flex:1;height:22px;border-radius:6px;background:var(--color-line,#ece9e0);overflow:hidden;display:flex;min-width:0;}',
       '.omni-usage-flow-seg{height:100%;}',
       '.omni-usage-flow-val{flex:0 0 150px;text-align:right;font-size:12px;font-variant-numeric:tabular-nums;color:var(--color-text,#1c1a16);}',
-      '.omni-usage-legend{display:flex;flex-wrap:wrap;gap:14px;padding:0 16px 16px;}',
+      '.omni-usage-legend{display:flex;flex-wrap:wrap;gap:12px;padding:0 16px 10px;}',
       '.omni-usage-legend span{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--color-text-muted,#8c887d);}',
       '.omni-usage-legend i{width:9px;height:9px;border-radius:2px;display:inline-block;}',
       '.omni-usage-tbl{width:100%;border-collapse:collapse;font-size:12px;}',
@@ -1408,6 +1411,15 @@ ${vn}`)}const De=ze.join(`
       '.omni-usage-tbl td.num{text-align:right;}',
       '.omni-usage-tbl .cur{font-weight:600;}',
       '.omni-usage-tbl .muted{color:var(--color-text-faint,#8c887d);}',
+      '.omni-usage-scroll{max-height:170px;overflow-y:auto;}',
+      '.omni-usage-tbl td{padding:6px 14px;}',
+      '.omni-usage-tbl th{padding:6px 14px;}',
+      '.omni-usage-cols{display:grid;grid-template-columns:minmax(0,1fr);gap:0;}',
+      '.omni-usage-cols .omni-usage-grid{grid-template-columns:repeat(2,minmax(0,1fr));}',
+      '@media (min-width:1100px){.omni-usage-cols{grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start;}',
+      '.omni-usage-cols > .omni-usage-col{display:flex;flex-direction:column;min-width:0;}',
+      '.omni-usage-col > .sec{padding-bottom:12px;}}',
+      '.omni-usage-col{display:flex;flex-direction:column;min-width:0;}',
     ].join('');
     document.head.appendChild(st);
   }
@@ -1800,6 +1812,9 @@ ${vn}`)}const De=ze.join(`
       var ctx = usage.current ? usage.current.context_tokens || 0 : 0;
       var limit = usage.current ? usage.current.context_limit || 0 : 0;
       var ctxPct = limit > 0 ? Math.round(pctOf(ctx, limit)) : 0;
+      var cols = el('div', 'omni-usage-cols');
+      var colL = el('div', 'omni-usage-col');
+      var colR = el('div', 'omni-usage-col');
       var secK = mkSec(U.allSessions(usage.sessions));
       var grid = el('div', 'omni-usage-grid');
       grid.appendChild(mkCard(U.output, fmt(usage.output), usage.sessions + ' ' + (ZH ? '个会话' : 'sessions')));
@@ -1807,7 +1822,7 @@ ${vn}`)}const De=ze.join(`
       grid.appendChild(mkCard(U.cacheRead, fmt(usage.cacheRead), U.cacheReadHintShort || ''));
       grid.appendChild(mkCard(U.cacheWrite, fmt(usage.cacheWrite), U.cacheWriteHintShort || ''));
       secK.appendChild(grid);
-      usageGroups.appendChild(secK);
+      colL.appendChild(secK);
       var before = usage.input + usage.output + usage.cacheRead + usage.cacheWrite;
       var cacheSaved = usage.cacheRead * 0.9;
       var cacheWriteCost = usage.cacheWrite * 0.25;
@@ -1828,8 +1843,8 @@ ${vn}`)}const De=ze.join(`
         mkFlowRow(U.after, [
           { n: U.input, v: usage.input, c: COLORS.input },
           { n: U.output, v: usage.output, c: COLORS.output },
-          { n: U.cacheRead + ' ×0.1', v: usage.cacheRead * 0.1, c: COLORS.cacheRead },
-          { n: U.cacheWrite + ' ×1.25', v: usage.cacheWrite * 1.25, c: COLORS.cacheWrite },
+          { n: U.cacheRead + ' x0.1', v: usage.cacheRead * 0.1, c: COLORS.cacheRead },
+          { n: U.cacheWrite + ' x1.25', v: usage.cacheWrite * 1.25, c: COLORS.cacheWrite },
         ], before, fmt(after) + ' ' + U.tokens),
       );
       flow.appendChild(
@@ -1852,15 +1867,37 @@ ${vn}`)}const De=ze.join(`
         legend.appendChild(item);
       }
       secS.appendChild(legend);
-      usageGroups.appendChild(secS);
+      colL.appendChild(secS);
+      if (usage.current) {
+        var ctx = usage.current.context_tokens || 0;
+        var limit = usage.current.context_limit || 0;
+        var ctxPct = limit > 0 ? Math.round(pctOf(ctx, limit)) : 0;
+        var secC = mkSec(U.context);
+        var gC = sc(el('div', 'settings-group'));
+        var rowC = sc(el('div', 'row'));
+        var lC = sc(el('span', 'rlabel', (usage.current.model || '—') + ' '));
+        lC.appendChild(sc(el('span', 'hint', fmt(ctx) + ' / ' + (limit ? fmt(limit) : '—') + ' ' + U.tokens + ' · ' + ctxPct + '%')));
+        rowC.appendChild(lC);
+        gC.appendChild(rowC);
+        var barRow = sc(el('div', 'row'));
+        var barWrap = el('div', 'omni-usage-bar');
+        barWrap.style.flex = '1';
+        var barFill = el('div');
+        barFill.style.width = ctxPct + '%';
+        barWrap.appendChild(barFill);
+        barRow.appendChild(barWrap);
+        gC.appendChild(barRow);
+        secC.appendChild(gC);
+        colR.appendChild(secC);
+      }
       var secB = mkSec(U.breakdownTitle || (ZH ? '明细' : 'Breakdown'));
       var tbl = document.createElement('table');
       tbl.className = 'omni-usage-tbl';
       var thead = document.createElement('thead');
       var hr = document.createElement('tr');
-      for (var h = 0; h < 4; h++) {
+      for (var h = 0; h < 3; h++) {
         var th = document.createElement('th');
-        th.textContent = [U.kind, U.tokens, U.beforePay, U.afterPay][h];
+        th.textContent = [U.kind, U.beforePay, U.afterPay][h];
         if (h > 0) th.className = 'num';
         hr.appendChild(th);
       }
@@ -1868,23 +1905,24 @@ ${vn}`)}const De=ze.join(`
       tbl.appendChild(thead);
       var tbody = document.createElement('tbody');
       var rowsData = [
-        [U.input, usage.input, usage.input, U.fullPrice, false],
-        [U.output, usage.output, usage.output, U.fullPrice, false],
-        [U.cacheRead, usage.cacheRead, usage.cacheRead * 0.1, U.discount, true],
-        [U.cacheWrite, usage.cacheWrite, usage.cacheWrite * 1.25, U.premium, true],
+        [U.input, usage.input, usage.input, false],
+        [U.output, usage.output, usage.output, false],
+        [U.cacheRead, usage.cacheRead, usage.cacheRead * 0.1, true],
+        [U.cacheWrite, usage.cacheWrite, usage.cacheWrite * 1.25, true],
       ];
       for (var r = 0; r < rowsData.length; r++) {
         var tr = document.createElement('tr');
         var td0 = document.createElement('td');
         td0.textContent = rowsData[r][0];
         tr.appendChild(td0);
-        for (var c2 = 1; c2 <= 3; c2++) {
-          var td = document.createElement('td');
-          td.className = 'num';
-          td.textContent = c2 === 1 ? fmt(rowsData[r][c2]) : c2 === 2 ? fmt(rowsData[r][c2]) : fmt(rowsData[r][c2]);
-          tr.appendChild(td);
-        }
-        if (rowsData[r][4]) tr.querySelectorAll('td')[2].classList.add('muted');
+        var td1 = document.createElement('td');
+        td1.className = 'num';
+        td1.textContent = fmt(rowsData[r][1]);
+        tr.appendChild(td1);
+        var td2 = document.createElement('td');
+        td2.className = 'num';
+        td2.textContent = fmt(rowsData[r][2]);
+        tr.appendChild(td2);
         tbody.appendChild(tr);
       }
       var totTr = document.createElement('tr');
@@ -1892,7 +1930,7 @@ ${vn}`)}const De=ze.join(`
       tot0.className = 'cur';
       tot0.textContent = ZH ? '合计' : 'Total';
       totTr.appendChild(tot0);
-      [before, before, after].forEach(function (v, idx) {
+      [before, after].forEach(function (v) {
         var td = document.createElement('td');
         td.className = 'num cur';
         td.textContent = fmt(v);
@@ -1900,10 +1938,8 @@ ${vn}`)}const De=ze.join(`
       });
       tbody.appendChild(totTr);
       tbl.appendChild(tbody);
-      var tblWrap = el('div');
-      tblWrap.appendChild(tbl);
-      secB.appendChild(tblWrap);
-      usageGroups.appendChild(secB);
+      secB.appendChild(tbl);
+      colR.appendChild(secB);
       if (usage.rows && usage.rows.length > 0) {
         var secR = mkSec(U.perSessionTitle || (ZH ? '各会话' : 'Per session'));
         var t2 = document.createElement('table');
@@ -1940,28 +1976,14 @@ ${vn}`)}const De=ze.join(`
           tb2.appendChild(tr2);
         }
         t2.appendChild(tb2);
-        secR.appendChild(t2);
-        usageGroups.appendChild(secR);
+        var scrollR = el('div', 'omni-usage-scroll');
+        scrollR.appendChild(t2);
+        secR.appendChild(scrollR);
+        colR.appendChild(secR);
       }
-      if (usage.current) {
-        var secC = mkSec(U.context);
-        var gC = sc(el('div', 'settings-group'));
-        var rowC = sc(el('div', 'row'));
-        var lC = sc(el('span', 'rlabel', model + ' '));
-        lC.appendChild(sc(el('span', 'hint', fmt(ctx) + ' / ' + (limit ? fmt(limit) : '—') + ' ' + U.tokens + ' · ' + ctxPct + '%')));
-        rowC.appendChild(lC);
-        gC.appendChild(rowC);
-        var barRow = sc(el('div', 'row'));
-        var barWrap = el('div', 'omni-usage-bar');
-        barWrap.style.flex = '1';
-        var barFill = el('div');
-        barFill.style.width = ctxPct + '%';
-        barWrap.appendChild(barFill);
-        barRow.appendChild(barWrap);
-        gC.appendChild(barRow);
-        secC.appendChild(gC);
-        usageGroups.appendChild(secC);
-      }
+      cols.appendChild(colL);
+      cols.appendChild(colR);
+      usageGroups.appendChild(cols);
     }
     async function loadUsage() {
       stateU.hidden = false;
