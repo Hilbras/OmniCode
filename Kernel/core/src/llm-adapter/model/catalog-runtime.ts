@@ -136,6 +136,7 @@ export class ProviderCatalogRuntimeService extends Disposable implements IProvid
 
   private readonly catalog: ProviderCatalog = createProviderCatalogSync();
   private readonly synced = new Map<string, DesiredBucket>();
+  private readonly bucketIndex = new Map<string, ReadonlyMap<string, CatalogModel>>();
   private routing = new Map<string, string>();
   private aliasOrder: readonly string[] = [];
   private providerOrder: readonly string[] = [];
@@ -146,6 +147,11 @@ export class ProviderCatalogRuntimeService extends Disposable implements IProvid
     @IProviderService private readonly providerService: IProviderService,
   ) {
     super();
+    this._register({
+      dispose: this.catalog.onChanged(() => {
+        this.bucketIndex.clear();
+      }),
+    });
     this._register(
       this.modelService.onDidChangeModels(() => {
         this.markDirty();
@@ -198,7 +204,18 @@ export class ProviderCatalogRuntimeService extends Disposable implements IProvid
     this.sync();
     const bucket = this.routing.get(alias);
     if (bucket === undefined) return undefined;
-    return this.catalog.models(bucket).find((model) => model.model === alias);
+    return this.indexFor(bucket)?.get(alias);
+  }
+
+  private indexFor(bucket: string): ReadonlyMap<string, CatalogModel> | undefined {
+    const cached = this.bucketIndex.get(bucket);
+    if (cached !== undefined) return cached;
+    const models = this.catalog.models(bucket);
+    if (models.length === 0) return undefined;
+    const index = new Map<string, CatalogModel>();
+    for (const model of models) index.set(model.model, model);
+    this.bucketIndex.set(bucket, index);
+    return index;
   }
 
   onChanged(listener: (event: ProviderCatalogChanged) => void): IDisposable {
@@ -215,6 +232,7 @@ export class ProviderCatalogRuntimeService extends Disposable implements IProvid
   }
 
   private syncAll(): void {
+    this.bucketIndex.clear();
     const providers = this.providerService.list();
     const models = this.modelService.list();
     const defaultProvider = this.providerService.getDefaultProvider();

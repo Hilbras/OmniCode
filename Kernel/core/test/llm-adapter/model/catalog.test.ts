@@ -1649,3 +1649,70 @@ describe('ModelCatalog setDefaultModel', () => {
     }
   });
 });
+
+describe('provider catalog runtime lookup index', () => {
+  function bigBucketHost(modelCount: number) {
+    const models: Record<string, unknown> = {};
+    for (let i = 0; i < modelCount; i += 1) {
+      models[`m${i}`] = { provider: 'big', model: `vendor-${i}`, maxContextSize: 8192 };
+    }
+    models['small'] = { provider: 'small', model: 'vendor-small', maxContextSize: 8192 };
+    return createHost({
+      providers: {
+        big: { type: 'openai', apiKey: 'sk-big', baseUrl: 'https://big.example.test/v1' },
+        small: { type: 'openai', apiKey: 'sk-small', baseUrl: 'https://small.example.test/v1' },
+      },
+      models,
+    });
+  }
+
+  it('resolves every alias in a large bucket to its own model', () => {
+    const { host, models, providers } = bigBucketHost(120);
+    const runtime = new ProviderCatalogRuntimeService(models, providers);
+    try {
+      for (let i = 0; i < 120; i += 1) {
+        expect(runtime.lookup(`m${i}`)?.model).toBe(`m${i}`);
+      }
+      expect(runtime.lookup('small')?.model).toBe('small');
+      expect(runtime.lookup('does-not-exist')).toBeUndefined();
+    } finally {
+      runtime.dispose();
+      host.dispose();
+    }
+  });
+
+  it('returns the same model object across calls instead of rebuilding the bucket', () => {
+    const { host, models, providers } = bigBucketHost(120);
+    const runtime = new ProviderCatalogRuntimeService(models, providers);
+    try {
+      const first = runtime.lookup('m7');
+      const second = runtime.lookup('m7');
+      expect(first).toBeDefined();
+      expect(second).toBe(first);
+    } finally {
+      runtime.dispose();
+      host.dispose();
+    }
+  });
+
+  it('rebuilds the index on resync so aliases added later resolve', () => {
+    const { host, models, providers } = bigBucketHost(3);
+    const runtime = new ProviderCatalogRuntimeService(models, providers);
+    try {
+      expect(runtime.lookup('added-later')).toBeUndefined();
+      models.loadAll(
+        {
+          m0: { provider: 'big', model: 'vendor-0', maxContextSize: 8192 },
+          'added-later': { provider: 'big', model: 'vendor-new', maxContextSize: 8192 },
+        },
+        undefined,
+      );
+      runtime.resync();
+      expect(runtime.lookup('added-later')?.model).toBe('added-later');
+      expect(runtime.lookup('m0')?.model).toBe('m0');
+    } finally {
+      runtime.dispose();
+      host.dispose();
+    }
+  });
+});
