@@ -12,6 +12,7 @@ import { RESERVE_VAR, measureControlsWidth } from './window-chrome';
  * setting, and resolves dropped files to paths.
  */
 contextBridge.exposeInMainWorld('omnicodeDesktop', {
+  getVersion: (): Promise<string> => ipcRenderer.invoke('desktop:version'),
   getUpdateStatus: (): Promise<UpdateStatus> => ipcRenderer.invoke('desktop:update-status'),
   onUpdateStatus: (listener: (status: UpdateStatus) => void): (() => void) => {
     const handler = (_event: IpcRendererEvent, status: UpdateStatus): void => listener(status);

@@ -1622,6 +1622,36 @@ ${vn}`)}const De=ze.join(`
     var pp = sdialog.querySelector('.pp');
     if (pp && !pp.hasAttribute('data-omni-pv-watched')) watchProviders(pp);
   }
+  var appVersionPromise;
+  function appVersion() {
+    if (appVersionPromise !== undefined) return appVersionPromise;
+    var bridge = window.omnicodeDesktop;
+    appVersionPromise =
+      bridge && typeof bridge.getVersion === 'function'
+        ? Promise.resolve(bridge.getVersion()).catch(function () {
+            return undefined;
+          })
+        : Promise.resolve(undefined);
+    return appVersionPromise;
+  }
+  function patchAboutVersion(sdialog) {
+    var values = sdialog.querySelectorAll('.row > .rvalue');
+    for (var i = 0; i < values.length; i++) {
+      var node = values[i];
+      if (node.hasAttribute('data-omni-version')) continue;
+      var match = /^(\d+\.\d+\.\d+(?:[-+.][\w.]+)?)\s*\u00b7/.exec((node.textContent || '').trim());
+      if (match === null) continue;
+      node.setAttribute('data-omni-version', match[1]);
+      (function (target, webVersion) {
+        appVersion().then(function (desktopVersion) {
+          if (typeof desktopVersion !== 'string' || desktopVersion === '' || desktopVersion === webVersion) {
+            return;
+          }
+          target.textContent = desktopVersion + ' \u00b7 web ' + webVersion;
+        });
+      })(node, match[1]);
+    }
+  }
   function enhance(sdialog) {
     watchProvidersIfPresent(sdialog);
     if (sdialog.querySelector('[data-omni-skills]')) return;
@@ -2337,6 +2367,7 @@ ${vn}`)}const De=ze.join(`
     var sdialog = document.querySelector('.sd');
     if (!sdialog) return;
     watchProvidersIfPresent(sdialog);
+    patchAboutVersion(sdialog);
     enhance(sdialog);
   });
   function boot() {
