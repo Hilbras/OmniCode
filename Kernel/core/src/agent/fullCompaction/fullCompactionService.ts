@@ -92,7 +92,9 @@ import { RECENT_CONTEXT_SIZE_RATIO, RuntimeCompactionStrategy, type CompactionSt
 import { type CompactionBeginData, type CompactionResult } from './types';
 
 export const MAX_COMPACTION_RETRY_ATTEMPTS = 5;
-const DEFAULT_COMPACTION_MAX_COMPLETION_TOKENS = 128 * 1024;
+const DEFAULT_COMPACTION_MAX_COMPLETION_TOKENS = 64 * 1024;
+const MIN_COMPACTION_MAX_COMPLETION_TOKENS = 4 * 1024;
+const MAX_COMPACTION_OUTPUT_CAP_SHRINK_ATTEMPTS = 4;
 const COMPACTION_OUTPUT_MIN_TOKENS = 1_024;
 const COMPACTION_ESTIMATE_ERROR = 0.15;
 const OVERFLOW_CONTEXT_SAFETY_RATIO = 0.85;
@@ -730,6 +732,8 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
       let historyForModel: readonly ContextMessage[] = stripDynamicToolContext(originalHistory);
       let droppedCount = 0;
       let overflowShrinkCount = 0;
+      let outputCapShrinkCount = 0;
+      let compactionOutputCap = compactionMaxOutputSize;
       let requestAttempts = 0;
       let payloadFlattened = false;
       const preShrunkHistory = this.preShrinkHistoryToWindowBudget(
@@ -745,7 +749,7 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
         const messages: Message[] = [...messagesToCompact, createUserMessage(instruction)];
         const estimatedCompactionRequestTokens = this.requestTokens(messages);
         const requestMaxOutputSize = this.fitCompactionOutputTokens(
-          compactionMaxOutputSize,
+          compactionOutputCap,
           estimatedCompactionRequestTokens,
           effectiveMaxContextTokens,
         );
@@ -801,6 +805,23 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
             estimatedCompactionRequestTokens,
             effectiveMaxContextTokens,
           );
+          if (isOutputCapRejection(statusError)) {
+            const nextCap =
+              compactionOutputCap === undefined
+                ? undefined
+                : shrinkCompactionOutputCap(compactionOutputCap);
+            if (
+              nextCap === undefined ||
+              outputCapShrinkCount >= MAX_COMPACTION_OUTPUT_CAP_SHRINK_ATTEMPTS ||
+              requestAttempts >= maxAttempts
+            ) {
+              throw error;
+            }
+            outputCapShrinkCount += 1;
+            compactionOutputCap = nextCap;
+            retryCount = 0;
+            continue;
+          }
           const isWindowSized = this.isWindowSizedRejection(
             error,
             estimatedCompactionRequestTokens,
@@ -1025,8 +1046,19 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
   }
 }
 
-function findAPIStatusError(error: unknown): APIStatusError | undefined {
-  let current: unknown = error;
+function isOutputCapRejection(error: APIStatusError | undefined): boolean {
+  if (error === undefined || error.statusCode !== 400) return false;
+  const message = error.message;
+  if (!/max_tokens/i.test(message)) return false;
+  return /exceed|too (large|long|high)|limit/i.test(message);
+}
+
+function shrinkCompactionOutputCap(current: number): number | undefined {
+  const next = Math.floor(current / 2);
+  return next >= MIN_COMPACTION_MAX_COMPLETION_TOKENS ? next : undefined;
+}
+
+function findAPIStatusError(error: unknown): APIStatusError | undefined {  let current: unknown = error;
   const seen = new Set<unknown>();
   while (current !== undefined && current !== null && !seen.has(current)) {
     if (current instanceof APIStatusError) return current;

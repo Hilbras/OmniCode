@@ -3250,7 +3250,7 @@ describe('FullCompaction', () => {
     expect(compactionMaxCompletionTokens).toEqual([64_000]);
   });
 
-  it('uses default 128k hardCap when maxOutputSize is not configured', async () => {
+  it('uses the default 64k hardCap when maxOutputSize is not configured', async () => {
     const compactionMaxCompletionTokens: unknown[] = [];
     const generate: GenerateFn = requesterFromGenerateFn(
       async (_provider, _system, _tools, _history, _callbacks, options) => {
@@ -3269,7 +3269,35 @@ describe('FullCompaction', () => {
     await ctx.rpc.beginCompaction({});
     await completed;
 
-    expect(compactionMaxCompletionTokens).toEqual([128 * 1024]);
+    expect(compactionMaxCompletionTokens).toEqual([64 * 1024]);
+  });
+
+  it('shrinks the output cap and retries when the provider rejects max_tokens', async () => {
+    const compactionMaxCompletionTokens: unknown[] = [];
+    let attempts = 0;
+    const generate: GenerateFn = requesterFromGenerateFn(
+      async (_provider, _system, _tools, _history, _callbacks, options) => {
+        attempts += 1;
+        compactionMaxCompletionTokens.push(options?.maxCompletionTokens);
+        if (attempts === 1) {
+          throw new APIStatusError(400, 'max_tokens exceeds the limit of 65536');
+        }
+        return textResult('Shrunk cap compacted summary.');
+      },
+    );
+    const ctx = testAgent({ generate });
+    ctx.configure({
+      provider: CATALOGUED_PROVIDER,
+      modelCapabilities: CATALOGUED_MODEL_CAPABILITIES,
+    });
+    ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+    const completed = ctx.once('compaction.completed');
+
+    await ctx.rpc.beginCompaction({});
+    await completed;
+
+    expect(attempts).toBe(2);
+    expect(compactionMaxCompletionTokens).toEqual([64 * 1024, 32 * 1024]);
   });
 
   it('fits the compaction output budget to the room left in the context window', async () => {
