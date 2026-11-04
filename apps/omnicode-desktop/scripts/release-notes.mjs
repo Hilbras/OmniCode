@@ -50,8 +50,17 @@ function fromChangelog() {
   return out;
 }
 
-function fromPendingChangesets() {
+function fromPendingChangesets(version) {
+  const statePath = resolve(root, 'release-notes-announced.json');
+  let state = { announced: {} };
+  try {
+    state = JSON.parse(readFileSync(statePath, 'utf8'));
+  } catch {
+    state = { announced: {} };
+  }
+  const announced = state.announced ?? {};
   const entries = [];
+  const pending = [];
   for (const file of readdirSync(changesetDir).toSorted()) {
     if (!file.endsWith('.md') || file === 'README.md') continue;
     const source = readFileSync(resolve(changesetDir, file), 'utf8');
@@ -61,9 +70,18 @@ function fromPendingChangesets() {
     if (body.length === 0) continue;
     const bumps = [...match[1].matchAll(/:\s*(major|minor|patch)\s*$/gm)].map((m) => m[1]);
     if (bumps.length === 0) continue;
+    pending.push(file);
+    // A changeset announced by the version being built stays in that version's
+    // notes, so rebuilding the same version is deterministic. Anything
+    // announced by an earlier version is old news and is left out.
+    if (announced[file] !== undefined && announced[file] !== version) continue;
     const level = bumps.includes('major') ? 'major' : bumps.includes('minor') ? 'minor' : 'patch';
     entries.push({ level, text: body.replace(/\s+/g, ' ').trim() });
   }
+  if (entries.length === 0) return [];
+  const next = { announced: { ...announced } };
+  for (const file of pending) next.announced[file] = version;
+  writeFileSync(statePath, `${JSON.stringify(next, null, 2)}\n`);
   const out = [];
   for (const level of ['major', 'minor', 'patch']) {
     const group = entries.filter((entry) => entry.level === level);
@@ -78,7 +96,7 @@ function fromPendingChangesets() {
 
 const out = fromChangelog();
 const usedChangesets = out.length === 0;
-if (usedChangesets) out.push(...fromPendingChangesets());
+if (usedChangesets) out.push(...fromPendingChangesets(version));
 
 const notes = out.some((line) => line.startsWith('- '))
   ? out.join('\n')

@@ -1,0 +1,23 @@
+{
+  "announced": {
+    "about-app-version.md": "1.4.12",
+    "bundled-skills.md": "1.4.12",
+    "compaction-keep-context.md": "1.4.12",
+    "compaction-output-cap.md": "1.4.12",
+    "compaction-slim-request.md": "1.4.12",
+    "desktop-bundled-ffmpeg.md": "1.4.12",
+    "desktop-perf.md": "1.4.12",
+    "fix-catalog-lookup-index.md": "1.4.12",
+    "model-menu-search.md": "1.4.12",
+    "notification-brand-icon.md": "1.4.12",
+    "ponytail-skills.md": "1.4.12",
+    "release-notes-content.md": "1.4.12",
+    "settings-skills-advanced.md": "1.4.12",
+    "settings-skills-page.md": "1.4.12",
+    "settings-usage-advanced.md": "1.4.12",
+    "settings-usage-page.md": "1.4.12",
+    "skill-enable-disable.md": "1.4.12",
+    "usage-fast-and-trimmed.md": "1.4.12",
+    "usage-two-column.md": "1.4.12"
+  }
+}
