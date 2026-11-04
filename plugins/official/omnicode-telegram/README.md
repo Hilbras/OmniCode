@@ -1,0 +1,62 @@
+# Omnicode Telegram
+
+Drive Omnicode from a Telegram chat — pick a session, send prompts, and change
+the model, profile, thinking level, permission mode and plan mode.
+
+## Setup
+
+1. Create a bot with [@BotFather](https://t.me/BotFather) and copy its token.
+2. Write `~/.omnicode/telegram.json`:
+
+   ```json
+   { "botToken": "123456:ABC...", "allowedChatIds": [] }
+   ```
+
+3. Start the daemon and message the bot once:
+
+   ```sh
+   node bin/omnicode-telegram.mjs
+   ```
+
+   It replies with your chat id and refuses every command.
+4. Put that id in `allowedChatIds`, restart, and you are in.
+
+The daemon discovers the running Omnicode server by itself, from
+`~/.omnicode/server/instances/*.json` and `~/.omnicode/server.token` — no manual
+URL or token needed.
+
+## Commands
+
+| Command | Effect |
+|---|---|
+| `/sessions` | list recent sessions |
+| `/use <n>` | select a session |
+| *(any text)* | prompt the selected session |
+| `/last` | newest assistant reply |
+| `/stop` | cancel the running turn |
+| `/model <alias\|clear>` | model for the next prompt |
+| `/profile <name\|clear>` | profile for the next prompt |
+| `/thinking <level\|clear>` | thinking level |
+| `/permission <mode\|clear>` | permission mode |
+| `/plan <on\|off\|clear>` | plan mode |
+| `/settings` | list the model catalog |
+| `/current` | selection and pending overrides |
+| `/help` | the command list |
+
+## Security
+
+The bot fails closed: only chat ids in `allowedChatIds` can do anything. Every
+other chat receives its own chat id and a refusal, and nothing else. It also
+talks only to `127.0.0.1`, so it never exposes your server.
+
+Treat the bot token like a password — anyone holding it can read your bot's
+updates.
+
+## State
+
+`~/.omnicode/telegram-state.json` holds the poll offset and each chat's selected
+session and overrides. Delete it to reset.
+
+## Requirements
+
+Node 18+ (uses the built-in `fetch`), and a running Omnicode server.
