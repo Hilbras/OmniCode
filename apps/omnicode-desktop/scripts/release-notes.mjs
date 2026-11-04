@@ -76,11 +76,13 @@ function fromPendingChangesets(version) {
     // announced by an earlier version is old news and is left out.
     if (announced[file] !== undefined && announced[file] !== version) continue;
     const level = bumps.includes('major') ? 'major' : bumps.includes('minor') ? 'minor' : 'patch';
-    entries.push({ level, text: body.replace(/\s+/g, ' ').trim() });
+    entries.push({ level, text: body.replace(/\s+/g, ' ').trim(), file });
   }
   if (entries.length === 0) return [];
+  // Record only what this version announced. Stamping every pending changeset
+  // would make a rebuild of the same version re-list all of them.
   const next = { announced: { ...announced } };
-  for (const file of pending) next.announced[file] = version;
+  for (const entry of entries) next.announced[entry.file] = version;
   writeFileSync(statePath, `${JSON.stringify(next, null, 2)}\n`);
   const out = [];
   for (const level of ['major', 'minor', 'patch']) {
