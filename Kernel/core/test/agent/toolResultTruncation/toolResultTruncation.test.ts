@@ -7,25 +7,39 @@ import { TestInstantiationService } from '#/_base/di/test';
 import { IAgentScopeContext, makeAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import type { ExecutableToolResult } from '#/tool/toolContract';
 import { IAgentToolResultTruncationService } from '#/agent/toolResultTruncation/toolResultTruncation';
+import { TOOL_RESULT_COMPRESSION_FLAG_ID } from '#/agent/toolResultTruncation/flag';
+import {
+  compactStructuredText,
+  isDenseIdentifier,
+  normalizedEntropy,
+} from '#/agent/toolResultTruncation/structuredText';
 import { ToolResultTruncationService } from '#/agent/toolResultTruncation/toolResultTruncationService';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
+import { IFlagService } from '#/app/flag/flag';
 import type { ContentPart } from '#human/llm/message';
 import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageService';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { stubBootstrap } from '../../app/bootstrap/stubs';
+import { stubFlag } from '../../app/flag/stubs';
 
 describe('ToolResultTruncationService', () => {
   let disposables: DisposableStore;
   let homeDir: string;
   let truncation: IAgentToolResultTruncationService;
+  let compressionEnabled = false;
 
   beforeEach(async () => {
     homeDir = await mkdtemp(join(tmpdir(), 'tool-result-truncation-'));
+    compressionEnabled = false;
     disposables = new DisposableStore();
     const ix = disposables.add(new TestInstantiationService());
     ix.stub(IBootstrapService, stubBootstrap(homeDir));
+    ix.stub(
+      IFlagService,
+      stubFlag((id) => id === TOOL_RESULT_COMPRESSION_FLAG_ID && compressionEnabled),
+    );
     ix.stub(
       IAgentScopeContext,
       makeAgentScopeContext({
@@ -414,6 +428,7 @@ describe('ToolResultTruncationService', () => {
         agentScope: 'sessions/workspace/session/agents/main',
       }),
     );
+    ix.stub(IFlagService, stubFlag());
     ix.stub(IFileSystemStorageService, {
       write: async () => {
         throw new Error('disk full');
@@ -446,6 +461,96 @@ describe('ToolResultTruncationService', () => {
     expect(renderedShortLines).not.toContain('output_path:');
     expect(renderedShortLines).toContain('could not be saved to a file');
     expect(renderedShortLines.length).toBeLessThan(10_000);
+  });
+function bulkItems() {
+    return Array.from({ length: 400 }, (_, index) => ({
+      id: `item-${index}`,
+      description:
+        'Long descriptive prose that exists only to add bulk to this payload and nothing else at all. '.repeat(5),
+    }));
+  }
+
+  it('keeps the head and tail preview for large JSON when compression is off', async () => {
+    const payload = JSON.stringify(bulkItems(), null, 2);
+    const result = await truncation.truncateForModel<ExecutableToolResult>({
+      toolName: 'Search',
+      toolCallId: 'call:json-off',
+      result: { output: payload, isError: false },
+    });
+    const rendered = typeof result.output === 'string' ? result.output : JSON.stringify(result.output);
+    expect(result.truncated).toBe(true);
+    expect(rendered).not.toContain('structure and identifiers kept');
+    expect(rendered).toContain('[preview: chars');
+  });
+
+  it('inlines the compacted structure and keeps the original retrievable when compression is on', async () => {
+    compressionEnabled = true;
+    const payload = JSON.stringify(bulkItems(), null, 2);
+    const result = await truncation.truncateForModel<ExecutableToolResult>({
+      toolName: 'Search',
+      toolCallId: 'call:json-on',
+      result: { output: payload, isError: false },
+    });
+    const rendered = typeof result.output === 'string' ? result.output : JSON.stringify(result.output);
+    expect(result.truncated).toBe(true);
+    expect(rendered).toContain('structure and identifiers kept');
+    expect(rendered).toContain('item-24');
+    expect(rendered).toContain('__omitted_items');
+    const savedPath = renderedOutputPath(rendered);
+    expect(await readFile(savedPath, 'utf8')).toContain('item-300');
+  });
+});
+
+describe('compactStructuredText', () => {
+  it('returns undefined for content that is not JSON', () => {
+    expect(compactStructuredText('plain text, not json')).toBeUndefined();
+  });
+
+  it('strips indentation without reporting removed values', () => {
+    const raw = JSON.stringify({ id: 'a1', nested: { name: 'x', count: 2 } }, null, 2);
+    const result = compactStructuredText(raw);
+    expect(result).toBeDefined();
+    expect(result!.text.length).toBeLessThan(raw.length);
+    expect(result!.removedValues).toBe(0);
+    expect(result!.removedItems).toBe(0);
+    expect(JSON.parse(result!.text)).toEqual({ id: 'a1', nested: { name: 'x', count: 2 } });
+  });
+
+  it('keeps the first array items, counts the rest, and marks the omission', () => {
+    const items = Array.from({ length: 40 }, (_, index) => ({
+      id: `item-${index}`,
+      state: 'ok',
+    }));
+    const result = compactStructuredText(JSON.stringify(items), {
+      maxArrayItems: 5,
+      maxStringChars: 160,
+      entropyThreshold: 0.85,
+      maxDepth: 32,
+    });
+    expect(result).toBeDefined();
+    expect(result!.removedItems).toBe(35);
+    const parsed = JSON.parse(result!.text) as unknown[];
+    expect(parsed).toHaveLength(6);
+    expect(parsed[5]).toEqual({ __omitted_items: 35 });
+  });
+
+  it('elides a bulky prose value but keeps a dense identifier of the same length', () => {
+    const dense = 'a3f1c9e77b204d5f8a1c6e0b93d4725f6c8a19e4b7d35f2081ca64e93b7d15a8';
+    const prose =
+      'This is a long descriptive sentence that carries no identifier at all and keeps repeating itself over and over again for a while, and then it continues for another clause so that it comfortably passes the length threshold.';
+    const result = compactStructuredText(JSON.stringify({ dense, prose }));
+    expect(result).toBeDefined();
+    expect(result!.removedValues).toBe(1);
+    const parsed = JSON.parse(result!.text) as Record<string, string>;
+    expect(parsed['dense']).toBe(dense);
+    expect(parsed['prose']).toContain('__omitted_chars');
+  });
+
+  it('scores repetitive text low and mixed text high', () => {
+    expect(isDenseIdentifier('a3f1c9e77b204d5f8a1c6e0b93d4725f')).toBe(true);
+    expect(isDenseIdentifier('a value with spaces')).toBe(false);
+    expect(normalizedEntropy('aaaaaaaaaaaaaaaa')).toBeLessThan(0.2);
+    expect(normalizedEntropy('aB3f9Qx7Lm2Zp8Rw')).toBeGreaterThan(0.8);
   });
 });
 

@@ -5,6 +5,7 @@ import { basename, join, normalize } from 'pathe';
 import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
+import { IFlagService } from '#/app/flag/flag';
 import { LifecycleScope } from '#/app/scopes';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
 import {
@@ -15,6 +16,8 @@ import {
 import { AGENT_WIRE_RECORD_KEY } from '#/wire/record';
 import type { ContentPart } from '#human/llm/message';
 
+import { TOOL_RESULT_COMPRESSION_FLAG_ID } from './flag';
+import { compactStructuredText } from './structuredText';
 import {
   IAgentToolResultTruncationService,
   type ToolResultTruncationInput,
@@ -42,6 +45,7 @@ export class ToolResultTruncationService implements IAgentToolResultTruncationSe
     @IBootstrapService private readonly bootstrap: IBootstrapService,
     @IAgentScopeContext agent: IAgentScopeContext,
     @IFileSystemStorageService private readonly storage: IFileSystemStorageService,
+    @IFlagService private readonly flags: IFlagService,
   ) {
     this.storageScope = agent.scope('tool-results');
   }
@@ -54,6 +58,16 @@ export class ToolResultTruncationService implements IAgentToolResultTruncationSe
 
     const rawText = persistableToolResultText(result.output);
     if (rawText.length <= DEFAULT_TOOL_RESULT_MAX_CHARS) return result;
+
+    const compacted = this.flags.enabled(TOOL_RESULT_COMPRESSION_FLAG_ID)
+      ? compactStructuredText(rawText)
+      : undefined;
+    const compressed =
+      compacted !== undefined &&
+      compacted.text.length < rawText.length &&
+      compacted.text.length <= DEFAULT_TOOL_RESULT_MAX_CHARS
+        ? compacted
+        : undefined;
 
     const { spill, ...rest } = result;
     const retainedText =
@@ -100,13 +114,14 @@ export class ToolResultTruncationService implements IAgentToolResultTruncationSe
     const pointer = renderPersistedToolResult(
       input.toolName,
       input.toolCallId,
-      retainedText,
+      compressed?.text ?? retainedText,
       saved.outputPath,
       saved.preservedChars,
       totalChars,
       DEFAULT_TOOL_RESULT_MAX_CHARS,
       suffix,
       shaped.hasMedia,
+      compressed !== undefined,
     );
     return {
       ...rest,
@@ -262,6 +277,7 @@ function renderPersistedToolResult(
   maxChars: number,
   suffix: string,
   hasMedia: boolean,
+  fullPreview = false,
 ): string {
   const partial = preservedChars < totalChars;
   const lines = [
@@ -283,7 +299,15 @@ function renderPersistedToolResult(
     `output_path: ${outputPath}`,
     'next_step: Use Read with output_path to page through the saved output, or Grep to search it.',
   );
-  appendPreviewLines(lines, previewText);
+  if (fullPreview) {
+    lines.push(
+      '',
+      '[compacted: structure and identifiers kept, repetitive bulk omitted]',
+      previewText,
+    );
+  } else {
+    appendPreviewLines(lines, previewText);
+  }
   if (suffix.length > 0) lines.push('', suffix);
   return lines.join('\n');
 }
