@@ -26,6 +26,7 @@
     "provider-model-search.md": "1.4.17",
     "session-switch-performance.md": "1.4.17",
     "tool-payload-lazy-mount.md": "1.4.17",
-    "provider-enable-disable.md": "1.4.18"
+    "provider-enable-disable.md": "1.4.18",
+    "stale-web-cache-after-update.md": "1.4.19"
   }
 }
