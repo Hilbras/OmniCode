@@ -3171,6 +3171,12 @@ ${vn}`)}const De=ze.join(`
         span.textContent = label(id);
         tab.appendChild(span);
         tab.addEventListener('click', function () { navigate(id); });
+        tab.addEventListener('auxclick', function (event) {
+          if (event.button !== 1) return;
+          event.preventDefault();
+          close(id);
+        });
+        tab.setAttribute('aria-keyshortcuts', 'Alt+' + String(k + 1));
         var x = document.createElement('button');
         x.type = 'button';
         x.className = 'omni-tab-close';
@@ -3193,6 +3199,16 @@ ${vn}`)}const De=ze.join(`
     requestAnimationFrame(function () { queued = false; sync(); });
   }
   window.addEventListener('popstate', schedule);
+  window.addEventListener('keydown', function (event) {
+    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    var index = parseInt(event.key, 10);
+    if (!(index >= 1 && index <= 9)) return;
+    var list = readTabs();
+    var id = list[index - 1];
+    if (id === undefined) return;
+    event.preventDefault();
+    navigate(id);
+  });
   var observer = new MutationObserver(schedule);
   function boot() {
     if (!document.body) { setTimeout(boot, 30); return; }
