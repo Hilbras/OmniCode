@@ -25,6 +25,7 @@
     "connectors-settings-page.md": "1.4.16",
     "provider-model-search.md": "1.4.17",
     "session-switch-performance.md": "1.4.17",
-    "tool-payload-lazy-mount.md": "1.4.17"
+    "tool-payload-lazy-mount.md": "1.4.17",
+    "provider-enable-disable.md": "1.4.18"
   }
 }

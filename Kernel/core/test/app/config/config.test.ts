@@ -2911,6 +2911,25 @@ describe('ConfigService replaceSections', () => {
     disposables.dispose();
   });
 
+  it('drops a stale known provider key while preserving an unknown one', async () => {
+    const toml = [
+      '[providers.acme]',
+      'type = "openai"',
+      'api_key = "sk-acme"',
+      'disabled = true',
+      'future_provider_field = 2',
+      '',
+    ].join('\n');
+    const { config, disposables, storage } = await createSectionsConfig(toml);
+
+    await config.replace(PROVIDERS_SECTION, { acme: { type: 'openai', apiKey: 'sk-acme' } });
+
+    const onDisk = new TextDecoder().decode(await storage.read('', 'config.toml'));
+    expect(onDisk).not.toContain('disabled');
+    expect(onDisk).toContain('future_provider_field = 2');
+    disposables.dispose();
+  });
+
   it('rejects an atomic replacement when a guarded user value changed on disk', async () => {
     const { config, disposables, store, storage } = await createSectionsConfig();
     const setSpy = vi.spyOn(store, 'set');

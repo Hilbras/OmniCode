@@ -1004,4 +1004,77 @@ describe('server-v2 /api/v1 provider write endpoints', () => {
       max_context_size: 200000,
     });
   });
+
+  it('disables a provider: persists disabled = true and drops its models from the list', async () => {
+    await boot(DEFAULTED_TOML);
+    const { status, body } = await putJson<{ provider: { disabled?: boolean } }>(
+      '/api/v1/providers/openai/enabled',
+      { enabled: false },
+    );
+    expect(status).toBe(200);
+    expect(body.data.provider.disabled).toBe(true);
+
+    const onDisk = await readConfigToml();
+    const providers = onDisk['providers'] as Record<string, Record<string, unknown>>;
+    expect(providers['openai']?.['disabled']).toBe(true);
+
+    const list = await getJson<{ items: Array<{ id: string; disabled?: boolean }> }>(
+      '/api/v1/providers',
+    );
+    expect(list.body.data.items.find((entry) => entry.id === 'openai')?.disabled).toBe(true);
+
+    const models = await getJson<{ items: Array<{ provider: string }> }>('/api/v1/models');
+    expect(models.body.data.items.map((entry) => entry.provider)).toEqual(['omnicode']);
+  });
+
+  it('re-enables a provider: removes disabled from disk and restores its models', async () => {
+    await boot(DEFAULTED_TOML);
+    await putJson('/api/v1/providers/openai/enabled', { enabled: false });
+    const { status, body } = await putJson<{ provider: { disabled?: boolean } }>(
+      '/api/v1/providers/openai/enabled',
+      { enabled: true },
+    );
+    expect(status).toBe(200);
+    expect(body.data.provider.disabled).toBeUndefined();
+
+    const onDisk = await readConfigToml();
+    const providers = onDisk['providers'] as Record<string, Record<string, unknown>>;
+    expect(providers['openai']).toEqual({ type: 'openai', api_key: 'sk-openai' });
+
+    const models = await getJson<{ items: Array<{ provider: string }> }>('/api/v1/models');
+    expect(
+      models.body.data.items
+        .map((entry) => entry.provider)
+        .sort()
+        .join(','),
+    ).toBe('omnicode,openai');
+  });
+
+  it('keeps an unknown provider field while dropping a stale disabled flag', async () => {
+    const toml = [
+      '[providers.openai]',
+      'type = "openai"',
+      'api_key = "sk-openai"',
+      'future_provider_field = 2',
+      'disabled = true',
+      '',
+    ].join('\n');
+    await boot(toml);
+    const { status } = await putJson('/api/v1/providers/openai/enabled', { enabled: true });
+    expect(status).toBe(200);
+
+    const onDisk = await readConfigToml();
+    const providers = onDisk['providers'] as Record<string, Record<string, unknown>>;
+    expect(providers['openai']).toEqual({
+      type: 'openai',
+      api_key: 'sk-openai',
+      future_provider_field: 2,
+    });
+  });
+
+  it('maps an unknown provider id to 40412 when toggling enabled', async () => {
+    await boot(DEFAULTED_TOML);
+    const { body } = await putJson('/api/v1/providers/missing/enabled', { enabled: false });
+    expect(body.code).toBe(40412);
+  });
 });

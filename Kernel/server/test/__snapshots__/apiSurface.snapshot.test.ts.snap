@@ -642,6 +642,10 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "PUT",
+      "/api/v1/providers/{provider_id}/enabled",
+    ],
+    [
+      "PUT",
       "/api/v2/mcp/servers/{name}",
     ],
   ],

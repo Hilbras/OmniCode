@@ -26,7 +26,7 @@ import {
   type ProtocolProviderOptions,
 } from '../protocol/protocol';
 import { assertProviderBaseUrl } from '../provider/base-url';
-import { IProviderService } from '../provider/provider';
+import { IProviderService, type ProviderConfig } from '../provider/provider';
 import { getProviderDefinition, resolveProviderEndpoint } from '../provider/provider-definition';
 import {
   IModelCatalog,
@@ -226,8 +226,8 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
     const records = this.allRecords();
     const globalDefaultModel = this.models.getDefaultModel();
     const out: ProviderCatalogItem[] = [];
-    for (const providerId of this.runtime.providerIds()) {
-      const provider = this.runtime.providerInfo(providerId);
+    for (const providerId of Object.keys(this.providers.list())) {
+      const provider = this.providers.get(providerId);
       if (provider === undefined) continue;
       out.push(await this.toCatalogProvider(providerId, provider, records, globalDefaultModel));
     }
@@ -235,7 +235,7 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
   }
 
   async getProvider(providerId: string): Promise<ProviderCatalogItem> {
-    const provider = this.runtime.providerInfo(providerId);
+    const provider = this.providers.get(providerId);
     if (provider === undefined) {
       throw new Error2(
         ModelCatalogErrors.codes.PROVIDER_NOT_FOUND,
@@ -275,7 +275,7 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
 
   private async toCatalogProvider(
     providerId: string,
-    provider: CatalogProviderInfo,
+    provider: ProviderConfig,
     models: Readonly<Record<string, ModelRecord>>,
     globalDefaultModel: string | undefined,
   ): Promise<ProviderCatalogItem> {
@@ -285,7 +285,7 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
 
   private async resolveCredential(
     providerId: string,
-    provider: CatalogProviderInfo,
+    provider: ProviderConfig,
   ): Promise<ProviderCredentialState> {
     const declared = declaredProviderCredential(provider, providerId);
     return {

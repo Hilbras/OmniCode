@@ -40,6 +40,8 @@ import {
   providerCollectionActionBodySchema,
   replaceProviderRequestSchema,
   replaceProviderResponseSchema,
+  setProviderEnabledRequestSchema,
+  setProviderEnabledResponseSchema,
   type ProviderCollectionActionBody,
 } from '../protocol/rest-modelCatalog';
 import { type ActionTable, runAction } from './action-dispatch';
@@ -463,6 +465,53 @@ export function registerModelCatalogRoutes(app: ModelCatalogRouteHost, core: Sco
     replaceProviderRoute.path,
     replaceProviderRoute.options,
     replaceProviderRoute.handler as Parameters<ModelCatalogRouteHost['put']>[2],
+  );
+
+  const setProviderEnabledRoute = defineRoute(
+    {
+      method: 'PUT',
+      path: '/providers/{provider_id}/enabled',
+      params: providerIdParamSchema,
+      body: setProviderEnabledRequestSchema,
+      success: { data: setProviderEnabledResponseSchema },
+      errors: {
+        [ErrorCode.VALIDATION_FAILED]: {},
+        [ErrorCode.PROVIDER_NOT_FOUND]: {},
+      },
+      description:
+        'Enable or disable a provider. A disabled provider keeps its configuration and credentials, but its model aliases are left out of the model list.',
+      tags: ['providers'],
+      operationId: 'setProviderEnabled',
+    },
+    async (req, reply) => {
+      await enqueueProviderWrite(async () => {
+        const config = await loadConfig(core);
+        const { provider_id } = req.params;
+        const providers = config.inspect<ProvidersSection>(PROVIDERS_SECTION).userValue ?? {};
+        const target = providers[provider_id];
+        if (target === undefined) {
+          reply.send(
+            errEnvelope(
+              ErrorCode.PROVIDER_NOT_FOUND,
+              `provider ${provider_id} does not exist`,
+              req.id,
+            ),
+          );
+          return;
+        }
+        const provider: ProviderConfig = { ...target };
+        if (req.body.enabled) delete provider.disabled;
+        else provider.disabled = true;
+        await config.replace(PROVIDERS_SECTION, { ...providers, [provider_id]: provider });
+        const saved = await core.accessor.get(IModelCatalog).getProvider(provider_id);
+        reply.send(okEnvelope({ provider: saved }, req.id));
+      });
+    },
+  );
+  app.put(
+    setProviderEnabledRoute.path,
+    setProviderEnabledRoute.options,
+    setProviderEnabledRoute.handler as Parameters<ModelCatalogRouteHost['put']>[2],
   );
 
   const refreshProvidersRoute = defineRoute(

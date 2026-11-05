@@ -78,6 +78,7 @@ export const providerCatalogItemSchema = z.object({
   has_api_key: z.boolean(),
   status: providerCatalogStatusSchema,
   models: z.array(z.string().min(1)).optional(),
+  disabled: z.boolean().optional(),
 });
 export type ProviderCatalogItem = z.infer<typeof providerCatalogItemSchema>;
 
@@ -149,6 +150,7 @@ export function toProtocolProvider(
         ? 'connected'
         : 'unconfigured',
     models: providerModels,
+    disabled: provider.disabled,
   };
 }
 

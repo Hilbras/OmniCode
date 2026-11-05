@@ -238,11 +238,13 @@ export class ProviderCatalogRuntimeService extends Disposable implements IProvid
     const defaultProvider = this.providerService.getDefaultProvider();
     const desired = new Map<string, { info?: CatalogProviderInfo; models: CatalogModelDefinition[] }>();
     for (const [providerId, config] of Object.entries(providers)) {
+      if (config.disabled === true) continue;
       desired.set(providerId, { info: toCatalogProviderInfo(config), models: [] });
     }
     const routing = new Map<string, string>();
     for (const [alias, record] of Object.entries(models)) {
       const bucket = bucketOfRecord(record, defaultProvider);
+      if (providers[bucket]?.disabled === true) continue;
       routing.set(alias, bucket);
       let entry = desired.get(bucket);
       if (entry === undefined) {

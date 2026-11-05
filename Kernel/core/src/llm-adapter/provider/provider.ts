@@ -31,6 +31,7 @@ export interface ProviderConfig {
   source?: Record<string, unknown>;
   protocolOverrides?: Record<string, Protocol>;
   excludedModels?: string[];
+  disabled?: boolean;
 }
 
 export type ProvidersSection = Record<string, ProviderConfig>;

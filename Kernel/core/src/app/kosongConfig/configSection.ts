@@ -62,6 +62,7 @@ export const ProviderConfigSchema = z.object({
   source: z.record(z.string(), z.unknown()).optional(),
   protocolOverrides: z.record(z.string(), ProtocolSchema).optional(),
   excludedModels: z.array(z.string()).optional(),
+  disabled: z.boolean().optional(),
 });
 
 export const ProvidersSectionSchema = z.record(z.string(), ProviderConfigSchema);
@@ -124,12 +125,14 @@ export const providersToToml = (value: unknown, rawSnake: unknown): unknown => {
   return out;
 };
 
+const PROVIDER_CONFIG_KEYS = Object.keys(ProviderConfigSchema.shape);
+
 function providerEntryToToml(
   provider: Record<string, unknown>,
   rawProvider: unknown,
 ): Record<string, unknown> {
   const out = cloneRecord(rawProvider);
-  for (const key of PROVIDER_CREDENTIAL_FIELDS) {
+  for (const key of PROVIDER_CONFIG_KEYS) {
     if (provider[key] === undefined) delete out[camelToSnake(key)];
   }
   for (const [key, value] of Object.entries(provider)) {
@@ -143,8 +146,6 @@ function providerEntryToToml(
   }
   return out;
 }
-
-const PROVIDER_CREDENTIAL_FIELDS = ['apiKey', 'oauth', 'apiKeyEnv', 'authScheme'] as const;
 
 registerConfigSection(PROVIDERS_SECTION, ProvidersSectionSchema, {
   defaultValue: {},

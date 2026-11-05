@@ -132,6 +132,16 @@ export const replaceProviderResponseSchema = z.object({
 });
 export type ReplaceProviderResponse = z.infer<typeof replaceProviderResponseSchema>;
 
+export const setProviderEnabledRequestSchema = z.object({
+  enabled: z.boolean(),
+});
+export type SetProviderEnabledRequest = z.infer<typeof setProviderEnabledRequestSchema>;
+
+export const setProviderEnabledResponseSchema = z.object({
+  provider: providerCatalogItemSchema,
+});
+export type SetProviderEnabledResponse = z.infer<typeof setProviderEnabledResponseSchema>;
+
 export const catalogModelItemSchema = z.object({
   id: z.string().min(1),
   name: z.string().optional(),

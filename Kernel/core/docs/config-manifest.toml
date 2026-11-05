@@ -400,6 +400,7 @@ merge_all_available_skills = true
   # source: record<string, any>
   # protocol_overrides: record<string, "anthropic" | "openai" | "openai_responses" | "google-genai">
   # excluded_models: string[]
+  # disabled: boolean
 
 # ##########################################################################
 # secondaryModel (config.toml: secondary_model)
