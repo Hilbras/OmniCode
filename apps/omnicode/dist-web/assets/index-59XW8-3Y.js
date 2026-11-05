@@ -3014,3 +3014,190 @@ ${vn}`)}const De=ze.join(`
   }
   boot();
 })();
+
+;(function () {
+  if (window.__omniSessionTabs) return;
+  window.__omniSessionTabs = true;
+
+  var KEY = 'omni.sessionTabs';
+  var MAX_TABS = 12;
+  var ZH = (document.documentElement.lang || '').toLowerCase().startsWith('zh');
+  var T = {
+    open: ZH ? '已打开的会话' : 'Open sessions',
+    close: ZH ? '关闭标签页' : 'Close tab',
+  };
+
+  function readTabs() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(KEY) || '[]');
+      return Array.isArray(raw) ? raw.filter(function (x) { return typeof x === 'string' && x; }) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function writeTabs(list) {
+    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { /* ignore */ }
+  }
+  function activeId() {
+    var m = /\/sessions\/(session_[A-Za-z0-9-]+)/.exec(location.pathname);
+    return m ? m[1] : null;
+  }
+  function isChatView() {
+    return activeId() !== null && !location.pathname.includes('session-admin');
+  }
+  function token() {
+    try {
+      var raw = localStorage.getItem('omnicode-web.server-credential');
+      if (!raw) return null;
+      try { var parsed = JSON.parse(raw); return parsed && parsed.credential ? parsed.credential : raw; } catch (e) { return raw; }
+    } catch (e) {
+      return null;
+    }
+  }
+
+  var titles = {};
+  var titlesLoaded = false;
+  function loadTitles() {
+    if (titlesLoaded) return;
+    titlesLoaded = true;
+    var t = token();
+    if (!t) return;
+    fetch('/api/v1/sessions?page_size=100', { headers: { Authorization: 'Bearer ' + t } })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        var items = (j && j.data && j.data.items) || [];
+        for (var i = 0; i < items.length; i++) {
+          if (items[i] && items[i].id) titles[items[i].id] = items[i].title || '';
+        }
+        render();
+      })
+      .catch(function () { /* keep id-derived labels */ });
+  }
+  function label(id) {
+    var t = titles[id];
+    if (typeof t === 'string' && t.trim() !== '') return t.trim().slice(0, 28);
+    return id.replace(/^session_/, '').slice(0, 8);
+  }
+  function navigate(id) {
+    if (id === activeId()) return;
+    history.pushState(null, '', '/sessions/' + id);
+    window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
+    render();
+  }
+  function close(id) {
+    var list = readTabs();
+    var idx = list.indexOf(id);
+    if (idx === -1) return;
+    if (list.length <= 1) return;
+    list.splice(idx, 1);
+    writeTabs(list);
+    if (id === activeId()) {
+      var next = list[Math.min(idx, list.length - 1)];
+      if (next) navigate(next);
+    }
+    render();
+  }
+  function ensureActive() {
+    if (!isChatView()) return;
+    var id = activeId();
+    var list = readTabs();
+    if (list.indexOf(id) === -1) {
+      list.push(id);
+      while (list.length > MAX_TABS) {
+        var victim = list.findIndex(function (x) { return x !== id; });
+        if (victim === -1) break;
+        list.splice(victim, 1);
+      }
+      writeTabs(list);
+    }
+    loadTitles();
+  }
+  function style() {
+    if (document.getElementById('omni-tabs-style')) return;
+    var s = document.createElement('style');
+    s.id = 'omni-tabs-style';
+    s.textContent = [
+      '.omni-tabs{display:flex;align-items:center;gap:2px;padding:4px var(--space-2);overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line, rgba(128,128,128,.18));flex:0 0 auto}',
+      '.omni-tabs::-webkit-scrollbar{display:none}',
+      '.omni-tab{display:inline-flex;align-items:center;gap:6px;max-width:230px;padding:4px 8px;border:0;border-radius:var(--radius-sm,6px);background:transparent;color:var(--color-text-muted,#888);font-family:var(--font-ui,sans-serif);font-size:var(--text-xs,12px);cursor:pointer;white-space:nowrap}',
+      '.omni-tab:hover{background:var(--color-hover,rgba(128,128,128,.12));color:var(--color-text,#eee)}',
+      '.omni-tab.is-active{background:var(--color-selected,rgba(128,128,128,.18));color:var(--color-text,#fff)}',
+      '.omni-tab-label{overflow:hidden;text-overflow:ellipsis}',
+      '.omni-tab-close{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:0;border-radius:50%;padding:0;background:transparent;color:inherit;opacity:.55;cursor:pointer;font-size:11px;line-height:1}',
+      '.omni-tab-close:hover{opacity:1;background:var(--color-hover,rgba(128,128,128,.25))}',
+    ].join('');
+    document.head.appendChild(s);
+  }
+  var host = null;
+  function strip() {
+    if (host && host.isConnected) return host;
+    host = document.createElement('div');
+    host.className = 'omni-tabs';
+    host.setAttribute('role', 'tablist');
+    host.setAttribute('aria-label', T.open);
+    return host;
+  }
+  function render() {
+    if (!isChatView()) {
+      if (host && host.parentNode) host.parentNode.removeChild(host);
+      return;
+    }
+    var con = null;
+    var cons = document.querySelectorAll('.app > .con');
+    for (var i = 0; i < cons.length; i++) {
+      if (cons[i].querySelector('.chat-layout')) { con = cons[i]; break; }
+    }
+    if (!con) return;
+    style();
+    var el = strip();
+    if (el.parentNode !== con) {
+      var layout = con.querySelector('.chat-layout');
+      if (layout) con.insertBefore(el, layout);
+      else con.appendChild(el);
+    }
+    var list = readTabs();
+    var current = activeId();
+    el.textContent = '';
+    for (var k = 0; k < list.length; k++) {
+      (function (id) {
+        var tab = document.createElement('button');
+        tab.type = 'button';
+        tab.className = 'omni-tab' + (id === current ? ' is-active' : '');
+        tab.setAttribute('role', 'tab');
+        tab.setAttribute('aria-selected', id === current ? 'true' : 'false');
+        tab.title = id;
+        var span = document.createElement('span');
+        span.className = 'omni-tab-label';
+        span.textContent = label(id);
+        tab.appendChild(span);
+        tab.addEventListener('click', function () { navigate(id); });
+        var x = document.createElement('button');
+        x.type = 'button';
+        x.className = 'omni-tab-close';
+        x.setAttribute('aria-label', T.close);
+        x.textContent = '\u00d7';
+        x.addEventListener('click', function (e) { e.stopPropagation(); close(id); });
+        tab.appendChild(x);
+        el.appendChild(tab);
+      })(list[k]);
+    }
+  }
+  function sync() {
+    ensureActive();
+    render();
+  }
+  var queued = false;
+  function schedule() {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(function () { queued = false; sync(); });
+  }
+  window.addEventListener('popstate', schedule);
+  var observer = new MutationObserver(schedule);
+  function boot() {
+    if (!document.body) { setTimeout(boot, 30); return; }
+    observer.observe(document.body, { childList: true, subtree: true });
+    sync();
+  }
+  boot();
+})();
