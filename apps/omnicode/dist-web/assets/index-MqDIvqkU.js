@@ -1367,8 +1367,8 @@ ${vn}`)}const De=ze.join(`
     bridgeRunning: (pid) => (ZH ? '运行中 (PID ' + pid + ')' : 'Running (PID ' + pid + ')'),
     bridgeRunningNoPid: ZH ? '运行中' : 'Running',
     bridgeHint: ZH
-      ? '在插件目录中运行 node bin/omnicode-telegram.mjs 即启动机器人。'
-      : 'Start the bot with node bin/omnicode-telegram.mjs from the plugin folder.',
+      ? '机器人未随应用打包。请先安装 omnicode-telegram 插件,再在该插件目录中运行 node bin/omnicode-telegram.mjs。'
+      : 'The bot is not bundled with the app. Install the omnicode-telegram plugin, then run node bin/omnicode-telegram.mjs from that plugin folder.',
     botLabel: ZH ? '机器人' : 'Bot',
     botUnverified: ZH ? '未验证' : 'Not verified',
     configPath: ZH ? '配置文件' : 'Config file',
