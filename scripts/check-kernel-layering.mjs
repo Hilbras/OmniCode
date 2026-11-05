@@ -80,7 +80,28 @@ function walk(dir, files = []) {
 }
 
 const packages = packageDirs();
-const importPattern = /import\s+[^;]*?from\s+'@hilbras\/omnicode-([a-z0-9-]+)(?:\/[^']*)?'/g;
+const KERNEL_PACKAGE = '@hilbras\\/omnicode-([a-z0-9-]+)(?:\\/[^\']*)?';
+const STATIC_FORMS = [
+  new RegExp(`(?:import|export)\\s+[^;]*?from\\s+'(?:${KERNEL_PACKAGE})'`, 'g'),
+  new RegExp(`import\\s+'(?:${KERNEL_PACKAGE})'`, 'g'),
+];
+const DYNAMIC_FORMS = [new RegExp(`import\\(\\s*'(?:${KERNEL_PACKAGE})'\\s*\\)`, 'g')];
+
+function kernelImportsOf(text) {
+  const found = new Map();
+  for (const pattern of STATIC_FORMS) {
+    for (const match of text.matchAll(pattern)) {
+      if (match[1] !== undefined) found.set(match[1], false);
+    }
+  }
+  for (const pattern of DYNAMIC_FORMS) {
+    for (const match of text.matchAll(pattern)) {
+      if (match[1] !== undefined && !found.has(match[1])) found.set(match[1], true);
+    }
+  }
+  return found;
+}
+
 const violations = [];
 const edges = new Map();
 
@@ -88,10 +109,9 @@ for (const [from, dir] of packages) {
   const deps = new Set();
   for (const file of walk(join(dir, 'src'))) {
     const text = readFileSync(file, 'utf8');
-    for (const match of text.matchAll(importPattern)) {
-      const to = match[1];
+    for (const [to, dynamic] of kernelImportsOf(text)) {
       if (to === from || !packages.has(to)) continue;
-      deps.add(to);
+      if (!dynamic) deps.add(to);
       for (const rule of RULES) {
         if (rule.test(from, to)) {
           violations.push({
