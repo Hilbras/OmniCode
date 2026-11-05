@@ -23,7 +23,7 @@ interface Options {
 }
 
 const USAGE = `Usage:
-  pnpm exec tsx --import ./build/register-raw-text-loader.mjs Kernel/SDK/examples/omnicode-harness-log-marker.ts --session <session-id>
+  pnpm exec tsx --import ./build/register-raw-text-loader.mjs Kernel/API/examples/omnicode-harness-log-marker.ts --session <session-id>
 
 Options:
   -s, --session <id>   Existing session id to resume and mark
