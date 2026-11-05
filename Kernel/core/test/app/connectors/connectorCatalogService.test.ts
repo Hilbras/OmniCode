@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
+import type { ConnectorEntry } from '#/app/connectors/connectors';
 import { ConnectorCatalogService } from '#/app/connectors/connectorCatalogService';
 import type { IFlagService } from '#/app/flag/flag';
 import type { IGitHubService } from '#/app/github/github';
@@ -12,6 +13,8 @@ import type {
 } from '#/app/mcpManagement/mcpManagement';
 import type { IPluginService } from '#/app/plugin/plugin';
 import type { PluginSummary } from '#/app/plugin/types';
+import type { ITelegramConnectorService } from '#/app/telegram/telegram';
+import type { TelegramConnectorStatus } from '#/app/telegram/types';
 import type { VercelConnectionStatus } from '#/app/vercel/types';
 import type { IVercelService } from '#/app/vercel/vercel';
 
@@ -25,6 +28,18 @@ interface Stubs {
   readonly githubFlagEnabled?: boolean;
   readonly vercel?: VercelConnectionStatus;
   readonly vercelFlagEnabled?: boolean;
+  readonly telegram?: TelegramConnectorStatus;
+}
+
+function telegramStatus(entry: Partial<TelegramConnectorStatus> = {}): TelegramConnectorStatus {
+  return {
+    state: 'not-configured',
+    configPath: '/home/user/.omnicode/telegram.json',
+    hasToken: false,
+    allowedChatIds: [],
+    running: false,
+    ...entry,
+  };
 }
 
 function vercelStatus(entry: Partial<VercelConnectionStatus> = {}): VercelConnectionStatus {
@@ -69,7 +84,10 @@ function makeService(stubs: Stubs): ConnectorCatalogService {
   const vercel = {
     status: vi.fn(async () => stubs.vercel ?? vercelStatus()),
   } as unknown as IVercelService;
-  return new ConnectorCatalogService(management, store, plugins, github, flags, vercel);
+  const telegram = {
+    status: vi.fn(async () => stubs.telegram ?? telegramStatus()),
+  } as unknown as ITelegramConnectorService;
+  return new ConnectorCatalogService(management, store, plugins, github, flags, vercel, telegram);
 }
 
 function mcpServer(entry: Partial<McpManagedServer> & { readonly name: string }): McpManagedServer {
@@ -376,8 +394,42 @@ describe('ConnectorCatalogService', () => {
 
     const connectors = await service.listConnectors();
 
-    expect(connectors.map((entry) => entry.id)).toEqual(['github', 'vercel']);
+    expect(connectors.map((entry) => entry.id)).toEqual(['github', 'vercel', 'telegram']);
     expect(connectors.every((entry) => entry.kind === 'service')).toBe(true);
+  });
+
+  it('maps the telegram states onto the connector status', async () => {
+    const cases: readonly {
+      readonly telegram: TelegramConnectorStatus;
+      readonly status: ConnectorEntry['status'];
+    }[] = [
+      { telegram: telegramStatus({ state: 'not-configured' }), status: 'not-configured' },
+      { telegram: telegramStatus({ state: 'awaiting-chat', hasToken: true }), status: 'needs-auth' },
+      { telegram: telegramStatus({ state: 'ready', hasToken: true, running: true }), status: 'active' },
+      { telegram: telegramStatus({ state: 'ready', hasToken: true, running: false }), status: 'inactive' },
+    ];
+
+    for (const testCase of cases) {
+      const service = makeService({ servers: [], auth: [], plugins: [], telegram: testCase.telegram });
+      const entries = await service.listConnectors();
+      expect(entries.find((entry) => entry.id === 'telegram')?.status).toBe(testCase.status);
+    }
+  });
+
+  it('lists the telegram connector without capabilities or actions', async () => {
+    const service = makeService({ servers: [], auth: [], plugins: [] });
+
+    const telegram = (await service.listConnectors()).find((entry) => entry.id === 'telegram');
+    expect(telegram).toEqual({
+      id: 'telegram',
+      kind: 'service',
+      name: 'Telegram',
+      description: 'Drive sessions from a Telegram chat',
+      scope: 'user',
+      status: 'not-configured',
+      capabilities: [],
+      actions: [],
+    });
   });
 
   it('scopes the MCP listing to the requested directory', async () => {
@@ -392,6 +444,7 @@ describe('ConnectorCatalogService', () => {
       { status: vi.fn(async () => githubStatus()) } as unknown as IGitHubService,
       { enabled: vi.fn(() => false) } as unknown as IFlagService,
       { status: vi.fn(async () => vercelStatus()) } as unknown as IVercelService,
+      { status: vi.fn(async () => telegramStatus()) } as unknown as ITelegramConnectorService,
     );
 
     await service.listConnectors({ cwd: '/repo' });

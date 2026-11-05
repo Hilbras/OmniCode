@@ -12,6 +12,8 @@ import {
 import { IPluginService } from '#/app/plugin/plugin';
 import type { PluginSummary } from '#/app/plugin/types';
 import { LifecycleScope } from '#/app/scopes';
+import { ITelegramConnectorService } from '#/app/telegram/telegram';
+import type { TelegramConnectorStatus } from '#/app/telegram/types';
 import { VERCEL_FLAG_ID } from '#/app/vercel/flag';
 import type { VercelConnectionStatus } from '#/app/vercel/types';
 import { IVercelService } from '#/app/vercel/vercel';
@@ -36,6 +38,7 @@ export class ConnectorCatalogService implements IConnectorCatalogService {
     @IGitHubService private readonly github: IGitHubService,
     @IFlagService private readonly flags: IFlagService,
     @IVercelService private readonly vercel: IVercelService,
+    @ITelegramConnectorService private readonly telegram: ITelegramConnectorService,
   ) {}
 
   async listConnectors(query: ConnectorQuery = {}): Promise<readonly ConnectorEntry[]> {
@@ -57,6 +60,7 @@ export class ConnectorCatalogService implements IConnectorCatalogService {
     entries.push(
       vercelConnector(await this.vercel.status(), connectable, this.flags.enabled(VERCEL_FLAG_ID)),
     );
+    entries.push(telegramConnector(await this.telegram.status()));
     return entries;
   }
 }
@@ -165,6 +169,25 @@ function vercelStatus(
   if (!status.configured) return 'not-configured';
   if (status.connected) return status.expired ? 'expired' : 'active';
   return 'needs-auth';
+}
+
+function telegramConnector(status: TelegramConnectorStatus): ConnectorEntry {
+  return {
+    id: 'telegram',
+    kind: 'service',
+    name: 'Telegram',
+    description: 'Drive sessions from a Telegram chat',
+    scope: 'user',
+    status: telegramStatus(status),
+    capabilities: [],
+    actions: [],
+  };
+}
+
+function telegramStatus(status: TelegramConnectorStatus): ConnectorStatus {
+  if (status.state === 'not-configured') return 'not-configured';
+  if (status.state === 'awaiting-chat') return 'needs-auth';
+  return status.running ? 'active' : 'inactive';
 }
 
 function pluginConnector(plugin: PluginSummary): ConnectorEntry {

@@ -20,6 +20,11 @@
     "usage-fast-and-trimmed.md": "1.4.12",
     "usage-two-column.md": "1.4.12",
     "release-notes-incremental.md": "1.4.14",
-    "telegram-plugin.md": "1.4.14"
+    "telegram-plugin.md": "1.4.14",
+    "release-notes-record-only-new.md": "1.4.15",
+    "connectors-settings-page.md": "1.4.16",
+    "provider-model-search.md": "1.4.17",
+    "session-switch-performance.md": "1.4.17",
+    "tool-payload-lazy-mount.md": "1.4.17"
   }
 }

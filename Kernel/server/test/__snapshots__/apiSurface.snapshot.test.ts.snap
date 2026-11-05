@@ -70,6 +70,14 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "GET",
+      "/api/v1/connectors",
+    ],
+    [
+      "GET",
+      "/api/v1/connectors/telegram",
+    ],
+    [
+      "GET",
       "/api/v1/debug/{service}/{method}",
     ],
     [
@@ -334,10 +342,6 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "GET",
-      "/api/v2/mcp/servers{export}",
-    ],
-    [
-      "GET",
       "/api/v2/mcp/servers/{name}",
     ],
     [
@@ -371,6 +375,10 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     [
       "POST",
       "/api/v1/config",
+    ],
+    [
+      "POST",
+      "/api/v1/connectors/telegram/verify",
     ],
     [
       "POST",
@@ -602,10 +610,6 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "POST",
-      "/api/v2/mcp/servers{import}",
-    ],
-    [
-      "POST",
       "/api/v2/sessions:archive",
     ],
     [
@@ -630,11 +634,11 @@ exports[`API surface snapshot > matches the documented v2 route table and meta e
     ],
     [
       "PUT",
-      "/api/v1/providers/{provider_id}",
+      "/api/v1/connectors/telegram",
     ],
     [
       "PUT",
-      "/api/v1/providers/{provider_id}/enabled",
+      "/api/v1/providers/{provider_id}",
     ],
     [
       "PUT",

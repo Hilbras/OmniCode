@@ -15,6 +15,7 @@ import { registerAuthRoute } from './auth';
 import { registerCapabilitiesRoutes } from './capabilities';
 import { registerConfigRoutes } from './config';
 import { registerConnectionsRoutes } from './connections';
+import { registerConnectorsRoutes } from './connectors';
 import { registerFileHistoryRoutes } from './fileHistory';
 import { registerFilesRoutes } from './files';
 import { registerFsRoutes } from './fs';
@@ -191,6 +192,10 @@ export async function registerApiV1Routes(
       registerConnectionsRoutes(
         apiV1 as unknown as Parameters<typeof registerConnectionsRoutes>[0],
         opts.connectionRegistry,
+      );
+      registerConnectorsRoutes(
+        apiV1 as unknown as Parameters<typeof registerConnectorsRoutes>[0],
+        core,
       );
       registerSnapshotRoutes(apiV1 as unknown as Parameters<typeof registerSnapshotRoutes>[0], {
         core,

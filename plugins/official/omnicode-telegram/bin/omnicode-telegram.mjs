@@ -315,8 +315,10 @@ async function handle(config, chatId, text) {
   }
 }
 
+// The pid and heartbeat let a reader (the Connectors settings page) tell a
+// live bridge from a file left behind by a crashed one.
 async function saveState() {
-  await writeJson(STATE_PATH, state);
+  await writeJson(STATE_PATH, { ...state, pid: process.pid, heartbeatAt: Date.now() });
 }
 
 async function main() {
@@ -329,6 +331,7 @@ async function main() {
     state.overrides = saved.overrides ?? {};
   }
   const info = await server();
+  await saveState();
   log(`connected to ${info.baseUrl} (omnicode ${info.version ?? '?'})`);
   log(config.allowedChatIds.length === 0
     ? 'no allowedChatIds yet — message the bot to learn your chat id, add it, then restart'
