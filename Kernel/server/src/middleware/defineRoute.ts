@@ -196,10 +196,18 @@ export function defineRoute<
     schema['consumes'] = options.consumes;
   }
 
+  const resolvedHandler: RouteDefinition<TBody, TParams, TQuery>['handler'] = async (
+    req,
+    reply,
+  ) => {
+    await handler(req, reply);
+    return reply as unknown as void;
+  };
+
   return {
     method: options.method,
     path: toFastifyPath(options.path),
     options: { preHandler, schema },
-    handler,
+    handler: resolvedHandler,
   };
 }

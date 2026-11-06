@@ -22,7 +22,7 @@ describe('web asset cache policy', () => {
       writeFile(join(assetsDir, 'favicon.svg'), '<svg></svg>'),
     ]);
     app = Fastify();
-    await app.register(compress, { global: false, threshold: 1024 });
+    await app.register(compress, { global: true, threshold: 1024 });
     await registerWebAssetRoutes(app, assetsDir);
   });
 

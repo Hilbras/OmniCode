@@ -281,7 +281,11 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
   app.setValidatorCompiler(() => () => true);
   app.setSerializerCompiler(() => (data) => JSON.stringify(data));
   installErrorHandler(app);
-  await app.register(compress, { global: false, threshold: 1024 });
+  await app.register(compress, {
+    global: true,
+    threshold: 1024,
+    customTypes: /^(?:application\/json|text\/(?!event-stream)|[^;]+\+(?:json|xml))/u,
+  });
   const hostCheck = createHostCheck({
     boundHost: host,
     extra: [...parseAllowedHosts(process.env), ...(opts.allowedHosts ?? [])],

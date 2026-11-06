@@ -7,7 +7,6 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 interface WebAssetRouteHost {
   get(
     path: string,
-    options: { readonly compress: Record<string, unknown> },
     handler: (req: FastifyRequest, reply: FastifyReply) => Promise<unknown>,
   ): unknown;
 }
@@ -18,9 +17,8 @@ export async function registerWebAssetRoutes(
 ): Promise<void> {
   await assertWebAssets(assetsDir);
 
-  const options = { compress: {} };
-  app.get('/', options, async (req, reply) => serveWebAsset(req, reply, assetsDir));
-  app.get('/*', options, async (req, reply) => serveWebAsset(req, reply, assetsDir));
+  app.get('/', async (req, reply) => serveWebAsset(req, reply, assetsDir));
+  app.get('/*', async (req, reply) => serveWebAsset(req, reply, assetsDir));
 }
 
 async function assertWebAssets(assetsDir: string): Promise<void> {
