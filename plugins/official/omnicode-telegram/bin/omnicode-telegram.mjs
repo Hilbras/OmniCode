@@ -26,7 +26,7 @@ const STATE_PATH = path.join(HOME, 'telegram-state.json');
 const INSTANCES_DIR = path.join(HOME, 'server', 'instances');
 const TOKEN_PATH = path.join(HOME, 'server.token');
 const POLL_TIMEOUT_S = 25;
-const SESSIONS_PAGE = 10;
+const SESSIONS_PAGE = 100;
 
 const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, profilePhotoHash: undefined };
 
@@ -112,6 +112,8 @@ async function listSessions(server) {
       id: item.id,
       title: trim(item.meta?.title || item.meta?.last_prompt || 'untitled', 48),
       updatedAt: item.meta?.updated_at ?? 0,
+      project: projectName(item),
+      status: typeof item.activity?.status === 'string' ? item.activity.status : '',
     }))
     .toSorted((a, b) => b.updatedAt - a.updatedAt);
 }
@@ -143,10 +145,64 @@ function formatDuration(ms) {
 }
 
 function projectName(item) {
-  const cwd = item !== null && typeof item === 'object' && item.metadata !== undefined && typeof item.metadata.cwd === 'string' ? item.metadata.cwd : '';
+  const source = item !== null && typeof item === 'object' ? item : {};
+  const cwd =
+    typeof source.workspace?.cwd === 'string'
+      ? source.workspace.cwd
+      : typeof source.metadata?.cwd === 'string'
+        ? source.metadata.cwd
+        : '';
   if (cwd === '') return '';
   const parts = cwd.split(/[\\/]+/).filter((part) => part !== '');
   return parts.length === 0 ? '' : parts[parts.length - 1];
+}
+
+function chunkText(text, limit) {
+  const chunks = [];
+  let current = '';
+  for (const line of text.split('\n')) {
+    if (current !== '' && current.length + line.length + 1 > limit) {
+      chunks.push(current);
+      current = line;
+      continue;
+    }
+    current = current === '' ? line : `${current}\n${line}`;
+  }
+  if (current !== '') chunks.push(current);
+  return chunks;
+}
+
+function groupSessionsByProject(sessions) {
+  const groups = new Map();
+  for (const session of sessions) {
+    const project = session.project === '' ? 'unknown project' : session.project;
+    const list = groups.get(project) ?? [];
+    list.push(session);
+    groups.set(project, list);
+  }
+  return [...groups.entries()];
+}
+
+function orderedSessions(sessions) {
+  return groupSessionsByProject(sessions).flatMap(([, list]) => list);
+}
+
+function sessionsReport(sessions, chatId) {
+  const selected = selectionFor(chatId);
+  const out = [];
+  let index = 0;
+  for (const [project, list] of groupSessionsByProject(sessions)) {
+    out.push(`${project} (${list.length})`);
+    for (const session of list) {
+      index += 1;
+      const marks = [];
+      if (session.status === 'running') marks.push('running');
+      if (session.id === selected) marks.push('selected');
+      const suffix = marks.length === 0 ? '' : ` (${marks.join(', ')})`;
+      out.push(`  ${index}. ${session.title}${suffix}`);
+    }
+  }
+  return out.join('\n');
 }
 
 function shortPath(file) {
@@ -460,13 +516,16 @@ async function handle(config, chatId, text) {
         await send(config, chatId, 'No sessions.');
         return;
       }
-      const lines = sessions.map((session, index) => `${index + 1}. ${session.title}`);
-      await send(config, chatId, `${lines.join('\n')}\n\nSelect with /use <n>.`);
+      const chunks = chunkText(sessionsReport(sessions, chatId), 3800);
+      for (let i = 0; i < chunks.length; i += 1) {
+        const tail = i === chunks.length - 1 ? '\n\nSelect with /use <n>.' : `\n\n(${i + 1}/${chunks.length})`;
+        await send(config, chatId, `${chunks[i]}${tail}`);
+      }
       return;
     }
     case '/use': {
       const index = Number.parseInt(argument, 10);
-      const sessions = await listSessions(await server());
+      const sessions = orderedSessions(await listSessions(await server()));
       const picked = sessions[index - 1];
       if (picked === undefined) {
         await send(config, chatId, 'Use /sessions first, then /use <number>.');
@@ -628,7 +687,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, sessionsReport };
 
 if (isEntryPoint) {
   main().catch((error) => {

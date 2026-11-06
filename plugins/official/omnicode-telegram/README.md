@@ -43,7 +43,7 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 
 | Command | Effect |
 |---|---|
-| `/sessions` | list recent sessions |
+| `/sessions` | list sessions grouped by project |
 | `/status` | which sessions are working right now |
 | `/use <n>` | select a session |
 | *(any text)* | prompt the selected session |
