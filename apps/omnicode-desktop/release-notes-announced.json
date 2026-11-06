@@ -34,6 +34,13 @@
     "tool-result-dedupe.md": "1.4.27",
     "session-tabs-in-topbar.md": "1.4.28",
     "session-project-labels.md": "1.4.29",
-    "telegram-bridge-with-app.md": "1.4.30"
+    "telegram-bridge-with-app.md": "1.4.30",
+    "compressed-api-and-later-search-warmup.md": "1.4.30",
+    "compressed-web-assets.md": "1.4.30",
+    "desktop-ffmpeg-dedupe.md": "1.4.30",
+    "faster-startup.md": "1.4.30",
+    "prune-stale-web-cache.md": "1.4.30",
+    "session-tabs-clickable.md": "1.4.30",
+    "sidebar-spinner-direction.md": "1.4.30"
   }
 }
