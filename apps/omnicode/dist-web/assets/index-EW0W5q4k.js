@@ -3056,6 +3056,7 @@ ${vn}`)}const De=ze.join(`
   }
 
   var titles = {};
+  var projects = {};
   var titlesLoaded = false;
   function loadTitles() {
     if (titlesLoaded) return;
@@ -3067,11 +3068,43 @@ ${vn}`)}const De=ze.join(`
       .then(function (j) {
         var items = (j && j.data && j.data.items) || [];
         for (var i = 0; i < items.length; i++) {
-          if (items[i] && items[i].id) titles[items[i].id] = items[i].title || '';
+          if (items[i] && items[i].id) {
+            titles[items[i].id] = items[i].title || '';
+            projects[items[i].id] = projectOf(items[i]);
+          }
         }
         render();
+        decorateProjects();
       })
       .catch(function () { });
+  }
+  function projectOf(item) {
+    var cwd = item && item.metadata && typeof item.metadata.cwd === 'string' ? item.metadata.cwd : '';
+    if (cwd === '') return '';
+    var parts = cwd.split(/[\\/]+/).filter(function (part) { return part !== ''; });
+    return parts.length === 0 ? '' : parts[parts.length - 1];
+  }
+  function decorateProjects() {
+    var rows = document.querySelectorAll('div.se[data-session-id]');
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var id = row.getAttribute('data-session-id');
+      var project = projects[id];
+      if (typeof project !== 'string' || project === '') continue;
+      var existing = row.querySelector('.omni-proj');
+      if (existing !== null) {
+        if (existing.textContent !== project) existing.textContent = project;
+        continue;
+      }
+      var left = row.querySelector('.left');
+      if (left === null) continue;
+      style();
+      var chip = document.createElement('span');
+      chip.className = 'omni-proj';
+      chip.textContent = project;
+      chip.title = project;
+      left.appendChild(chip);
+    }
   }
   function label(id) {
     var t = titles[id];
@@ -3128,6 +3161,8 @@ ${vn}`)}const De=ze.join(`
       '.omni-tab-close{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:0;border-radius:50%;padding:0;background:transparent;color:inherit;opacity:0;cursor:pointer;font-size:11px;line-height:1;flex:none}',
       '.omni-tab:hover .omni-tab-close,.omni-tab.is-active .omni-tab-close{opacity:.55}',
       '.omni-tab-close:hover{opacity:1 !important;background:var(--color-hover,rgba(128,128,128,.25))}',
+      '.omni-proj{flex:none;max-width:92px;margin-left:6px;padding:0 5px;border-radius:999px;background:var(--color-hover,rgba(128,128,128,.14));color:var(--color-text-muted,#8a8a8a);font-size:10px;line-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em}',
+      '.se:hover .omni-proj{background:var(--color-hover,rgba(128,128,128,.22));color:var(--color-text,#ddd)}',
     ].join('');
     document.head.appendChild(s);
   }
@@ -3196,6 +3231,7 @@ ${vn}`)}const De=ze.join(`
   function sync() {
     ensureActive();
     render();
+    decorateProjects();
   }
   var queued = false;
   function schedule() {
