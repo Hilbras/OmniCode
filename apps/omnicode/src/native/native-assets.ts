@@ -350,6 +350,102 @@ function ensureFile(path: string, bytes: Buffer, expectedSha256: string, mode?: 
   }
 }
 
+const MATERIALIZED_SENTINEL = '.materialized.json';
+const MATERIALIZED_SENTINEL_VERSION = 1;
+const VERIFY_ENV = 'OMNICODE_VERIFY_NATIVE_ASSETS';
+
+interface MaterializedEntry {
+  readonly path: string;
+  readonly size: number;
+  readonly mtimeMs: number;
+  readonly mode: number;
+}
+
+interface MaterializedSentinel {
+  readonly version: typeof MATERIALIZED_SENTINEL_VERSION;
+  readonly manifestHash: string;
+  readonly files: readonly MaterializedEntry[];
+}
+
+function readMaterializedSentinel(path: string): MaterializedSentinel | null {
+  try {
+    const parsed: unknown = JSON.parse(readFileSync(path, 'utf-8'));
+    if (typeof parsed !== 'object' || parsed === null) return null;
+    const record = parsed as Record<string, unknown>;
+    if (record['version'] !== MATERIALIZED_SENTINEL_VERSION) return null;
+    if (typeof record['manifestHash'] !== 'string') return null;
+    if (!Array.isArray(record['files'])) return null;
+    return parsed as MaterializedSentinel;
+  } catch {
+    return null;
+  }
+}
+
+function materializedFileInfo(path: string): MaterializedEntry | null {
+  try {
+    const info = statSync(path);
+    if (!info.isFile()) return null;
+    return { path, size: info.size, mtimeMs: info.mtimeMs, mode: info.mode & 0o777 };
+  } catch {
+    return null;
+  }
+}
+
+function nativeTreeMatchesManifest(
+  cacheRoot: string,
+  manifest: NativeAssetManifest,
+  sentinel: MaterializedSentinel | null,
+): boolean {
+  if (sentinel === null || sentinel.manifestHash !== sha256(JSON.stringify(manifest))) return false;
+  const files = [...manifest.packages.flatMap((pkg) => pkg.files), ...manifest.runtimeFiles];
+  if (sentinel.files.length !== files.length) return false;
+  const recorded = new Map(sentinel.files.map((entry) => [entry.path, entry]));
+  for (const file of files) {
+    const expected = recorded.get(file.relativePath);
+    if (expected === undefined) return false;
+    const actual = materializedFileInfo(resolveAssetPath(cacheRoot, file.relativePath));
+    if (
+      actual === null ||
+      actual.size !== expected.size ||
+      actual.mtimeMs !== expected.mtimeMs ||
+      actual.mode !== expected.mode
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function writeMaterializedSentinel(
+  cacheRoot: string,
+  manifest: NativeAssetManifest,
+): void {
+  const files = [...manifest.packages.flatMap((pkg) => pkg.files), ...manifest.runtimeFiles];
+  const entries: MaterializedEntry[] = [];
+  for (const file of files) {
+    const actual = materializedFileInfo(resolveAssetPath(cacheRoot, file.relativePath));
+    if (actual === null) return;
+    entries.push({ ...actual, path: file.relativePath });
+  }
+  const sentinel: MaterializedSentinel = {
+    version: MATERIALIZED_SENTINEL_VERSION,
+    manifestHash: sha256(JSON.stringify(manifest)),
+    files: entries,
+  };
+  const path = join(cacheRoot, MATERIALIZED_SENTINEL);
+  const tempPath = `${path}.${process.pid}.${Date.now()}.tmp`;
+  try {
+    writeFileSync(tempPath, JSON.stringify(sentinel), { mode: 0o644 });
+    renameSync(tempPath, path);
+  } catch {
+    rmSync(tempPath, { force: true });
+  }
+}
+
+function verificationForced(options: NativeAssetOptions): boolean {
+  return (options.env ?? process.env)[VERIFY_ENV] === '1';
+}
+
 function ensureEntryFile(cacheRoot: string): void {
   const entryPath = join(cacheRoot, 'node_modules', '.omnicode-native-entry.cjs');
   ensureFile(
@@ -370,6 +466,13 @@ export function ensureNativeAssetTree(options: NativeAssetOptions = {}): string 
   const manifest = validateNativeAssetManifest(rawManifest);
 
   const cacheRoot = getNativeAssetCacheRoot(rawManifest, options);
+  if (!verificationForced(options)) {
+    const sentinel = readMaterializedSentinel(join(cacheRoot, MATERIALIZED_SENTINEL));
+    if (nativeTreeMatchesManifest(cacheRoot, manifest, sentinel)) {
+      ensureEntryFile(cacheRoot);
+      return cacheRoot;
+    }
+  }
   const sourceKeys = new Set(source.getAssetKeys());
   const files = [
     ...manifest.packages.flatMap((pkg) => pkg.files),
@@ -388,6 +491,7 @@ export function ensureNativeAssetTree(options: NativeAssetOptions = {}): string 
     }
     ensureFile(resolveAssetPath(cacheRoot, file.relativePath), bytes, file.sha256, file.mode);
   }
+  writeMaterializedSentinel(cacheRoot, manifest);
   ensureEntryFile(cacheRoot);
   return cacheRoot;
 }

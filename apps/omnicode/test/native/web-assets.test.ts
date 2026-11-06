@@ -107,6 +107,75 @@ describe('web assets', () => {
     }
   });
 
+  it('skips re-reading embedded assets once the cache is materialized', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'omnicode-web-assets-sentinel-'));
+    try {
+      const { manifest, source } = fakeWebAssets({
+        'index.html': '<div id="app"></div>\n',
+        'assets/app.js': 'console.log("ok");\n',
+      });
+      let reads = 0;
+      const counting: WebAssetSource = {
+        getAssetKeys: () => source.getAssetKeys(),
+        getRawAsset: (assetKey) => {
+          reads += 1;
+          return source.getRawAsset(assetKey);
+        },
+      };
+
+      const first = getNativeWebAssetsDir({
+        cacheBase: dir,
+        manifest,
+        source: counting,
+        version: 'test',
+      });
+      expect(reads).toBeGreaterThan(0);
+
+      const readsAfterFirst = reads;
+      const second = getNativeWebAssetsDir({
+        cacheBase: dir,
+        manifest,
+        source: counting,
+        version: 'test',
+      });
+
+      expect(second).toBe(first);
+      expect(reads).toBe(readsAfterFirst);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('re-reads embedded assets when verification is forced', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'omnicode-web-assets-verify-'));
+    try {
+      const { manifest, source } = fakeWebAssets({ 'index.html': '<html></html>' });
+      let reads = 0;
+      const counting: WebAssetSource = {
+        getAssetKeys: () => source.getAssetKeys(),
+        getRawAsset: (assetKey) => {
+          reads += 1;
+          return source.getRawAsset(assetKey);
+        },
+      };
+
+      getNativeWebAssetsDir({ cacheBase: dir, manifest, source: counting, version: 'test' });
+      const readsAfterFirst = reads;
+
+      getNativeWebAssetsDir({
+        cacheBase: dir,
+        manifest,
+        source: counting,
+        version: 'test',
+        env: { OMNICODE_VERIFY_WEB_ASSETS: '1' },
+      });
+
+      expect(reads).toBeGreaterThan(readsAfterFirst);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('returns null when no SEA web asset source is available', () => {
     expect(getNativeWebAssetsDir({ source: null })).toBeNull();
   });

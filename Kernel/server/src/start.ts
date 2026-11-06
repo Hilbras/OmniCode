@@ -37,6 +37,7 @@ import {
   type Scope,
   type ScopeSeed,
 } from '@hilbras/omnicode-core';
+import compress from '@fastify/compress';
 import { createRemoteControlManager } from '@hilbras/omnicode-remote';
 import Fastify, { type FastifyInstance } from 'fastify';
 
@@ -280,6 +281,7 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
   app.setValidatorCompiler(() => () => true);
   app.setSerializerCompiler(() => (data) => JSON.stringify(data));
   installErrorHandler(app);
+  await app.register(compress, { global: false, threshold: 1024 });
   const hostCheck = createHostCheck({
     boundHost: host,
     extra: [...parseAllowedHosts(process.env), ...(opts.allowedHosts ?? [])],
@@ -347,7 +349,6 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
 
   const connectionRegistry = new ConnectionRegistry();
   const transcriptService = new TranscriptService({ homeDir, core, logger });
-  core.accessor.get(IGlobalSearchService).setLiveTranscriptSource(transcriptService);
   const broadcaster = new SessionEventBroadcaster({
     eventsDir: join(homeDir, 'server', 'events'),
     core,
@@ -615,6 +616,10 @@ export async function startServer(opts: ServerStartOptions): Promise<RunningServ
   const address = app.server.address();
   boundPort = typeof address === 'object' && address !== null ? address.port : port;
   await registration.update({ port: boundPort });
+
+  const globalSearch = core.accessor.get(IGlobalSearchService);
+  globalSearch.setLiveTranscriptSource(transcriptService);
+  globalSearch.scheduleWarmup();
 
   void modelCatalogRefreshScheduler.start().catch((error) => {
     logger.warn(

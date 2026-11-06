@@ -143,12 +143,14 @@ function makeConfig(searchEnabled: boolean, extra?: Record<string, unknown>): IC
 function makeService(home: string, index: ISessionIndex): GlobalSearchService {
   const service = new GlobalSearchService(index, makeBootstrap(home), noopLog, makeConfig(true));
   service.syncDebounceMs = 0;
+  service.scheduleWarmup(0);
   return service;
 }
 
 function makeInlineService(home: string, index: ISessionIndex): GlobalSearchService {
   const service = new GlobalSearchService(index, makeBootstrap(home), noopLog, makeConfig(false));
   service.syncDebounceMs = 0;
+  service.scheduleWarmup(0);
   return service;
 }
 
@@ -211,6 +213,7 @@ function refreshNow(service: GlobalSearchService): Promise<void> {
 
 interface ServiceInternals {
   syncPromise: Promise<void> | null;
+  backend: unknown;
 }
 
 function internals(service: GlobalSearchService): ServiceInternals {
@@ -221,6 +224,19 @@ async function flush(rounds = 20): Promise<void> {
   for (let i = 0; i < rounds; i++) {
     await new Promise<void>((resolve) => setImmediate(resolve));
   }
+}
+
+async function waitForTest(
+  check: () => boolean,
+  label: string,
+  timeoutMs = 5_000,
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (check()) return;
+    await new Promise<void>((resolve) => setTimeout(resolve, 10));
+  }
+  throw new Error(`timed out waiting for ${label}`);
 }
 
 function blockFirstCall(
@@ -3265,6 +3281,27 @@ describe('search lifecycle diagnostics (stage 5)', () => {
     const path = core.db!.lifecycleStatus().path;
     expect(path).toContain('generation-load');
     expect(path).not.toContain('full-rebuild');
+  });
+
+  it('leaves the index closed until scheduleWarmup fires', async () => {
+    const s1 = summary('s1', '预热延迟', T1);
+    await writeWire(home!, 's1', 'main', [userLine('苹果 warmup', T1)]);
+    const service = track(
+      new GlobalSearchService(staticIndex([s1]), makeBootstrap(home!), noopLog, makeConfig(false)),
+    );
+    service.syncDebounceMs = 0;
+    const state = internals(service);
+
+    await flush();
+    expect(state.backend).toBeNull();
+    expect(state.syncPromise).toBeNull();
+
+    service.scheduleWarmup(50);
+    expect(state.backend).toBeNull();
+
+    await waitForTest(() => state.backend !== null, 'delayed warmup to open the index');
+    await settleSync(service);
+    expect((await service.search({ query: '苹果' })).items.length).toBe(1);
   });
 
   it('concurrent cold calls open the index exactly once (inline)', async () => {

@@ -154,6 +154,36 @@ describe('native assets', () => {
     }
   });
 
+  it('skips re-reading embedded native assets once the tree is materialized', () => {
+    const dir = mkdtempSync(join(tmpdir(), 'omnicode-native-assets-sentinel-'));
+    try {
+      const { manifest, source } = fakeManifest({
+        'node_modules/fake-native/package.json': '{"main":"index.js"}',
+        'node_modules/fake-native/index.js': "module.exports = { value: 'ok' };\n",
+      });
+      let reads = 0;
+      const counting: NativeAssetSource = {
+        getAssetKeys: () => source.getAssetKeys(),
+        getRawAsset: (assetKey) => {
+          reads += 1;
+          return source.getRawAsset(assetKey);
+        },
+      };
+      const options = { cacheBase: dir, manifest, source: counting, version: 'test' };
+
+      const first = getNativePackageRoot('fake-native', options);
+      expect(reads).toBeGreaterThan(0);
+
+      const readsAfterFirst = reads;
+      const second = getNativePackageRoot('fake-native', options);
+
+      expect(second).toBe(first);
+      expect(reads).toBe(readsAfterFirst);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('loads a package from extracted native assets', () => {
     const dir = mkdtempSync(join(tmpdir(), 'omnicode-native-require-'));
     try {

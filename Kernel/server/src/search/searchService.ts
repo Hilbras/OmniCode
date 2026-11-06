@@ -61,6 +61,7 @@ export type { GlobalSearchErrorReason } from './contract';
 
 const INDEX_DIR_NAME = 'search-index';
 const SESSION_PAGE_SIZE = 500;
+const WARMUP_DELAY_MS = 5_000;
 
 const MAX_QUERY_TERMS = 32;
 const MAX_LITERAL_QUERY_CHARS = 1_024;
@@ -105,6 +106,7 @@ export interface IGlobalSearchService {
   }>;
   lifecycleReport(): CoreLifecycleReport;
   setLiveTranscriptSource(source: LiveTranscriptSource): void;
+  scheduleWarmup(delayMs?: number): void;
 }
 
 export const IGlobalSearchService = createDecorator<IGlobalSearchService>('globalSearch');
@@ -246,12 +248,25 @@ export class GlobalSearchService implements IGlobalSearchService {
     @IBootstrapService private readonly bootstrap: IBootstrapService,
     @ILogService private readonly log: ILogService,
     @IConfigService private readonly config: IConfigService,
-  ) {
-    this.requestSync();
-  }
+  ) {}
 
   setLiveTranscriptSource(source: LiveTranscriptSource): void {
     this.liveSource = source;
+  }
+
+  scheduleWarmup(delayMs = WARMUP_DELAY_MS): void {
+    if (this.disposed || this.syncPromise !== null || this.syncTimer !== null) return;
+    if (delayMs <= 0) {
+      this.requestSync();
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (this.syncTimer !== timer) return;
+      this.syncTimer = null;
+      this.requestSync();
+    }, delayMs);
+    timer.unref?.();
+    this.syncTimer = timer;
   }
 
   private get indexDir(): string {
@@ -335,6 +350,10 @@ export class GlobalSearchService implements IGlobalSearchService {
   }
 
   private startSyncPass(): void {
+    if (this.syncTimer !== null) {
+      clearTimeout(this.syncTimer);
+      this.syncTimer = null;
+    }
     this.syncQueued = false;
     void this.ensureSyncStarted().then(
       () => {
