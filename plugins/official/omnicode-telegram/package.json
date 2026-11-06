@@ -1,0 +1,10 @@
+{
+  "name": "omnicode-telegram",
+  "version": "1.1.9",
+  "private": true,
+  "type": "module",
+  "description": "Telegram bridge for Omnicode: drive a session from a chat.",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}

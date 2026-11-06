@@ -51,7 +51,11 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 | `/provider` | narrow the model list to one provider |
 | `/use <n>` | select a session from the open project |
 | *(any text)* | prompt the selected session |
+| *(a photo)* | send the image to the selected session |
 | `/last` | newest assistant reply |
+| `/usage` | tokens used by this session (input, output, cache) |
+| `/diff` | git status and diffstat of the workspace |
+| `/files` | files the last turn changed |
 | `/notify <on\|off>` | report each turn when it finishes |
 | `/stop` | cancel the running turn |
 | `/model <alias\|clear>` | model for the next prompt |
@@ -73,6 +77,29 @@ desktop app counts too. `/notify off` mutes it, `/notify on` turns it back on.
 
 `/status` answers the other question: which sessions are working right now,
 with their project, their elapsed time, and which one this chat selected.
+
+## Approvals and questions
+
+When a turn stops to ask for permission, the chat shows the tool, the action and a
+preview of the input, with **Allow**, **Deny** and **Allow for this session**
+buttons. Questions arrive as one button per option, and while one is open any plain
+reply becomes the answer: numbers pick options (`1` or `1,3`), anything else is sent
+as a free-form answer. An approval answered somewhere else reports that instead of
+failing silently.
+
+## Progress
+
+A running turn gets one message that keeps changing — `⏳ Working · step 8 · Bash ·
+9 tools · 3m 12s` — and that same message is edited into the finish report when the
+turn ends, so a chat shows one entry per turn rather than silence followed by a wall
+of text. Reports too long for one message arrive as a summary plus a `report.md`
+attachment.
+
+## Images
+
+Send a photo, or an image file up to 5 MB, and it goes to the selected session as an
+image the agent can look at; the caption becomes the prompt. Other file types are
+refused with a note saying why.
 
 ## Browsing
 
@@ -134,3 +161,13 @@ session and overrides. Delete it to reset.
 ## Requirements
 
 Node 18+ (uses the built-in `fetch`), and a running Omnicode server.
+
+## Tests
+
+```sh
+node --test test/*.test.mjs
+```
+
+Covers the duration and markdown formatters, message chunking, project grouping,
+the finish report, the keyboards, and the approval and question payloads. It runs
+offline: no server, no bot token.
