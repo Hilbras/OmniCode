@@ -32,6 +32,7 @@ import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { IAgentToolSelectService } from '#/agent/toolSelect/toolSelect';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
+import { IFlagService } from '#/app/flag/flag';
 import { THINKING_SECTION } from '#/app/kosongConfig/configSection';
 import { LifecycleScope } from '#/app/scopes';
 import type { ApiErrorEvent, LlmRequestProjectionFallbackEvent } from '#/app/telemetry/events';
@@ -102,6 +103,8 @@ import {
   type LlmRequestToolSchema,
 } from './llmRequestOps';
 import { ToolResultClearer } from './toolResultClearing';
+import { dedupeRepeatedToolResults } from './toolResultDedupe';
+import { TOOL_RESULT_DEDUPE_FLAG_ID } from './toolResultDedupeFlag';
 
 const EMPTY_TOOL_PARAMETERS: Record<string, unknown> = {
   type: 'object',
@@ -183,6 +186,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     @IAgentProfileService private readonly profile: IAgentProfileService,
     @ISessionUsageService private readonly usage: ISessionUsageService,
     @IConfigService private readonly config: IConfigService,
+    @IFlagService private readonly flags: IFlagService,
     @IModelService private readonly modelService: IModelService,
     @IModelCatalog private readonly modelCatalog: IModelCatalog,
     @ILogService private readonly log: ILogService,
@@ -348,12 +352,18 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     const compaction = resolveCompactionConfig(
       this.config.get<CompactionSectionConfig>(COMPACTION_SECTION),
     );
-    if (!compaction.clearToolResults) return messages;
+    const deduped = this.dedupeToolResults(messages);
+    if (!compaction.clearToolResults) return deduped;
     const capability = this.profile.data().modelCapabilities;
     return this.toolResultClearer.apply(
-      messages,
+      deduped,
       capability.max_input_tokens ?? capability.max_context_tokens,
     );
+  }
+
+  private dedupeToolResults(messages: readonly ContextMessage[]): readonly ContextMessage[] {
+    if (!this.flags.enabled(TOOL_RESULT_DEDUPE_FLAG_ID)) return messages;
+    return dedupeRepeatedToolResults(messages).messages;
   }
 
   private tryGetModel(): Model | undefined {

@@ -34,6 +34,7 @@ import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import type { Event2 } from '#/app/event/event2';
 import { IEventBus } from '#/app/event/eventBus';
+import { IFlagService } from '#/app/flag/flag';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { Error2, ErrorCodes } from '#/errors';
 import type { ModelCapability } from '#/llm-adapter/contract/capability';
@@ -74,6 +75,7 @@ import { emptyUsage, type TokenUsage } from '#human/llm/usage';
 import { createActor, emit, setup } from '#human/xstate2';
 
 import { stubBootstrap } from '../../app/bootstrap/stubs';
+import { stubFlag } from '../../app/flag/stubs';
 import { recordingTelemetry, type TelemetryRecord } from '../../app/telemetry/stubs';
 import {
   recordingWireLog,
@@ -226,6 +228,7 @@ function createService(
 ) {
   const ix = disposables.add(new TestInstantiationService());
   ix.stub(IBootstrapService, stubBootstrap('/tmp/omnicode-llm-requester-test', options.env ?? {}));
+  ix.stub(IFlagService, stubFlag());
   const thinkingLevel = options.thinkingLevel ?? 'off';
   const profile: Partial<IAgentProfileService> = {
     hasProvider: () => true,
