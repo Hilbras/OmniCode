@@ -450,11 +450,11 @@ async function pollInteractions(config) {
     } catch {
       continue;
     }
-    const seen = new Set(state.interactions[chatId] ?? []);
+    const seen = new Map(Object.entries(state.interactions[chatId] ?? {}));
     let changed = false;
     for (const approval of approvals) {
       if (typeof approval.approval_id !== 'string' || seen.has(approval.approval_id)) continue;
-      seen.add(approval.approval_id);
+      seen.set(approval.approval_id, sessionId);
       changed = true;
       try {
         await tg(config, 'sendMessage', {
@@ -469,7 +469,7 @@ async function pollInteractions(config) {
     }
     for (const question of questions) {
       if (typeof question.question_id !== 'string' || seen.has(question.question_id)) continue;
-      seen.add(question.question_id);
+      seen.set(question.question_id, sessionId);
       changed = true;
       state.pendingQuestion[chatId] = {
         questionId: question.question_id,
@@ -489,8 +489,8 @@ async function pollInteractions(config) {
       }
     }
     const live = new Set([...approvals.map((a) => a.approval_id), ...questions.map((q) => q.question_id)]);
-    const kept = [...seen].filter((id) => live.has(id));
-    if (kept.length !== seen.size) changed = true;
+    const kept = Object.fromEntries([...seen].filter(([id]) => live.has(id)));
+    if (Object.keys(kept).length !== seen.size) changed = true;
     if (changed) {
       state.interactions[chatId] = kept;
       await saveState();
@@ -520,7 +520,8 @@ async function handleCallback(config, query) {
       await handle(config, chatId, decodeURIComponent(id));
       return;
     }
-    const sessionId = state.selection[chatId];
+    const recorded = state.interactions[chatId]?.[id];
+    const sessionId = typeof recorded === 'string' && recorded !== '' ? recorded : state.selection[chatId];
     if (typeof sessionId !== 'string') throw new Error('no session selected in this chat');
     if (kind === 'apv') {
       const decision = parts[2];
@@ -709,6 +710,15 @@ async function filesReport(info, sessionId) {
   const { files } = turnFacts(turn);
   if (files.size === 0) return 'The last turn changed no files.';
   return ['Files changed in the last turn', '', ...[...files].slice(0, 20).map((file) => `• ${file}`)].join('\n');
+}
+
+function normalizeInteractions(saved) {
+  const out = {};
+  for (const [chatId, value] of Object.entries(saved ?? {})) {
+    if (Array.isArray(value)) out[chatId] = Object.fromEntries(value.map((id) => [String(id), '']));
+    else if (value !== null && typeof value === 'object') out[chatId] = { ...value };
+  }
+  return out;
 }
 
 const NOTIFY_INTERVAL_MS = 3000;
@@ -1457,7 +1467,7 @@ async function main() {
     state.view = saved.view ?? {};
     state.provider = saved.provider ?? {};
     state.models = saved.models ?? {};
-    state.interactions = saved.interactions ?? {};
+    state.interactions = normalizeInteractions(saved.interactions);
     state.pendingQuestion = saved.pendingQuestion ?? {};
     state.progress = saved.progress ?? {};
     state.profilePhotoHash = saved.profilePhotoHash;
@@ -1542,7 +1552,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback };
 
 if (isEntryPoint) {
   main().catch((error) => {
