@@ -275,6 +275,18 @@ Node 18+ (uses the built-in `fetch`), and a running Omnicode server.
 node --test test/*.test.mjs
 ```
 
-Covers the duration and markdown formatters, message chunking, project grouping,
-the finish report, the keyboards, and the approval and question payloads. It runs
-offline: no server, no bot token.
+Two kinds of test, both offline — no server, no bot token, no network:
+
+- **formatters and renderers** — durations, markdown, chunking, project grouping, the
+  finish report, the pinned header, keyboards, approval and question payloads, bot naming,
+  paging, and the video/image pickers.
+- **the command surface**, through the injectable transport (`setTelegramTransport`,
+  `setApiTransport`, `setServerResolver`): `/stop` hits the session abort action, `/use`
+  posts the newest finished turn and progress for a running one, `/last` returns the
+  newest reply, `/name` refuses with no session, a callback from a chat outside
+  `allowedChatIds` does nothing, a question answered by text survives a server error but
+  clears when it is genuinely gone, and a failed approval notice is retried instead of
+  being recorded as sent.
+
+Each of those started as a real bug in this plugin, so the suite is the regression net for
+the callback surface. If you add a command, add its case here.

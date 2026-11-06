@@ -93,7 +93,18 @@ async function discoverServer() {
 
 // --- Omnicode API -------------------------------------------------------------
 
-async function api(server, method, route, body) {
+let apiTransport;
+
+function setApiTransport(next) {
+  apiTransport = next ?? undefined;
+}
+
+function api(server, method, route, body) {
+  if (apiTransport !== undefined) return apiTransport(server, method, route, body);
+  return apiReal(server, method, route, body);
+}
+
+async function apiReal(server, method, route, body) {
   let response;
   try {
     response = await fetch(`${server.baseUrl}${route}`, {
@@ -632,6 +643,10 @@ async function pollInteractions(config) {
 
 async function handleCallback(config, query) {
   const chatId = query?.message?.chat?.id;
+  if (typeof chatId !== 'number' || !config.allowedChatIds.includes(chatId)) {
+    log(`ignored a callback press from chat ${String(chatId)} — not in allowedChatIds`);
+    return;
+  }
   const messageId = query?.message?.message_id;
   const parts = typeof query?.data === 'string' ? query.data.split('|') : [];
   const kind = parts[0];
@@ -1555,7 +1570,15 @@ let serverPromise;
 let serverCheckedAt = 0;
 const SERVER_CACHE_MS = 5000;
 
+let serverOverride;
+
+function setServerResolver(value) {
+  serverOverride = value;
+  serverPromise = undefined;
+}
+
 function server() {
+  if (serverOverride !== undefined) return Promise.resolve(serverOverride);
   const now = Date.now();
   if (serverPromise === undefined || now - serverCheckedAt >= SERVER_CACHE_MS) {
     serverCheckedAt = now;
@@ -1590,8 +1613,27 @@ function serialized(task) {
   return run;
 }
 
+let telegramTransport;
+const editSequence = new Map();
+
+function setTelegramTransport(next) {
+  telegramTransport = next ?? undefined;
+}
+
 function tg(config, method, body) {
+  if (telegramTransport !== undefined) return telegramTransport(config, method, body);
   if (LONG_POLL_METHODS.has(method)) return tgOnce(config, method, body);
+  if (method === 'editMessageText' && body !== undefined) {
+    // A queued edit that a newer one has already superseded is dropped: progress and the
+    // header can both be edited several times per tick, and Telegram counts every call.
+    const key = `${String(body['chat_id'])}:${String(body['message_id'])}`;
+    const sequence = (editSequence.get(key) ?? 0) + 1;
+    editSequence.set(key, sequence);
+    return serialized(() => {
+      if (editSequence.get(key) !== sequence) return undefined;
+      return tgOnce(config, method, body);
+    });
+  }
   return serialized(() => tgOnce(config, method, body));
 }
 
@@ -2485,7 +2527,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId, purgeUpperBound, videoPartOf, videoFrames, otherFinishLine, sessionHeaderText, refreshHeader };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId, purgeUpperBound, videoPartOf, videoFrames, otherFinishLine, sessionHeaderText, refreshHeader, answerQuestionByText, setTelegramTransport, setApiTransport, setServerResolver };
 
 // Loaded at import time so that anything importing this module (tests, a one-off
 // command) sees the same state the daemon has, instead of an empty one that would
