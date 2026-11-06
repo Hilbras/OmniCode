@@ -28,7 +28,7 @@ const TOKEN_PATH = path.join(HOME, 'server.token');
 const POLL_TIMEOUT_S = 25;
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -309,11 +309,227 @@ async function statusReport(info, chatId) {
     } catch {
       // an unreadable session simply shows without elapsed time
     }
-    if (item.id === selected) line += ' ← selected';
+    if (item.id === selected) {
+      try {
+        const [approvals, questions] = await Promise.all([pendingApprovals(info, item.id), pendingQuestions(info, item.id)]);
+        if (approvals.length > 0) line += ' · waiting for approval';
+        else if (questions.length > 0) line += ' · waiting for an answer';
+      } catch {
+        // the status line still renders without the wait hint
+      }
+      line += ' ← selected';
+    }
     lines.push(line, `  ${String(item.id)}`);
   }
   if (working.length > 10) lines.push(`…and ${String(working.length - 10)} more.`);
   return lines.join('\n');
+}
+
+async function pendingApprovals(info, sessionId) {
+  const data = await api(info, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/approvals?status=pending`);
+  return Array.isArray(data?.items) ? data.items : [];
+}
+
+async function pendingQuestions(info, sessionId) {
+  const data = await api(info, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/questions?status=pending`);
+  return Array.isArray(data?.items) ? data.items : [];
+}
+
+function approvalText(approval) {
+  let preview = '';
+  try {
+    preview = JSON.stringify(approval.tool_input_display ?? {}).slice(0, 300);
+  } catch {
+    preview = '';
+  }
+  const head = typeof approval.action === 'string' && approval.action !== '' ? `${String(approval.tool_name)} · ${approval.action}` : String(approval.tool_name ?? 'tool');
+  const lines = ['🔐 Approval needed', '', head];
+  if (preview !== '' && preview !== '{}') lines.push('', preview);
+  lines.push('', 'Allow it?');
+  return lines.join('\n');
+}
+
+function approvalKeyboard(approval) {
+  return {
+    inline_keyboard: [
+      [
+        { text: '✅ Allow', callback_data: `apv|${approval.approval_id}|approved` },
+        { text: '⛔ Deny', callback_data: `apv|${approval.approval_id}|rejected` },
+      ],
+      [{ text: '♾ Allow for this session', callback_data: `apv|${approval.approval_id}|approved|session` }],
+    ],
+  };
+}
+
+function questionText(question) {
+  const lines = ['❓ Question', ''];
+  for (const item of question.questions ?? []) {
+    if (typeof item.header === 'string' && item.header !== '') lines.push(`— ${item.header} —`);
+    lines.push(item.question);
+    (item.options ?? []).forEach((option, index) => {
+      const description = typeof option.description === 'string' && option.description !== '' ? ` — ${option.description}` : '';
+      lines.push(`  ${index + 1}. ${option.label}${description}`);
+    });
+    if (item.multi_select === true) lines.push('  (multi-select: reply with numbers, e.g. 1,3)');
+    lines.push('');
+  }
+  lines.push('Pick a button, reply with the number, or send any other text as the answer.');
+  return lines.join('\n');
+}
+
+function questionKeyboard(question) {
+  const rows = [];
+  for (const item of question.questions ?? []) {
+    if (item.multi_select === true) continue;
+    for (const option of item.options ?? []) {
+      rows.push([{ text: String(option.label).slice(0, 60), callback_data: `q|${question.question_id}|${item.id}|${option.id}` }]);
+    }
+  }
+  return rows.length === 0 ? undefined : { inline_keyboard: rows.slice(0, 8) };
+}
+
+async function pollInteractions(config) {
+  const info = await server();
+  for (const chatId of Object.keys(state.selection)) {
+    const sessionId = state.selection[chatId];
+    if (typeof sessionId !== 'string' || sessionId === '') continue;
+    let approvals;
+    let questions;
+    try {
+      approvals = await pendingApprovals(info, sessionId);
+      questions = await pendingQuestions(info, sessionId);
+    } catch {
+      continue;
+    }
+    const seen = new Set(state.interactions[chatId] ?? []);
+    let changed = false;
+    for (const approval of approvals) {
+      if (typeof approval.approval_id !== 'string' || seen.has(approval.approval_id)) continue;
+      seen.add(approval.approval_id);
+      changed = true;
+      try {
+        await tg(config, 'sendMessage', {
+          chat_id: Number(chatId),
+          text: approvalText(approval),
+          reply_markup: approvalKeyboard(approval),
+          disable_web_page_preview: true,
+        });
+      } catch (error) {
+        log(`approval notice failed: ${error.message}`);
+      }
+    }
+    for (const question of questions) {
+      if (typeof question.question_id !== 'string' || seen.has(question.question_id)) continue;
+      seen.add(question.question_id);
+      changed = true;
+      state.pendingQuestion[chatId] = {
+        questionId: question.question_id,
+        sessionId,
+        questions: question.questions ?? [],
+      };
+      const keyboard = questionKeyboard(question);
+      try {
+        await tg(config, 'sendMessage', {
+          chat_id: Number(chatId),
+          text: questionText(question),
+          ...(keyboard === undefined ? undefined : { reply_markup: keyboard }),
+          disable_web_page_preview: true,
+        });
+      } catch (error) {
+        log(`question notice failed: ${error.message}`);
+      }
+    }
+    const live = new Set([...approvals.map((a) => a.approval_id), ...questions.map((q) => q.question_id)]);
+    const kept = [...seen].filter((id) => live.has(id));
+    if (kept.length !== seen.size) changed = true;
+    if (changed) {
+      state.interactions[chatId] = kept;
+      await saveState();
+    }
+  }
+}
+
+async function handleCallback(config, query) {
+  const chatId = query?.message?.chat?.id;
+  const messageId = query?.message?.message_id;
+  const parts = typeof query?.data === 'string' ? query.data.split('|') : [];
+  const kind = parts[0];
+  const id = parts[1];
+  const say = async (text) => {
+    if (typeof messageId === 'number' && typeof chatId === 'number') {
+      try {
+        await tg(config, 'editMessageText', { chat_id: chatId, message_id: messageId, text, disable_web_page_preview: true });
+        return;
+      } catch {
+        // fall through to a fresh message when the edit is not allowed
+      }
+    }
+    if (typeof chatId === 'number') await send(config, chatId, text).catch(() => undefined);
+  };
+  try {
+    const sessionId = state.selection[chatId];
+    if (typeof sessionId !== 'string') throw new Error('no session selected in this chat');
+    if (kind === 'apv') {
+      const decision = parts[2];
+      const scope = parts[3] === 'session' ? 'session' : undefined;
+      const body = scope === undefined ? { decision } : { decision, scope };
+      const result = await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/approvals/${encodeURIComponent(id)}`, body);
+      const verb = decision === 'approved' ? 'Allowed' : decision === 'rejected' ? 'Denied' : 'Cancelled';
+      await say(result?.resolved === false ? '⚠️ Already answered elsewhere.' : `✅ ${verb}${scope === 'session' ? ' for this session' : ''}.`);
+      return;
+    }
+    if (kind === 'q') {
+      const itemId = parts[2];
+      const optionId = parts[3];
+      await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/questions/${encodeURIComponent(id)}`, {
+        answers: { [itemId]: { kind: 'single', option_id: optionId } },
+        method: 'click',
+      });
+      delete state.pendingQuestion[chatId];
+      await saveState();
+      await say('✅ Answered.');
+      return;
+    }
+    await say('Unknown action.');
+  } catch (error) {
+    await say(`Could not answer: ${error.message}`);
+  } finally {
+    try {
+      await tg(config, 'answerCallbackQuery', { callback_query_id: query.id });
+    } catch {
+      // the spinner expiring on its own is harmless
+    }
+  }
+}
+
+async function answerQuestionByText(config, chatId, pending, text) {
+  const item = pending.questions?.[0];
+  if (pending.questions.length > 1 || item === undefined) {
+    await send(config, chatId, 'This question has several parts — answer it in the app.');
+    return;
+  }
+  const options = item.options ?? [];
+  const tokens = text.split(/[\s,]+/).filter((token) => token !== '');
+  const numbers = tokens.map((token) => Number.parseInt(token, 10));
+  const allNumbers = numbers.length > 0 && numbers.every((value) => Number.isInteger(value) && value >= 1 && value <= options.length);
+  let answer;
+  if (allNumbers) {
+    const ids = numbers.map((value) => options[value - 1].id).filter((value) => typeof value === 'string');
+    if (ids.length === 1) answer = { kind: 'single', option_id: ids[0] };
+    else if (ids.length > 1) answer = { kind: 'multi', option_ids: ids };
+  }
+  if (answer === undefined) answer = { kind: 'other', text };
+  try {
+    await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(pending.sessionId)}/questions/${encodeURIComponent(pending.questionId)}`, {
+      answers: { [item.id]: answer },
+      method: 'enter',
+    });
+    delete state.pendingQuestion[chatId];
+    await saveState();
+    await send(config, chatId, '✅ Answered.');
+  } catch (error) {
+    await send(config, chatId, `Could not answer: ${error.message}`);
+  }
 }
 
 const NOTIFY_INTERVAL_MS = 3000;
@@ -629,6 +845,11 @@ async function handle(config, chatId, text) {
   const trimmed = text.trim();
   if (trimmed === '' ) return;
   if (!trimmed.startsWith('/')) {
+    const pending = state.pendingQuestion[chatId];
+    if (pending !== undefined && (pending.questions?.length ?? 0) > 0) {
+      await answerQuestionByText(config, chatId, pending, trimmed);
+      return;
+    }
     const sessionId = selectionFor(chatId);
     if (sessionId === undefined) {
       await send(config, chatId, 'No session selected. Use /sessions then /use <n>.');
@@ -914,6 +1135,8 @@ async function main() {
     state.view = saved.view ?? {};
     state.provider = saved.provider ?? {};
     state.models = saved.models ?? {};
+    state.interactions = saved.interactions ?? {};
+    state.pendingQuestion = saved.pendingQuestion ?? {};
     state.profilePhotoHash = saved.profilePhotoHash;
   }
   const info = await waitForServer();
@@ -931,6 +1154,9 @@ async function main() {
   await primeReports();
   await watchServer(config);
   setInterval(() => {
+    pollInteractions(config).catch((error) => log(`interaction poll failed: ${error.message}`));
+  }, NOTIFY_INTERVAL_MS);
+  setInterval(() => {
     watchServer(config).catch((error) => log(`connection watch failed: ${error.message}`));
   }, 10000);
   setInterval(() => {
@@ -941,7 +1167,7 @@ async function main() {
   for (;;) {
     let updates;
     try {
-      updates = await tg(config, 'getUpdates', { offset: state.offset, timeout: POLL_TIMEOUT_S, allowed_updates: ['message'] });
+      updates = await tg(config, 'getUpdates', { offset: state.offset, timeout: POLL_TIMEOUT_S, allowed_updates: ['message', 'callback_query'] });
       backoffMs = 3000;
     } catch (error) {
       log(`poll failed: ${error.message}; retrying in ${Math.round(backoffMs / 1000)}s`);
@@ -952,6 +1178,10 @@ async function main() {
     for (const update of updates) {
       state.offset = update.update_id + 1;
       try {
+        if (update.callback_query !== undefined) {
+          await handleCallback(config, update.callback_query);
+          continue;
+        }
         const message = update.message;
         if (message === undefined || typeof message.text !== 'string') continue;
         const chatId = message.chat.id;
@@ -974,7 +1204,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions };
 
 if (isEntryPoint) {
   main().catch((error) => {
