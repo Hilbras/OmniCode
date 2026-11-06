@@ -958,6 +958,14 @@ async function applyBotName(config, sessionId) {
   return name;
 }
 
+async function maybeRefreshName(config) {
+  if (typeof state.nameRetryAt === 'number' && Date.now() < state.nameRetryAt) return;
+  const sessionId = Object.values(state.selection).find((value) => typeof value === 'string' && value !== '');
+  if (sessionId === undefined) return;
+  const name = await applyBotName(config, sessionId);
+  log(`bot name check: wanted "${name}", telegram holds "${String(state.botName)}"`);
+}
+
 async function sendLastReport(config, chatId, sessionId) {
   const info = await server();
   const data = await api(info, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/transcript?agent_id=main&page_size=3`).catch(() => undefined);
@@ -1031,6 +1039,7 @@ function describeError(error) {
 }
 
 const NOTIFY_INTERVAL_MS = 3000;
+const NAME_RETRY_INTERVAL_MS = 10 * 60 * 1000;
 const REPORT_MAX_CHARS = 3500;
 
 async function newestTurn(server, sessionId) {
@@ -1919,6 +1928,9 @@ async function main() {
   setInterval(() => {
     reportFinishedTurns(config).catch((error) => log(`finish report failed: ${error.message}`));
   }, NOTIFY_INTERVAL_MS);
+  setInterval(() => {
+    maybeRefreshName(config).catch((error) => log(`name refresh failed: ${error.message}`));
+  }, NAME_RETRY_INTERVAL_MS);
 
   let backoffMs = 3000;
   for (;;) {
