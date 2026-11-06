@@ -480,6 +480,17 @@ async function uploadProfilePhoto(config) {
   return 'photo uploaded';
 }
 
+async function waitForServer() {
+  for (;;) {
+    try {
+      return await server();
+    } catch (error) {
+      log(`waiting for the Omnicode server: ${error.message}`);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+  }
+}
+
 async function applyBotProfile(config) {
   const attempts = [
     ['commands', () => tg(config, 'setMyCommands', { commands: COMMANDS_BROWSE })],
@@ -795,10 +806,12 @@ async function handle(config, chatId, text) {
         return;
       }
       state.provider[chatId] = picked;
+      delete state.models[chatId];
       await saveState();
       await send(config, chatId, `Provider: ${picked}\nPick a model with /models.`);
       return;
     }
+    case '/settings':
     case '/models': {
       const models = await modelCatalog(await server());
       const provider = state.provider[chatId];
@@ -835,17 +848,6 @@ async function handle(config, chatId, text) {
       await send(config, chatId, `Model for the next prompt: ${modelLabel(picked)}`);
       return;
     }
-    case '/settings': {
-      try {
-        const data = await api(await server(), 'GET', '/api/v1/models');
-        const models = Array.isArray(data?.items) ? data.items : [];
-        const sample = models.slice(0, 40).map((model) => `• ${model.id ?? model.model ?? model.name}`);
-        await send(config, chatId, `Models (showing ${sample.length} of ${models.length}):\n${sample.join('\n')}\n\nPick with /model <alias>.`);
-      } catch (error) {
-        await send(config, chatId, `Could not list models: ${error.message}`);
-      }
-      return;
-    }
     default:
       await send(config, chatId, `Unknown command ${command}.\n\n${HELP}`);
   }
@@ -872,7 +874,7 @@ async function main() {
     state.models = saved.models ?? {};
     state.profilePhotoHash = saved.profilePhotoHash;
   }
-  const info = await server();
+  const info = await waitForServer();
   await saveState();
   log(`connected to ${info.baseUrl} (omnicode ${info.version ?? '?'})`);
   log(config.allowedChatIds.length === 0
