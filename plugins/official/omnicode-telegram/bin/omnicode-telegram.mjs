@@ -28,7 +28,7 @@ const TOKEN_PATH = path.join(HOME, 'server.token');
 const POLL_TIMEOUT_S = 25;
 const SESSIONS_PAGE = 10;
 
-const state = { offset: 0, selection: {}, overrides: {} };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -132,6 +132,67 @@ async function lastReply(server, sessionId) {
   return undefined;
 }
 
+const NOTIFY_INTERVAL_MS = 3000;
+const REPORT_MAX_CHARS = 3500;
+
+async function newestTurn(server, sessionId) {
+  const data = await api(server, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/transcript?agent_id=main&page_size=1`);
+  const items = Array.isArray(data?.items) ? data.items : [];
+  return items.find((item) => item !== null && typeof item === 'object' && item.kind === 'turn');
+}
+
+function reportsEnabled(chatId) {
+  return state.notify[chatId] !== false;
+}
+
+async function rememberNewestTurn(chatId, sessionId) {
+  try {
+    const turn = await newestTurn(await server(), sessionId);
+    if (turn !== undefined && turn.state === 'completed') state.notified[chatId] = turn.turnId;
+  } catch {
+    // a session that cannot be read now simply announces its next finished turn
+  }
+}
+
+async function primeReports() {
+  for (const chatId of Object.keys(state.selection)) {
+    if (state.notified[chatId] !== undefined) continue;
+    await rememberNewestTurn(chatId, state.selection[chatId]);
+  }
+  await saveState();
+}
+
+let reporting = false;
+
+async function reportFinishedTurns(config) {
+  if (reporting) return;
+  reporting = true;
+  try {
+    const info = await server();
+    for (const chatId of Object.keys(state.selection)) {
+      const sessionId = state.selection[chatId];
+      if (typeof sessionId !== 'string' || !reportsEnabled(chatId)) continue;
+      let turn;
+      try {
+        turn = await newestTurn(info, sessionId);
+      } catch {
+        continue;
+      }
+      if (turn === undefined || turn.turnId === state.notified[chatId]) continue;
+      if (turn.state === 'running') continue;
+      state.notified[chatId] = turn.turnId;
+      await saveState();
+      if (turn.state !== 'completed') continue;
+      const reply = await lastReply(info, sessionId).catch(() => undefined);
+      if (reply === undefined) continue;
+      const body = reply.length > REPORT_MAX_CHARS ? `${reply.slice(0, REPORT_MAX_CHARS)}\n…(truncated)` : reply;
+      await send(config, Number(chatId), `✅ Finished\n\n${body}`);
+    }
+  } finally {
+    reporting = false;
+  }
+}
+
 // --- Telegram -----------------------------------------------------------------
 
 let serverPromise;
@@ -225,6 +286,7 @@ const HELP = [
   '/use <n> — select one by number',
   '/current — show the selection and pending overrides',
   '/last — show the newest assistant reply',
+  '/notify <on|off> — report each turn when it finishes',
   '/stop — cancel the running turn',
   '',
   'Send any other text to prompt the selected session.',
@@ -306,6 +368,8 @@ async function handle(config, chatId, text) {
         return;
       }
       state.selection[chatId] = picked.id;
+      delete state.notified[chatId];
+      await rememberNewestTurn(chatId, picked.id);
       await saveState();
       await send(config, chatId, `Selected: ${picked.title}`);
       return;
@@ -313,6 +377,17 @@ async function handle(config, chatId, text) {
     case '/current': {
       const sessionId = selectionFor(chatId);
       await send(config, chatId, `session: ${sessionId ?? 'none'}\noverrides: ${describeOverrides(chatId)}`);
+      return;
+    }
+    case '/notify': {
+      const mode = argument.toLowerCase();
+      if (mode !== 'on' && mode !== 'off') {
+        await send(config, chatId, 'Use /notify on or /notify off.');
+        return;
+      }
+      state.notify[chatId] = mode === 'on';
+      await saveState();
+      await send(config, chatId, `Finish reports ${mode === 'on' ? 'on' : 'off'}.`);
       return;
     }
     case '/last': {
@@ -395,6 +470,8 @@ async function main() {
     state.offset = saved.offset ?? 0;
     state.selection = saved.selection ?? {};
     state.overrides = saved.overrides ?? {};
+    state.notify = saved.notify ?? {};
+    state.notified = saved.notified ?? {};
     state.profilePhotoHash = saved.profilePhotoHash;
   }
   const info = await server();
@@ -404,6 +481,10 @@ async function main() {
     ? 'no allowedChatIds yet — message the bot to learn your chat id, add it, then restart'
     : `serving ${config.allowedChatIds.length} allowed chat(s)`);
   await applyBotProfile(config);
+  await primeReports();
+  setInterval(() => {
+    reportFinishedTurns(config).catch((error) => log(`finish report failed: ${error.message}`));
+  }, NOTIFY_INTERVAL_MS);
 
   let backoffMs = 3000;
   for (;;) {

@@ -47,6 +47,7 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 | `/use <n>` | select a session |
 | *(any text)* | prompt the selected session |
 | `/last` | newest assistant reply |
+| `/notify <on\|off>` | report each turn when it finishes |
 | `/stop` | cancel the running turn |
 | `/model <alias\|clear>` | model for the next prompt |
 | `/profile <name\|clear>` | profile for the next prompt |
@@ -56,6 +57,13 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 | `/settings` | list the model catalog |
 | `/current` | selection and pending overrides |
 | `/help` | the command list |
+
+## Finish reports
+
+When a turn in the session the chat selected finishes, the bot sends the last
+assistant message to the chat, so you can close the app and still get the result.
+A turn you started from the desktop app counts too. `/notify off` mutes it,
+`/notify on` turns it back on.
 
 ## Security
 
