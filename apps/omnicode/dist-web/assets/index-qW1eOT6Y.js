@@ -3036,7 +3036,7 @@ ${vn}`)}const De=ze.join(`
     }
   }
   function writeTabs(list) {
-    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { /* ignore */ }
+    try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (e) { }
   }
   function activeId() {
     var m = /\/sessions\/(session_[A-Za-z0-9-]+)/.exec(location.pathname);
@@ -3071,7 +3071,7 @@ ${vn}`)}const De=ze.join(`
         }
         render();
       })
-      .catch(function () { /* keep id-derived labels */ });
+      .catch(function () { });
   }
   function label(id) {
     var t = titles[id];
@@ -3117,14 +3117,17 @@ ${vn}`)}const De=ze.join(`
     var s = document.createElement('style');
     s.id = 'omni-tabs-style';
     s.textContent = [
-      '.omni-tabs{display:flex;align-items:center;gap:2px;padding:4px var(--space-2);overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--line, rgba(128,128,128,.18));flex:0 0 auto}',
+      '.omni-tabs{display:flex;align-items:center;gap:2px;min-width:0;max-width:38vw;height:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;margin-left:2px;flex:0 1 auto}',
       '.omni-tabs::-webkit-scrollbar{display:none}',
-      '.omni-tab{display:inline-flex;align-items:center;gap:6px;max-width:230px;padding:4px 8px;border:0;border-radius:var(--radius-sm,6px);background:transparent;color:var(--color-text-muted,#888);font-family:var(--font-ui,sans-serif);font-size:var(--text-xs,12px);cursor:pointer;white-space:nowrap}',
+      '.omni-tabs:empty{display:none}',
+      '.omni-tab{position:relative;display:inline-flex;align-items:center;gap:5px;max-width:190px;height:26px;padding:0 7px;border:0;border-radius:var(--radius-sm,6px);background:transparent;color:var(--color-text-muted,#8a8a8a);font-family:var(--font-ui,sans-serif);font-size:var(--text-xs,12px);line-height:1;cursor:pointer;white-space:nowrap;flex:none;transition:background-color .12s ease,color .12s ease}',
       '.omni-tab:hover{background:var(--color-hover,rgba(128,128,128,.12));color:var(--color-text,#eee)}',
-      '.omni-tab.is-active{background:var(--color-selected,rgba(128,128,128,.18));color:var(--color-text,#fff)}',
+      '.omni-tab.is-active{background:var(--color-selected,rgba(128,128,128,.16));color:var(--color-text,#fff)}',
+      '.omni-tab.is-active::after{content:"";position:absolute;left:7px;right:7px;bottom:-1px;height:2px;border-radius:1px;background:var(--color-accent,currentColor);opacity:.85}',
       '.omni-tab-label{overflow:hidden;text-overflow:ellipsis}',
-      '.omni-tab-close{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border:0;border-radius:50%;padding:0;background:transparent;color:inherit;opacity:.55;cursor:pointer;font-size:11px;line-height:1}',
-      '.omni-tab-close:hover{opacity:1;background:var(--color-hover,rgba(128,128,128,.25))}',
+      '.omni-tab-close{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:0;border-radius:50%;padding:0;background:transparent;color:inherit;opacity:0;cursor:pointer;font-size:11px;line-height:1;flex:none}',
+      '.omni-tab:hover .omni-tab-close,.omni-tab.is-active .omni-tab-close{opacity:.55}',
+      '.omni-tab-close:hover{opacity:1 !important;background:var(--color-hover,rgba(128,128,128,.25))}',
     ].join('');
     document.head.appendChild(s);
   }
@@ -3142,18 +3145,14 @@ ${vn}`)}const De=ze.join(`
       if (host && host.parentNode) host.parentNode.removeChild(host);
       return;
     }
-    var con = null;
-    var cons = document.querySelectorAll('.app > .con');
-    for (var i = 0; i < cons.length; i++) {
-      if (cons[i].querySelector('.chat-layout')) { con = cons[i]; break; }
-    }
-    if (!con) return;
+    var header = document.querySelector('header.chat-header');
+    if (!header) return;
     style();
     var el = strip();
-    if (el.parentNode !== con) {
-      var layout = con.querySelector('.chat-layout');
-      if (layout) con.insertBefore(el, layout);
-      else con.appendChild(el);
+    if (el.parentNode !== header) {
+      var spacer = header.querySelector('.ch-spacer');
+      if (spacer) header.insertBefore(el, spacer);
+      else header.appendChild(el);
     }
     var list = readTabs();
     var current = activeId();
@@ -3165,11 +3164,11 @@ ${vn}`)}const De=ze.join(`
         tab.className = 'omni-tab' + (id === current ? ' is-active' : '');
         tab.setAttribute('role', 'tab');
         tab.setAttribute('aria-selected', id === current ? 'true' : 'false');
-        tab.title = id;
-        var span = document.createElement('span');
-        span.className = 'omni-tab-label';
-        span.textContent = label(id);
-        tab.appendChild(span);
+        tab.title = label(id);
+        var text = document.createElement('span');
+        text.className = 'omni-tab-label';
+        text.textContent = label(id);
+        tab.appendChild(text);
         tab.addEventListener('click', function () { navigate(id); });
         tab.addEventListener('auxclick', function (event) {
           if (event.button !== 1) return;
@@ -3185,6 +3184,12 @@ ${vn}`)}const De=ze.join(`
         x.addEventListener('click', function (e) { e.stopPropagation(); close(id); });
         tab.appendChild(x);
         el.appendChild(tab);
+        if (id === current) {
+          var left = tab.offsetLeft;
+          var right = left + tab.offsetWidth;
+          if (left < el.scrollLeft) el.scrollLeft = left;
+          else if (right > el.scrollLeft + el.clientWidth) el.scrollLeft = right - el.clientWidth;
+        }
       })(list[k]);
     }
   }
@@ -3196,9 +3201,17 @@ ${vn}`)}const De=ze.join(`
   function schedule() {
     if (queued) return;
     queued = true;
-    requestAnimationFrame(function () { queued = false; sync(); });
+    setTimeout(function () { queued = false; sync(); }, 16);
   }
   window.addEventListener('popstate', schedule);
+  window.addEventListener('hashchange', schedule);
+  window.addEventListener('load', schedule);
+  (function hookHistory() {
+    var push = history.pushState;
+    var replace = history.replaceState;
+    history.pushState = function () { var result = push.apply(this, arguments); schedule(); return result; };
+    history.replaceState = function () { var result = replace.apply(this, arguments); schedule(); return result; };
+  })();
   window.addEventListener('keydown', function (event) {
     if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     var index = parseInt(event.key, 10);
@@ -3214,6 +3227,7 @@ ${vn}`)}const De=ze.join(`
     if (!document.body) { setTimeout(boot, 30); return; }
     observer.observe(document.body, { childList: true, subtree: true });
     sync();
+    setInterval(schedule, 2000);
   }
   boot();
 })();
