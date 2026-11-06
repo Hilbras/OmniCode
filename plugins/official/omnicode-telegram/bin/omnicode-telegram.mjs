@@ -584,6 +584,71 @@ async function answerQuestionByText(config, chatId, pending, text) {
   }
 }
 
+const MAX_IMAGE_BYTES = 5_000_000;
+
+function promptOverrides(chatId) {
+  const overrides = overridesFor(chatId);
+  const body = {};
+  for (const key of ['model', 'profile', 'thinking', 'permission_mode']) {
+    if (overrides[key] !== undefined) body[key] = overrides[key];
+  }
+  if (overrides.plan_mode !== undefined) body.plan_mode = overrides.plan_mode === true || overrides.plan_mode === 'true';
+  return body;
+}
+
+async function downloadTelegramFile(config, fileId) {
+  const file = await tg(config, 'getFile', { file_id: fileId });
+  const filePath = typeof file?.file_path === 'string' ? file.file_path : '';
+  if (filePath === '') throw new Error('telegram did not return a file path');
+  const response = await fetch(`https://api.telegram.org/file/bot${config.botToken}/${filePath}`, {
+    signal: AbortSignal.timeout(60000),
+  });
+  if (!response.ok) throw new Error(`download failed with HTTP ${response.status}`);
+  return Buffer.from(await response.arrayBuffer());
+}
+
+function imagePartOf(message) {
+  if (Array.isArray(message.photo) && message.photo.length > 0) {
+    const largest = message.photo[message.photo.length - 1];
+    return typeof largest?.file_id === 'string'
+      ? { fileId: largest.file_id, mediaType: 'image/jpeg', name: 'telegram-photo.jpg' }
+      : undefined;
+  }
+  const document = message.document;
+  if (document === undefined || typeof document.file_id !== 'string') return undefined;
+  const mime = typeof document.mime_type === 'string' ? document.mime_type : '';
+  if (!mime.startsWith('image/')) return undefined;
+  return { fileId: document.file_id, mediaType: mime, name: typeof document.file_name === 'string' ? document.file_name : 'telegram-image' };
+}
+
+async function handleMedia(config, chatId, message) {
+  const sessionId = selectionFor(chatId);
+  if (sessionId === undefined) {
+    await send(config, chatId, 'No session selected. Use /sessions then /use <n>.');
+    return;
+  }
+  const image = imagePartOf(message);
+  if (image === undefined) {
+    await send(config, chatId, 'Only images are supported right now.');
+    return;
+  }
+  const bytes = await downloadTelegramFile(config, image.fileId);
+  if (bytes.length > MAX_IMAGE_BYTES) {
+    await send(config, chatId, `That image is ${(bytes.length / 1_000_000).toFixed(1)} MB; the limit is 5 MB.`);
+    return;
+  }
+  const caption = typeof message.caption === 'string' && message.caption.trim() !== '' ? message.caption.trim() : 'Please look at this image.';
+  const body = {
+    content: [
+      { type: 'image', source: { kind: 'base64', media_type: image.mediaType, data: bytes.toString('base64'), name: image.name } },
+      { type: 'text', text: caption },
+    ],
+    ...promptOverrides(chatId),
+  };
+  await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/prompts`, body);
+  await send(config, chatId, `Sent ${image.name} to the session.`);
+}
+
 const NOTIFY_INTERVAL_MS = 3000;
 const REPORT_MAX_CHARS = 3500;
 
@@ -1020,12 +1085,7 @@ async function handle(config, chatId, text) {
       await send(config, chatId, 'No session selected. Use /sessions then /use <n>.');
       return;
     }
-    const overrides = overridesFor(chatId);
-    const body = { content: [{ type: 'text', text: trimmed }] };
-    for (const key of ['model', 'profile', 'thinking', 'permission_mode']) {
-      if (overrides[key] !== undefined) body[key] = overrides[key];
-    }
-    if (overrides.plan_mode !== undefined) body.plan_mode = overrides.plan_mode === true || overrides.plan_mode === 'true';
+    const body = { content: [{ type: 'text', text: trimmed }], ...promptOverrides(chatId) };
     try {
       await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/prompts`, body);
       await send(config, chatId, `Sent to ${trimmed.slice(0, 40)}…\nUse /last to read the reply.`);
@@ -1351,7 +1411,20 @@ async function main() {
           continue;
         }
         const message = update.message;
-        if (message === undefined || typeof message.text !== 'string') continue;
+        if (message === undefined) continue;
+        if (typeof message.text !== 'string') {
+          const chatIdForMedia = message.chat?.id;
+          if (typeof chatIdForMedia === 'number' && config.allowedChatIds.includes(chatIdForMedia)) {
+            if (Array.isArray(message.photo) || message.document !== undefined) {
+              try {
+                await handleMedia(config, chatIdForMedia, message);
+              } catch (error) {
+                await send(config, chatIdForMedia, `Could not send that image: ${error.message}`);
+              }
+            }
+          }
+          continue;
+        }
         const chatId = message.chat.id;
         if (!config.allowedChatIds.includes(chatId)) {
           await send(config, chatId, `This chat is not allowed to control Omnicode.\nYour chat id: ${chatId}\nAdd it to allowedChatIds in ${CONFIG_PATH} and restart the bot.`);
