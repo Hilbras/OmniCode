@@ -203,6 +203,23 @@ set the name by hand: the pinned header above is the per-session indicator, and 
 nothing. `/name on` resumes renaming, and `/name` alone reports the name Telegram holds,
 the name the bridge wants, and any remaining cooldown.
 
+## Groups with topics
+
+A bot in a **private chat** can do one session at a time, because it has one chat, one
+name and one pin. Put it in a **group with Topics enabled** and that limitation disappears:
+each session gets its own topic.
+
+- Selecting a session (`/use`, `/new`, or a button) creates the topic if it does not exist,
+  named `<project> · <session title>`, and renames it when the session is renamed.
+- Every message for that session is posted **into its topic**; typing inside a topic drives
+  that session, so several sessions can run side by side without switching.
+- Nothing is cleared, nothing is pinned and the bot's name is never touched in this mode —
+  the topic *is* the identity, and it has no rate limit.
+
+The mode turns itself on when the chat reports `is_forum` and is off everywhere else, so
+existing private chats behave exactly as before. Set `OMNICODE_TELEGRAM_TOPICS=off` to
+disable it even in a group.
+
 ## Browsing
 
 `/sessions` lists projects only — how many sessions each holds and how many are

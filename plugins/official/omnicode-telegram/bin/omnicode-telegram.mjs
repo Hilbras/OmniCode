@@ -37,7 +37,7 @@ const POLL_TIMEOUT_S = 10;
 setDefaultResultOrder('ipv4first');
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, incoming: {}, clearHinted: {}, watching: {}, otherNotified: {}, others: {}, header: {}, renameDisabled: undefined, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, incoming: {}, clearHinted: {}, watching: {}, otherNotified: {}, others: {}, header: {}, forum: {}, topics: {}, thread: {}, renameDisabled: undefined, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
 
 const recentLog = [];
 
@@ -1083,6 +1083,73 @@ async function deleteMessages(config, chatId, ids) {
   return { removed, stale, known: unique.length };
 }
 
+function topicsDisabled() {
+  return process.env.OMNICODE_TELEGRAM_TOPICS === 'off';
+}
+
+async function isForumChat(config, chatId) {
+  if (topicsDisabled()) return false;
+  const key = String(chatId);
+  const cached = state.forum[key];
+  if (typeof cached === 'boolean') return cached;
+  const chat = await tg(config, 'getChat', { chat_id: Number(chatId) }).catch(() => undefined);
+  const forum = chat?.is_forum === true;
+  state.forum[key] = forum;
+  await saveState();
+  return forum;
+}
+
+function topicName(meta) {
+  const label = [meta?.project, meta?.title]
+    .filter((part) => typeof part === 'string' && part.trim() !== '')
+    .join(' \u00b7 ');
+  return (label === '' ? 'session' : label).slice(0, 128);
+}
+
+async function ensureTopic(config, chatId, sessionId, meta) {
+  const key = String(chatId);
+  const map = state.topics[key] ?? {};
+  const name = topicName(meta);
+  const existing = map[sessionId];
+  if (typeof existing === 'number') {
+    await tg(config, 'editForumTopic', { chat_id: Number(chatId), message_thread_id: existing, name }).catch(() => undefined);
+    state.thread[key] = existing;
+    await saveState();
+    return existing;
+  }
+  const created = await tg(config, 'createForumTopic', { chat_id: Number(chatId), name }).catch((error) => {
+    log(`could not create a topic for ${sessionId}: ${error.message}`);
+    return undefined;
+  });
+  const threadId = created?.message_thread_id;
+  if (typeof threadId !== 'number') return undefined;
+  state.topics[key] = { ...map, [sessionId]: threadId };
+  state.thread[key] = threadId;
+  await saveState();
+  return threadId;
+}
+
+async function adoptTopicSession(config, chatId, message) {
+  const threadId = message?.message_thread_id;
+  if (typeof threadId !== 'number') return;
+  const sessionId = sessionForThread(chatId, threadId);
+  if (typeof sessionId !== 'string' || state.selection[chatId] === sessionId) return;
+  state.selection[chatId] = sessionId;
+  state.thread[chatId] = threadId;
+  delete state.notified[chatId];
+  await rememberNewestTurn(chatId, sessionId);
+  await saveState();
+  await setMenu(config, chatId, COMMANDS_SESSION);
+}
+
+function sessionForThread(chatId, threadId) {
+  const map = state.topics[String(chatId)] ?? {};
+  for (const [sessionId, id] of Object.entries(map)) {
+    if (id === threadId) return sessionId;
+  }
+  return undefined;
+}
+
 async function clearChatHistory(config, chatId) {
   const sent = state.sent[chatId] ?? [];
   const incoming = state.incoming[chatId] ?? [];
@@ -1256,6 +1323,20 @@ async function sendLastReport(config, chatId, sessionId) {
 }
 
 async function syncChatOnSelection(config, chatId, sessionId) {
+  const forum = await isForumChat(config, chatId).catch(() => false);
+  if (forum) {
+    const sessions = await listSessions(await server()).catch(() => []);
+    const meta = sessions.find((session) => session.id === sessionId);
+    const threadId = await ensureTopic(config, chatId, sessionId, meta);
+    log(`topic mode: ${sessionId} -> thread ${String(threadId ?? 'none')}`);
+    try {
+      await sendLastReport(config, chatId, sessionId);
+    } catch (error) {
+      log(`last report failed: ${error.message}`);
+    }
+    await refreshPending(config, chatId, sessionId).catch(() => undefined);
+    return;
+  }
   let cleared = { removed: 0, stale: 0, known: 0 };
   try {
     cleared = await clearChatHistory(config, chatId);
@@ -1620,7 +1701,18 @@ function setTelegramTransport(next) {
   telegramTransport = next ?? undefined;
 }
 
-function tg(config, method, body) {
+function withThread(body) {
+  if (body === undefined || body['message_thread_id'] !== undefined) return body;
+  const chatId = body['chat_id'];
+  if (typeof chatId !== 'number') return body;
+  const thread = state.thread[String(chatId)];
+  return typeof thread === 'number' ? { ...body, message_thread_id: thread } : body;
+}
+
+function tg(config, method, payload) {
+  // in a topic-enabled group every new message belongs to the topic of the session that is
+  // being driven, so the thread id is attached here rather than at thirty call sites
+  const body = SENDING_METHODS.has(method) ? withThread(payload) : payload;
   if (telegramTransport !== undefined) return telegramTransport(config, method, body);
   if (LONG_POLL_METHODS.has(method)) return tgOnce(config, method, body);
   if (method === 'editMessageText' && body !== undefined) {
@@ -2366,6 +2458,9 @@ async function loadPersistedState() {
   state.otherNotified = saved.otherNotified ?? {};
   state.others = saved.others ?? {};
   state.header = saved.header ?? {};
+  state.forum = saved.forum ?? {};
+  state.topics = saved.topics ?? {};
+  state.thread = saved.thread ?? {};
   state.renameDisabled = saved.renameDisabled;
   state.botName = saved.botName;
   state.nameRetryAt = saved.nameRetryAt;
@@ -2512,6 +2607,7 @@ async function main() {
           continue;
         }
         rememberIncoming(chatId, message.message_id);
+        await adoptTopicSession(config, chatId, message);
         try {
           await handle(config, chatId, message.text);
         } catch (error) {
@@ -2527,7 +2623,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId, purgeUpperBound, videoPartOf, videoFrames, otherFinishLine, sessionHeaderText, refreshHeader, answerQuestionByText, setTelegramTransport, setApiTransport, setServerResolver };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId, purgeUpperBound, videoPartOf, videoFrames, otherFinishLine, sessionHeaderText, refreshHeader, answerQuestionByText, setTelegramTransport, setApiTransport, setServerResolver, adoptTopicSession, topicName };
 
 // Loaded at import time so that anything importing this module (tests, a one-off
 // command) sees the same state the daemon has, instead of an empty one that would

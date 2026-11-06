@@ -10,8 +10,9 @@ const m = await import('../bin/omnicode-telegram.mjs');
 
 const CHAT = 111;
 const OTHER_CHAT = 222;
+const FORUM_CHAT = 333;
 const SESSION = 'session_alpha';
-const config = { botToken: 'test-token', allowedChatIds: [CHAT, OTHER_CHAT] };
+const config = { botToken: 'test-token', allowedChatIds: [CHAT, OTHER_CHAT, FORUM_CHAT] };
 
 const calls = { tg: [], api: [] };
 const fixture = { sessions: [], turns: [], messages: [], approvals: [], questions: [], failTgMethod: undefined, failApiRoute: undefined, answerFails: undefined };
@@ -53,6 +54,8 @@ m.setApiTransport(async (server, method, route, body) => {
 m.setTelegramTransport(async (unusedConfig, method, body) => {
   calls.tg.push({ method, body });
   if (fixture.failTgMethod === method) throw new Error('send failed');
+  if (method === 'getChat') return { is_forum: body?.chat_id === FORUM_CHAT };
+  if (method === 'createForumTopic') return { message_thread_id: 55 };
   return { message_id: 900 + calls.tg.length };
 });
 
@@ -215,5 +218,54 @@ describe('announcing approvals', () => {
     const second = await m.announcePending(config, String(CHAT), SESSION, [approval], []);
     assert.equal(second, true);
     assert.equal(m.state.interactions[String(CHAT)]?.['approval_1'], SESSION);
+  });
+});
+
+describe('topic mode', () => {
+  it('opens one topic per session and sends into it, without clearing or pinning', async () => {
+    reset({ sessions: [session()], turns: [turn('t1', 'completed', 'topic report')] });
+    m.state.view[String(FORUM_CHAT)] = { workspaceId: 'ws_1', ids: [SESSION] };
+    m.state.sent[String(FORUM_CHAT)] = [];
+
+    await m.handle(config, FORUM_CHAT, '/use 1');
+
+    const created = calls.tg.find((call) => call.method === 'createForumTopic');
+    assert.ok(created, 'no topic was created');
+    assert.equal(created.body.name, 'alpha \u00b7 alpha');
+
+    const sent = calls.tg.filter((call) => call.method === 'sendMessage');
+    assert.ok(sent.length > 0, 'nothing was posted');
+    assert.ok(sent.every((call) => call.body.message_thread_id === 55), 'a message was posted outside the topic');
+    assert.ok(sent.some((call) => String(call.body.text).includes('topic report')));
+    assert.ok(!calls.tg.some((call) => call.method === 'deleteMessage'), 'cleared the group in topic mode');
+    assert.ok(!calls.tg.some((call) => call.method === 'pinChatMessage'), 'pinned in topic mode');
+    assert.ok(!calls.tg.some((call) => call.method === 'setMyName'), 'renamed the bot in topic mode');
+  });
+
+  it('routes a message typed inside a topic to that topic session', async () => {
+    reset({ sessions: [session()] });
+    m.state.topics[String(FORUM_CHAT)] = { [SESSION]: 77 };
+    delete m.state.selection[String(FORUM_CHAT)];
+
+    await m.adoptTopicSession(config, FORUM_CHAT, { message_thread_id: 77 });
+
+    assert.equal(m.state.selection[String(FORUM_CHAT)], SESSION);
+    assert.equal(m.state.thread[String(FORUM_CHAT)], 77);
+  });
+
+  it('ignores a thread that belongs to no session', async () => {
+    reset({ sessions: [session()] });
+    m.state.topics[String(FORUM_CHAT)] = {};
+    m.state.selection[String(FORUM_CHAT)] = 'session_other';
+
+    await m.adoptTopicSession(config, FORUM_CHAT, { message_thread_id: 999 });
+
+    assert.equal(m.state.selection[String(FORUM_CHAT)], 'session_other');
+  });
+
+  it('names a topic after the project and the session, cut to the limit', () => {
+    assert.equal(m.topicName({ project: 'OmniHilbras', title: 'hi' }), 'OmniHilbras \u00b7 hi');
+    assert.equal(m.topicName({}), 'session');
+    assert.equal(m.topicName({ project: 'p'.repeat(200), title: 't' }).length, 128);
   });
 });
