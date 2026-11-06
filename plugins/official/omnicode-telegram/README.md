@@ -110,7 +110,9 @@ Choosing a session (`/use <n>`, or tapping one in `/project`) does three things:
 2. **Renames the bot** to `OmniCode - <project>`, so the chat header says which project
    you are driving.
 3. **Posts the last report** from that session — the newest finished turn, with its
-   duration, tools, files and final message.
+   duration, tools, files and final message — and **pins** it, so the top of the chat
+   always names the session you are driving. The pin is the reliable half of step 2:
+   renames are rate-limited, pins are not.
 
 Anything that session is *waiting on* is posted right after the report — a pending
 approval with its Allow / Deny buttons, or a pending question — so entering a stalled
@@ -118,13 +120,23 @@ session from your phone tells you what it needs. Because the chat is emptied fir
 waiting item is always announced again, even if an earlier copy of the notice was
 deleted with the rest of the history.
 
-Limits worth knowing: a bot can only delete **its own** messages, and only ones it has
-sent since it started tracking them (Telegram refuses anything older than 48 hours),
-so your own messages and older bot messages stay in the chat. The bot's name is also
-global — one bot has one name — so it reflects the last project you opened, in any
-chat; Telegram allows only a few name changes per day, so the bridge names the bot per
-project (not per session or per chat), skips the call when the name already matches,
-and after a rate-limit stays quiet until Telegram's own retry window has passed.
+## Clearing old messages: `/purge`
+
+A bot can only delete messages whose ids it recorded as it sent them, and Telegram has
+no way to list a chat's history — so messages from before the bridge started keeping
+that ledger are unreachable, and a switch reports them as undeletable instead of
+pretending the chat is empty. `/purge` closes that gap: it walks the chat's message ids
+and deletes every one the bot is allowed to remove, then re-posts and pins the last
+report. Run it once after installing or upgrading, and each switch keeps the chat clean
+from then on.
+
+Limits worth knowing: a bot can only delete **its own** messages — your messages, other
+bots' messages, and anything older than 48 hours survive and are reported as skipped.
+The bot's name is also global — one bot has one name — so it reflects the last project
+you opened, in any chat; Telegram allows only a few name changes per day, so the bridge
+names the bot per project (not per session or per chat), skips the call when the name
+already matches, and after a rate-limit stays quiet until Telegram's own retry window has
+passed.
 
 ## Browsing
 

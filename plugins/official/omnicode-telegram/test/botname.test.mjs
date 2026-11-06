@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { approvalKeyboard, botNameFor, longId, questionKeyboard, shortId } from '../bin/omnicode-telegram.mjs';
+import { approvalKeyboard, botNameFor, longId, purgeUpperBound, questionKeyboard, shortId } from '../bin/omnicode-telegram.mjs';
 
 const LIMIT = 64;
 const bytes = (value) => Buffer.byteLength(value, 'utf8');
@@ -76,5 +76,16 @@ describe('callback data', () => {
     assert.equal(longId(parts[0], parts[1]), approvalId);
     assert.equal(parts[2], 'approved');
     assert.equal(parts[3], 'session');
+  });
+});
+
+describe('purgeUpperBound', () => {
+  it('sweeps past the newest id it knows, to reach untracked history', () => {
+    assert.equal(purgeUpperBound([1, 289, 400]), 500);
+    assert.equal(purgeUpperBound([273]), 373);
+  });
+
+  it('falls back to a bounded sweep when nothing is tracked', () => {
+    assert.equal(purgeUpperBound([]), 500);
   });
 });

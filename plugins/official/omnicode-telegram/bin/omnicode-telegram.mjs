@@ -14,7 +14,7 @@
 // chat id and refuses every other command.
 
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
-import { existsSync } from 'node:fs';
+import { existsSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { homedir } from 'node:os';
@@ -25,6 +25,8 @@ import { pathToFileURL } from 'node:url';
 const HOME = process.env.OMNICODE_HOME ?? path.join(homedir(), '.omnicode');
 const CONFIG_PATH = path.join(HOME, 'telegram.json');
 const STATE_PATH = path.join(HOME, 'telegram-state.json');
+const LOCK_PATH = path.join(HOME, 'telegram-bridge.lock');
+const LOCK_MAX_AGE_MS = 24 * 60 * 60 * 1000;
 const INSTANCES_DIR = path.join(HOME, 'server', 'instances');
 const TOKEN_PATH = path.join(HOME, 'server.token');
 const POLL_TIMEOUT_S = 10;
@@ -34,7 +36,7 @@ const POLL_TIMEOUT_S = 10;
 setDefaultResultOrder('ipv4first');
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, clearHinted: {}, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -811,7 +813,7 @@ function normalizeInteractions(saved) {
 }
 
 const SENDING_METHODS = new Set(['sendMessage', 'sendPhoto', 'sendDocument', 'sendVideo', 'sendVoice', 'sendMediaGroup']);
-const MAX_TRACKED_MESSAGES = 300;
+const MAX_TRACKED_MESSAGES = 1000;
 
 let saveQueued = false;
 
@@ -840,19 +842,62 @@ function forgetSent(chatId, messageId) {
 async function clearChatHistory(config, chatId) {
   const list = state.sent[chatId] ?? [];
   let removed = 0;
+  let stale = 0;
   for (const messageId of list) {
     try {
       await tg(config, 'deleteMessage', { chat_id: chatId, message_id: messageId });
       removed += 1;
-    } catch {
-      // messages older than 48h cannot be deleted by a bot; skip them
+    } catch (error) {
+      stale += 1;
+      log(`message ${String(messageId)} not deleted: ${error.message}`);
     }
   }
   state.sent[chatId] = [];
   state.interactions[chatId] = {};
   delete state.pendingQuestion[chatId];
   await saveState();
-  return removed;
+  return { removed, stale, known: list.length };
+}
+
+async function pinMessage(config, chatId, messageId) {
+  await tg(config, 'unpinAllChatMessages', { chat_id: chatId }).catch(() => undefined);
+  try {
+    await tg(config, 'pinChatMessage', { chat_id: chatId, message_id: messageId, disable_notification: true });
+    return true;
+  } catch (error) {
+    log(`pin failed: ${error.message}`);
+    return false;
+  }
+}
+
+function purgeUpperBound(knownIds) {
+  const highest = knownIds.length === 0 ? 0 : Math.max(...knownIds);
+  return highest === 0 ? 500 : highest + 100;
+}
+
+async function purgeChat(config, chatId, note) {
+  const upper = purgeUpperBound(state.sent[chatId] ?? []);
+  let removed = 0;
+  for (let messageId = 1; messageId <= upper; messageId += 1) {
+    try {
+      await tg(config, 'deleteMessage', { chat_id: chatId, message_id: messageId });
+      removed += 1;
+    } catch {
+      // ids that never existed, the person's own messages and anything older than 48
+      // hours all fail here — a bot cannot remove those, so keep sweeping
+    }
+    if (messageId % 25 === 0) {
+      await note(`Purging… ${String(messageId)} of ${String(upper)} ids checked, ${String(removed)} deleted`);
+    }
+    await new Promise((resolve) => {
+      setTimeout(resolve, 40);
+    });
+  }
+  state.sent[chatId] = [];
+  state.interactions[chatId] = {};
+  delete state.pendingQuestion[chatId];
+  await saveState();
+  return { removed, upper };
 }
 
 function botNameFor(project) {
@@ -898,21 +943,23 @@ async function sendLastReport(config, chatId, sessionId) {
   const turn = turns.find((item) => item.state === 'completed');
   if (turn === undefined) {
     log(`no finished turn in ${sessionId}; nothing to report`);
-    return;
+    return undefined;
   }
   const sessions = await listSessions(info).catch(() => []);
   const meta = sessions.find((session) => session.id === sessionId);
   try {
-    await deliverReport(config, chatId, turn, meta, undefined);
+    const delivered = await deliverReport(config, chatId, turn, meta, undefined);
+    return delivered?.messageId;
   } catch (error) {
     log(`last report failed: ${error.message}`);
+    return undefined;
   }
 }
 
 async function syncChatOnSelection(config, chatId, sessionId) {
-  let removed = 0;
+  let cleared = { removed: 0, stale: 0, known: 0 };
   try {
-    removed = await clearChatHistory(config, chatId);
+    cleared = await clearChatHistory(config, chatId);
   } catch (error) {
     log(`chat clear failed: ${error.message}`);
   }
@@ -922,11 +969,28 @@ async function syncChatOnSelection(config, chatId, sessionId) {
   } catch (error) {
     log(`rename failed: ${error.message}`);
   }
-  log(`selection synced for ${String(chatId)} (cleared ${String(removed)} messages, name "${name}")`);
+  log(
+    `selection synced for ${String(chatId)} (cleared ${String(cleared.removed)} of ${String(cleared.known)} tracked, ${String(cleared.stale)} undeletable, name "${name}")`,
+  );
+  let messageId;
   try {
-    await sendLastReport(config, chatId, sessionId);
+    messageId = await sendLastReport(config, chatId, sessionId);
   } catch (error) {
     log(`last report failed: ${error.message}`);
+  }
+  if (typeof messageId === 'number') await pinMessage(config, chatId, messageId);
+  if (cleared.known === 0 && state.clearHinted[chatId] !== true) {
+    state.clearHinted[chatId] = true;
+    try {
+      await send(
+        config,
+        chatId,
+        'Tip: this chat still holds messages sent before the bridge started keeping their ids, and Telegram lets a bot delete only messages it tracked as it sent them. Clear this chat once from Telegram itself, and every switch will keep it clean from then on.',
+      );
+    } catch (error) {
+      log(`clear tip failed: ${error.message}`);
+    }
+    await saveState();
   }
   try {
     await refreshPending(config, chatId, sessionId);
@@ -1225,6 +1289,7 @@ const COMMANDS_SESSION = [
   { command: 'stop', description: 'cancel the running turn' },
   { command: 'current', description: 'show the selection and overrides' },
   { command: 'notify', description: 'report each turn when it finishes' },
+  { command: 'purge', description: "delete this bot's messages, old ones too" },
   { command: 'sessions', description: 'back to the project list' },
   { command: 'help', description: 'show the command list' },
 ];
@@ -1361,6 +1426,7 @@ const HELP = [
   '/files — files the last turn changed',
   '/notify <on|off> — report each turn when it finishes',
   '/stop — cancel the running turn',
+  '/purge — delete every message this bot sent here, including old ones',
   '',
   'Send any other text to prompt the selected session.',
   '',
@@ -1533,6 +1599,25 @@ async function handle(config, chatId, text) {
       await send(config, chatId, `session: ${sessionId ?? 'none'}\noverrides: ${describeOverrides(chatId)}`);
       return;
     }
+    case '/purge': {
+      const sessionId = selectionFor(chatId);
+      const noteMessage = await send(config, chatId, 'Purging every message this bot sent here…').catch(() => undefined);
+      const note = async (text) => {
+        if (typeof noteMessage?.message_id === 'number') {
+          await tg(config, 'editMessageText', { chat_id: chatId, message_id: noteMessage.message_id, text }).catch(() => undefined);
+        }
+      };
+      const result = await purgeChat(config, chatId, note);
+      log(`purge for ${String(chatId)}: deleted ${String(result.removed)} of ${String(result.upper)} ids checked`);
+      if (typeof sessionId === 'string') {
+        const reportId = await sendLastReport(config, chatId, sessionId).catch(() => undefined);
+        if (typeof reportId === 'number') await pinMessage(config, chatId, reportId);
+        await refreshPending(config, chatId, sessionId).catch(() => undefined);
+      } else {
+        await send(config, chatId, `Purged ${String(result.removed)} message(s). Select a session with /use to start again.`);
+      }
+      return;
+    }
     case '/notify': {
       const mode = argument.toLowerCase();
       if (mode !== 'on' && mode !== 'off') {
@@ -1692,30 +1777,75 @@ async function handle(config, chatId, text) {
 // The pid and heartbeat let a reader (the Connectors settings page) tell a
 // live bridge from a file left behind by a crashed one.
 async function saveState() {
+  await loadPersistedState();
   await writeJson(STATE_PATH, { ...state, pid: process.pid, heartbeatAt: Date.now() });
+}
+
+let loadedOnce = false;
+
+async function loadPersistedState() {
+  if (loadedOnce) return;
+  loadedOnce = true;
+  await mkdir(path.dirname(STATE_PATH), { recursive: true });
+  const saved = await readJson(STATE_PATH, undefined);
+  if (saved === undefined) return;
+  state.offset = saved.offset ?? 0;
+  state.selection = saved.selection ?? {};
+  state.overrides = saved.overrides ?? {};
+  state.notify = saved.notify ?? {};
+  state.notified = saved.notified ?? {};
+  state.view = saved.view ?? {};
+  state.provider = saved.provider ?? {};
+  state.models = saved.models ?? {};
+  state.interactions = normalizeInteractions(saved.interactions);
+  state.pendingQuestion = saved.pendingQuestion ?? {};
+  state.progress = saved.progress ?? {};
+  state.sent = saved.sent ?? {};
+  state.clearHinted = saved.clearHinted ?? {};
+  state.botName = saved.botName;
+  state.nameRetryAt = saved.nameRetryAt;
+  state.profilePhotoHash = saved.profilePhotoHash;
+}
+
+function processAlive(pid) {
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function claimLock() {
+  const held = await readJson(LOCK_PATH, undefined);
+  if (held !== undefined && typeof held.pid === 'number' && held.pid !== process.pid) {
+    const claimedAt = typeof held.claimedAt === 'number' ? held.claimedAt : 0;
+    if (Date.now() - claimedAt < LOCK_MAX_AGE_MS && processAlive(held.pid)) return held.pid;
+  }
+  await writeJson(LOCK_PATH, { pid: process.pid, claimedAt: Date.now() });
+  return undefined;
+}
+
+function releaseLockSync() {
+  rmSync(LOCK_PATH, { force: true });
 }
 
 async function main() {
   const config = await loadConfig();
   await mkdir(path.dirname(STATE_PATH), { recursive: true });
-  const saved = await readJson(STATE_PATH, undefined);
-  if (saved !== undefined) {
-    state.offset = saved.offset ?? 0;
-    state.selection = saved.selection ?? {};
-    state.overrides = saved.overrides ?? {};
-    state.notify = saved.notify ?? {};
-    state.notified = saved.notified ?? {};
-    state.view = saved.view ?? {};
-    state.provider = saved.provider ?? {};
-    state.models = saved.models ?? {};
-    state.interactions = normalizeInteractions(saved.interactions);
-    state.pendingQuestion = saved.pendingQuestion ?? {};
-    state.progress = saved.progress ?? {};
-    state.sent = saved.sent ?? {};
-    state.botName = saved.botName;
-    state.nameRetryAt = saved.nameRetryAt;
-    state.profilePhotoHash = saved.profilePhotoHash;
+  const holder = await claimLock();
+  if (holder !== undefined) {
+    log(`another bridge is already polling (pid ${String(holder)}); exiting so the two cannot split the updates`);
+    process.exit(0);
   }
+  process.on('exit', () => {
+    try {
+      releaseLockSync();
+    } catch {
+      // nothing useful to do while exiting
+    }
+  });
+  await loadPersistedState();
   const info = await waitForServer();
   await saveState();
   log(`connected to ${info.baseUrl} (omnicode ${info.version ?? '?'})`);
@@ -1796,7 +1926,12 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId, purgeUpperBound };
+
+// Loaded at import time so that anything importing this module (tests, a one-off
+// command) sees the same state the daemon has, instead of an empty one that would
+// be written back over the file — which used to discard the message ledger.
+await loadPersistedState();
 
 if (isEntryPoint) {
   main().catch((error) => {
