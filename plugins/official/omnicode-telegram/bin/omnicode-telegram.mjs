@@ -15,6 +15,7 @@
 
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -144,6 +145,7 @@ async function tg(config, method, body) {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
+    signal: AbortSignal.timeout(60000),
   });
   const payload = await response.json();
   if (payload.ok !== true) throw new Error(payload.description ?? `telegram ${method} failed`);
@@ -151,6 +153,70 @@ async function tg(config, method, body) {
 }
 
 const send = (config, chatId, text) => tg(config, 'sendMessage', { chat_id: chatId, text, disable_web_page_preview: true });
+
+const BOT_COMMANDS = [
+  { command: 'sessions', description: 'list recent sessions' },
+  { command: 'use', description: 'select a session by number' },
+  { command: 'current', description: 'show the selection and overrides' },
+  { command: 'last', description: 'newest assistant reply' },
+  { command: 'stop', description: 'cancel the running turn' },
+  { command: 'model', description: 'model for the next prompt' },
+  { command: 'profile', description: 'profile for the next prompt' },
+  { command: 'thinking', description: 'thinking level for the next prompt' },
+  { command: 'permission', description: 'permission mode for the next prompt' },
+  { command: 'plan', description: 'plan mode on or off' },
+  { command: 'settings', description: 'list the model catalog' },
+  { command: 'help', description: 'show the command list' },
+];
+
+const SHORT_DESCRIPTION = 'Drive Omnicode from chat: pick a session, send prompts, switch model.';
+
+const DESCRIPTION = [
+  'Omnicode from Telegram.',
+  '',
+  'List your sessions, pick one, and send prompts to it. Model, profile, thinking level, permission mode and plan mode can be overridden per prompt.',
+].join('\n');
+
+const AVATAR_PATH = path.join(import.meta.dirname, '..', 'assets', 'avatar.jpg');
+
+async function uploadProfilePhoto(config) {
+  const bytes = await readFile(AVATAR_PATH);
+  const digest = createHash('sha256').update(bytes).digest('hex');
+  if (state.profilePhotoHash === digest) return 'photo unchanged';
+  const form = new FormData();
+  form.append('photo', JSON.stringify({ type: 'static', photo: 'attach://avatar.jpg' }));
+  form.append('avatar.jpg', new Blob([bytes], { type: 'image/jpeg' }), 'avatar.jpg');
+  const response = await fetch(`https://api.telegram.org/bot${config.botToken}/setMyProfilePhoto`, {
+    method: 'POST',
+    body: form,
+    signal: AbortSignal.timeout(60000),
+  });
+  const payload = await response.json();
+  if (payload.ok !== true) throw new Error(payload.description ?? 'setMyProfilePhoto failed');
+  state.profilePhotoHash = digest;
+  return 'photo uploaded';
+}
+
+async function applyBotProfile(config) {
+  const attempts = [
+    ['commands', () => tg(config, 'setMyCommands', { commands: BOT_COMMANDS })],
+    ['menu', () => tg(config, 'setChatMenuButton', { menu_button: { type: 'commands' } })],
+    ['short description', () => tg(config, 'setMyShortDescription', { short_description: SHORT_DESCRIPTION })],
+    ['description', () => tg(config, 'setMyDescription', { description: DESCRIPTION })],
+    ['photo', () => uploadProfilePhoto(config)],
+  ];
+  const outcomes = [];
+  for (const [label, run] of attempts) {
+    try {
+      const result = await run();
+      outcomes.push(typeof result === 'string' ? `${label}: ${result}` : `${label}: ok`);
+    } catch (error) {
+      outcomes.push(`${label}: ${error.message}`);
+    }
+  }
+  await saveState();
+  log(`bot profile — ${outcomes.join(', ')}`);
+}
 
 const HELP = [
   'Omnicode from Telegram',
@@ -329,6 +395,7 @@ async function main() {
     state.offset = saved.offset ?? 0;
     state.selection = saved.selection ?? {};
     state.overrides = saved.overrides ?? {};
+    state.profilePhotoHash = saved.profilePhotoHash;
   }
   const info = await server();
   await saveState();
@@ -336,29 +403,37 @@ async function main() {
   log(config.allowedChatIds.length === 0
     ? 'no allowedChatIds yet — message the bot to learn your chat id, add it, then restart'
     : `serving ${config.allowedChatIds.length} allowed chat(s)`);
+  await applyBotProfile(config);
 
+  let backoffMs = 3000;
   for (;;) {
     let updates;
     try {
       updates = await tg(config, 'getUpdates', { offset: state.offset, timeout: POLL_TIMEOUT_S, allowed_updates: ['message'] });
+      backoffMs = 3000;
     } catch (error) {
-      log(`poll failed: ${error.message}`);
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      log(`poll failed: ${error.message}; retrying in ${Math.round(backoffMs / 1000)}s`);
+      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+      backoffMs = Math.min(backoffMs * 2, 30000);
       continue;
     }
     for (const update of updates) {
       state.offset = update.update_id + 1;
-      const message = update.message;
-      if (message === undefined || typeof message.text !== 'string') continue;
-      const chatId = message.chat.id;
-      if (!config.allowedChatIds.includes(chatId)) {
-        await send(config, chatId, `This chat is not allowed to control Omnicode.\nYour chat id: ${chatId}\nAdd it to allowedChatIds in ${CONFIG_PATH} and restart the bot.`);
-        continue;
-      }
       try {
-        await handle(config, chatId, message.text);
+        const message = update.message;
+        if (message === undefined || typeof message.text !== 'string') continue;
+        const chatId = message.chat.id;
+        if (!config.allowedChatIds.includes(chatId)) {
+          await send(config, chatId, `This chat is not allowed to control Omnicode.\nYour chat id: ${chatId}\nAdd it to allowedChatIds in ${CONFIG_PATH} and restart the bot.`);
+          continue;
+        }
+        try {
+          await handle(config, chatId, message.text);
+        } catch (error) {
+          await send(config, chatId, `Error: ${error.message}`);
+        }
       } catch (error) {
-        await send(config, chatId, `Error: ${error.message}`);
+        log(`update ${String(update.update_id)} failed: ${error.message}`);
       }
     }
     await saveState();
@@ -367,7 +442,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg };
 
 if (isEntryPoint) {
   main().catch((error) => {

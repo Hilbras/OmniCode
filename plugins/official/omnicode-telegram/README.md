@@ -25,6 +25,20 @@ The daemon discovers the running Omnicode server by itself, from
 `~/.omnicode/server/instances/*.json` and `~/.omnicode/server.token` — no manual
 URL or token needed.
 
+## What it sets on your bot
+
+Every start, the bridge configures the bot itself so the chat shows a working menu:
+
+- the command list that appears when you type `/`
+- the menu button that opens that list
+- the bot's short description and description
+- the bot's profile photo from `assets/avatar.jpg` — uploaded once, and again only
+  when that file changes
+
+All of it is best-effort: if Telegram rejects a step, the bridge logs it and keeps
+running. Setting the photo needs a `.JPG` (the Bot API does not accept PNG for
+profile photos), which is why the plugin ships `avatar.jpg`.
+
 ## Commands
 
 | Command | Effect |
