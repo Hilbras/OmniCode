@@ -13,7 +13,12 @@ function callbacks(keyboard) {
 describe('botNameFor', () => {
   it('names the bot after the project', () => {
     assert.equal(botNameFor('trading'), 'OmniCode - trading');
-    assert.equal(botNameFor('OmniCode'), 'OmniCode - OmniCode');
+    assert.equal(botNameFor('OmniCode Desktop'), 'OmniCode Desktop');
+  });
+
+  it('does not repeat its own name for its own project', () => {
+    assert.equal(botNameFor('OmniCode'), 'OmniCode');
+    assert.equal(botNameFor('omnicode'), 'omnicode');
   });
 
   it('copes with a missing or blank project', () => {

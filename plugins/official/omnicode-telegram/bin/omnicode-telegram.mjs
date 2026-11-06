@@ -1046,7 +1046,7 @@ async function purgeChat(config, chatId, note) {
 
 function botNameFor(project) {
   const label = typeof project === 'string' && project.trim() !== '' ? project.trim() : 'no session';
-  const name = `OmniCode - ${label}`;
+  const name = label.toLowerCase().startsWith('omnicode') ? label : `OmniCode - ${label}`;
   return name.length <= 64 ? name : `${name.slice(0, 63)}…`;
 }
 
