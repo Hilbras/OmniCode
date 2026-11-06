@@ -1,4 +1,5 @@
 import {
+  existsSync,
   mkdirSync,
   statSync,
   utimesSync,
@@ -13,6 +14,7 @@ import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { cleanupStaleNativeCache } from '#/native/native-assets';
+import { cleanupStaleWebAssetCache } from '#/native/web-assets';
 
 describe('cleanupStaleNativeCache', () => {
   let root: string;
@@ -106,6 +108,88 @@ describe('cleanupStaleNativeCache', () => {
       target: 'darwin-arm64',
       currentRoot: current,
     });
+    expect(result.errors).toEqual([]);
+  });
+});
+
+describe('cleanupStaleWebAssetCache', () => {
+  let root: string;
+
+  beforeEach(() => {
+    root = mkdtempSync(join(tmpdir(), 'omnicode-web-cache-gc-'));
+  });
+
+  afterEach(() => {
+    rmSync(root, { recursive: true, force: true });
+  });
+
+  function makeWebDir(version: string, hash: string, mtimeOffset = 0): string {
+    const distWeb = join(root, 'web', version, 'linux-x64', hash, 'dist-web');
+    mkdirSync(distWeb, { recursive: true });
+    writeFileSync(join(distWeb, 'index.html'), hash);
+    const now = Math.floor(Date.now() / 1000);
+    utimesSync(join(root, 'web', version, 'linux-x64', hash), now + mtimeOffset, now + mtimeOffset);
+    utimesSync(join(root, 'web', version), now + mtimeOffset, now + mtimeOffset);
+    return distWeb;
+  }
+
+  it('keeps the current manifest dir plus the newest sibling', () => {
+    const oldest = makeWebDir('1.0.0', 'aaaa', -300);
+    const recent = makeWebDir('1.0.0', 'cccc', -100);
+    const current = makeWebDir('1.0.0', 'dddd', 0);
+
+    const result = cleanupStaleWebAssetCache({
+      cacheBase: root,
+      version: '1.0.0',
+      currentRoot: current,
+    });
+
+    expect(result.removed).toEqual([join(oldest, '..')]);
+    expect(result.kept).toContain(join(recent, '..'));
+    expect(result.kept).toContain(join(current, '..'));
+    expect(readdirSync(join(root, 'web', '1.0.0', 'linux-x64')).toSorted()).toEqual([
+      'cccc',
+      'dddd',
+    ]);
+  });
+
+  it('prunes older version trees but keeps the current one', () => {
+    const oldVersion = makeWebDir('0.9.0', 'aaaa', -400);
+    const previousVersion = makeWebDir('0.9.5', 'bbbb', -200);
+    const current = makeWebDir('1.0.0', 'cccc', 0);
+
+    const result = cleanupStaleWebAssetCache({
+      cacheBase: root,
+      version: '1.0.0',
+      currentRoot: current,
+    });
+
+    expect(result.removed).toContain(join(root, 'web', '0.9.0'));
+    expect(existsSync(oldVersion)).toBe(false);
+    expect(readdirSync(join(root, 'web')).toSorted()).toEqual(['0.9.5', '1.0.0']);
+    expect(statSync(previousVersion).isDirectory()).toBe(true);
+    expect(statSync(current).isDirectory()).toBe(true);
+  });
+
+  it('is a no-op when the web cache does not exist', () => {
+    const result = cleanupStaleWebAssetCache({
+      cacheBase: root,
+      version: '1.0.0',
+      currentRoot: join(root, 'web', '1.0.0', 'linux-x64', 'absent', 'dist-web'),
+    });
+
+    expect(result.kept).toEqual([]);
+    expect(result.removed).toEqual([]);
+  });
+
+  it('reports no errors on a clean run', () => {
+    const current = makeWebDir('1.0.0', 'dddd');
+    const result = cleanupStaleWebAssetCache({
+      cacheBase: root,
+      version: '1.0.0',
+      currentRoot: current,
+    });
+
     expect(result.errors).toEqual([]);
   });
 });

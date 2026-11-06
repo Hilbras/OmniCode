@@ -43,6 +43,7 @@ import { createOmnicodeCodeHostIdentity, getVersion } from './cli/version';
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE, PROCESS_NAME } from './constant/app';
 import { runHeadlessMigrate, type MigrateCommandOptions } from './migration/index';
 import { cleanupStaleNativeCacheForCurrent } from './native/native-assets';
+import { cleanupStaleWebAssetCacheForCurrent } from './native/web-assets';
 import { installMinidbTextBuildWorker } from './native/minidb-worker';
 import { installKapSearchWorker } from './native/search-worker';
 import { installNativeModuleHook } from './native/module-hook';
@@ -227,6 +228,11 @@ function bootstrap(): void {
   queueMicrotask(() => {
     try {
       cleanupStaleNativeCacheForCurrent();
+    } catch {
+      // ignore: cache GC must never affect process startup
+    }
+    try {
+      cleanupStaleWebAssetCacheForCurrent();
     } catch {
       // ignore: cache GC must never affect process startup
     }
