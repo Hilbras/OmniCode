@@ -61,7 +61,15 @@ export type { GlobalSearchErrorReason } from './contract';
 
 const INDEX_DIR_NAME = 'search-index';
 const SESSION_PAGE_SIZE = 500;
-const WARMUP_DELAY_MS = 5_000;
+const WARMUP_DELAY_MS = 30_000;
+const WARMUP_DELAY_ENV = 'OMNICODE_SEARCH_WARMUP_DELAY_MS';
+
+function warmupDelayMs(): number {
+  const raw = process.env[WARMUP_DELAY_ENV];
+  if (raw === undefined || raw.trim() === '') return WARMUP_DELAY_MS;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : WARMUP_DELAY_MS;
+}
 
 const MAX_QUERY_TERMS = 32;
 const MAX_LITERAL_QUERY_CHARS = 1_024;
@@ -254,7 +262,7 @@ export class GlobalSearchService implements IGlobalSearchService {
     this.liveSource = source;
   }
 
-  scheduleWarmup(delayMs = WARMUP_DELAY_MS): void {
+  scheduleWarmup(delayMs = warmupDelayMs()): void {
     if (this.disposed || this.syncPromise !== null || this.syncTimer !== null) return;
     if (delayMs <= 0) {
       this.requestSync();
