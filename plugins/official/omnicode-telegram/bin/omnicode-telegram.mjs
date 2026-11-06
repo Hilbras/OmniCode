@@ -871,6 +871,7 @@ async function clearChatHistory(config, chatId) {
   state.sent[chatId] = [];
   state.incoming[chatId] = [];
   state.interactions[chatId] = {};
+  delete state.progress[chatId];
   delete state.pendingQuestion[chatId];
   await saveState();
   return result;
@@ -961,6 +962,11 @@ async function sendLastReport(config, chatId, sessionId) {
   const info = await server();
   const data = await api(info, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/transcript?agent_id=main&page_size=3`).catch(() => undefined);
   const turns = (Array.isArray(data?.items) ? data.items : []).filter((item) => item?.kind === 'turn');
+  const running = turns.find((item) => item.state === 'running');
+  if (running !== undefined) {
+    await showProgress(config, chatId, running, undefined);
+    return undefined;
+  }
   const turn = turns.find((item) => item.state === 'completed');
   if (turn === undefined) {
     log(`no finished turn in ${sessionId}; nothing to report`);
@@ -1099,8 +1105,14 @@ async function showProgress(config, chatId, turn, progress) {
       disable_web_page_preview: true,
     });
     progress.lastLine = line;
-  } catch {
-    // a throttled or rejected edit is harmless; the next tick tries again
+  } catch (error) {
+    // a throttled or rejected edit is harmless; the next tick tries again — unless the
+    // message is gone (the chat was cleared), in which case drop it so a fresh progress
+    // message is posted instead of editing a corpse forever
+    if (/message to edit not found|message can't be edited/i.test(error.message)) {
+      delete state.progress[chatId];
+      await saveState().catch(() => undefined);
+    }
   }
 }
 
