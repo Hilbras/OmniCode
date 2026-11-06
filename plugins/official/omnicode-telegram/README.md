@@ -89,11 +89,21 @@ failing silently.
 
 ## Progress
 
-A running turn gets one message that keeps changing — `⏳ Working · step 8 · Bash ·
-9 tools · 3m 12s` — and that same message is edited into the finish report when the
-turn ends, so a chat shows one entry per turn rather than silence followed by a wall
-of text. Reports too long for one message arrive as a summary plus a `report.md`
-attachment.
+A running turn gets one message that keeps changing, and what it shows is the agent's
+own words rather than its plumbing:
+
+```
+⏳ Working · 4m 2s
+
+Now updating the tests to the new behaviour:
+```
+
+Tool names, commands and step counts are deliberately left out — the point is to read what
+the agent says it is doing. The newest text frame of the turn is shown, escaped and cut to
+500 characters so a long paragraph cannot flood the chat. That same message is edited into
+the finish report when the turn ends, so a chat shows one entry per turn rather than
+silence followed by a wall of text. Reports too long for one message arrive as a summary
+plus a `report.md` attachment.
 
 ## Images and videos
 
@@ -110,10 +120,17 @@ saying why, and anything over the size limit names both the size and the limit.
 ## Alerts from other sessions
 
 While you drive one session, the bridge also watches the others. When a session that was
-working stops, you get a one-line alert in the chat — `✅ Finished · 1m 5s`, the project
-and session, and the first line of its reply — so you learn about it without leaving the
-session you are in. The session you have selected is excluded, since its own report
-already covers it.
+working stops, the chat gets a short alert:
+
+```
+🔔 OmniHilbras · hi — done in 1m 5s
+<first line of its reply>
+[ Open this session ]
+```
+
+so you learn about it without leaving the session you are in, and one tap switches the chat
+to it — clearing, renaming the header and posting that session's last report, exactly like
+`/use`. The session you have selected is excluded, since its own report already covers it.
 
 Telegram has no way for a bot to raise a *service* notification (the centred "X pinned a
 message" line); only messages can notify, so this arrives as a very short message.

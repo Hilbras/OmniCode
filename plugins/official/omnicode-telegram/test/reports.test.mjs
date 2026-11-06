@@ -66,26 +66,48 @@ describe('summarizeTurn', () => {
 });
 
 describe('progressLine', () => {
-  it('shows the step, the last tool and the tool count', () => {
+  it("shows the agent's latest words, not the tools it ran", () => {
     const running = {
       ...TURN,
       state: 'running',
       durationMs: undefined,
-      steps: [...TURN.steps, { stepId: 't1.4', frames: [{ kind: 'tool', name: 'Read', input: { path: '/tmp/work/b.ts' } }] }],
+      steps: [
+        ...TURN.steps,
+        { stepId: 't1.4', frames: [{ kind: 'tool', name: 'Read', input: { path: '/tmp/work/b.ts' } }] },
+        { stepId: 't1.5', frames: [{ kind: 'text', text: 'Checking how the auth guard is wired.' }] },
+      ],
     };
     const line = progressLine(running);
 
-    assert.match(line, /Working/);
-    assert.match(line, /step 4/);
-    assert.match(line, /Read/);
-    assert.match(line, /3 tools/);
+    assert.match(line, /⏳ <b>Working<\/b>/);
+    assert.match(line, /Checking how the auth guard is wired\./);
+    assert.doesNotMatch(line, /Read/);
+    assert.doesNotMatch(line, /tools/);
+    assert.doesNotMatch(line, /step /);
   });
 
-  it('still renders when the newest step has no tool yet', () => {
-    const line = progressLine({ ...TURN, state: 'running', durationMs: undefined });
+  it('shows only the working line when the agent has not spoken yet', () => {
+    const line = progressLine({ ...TURN, state: 'running', durationMs: undefined, steps: [{ stepId: 's', frames: [{ kind: 'tool', name: 'Bash' }] }] });
 
-    assert.match(line, /step 3/);
-    assert.match(line, /2 tools/);
+    assert.match(line, /⏳ <b>Working<\/b>/);
+    assert.doesNotMatch(line, /Bash/);
+  });
+
+  it('escapes the words so model output cannot break the message', () => {
+    const line = progressLine({ ...TURN, state: 'running', durationMs: undefined, steps: [{ stepId: 's', frames: [{ kind: 'text', text: 'a <b> & c' }] }] });
+
+    assert.match(line, /a &lt;b&gt; &amp; c/);
+  });
+
+  it('cuts a long comment instead of flooding the chat', () => {
+    const line = progressLine({
+      ...TURN,
+      state: 'running',
+      durationMs: undefined,
+      steps: [{ stepId: 's', frames: [{ kind: 'text', text: 'x'.repeat(900) }] }],
+    });
+
+    assert.ok(line.length < 600);
   });
 });
 
@@ -215,15 +237,14 @@ describe('otherFinishLine', () => {
   it('names the project and session with the duration and first reply line', () => {
     const line = otherFinishLine({ ...TURN }, { project: 'OmniHilbras', title: 'hi' });
 
-    assert.match(line, /^✅ Finished · 1m 5s/);
-    assert.match(line, /OmniHilbras · hi/);
+    assert.match(line, /^🔔 OmniHilbras · hi — done in 1m 5s/);
     assert.match(line, /Final \*\*report\*\*/);
   });
 
   it('copes with a session that has no project or reply', () => {
     const line = otherFinishLine({ turnId: 't9', state: 'completed', steps: [] }, {});
 
-    assert.match(line, /^✅ Finished\nanother session$/);
+    assert.equal(line, '🔔 Another session finished');
   });
 
   it('keeps the reply short enough to read as a notification', () => {

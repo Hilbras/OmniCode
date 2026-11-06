@@ -442,13 +442,20 @@ function approvalText(approval) {
 
 const CALLBACK_LIMIT_BYTES = 64;
 
+function idPrefix(kind) {
+  if (kind === 'apv') return 'approval_';
+  if (kind === 'q') return 'question_';
+  if (kind === 'go') return 'session_';
+  return '';
+}
+
 function shortId(kind, id) {
-  const prefix = kind === 'apv' ? 'approval_' : kind === 'q' ? 'question_' : '';
+  const prefix = idPrefix(kind);
   return prefix !== '' && id.startsWith(prefix) ? id.slice(prefix.length) : id;
 }
 
 function longId(kind, id) {
-  const prefix = kind === 'apv' ? 'approval_' : kind === 'q' ? 'question_' : '';
+  const prefix = idPrefix(kind);
   return prefix !== '' && !id.startsWith(prefix) ? `${prefix}${id}` : id;
 }
 
@@ -631,6 +638,18 @@ async function handleCallback(config, query) {
   try {
     if (kind === 'cmd') {
       await handle(config, chatId, decodeURIComponent(id));
+      return;
+    }
+    if (kind === 'go') {
+      const sessions = await listSessions(await server());
+      const target = sessions.find((session) => session.id === id);
+      if (target === undefined) throw new Error('that session is gone');
+      state.selection[chatId] = target.id;
+      delete state.notified[chatId];
+      await rememberNewestTurn(chatId, target.id);
+      await saveState();
+      await setMenu(config, chatId, COMMANDS_SESSION);
+      await syncChatOnSelection(config, chatId, target.id);
       return;
     }
     const recorded = state.interactions[chatId]?.[id];
@@ -1243,21 +1262,26 @@ let reporting = false;
 
 const HTML_MESSAGE_LIMIT = 3800;
 
+function latestCommentary(turn, limit = 500) {
+  const spoken = [];
+  for (const step of turn.steps ?? []) {
+    for (const frame of step.frames ?? []) {
+      if (frame.kind !== 'text' || typeof frame.text !== 'string') continue;
+      const trimmed = frame.text.trim();
+      if (trimmed !== '') spoken.push(trimmed);
+    }
+  }
+  const last = spoken.at(-1);
+  if (last === undefined) return '';
+  return last.length <= limit ? last : `${last.slice(0, limit - 1)}…`;
+}
+
 function progressLine(turn) {
-  const { tools, steps } = turnFacts(turn);
-  const lastStep = (turn.steps ?? []).at(-1);
-  const names = (lastStep?.frames ?? [])
-    .filter((frame) => frame.kind === 'tool')
-    .map((frame) => frame.name)
-    .filter((name) => typeof name === 'string');
   const started = typeof turn.startedAt === 'string' ? Date.parse(turn.startedAt) : Number.NaN;
   const elapsed = Number.isFinite(started) ? formatDuration(Date.now() - started) : '';
-  const parts = ['⏳ <b>Working</b>'];
-  if (steps > 0) parts.push(`step ${String(steps)}`);
-  if (names.length > 0) parts.push(escapeHtml(names[names.length - 1]));
-  if (tools > 0) parts.push(`${String(tools)} tools`);
-  if (elapsed !== '') parts.push(elapsed);
-  return parts.join(' · ');
+  const head = elapsed === '' ? '⏳ <b>Working</b>' : `⏳ <b>Working</b> · ${elapsed}`;
+  const commentary = latestCommentary(turn);
+  return commentary === '' ? head : `${head}\n\n${escapeHtml(commentary)}`;
 }
 
 async function showProgress(config, chatId, turn, progress) {
@@ -1361,11 +1385,12 @@ function otherFinishLine(turn, meta) {
   const project = typeof meta?.project === 'string' ? meta.project : '';
   const title = typeof meta?.title === 'string' ? meta.title : '';
   const label = [project, title].filter((part) => part !== '').join(' · ');
+  const who = label === '' ? 'Another session' : label;
   const duration = typeof turn.durationMs === 'number' ? formatDuration(turn.durationMs) : '';
-  const head = duration === '' ? '✅ Finished' : `✅ Finished · ${duration}`;
+  const head = duration === '' ? `🔔 ${who} finished` : `🔔 ${who} — done in ${duration}`;
   const reply = (finalTextOf(turn) ?? '').split('\n').find((line) => line.trim() !== '') ?? '';
   const tail = reply === '' ? '' : `\n${reply.trim().slice(0, 160)}`;
-  return `${head}\n${label === '' ? 'another session' : label}${tail}`;
+  return `${head}${tail}`;
 }
 
 let otherChecks = false;
@@ -1403,9 +1428,10 @@ async function reportOtherFinishedTurns(config) {
       state.otherNotified[id] = turn.turnId;
       changed = true;
       const line = otherFinishLine(turn, session);
+      const keyboard = { inline_keyboard: [[{ text: 'Open this session', callback_data: `go|${shortId('go', id)}` }]] };
       for (const chatId of chats) {
         if (state.selection[chatId] === id) continue;
-        await send(config, Number(chatId), line).catch((error) => log(`other finish notice failed: ${error.message}`));
+        await sendPlain(config, Number(chatId), line, keyboard).catch((error) => log(`other finish notice failed: ${error.message}`));
       }
     }
     if (changed) await saveState();
