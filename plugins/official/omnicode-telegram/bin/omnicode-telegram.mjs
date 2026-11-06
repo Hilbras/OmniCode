@@ -34,7 +34,7 @@ const POLL_TIMEOUT_S = 10;
 setDefaultResultOrder('ipv4first');
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, botName: undefined, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -766,6 +766,124 @@ function normalizeInteractions(saved) {
   return out;
 }
 
+const SENDING_METHODS = new Set(['sendMessage', 'sendPhoto', 'sendDocument', 'sendVideo', 'sendVoice', 'sendMediaGroup']);
+const MAX_TRACKED_MESSAGES = 120;
+
+let saveQueued = false;
+
+function scheduleStateSave() {
+  if (saveQueued) return;
+  saveQueued = true;
+  setTimeout(() => {
+    saveQueued = false;
+    void saveState().catch(() => undefined);
+  }, 2000);
+}
+
+function rememberSent(chatId, messageId) {
+  const list = state.sent[chatId] ?? [];
+  list.push(messageId);
+  state.sent[chatId] = list.slice(-MAX_TRACKED_MESSAGES);
+  scheduleStateSave();
+}
+
+function forgetSent(chatId, messageId) {
+  const list = state.sent[chatId];
+  if (list === undefined) return;
+  state.sent[chatId] = list.filter((id) => id !== messageId);
+}
+
+async function clearChatHistory(config, chatId) {
+  const list = state.sent[chatId] ?? [];
+  let removed = 0;
+  for (const messageId of list) {
+    try {
+      await tg(config, 'deleteMessage', { chat_id: chatId, message_id: messageId });
+      removed += 1;
+    } catch {
+      // messages older than 48h cannot be deleted by a bot; skip them
+    }
+  }
+  state.sent[chatId] = [];
+  await saveState();
+  return removed;
+}
+
+function botNameFor(project, title) {
+  const parts = [];
+  if (typeof project === 'string' && project !== '') parts.push(project);
+  if (typeof title === 'string' && title.trim() !== '' && title.trim() !== project) parts.push(title.trim());
+  const label = parts.length === 0 ? 'no session' : parts.join(' · ');
+  const name = `OmniCode - ${label}`;
+  return name.length <= 64 ? name : `${name.slice(0, 63)}…`;
+}
+
+async function applyBotName(config, chatId, sessionId) {
+  const info = await server();
+  const sessions = await listSessions(info).catch(() => []);
+  const meta = sessions.find((session) => session.id === sessionId);
+  const name = botNameFor(meta?.project ?? '', meta?.title ?? '');
+  if (state.botName === name) return name;
+  try {
+    await tg(config, 'setMyName', { name });
+    state.botName = name;
+    await saveState();
+  } catch (error) {
+    log(`bot name not changed: ${error.message}`);
+  }
+  return name;
+}
+
+async function sendLastReport(config, chatId, sessionId) {
+  const info = await server();
+  const data = await api(info, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/transcript?agent_id=main&page_size=3`).catch(() => undefined);
+  const turns = (Array.isArray(data?.items) ? data.items : []).filter((item) => item?.kind === 'turn');
+  const turn = turns.find((item) => item.state === 'completed');
+  if (turn === undefined) {
+    await send(config, chatId, 'No finished turn in this session yet.');
+    return;
+  }
+  const sessions = await listSessions(info).catch(() => []);
+  const meta = sessions.find((session) => session.id === sessionId);
+  try {
+    await deliverReport(config, chatId, turn, meta, undefined);
+  } catch (error) {
+    log(`last report failed: ${error.message}`);
+  }
+}
+
+async function syncChatOnSelection(config, chatId, sessionId) {
+  let removed = 0;
+  try {
+    removed = await clearChatHistory(config, chatId);
+  } catch (error) {
+    log(`chat clear failed: ${error.message}`);
+  }
+  let name = '';
+  try {
+    name = await applyBotName(config, chatId, sessionId);
+  } catch (error) {
+    log(`rename failed: ${error.message}`);
+  }
+  log(`selection synced for ${String(chatId)} (cleared ${String(removed)} messages, name "${name}")`);
+  try {
+    await send(config, chatId, name === '' ? 'Selected.' : `Now driving ${name.replace(/^OmniCode - /, '')}.`);
+  } catch (error) {
+    log(`selection notice failed: ${error.message}`);
+  }
+  try {
+    await sendLastReport(config, chatId, sessionId);
+  } catch (error) {
+    log(`last report failed: ${error.message}`);
+  }
+}
+
+function describeError(error) {
+  const cause = error?.cause;
+  const code = cause?.code ?? cause?.errno;
+  return code === undefined ? String(error?.message) : `${String(error?.message)} (${String(code)})`;
+}
+
 const NOTIFY_INTERVAL_MS = 3000;
 const REPORT_MAX_CHARS = 3500;
 
@@ -983,6 +1101,14 @@ async function tg(config, method, body) {
   });
   const payload = await response.json();
   if (payload.ok !== true) throw new Error(payload.description ?? `telegram ${method} failed`);
+  if (SENDING_METHODS.has(method)) {
+    const chatId = body === undefined ? undefined : body['chat_id'];
+    const messageId = payload.result === undefined ? undefined : payload.result.message_id;
+    if (typeof chatId === 'number' && typeof messageId === 'number') rememberSent(chatId, messageId);
+  }
+  if (method === 'deleteMessage' && body !== undefined) {
+    forgetSent(Number(body['chat_id']), Number(body['message_id']));
+  }
   return payload.result;
 }
 
@@ -1319,7 +1445,7 @@ async function handle(config, chatId, text) {
         delete state.notified[chatId];
         await saveState();
         await setMenu(config, chatId, COMMANDS_SESSION);
-        await send(config, chatId, `Created and selected: ${title}\n${id}`);
+        await syncChatOnSelection(config, chatId, id);
       } catch (error) {
         await send(config, chatId, `Could not create the session: ${error.message}`);
       }
@@ -1344,7 +1470,7 @@ async function handle(config, chatId, text) {
       await rememberNewestTurn(chatId, id);
       await saveState();
       await setMenu(config, chatId, COMMANDS_SESSION);
-      await send(config, chatId, `Selected: ${picked === undefined ? id : picked.title}`);
+      await syncChatOnSelection(config, chatId, id);
       return;
     }
     case '/current': {
@@ -1530,6 +1656,8 @@ async function main() {
     state.interactions = normalizeInteractions(saved.interactions);
     state.pendingQuestion = saved.pendingQuestion ?? {};
     state.progress = saved.progress ?? {};
+    state.sent = saved.sent ?? {};
+    state.botName = saved.botName;
     state.profilePhotoHash = saved.profilePhotoHash;
   }
   const info = await waitForServer();
@@ -1563,11 +1691,11 @@ async function main() {
       updates = await tg(config, 'getUpdates', { offset: state.offset, timeout: POLL_TIMEOUT_S, allowed_updates: ['message', 'callback_query'] });
       backoffMs = 3000;
     } catch (error) {
-      log(`poll failed: ${error.message}; retrying in ${Math.round(backoffMs / 1000)}s`);
+      log(`poll failed: ${describeError(error)}; retrying in ${Math.round(backoffMs / 1000)}s`);
       await new Promise((resolve) => {
         setTimeout(resolve, backoffMs);
       });
-      backoffMs = Math.min(backoffMs * 2, 30000);
+      backoffMs = Math.min(backoffMs * 2, 15000);
       continue;
     }
     for (const update of updates) {
@@ -1612,7 +1740,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection };
 
 if (isEntryPoint) {
   main().catch((error) => {

@@ -101,6 +101,23 @@ Send a photo, or an image file up to 5 MB, and it goes to the selected session a
 image the agent can look at; the caption becomes the prompt. Other file types are
 refused with a note saying why.
 
+## Selecting a session
+
+Choosing a session (`/use <n>`, or tapping one in `/project`) does three things:
+
+1. **Clears the chat.** Every message the bot sent in that chat is deleted, so each
+   session starts from a clean slate.
+2. **Renames the bot** to `OmniCode - <project> · <session title>`, so the chat header
+   tells you which session you are driving.
+3. **Posts the last report** from that session — the newest finished turn, with its
+   duration, tools, files and final message.
+
+Limits worth knowing: a bot can only delete **its own** messages, and only ones it has
+sent since it started tracking them (Telegram refuses anything older than 48 hours),
+so your own messages and older bot messages stay in the chat. The bot's name is also
+global — one bot has one name — so it reflects the session you selected last, in any
+chat. It is only sent to Telegram when the name actually changes.
+
 ## Browsing
 
 `/sessions` lists projects only — how many sessions each holds and how many are
