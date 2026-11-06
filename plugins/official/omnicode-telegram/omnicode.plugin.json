@@ -1,6 +1,6 @@
 {
   "name": "omnicode-telegram",
-  "version": "1.1.22",
+  "version": "1.1.23",
   "description": "Drive Omnicode from Telegram: pick a session, send prompts, switch model, profile, thinking level and permission mode, and follow the reply.",
   "keywords": ["telegram", "remote", "control", "bot", "channel"],
   "skills": "./skills/",

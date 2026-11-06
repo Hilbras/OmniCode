@@ -962,25 +962,23 @@ async function sendLastReport(config, chatId, sessionId) {
   const info = await server();
   const data = await api(info, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/transcript?agent_id=main&page_size=3`).catch(() => undefined);
   const turns = (Array.isArray(data?.items) ? data.items : []).filter((item) => item?.kind === 'turn');
-  const running = turns.find((item) => item.state === 'running');
-  if (running !== undefined) {
-    await showProgress(config, chatId, running, undefined);
-    return undefined;
-  }
+  let reportId;
   const turn = turns.find((item) => item.state === 'completed');
   if (turn === undefined) {
     log(`no finished turn in ${sessionId}; nothing to report`);
-    return undefined;
+  } else {
+    const sessions = await listSessions(info).catch(() => []);
+    const meta = sessions.find((session) => session.id === sessionId);
+    try {
+      const delivered = await deliverReport(config, chatId, turn, meta, undefined);
+      reportId = delivered?.messageId;
+    } catch (error) {
+      log(`last report failed: ${error.message}`);
+    }
   }
-  const sessions = await listSessions(info).catch(() => []);
-  const meta = sessions.find((session) => session.id === sessionId);
-  try {
-    const delivered = await deliverReport(config, chatId, turn, meta, undefined);
-    return delivered?.messageId;
-  } catch (error) {
-    log(`last report failed: ${error.message}`);
-    return undefined;
-  }
+  const running = turns.find((item) => item.state === 'running');
+  if (running !== undefined) await showProgress(config, chatId, running, undefined);
+  return reportId;
 }
 
 async function syncChatOnSelection(config, chatId, sessionId) {
