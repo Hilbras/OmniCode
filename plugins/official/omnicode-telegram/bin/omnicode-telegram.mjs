@@ -28,7 +28,7 @@ const TOKEN_PATH = path.join(HOME, 'server.token');
 const POLL_TIMEOUT_S = 25;
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -239,17 +239,24 @@ function sessionLabel(item) {
   return text.length <= 48 ? text : `${text.slice(0, 47)}…`;
 }
 
-function summarizeTurn(turn, meta) {
-  const counts = new Map();
-  const files = new Set();
-  let tools = 0;
+function finalTextOf(turn) {
   let final;
   for (const step of turn.steps ?? []) {
     for (const frame of step.frames ?? []) {
       if (frame.kind === 'text' && typeof frame.text === 'string' && frame.text.trim() !== '') {
         final = frame.text.trim();
-        continue;
       }
+    }
+  }
+  return final;
+}
+
+function turnFacts(turn) {
+  const counts = new Map();
+  const files = new Set();
+  let tools = 0;
+  for (const step of turn.steps ?? []) {
+    for (const frame of step.frames ?? []) {
       if (frame.kind !== 'tool') continue;
       tools += 1;
       const name = typeof frame.name === 'string' ? frame.name : 'tool';
@@ -258,6 +265,11 @@ function summarizeTurn(turn, meta) {
       if ((name === 'Edit' || name === 'Write') && typeof input.path === 'string') files.add(input.path);
     }
   }
+  return { counts, files, tools, steps: (turn.steps ?? []).length };
+}
+
+function summarizeTurn(turn, meta, includeBody = true) {
+  const { counts, files, tools } = turnFacts(turn);
   const duration = formatDuration(turn.durationMs);
   const lines = [duration === '' ? '<b>✅ Finished</b>' : `<b>✅ Finished</b> · ${duration}`];
   const where = [];
@@ -278,10 +290,12 @@ function summarizeTurn(turn, meta) {
     if (files.size > 5) listed.push(`<i>+${String(files.size - 5)} more</i>`);
     lines.push('', '<b>Files</b>', ...listed);
   }
+  if (!includeBody) return lines.join('\n');
+  const final = finalTextOf(turn);
   if (final === undefined) {
     lines.push('', '<i>no final message</i>');
   } else {
-    const body = final.length > REPORT_MAX_CHARS ? `${final.slice(0, REPORT_MAX_CHARS)}\n…(truncated)` : final;
+    const body = final.length > REPORT_MAX_CHARS ? `${final.slice(0, REPORT_MAX_CHARS)}\n...(truncated)` : final;
     lines.push('', '<blockquote>', markdownToHtml(body), '</blockquote>');
   }
   return lines.join('\n');
@@ -564,6 +578,104 @@ async function primeReports() {
 
 let reporting = false;
 
+const HTML_MESSAGE_LIMIT = 3800;
+
+function progressLine(turn) {
+  const { tools, steps } = turnFacts(turn);
+  const lastStep = (turn.steps ?? []).at(-1);
+  const names = (lastStep?.frames ?? [])
+    .filter((frame) => frame.kind === 'tool')
+    .map((frame) => frame.name)
+    .filter((name) => typeof name === 'string');
+  const started = typeof turn.startedAt === 'string' ? Date.parse(turn.startedAt) : Number.NaN;
+  const elapsed = Number.isFinite(started) ? formatDuration(Date.now() - started) : '';
+  const parts = ['⏳ <b>Working</b>'];
+  if (steps > 0) parts.push(`step ${String(steps)}`);
+  if (names.length > 0) parts.push(escapeHtml(names[names.length - 1]));
+  if (tools > 0) parts.push(`${String(tools)} tools`);
+  if (elapsed !== '') parts.push(elapsed);
+  return parts.join(' · ');
+}
+
+async function showProgress(config, chatId, turn, progress) {
+  const line = progressLine(turn);
+  if (progress === undefined || progress.turnId !== turn.turnId || typeof progress.messageId !== 'number') {
+    try {
+      const sent = await tg(config, 'sendMessage', { chat_id: Number(chatId), text: line, parse_mode: 'HTML', disable_web_page_preview: true });
+      state.progress[chatId] = { turnId: turn.turnId, messageId: sent?.message_id, lastLine: line };
+      await saveState();
+    } catch (error) {
+      log(`progress message failed: ${error.message}`);
+    }
+    return;
+  }
+  if (progress.lastLine === line) return;
+  try {
+    await tg(config, 'editMessageText', {
+      chat_id: Number(chatId),
+      message_id: progress.messageId,
+      text: line,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+    });
+    progress.lastLine = line;
+  } catch {
+    // a throttled or rejected edit is harmless; the next tick tries again
+  }
+}
+
+async function sendReportFile(config, chatId, head, body) {
+  const content = [head.replace(/<[^>]+>/g, ''), '', body].join('\n');
+  const form = new FormData();
+  form.append('chat_id', String(chatId));
+  form.append('document', new Blob([content], { type: 'text/markdown' }), 'report.md');
+  const response = await fetch(`https://api.telegram.org/bot${config.botToken}/sendDocument`, {
+    method: 'POST',
+    body: form,
+    signal: AbortSignal.timeout(60000),
+  });
+  const payload = await response.json();
+  if (payload.ok !== true) throw new Error(payload.description ?? 'sendDocument failed');
+}
+
+async function deliverReport(config, chatId, turn, meta, progress) {
+  const full = summarizeTurn(turn, meta, true);
+  const reuse =
+    progress !== undefined && progress.turnId === turn.turnId && typeof progress.messageId === 'number' ? progress.messageId : undefined;
+  if (full.length <= HTML_MESSAGE_LIMIT) {
+    if (reuse !== undefined) {
+      try {
+        await tg(config, 'editMessageText', {
+          chat_id: chatId,
+          message_id: reuse,
+          text: full,
+          parse_mode: 'HTML',
+          disable_web_page_preview: true,
+        });
+        return;
+      } catch {
+        // fall through to a fresh message
+      }
+    }
+    await sendHtml(config, chatId, full);
+    return;
+  }
+  const head = summarizeTurn(turn, meta, false);
+  const body = finalTextOf(turn) ?? '';
+  if (reuse !== undefined) {
+    await tg(config, 'editMessageText', {
+      chat_id: chatId,
+      message_id: reuse,
+      text: `${head}\n\n<i>full report attached.</i>`,
+      parse_mode: 'HTML',
+      disable_web_page_preview: true,
+    }).catch(() => sendHtml(config, chatId, head));
+  } else {
+    await sendHtml(config, chatId, head);
+  }
+  await sendReportFile(config, chatId, head, body);
+}
+
 async function reportFinishedTurns(config) {
   if (reporting) return;
   reporting = true;
@@ -578,14 +690,29 @@ async function reportFinishedTurns(config) {
       } catch {
         continue;
       }
-      if (turn === undefined || turn.turnId === state.notified[chatId]) continue;
-      if (turn.state === 'running') continue;
+      if (turn === undefined) continue;
+      const progress = state.progress[chatId];
+      if (turn.state === 'running') {
+        await showProgress(config, chatId, turn, progress);
+        continue;
+      }
+      if (turn.turnId === state.notified[chatId]) continue;
       state.notified[chatId] = turn.turnId;
       await saveState();
-      if (turn.state !== 'completed') continue;
+      if (turn.state !== 'completed') {
+        delete state.progress[chatId];
+        await saveState();
+        continue;
+      }
       const sessions = await listSessions(info).catch(() => []);
       const meta = sessions.find((session) => session.id === sessionId);
-      await sendHtml(config, Number(chatId), summarizeTurn(turn, meta));
+      try {
+        await deliverReport(config, Number(chatId), turn, meta, progress);
+      } catch (error) {
+        log(`report to ${String(chatId)} failed: ${error.message}`);
+      }
+      delete state.progress[chatId];
+      await saveState();
     }
   } finally {
     reporting = false;
@@ -1137,6 +1264,7 @@ async function main() {
     state.models = saved.models ?? {};
     state.interactions = saved.interactions ?? {};
     state.pendingQuestion = saved.pendingQuestion ?? {};
+    state.progress = saved.progress ?? {};
     state.profilePhotoHash = saved.profilePhotoHash;
   }
   const info = await waitForServer();
