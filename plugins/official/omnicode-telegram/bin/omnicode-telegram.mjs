@@ -1013,7 +1013,9 @@ async function waitForServer() {
       return await server();
     } catch (error) {
       log(`waiting for the Omnicode server: ${error.message}`);
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+      await new Promise((resolve) => {
+        setTimeout(resolve, 5000);
+      });
     }
   }
 }
@@ -1492,7 +1494,9 @@ async function main() {
       backoffMs = 3000;
     } catch (error) {
       log(`poll failed: ${error.message}; retrying in ${Math.round(backoffMs / 1000)}s`);
-      await new Promise((resolve) => setTimeout(resolve, backoffMs));
+      await new Promise((resolve) => {
+        setTimeout(resolve, backoffMs);
+      });
       backoffMs = Math.min(backoffMs * 2, 30000);
       continue;
     }

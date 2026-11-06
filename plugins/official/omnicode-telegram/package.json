@@ -1,6 +1,6 @@
 {
   "name": "omnicode-telegram",
-  "version": "1.1.9",
+  "version": "1.1.10",
   "private": true,
   "type": "module",
   "description": "Telegram bridge for Omnicode: drive a session from a chat.",
