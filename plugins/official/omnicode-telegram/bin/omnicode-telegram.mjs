@@ -16,6 +16,7 @@
 import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execFile } from 'node:child_process';
 import { homedir } from 'node:os';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -649,6 +650,67 @@ async function handleMedia(config, chatId, message) {
   await send(config, chatId, `Sent ${image.name} to the session.`);
 }
 
+function formatTokens(value) {
+  return typeof value === 'number' && Number.isFinite(value) ? value.toLocaleString('en-US') : '0';
+}
+
+async function usageReport(info, sessionId) {
+  const data = await api(info, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/transcript?agent_id=main&page_size=5`);
+  const turns = (Array.isArray(data?.items) ? data.items : []).filter((item) => item?.kind === 'turn');
+  if (turns.length === 0) return 'No turns yet.';
+  const totals = { inputOther: 0, output: 0, inputCacheRead: 0, inputCacheCreation: 0 };
+  let steps = 0;
+  for (const turn of turns) {
+    for (const step of turn.steps ?? []) {
+      const usage = step.usage ?? {};
+      steps += 1;
+      for (const key of Object.keys(totals)) {
+        if (typeof usage[key] === 'number') totals[key] += usage[key];
+      }
+    }
+  }
+  return [
+    `Usage · last ${String(turns.length)} turn(s) · ${String(steps)} steps`,
+    '',
+    `new input     ${formatTokens(totals.inputOther)}`,
+    `output        ${formatTokens(totals.output)}`,
+    `cache read    ${formatTokens(totals.inputCacheRead)}`,
+    `cache write   ${formatTokens(totals.inputCacheCreation)}`,
+  ].join('\n');
+}
+
+function gitIn(cwd, args) {
+  return new Promise((resolve) => {
+    execFile(
+      'git',
+      ['-C', cwd, ...args],
+      { timeout: 10000, maxBuffer: 1024 * 1024 },
+      (error, stdout) => resolve({ ok: error === null, stdout: String(stdout ?? '') }),
+    );
+  });
+}
+
+async function diffReport(cwd) {
+  if (cwd === '') return 'This session has no workspace path.';
+  const status = await gitIn(cwd, ['status', '--short']);
+  if (!status.ok) return `Not a git working tree: ${cwd}`;
+  const lines = [`Git · ${cwd}`, ''];
+  const changed = status.stdout.trim();
+  lines.push(changed === '' ? '(clean)' : changed.split('\n').slice(0, 30).join('\n'));
+  const stat = await gitIn(cwd, ['diff', '--stat']);
+  const statText = stat.stdout.trim();
+  if (statText !== '') lines.push('', ...statText.split('\n').slice(0, 12));
+  return lines.join('\n').slice(0, 3500);
+}
+
+async function filesReport(info, sessionId) {
+  const turn = await newestTurn(info, sessionId);
+  if (turn === undefined) return 'No turns yet.';
+  const { files } = turnFacts(turn);
+  if (files.size === 0) return 'The last turn changed no files.';
+  return ['Files changed in the last turn', '', ...[...files].slice(0, 20).map((file) => `• ${file}`)].join('\n');
+}
+
 const NOTIFY_INTERVAL_MS = 3000;
 const REPORT_MAX_CHARS = 3500;
 
@@ -907,6 +969,9 @@ const COMMANDS_SESSION = [
   { command: 'permission', description: 'permission mode for the next prompt' },
   { command: 'plan', description: 'plan mode on or off' },
   { command: 'last', description: 'newest assistant reply' },
+  { command: 'usage', description: 'tokens used by this session' },
+  { command: 'diff', description: 'git status and diffstat of the workspace' },
+  { command: 'files', description: 'files the last turn changed' },
   { command: 'stop', description: 'cancel the running turn' },
   { command: 'current', description: 'show the selection and overrides' },
   { command: 'notify', description: 'report each turn when it finishes' },
@@ -1039,6 +1104,9 @@ const HELP = [
   '/use <n> — select one by number',
   '/current — show the selection and pending overrides',
   '/last — show the newest assistant reply',
+  '/usage — tokens used by this session',
+  '/diff — git status and diffstat of the workspace',
+  '/files — files the last turn changed',
   '/notify <on|off> — report each turn when it finishes',
   '/stop — cancel the running turn',
   '',
@@ -1301,6 +1369,31 @@ async function handle(config, chatId, text) {
       await send(config, chatId, `Provider: ${picked}\nPick a model with /models.`);
       return;
     }
+    case '/usage': {
+      const sessionId = selectionFor(chatId);
+      if (sessionId === undefined) {
+        await send(config, chatId, 'No session selected.');
+        return;
+      }
+      await send(config, chatId, await usageReport(await server(), sessionId));
+      return;
+    }
+    case '/diff': {
+      const sessionId = selectionFor(chatId);
+      const sessions = await listSessions(await server());
+      const picked = sessions.find((session) => session.id === sessionId);
+      await send(config, chatId, await diffReport(picked?.cwd ?? ''));
+      return;
+    }
+    case '/files': {
+      const sessionId = selectionFor(chatId);
+      if (sessionId === undefined) {
+        await send(config, chatId, 'No session selected.');
+        return;
+      }
+      await send(config, chatId, await filesReport(await server(), sessionId));
+      return;
+    }
     case '/settings':
     case '/models': {
       const models = await modelCatalog(await server());
@@ -1445,7 +1538,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport };
 
 if (isEntryPoint) {
   main().catch((error) => {
