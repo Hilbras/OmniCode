@@ -30,6 +30,7 @@
     "stale-web-cache-after-update.md": "1.4.19",
     "session-tabs.md": "1.4.20",
     "telegram-card-honest-hint.md": "1.4.23",
-    "session-tabs-shortcuts.md": "1.4.24"
+    "session-tabs-shortcuts.md": "1.4.24",
+    "tool-result-dedupe.md": "1.4.27"
   }
 }
