@@ -43,7 +43,7 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 
 | Command | Effect |
 |---|---|
-| `/sessions` | projects, with their three latest sessions |
+| `/sessions` | projects only, with session and running counts |
 | `/project <n\|name>` | open a project and list all its sessions |
 | `/new <title>` | create a session in the open project |
 | `/status` | which sessions are working right now |
@@ -76,10 +76,14 @@ with their project, their elapsed time, and which one this chat selected.
 
 ## Browsing
 
-`/sessions` lists projects, each with its three latest sessions. `/project 2`
-(or `/project <part of the name>`) opens one and lists every session in it;
-that list is what `/use <n>` numbers. `/new <title>` creates a session in the
-open project and selects it.
+`/sessions` lists projects only — how many sessions each holds and how many are
+running right now. `/project 2` (or `/project <part of the name>`) opens one and
+lists every session in it; that list is what `/use <n>` numbers. `/new <title>`
+creates a session in the open project and selects it.
+
+The bridge re-discovers the app's server every few seconds — the desktop app
+binds a new port on each launch — so restarting the app reconnects by itself,
+and every allowed chat gets a `✅ Connected` message when it does.
 
 The bot's own menu follows that: before a session is chosen it offers the
 browsing commands, and once one is selected it switches to the session commands

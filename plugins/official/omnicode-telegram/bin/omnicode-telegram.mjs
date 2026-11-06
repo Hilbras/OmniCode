@@ -78,14 +78,20 @@ async function discoverServer() {
 // --- Omnicode API -------------------------------------------------------------
 
 async function api(server, method, route, body) {
-  const response = await fetch(`${server.baseUrl}${route}`, {
-    method,
-    headers: {
-      authorization: `Bearer ${server.token}`,
-      ...(body === undefined ? {} : { 'content-type': 'application/json' }),
-    },
-    ...(body === undefined ? {} : { body: JSON.stringify(body) }),
-  });
+  let response;
+  try {
+    response = await fetch(`${server.baseUrl}${route}`, {
+      method,
+      headers: {
+        authorization: `Bearer ${server.token}`,
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+  } catch (error) {
+    forgetServer();
+    throw error;
+  }
   const text = await response.text();
   let payload;
   try {
@@ -185,8 +191,6 @@ function groupSessionsByProject(sessions) {
   return [...groups.entries()];
 }
 
-const SESSIONS_PER_PROJECT = 3;
-
 function sessionMarks(session, chatId) {
   const parts = [];
   if (session.status === 'running') parts.push('running');
@@ -198,13 +202,10 @@ function projectsReport(sessions, chatId) {
   const groups = groupSessionsByProject(sessions);
   const lines = [`Projects (${groups.length}) · ${sessions.length} sessions`, ''];
   groups.forEach(([project, list], index) => {
-    lines.push(`${index + 1}. ${project} — ${list.length}`);
-    for (const session of list.slice(0, SESSIONS_PER_PROJECT)) {
-      lines.push(`   · ${session.title}${sessionMarks(session, chatId)}`);
-    }
-    if (list.length > SESSIONS_PER_PROJECT) {
-      lines.push(`   …${list.length - SESSIONS_PER_PROJECT} more — /project ${index + 1}`);
-    }
+    const running = list.filter((session) => session.status === 'running').length;
+    const selected = list.some((session) => session.id === selectionFor(chatId)) ? ' ← selected' : '';
+    const activity = running === 0 ? '' : ` · ${running} running`;
+    lines.push(`${index + 1}. ${project} — ${list.length}${activity}${selected}`);
   });
   lines.push('', 'Open a project with /project <n>.');
   return lines.join('\n');
@@ -378,9 +379,24 @@ async function reportFinishedTurns(config) {
 // --- Telegram -----------------------------------------------------------------
 
 let serverPromise;
+let serverCheckedAt = 0;
+const SERVER_CACHE_MS = 5000;
+
 function server() {
-  serverPromise ??= discoverServer();
+  const now = Date.now();
+  if (serverPromise === undefined || now - serverCheckedAt >= SERVER_CACHE_MS) {
+    serverCheckedAt = now;
+    serverPromise = discoverServer().catch((error) => {
+      serverPromise = undefined;
+      throw error;
+    });
+  }
   return serverPromise;
+}
+
+function forgetServer() {
+  serverPromise = undefined;
+  serverCheckedAt = 0;
 }
 
 async function tg(config, method, body) {
@@ -518,6 +534,32 @@ async function setMenu(config, chatId, commands) {
   } catch (error) {
     log(`menu for ${String(chatId)} not updated: ${error.message}`);
   }
+}
+
+let announcedFor = '';
+
+async function announceConnection(config, info) {
+  if (announcedFor === info.baseUrl) return;
+  announcedFor = info.baseUrl;
+  const line = `✅ Connected to OmniCode\n${info.baseUrl} (omnicode ${info.version ?? '?'})`;
+  for (const chatId of config.allowedChatIds) {
+    try {
+      await send(config, chatId, line);
+    } catch (error) {
+      log(`connect notice to ${String(chatId)} failed: ${error.message}`);
+    }
+  }
+}
+
+async function watchServer(config) {
+  let info;
+  try {
+    info = await server();
+  } catch {
+    announcedFor = '';
+    return;
+  }
+  await announceConnection(config, info);
 }
 
 async function modelCatalog(info) {
@@ -887,6 +929,10 @@ async function main() {
     }
   }
   await primeReports();
+  await watchServer(config);
+  setInterval(() => {
+    watchServer(config).catch((error) => log(`connection watch failed: ${error.message}`));
+  }, 10000);
   setInterval(() => {
     reportFinishedTurns(config).catch((error) => log(`finish report failed: ${error.message}`));
   }, NOTIFY_INTERVAL_MS);
@@ -928,7 +974,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server };
 
 if (isEntryPoint) {
   main().catch((error) => {
