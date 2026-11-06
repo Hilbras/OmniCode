@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, shell } from 'electron';
 
 import { type ServerHandle, startServer } from './server';
+import { startTelegramBridge, type TelegramBridgeHandle } from './telegram-bridge';
 import { resourceImage, startUpdater, type UpdateStatus, type Updater } from './updater';
 import { decorateWindow, titleBarOverlay } from './window-chrome';
 
@@ -11,6 +12,7 @@ app.commandLine.appendSwitch('disable-component-update');
 app.commandLine.appendSwitch('disable-breakpad');
 
 let server: ServerHandle | undefined;
+let telegram: TelegramBridgeHandle | undefined;
 let mainWindow: BrowserWindow | undefined;
 let updater: Updater | undefined;
 let pageTitle = 'Omnicode';
@@ -22,6 +24,7 @@ if (!app.requestSingleInstanceLock()) {
   app.on('second-instance', () => showWindow());
   app.on('window-all-closed', () => app.quit());
   app.on('before-quit', (event) => {
+    telegram?.stop();
     if (quitting || server === undefined) return;
     event.preventDefault();
     quitting = true;
@@ -68,6 +71,8 @@ async function boot(): Promise<void> {
     },
   });
   registerBridge(updater);
+  telegram = startTelegramBridge();
+  if (telegram !== undefined) console.log(`[telegram] bridge started (pid ${String(telegram.pid)})`);
   mainWindow = createWindow(server);
 }
 
