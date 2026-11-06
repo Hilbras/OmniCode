@@ -11,24 +11,25 @@ function callbacks(keyboard) {
 }
 
 describe('botNameFor', () => {
-  it('names the bot after the project', () => {
-    assert.equal(botNameFor('trading'), 'OmniCode - trading');
-    assert.equal(botNameFor('OmniCode Desktop'), 'OmniCode Desktop');
+  it('names the bot after the project and the session title', () => {
+    assert.equal(botNameFor('trading', 'fix the deploy'), 'OmniCode - trading · fix the deploy');
+    assert.equal(botNameFor('OmniCode', 'hi'), 'OmniCode - OmniCode · hi');
   });
 
-  it('does not repeat its own name for its own project', () => {
-    assert.equal(botNameFor('OmniCode'), 'OmniCode');
-    assert.equal(botNameFor('omnicode'), 'omnicode');
+  it('drops the title when the session has none, or repeats the project', () => {
+    assert.equal(botNameFor('trading', ''), 'OmniCode - trading');
+    assert.equal(botNameFor('trading', undefined), 'OmniCode - trading');
+    assert.equal(botNameFor('trading', 'trading'), 'OmniCode - trading · trading');
   });
 
   it('copes with a missing or blank project', () => {
-    assert.equal(botNameFor(''), 'OmniCode - no session');
-    assert.equal(botNameFor('   '), 'OmniCode - no session');
-    assert.equal(botNameFor(undefined), 'OmniCode - no session');
+    assert.equal(botNameFor('', 'hi'), 'OmniCode - hi');
+    assert.equal(botNameFor('', ''), 'OmniCode - no session');
+    assert.equal(botNameFor(undefined, undefined), 'OmniCode - no session');
   });
 
   it("stays inside Telegram's 64-character limit", () => {
-    const name = botNameFor('a'.repeat(80));
+    const name = botNameFor('a'.repeat(80), 'b'.repeat(80));
 
     assert.equal(name.length, 64);
     assert.ok(name.startsWith('OmniCode - '));

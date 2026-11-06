@@ -1044,10 +1044,13 @@ async function purgeChat(config, chatId, note) {
   return { removed, upper, skipped: [...reasons].map(([reason, count]) => `${String(count)} ${reason}`) };
 }
 
-function botNameFor(project) {
-  const label = typeof project === 'string' && project.trim() !== '' ? project.trim() : 'no session';
-  const name = label.toLowerCase().startsWith('omnicode') ? label : `OmniCode - ${label}`;
-  return name.length <= 64 ? name : `${name.slice(0, 63)}…`;
+function botNameFor(project, title) {
+  const projectLabel = typeof project === 'string' ? project.trim() : '';
+  const titleLabel = typeof title === 'string' ? title.trim() : '';
+  const parts = [projectLabel, titleLabel].filter((part) => part !== '');
+  const label = parts.length === 0 ? 'no session' : parts.join(' · ');
+  const name = `OmniCode - ${label}`;
+  return name.length <= 64 ? name : `${name.slice(0, 61)}...`;
 }
 
 function retryAfterMs(error) {
@@ -1059,7 +1062,7 @@ async function applyBotName(config, sessionId) {
   const info = await server();
   const sessions = await listSessions(info).catch(() => []);
   const meta = sessions.find((session) => session.id === sessionId);
-  const name = botNameFor(meta?.project ?? '');
+  const name = botNameFor(meta?.project ?? '', meta?.title ?? '');
   if (state.botName === name) return name;
   if (typeof state.nameRetryAt === 'number' && Date.now() < state.nameRetryAt) return name;
   try {
@@ -1851,7 +1854,7 @@ async function handle(config, chatId, text) {
       const sessionId = selectionFor(chatId);
       const sessions = await listSessions(await server()).catch(() => []);
       const meta = sessions.find((session) => session.id === sessionId);
-      const desired = botNameFor(meta?.project ?? '');
+      const desired = botNameFor(meta?.project ?? '', meta?.title ?? '');
       state.botName = '';
       await applyBotName(config, sessionId).catch(() => undefined);
       const current = await tg(config, 'getMyName', {}).catch(() => undefined);

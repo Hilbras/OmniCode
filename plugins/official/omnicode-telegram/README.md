@@ -126,8 +126,8 @@ Choosing a session (`/use <n>`, or tapping one in `/project`) does three things:
 
 1. **Clears the chat.** Every message the bot sent in that chat is deleted, so each
    session starts from a clean slate.
-2. **Renames the bot** to `OmniCode - <project>`, so the chat header says which project
-   you are driving.
+2. **Renames the bot** to `OmniCode - <project> · <session title>`, so the chat header
+   says which session you are driving (subject to Telegram's rate limit, below).
 3. **Posts the last report** from that session — the newest finished turn, with its
    duration, tools, files and final message — and **pins** it, so the top of the chat
    always names the session you are driving. The pin is the reliable half of step 2:
@@ -154,12 +154,15 @@ chat completely — your commands go with the bot's replies.
 
 Limits worth knowing: only messages younger than 48 hours can be deleted by anyone, and
 anything older survives — `/purge` and each switch report the count they could not
-remove rather than claiming success. The bot's name is also global — one bot has one
-name — so it reflects the last project you opened, in any chat; Telegram allows only a
-few name changes per day, so the bridge names the bot per project (not per session or per
-chat), skips the call when the name already matches, and after a rate-limit stays quiet
-until Telegram's own retry window has
-passed.
+remove rather than claiming success.
+
+The bot's name is global — one bot has one name, in every chat — and the bridge sets it to
+`OmniCode - <project> · <session title>` for the session you are driving. Telegram allows
+only about one name change per day, so this lags: after a switch the name can be up to a
+day behind whatever you are in. The bridge skips the call when the name already matches,
+and after a refusal stays quiet until Telegram's own retry window has passed, rather than
+retrying and pushing that window out again. The pinned report is the reliable indicator —
+it is refreshed instantly on every switch and has no limit.
 
 ## Browsing
 
