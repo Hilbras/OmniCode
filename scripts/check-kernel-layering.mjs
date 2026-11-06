@@ -132,7 +132,7 @@ function findCycles(graph) {
   const visit = (node, stack) => {
     if (stack.includes(node)) {
       const cycle = stack.slice(stack.indexOf(node)).concat(node);
-      const key = [...new Set(cycle)].sort().join('>');
+      const key = [...new Set(cycle)].sort((left, right) => left.localeCompare(right)).join('>');
       if (!seen.has(key)) {
         seen.add(key);
         found.push(cycle);

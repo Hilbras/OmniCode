@@ -158,9 +158,10 @@ async function probeBot(token: string): Promise<TelegramProbe> {
     return { error: typeof description === 'string' ? description : `HTTP ${response.status}` };
   }
   const bot = result as Record<string, unknown>;
+  const botId = bot['id'];
   return {
     bot: {
-      id: String(bot['id'] ?? ''),
+      id: typeof botId === 'number' || typeof botId === 'string' ? String(botId) : '',
       username: typeof bot['username'] === 'string' ? bot['username'] : '',
       name: typeof bot['first_name'] === 'string' ? bot['first_name'] : '',
     },
