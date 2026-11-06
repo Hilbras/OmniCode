@@ -12,6 +12,7 @@ import {
   projectsReport,
   questionKeyboard,
   questionText,
+  sessionHeaderText,
   sessionsKeyboard,
   summarizeTurn,
   otherFinishLine,
@@ -230,5 +231,24 @@ describe('otherFinishLine', () => {
     const line = otherFinishLine(long, { project: 'p' });
 
     assert.ok(line.length < 260);
+  });
+});
+
+describe('sessionHeaderText', () => {
+  it('names the project, the session and the current state', () => {
+    const text = sessionHeaderText({ project: 'OmniHilbras', title: 'hi' }, 'session_9cf2b4bb', 'running');
+
+    assert.equal(text, '📌 OmniHilbras · hi\nsession_9cf2b4bb\n⏳ working');
+  });
+
+  it('says what the session is waiting on', () => {
+    assert.match(sessionHeaderText({ project: 'p', title: 't' }, 's1', 'approval'), /waiting for approval/);
+    assert.match(sessionHeaderText({ project: 'p', title: 't' }, 's1', 'question'), /waiting for an answer/);
+    assert.match(sessionHeaderText({ project: 'p', title: 't' }, 's1', 'idle'), /idle/);
+    assert.match(sessionHeaderText({ project: 'p', title: 't' }, 's1', 'failed'), /failed/);
+  });
+
+  it('copes with a session that has no project or title', () => {
+    assert.equal(sessionHeaderText({}, 's1', 'idle'), '📌 no project · untitled\ns1\n✅ idle');
   });
 });

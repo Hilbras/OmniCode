@@ -37,7 +37,7 @@ const POLL_TIMEOUT_S = 10;
 setDefaultResultOrder('ipv4first');
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, incoming: {}, clearHinted: {}, watching: {}, otherNotified: {}, others: {}, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, incoming: {}, clearHinted: {}, watching: {}, otherNotified: {}, others: {}, header: {}, renameDisabled: undefined, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -994,6 +994,7 @@ async function clearChatHistory(config, chatId) {
   state.incoming[chatId] = [];
   state.interactions[chatId] = {};
   delete state.progress[chatId];
+  delete state.header[chatId];
   delete state.pendingQuestion[chatId];
   await saveState();
   return result;
@@ -1013,6 +1014,46 @@ async function pinMessage(config, chatId, messageId) {
 function purgeUpperBound(knownIds) {
   const highest = knownIds.length === 0 ? 0 : Math.max(...knownIds);
   return highest === 0 ? 500 : highest + 100;
+}
+
+const headerStatus = new Map();
+
+function statusWord(status) {
+  if (status === 'running') return '⏳ working';
+  if (status === 'approval') return '🔐 waiting for approval';
+  if (status === 'question') return '❓ waiting for an answer';
+  if (status === 'failed') return '⚠️ last turn failed';
+  return '✅ idle';
+}
+
+function sessionHeaderText(meta, sessionId, status) {
+  const project = typeof meta?.project === 'string' && meta.project !== '' ? meta.project : 'no project';
+  const title = typeof meta?.title === 'string' && meta.title !== '' ? meta.title : 'untitled';
+  return `📌 ${project} · ${title}\n${String(sessionId)}\n${statusWord(status)}`;
+}
+
+async function refreshHeader(config, chatId, sessionId, status) {
+  const info = await server();
+  const sessions = await listSessions(info).catch(() => []);
+  const meta = sessions.find((session) => session.id === sessionId);
+  const effective = status ?? meta?.status ?? '';
+  const text = sessionHeaderText(meta, sessionId, effective);
+  headerStatus.set(String(chatId), effective);
+  const existing = state.header[chatId];
+  if (typeof existing === 'number') {
+    try {
+      await tg(config, 'editMessageText', { chat_id: Number(chatId), message_id: existing, text, disable_web_page_preview: true });
+      return existing;
+    } catch {
+      // the message is gone (the chat was cleared); post a fresh one below
+    }
+  }
+  const sent = await send(config, Number(chatId), text);
+  if (typeof sent?.message_id !== 'number') return undefined;
+  state.header[chatId] = sent.message_id;
+  await saveState();
+  await pinMessage(config, chatId, sent.message_id);
+  return sent.message_id;
 }
 
 async function purgeChat(config, chatId, note) {
@@ -1063,6 +1104,7 @@ async function applyBotName(config, sessionId) {
   const sessions = await listSessions(info).catch(() => []);
   const meta = sessions.find((session) => session.id === sessionId);
   const name = botNameFor(meta?.project ?? '', meta?.title ?? '');
+  if (state.renameDisabled === true) return name;
   if (state.botName === name) return name;
   if (typeof state.nameRetryAt === 'number' && Date.now() < state.nameRetryAt) return name;
   try {
@@ -1130,13 +1172,16 @@ async function syncChatOnSelection(config, chatId, sessionId) {
   log(
     `selection synced for ${String(chatId)} (cleared ${String(cleared.removed)} of ${String(cleared.known)} tracked, ${String(cleared.stale)} undeletable, name "${name}")`,
   );
-  let messageId;
   try {
-    messageId = await sendLastReport(config, chatId, sessionId);
+    await refreshHeader(config, chatId, sessionId, undefined);
+  } catch (error) {
+    log(`header failed: ${describeError(error)}`);
+  }
+  try {
+    await sendLastReport(config, chatId, sessionId);
   } catch (error) {
     log(`last report failed: ${error.message}`);
   }
-  if (typeof messageId === 'number') await pinMessage(config, chatId, messageId);
   if (cleared.known === 0 && state.clearHinted[chatId] !== true) {
     state.clearHinted[chatId] = true;
     try {
@@ -1384,6 +1429,10 @@ async function reportFinishedTurns(config) {
         continue;
       }
       if (turn === undefined) continue;
+      const effective = turn.state === 'running' ? 'running' : turn.state;
+      if (headerStatus.get(String(chatId)) !== effective) {
+        await refreshHeader(config, Number(chatId), sessionId, effective).catch((error) => log(`header failed: ${String(error.message)}`));
+      }
       const progress = state.progress[chatId];
       if (turn.state === 'running') {
         await showProgress(config, chatId, turn, progress);
@@ -1650,7 +1699,7 @@ const HELP = [
   '/notify <on|off> — report each turn when it finishes',
   '/stop — cancel the running turn',
   '/purge — delete every message this bot sent here, including old ones',
-  '/name — show and retry the bot name Telegram allows you to use',
+  '/name [on|off] — show, retry or stop the bot rename',
   '',
   'Send any other text to prompt the selected session.',
   '',
@@ -1827,7 +1876,10 @@ async function handle(config, chatId, text) {
     }
     case '/current': {
       const sessionId = selectionFor(chatId);
-      await send(config, chatId, `session: ${sessionId ?? 'none'}\noverrides: ${describeOverrides(chatId)}`);
+      const sessions = await listSessions(await server()).catch(() => []);
+      const meta = sessions.find((session) => session.id === sessionId);
+      const head = typeof sessionId === 'string' ? sessionHeaderText(meta, sessionId, meta?.status) : 'no session selected';
+      await send(config, chatId, `${head}\n\noverrides: ${describeOverrides(chatId)}`);
       return;
     }
     case '/purge': {
@@ -1841,8 +1893,8 @@ async function handle(config, chatId, text) {
       const result = await purgeChat(config, chatId, note);
       log(`purge for ${String(chatId)}: deleted ${String(result.removed)} of ${String(result.upper)} ids checked`);
       if (typeof sessionId === 'string') {
-        const reportId = await sendLastReport(config, chatId, sessionId).catch(() => undefined);
-        if (typeof reportId === 'number') await pinMessage(config, chatId, reportId);
+        await refreshHeader(config, chatId, sessionId, undefined).catch(() => undefined);
+        await sendLastReport(config, chatId, sessionId).catch(() => undefined);
         await refreshPending(config, chatId, sessionId).catch(() => undefined);
       } else {
         const detail = result.skipped.length === 0 ? '' : `\nSkipped: ${result.skipped.join('; ')}`;
@@ -1851,17 +1903,34 @@ async function handle(config, chatId, text) {
       return;
     }
     case '/name': {
+      const mode = argument.toLowerCase();
+      if (mode === 'on' || mode === 'off') {
+        state.renameDisabled = mode === 'off';
+        await saveState();
+        await send(
+          config,
+          chatId,
+          mode === 'off'
+            ? 'Renaming off — the bot keeps the name you gave it. The pinned header still shows which session you are in.'
+            : 'Renaming on — the bridge will set "OmniCode - <project> · <session title>" when Telegram allows it (about once a day).',
+        );
+        return;
+      }
       const sessionId = selectionFor(chatId);
       const sessions = await listSessions(await server()).catch(() => []);
       const meta = sessions.find((session) => session.id === sessionId);
       const desired = botNameFor(meta?.project ?? '', meta?.title ?? '');
-      state.botName = '';
-      await applyBotName(config, sessionId).catch(() => undefined);
+      if (state.renameDisabled !== true) {
+        state.botName = '';
+        await applyBotName(config, sessionId).catch(() => undefined);
+      }
       const current = await tg(config, 'getMyName', {}).catch(() => undefined);
       const remaining = typeof state.nameRetryAt === 'number' ? state.nameRetryAt - Date.now() : 0;
-      const status = remaining > 0
-        ? `Telegram is refusing another rename for about ${String(Math.round(remaining / 3600000))}h — a bot may only change its name a few times a day.`
-        : 'Renaming is available.';
+      const status = state.renameDisabled === true
+        ? 'Renaming is off (/name on to enable it).'
+        : remaining > 0
+          ? `Telegram is refusing another rename for about ${String(Math.round(remaining / 3600000))}h — a bot may only change its name a few times a day.`
+          : 'Renaming is available.';
       await send(config, chatId, `Name on Telegram: ${String(current?.name ?? '?')}\nWanted: ${desired}\n${status}`);
       return;
     }
@@ -2065,6 +2134,8 @@ async function loadPersistedState() {
   state.watching = saved.watching ?? {};
   state.otherNotified = saved.otherNotified ?? {};
   state.others = saved.others ?? {};
+  state.header = saved.header ?? {};
+  state.renameDisabled = saved.renameDisabled;
   state.botName = saved.botName;
   state.nameRetryAt = saved.nameRetryAt;
   state.profilePhotoHash = saved.profilePhotoHash;
@@ -2203,7 +2274,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId, purgeUpperBound, videoPartOf, videoFrames, otherFinishLine };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId, purgeUpperBound, videoPartOf, videoFrames, otherFinishLine, sessionHeaderText, refreshHeader };
 
 // Loaded at import time so that anything importing this module (tests, a one-off
 // command) sees the same state the daemon has, instead of an empty one that would

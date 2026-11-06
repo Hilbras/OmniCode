@@ -126,12 +126,20 @@ Choosing a session (`/use <n>`, or tapping one in `/project`) does three things:
 
 1. **Clears the chat.** Every message the bot sent in that chat is deleted, so each
    session starts from a clean slate.
-2. **Renames the bot** to `OmniCode - <project> · <session title>`, so the chat header
-   says which session you are driving (subject to Telegram's rate limit, below).
+2. **Pins a header** that names the session you are driving:
+
+   ```
+   📌 OmniHilbras · hi
+   session_9cf2b4bb-b8b2-42a8-b72b-6c71da4eb06d
+   ✅ idle
+   ```
+
+   The header is edited in place on every switch and whenever the session changes state
+   (`⏳ working`, `🔐 waiting for approval`, `❓ waiting for an answer`, `⚠️ failed`), so the top
+   of the chat always answers "which session am I in, and is it busy?". Editing has no
+   limit, which is why this — not the bot's name — is the reliable indicator.
 3. **Posts the last report** from that session — the newest finished turn, with its
-   duration, tools, files and final message — and **pins** it, so the top of the chat
-   always names the session you are driving. The pin is the reliable half of step 2:
-   renames are rate-limited, pins are not.
+   duration, tools, files and final message.
 
 Anything that session is *waiting on* is posted right after the report — a pending
 approval with its Allow / Deny buttons, or a pending question — so entering a stalled
@@ -156,13 +164,16 @@ Limits worth knowing: only messages younger than 48 hours can be deleted by anyo
 anything older survives — `/purge` and each switch report the count they could not
 remove rather than claiming success.
 
-The bot's name is global — one bot has one name, in every chat — and the bridge sets it to
-`OmniCode - <project> · <session title>` for the session you are driving. Telegram allows
-only about one name change per day, so this lags: after a switch the name can be up to a
-day behind whatever you are in. The bridge skips the call when the name already matches,
-and after a refusal stays quiet until Telegram's own retry window has passed, rather than
-retrying and pushing that window out again. The pinned report is the reliable indicator —
-it is refreshed instantly on every switch and has no limit.
+The bot's name is global — one bot has one name, in every chat — and by default the bridge
+sets it to `OmniCode - <project> · <session title>`. Telegram allows only about one name
+change per day, so that lags: after a switch the name can be a day behind. The bridge
+skips the call when the name already matches, and after a refusal stays quiet until
+Telegram's own retry window has passed rather than pushing that window out again.
+
+`/name off` stops the bridge renaming altogether, which is the sensible choice if you have
+set the name by hand: the pinned header above is the per-session indicator, and it costs
+nothing. `/name on` resumes renaming, and `/name` alone reports the name Telegram holds,
+the name the bridge wants, and any remaining cooldown.
 
 ## Browsing
 
