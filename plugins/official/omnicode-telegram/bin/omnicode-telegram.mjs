@@ -444,9 +444,23 @@ function questionKeyboard(question) {
 
 async function pollInteractions(config) {
   const info = await server();
+  const watchersBySession = new Map();
   for (const chatId of Object.keys(state.selection)) {
     const sessionId = state.selection[chatId];
     if (typeof sessionId !== 'string' || sessionId === '') continue;
+    if (!watchersBySession.has(sessionId)) watchersBySession.set(sessionId, new Set());
+    watchersBySession.get(sessionId).add(chatId);
+  }
+  const ownersBySession = new Map();
+  for (const chatId of Object.keys(state.pendingQuestion)) {
+    const entry = state.pendingQuestion[chatId];
+    if (typeof entry?.sessionId !== 'string' || entry.sessionId === '') continue;
+    if (!ownersBySession.has(entry.sessionId)) ownersBySession.set(entry.sessionId, new Set());
+    ownersBySession.get(entry.sessionId).add(chatId);
+  }
+  let changed = false;
+  const sessions = new Set([...watchersBySession.keys(), ...ownersBySession.keys()]);
+  for (const sessionId of sessions) {
     let approvals;
     let questions;
     try {
@@ -455,52 +469,65 @@ async function pollInteractions(config) {
     } catch {
       continue;
     }
-    const seen = new Map(Object.entries(state.interactions[chatId] ?? {}));
-    let changed = false;
-    for (const approval of approvals) {
-      if (typeof approval.approval_id !== 'string' || seen.has(approval.approval_id)) continue;
-      seen.set(approval.approval_id, sessionId);
-      changed = true;
-      try {
-        await tg(config, 'sendMessage', {
-          chat_id: Number(chatId),
-          text: approvalText(approval),
-          reply_markup: approvalKeyboard(approval),
-          disable_web_page_preview: true,
-        });
-      } catch (error) {
-        log(`approval notice failed: ${error.message}`);
+    const liveQuestions = new Set(questions.map((question) => question.question_id));
+    for (const chatId of ownersBySession.get(sessionId) ?? []) {
+      const entry = state.pendingQuestion[chatId];
+      if (entry !== undefined && !liveQuestions.has(entry.questionId)) {
+        delete state.pendingQuestion[chatId];
+        changed = true;
       }
     }
-    for (const question of questions) {
-      if (typeof question.question_id !== 'string' || seen.has(question.question_id)) continue;
-      seen.set(question.question_id, sessionId);
-      changed = true;
-      state.pendingQuestion[chatId] = {
-        questionId: question.question_id,
-        sessionId,
-        questions: question.questions ?? [],
-      };
-      const keyboard = questionKeyboard(question);
-      try {
-        await tg(config, 'sendMessage', {
-          chat_id: Number(chatId),
-          text: questionText(question),
-          ...(keyboard === undefined ? undefined : { reply_markup: keyboard }),
-          disable_web_page_preview: true,
-        });
-      } catch (error) {
-        log(`question notice failed: ${error.message}`);
+    const watchers = watchersBySession.get(sessionId);
+    if (watchers === undefined) continue;
+    for (const chatId of watchers) {
+      const seen = new Map(Object.entries(state.interactions[chatId] ?? {}));
+      let chatChanged = false;
+      for (const approval of approvals) {
+        if (typeof approval.approval_id !== 'string' || seen.has(approval.approval_id)) continue;
+        seen.set(approval.approval_id, sessionId);
+        chatChanged = true;
+        try {
+          await tg(config, 'sendMessage', {
+            chat_id: Number(chatId),
+            text: approvalText(approval),
+            reply_markup: approvalKeyboard(approval),
+            disable_web_page_preview: true,
+          });
+        } catch (error) {
+          log(`approval notice failed: ${error.message}`);
+        }
       }
-    }
-    const live = new Set([...approvals.map((a) => a.approval_id), ...questions.map((q) => q.question_id)]);
-    const kept = Object.fromEntries([...seen].filter(([id]) => live.has(id)));
-    if (Object.keys(kept).length !== seen.size) changed = true;
-    if (changed) {
-      state.interactions[chatId] = kept;
-      await saveState();
+      for (const question of questions) {
+        if (typeof question.question_id !== 'string' || seen.has(question.question_id)) continue;
+        seen.set(question.question_id, sessionId);
+        chatChanged = true;
+        state.pendingQuestion[chatId] = {
+          questionId: question.question_id,
+          sessionId,
+          questions: question.questions ?? [],
+        };
+        const keyboard = questionKeyboard(question);
+        try {
+          await tg(config, 'sendMessage', {
+            chat_id: Number(chatId),
+            text: questionText(question),
+            ...(keyboard === undefined ? undefined : { reply_markup: keyboard }),
+            disable_web_page_preview: true,
+          });
+        } catch (error) {
+          log(`question notice failed: ${error.message}`);
+        }
+      }
+      const live = new Set([...approvals.map((a) => a.approval_id), ...questions.map((q) => q.question_id)]);
+      const kept = Object.fromEntries([...seen].filter(([id]) => live.has(id)));
+      if (Object.keys(kept).length !== seen.size) chatChanged = true;
+      if (chatChanged) {
+        state.interactions[chatId] = kept;
+        changed = true;
+      }
     }
   }
+  if (changed) await saveState();
 }
 
 async function handleCallback(config, query) {
@@ -562,10 +589,19 @@ async function handleCallback(config, query) {
 }
 
 async function answerQuestionByText(config, chatId, pending, text) {
-  const item = pending.questions?.[0];
-  if (pending.questions.length > 1 || item === undefined) {
-    await send(config, chatId, 'This question has several parts — answer it in the app.');
-    return;
+  const parts = pending.questions ?? [];
+  const item = parts[0];
+  if (parts.length !== 1 || item === undefined) {
+    const listed = parts
+      .slice(0, 4)
+      .map((part, index) => `${String(index + 1)}. ${String(part.question ?? '').slice(0, 70)}`)
+      .join('\n');
+    await send(
+      config,
+      chatId,
+      `That question has ${String(parts.length)} parts, so it needs the app:\n\n${listed}\n\nAnswer it there, or tap a button above if it has one.`,
+    );
+    return 'refused';
   }
   const options = item.options ?? [];
   const tokens = text.split(/[\s,]+/).filter((token) => token !== '');
@@ -586,8 +622,12 @@ async function answerQuestionByText(config, chatId, pending, text) {
     delete state.pendingQuestion[chatId];
     await saveState();
     await send(config, chatId, '✅ Answered.');
+    return 'answered';
   } catch (error) {
-    await send(config, chatId, `Could not answer: ${error.message}`);
+    delete state.pendingQuestion[chatId];
+    await saveState();
+    log(`question ${pending.questionId} no longer answerable: ${error.message}`);
+    return 'gone';
   }
 }
 
@@ -1173,9 +1213,12 @@ async function handle(config, chatId, text) {
   if (trimmed === '' ) return;
   if (!trimmed.startsWith('/')) {
     const pending = state.pendingQuestion[chatId];
-    if (pending !== undefined && (pending.questions?.length ?? 0) > 0) {
-      await answerQuestionByText(config, chatId, pending, trimmed);
-      return;
+    const pendingMatchesSelection = pending !== undefined && pending.sessionId === selectionFor(chatId);
+    if (pendingMatchesSelection && (pending.questions?.length ?? 0) > 0) {
+      const outcome = await answerQuestionByText(config, chatId, pending, trimmed);
+      if (outcome !== 'gone') return;
+      // the question was answered or dropped elsewhere: fall through and treat this
+      // message as an ordinary prompt instead of swallowing it
     }
     const sessionId = selectionFor(chatId);
     if (sessionId === undefined) {
