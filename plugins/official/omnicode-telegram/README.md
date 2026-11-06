@@ -47,6 +47,8 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 | `/project <n\|name>` | open a project and list all its sessions |
 | `/new <title>` | create a session in the open project |
 | `/status` | which sessions are working right now |
+| `/models` | pick a model by number, inside the chosen provider |
+| `/provider` | narrow the model list to one provider |
 | `/use <n>` | select a session from the open project |
 | *(any text)* | prompt the selected session |
 | `/last` | newest assistant reply |
@@ -78,6 +80,38 @@ with their project, their elapsed time, and which one this chat selected.
 (or `/project <part of the name>`) opens one and lists every session in it;
 that list is what `/use <n>` numbers. `/new <title>` creates a session in the
 open project and selects it.
+
+The bot's own menu follows that: before a session is chosen it offers the
+browsing commands, and once one is selected it switches to the session commands
+(`/new`, `/models`, `/provider`, `/thinking`, `/stop`, …) for that chat.
+
+## Run it persistently
+
+The app does not start this bridge, so a plain `node bin/omnicode-telegram.mjs`
+dies when that shell, session or app closes. On Linux, install it as a user
+service so it survives restarts and reboots:
+
+```sh
+mkdir -p ~/.config/systemd/user
+cat > ~/.config/systemd/user/omnicode-telegram.service <<EOF
+[Unit]
+Description=Omnicode Telegram bridge
+After=network-online.target
+
+[Service]
+ExecStart=$(command -v node) /path/to/omnicode-telegram/bin/omnicode-telegram.mjs
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=default.target
+EOF
+systemctl --user daemon-reload
+systemctl --user enable --now omnicode-telegram
+loginctl enable-linger "$USER"
+```
+
+`Restart=always` also covers the transient network failures the Bot API throws.
 
 ## Security
 

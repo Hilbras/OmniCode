@@ -28,7 +28,7 @@ const TOKEN_PATH = path.join(HOME, 'server.token');
 const POLL_TIMEOUT_S = 25;
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -426,21 +426,29 @@ async function sendHtml(config, chatId, html) {
   }
 }
 
-const BOT_COMMANDS = [
-  { command: 'status', description: 'which sessions are working right now' },
+const COMMANDS_BROWSE = [
   { command: 'sessions', description: 'projects, with their latest sessions' },
   { command: 'project', description: 'open a project and list all its sessions' },
   { command: 'new', description: 'create a session in the open project' },
   { command: 'use', description: 'select a session by number' },
-  { command: 'current', description: 'show the selection and overrides' },
-  { command: 'last', description: 'newest assistant reply' },
-  { command: 'stop', description: 'cancel the running turn' },
-  { command: 'model', description: 'model for the next prompt' },
-  { command: 'profile', description: 'profile for the next prompt' },
+  { command: 'status', description: 'which sessions are working right now' },
+  { command: 'help', description: 'show the command list' },
+];
+
+const COMMANDS_SESSION = [
+  { command: 'new', description: 'create another session in this project' },
+  { command: 'models', description: 'pick the model for the next prompt' },
+  { command: 'provider', description: 'narrow the models to one provider' },
+  { command: 'model', description: 'set a model by alias, or clear it' },
   { command: 'thinking', description: 'thinking level for the next prompt' },
+  { command: 'profile', description: 'profile for the next prompt' },
   { command: 'permission', description: 'permission mode for the next prompt' },
   { command: 'plan', description: 'plan mode on or off' },
-  { command: 'settings', description: 'list the model catalog' },
+  { command: 'last', description: 'newest assistant reply' },
+  { command: 'stop', description: 'cancel the running turn' },
+  { command: 'current', description: 'show the selection and overrides' },
+  { command: 'notify', description: 'report each turn when it finishes' },
+  { command: 'sessions', description: 'back to the project list' },
   { command: 'help', description: 'show the command list' },
 ];
 
@@ -474,7 +482,7 @@ async function uploadProfilePhoto(config) {
 
 async function applyBotProfile(config) {
   const attempts = [
-    ['commands', () => tg(config, 'setMyCommands', { commands: BOT_COMMANDS })],
+    ['commands', () => tg(config, 'setMyCommands', { commands: COMMANDS_BROWSE })],
     ['menu', () => tg(config, 'setChatMenuButton', { menu_button: { type: 'commands' } })],
     ['short description', () => tg(config, 'setMyShortDescription', { short_description: SHORT_DESCRIPTION })],
     ['description', () => tg(config, 'setMyDescription', { description: DESCRIPTION })],
@@ -491,6 +499,35 @@ async function applyBotProfile(config) {
   }
   await saveState();
   log(`bot profile — ${outcomes.join(', ')}`);
+}
+
+async function setMenu(config, chatId, commands) {
+  try {
+    await tg(config, 'setMyCommands', { commands, scope: { type: 'chat', chat_id: chatId } });
+  } catch (error) {
+    log(`menu for ${String(chatId)} not updated: ${error.message}`);
+  }
+}
+
+async function modelCatalog(info) {
+  const data = await api(info, 'GET', '/api/v1/models');
+  const items = Array.isArray(data?.items) ? data.items : [];
+  return items.filter((item) => typeof item.model === 'string' && item.model !== '');
+}
+
+function providerCounts(models) {
+  const counts = new Map();
+  for (const model of models) {
+    const provider = typeof model.provider === 'string' ? model.provider : '';
+    if (provider === '') continue;
+    counts.set(provider, (counts.get(provider) ?? 0) + 1);
+  }
+  return [...counts.entries()].sort((left, right) => right[1] - left[1]);
+}
+
+function modelLabel(model) {
+  const display = typeof model.display_name === 'string' && model.display_name !== '' ? model.display_name : model.model;
+  return `${display} (${String(model.provider ?? '')})`;
 }
 
 const HELP = [
@@ -514,6 +551,8 @@ const HELP = [
   '/thinking <level|clear>',
   '/permission <mode|clear>',
   '/plan <on|off|clear>',
+  '/models — pick a model by number (after /provider)',
+  '/provider — narrow the model list to one provider',
   '/settings — list the model catalog to pick from',
 ].join('\n');
 
@@ -578,6 +617,7 @@ async function handle(config, chatId, text) {
       const chunks = chunkText(projectsReport(sessions, chatId), 3800);
       state.view[chatId] = { project: '', workspaceId: '', cwd: '', ids: [] };
       await saveState();
+      await setMenu(config, chatId, COMMANDS_BROWSE);
       for (let i = 0; i < chunks.length; i += 1) {
         const tail = chunks.length > 1 && i < chunks.length - 1 ? `\n\n(${i + 1}/${chunks.length})` : '';
         await send(config, chatId, `${chunks[i]}${tail}`);
@@ -611,6 +651,7 @@ async function handle(config, chatId, text) {
         ids: list.map((session) => session.id),
       };
       await saveState();
+      await setMenu(config, chatId, COMMANDS_BROWSE);
       const projectChunks = chunkText(projectReport(entry, chatId), 3800);
       for (let i = 0; i < projectChunks.length; i += 1) {
         const tail = projectChunks.length > 1 && i < projectChunks.length - 1 ? `\n\n(${i + 1}/${projectChunks.length})` : '';
@@ -636,6 +677,7 @@ async function handle(config, chatId, text) {
         if (view !== undefined) view.ids = [id, ...view.ids];
         delete state.notified[chatId];
         await saveState();
+        await setMenu(config, chatId, COMMANDS_SESSION);
         await send(config, chatId, `Created and selected: ${title}\n${id}`);
       } catch (error) {
         await send(config, chatId, `Could not create the session: ${error.message}`);
@@ -660,6 +702,7 @@ async function handle(config, chatId, text) {
       delete state.notified[chatId];
       await rememberNewestTurn(chatId, id);
       await saveState();
+      await setMenu(config, chatId, COMMANDS_SESSION);
       await send(config, chatId, `Selected: ${picked === undefined ? id : picked.title}`);
       return;
     }
@@ -729,6 +772,69 @@ async function handle(config, chatId, text) {
       await send(config, chatId, `${key} = ${overrides[key] ?? 'default'}`);
       return;
     }
+    case '/provider': {
+      const models = await modelCatalog(await server());
+      const counts = providerCounts(models);
+      if (counts.length === 0) {
+        await send(config, chatId, 'No models are configured.');
+        return;
+      }
+      if (argument === '') {
+        const lines = counts.slice(0, 30).map(([name, count], index) => `${index + 1}. ${name} — ${count} models`);
+        lines.push('', 'Pick one with /provider <n|name>, then /models.');
+        await send(config, chatId, lines.join('\n'));
+        return;
+      }
+      const wanted = Number.parseInt(argument, 10);
+      const picked =
+        Number.isInteger(wanted) && wanted >= 1 && wanted <= counts.length
+          ? counts[wanted - 1][0]
+          : counts.map(([name]) => name).find((name) => name.toLowerCase().includes(argument.toLowerCase()));
+      if (picked === undefined) {
+        await send(config, chatId, 'Unknown provider. Run /provider for the list.');
+        return;
+      }
+      state.provider[chatId] = picked;
+      await saveState();
+      await send(config, chatId, `Provider: ${picked}\nPick a model with /models.`);
+      return;
+    }
+    case '/models': {
+      const models = await modelCatalog(await server());
+      const provider = state.provider[chatId];
+      const scoped = provider === undefined ? models : models.filter((model) => model.provider === provider);
+      if (scoped.length === 0) {
+        await send(config, chatId, provider === undefined ? 'No models are configured.' : `No models for ${provider}. Run /provider to switch.`);
+        return;
+      }
+      if (argument === '') {
+        const shown = scoped.slice(0, 30);
+        state.models[chatId] = shown.map((model) => model.model);
+        await saveState();
+        const lines = shown.map((model, index) => `${index + 1}. ${modelLabel(model)}`);
+        lines.push('', provider === undefined ? 'Pick with /models <n>, or narrow first with /provider.' : `Provider ${provider} · pick with /models <n>.`);
+        await send(config, chatId, lines.join('\n'));
+        return;
+      }
+      const wanted = Number.parseInt(argument, 10);
+      let picked;
+      if (Number.isInteger(wanted) && wanted >= 1) {
+        const id = (state.models[chatId] ?? [])[wanted - 1];
+        picked = scoped.find((model) => model.model === id) ?? scoped[wanted - 1];
+      } else {
+        picked =
+          scoped.find((model) => model.model === argument) ??
+          scoped.find((model) => typeof model.display_name === 'string' && model.display_name.toLowerCase().includes(argument.toLowerCase()));
+      }
+      if (picked === undefined) {
+        await send(config, chatId, 'Unknown model. Run /models for the list.');
+        return;
+      }
+      overridesFor(chatId).model = picked.model;
+      await saveState();
+      await send(config, chatId, `Model for the next prompt: ${modelLabel(picked)}`);
+      return;
+    }
     case '/settings': {
       try {
         const data = await api(await server(), 'GET', '/api/v1/models');
@@ -762,6 +868,8 @@ async function main() {
     state.notify = saved.notify ?? {};
     state.notified = saved.notified ?? {};
     state.view = saved.view ?? {};
+    state.provider = saved.provider ?? {};
+    state.models = saved.models ?? {};
     state.profilePhotoHash = saved.profilePhotoHash;
   }
   const info = await server();
@@ -771,6 +879,11 @@ async function main() {
     ? 'no allowedChatIds yet — message the bot to learn your chat id, add it, then restart'
     : `serving ${config.allowedChatIds.length} allowed chat(s)`);
   await applyBotProfile(config);
+  for (const [chatId, sessionId] of Object.entries(state.selection)) {
+    if (typeof sessionId === 'string' && sessionId !== '') {
+      await setMenu(config, Number(chatId), COMMANDS_SESSION);
+    }
+  }
   await primeReports();
   setInterval(() => {
     reportFinishedTurns(config).catch((error) => log(`finish report failed: ${error.message}`));
@@ -813,7 +926,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel };
 
 if (isEntryPoint) {
   main().catch((error) => {
