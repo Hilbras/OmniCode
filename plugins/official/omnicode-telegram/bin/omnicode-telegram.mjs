@@ -36,7 +36,7 @@ const POLL_TIMEOUT_S = 10;
 setDefaultResultOrder('ipv4first');
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, clearHinted: {}, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, incoming: {}, clearHinted: {}, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -839,11 +839,20 @@ function forgetSent(chatId, messageId) {
   state.sent[chatId] = list.filter((id) => id !== messageId);
 }
 
-async function clearChatHistory(config, chatId) {
-  const list = state.sent[chatId] ?? [];
+function rememberIncoming(chatId, messageId) {
+  if (typeof messageId !== 'number') return;
+  const list = state.incoming[chatId] ?? [];
+  if (list.includes(messageId)) return;
+  list.push(messageId);
+  state.incoming[chatId] = list.slice(-MAX_TRACKED_MESSAGES);
+  scheduleStateSave();
+}
+
+async function deleteMessages(config, chatId, ids) {
   let removed = 0;
   let stale = 0;
-  for (const messageId of list) {
+  const unique = [...new Set(ids)];
+  for (const messageId of unique) {
     try {
       await tg(config, 'deleteMessage', { chat_id: chatId, message_id: messageId });
       removed += 1;
@@ -852,11 +861,19 @@ async function clearChatHistory(config, chatId) {
       log(`message ${String(messageId)} not deleted: ${error.message}`);
     }
   }
+  return { removed, stale, known: unique.length };
+}
+
+async function clearChatHistory(config, chatId) {
+  const sent = state.sent[chatId] ?? [];
+  const incoming = state.incoming[chatId] ?? [];
+  const result = await deleteMessages(config, chatId, [...sent, ...incoming]);
   state.sent[chatId] = [];
+  state.incoming[chatId] = [];
   state.interactions[chatId] = {};
   delete state.pendingQuestion[chatId];
   await saveState();
-  return { removed, stale, known: list.length };
+  return result;
 }
 
 async function pinMessage(config, chatId, messageId) {
@@ -876,15 +893,17 @@ function purgeUpperBound(knownIds) {
 }
 
 async function purgeChat(config, chatId, note) {
-  const upper = purgeUpperBound(state.sent[chatId] ?? []);
+  const known = [...(state.sent[chatId] ?? []), ...(state.incoming[chatId] ?? [])];
+  const upper = purgeUpperBound(known);
   let removed = 0;
+  const reasons = new Map();
   for (let messageId = 1; messageId <= upper; messageId += 1) {
     try {
       await tg(config, 'deleteMessage', { chat_id: chatId, message_id: messageId });
       removed += 1;
-    } catch {
-      // ids that never existed, the person's own messages and anything older than 48
-      // hours all fail here — a bot cannot remove those, so keep sweeping
+    } catch (error) {
+      const reason = error.message.replace(/\d+/g, 'N');
+      reasons.set(reason, (reasons.get(reason) ?? 0) + 1);
     }
     if (messageId % 25 === 0) {
       await note(`Purging… ${String(messageId)} of ${String(upper)} ids checked, ${String(removed)} deleted`);
@@ -893,11 +912,13 @@ async function purgeChat(config, chatId, note) {
       setTimeout(resolve, 40);
     });
   }
+  for (const [reason, count] of reasons) log(`purge skipped ${String(count)} x ${reason}`);
   state.sent[chatId] = [];
+  state.incoming[chatId] = [];
   state.interactions[chatId] = {};
   delete state.pendingQuestion[chatId];
   await saveState();
-  return { removed, upper };
+  return { removed, upper, skipped: [...reasons].map(([reason, count]) => `${String(count)} ${reason}`) };
 }
 
 function botNameFor(project) {
@@ -1290,6 +1311,7 @@ const COMMANDS_SESSION = [
   { command: 'current', description: 'show the selection and overrides' },
   { command: 'notify', description: 'report each turn when it finishes' },
   { command: 'purge', description: "delete this bot's messages, old ones too" },
+  { command: 'name', description: 'show and retry the bot name' },
   { command: 'sessions', description: 'back to the project list' },
   { command: 'help', description: 'show the command list' },
 ];
@@ -1427,6 +1449,7 @@ const HELP = [
   '/notify <on|off> — report each turn when it finishes',
   '/stop — cancel the running turn',
   '/purge — delete every message this bot sent here, including old ones',
+  '/name — show and retry the bot name Telegram allows you to use',
   '',
   'Send any other text to prompt the selected session.',
   '',
@@ -1614,8 +1637,24 @@ async function handle(config, chatId, text) {
         if (typeof reportId === 'number') await pinMessage(config, chatId, reportId);
         await refreshPending(config, chatId, sessionId).catch(() => undefined);
       } else {
-        await send(config, chatId, `Purged ${String(result.removed)} message(s). Select a session with /use to start again.`);
+        const detail = result.skipped.length === 0 ? '' : `\nSkipped: ${result.skipped.join('; ')}`;
+        await send(config, chatId, `Purged ${String(result.removed)} message(s) of ${String(result.upper)} ids checked.${detail}\nSelect a session with /use to start again.`);
       }
+      return;
+    }
+    case '/name': {
+      const sessionId = selectionFor(chatId);
+      const sessions = await listSessions(await server()).catch(() => []);
+      const meta = sessions.find((session) => session.id === sessionId);
+      const desired = botNameFor(meta?.project ?? '');
+      state.botName = '';
+      await applyBotName(config, sessionId).catch(() => undefined);
+      const current = await tg(config, 'getMyName', {}).catch(() => undefined);
+      const remaining = typeof state.nameRetryAt === 'number' ? state.nameRetryAt - Date.now() : 0;
+      const status = remaining > 0
+        ? `Telegram is refusing another rename for about ${String(Math.round(remaining / 3600000))}h — a bot may only change its name a few times a day.`
+        : 'Renaming is available.';
+      await send(config, chatId, `Name on Telegram: ${String(current?.name ?? '?')}\nWanted: ${desired}\n${status}`);
       return;
     }
     case '/notify': {
@@ -1801,6 +1840,7 @@ async function loadPersistedState() {
   state.pendingQuestion = saved.pendingQuestion ?? {};
   state.progress = saved.progress ?? {};
   state.sent = saved.sent ?? {};
+  state.incoming = saved.incoming ?? {};
   state.clearHinted = saved.clearHinted ?? {};
   state.botName = saved.botName;
   state.nameRetryAt = saved.nameRetryAt;
@@ -1896,6 +1936,7 @@ async function main() {
         if (typeof message.text !== 'string') {
           const chatIdForMedia = message.chat?.id;
           if (typeof chatIdForMedia === 'number' && config.allowedChatIds.includes(chatIdForMedia)) {
+            rememberIncoming(chatIdForMedia, message.message_id);
             if (Array.isArray(message.photo) || message.document !== undefined) {
               try {
                 await handleMedia(config, chatIdForMedia, message);
@@ -1911,6 +1952,7 @@ async function main() {
           await send(config, chatId, `This chat is not allowed to control Omnicode.\nYour chat id: ${chatId}\nAdd it to allowedChatIds in ${CONFIG_PATH} and restart the bot.`);
           continue;
         }
+        rememberIncoming(chatId, message.message_id);
         try {
           await handle(config, chatId, message.text);
         } catch (error) {
