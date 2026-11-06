@@ -28,7 +28,7 @@ const TOKEN_PATH = path.join(HOME, 'server.token');
 const POLL_TIMEOUT_S = 25;
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -114,6 +114,8 @@ async function listSessions(server) {
       updatedAt: item.meta?.updated_at ?? 0,
       project: projectName(item),
       status: typeof item.activity?.status === 'string' ? item.activity.status : '',
+      workspaceId: typeof item.workspace?.id === 'string' ? item.workspace.id : '',
+      cwd: typeof item.workspace?.cwd === 'string' ? item.workspace.cwd : '',
     }))
     .toSorted((a, b) => b.updatedAt - a.updatedAt);
 }
@@ -183,26 +185,42 @@ function groupSessionsByProject(sessions) {
   return [...groups.entries()];
 }
 
-function orderedSessions(sessions) {
-  return groupSessionsByProject(sessions).flatMap(([, list]) => list);
+const SESSIONS_PER_PROJECT = 3;
+
+function sessionMarks(session, chatId) {
+  const parts = [];
+  if (session.status === 'running') parts.push('running');
+  if (session.id === selectionFor(chatId)) parts.push('selected');
+  return parts.length === 0 ? '' : ` (${parts.join(', ')})`;
 }
 
-function sessionsReport(sessions, chatId) {
-  const selected = selectionFor(chatId);
-  const out = [];
-  let index = 0;
-  for (const [project, list] of groupSessionsByProject(sessions)) {
-    out.push(`${project} (${list.length})`);
-    for (const session of list) {
-      index += 1;
-      const marks = [];
-      if (session.status === 'running') marks.push('running');
-      if (session.id === selected) marks.push('selected');
-      const suffix = marks.length === 0 ? '' : ` (${marks.join(', ')})`;
-      out.push(`  ${index}. ${session.title}${suffix}`);
+function projectsReport(sessions, chatId) {
+  const groups = groupSessionsByProject(sessions);
+  const lines = [`Projects (${groups.length}) · ${sessions.length} sessions`, ''];
+  groups.forEach(([project, list], index) => {
+    lines.push(`${index + 1}. ${project} — ${list.length}`);
+    for (const session of list.slice(0, SESSIONS_PER_PROJECT)) {
+      lines.push(`   · ${session.title}${sessionMarks(session, chatId)}`);
     }
-  }
-  return out.join('\n');
+    if (list.length > SESSIONS_PER_PROJECT) {
+      lines.push(`   …${list.length - SESSIONS_PER_PROJECT} more — /project ${index + 1}`);
+    }
+  });
+  lines.push('', 'Open a project with /project <n>.');
+  return lines.join('\n');
+}
+
+function projectReport(entry, chatId) {
+  const [project, list] = entry;
+  const lines = [`${project} — ${list.length} sessions`];
+  const cwd = list[0]?.cwd ?? '';
+  if (cwd !== '') lines.push(cwd);
+  lines.push('');
+  list.forEach((session, index) => {
+    lines.push(`${index + 1}. ${session.title}${sessionMarks(session, chatId)}`);
+  });
+  lines.push('', 'Select with /use <n>, or create one with /new <title>.');
+  return lines.join('\n');
 }
 
 function shortPath(file) {
@@ -220,7 +238,7 @@ function sessionLabel(item) {
   return text.length <= 48 ? text : `${text.slice(0, 47)}…`;
 }
 
-function summarizeTurn(turn) {
+function summarizeTurn(turn, meta) {
   const counts = new Map();
   const files = new Set();
   let tools = 0;
@@ -240,26 +258,32 @@ function summarizeTurn(turn) {
     }
   }
   const duration = formatDuration(turn.durationMs);
-  const lines = [duration === '' ? '✅ Finished' : `✅ Finished · ${duration}`];
+  const lines = [duration === '' ? '<b>✅ Finished</b>' : `<b>✅ Finished</b> · ${duration}`];
+  const where = [];
+  if (meta !== undefined && meta.project !== '') where.push(escapeHtml(meta.project));
+  if (meta !== undefined) where.push(escapeHtml(meta.title));
+  if (where.length > 0) lines.push(`<i>${where.join(' · ')}</i>`);
+  lines.push('', `▸ <b>${String((turn.steps ?? []).length)} steps</b> · ${String(tools)} tools`);
   if (tools > 0) {
     const breakdown = [...counts.entries()]
       .sort((left, right) => right[1] - left[1])
-      .slice(0, 5)
-      .map(([name, count]) => `${name}×${count}`)
-      .join(', ');
-    lines.push(`steps ${String((turn.steps ?? []).length)} · tools ${String(tools)} (${breakdown})`);
+      .slice(0, 6)
+      .map(([name, count]) => `${escapeHtml(name)}×${String(count)}`)
+      .join(' · ');
+    lines.push(`▸ ${breakdown}`);
   }
   if (files.size > 0) {
-    const shown = [...files].slice(0, 4).map(shortPath).join(', ');
-    lines.push(`files: ${shown}${files.size > 4 ? ` (+${String(files.size - 4)})` : ''}`);
+    const listed = [...files].slice(0, 5).map((file) => `<code>${escapeHtml(shortPath(file))}</code>`);
+    if (files.size > 5) listed.push(`<i>+${String(files.size - 5)} more</i>`);
+    lines.push('', '<b>Files</b>', ...listed);
   }
-  const body =
-    final === undefined
-      ? '(no final message)'
-      : final.length > REPORT_MAX_CHARS
-        ? `${final.slice(0, REPORT_MAX_CHARS)}\n…(truncated)`
-        : final;
-  return `${lines.join('\n')}\n\n${body}`;
+  if (final === undefined) {
+    lines.push('', '<i>no final message</i>');
+  } else {
+    const body = final.length > REPORT_MAX_CHARS ? `${final.slice(0, REPORT_MAX_CHARS)}\n…(truncated)` : final;
+    lines.push('', '<blockquote>', markdownToHtml(body), '</blockquote>');
+  }
+  return lines.join('\n');
 }
 
 async function statusReport(info, chatId) {
@@ -342,7 +366,9 @@ async function reportFinishedTurns(config) {
       state.notified[chatId] = turn.turnId;
       await saveState();
       if (turn.state !== 'completed') continue;
-      await send(config, Number(chatId), summarizeTurn(turn));
+      const sessions = await listSessions(info).catch(() => []);
+      const meta = sessions.find((session) => session.id === sessionId);
+      await sendHtml(config, Number(chatId), summarizeTurn(turn, meta));
     }
   } finally {
     reporting = false;
@@ -371,9 +397,40 @@ async function tg(config, method, body) {
 
 const send = (config, chatId, text) => tg(config, 'sendMessage', { chat_id: chatId, text, disable_web_page_preview: true });
 
+const escapeHtml = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+
+function markdownToHtml(text) {
+  const codeBlocks = [];
+  const staged = text.replace(/```[^\n]*\n([\s\S]*?)```/g, (_match, code) => {
+    codeBlocks.push(`<pre>${escapeHtml(String(code).replace(/\n$/, ''))}</pre>`);
+    return `\u0000${String(codeBlocks.length - 1)}\u0000`;
+  });
+  let html = escapeHtml(staged);
+  html = html.replace(/`([^`\n]+)`/g, (_match, code) => `<code>${code}</code>`);
+  html = html.replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>');
+  html = html.replace(/^#{1,6}\s+(.+)$/gm, '<b>$1</b>');
+  html = html.replace(/^\s*[-*]\s+/gm, '• ');
+  return html.replace(/\u0000(\d+)\u0000/g, (_match, index) => codeBlocks[Number(index)] ?? '');
+}
+
+async function sendHtml(config, chatId, html) {
+  try {
+    return await tg(config, 'sendMessage', { chat_id: chatId, text: html, parse_mode: 'HTML', disable_web_page_preview: true });
+  } catch {
+    const plain = html
+      .replace(/<[^>]+>/g, '')
+      .replaceAll('&lt;', '<')
+      .replaceAll('&gt;', '>')
+      .replaceAll('&amp;', '&');
+    return send(config, chatId, plain);
+  }
+}
+
 const BOT_COMMANDS = [
   { command: 'status', description: 'which sessions are working right now' },
-  { command: 'sessions', description: 'list recent sessions' },
+  { command: 'sessions', description: 'projects, with their latest sessions' },
+  { command: 'project', description: 'open a project and list all its sessions' },
+  { command: 'new', description: 'create a session in the open project' },
   { command: 'use', description: 'select a session by number' },
   { command: 'current', description: 'show the selection and overrides' },
   { command: 'last', description: 'newest assistant reply' },
@@ -439,7 +496,9 @@ async function applyBotProfile(config) {
 const HELP = [
   'Omnicode from Telegram',
   '',
-  '/sessions — list recent sessions',
+  '/sessions — projects, with their latest sessions',
+  '/project <n|name> — open a project and list all its sessions',
+  '/new <title> — create a session in the open project',
   '/status — sessions working right now',
   '/use <n> — select one by number',
   '/current — show the selection and pending overrides',
@@ -516,26 +575,92 @@ async function handle(config, chatId, text) {
         await send(config, chatId, 'No sessions.');
         return;
       }
-      const chunks = chunkText(sessionsReport(sessions, chatId), 3800);
+      const chunks = chunkText(projectsReport(sessions, chatId), 3800);
+      state.view[chatId] = { project: '', workspaceId: '', cwd: '', ids: [] };
+      await saveState();
       for (let i = 0; i < chunks.length; i += 1) {
-        const tail = i === chunks.length - 1 ? '\n\nSelect with /use <n>.' : `\n\n(${i + 1}/${chunks.length})`;
+        const tail = chunks.length > 1 && i < chunks.length - 1 ? `\n\n(${i + 1}/${chunks.length})` : '';
         await send(config, chatId, `${chunks[i]}${tail}`);
+      }
+      return;
+    }
+    case '/project': {
+      const sessions = await listSessions(await server());
+      const groups = groupSessionsByProject(sessions);
+      if (groups.length === 0) {
+        await send(config, chatId, 'No sessions.');
+        return;
+      }
+      const wanted = Number.parseInt(argument, 10);
+      let entry;
+      if (Number.isInteger(wanted) && wanted >= 1 && wanted <= groups.length) {
+        entry = groups[wanted - 1];
+      } else if (argument !== '') {
+        const needle = argument.toLowerCase();
+        entry = groups.find(([project]) => project.toLowerCase().includes(needle));
+      }
+      if (entry === undefined) {
+        await send(config, chatId, 'Use /sessions first, then /project <n> or /project <name>.');
+        return;
+      }
+      const [projectName_, list] = entry;
+      state.view[chatId] = {
+        project: projectName_,
+        workspaceId: list[0]?.workspaceId ?? '',
+        cwd: list[0]?.cwd ?? '',
+        ids: list.map((session) => session.id),
+      };
+      await saveState();
+      const projectChunks = chunkText(projectReport(entry, chatId), 3800);
+      for (let i = 0; i < projectChunks.length; i += 1) {
+        const tail = projectChunks.length > 1 && i < projectChunks.length - 1 ? `\n\n(${i + 1}/${projectChunks.length})` : '';
+        await send(config, chatId, `${projectChunks[i]}${tail}`);
+      }
+      return;
+    }
+    case '/new': {
+      const view = state.view[chatId];
+      const sessions = await listSessions(await server());
+      const selected = sessions.find((session) => session.id === selectionFor(chatId));
+      const workspaceId = view?.workspaceId || selected?.workspaceId || '';
+      if (workspaceId === '') {
+        await send(config, chatId, 'Open a project first: /sessions, then /project <n>.');
+        return;
+      }
+      const title = argument === '' ? 'New session' : argument;
+      try {
+        const created = await api(await server(), 'POST', '/api/v1/sessions', { workspace_id: workspaceId, title });
+        const id = typeof created?.id === 'string' ? created.id : '';
+        if (id === '') throw new Error('the server did not return a session id');
+        state.selection[chatId] = id;
+        if (view !== undefined) view.ids = [id, ...view.ids];
+        delete state.notified[chatId];
+        await saveState();
+        await send(config, chatId, `Created and selected: ${title}\n${id}`);
+      } catch (error) {
+        await send(config, chatId, `Could not create the session: ${error.message}`);
       }
       return;
     }
     case '/use': {
       const index = Number.parseInt(argument, 10);
-      const sessions = orderedSessions(await listSessions(await server()));
-      const picked = sessions[index - 1];
-      if (picked === undefined) {
-        await send(config, chatId, 'Use /sessions first, then /use <number>.');
+      const view = state.view[chatId];
+      if (view === undefined || view.ids.length === 0) {
+        await send(config, chatId, 'Open a project first: /sessions, then /project <n>.');
         return;
       }
-      state.selection[chatId] = picked.id;
+      const id = view.ids[index - 1];
+      if (id === undefined) {
+        await send(config, chatId, `Use a number from the open project (1-${String(view.ids.length)}).`);
+        return;
+      }
+      const sessions = await listSessions(await server());
+      const picked = sessions.find((session) => session.id === id);
+      state.selection[chatId] = id;
       delete state.notified[chatId];
-      await rememberNewestTurn(chatId, picked.id);
+      await rememberNewestTurn(chatId, id);
       await saveState();
-      await send(config, chatId, `Selected: ${picked.title}`);
+      await send(config, chatId, `Selected: ${picked === undefined ? id : picked.title}`);
       return;
     }
     case '/current': {
@@ -636,6 +761,7 @@ async function main() {
     state.overrides = saved.overrides ?? {};
     state.notify = saved.notify ?? {};
     state.notified = saved.notified ?? {};
+    state.view = saved.view ?? {};
     state.profilePhotoHash = saved.profilePhotoHash;
   }
   const info = await server();
@@ -687,7 +813,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, sessionsReport };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml };
 
 if (isEntryPoint) {
   main().catch((error) => {

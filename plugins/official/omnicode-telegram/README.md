@@ -43,9 +43,11 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 
 | Command | Effect |
 |---|---|
-| `/sessions` | list sessions grouped by project |
+| `/sessions` | projects, with their three latest sessions |
+| `/project <n\|name>` | open a project and list all its sessions |
+| `/new <title>` | create a session in the open project |
 | `/status` | which sessions are working right now |
-| `/use <n>` | select a session |
+| `/use <n>` | select a session from the open project |
 | *(any text)* | prompt the selected session |
 | `/last` | newest assistant reply |
 | `/notify <on\|off>` | report each turn when it finishes |
@@ -61,13 +63,21 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 
 ## Finish reports
 
-When a turn in the session the chat selected finishes, the bot sends a report:
-how long it took, how many steps and which tools ran, which files it changed,
-and the agent's final message. A turn you started from the desktop app counts
-too. `/notify off` mutes it, `/notify on` turns it back on.
+When a turn in the session the chat selected finishes, the bot sends a formatted
+report: duration, the project and session, step and tool counts with a
+per-tool breakdown, the files an Edit or Write touched, and the agent's final
+message rendered as HTML (bold, code, quoted). A turn you started from the
+desktop app counts too. `/notify off` mutes it, `/notify on` turns it back on.
 
 `/status` answers the other question: which sessions are working right now,
 with their project, their elapsed time, and which one this chat selected.
+
+## Browsing
+
+`/sessions` lists projects, each with its three latest sessions. `/project 2`
+(or `/project <part of the name>`) opens one and lists every session in it;
+that list is what `/use <n>` numbers. `/new <title>` creates a session in the
+open project and selects it.
 
 ## Security
 
