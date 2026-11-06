@@ -3326,3 +3326,69 @@ ${vn}`)}const De=ze.join(`
   }
   boot();
 })();
+;(function () {
+  if (window.__omniSidebarSpinner) return;
+  window.__omniSidebarSpinner = true;
+
+  var STYLE_ID = 'omni-spin-style';
+  var SELECTOR = '.se .ui-spinner, .pin-row .ui-spinner';
+
+  function style() {
+    if (document.getElementById(STYLE_ID)) return;
+    var s = document.createElement('style');
+    s.id = STYLE_ID;
+    s.textContent = [
+      '@keyframes omni-spin-ccw{from{transform:rotate(360deg)}to{transform:rotate(0deg)}}',
+      '.omni-spin-reverse{animation:omni-spin-ccw 850ms linear infinite}',
+    ].join('');
+    document.head.appendChild(s);
+  }
+
+  // The spinner is driven by the Web Animations API (element.animate), which a stylesheet
+  // cannot retarget, so the running animation is cancelled and a CSS animation in the
+  // opposite direction takes over. Our own CSSAnimation is skipped on later passes, which
+  // keeps this idempotent per element.
+  function apply() {
+    var nodes = document.querySelectorAll(SELECTOR);
+    if (nodes.length === 0) return;
+    style();
+    for (var i = 0; i < nodes.length; i++) {
+      var el = nodes[i];
+      el.classList.add('omni-spin-reverse');
+      if (typeof el.getAnimations !== 'function') continue;
+      var animations = el.getAnimations();
+      for (var k = 0; k < animations.length; k++) {
+        var animation = animations[k];
+        var mine = typeof CSSAnimation !== 'undefined' && animation instanceof CSSAnimation;
+        if (mine) continue;
+        try {
+          animation.cancel();
+        } catch (e) {
+          // a cancelled or finished animation needs nothing else
+        }
+      }
+    }
+  }
+
+  var queued = false;
+  function schedule() {
+    if (queued) return;
+    queued = true;
+    setTimeout(function () {
+      queued = false;
+      apply();
+    }, 16);
+  }
+
+  function boot() {
+    if (!document.body) {
+      setTimeout(boot, 30);
+      return;
+    }
+    new MutationObserver(schedule).observe(document.body, { childList: true, subtree: true });
+    apply();
+    setInterval(apply, 1000);
+  }
+
+  boot();
+})();
