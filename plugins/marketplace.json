@@ -92,7 +92,7 @@
       "id": "omnicode-telegram",
       "tier": "official",
       "displayName": "Omnicode Telegram",
-      "version": "1.1.13",
+      "version": "1.1.14",
       "description": "Select and drive a Omnicode session from a Telegram chat.",
       "keywords": [
         "telegram",

@@ -811,13 +811,16 @@ async function sendReportFile(config, chatId, head, body) {
   });
   const payload = await response.json();
   if (payload.ok !== true) throw new Error(payload.description ?? 'sendDocument failed');
+  return payload.result?.message_id;
 }
 
 async function deliverReport(config, chatId, turn, meta, progress) {
   const full = summarizeTurn(turn, meta, true);
+  const bodyText = finalTextOf(turn) ?? '';
+  const oversize = full.length > HTML_MESSAGE_LIMIT || bodyText.length > REPORT_MAX_CHARS;
   const reuse =
     progress !== undefined && progress.turnId === turn.turnId && typeof progress.messageId === 'number' ? progress.messageId : undefined;
-  if (full.length <= HTML_MESSAGE_LIMIT) {
+  if (!oversize) {
     if (reuse !== undefined) {
       try {
         await tg(config, 'editMessageText', {
@@ -827,28 +830,37 @@ async function deliverReport(config, chatId, turn, meta, progress) {
           parse_mode: 'HTML',
           disable_web_page_preview: true,
         });
-        return;
+        return { via: 'edited', messageId: reuse };
       } catch {
         // fall through to a fresh message
       }
     }
-    await sendHtml(config, chatId, full);
-    return;
+    const sent = await sendHtml(config, chatId, full);
+    return { via: 'sent', messageId: sent?.message_id };
   }
   const head = summarizeTurn(turn, meta, false);
   const body = finalTextOf(turn) ?? '';
+  let messageId;
   if (reuse !== undefined) {
-    await tg(config, 'editMessageText', {
-      chat_id: chatId,
-      message_id: reuse,
-      text: `${head}\n\n<i>full report attached.</i>`,
-      parse_mode: 'HTML',
-      disable_web_page_preview: true,
-    }).catch(() => sendHtml(config, chatId, head));
+    try {
+      await tg(config, 'editMessageText', {
+        chat_id: chatId,
+        message_id: reuse,
+        text: `${head}\n\n<i>full report attached.</i>`,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true,
+      });
+      messageId = reuse;
+    } catch {
+      const sent = await sendHtml(config, chatId, head);
+      messageId = sent?.message_id;
+    }
   } else {
-    await sendHtml(config, chatId, head);
+    const sent = await sendHtml(config, chatId, head);
+    messageId = sent?.message_id;
   }
-  await sendReportFile(config, chatId, head, body);
+  const documentMessageId = await sendReportFile(config, chatId, head, body);
+  return { via: 'document', messageId, documentMessageId };
 }
 
 async function reportFinishedTurns(config) {
@@ -1552,7 +1564,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport };
 
 if (isEntryPoint) {
   main().catch((error) => {
