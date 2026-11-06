@@ -224,11 +224,12 @@ function createService(
     readonly contextMessages?: Message[];
     readonly env?: Record<string, string>;
     readonly compaction?: CompactionSectionConfig;
+    readonly flags?: boolean;
   } = {},
 ) {
   const ix = disposables.add(new TestInstantiationService());
   ix.stub(IBootstrapService, stubBootstrap('/tmp/omnicode-llm-requester-test', options.env ?? {}));
-  ix.stub(IFlagService, stubFlag());
+  ix.stub(IFlagService, stubFlag(options.flags ?? false));
   const thinkingLevel = options.thinkingLevel ?? 'off';
   const profile: Partial<IAgentProfileService> = {
     hasProvider: () => true,
@@ -437,6 +438,55 @@ describe('AgentLLMRequesterService tool result clearing', () => {
     await service.request({ messages, source: { type: 'operation' } });
 
     expect(seen[0]).toEqual(messages);
+  });
+
+  function duplicateHistory(): Message[] {
+    const body = 'x'.repeat(1_200);
+    const messages: Message[] = [
+      { role: 'user', content: [{ type: 'text', text: 'start' }], toolCalls: [] },
+    ];
+    for (const id of ['call-0', 'call-1']) {
+      messages.push({
+        role: 'assistant',
+        content: [],
+        toolCalls: [{ type: 'function', id, name: 'Read', arguments: '{"path":"same.ts"}' }],
+      });
+      messages.push({
+        role: 'tool',
+        content: [{ type: 'text', text: body }],
+        toolCalls: [],
+        toolCallId: id,
+      });
+    }
+    return messages;
+  }
+
+  function toolText(message: ContextMessage): string {
+    return message.content.flatMap((part) => (part.type === 'text' ? [part.text] : [])).join('');
+  }
+
+  it('points a repeated tool result at the earlier identical one', async () => {
+    const seen: (readonly ContextMessage[])[] = [];
+    const { service } = createService(createRequester({ value: 0 }, null), capturingProjector(seen), {
+      flags: true,
+    });
+
+    await service.request({ messages: duplicateHistory(), source: { type: 'turn', turnId: 1 } });
+
+    const first = seen[0]!.find((message) => message.toolCallId === 'call-0')!;
+    const second = seen[0]!.find((message) => message.toolCallId === 'call-1')!;
+    expect(toolText(first)).toBe('x'.repeat(1_200));
+    expect(toolText(second)).toContain('Identical to the earlier result of Read');
+  });
+
+  it('keeps both copies when tool-result deduplication is off', async () => {
+    const seen: (readonly ContextMessage[])[] = [];
+    const { service } = createService(createRequester({ value: 0 }, null), capturingProjector(seen));
+
+    await service.request({ messages: duplicateHistory(), source: { type: 'turn', turnId: 1 } });
+
+    const second = seen[0]!.find((message) => message.toolCallId === 'call-1')!;
+    expect(toolText(second)).toBe('x'.repeat(1_200));
   });
 });
 

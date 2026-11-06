@@ -9,7 +9,7 @@ export const toolResultDedupeFlag: FlagDefinitionInput = {
   description:
     'When a tool returns the same output twice in one conversation, keep the first copy and replace the later one with a pointer to it. Nothing is lost: the earlier identical result stays in context.',
   env: TOOL_RESULT_DEDUPE_FLAG_ENV,
-  default: false,
+  default: true,
   surface: 'core',
 };
 
