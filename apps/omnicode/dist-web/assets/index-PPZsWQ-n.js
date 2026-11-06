@@ -3014,7 +3014,6 @@ ${vn}`)}const De=ze.join(`
   }
   boot();
 })();
-
 ;(function () {
   if (window.__omniSessionTabs) return;
   window.__omniSessionTabs = true;
@@ -3056,6 +3055,7 @@ ${vn}`)}const De=ze.join(`
   }
 
   var titles = {};
+  var projects = {};
   var titlesLoaded = false;
   function loadTitles() {
     if (titlesLoaded) return;
@@ -3067,22 +3067,91 @@ ${vn}`)}const De=ze.join(`
       .then(function (j) {
         var items = (j && j.data && j.data.items) || [];
         for (var i = 0; i < items.length; i++) {
-          if (items[i] && items[i].id) titles[items[i].id] = items[i].title || '';
+          if (items[i] && items[i].id) {
+            titles[items[i].id] = items[i].title || '';
+            projects[items[i].id] = projectOf(items[i]);
+          }
         }
         render();
+        decorateProjects();
       })
       .catch(function () { });
+  }
+  function projectOf(item) {
+    var cwd = item && item.metadata && typeof item.metadata.cwd === 'string' ? item.metadata.cwd : '';
+    if (cwd === '') return '';
+    var parts = cwd.split(/[\\/]+/).filter(function (part) { return part !== ''; });
+    return parts.length === 0 ? '' : parts[parts.length - 1];
+  }
+  function decorateProjects() {
+    var rows = document.querySelectorAll('div.se[data-session-id]');
+    for (var i = 0; i < rows.length; i++) {
+      var row = rows[i];
+      var id = row.getAttribute('data-session-id');
+      var project = projects[id];
+      if (typeof project !== 'string' || project === '') continue;
+      var existing = row.querySelector('.omni-proj');
+      if (existing !== null) {
+        if (existing.textContent !== project) existing.textContent = project;
+        continue;
+      }
+      var left = row.querySelector('.left');
+      if (left === null) continue;
+      style();
+      var chip = document.createElement('span');
+      chip.className = 'omni-proj';
+      chip.textContent = project;
+      chip.title = project;
+      left.appendChild(chip);
+    }
   }
   function label(id) {
     var t = titles[id];
     if (typeof t === 'string' && t.trim() !== '') return t.trim().slice(0, 28);
     return id.replace(/^session_/, '').slice(0, 8);
   }
-  function navigate(id) {
-    if (id === activeId()) return;
+
+  // Clicking a tab has to travel the app's own route rather than a synthetic one: the app
+  // keeps its own view state, so a pushState plus a fake popstate left the tab strip
+  // looking idle. Prefer the sidebar row the app already listens to, and only signal the
+  // URL directly when that row is not on screen.
+  function hardNavigate(id) {
     history.pushState(null, '', '/sessions/' + id);
     window.dispatchEvent(new PopStateEvent('popstate', { state: null }));
     render();
+  }
+  function rowFor(id) {
+    var rows = document.querySelectorAll('[data-session-id]');
+    for (var i = 0; i < rows.length; i++) {
+      if (rows[i].getAttribute('data-session-id') === id) return rows[i];
+    }
+    return null;
+  }
+  function navigate(id) {
+    if (id === activeId()) {
+      render();
+      return;
+    }
+    var row = rowFor(id);
+    if (row !== null) {
+      var target = row.querySelector('a[href],button,[role="button"]') || row;
+      target.click();
+      var attempts = 0;
+      (function verify() {
+        attempts += 1;
+        if (activeId() === id) {
+          render();
+          return;
+        }
+        if (attempts < 3) {
+          setTimeout(verify, 40);
+          return;
+        }
+        hardNavigate(id);
+      })();
+      return;
+    }
+    hardNavigate(id);
   }
   function close(id) {
     var list = readTabs();
@@ -3117,17 +3186,23 @@ ${vn}`)}const De=ze.join(`
     var s = document.createElement('style');
     s.id = 'omni-tabs-style';
     s.textContent = [
-      '.omni-tabs{display:flex;align-items:center;gap:2px;min-width:0;max-width:38vw;height:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;margin-left:2px;flex:0 1 auto}',
+      '.omni-tabs{display:flex;align-items:center;gap:2px;min-width:0;max-width:52vw;height:100%;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;margin-left:2px;flex:0 1 auto}',
       '.omni-tabs::-webkit-scrollbar{display:none}',
       '.omni-tabs:empty{display:none}',
-      '.omni-tab{position:relative;display:inline-flex;align-items:center;gap:5px;max-width:190px;height:26px;padding:0 7px;border:0;border-radius:var(--radius-sm,6px);background:transparent;color:var(--color-text-muted,#8a8a8a);font-family:var(--font-ui,sans-serif);font-size:var(--text-xs,12px);line-height:1;cursor:pointer;white-space:nowrap;flex:none;transition:background-color .12s ease,color .12s ease}',
+      '.omni-tab{position:relative;display:inline-flex;align-items:center;gap:6px;max-width:230px;height:26px;padding:0 8px;border:0;border-radius:var(--radius-sm,6px);background:transparent;color:var(--color-text-muted,#8a8a8a);font-family:var(--font-ui,sans-serif);font-size:var(--text-xs,12px);line-height:1;cursor:pointer;white-space:nowrap;flex:none;transition:background-color .12s ease,color .12s ease}',
       '.omni-tab:hover{background:var(--color-hover,rgba(128,128,128,.12));color:var(--color-text,#eee)}',
       '.omni-tab.is-active{background:var(--color-selected,rgba(128,128,128,.16));color:var(--color-text,#fff)}',
-      '.omni-tab.is-active::after{content:"";position:absolute;left:7px;right:7px;bottom:-1px;height:2px;border-radius:1px;background:var(--color-accent,currentColor);opacity:.85}',
+      '.omni-tab.is-active::after{content:"";position:absolute;left:8px;right:8px;bottom:-1px;height:2px;border-radius:1px;background:var(--color-accent,currentColor);opacity:.85}',
+      '.omni-tab-proj{flex:none;max-width:86px;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-muted,#8a8a8a);opacity:.8}',
+      '.omni-tab.is-active .omni-tab-proj{opacity:1}',
+      '.omni-tab-sep{flex:none;color:var(--color-text-muted,#8a8a8a);opacity:.45}',
       '.omni-tab-label{overflow:hidden;text-overflow:ellipsis}',
       '.omni-tab-close{display:inline-flex;align-items:center;justify-content:center;width:13px;height:13px;border:0;border-radius:50%;padding:0;background:transparent;color:inherit;opacity:0;cursor:pointer;font-size:11px;line-height:1;flex:none}',
       '.omni-tab:hover .omni-tab-close,.omni-tab.is-active .omni-tab-close{opacity:.55}',
       '.omni-tab-close:hover{opacity:1 !important;background:var(--color-hover,rgba(128,128,128,.25))}',
+      '.omni-proj{flex:none;max-width:92px;margin-left:6px;padding:0 5px;border-radius:999px;background:var(--color-hover,rgba(128,128,128,.14));color:var(--color-text-muted,#8a8a8a);font-size:10px;line-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.01em}',
+      '.se:hover .omni-proj{background:var(--color-hover,rgba(128,128,128,.22));color:var(--color-text,#ddd)}',
+      'body.omni-tabs-on .ch-id{display:none !important}',
     ].join('');
     document.head.appendChild(s);
   }
@@ -3143,6 +3218,7 @@ ${vn}`)}const De=ze.join(`
   function render() {
     if (!isChatView()) {
       if (host && host.parentNode) host.parentNode.removeChild(host);
+      document.body.classList.remove('omni-tabs-on');
       return;
     }
     var header = document.querySelector('header.chat-header');
@@ -3165,11 +3241,26 @@ ${vn}`)}const De=ze.join(`
         tab.setAttribute('role', 'tab');
         tab.setAttribute('aria-selected', id === current ? 'true' : 'false');
         tab.title = label(id);
+        var project = projects[id];
+        if (typeof project === 'string' && project !== '') {
+          var badge = document.createElement('span');
+          badge.className = 'omni-tab-proj';
+          badge.textContent = project;
+          badge.title = project;
+          tab.appendChild(badge);
+          var sep = document.createElement('span');
+          sep.className = 'omni-tab-sep';
+          sep.textContent = '/';
+          tab.appendChild(sep);
+        }
         var text = document.createElement('span');
         text.className = 'omni-tab-label';
         text.textContent = label(id);
         tab.appendChild(text);
-        tab.addEventListener('click', function () { navigate(id); });
+        tab.addEventListener('click', function (event) {
+          if (event.target && event.target.classList && event.target.classList.contains('omni-tab-close')) return;
+          navigate(id);
+        });
         tab.addEventListener('auxclick', function (event) {
           if (event.button !== 1) return;
           event.preventDefault();
@@ -3192,10 +3283,14 @@ ${vn}`)}const De=ze.join(`
         }
       })(list[k]);
     }
+    // the session identity now lives in the tabs, so the header copy is redundant
+    if (list.length > 0) document.body.classList.add('omni-tabs-on');
+    else document.body.classList.remove('omni-tabs-on');
   }
   function sync() {
     ensureActive();
     render();
+    decorateProjects();
   }
   var queued = false;
   function schedule() {
@@ -3212,25 +3307,6 @@ ${vn}`)}const De=ze.join(`
     history.pushState = function () { var result = push.apply(this, arguments); schedule(); return result; };
     history.replaceState = function () { var result = replace.apply(this, arguments); schedule(); return result; };
   })();
-  window.addEventListener('keydown', function (event) {
-    if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
-    var index = parseInt(event.key, 10);
-    if (!(index >= 1 && index <= 9)) return;
-    var list = readTabs();
-    var id = list[index - 1];
-    if (id === undefined) return;
-    event.preventDefault();
-    navigate(id);
-  });
-  var observer = new MutationObserver(schedule);
-  function boot() {
-    if (!document.body) { setTimeout(boot, 30); return; }
-    observer.observe(document.body, { childList: true, subtree: true });
-    sync();
-    setInterval(schedule, 2000);
-  }
-  boot();
-})();
   window.addEventListener('keydown', function (event) {
     if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
     var index = parseInt(event.key, 10);
