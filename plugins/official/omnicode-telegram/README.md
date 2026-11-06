@@ -64,8 +64,15 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 | `/permission <mode\|clear>` | permission mode |
 | `/plan <on\|off\|clear>` | plan mode |
 | `/settings` | list the model catalog |
-| `/current` | selection and pending overrides |
+| `/current` | selection, session id and pending overrides |
+| `/pending` | everything waiting on you, across sessions, with a button per session |
+| `/purge` | delete every message this bot sent here, old ones included |
+| `/name [on\|off]` | show or retry the bot rename, or stop renaming altogether |
+| `/debug` | bridge state (offset, ledgers, ffmpeg, rename cooldown) and the last log lines |
 | `/help` | the command list |
+
+`/permission` accepts only `manual`, `auto` or `yolo`; anything else is refused with the
+three valid values rather than stored and rejected on the next prompt.
 
 ## Finish reports
 
@@ -110,12 +117,15 @@ plus a `report.md` attachment.
 Send a photo, an image file up to 10 MB, or a video up to 20 MB, and it goes to the
 selected session; the caption becomes the prompt.
 
-A video arrives as still frames — up to six, sampled roughly every two seconds — because
-the agent reads images, not video streams. Frame extraction uses ffmpeg found at
-`OMNICODE_FFMPEG`, then `/opt/Omnicode/resources/ffmpeg/ffmpeg` (the desktop bundle),
-`/usr/local/bin/ffmpeg`, `/usr/bin/ffmpeg`. With no ffmpeg the bot says so and names the
-paths it looked in, instead of failing quietly. Other file types are refused with a note
-saying why, and anything over the size limit names both the size and the limit.
+A video arrives as still frames — up to six, evenly spaced across the **whole** clip —
+because the agent reads images, not video streams. The message says which span the frames
+cover, so a long clip is never mistaken for its first few seconds.
+
+Frame extraction uses the first ffmpeg it finds: `OMNICODE_FFMPEG`, then the desktop app's
+own `resources/ffmpeg`, then any `ffmpeg` on `PATH`. With none installed the bot says so
+instead of failing quietly. Sizes are checked from Telegram's own metadata *before* the
+download, so an oversized file is refused with its size and the limit rather than a raw
+API error, and voice notes, audio and stickers get a one-line reason instead of silence.
 
 ## Alerts from other sessions
 
@@ -135,7 +145,8 @@ to it — clearing, renaming the header and posting that session's last report, 
 Telegram has no way for a bot to raise a *service* notification (the centred "X pinned a
 message" line); only messages can notify, so this arrives as a very short message.
 `/notify others off` turns these alerts off while keeping finish reports, and `/notify
-off` silences everything.
+off` silences the finish reports (progress and the pinned header keep working, since they
+are the navigation).
 
 ## Selecting a session
 

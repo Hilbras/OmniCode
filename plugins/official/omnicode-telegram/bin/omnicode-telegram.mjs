@@ -13,8 +13,8 @@
 // The bot fails closed: with no allowedChatIds it answers only with the sender's
 // chat id and refuses every other command.
 
-import { readFile, writeFile, mkdir, readdir, mkdtemp, rm } from 'node:fs/promises';
-import { existsSync, rmSync } from 'node:fs';
+import { readFile, writeFile, mkdir, readdir, mkdtemp, rename, rm } from 'node:fs/promises';
+import { existsSync, readFileSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -39,8 +39,13 @@ const SESSIONS_PAGE = 100;
 
 const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, incoming: {}, clearHinted: {}, watching: {}, otherNotified: {}, others: {}, header: {}, renameDisabled: undefined, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
 
+const recentLog = [];
+
 function log(message) {
-  process.stdout.write(`[omnicode-telegram] ${message}\n`);
+  const line = `[omnicode-telegram] ${message}`;
+  process.stdout.write(`${line}\n`);
+  recentLog.push(line);
+  if (recentLog.length > 20) recentLog.shift();
 }
 
 async function readJson(file, fallback) {
@@ -53,7 +58,9 @@ async function readJson(file, fallback) {
 
 async function writeJson(file, value) {
   await mkdir(path.dirname(file), { recursive: true });
-  await writeFile(file, `${JSON.stringify(value, null, 2)}\n`);
+  const temp = `${file}.${String(process.pid)}.tmp`;
+  await writeFile(temp, `${JSON.stringify(value, null, 2)}\n`);
+  await rename(temp, file);
 }
 
 async function loadConfig() {
@@ -136,10 +143,9 @@ async function listSessions(server) {
 }
 
 async function lastReply(server, sessionId) {
-  const data = await api(server, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/messages?limit=20`);
+  const data = await api(server, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/messages?page_size=20&role=assistant`);
   const items = Array.isArray(data?.items) ? data.items : [];
-  for (let i = items.length - 1; i >= 0; i -= 1) {
-    const message = items[i];
+  for (const message of items) {
     if (message.role !== 'assistant') continue;
     const text = (message.content ?? [])
       .filter((part) => part.type === 'text')
@@ -249,7 +255,10 @@ function projectsKeyboard(groups, page = 1) {
 
 function sessionsKeyboard(list, page = 1, projectIndex = 1) {
   const slice = pageSlice(list, page);
-  const buttons = slice.items.map((session, offset) => commandButton(session.title, `/use ${slice.start + offset + 1}`));
+  const buttons = slice.items.map((session) => ({
+    text: String(session.title).slice(0, 60),
+    callback_data: `use|${shortId('go', String(session.id))}`,
+  }));
   const rows = chunkRows(buttons, 2)
     .concat(pageNavRows(slice, (next) => `/project ${String(projectIndex)} ${String(next)}`));
   return rows.length === 0 ? undefined : { inline_keyboard: rows };
@@ -501,10 +510,13 @@ function questionText(question) {
 }
 
 function questionKeyboard(question) {
+  const items = question.questions ?? [];
+  // buttons may only answer a single-item, single-choice question: one press resolves the
+  // whole interaction, so a multi-item prompt would lose every item not tapped
+  if (items.length !== 1 || items[0].multi_select === true) return undefined;
   const rows = [];
   const questionId = shortId('q', String(question.question_id));
-  for (const item of question.questions ?? []) {
-    if (item.multi_select === true) continue;
+  for (const item of items) {
     for (const option of item.options ?? []) {
       rows.push([{ text: String(option.label).slice(0, 60), callback_data: `q|${questionId}|${String(item.id)}|${String(option.id)}` }]);
     }
@@ -518,8 +530,6 @@ async function announcePending(config, chatId, sessionId, approvals, questions) 
   let chatChanged = false;
   for (const approval of approvals) {
     if (typeof approval.approval_id !== 'string' || seen.has(approval.approval_id)) continue;
-    seen.set(approval.approval_id, sessionId);
-    chatChanged = true;
     try {
       await tg(config, 'sendMessage', {
         chat_id: Number(chatId),
@@ -527,19 +537,14 @@ async function announcePending(config, chatId, sessionId, approvals, questions) 
         reply_markup: approvalKeyboard(approval),
         disable_web_page_preview: true,
       });
+      seen.set(approval.approval_id, sessionId);
+      chatChanged = true;
     } catch (error) {
-      log(`approval notice failed: ${error.message}`);
+      log(`approval notice failed, will retry: ${error.message}`);
     }
   }
   for (const question of questions) {
     if (typeof question.question_id !== 'string' || seen.has(question.question_id)) continue;
-    seen.set(question.question_id, sessionId);
-    chatChanged = true;
-    state.pendingQuestion[chatId] = {
-      questionId: question.question_id,
-      sessionId,
-      questions: question.questions ?? [],
-    };
     const keyboard = questionKeyboard(question);
     try {
       await tg(config, 'sendMessage', {
@@ -548,8 +553,15 @@ async function announcePending(config, chatId, sessionId, approvals, questions) 
         ...(keyboard === undefined ? undefined : { reply_markup: keyboard }),
         disable_web_page_preview: true,
       });
+      seen.set(question.question_id, sessionId);
+      state.pendingQuestion[chatId] = {
+        questionId: question.question_id,
+        sessionId,
+        questions: question.questions ?? [],
+      };
+      chatChanged = true;
     } catch (error) {
-      log(`question notice failed: ${error.message}`);
+      log(`question notice failed, will retry: ${error.message}`);
     }
   }
   const live = new Set([...approvals.map((approval) => approval.approval_id), ...questions.map((question) => question.question_id)]);
@@ -640,7 +652,7 @@ async function handleCallback(config, query) {
       await handle(config, chatId, decodeURIComponent(id));
       return;
     }
-    if (kind === 'go') {
+    if (kind === 'go' || kind === 'use') {
       const sessions = await listSessions(await server());
       const target = sessions.find((session) => session.id === id);
       if (target === undefined) throw new Error('that session is gone');
@@ -660,7 +672,7 @@ async function handleCallback(config, query) {
       const scope = parts[3] === 'session' ? 'session' : undefined;
       const body = scope === undefined ? { decision } : { decision, scope };
       const result = await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/approvals/${encodeURIComponent(id)}`, body);
-      const verb = decision === 'approved' ? 'Allowed' : decision === 'rejected' ? 'Denied' : 'Cancelled';
+      const verb = decision === 'approved' ? 'Allowed' : 'Denied';
       await say(result?.resolved === false ? '⚠️ Already answered elsewhere.' : `✅ ${verb}${scope === 'session' ? ' for this session' : ''}.`);
       return;
     }
@@ -724,10 +736,18 @@ async function answerQuestionByText(config, chatId, pending, text) {
     await send(config, chatId, '✅ Answered.');
     return 'answered';
   } catch (error) {
-    delete state.pendingQuestion[chatId];
-    await saveState();
-    log(`question ${pending.questionId} no longer answerable: ${error.message}`);
-    return 'gone';
+    if (/not found|404|already resolved|409|no longer/i.test(String(error?.message))) {
+      delete state.pendingQuestion[chatId];
+      await saveState();
+      log(`question ${pending.questionId} is gone: ${error.message}`);
+      return 'gone';
+    }
+    await send(
+      config,
+      chatId,
+      `Could not reach OmniCode to answer that (${error.message}). The question is still open — send your answer again.`,
+    );
+    return 'retry';
   }
 }
 
@@ -735,35 +755,71 @@ const MAX_IMAGE_BYTES = 10_000_000;
 const MAX_VIDEO_BYTES = 20_000_000;
 const MAX_VIDEO_FRAMES = 6;
 
-const FFMPEG_CANDIDATES = [
-  process.env.OMNICODE_FFMPEG,
-  '/opt/Omnicode/resources/ffmpeg/ffmpeg',
-  '/usr/local/bin/ffmpeg',
-  '/usr/bin/ffmpeg',
-];
+const FFMPEG_BINARY = process.platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
+
+function ffmpegCandidates() {
+  const exeDir = path.dirname(process.execPath);
+  const candidates = [
+    process.env.OMNICODE_FFMPEG,
+    process.env.OMNICODE_RESOURCES === undefined ? undefined : path.join(process.env.OMNICODE_RESOURCES, 'ffmpeg', FFMPEG_BINARY),
+    path.join(exeDir, 'resources', 'ffmpeg', FFMPEG_BINARY),
+    path.join(exeDir, '..', 'resources', 'ffmpeg', FFMPEG_BINARY),
+    '/opt/Omnicode/resources/ffmpeg/ffmpeg',
+  ];
+  for (const dir of String(process.env.PATH ?? '').split(path.delimiter)) {
+    if (dir !== '') candidates.push(path.join(dir, FFMPEG_BINARY));
+  }
+  return candidates;
+}
 
 const run = promisify(execFile);
 
 function findFfmpeg() {
-  for (const candidate of FFMPEG_CANDIDATES) {
+  for (const candidate of ffmpegCandidates()) {
     if (typeof candidate === 'string' && candidate !== '' && existsSync(candidate)) return candidate;
   }
   return undefined;
 }
 
+async function probeDurationSeconds(ffmpeg, input) {
+  try {
+    await run(ffmpeg, ['-i', input]);
+    return undefined;
+  } catch (error) {
+    const match = /Duration:\s*(\d+):(\d+):(\d+(?:\.\d+)?)/.exec(String(error?.stderr ?? error?.message ?? ''));
+    if (match === null) return undefined;
+    return Number(match[1]) * 3600 + Number(match[2]) * 60 + Number(match[3]);
+  }
+}
+
 async function videoFrames(bytes, name) {
   const ffmpeg = findFfmpeg();
-  if (ffmpeg === undefined) return { frames: [], reason: 'ffmpeg is not installed on this machine' };
+  if (ffmpeg === undefined) {
+    return { frames: [], reason: `ffmpeg is not installed — looked for ${ffmpegCandidates().filter((entry) => typeof entry === 'string').slice(0, 4).join(', ')}` };
+  }
   const dir = await mkdtemp(path.join(tmpdir(), 'omnicode-telegram-'));
   try {
     const input = path.join(dir, `input-${name.replaceAll(/[^\w.-]+/g, '_')}`);
     await writeFile(input, bytes);
-    const pattern = path.join(dir, 'frame-%02d.jpg');
-    await run(ffmpeg, ['-y', '-loglevel', 'error', '-i', input, '-vf', 'fps=1/2,scale=960:-2', '-frames:v', String(MAX_VIDEO_FRAMES), '-q:v', '4', pattern]);
-    const files = (await readdir(dir)).filter((file) => file.startsWith('frame-')).sort();
+    const duration = await probeDurationSeconds(ffmpeg, input);
+    const stamps = [];
+    if (duration !== undefined && duration > 0.5) {
+      const window = duration / (MAX_VIDEO_FRAMES + 1);
+      for (let index = 1; index <= MAX_VIDEO_FRAMES; index += 1) stamps.push(window * index);
+    } else {
+      stamps.push(0.2);
+    }
     const frames = [];
-    for (const file of files) frames.push(await readFile(path.join(dir, file)));
-    return { frames, reason: files.length === 0 ? 'ffmpeg could not decode any frame' : '' };
+    for (const [index, stamp] of stamps.entries()) {
+      const out = path.join(dir, `frame-${String(index).padStart(2, '0')}.jpg`);
+      try {
+        await run(ffmpeg, ['-y', '-loglevel', 'error', '-ss', String(Math.max(0, stamp)), '-i', input, '-frames:v', '1', '-vf', 'scale=960:-2', '-q:v', '4', out]);
+        frames.push(await readFile(out));
+      } catch (error) {
+        log(`video frame at ${String(Math.round(stamp))}s skipped: ${String(error?.message ?? '')}`);
+      }
+    }
+    return { frames, covered: duration, reason: frames.length === 0 ? 'ffmpeg could not decode a frame from this video' : '' };
   } finally {
     await rm(dir, { recursive: true, force: true }).catch(() => undefined);
   }
@@ -779,8 +835,12 @@ function promptOverrides(chatId) {
   return body;
 }
 
-async function downloadTelegramFile(config, fileId) {
+async function downloadTelegramFile(config, fileId, limitBytes) {
   const file = await tg(config, 'getFile', { file_id: fileId });
+  const size = typeof file?.file_size === 'number' ? file.file_size : undefined;
+  if (limitBytes !== undefined && size !== undefined && size > limitBytes) {
+    throw new Error(`the file is ${(size / 1_000_000).toFixed(1)} MB; the limit is ${String(Math.round(limitBytes / 1_000_000))} MB`);
+  }
   const filePath = typeof file?.file_path === 'string' ? file.file_path : '';
   if (filePath === '') throw new Error('telegram did not return a file path');
   const response = await fetch(`https://api.telegram.org/file/bot${config.botToken}/${filePath}`, {
@@ -832,7 +892,7 @@ async function handleMedia(config, chatId, message) {
   }
   const image = imagePartOf(message);
   if (image !== undefined) {
-    const bytes = await downloadTelegramFile(config, image.fileId);
+    const bytes = await downloadTelegramFile(config, image.fileId, MAX_IMAGE_BYTES);
     if (bytes.length > MAX_IMAGE_BYTES) {
       await send(config, chatId, `That image is ${(bytes.length / 1_000_000).toFixed(1)} MB; the limit is ${String(MAX_IMAGE_BYTES / 1_000_000)} MB.`);
       return;
@@ -853,7 +913,7 @@ async function handleMedia(config, chatId, message) {
     await send(config, chatId, 'Only images and videos are supported here — send a photo, an image file, or a video.');
     return;
   }
-  const bytes = await downloadTelegramFile(config, video.fileId);
+  const bytes = await downloadTelegramFile(config, video.fileId, MAX_VIDEO_BYTES);
   if (bytes.length > MAX_VIDEO_BYTES) {
     await send(
       config,
@@ -862,12 +922,12 @@ async function handleMedia(config, chatId, message) {
     );
     return;
   }
-  const { frames, reason } = await videoFrames(bytes, video.name);
+  const { frames, reason, covered } = await videoFrames(bytes, video.name);
   if (frames.length === 0) {
     await send(
       config,
       chatId,
-      `Could not read that video: ${reason}.\nThe bridge looks for ffmpeg at $OMNICODE_FFMPEG, then ${FFMPEG_CANDIDATES.slice(1).join(', ')} — set OMNICODE_FFMPEG to a working binary to enable video.`,
+      `Could not read that video: ${reason}\nSet OMNICODE_FFMPEG to a working ffmpeg binary to enable video.`,
     );
     return;
   }
@@ -875,9 +935,12 @@ async function handleMedia(config, chatId, message) {
     type: 'image',
     source: { kind: 'base64', media_type: 'image/jpeg', data: frame.toString('base64'), name: `frame-${String(index + 1).padStart(2, '0')}.jpg` },
   }));
+  const window = typeof covered === 'number' && covered > 0
+    ? `covering the whole ${formatDuration(Math.round(covered * 1000))} clip`
+    : 'from the start of the clip';
   parts.push({
     type: 'text',
-    text: `${captionOf(message, 'Please look at this video.')}\n\n(${String(frames.length)} frames from "${video.name}", sampled every ~2 seconds)`,
+    text: `${captionOf(message, 'Please look at this video.')}\n\n(${String(frames.length)} still frames from "${video.name}", ${window})`,
   });
   await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/prompts`, { content: parts, ...promptOverrides(chatId) });
   await send(config, chatId, `Sent ${String(frames.length)} frames from ${video.name} to the session.`);
@@ -953,7 +1016,7 @@ function normalizeInteractions(saved) {
   return out;
 }
 
-const SENDING_METHODS = new Set(['sendMessage', 'sendPhoto', 'sendDocument', 'sendVideo', 'sendVoice', 'sendMediaGroup']);
+const SENDING_METHODS = new Set(['sendMessage', 'sendDocument']);
 const MAX_TRACKED_MESSAGES = 1000;
 
 let saveQueued = false;
@@ -1055,7 +1118,8 @@ async function refreshHeader(config, chatId, sessionId, status) {
   const info = await server();
   const sessions = await listSessions(info).catch(() => []);
   const meta = sessions.find((session) => session.id === sessionId);
-  const effective = status ?? meta?.status ?? '';
+  const waiting = meta?.status === 'approval' || meta?.status === 'question' ? meta.status : undefined;
+  const effective = waiting ?? status ?? meta?.status ?? '';
   const text = sessionHeaderText(meta, sessionId, effective);
   headerStatus.set(String(chatId), effective);
   const existing = state.header[chatId];
@@ -1063,8 +1127,9 @@ async function refreshHeader(config, chatId, sessionId, status) {
     try {
       await tg(config, 'editMessageText', { chat_id: Number(chatId), message_id: existing, text, disable_web_page_preview: true });
       return existing;
-    } catch {
-      // the message is gone (the chat was cleared); post a fresh one below
+    } catch (error) {
+      if (/message is not modified/i.test(String(error?.message))) return existing;
+      // otherwise the message is gone (the chat was cleared): post a fresh one below
     }
   }
   const sent = await send(config, Number(chatId), text);
@@ -1157,7 +1222,7 @@ async function sendLastReport(config, chatId, sessionId) {
   const data = await api(info, 'GET', `/api/v1/sessions/${encodeURIComponent(sessionId)}/transcript?agent_id=main&page_size=3`).catch(() => undefined);
   const turns = (Array.isArray(data?.items) ? data.items : []).filter((item) => item?.kind === 'turn');
   let reportId;
-  const turn = turns.find((item) => item.state === 'completed');
+  const turn = turns.filter((item) => item.state === 'completed').at(-1);
   if (turn === undefined) {
     log(`no finished turn in ${sessionId}; nothing to report`);
   } else {
@@ -1263,17 +1328,9 @@ let reporting = false;
 const HTML_MESSAGE_LIMIT = 3800;
 
 function latestCommentary(turn, limit = 500) {
-  const spoken = [];
-  for (const step of turn.steps ?? []) {
-    for (const frame of step.frames ?? []) {
-      if (frame.kind !== 'text' || typeof frame.text !== 'string') continue;
-      const trimmed = frame.text.trim();
-      if (trimmed !== '') spoken.push(trimmed);
-    }
-  }
-  const last = spoken.at(-1);
+  const last = finalTextOf(turn);
   if (last === undefined) return '';
-  return last.length <= limit ? last : `${last.slice(0, limit - 1)}…`;
+  return last.length <= limit ? last : `${last.slice(0, limit - 1)}...`;
 }
 
 function progressLine(turn) {
@@ -1329,7 +1386,9 @@ async function sendReportFile(config, chatId, head, body) {
   });
   const payload = await response.json();
   if (payload.ok !== true) throw new Error(payload.description ?? 'sendDocument failed');
-  return payload.result?.message_id;
+  const messageId = payload.result?.message_id;
+  if (typeof messageId === 'number') rememberSent(chatId, messageId);
+  return messageId;
 }
 
 async function deliverReport(config, chatId, turn, meta, progress) {
@@ -1377,8 +1436,8 @@ async function deliverReport(config, chatId, turn, meta, progress) {
     const sent = await sendHtml(config, chatId, head);
     messageId = sent?.message_id;
   }
-  const documentMessageId = await sendReportFile(config, chatId, head, body);
-  return { via: 'document', messageId, documentMessageId };
+  await sendReportFile(config, chatId, head, body);
+  return { via: 'document', messageId };
 }
 
 function otherFinishLine(turn, meta) {
@@ -1407,7 +1466,6 @@ async function reportOtherFinishedTurns(config) {
     if (chats.length === 0) return;
     const info = await server();
     const sessions = await listSessions(info).catch(() => []);
-    const selected = new Set(chats.map((chatId) => state.selection[chatId]));
     let changed = false;
     for (const session of sessions) {
       const id = session.id;
@@ -1422,7 +1480,6 @@ async function reportOtherFinishedTurns(config) {
       if (state.watching[id] !== true) continue;
       delete state.watching[id];
       changed = true;
-      if (selected.has(id)) continue;
       const turn = await newestTurn(info, id).catch(() => undefined);
       if (turn === undefined || turn.state !== 'completed' || turn.turnId === state.otherNotified[id]) continue;
       state.otherNotified[id] = turn.turnId;
@@ -1447,7 +1504,7 @@ async function reportFinishedTurns(config) {
     const info = await server();
     for (const chatId of Object.keys(state.selection)) {
       const sessionId = state.selection[chatId];
-      if (typeof sessionId !== 'string' || !reportsEnabled(chatId)) continue;
+      if (typeof sessionId !== 'string') continue;
       let turn;
       try {
         turn = await newestTurn(info, sessionId);
@@ -1468,6 +1525,11 @@ async function reportFinishedTurns(config) {
       state.notified[chatId] = turn.turnId;
       await saveState();
       if (turn.state !== 'completed') {
+        delete state.progress[chatId];
+        await saveState();
+        continue;
+      }
+      if (!reportsEnabled(chatId)) {
         delete state.progress[chatId];
         await saveState();
         continue;
@@ -1510,24 +1572,60 @@ function forgetServer() {
   serverCheckedAt = 0;
 }
 
-async function tg(config, method, body) {
-  const response = await fetch(`https://api.telegram.org/bot${config.botToken}/${method}`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-    signal: AbortSignal.timeout(60000),
-  });
-  const payload = await response.json();
-  if (payload.ok !== true) throw new Error(payload.description ?? `telegram ${method} failed`);
-  if (SENDING_METHODS.has(method)) {
-    const chatId = body === undefined ? undefined : body['chat_id'];
-    const messageId = payload.result === undefined ? undefined : payload.result.message_id;
-    if (typeof chatId === 'number' && typeof messageId === 'number') rememberSent(chatId, messageId);
+// One chain for every call except the long poll: Telegram counts a bot's calls per chat,
+// so serialising them keeps a burst of progress edits from tripping the limit. getUpdates
+// is excluded because it deliberately blocks for ten seconds.
+const LONG_POLL_METHODS = new Set(['getUpdates']);
+const RATE_LIMIT_ATTEMPTS = 3;
+const RATE_LIMIT_MAX_WAIT_MS = 15000;
+
+let telegramChain = Promise.resolve();
+
+function serialized(task) {
+  const run = telegramChain.then(task, task);
+  telegramChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+function tg(config, method, body) {
+  if (LONG_POLL_METHODS.has(method)) return tgOnce(config, method, body);
+  return serialized(() => tgOnce(config, method, body));
+}
+
+async function tgOnce(config, method, body) {
+  for (let attempt = 1; ; attempt += 1) {
+    const response = await fetch(`https://api.telegram.org/bot${config.botToken}/${method}`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(60000),
+    });
+    const payload = await response.json();
+    if (payload.ok !== true) {
+      const retryAfter = typeof payload.parameters?.retry_after === 'number' ? payload.parameters.retry_after : 0;
+      if ((response.status === 429 || retryAfter > 0) && attempt < RATE_LIMIT_ATTEMPTS) {
+        const waitMs = Math.min(Math.max(retryAfter, 1) * 1000, RATE_LIMIT_MAX_WAIT_MS);
+        log(`telegram rate limit on ${method}: waiting ${String(Math.round(waitMs / 1000))}s`);
+        await new Promise((resolve) => {
+          setTimeout(resolve, waitMs);
+        });
+        continue;
+      }
+      throw new Error(payload.description ?? `telegram ${method} failed`);
+    }
+    if (SENDING_METHODS.has(method)) {
+      const chatId = body === undefined ? undefined : body['chat_id'];
+      const messageId = payload.result === undefined ? undefined : payload.result.message_id;
+      if (typeof chatId === 'number' && typeof messageId === 'number') rememberSent(chatId, messageId);
+    }
+    if (method === 'deleteMessage' && body !== undefined) {
+      forgetSent(Number(body['chat_id']), Number(body['message_id']));
+    }
+    return payload.result;
   }
-  if (method === 'deleteMessage' && body !== undefined) {
-    forgetSent(Number(body['chat_id']), Number(body['message_id']));
-  }
-  return payload.result;
 }
 
 const send = (config, chatId, text) => tg(config, 'sendMessage', { chat_id: chatId, text, disable_web_page_preview: true });
@@ -1588,6 +1686,8 @@ const COMMANDS_SESSION = [
   { command: 'notify', description: 'report each turn when it finishes' },
   { command: 'purge', description: "delete this bot's messages, old ones too" },
   { command: 'name', description: 'show and retry the bot name' },
+  { command: 'pending', description: 'everything waiting on you' },
+  { command: 'debug', description: 'bridge state and recent log lines' },
   { command: 'sessions', description: 'back to the project list' },
   { command: 'help', description: 'show the command list' },
 ];
@@ -1726,6 +1826,8 @@ const HELP = [
   '/stop — cancel the running turn',
   '/purge — delete every message this bot sent here, including old ones',
   '/name [on|off] — show, retry or stop the bot rename',
+  '/pending — everything waiting on you, across sessions',
+  '/debug — bridge state and the last few log lines',
   '',
   'Send any other text to prompt the selected session.',
   '',
@@ -1802,7 +1904,7 @@ async function handle(config, chatId, text) {
         return;
       }
       const chunks = chunkText(projectsReport(sessions, chatId, pageFromArgument(argument)), 3800);
-      state.view[chatId] = { project: '', workspaceId: '', cwd: '', ids: [] };
+      state.view[chatId] = { workspaceId: '', ids: [] };
       await saveState();
       await setMenu(config, chatId, COMMANDS_BROWSE);
       const keyboard = projectsKeyboard(groupSessionsByProject(sessions), pageFromArgument(argument));
@@ -1837,13 +1939,10 @@ async function handle(config, chatId, text) {
         await send(config, chatId, 'Use /sessions first, then /project <n> or /project <name>.');
         return;
       }
-      const [projectName_, list] = entry;
+      const [, list] = entry;
       state.view[chatId] = {
-        project: projectName_,
         workspaceId: list[0]?.workspaceId ?? '',
-        cwd: list[0]?.cwd ?? '',
         ids: list.map((session) => session.id),
-        projectNumber,
       };
       await saveState();
       await setMenu(config, chatId, COMMANDS_BROWSE);
@@ -1900,6 +1999,42 @@ async function handle(config, chatId, text) {
       await syncChatOnSelection(config, chatId, id);
       return;
     }
+    case '/pending': {
+      const info = await server();
+      const sessions = await listSessions(info).catch(() => []);
+      const waiting = sessions.filter((session) => session.status === 'approval' || session.status === 'question');
+      if (waiting.length === 0) {
+        await send(config, chatId, 'Nothing is waiting on you anywhere.');
+        return;
+      }
+      const lines = ['⏳ Waiting on you', ''];
+      const buttons = [];
+      for (const session of waiting.slice(0, 10)) {
+        const approvals = await pendingApprovals(info, session.id).catch(() => []);
+        const questions = await pendingQuestions(info, session.id).catch(() => []);
+        const bits = [];
+        if (approvals.length > 0) bits.push(`${String(approvals.length)} approval(s)`);
+        if (questions.length > 0) bits.push(`${String(questions.length)} question(s)`);
+        lines.push(`• ${session.project} · ${session.title}${bits.length === 0 ? '' : ` — ${bits.join(', ')}`}`);
+        buttons.push([{ text: `Open ${session.title}`.slice(0, 60), callback_data: `use|${shortId('go', session.id)}` }]);
+      }
+      lines.push('', 'Tap a session to switch to it.');
+      await sendPlain(config, chatId, lines.join('\n'), buttons.length === 0 ? undefined : { inline_keyboard: buttons });
+      return;
+    }
+    case '/debug': {
+      const lines = [
+        '🔧 Bridge',
+        `pid ${String(process.pid)} · offset ${String(state.offset)}`,
+        `tracked sent ${String(Object.values(state.sent).reduce((sum, list) => sum + list.length, 0))} · incoming ${String(Object.values(state.incoming).reduce((sum, list) => sum + list.length, 0))}`,
+        `renaming ${state.renameDisabled === true ? 'off' : 'on'} · cooldown ${typeof state.nameRetryAt === 'number' && state.nameRetryAt > Date.now() ? `${String(Math.round((state.nameRetryAt - Date.now()) / 3600000))}h` : 'none'}`,
+        `ffmpeg ${findFfmpeg() ?? 'not found'}`,
+      ];
+      const last = recentLog.slice(-5);
+      if (last.length > 0) lines.push('', 'Recent:', ...last.map((line) => line.replace('[omnicode-telegram] ', '• ')));
+      await send(config, chatId, lines.join('\n'));
+      return;
+    }
     case '/current': {
       const sessionId = selectionFor(chatId);
       const sessions = await listSessions(await server()).catch(() => []);
@@ -1918,13 +2053,18 @@ async function handle(config, chatId, text) {
       };
       const result = await purgeChat(config, chatId, note);
       log(`purge for ${String(chatId)}: deleted ${String(result.removed)} of ${String(result.upper)} ids checked`);
+      const detail = result.skipped.length === 0 ? '' : `\nSkipped: ${result.skipped.join('; ')}`;
+      await send(
+        config,
+        chatId,
+        `🧹 Purged ${String(result.removed)} message(s), ${String(result.upper)} ids checked.${detail}`,
+      ).catch((error) => log(`purge summary failed: ${error.message}`));
       if (typeof sessionId === 'string') {
         await refreshHeader(config, chatId, sessionId, undefined).catch(() => undefined);
         await sendLastReport(config, chatId, sessionId).catch(() => undefined);
         await refreshPending(config, chatId, sessionId).catch(() => undefined);
       } else {
-        const detail = result.skipped.length === 0 ? '' : `\nSkipped: ${result.skipped.join('; ')}`;
-        await send(config, chatId, `Purged ${String(result.removed)} message(s) of ${String(result.upper)} ids checked.${detail}\nSelect a session with /use to start again.`);
+        await send(config, chatId, 'Select a session with /use to start again.').catch(() => undefined);
       }
       return;
     }
@@ -1943,6 +2083,10 @@ async function handle(config, chatId, text) {
         return;
       }
       const sessionId = selectionFor(chatId);
+      if (typeof sessionId !== 'string') {
+        await send(config, chatId, 'Select a session first — /sessions, then /project <n>. Nothing was renamed.');
+        return;
+      }
       const sessions = await listSessions(await server()).catch(() => []);
       const meta = sessions.find((session) => session.id === sessionId);
       const desired = botNameFor(meta?.project ?? '', meta?.title ?? '');
@@ -1991,7 +2135,7 @@ async function handle(config, chatId, text) {
       }
       try {
         const reply = await lastReply(await server(), sessionId);
-        await send(config, chatId, reply === undefined ? 'No assistant reply yet.' : reply.slice(0, 3500));
+        await send(config, chatId, reply === undefined ? 'No assistant reply yet.' : reply.slice(0, REPORT_MAX_CHARS));
       } catch (error) {
         await send(config, chatId, `Could not read the reply: ${error.message}`);
       }
@@ -2004,7 +2148,7 @@ async function handle(config, chatId, text) {
         return;
       }
       try {
-        await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/prompts/cancel`, {});
+        await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}:abort`, {});
         await send(config, chatId, 'Cancel requested.');
       } catch (error) {
         await send(config, chatId, `Cancel failed: ${error.message}`);
@@ -2024,6 +2168,12 @@ async function handle(config, chatId, text) {
       }
       if (argument === 'clear') {
         delete overrides[key];
+      } else if (key === 'permission_mode') {
+        if (argument !== 'manual' && argument !== 'yolo' && argument !== 'auto') {
+          await send(config, chatId, 'Use /permission manual, /permission auto or /permission yolo — or /permission clear.');
+          return;
+        }
+        overrides[key] = argument;
       } else if (key === 'plan_mode') {
         overrides[key] = argument === 'on' || argument === 'true';
       } else {
@@ -2130,9 +2280,22 @@ async function handle(config, chatId, text) {
 
 // The pid and heartbeat let a reader (the Connectors settings page) tell a
 // live bridge from a file left behind by a crashed one.
-async function saveState() {
+const STATE_SCHEMA = 2;
+
+let saveChain = Promise.resolve();
+
+function saveState() {
+  const run = saveChain.then(writeStateFile, writeStateFile);
+  saveChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
+}
+
+async function writeStateFile() {
   await loadPersistedState();
-  await writeJson(STATE_PATH, { ...state, pid: process.pid, heartbeatAt: Date.now() });
+  await writeJson(STATE_PATH, { ...state, schemaVersion: STATE_SCHEMA, pid: process.pid, heartbeatAt: Date.now() });
 }
 
 let loadedOnce = false;
@@ -2178,15 +2341,24 @@ function processAlive(pid) {
 
 async function claimLock() {
   const held = await readJson(LOCK_PATH, undefined);
-  if (held !== undefined && typeof held.pid === 'number' && held.pid !== process.pid) {
-    const claimedAt = typeof held.claimedAt === 'number' ? held.claimedAt : 0;
-    if (Date.now() - claimedAt < LOCK_MAX_AGE_MS && processAlive(held.pid)) return held.pid;
-  }
+  if (held !== undefined && typeof held.pid === 'number' && held.pid !== process.pid && processAlive(held.pid)) return held.pid;
   await writeJson(LOCK_PATH, { pid: process.pid, claimedAt: Date.now() });
   return undefined;
 }
 
+async function touchLock() {
+  const held = await readJson(LOCK_PATH, undefined).catch(() => undefined);
+  if (held?.pid !== process.pid) return;
+  await writeJson(LOCK_PATH, { pid: process.pid, claimedAt: Date.now() }).catch(() => undefined);
+}
+
 function releaseLockSync() {
+  try {
+    const held = JSON.parse(readFileSync(LOCK_PATH, 'utf8'));
+    if (held?.pid !== process.pid) return;
+  } catch {
+    return;
+  }
   rmSync(LOCK_PATH, { force: true });
 }
 
@@ -2235,6 +2407,9 @@ async function main() {
   setInterval(() => {
     reportOtherFinishedTurns(config).catch((error) => log(`other finish check failed: ${error.message}`));
   }, OTHER_CHECK_MS);
+  setInterval(() => {
+    touchLock().catch(() => undefined);
+  }, LOCK_MAX_AGE_MS / 4);
 
   let backoffMs = 3000;
   for (;;) {
@@ -2252,8 +2427,14 @@ async function main() {
     }
     for (const update of updates) {
       state.offset = update.update_id + 1;
+      scheduleStateSave();
       try {
         if (update.callback_query !== undefined) {
+          const callbackChat = update.callback_query.message?.chat?.id;
+          if (typeof callbackChat !== 'number' || !config.allowedChatIds.includes(callbackChat)) {
+            log(`ignored a callback press from chat ${String(callbackChat)} — not in allowedChatIds`);
+            continue;
+          }
           await handleCallback(config, update.callback_query);
           continue;
         }
@@ -2263,6 +2444,10 @@ async function main() {
           const chatIdForMedia = message.chat?.id;
           if (typeof chatIdForMedia === 'number' && config.allowedChatIds.includes(chatIdForMedia)) {
             rememberIncoming(chatIdForMedia, message.message_id);
+            const unsupported = message.voice !== undefined || message.audio !== undefined || message.sticker !== undefined;
+            if (unsupported) {
+              await send(config, chatIdForMedia, 'That kind of file cannot be read yet — send a photo, an image file, or a video.').catch(() => undefined);
+            }
             if (
               Array.isArray(message.photo) ||
               message.document !== undefined ||

@@ -149,8 +149,8 @@ describe('keyboards', () => {
       const all = buttons(keyboard);
       assert.ok(all.length > 0);
       for (const button of all) {
-        assert.match(button.callback_data, /^cmd\|/);
-        assert.ok(button.callback_data.length <= 64);
+        assert.match(button.callback_data, /^(cmd|use)\|/);
+        assert.ok(Buffer.byteLength(button.callback_data, 'utf8') <= 64);
       }
     }
   });
@@ -162,11 +162,11 @@ describe('keyboards', () => {
     assert.equal(first.text, 'OmniCode');
   });
 
-  it('shows five sessions per page and offers more', () => {
+  it('shows five sessions per page, each carrying its own id', () => {
     const many = Array.from({ length: 12 }, (_, index) => ({ id: `s${String(index + 1)}`, title: `session ${String(index + 1)}` }));
     const page1 = buttons(sessionsKeyboard(many, 1, 3));
 
-    assert.equal(page1.filter((button) => button.callback_data.startsWith('cmd|/use ')).length, 5);
+    assert.equal(page1.filter((button) => button.callback_data.startsWith('use|')).length, 5);
     assert.deepEqual(
       page1.map((button) => button.callback_data).slice(-1),
       ['cmd|/project 3 2'],
@@ -174,11 +174,11 @@ describe('keyboards', () => {
     assert.match(page1.at(-1).text, /More/);
   });
 
-  it('numbers the second page from six, so /use keeps working', () => {
+  it('gives an older message buttons that still open the session they name', () => {
     const many = Array.from({ length: 12 }, (_, index) => ({ id: `s${String(index + 1)}`, title: `session ${String(index + 1)}` }));
     const page2 = buttons(sessionsKeyboard(many, 2, 3)).map((button) => button.callback_data);
 
-    assert.equal(page2[0], 'cmd|/use 6');
+    assert.equal(page2[0], 'use|s6');
     assert.ok(page2.includes('cmd|/project 3 1'));
     assert.ok(page2.includes('cmd|/project 3 3'));
   });
@@ -230,6 +230,19 @@ describe('approval and question rendering', () => {
     };
     assert.equal(questionKeyboard(multi), undefined);
     assert.match(questionText(multi), /multi-select: reply with numbers/);
+  });
+
+  it('offers no buttons for a multi-item question, since one press resolves all of it', () => {
+    const twoParts = {
+      question_id: 'q3',
+      questions: [
+        { id: 'q_0', question: 'First?', options: [{ id: 'a', label: 'a' }] },
+        { id: 'q_1', question: 'Second?', options: [{ id: 'b', label: 'b' }] },
+      ],
+    };
+
+    assert.equal(questionKeyboard(twoParts), undefined);
+    assert.match(questionText(twoParts), /Second\?/);
   });
 });
 
