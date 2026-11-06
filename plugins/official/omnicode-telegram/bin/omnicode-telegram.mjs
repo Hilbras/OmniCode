@@ -18,6 +18,7 @@ import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
 import { homedir } from 'node:os';
+import { setDefaultResultOrder } from 'node:dns';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 
@@ -26,7 +27,11 @@ const CONFIG_PATH = path.join(HOME, 'telegram.json');
 const STATE_PATH = path.join(HOME, 'telegram-state.json');
 const INSTANCES_DIR = path.join(HOME, 'server', 'instances');
 const TOKEN_PATH = path.join(HOME, 'server.token');
-const POLL_TIMEOUT_S = 25;
+const POLL_TIMEOUT_S = 10;
+
+// Telegram resolves to IPv6 on some machines whose IPv6 route is broken, which shows
+// up as repeated "fetch failed" long-poll errors. Prefer IPv4 for every request.
+setDefaultResultOrder('ipv4first');
 const SESSIONS_PAGE = 100;
 
 const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, profilePhotoHash: undefined };
