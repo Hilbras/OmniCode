@@ -198,6 +198,40 @@ function sessionMarks(session, chatId) {
   return parts.length === 0 ? '' : ` (${parts.join(', ')})`;
 }
 
+function commandButton(text, command) {
+  return { text: String(text).slice(0, 60), callback_data: `cmd|${command}` };
+}
+
+function chunkRows(buttons, perRow) {
+  const rows = [];
+  for (let index = 0; index < buttons.length; index += perRow) rows.push(buttons.slice(index, index + perRow));
+  return rows;
+}
+
+function projectsKeyboard(groups) {
+  const buttons = groups.slice(0, 40).map(([project], index) => commandButton(project, `/project ${index + 1}`));
+  return buttons.length === 0 ? undefined : { inline_keyboard: chunkRows(buttons, 2) };
+}
+
+function sessionsKeyboard(list) {
+  const buttons = list.slice(0, 40).map((session, index) => commandButton(session.title, `/use ${index + 1}`));
+  return buttons.length === 0 ? undefined : { inline_keyboard: chunkRows(buttons, 2) };
+}
+
+function modelsKeyboard(shown) {
+  const buttons = shown.slice(0, 25).map((model, index) => commandButton(modelLabel(model), `/models ${index + 1}`));
+  return buttons.length === 0 ? undefined : { inline_keyboard: chunkRows(buttons, 2) };
+}
+
+function sendPlain(config, chatId, text, keyboard) {
+  return tg(config, 'sendMessage', {
+    chat_id: chatId,
+    text,
+    ...(keyboard === undefined ? undefined : { reply_markup: keyboard }),
+    disable_web_page_preview: true,
+  });
+}
+
 function projectsReport(sessions, chatId) {
   const groups = groupSessionsByProject(sessions);
   const lines = [`Projects (${groups.length}) · ${sessions.length} sessions`, ''];
@@ -481,6 +515,10 @@ async function handleCallback(config, query) {
     if (typeof chatId === 'number') await send(config, chatId, text).catch(() => undefined);
   };
   try {
+    if (kind === 'cmd') {
+      await handle(config, chatId, decodeURIComponent(id));
+      return;
+    }
     const sessionId = state.selection[chatId];
     if (typeof sessionId !== 'string') throw new Error('no session selected in this chat');
     if (kind === 'apv') {
@@ -1019,9 +1057,10 @@ async function handle(config, chatId, text) {
       state.view[chatId] = { project: '', workspaceId: '', cwd: '', ids: [] };
       await saveState();
       await setMenu(config, chatId, COMMANDS_BROWSE);
+      const keyboard = projectsKeyboard(groupSessionsByProject(sessions));
       for (let i = 0; i < chunks.length; i += 1) {
         const tail = chunks.length > 1 && i < chunks.length - 1 ? `\n\n(${i + 1}/${chunks.length})` : '';
-        await send(config, chatId, `${chunks[i]}${tail}`);
+        await sendPlain(config, chatId, `${chunks[i]}${tail}`, i === chunks.length - 1 ? keyboard : undefined);
       }
       return;
     }
@@ -1054,9 +1093,10 @@ async function handle(config, chatId, text) {
       await saveState();
       await setMenu(config, chatId, COMMANDS_BROWSE);
       const projectChunks = chunkText(projectReport(entry, chatId), 3800);
+      const sessionKeyboard = sessionsKeyboard(list);
       for (let i = 0; i < projectChunks.length; i += 1) {
         const tail = projectChunks.length > 1 && i < projectChunks.length - 1 ? `\n\n(${i + 1}/${projectChunks.length})` : '';
-        await send(config, chatId, `${projectChunks[i]}${tail}`);
+        await sendPlain(config, chatId, `${projectChunks[i]}${tail}`, i === projectChunks.length - 1 ? sessionKeyboard : undefined);
       }
       return;
     }
@@ -1216,7 +1256,7 @@ async function handle(config, chatId, text) {
         await saveState();
         const lines = shown.map((model, index) => `${index + 1}. ${modelLabel(model)}`);
         lines.push('', provider === undefined ? 'Pick with /models <n>, or narrow first with /provider.' : `Provider ${provider} · pick with /models <n>.`);
-        await send(config, chatId, lines.join('\n'));
+        await sendPlain(config, chatId, lines.join('\n'), modelsKeyboard(shown));
         return;
       }
       const wanted = Number.parseInt(argument, 10);
@@ -1332,7 +1372,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard };
 
 if (isEntryPoint) {
   main().catch((error) => {
