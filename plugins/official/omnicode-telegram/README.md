@@ -107,16 +107,24 @@ Choosing a session (`/use <n>`, or tapping one in `/project`) does three things:
 
 1. **Clears the chat.** Every message the bot sent in that chat is deleted, so each
    session starts from a clean slate.
-2. **Renames the bot** to `OmniCode - <project> · <session title>`, so the chat header
-   tells you which session you are driving.
+2. **Renames the bot** to `OmniCode - <project>`, so the chat header says which project
+   you are driving.
 3. **Posts the last report** from that session — the newest finished turn, with its
    duration, tools, files and final message.
+
+Anything that session is *waiting on* is posted right after the report — a pending
+approval with its Allow / Deny buttons, or a pending question — so entering a stalled
+session from your phone tells you what it needs. Because the chat is emptied first, a
+waiting item is always announced again, even if an earlier copy of the notice was
+deleted with the rest of the history.
 
 Limits worth knowing: a bot can only delete **its own** messages, and only ones it has
 sent since it started tracking them (Telegram refuses anything older than 48 hours),
 so your own messages and older bot messages stay in the chat. The bot's name is also
-global — one bot has one name — so it reflects the session you selected last, in any
-chat. It is only sent to Telegram when the name actually changes.
+global — one bot has one name — so it reflects the last project you opened, in any
+chat; Telegram allows only a few name changes per day, so the bridge names the bot per
+project (not per session or per chat), skips the call when the name already matches,
+and after a rate-limit stays quiet until Telegram's own retry window has passed.
 
 ## Browsing
 

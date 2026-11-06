@@ -34,7 +34,7 @@ const POLL_TIMEOUT_S = 10;
 setDefaultResultOrder('ipv4first');
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, botName: undefined, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -403,16 +403,41 @@ function approvalText(approval) {
   return lines.join('\n');
 }
 
+const CALLBACK_LIMIT_BYTES = 64;
+
+function shortId(kind, id) {
+  const prefix = kind === 'apv' ? 'approval_' : kind === 'q' ? 'question_' : '';
+  return prefix !== '' && id.startsWith(prefix) ? id.slice(prefix.length) : id;
+}
+
+function longId(kind, id) {
+  const prefix = kind === 'apv' ? 'approval_' : kind === 'q' ? 'question_' : '';
+  return prefix !== '' && !id.startsWith(prefix) ? `${prefix}${id}` : id;
+}
+
+function usableRows(rows) {
+  const kept = [];
+  for (const row of rows) {
+    const button = row[0];
+    if (typeof button?.callback_data === 'string' && Buffer.byteLength(button.callback_data, 'utf8') > CALLBACK_LIMIT_BYTES) {
+      log(`button dropped: callback_data is ${String(Buffer.byteLength(button.callback_data, 'utf8'))} bytes (limit ${String(CALLBACK_LIMIT_BYTES)})`);
+      continue;
+    }
+    kept.push(row);
+  }
+  return kept;
+}
+
 function approvalKeyboard(approval) {
-  return {
-    inline_keyboard: [
-      [
-        { text: '✅ Allow', callback_data: `apv|${approval.approval_id}|approved` },
-        { text: '⛔ Deny', callback_data: `apv|${approval.approval_id}|rejected` },
-      ],
-      [{ text: '♾ Allow for this session', callback_data: `apv|${approval.approval_id}|approved|session` }],
+  const id = shortId('apv', String(approval.approval_id));
+  const rows = usableRows([
+    [
+      { text: '✅ Allow', callback_data: `apv|${id}|approved` },
+      { text: '⛔ Deny', callback_data: `apv|${id}|rejected` },
     ],
-  };
+    [{ text: '♾ Allow for this session', callback_data: `apv|${id}|approved|session` }],
+  ]);
+  return rows.length === 0 ? undefined : { inline_keyboard: rows };
 }
 
 function questionText(question) {
@@ -433,13 +458,76 @@ function questionText(question) {
 
 function questionKeyboard(question) {
   const rows = [];
+  const questionId = shortId('q', String(question.question_id));
   for (const item of question.questions ?? []) {
     if (item.multi_select === true) continue;
     for (const option of item.options ?? []) {
-      rows.push([{ text: String(option.label).slice(0, 60), callback_data: `q|${question.question_id}|${item.id}|${option.id}` }]);
+      rows.push([{ text: String(option.label).slice(0, 60), callback_data: `q|${questionId}|${String(item.id)}|${String(option.id)}` }]);
     }
   }
-  return rows.length === 0 ? undefined : { inline_keyboard: rows.slice(0, 8) };
+  const kept = usableRows(rows).slice(0, 8);
+  return kept.length === 0 ? undefined : { inline_keyboard: kept };
+}
+
+async function announcePending(config, chatId, sessionId, approvals, questions) {
+  const seen = new Map(Object.entries(state.interactions[chatId] ?? {}));
+  let chatChanged = false;
+  for (const approval of approvals) {
+    if (typeof approval.approval_id !== 'string' || seen.has(approval.approval_id)) continue;
+    seen.set(approval.approval_id, sessionId);
+    chatChanged = true;
+    try {
+      await tg(config, 'sendMessage', {
+        chat_id: Number(chatId),
+        text: approvalText(approval),
+        reply_markup: approvalKeyboard(approval),
+        disable_web_page_preview: true,
+      });
+    } catch (error) {
+      log(`approval notice failed: ${error.message}`);
+    }
+  }
+  for (const question of questions) {
+    if (typeof question.question_id !== 'string' || seen.has(question.question_id)) continue;
+    seen.set(question.question_id, sessionId);
+    chatChanged = true;
+    state.pendingQuestion[chatId] = {
+      questionId: question.question_id,
+      sessionId,
+      questions: question.questions ?? [],
+    };
+    const keyboard = questionKeyboard(question);
+    try {
+      await tg(config, 'sendMessage', {
+        chat_id: Number(chatId),
+        text: questionText(question),
+        ...(keyboard === undefined ? undefined : { reply_markup: keyboard }),
+        disable_web_page_preview: true,
+      });
+    } catch (error) {
+      log(`question notice failed: ${error.message}`);
+    }
+  }
+  const live = new Set([...approvals.map((approval) => approval.approval_id), ...questions.map((question) => question.question_id)]);
+  const kept = Object.fromEntries([...seen].filter(([id]) => live.has(id)));
+  if (Object.keys(kept).length !== seen.size) chatChanged = true;
+  if (chatChanged) state.interactions[chatId] = kept;
+  return chatChanged;
+}
+
+async function refreshPending(config, chatId, sessionId) {
+  const info = await server();
+  let approvals;
+  let questions;
+  try {
+    approvals = await pendingApprovals(info, sessionId);
+    questions = await pendingQuestions(info, sessionId);
+  } catch (error) {
+    log(`pending fetch failed: ${describeError(error)}`);
+    return;
+  }
+  log(`pending for ${sessionId}: ${String(approvals.length)} approval(s), ${String(questions.length)} question(s)`);
+  if (await announcePending(config, chatId, sessionId, approvals, questions)) await saveState();
 }
 
 async function pollInteractions(config) {
@@ -480,51 +568,7 @@ async function pollInteractions(config) {
     const watchers = watchersBySession.get(sessionId);
     if (watchers === undefined) continue;
     for (const chatId of watchers) {
-      const seen = new Map(Object.entries(state.interactions[chatId] ?? {}));
-      let chatChanged = false;
-      for (const approval of approvals) {
-        if (typeof approval.approval_id !== 'string' || seen.has(approval.approval_id)) continue;
-        seen.set(approval.approval_id, sessionId);
-        chatChanged = true;
-        try {
-          await tg(config, 'sendMessage', {
-            chat_id: Number(chatId),
-            text: approvalText(approval),
-            reply_markup: approvalKeyboard(approval),
-            disable_web_page_preview: true,
-          });
-        } catch (error) {
-          log(`approval notice failed: ${error.message}`);
-        }
-      }
-      for (const question of questions) {
-        if (typeof question.question_id !== 'string' || seen.has(question.question_id)) continue;
-        seen.set(question.question_id, sessionId);
-        chatChanged = true;
-        state.pendingQuestion[chatId] = {
-          questionId: question.question_id,
-          sessionId,
-          questions: question.questions ?? [],
-        };
-        const keyboard = questionKeyboard(question);
-        try {
-          await tg(config, 'sendMessage', {
-            chat_id: Number(chatId),
-            text: questionText(question),
-            ...(keyboard === undefined ? undefined : { reply_markup: keyboard }),
-            disable_web_page_preview: true,
-          });
-        } catch (error) {
-          log(`question notice failed: ${error.message}`);
-        }
-      }
-      const live = new Set([...approvals.map((a) => a.approval_id), ...questions.map((q) => q.question_id)]);
-      const kept = Object.fromEntries([...seen].filter(([id]) => live.has(id)));
-      if (Object.keys(kept).length !== seen.size) chatChanged = true;
-      if (chatChanged) {
-        state.interactions[chatId] = kept;
-        changed = true;
-      }
+      if (await announcePending(config, chatId, sessionId, approvals, questions)) changed = true;
     }
   }
   if (changed) await saveState();
@@ -535,7 +579,7 @@ async function handleCallback(config, query) {
   const messageId = query?.message?.message_id;
   const parts = typeof query?.data === 'string' ? query.data.split('|') : [];
   const kind = parts[0];
-  const id = parts[1];
+  const id = parts[1] === undefined ? undefined : longId(kind, parts[1]);
   const say = async (text) => {
     if (typeof messageId === 'number' && typeof chatId === 'number') {
       try {
@@ -805,31 +849,44 @@ async function clearChatHistory(config, chatId) {
     }
   }
   state.sent[chatId] = [];
+  state.interactions[chatId] = {};
+  delete state.pendingQuestion[chatId];
   await saveState();
   return removed;
 }
 
-function botNameFor(project, title) {
-  const parts = [];
-  if (typeof project === 'string' && project !== '') parts.push(project);
-  if (typeof title === 'string' && title.trim() !== '' && title.trim() !== project) parts.push(title.trim());
-  const label = parts.length === 0 ? 'no session' : parts.join(' · ');
+function botNameFor(project) {
+  const label = typeof project === 'string' && project.trim() !== '' ? project.trim() : 'no session';
   const name = `OmniCode - ${label}`;
   return name.length <= 64 ? name : `${name.slice(0, 63)}…`;
 }
 
-async function applyBotName(config, chatId, sessionId) {
+function retryAfterMs(error) {
+  const match = /retry after (\d+)/i.exec(String(error?.message ?? ''));
+  return match === null ? 0 : Number(match[1]) * 1000;
+}
+
+async function applyBotName(config, sessionId) {
   const info = await server();
   const sessions = await listSessions(info).catch(() => []);
   const meta = sessions.find((session) => session.id === sessionId);
-  const name = botNameFor(meta?.project ?? '', meta?.title ?? '');
+  const name = botNameFor(meta?.project ?? '');
   if (state.botName === name) return name;
+  if (typeof state.nameRetryAt === 'number' && Date.now() < state.nameRetryAt) return name;
   try {
     await tg(config, 'setMyName', { name });
     state.botName = name;
+    delete state.nameRetryAt;
     await saveState();
   } catch (error) {
-    log(`bot name not changed: ${error.message}`);
+    const wait = retryAfterMs(error);
+    if (wait > 0) {
+      state.nameRetryAt = Date.now() + wait;
+      await saveState();
+      log(`bot name is rate-limited for another ${String(Math.round(wait / 3600000))}h; keeping the current one`);
+    } else {
+      log(`bot name not changed: ${error.message}`);
+    }
   }
   return name;
 }
@@ -861,7 +918,7 @@ async function syncChatOnSelection(config, chatId, sessionId) {
   }
   let name = '';
   try {
-    name = await applyBotName(config, chatId, sessionId);
+    name = await applyBotName(config, sessionId);
   } catch (error) {
     log(`rename failed: ${error.message}`);
   }
@@ -870,6 +927,11 @@ async function syncChatOnSelection(config, chatId, sessionId) {
     await sendLastReport(config, chatId, sessionId);
   } catch (error) {
     log(`last report failed: ${error.message}`);
+  }
+  try {
+    await refreshPending(config, chatId, sessionId);
+  } catch (error) {
+    log(`pending refresh failed: ${describeError(error)}`);
   }
 }
 
@@ -1651,6 +1713,7 @@ async function main() {
     state.progress = saved.progress ?? {};
     state.sent = saved.sent ?? {};
     state.botName = saved.botName;
+    state.nameRetryAt = saved.nameRetryAt;
     state.profilePhotoHash = saved.profilePhotoHash;
   }
   const info = await waitForServer();
@@ -1733,7 +1796,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId };
 
 if (isEntryPoint) {
   main().catch((error) => {
