@@ -44,6 +44,7 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 | Command | Effect |
 |---|---|
 | `/sessions` | list recent sessions |
+| `/status` | which sessions are working right now |
 | `/use <n>` | select a session |
 | *(any text)* | prompt the selected session |
 | `/last` | newest assistant reply |
@@ -60,10 +61,13 @@ profile photos), which is why the plugin ships `avatar.jpg`.
 
 ## Finish reports
 
-When a turn in the session the chat selected finishes, the bot sends the last
-assistant message to the chat, so you can close the app and still get the result.
-A turn you started from the desktop app counts too. `/notify off` mutes it,
-`/notify on` turns it back on.
+When a turn in the session the chat selected finishes, the bot sends a report:
+how long it took, how many steps and which tools ran, which files it changed,
+and the agent's final message. A turn you started from the desktop app counts
+too. `/notify off` mutes it, `/notify on` turns it back on.
+
+`/status` answers the other question: which sessions are working right now,
+with their project, their elapsed time, and which one this chat selected.
 
 ## Security
 

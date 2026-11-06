@@ -132,6 +132,109 @@ async function lastReply(server, sessionId) {
   return undefined;
 }
 
+function formatDuration(ms) {
+  if (typeof ms !== 'number' || !Number.isFinite(ms) || ms <= 0) return '';
+  const totalSeconds = Math.round(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes === 0) return `${seconds}s`;
+  if (minutes < 60) return `${minutes}m ${seconds}s`;
+  return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+}
+
+function projectName(item) {
+  const cwd = item !== null && typeof item === 'object' && item.metadata !== undefined && typeof item.metadata.cwd === 'string' ? item.metadata.cwd : '';
+  if (cwd === '') return '';
+  const parts = cwd.split(/[\\/]+/).filter((part) => part !== '');
+  return parts.length === 0 ? '' : parts[parts.length - 1];
+}
+
+function shortPath(file) {
+  const parts = file.split(/[\\/]+/).filter((part) => part !== '');
+  if (parts.length >= 2) {
+    const tail = parts.slice(-2).join('/');
+    return tail.length <= 60 ? `…/${tail}` : `…/${tail.slice(-58)}`;
+  }
+  return file.length <= 60 ? file : `…${file.slice(-59)}`;
+}
+
+function sessionLabel(item) {
+  const title = typeof item.title === 'string' && item.title.trim() !== '' ? item.title : item.last_prompt;
+  const text = typeof title === 'string' && title.trim() !== '' ? title.trim() : String(item.id);
+  return text.length <= 48 ? text : `${text.slice(0, 47)}…`;
+}
+
+function summarizeTurn(turn) {
+  const counts = new Map();
+  const files = new Set();
+  let tools = 0;
+  let final;
+  for (const step of turn.steps ?? []) {
+    for (const frame of step.frames ?? []) {
+      if (frame.kind === 'text' && typeof frame.text === 'string' && frame.text.trim() !== '') {
+        final = frame.text.trim();
+        continue;
+      }
+      if (frame.kind !== 'tool') continue;
+      tools += 1;
+      const name = typeof frame.name === 'string' ? frame.name : 'tool';
+      counts.set(name, (counts.get(name) ?? 0) + 1);
+      const input = frame.input ?? {};
+      if ((name === 'Edit' || name === 'Write') && typeof input.path === 'string') files.add(input.path);
+    }
+  }
+  const duration = formatDuration(turn.durationMs);
+  const lines = [duration === '' ? '✅ Finished' : `✅ Finished · ${duration}`];
+  if (tools > 0) {
+    const breakdown = [...counts.entries()]
+      .sort((left, right) => right[1] - left[1])
+      .slice(0, 5)
+      .map(([name, count]) => `${name}×${count}`)
+      .join(', ');
+    lines.push(`steps ${String((turn.steps ?? []).length)} · tools ${String(tools)} (${breakdown})`);
+  }
+  if (files.size > 0) {
+    const shown = [...files].slice(0, 4).map(shortPath).join(', ');
+    lines.push(`files: ${shown}${files.size > 4 ? ` (+${String(files.size - 4)})` : ''}`);
+  }
+  const body =
+    final === undefined
+      ? '(no final message)'
+      : final.length > REPORT_MAX_CHARS
+        ? `${final.slice(0, REPORT_MAX_CHARS)}\n…(truncated)`
+        : final;
+  return `${lines.join('\n')}\n\n${body}`;
+}
+
+async function statusReport(info, chatId) {
+  const data = await api(info, 'GET', '/api/v1/sessions?page_size=100');
+  const items = Array.isArray(data?.items) ? data.items : [];
+  const working = items.filter((item) => item.busy === true || item.main_turn_active === true);
+  const selected = selectionFor(chatId);
+  if (working.length === 0) {
+    return `Nothing is working right now.\n${String(items.length)} session(s) in total.`;
+  }
+  const lines = [`Working now (${String(working.length)}):`];
+  for (const item of working.slice(0, 10)) {
+    const parts = [];
+    const project = projectName(item);
+    if (project !== '') parts.push(project);
+    parts.push(sessionLabel(item));
+    let line = `• ${parts.join(' · ')}`;
+    try {
+      const turn = await newestTurn(info, item.id);
+      const started = turn === undefined || typeof turn.startedAt !== 'string' ? Number.NaN : Date.parse(turn.startedAt);
+      if (Number.isFinite(started)) line += ` · ${formatDuration(Date.now() - started)}`;
+    } catch {
+      // an unreadable session simply shows without elapsed time
+    }
+    if (item.id === selected) line += ' ← selected';
+    lines.push(line, `  ${String(item.id)}`);
+  }
+  if (working.length > 10) lines.push(`…and ${String(working.length - 10)} more.`);
+  return lines.join('\n');
+}
+
 const NOTIFY_INTERVAL_MS = 3000;
 const REPORT_MAX_CHARS = 3500;
 
@@ -183,10 +286,7 @@ async function reportFinishedTurns(config) {
       state.notified[chatId] = turn.turnId;
       await saveState();
       if (turn.state !== 'completed') continue;
-      const reply = await lastReply(info, sessionId).catch(() => undefined);
-      if (reply === undefined) continue;
-      const body = reply.length > REPORT_MAX_CHARS ? `${reply.slice(0, REPORT_MAX_CHARS)}\n…(truncated)` : reply;
-      await send(config, Number(chatId), `✅ Finished\n\n${body}`);
+      await send(config, Number(chatId), summarizeTurn(turn));
     }
   } finally {
     reporting = false;
@@ -216,6 +316,7 @@ async function tg(config, method, body) {
 const send = (config, chatId, text) => tg(config, 'sendMessage', { chat_id: chatId, text, disable_web_page_preview: true });
 
 const BOT_COMMANDS = [
+  { command: 'status', description: 'which sessions are working right now' },
   { command: 'sessions', description: 'list recent sessions' },
   { command: 'use', description: 'select a session by number' },
   { command: 'current', description: 'show the selection and overrides' },
@@ -283,6 +384,7 @@ const HELP = [
   'Omnicode from Telegram',
   '',
   '/sessions — list recent sessions',
+  '/status — sessions working right now',
   '/use <n> — select one by number',
   '/current — show the selection and pending overrides',
   '/last — show the newest assistant reply',
@@ -348,6 +450,9 @@ async function handle(config, chatId, text) {
     case '/start':
     case '/help':
       await send(config, chatId, HELP);
+      return;
+    case '/status':
+      await send(config, chatId, await statusReport(await server(), chatId));
       return;
     case '/sessions': {
       const sessions = await listSessions(await server());
@@ -523,7 +628,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn };
 
 if (isEntryPoint) {
   main().catch((error) => {
