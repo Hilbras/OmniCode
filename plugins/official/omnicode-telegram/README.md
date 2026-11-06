@@ -95,11 +95,30 @@ turn ends, so a chat shows one entry per turn rather than silence followed by a 
 of text. Reports too long for one message arrive as a summary plus a `report.md`
 attachment.
 
-## Images
+## Images and videos
 
-Send a photo, or an image file up to 5 MB, and it goes to the selected session as an
-image the agent can look at; the caption becomes the prompt. Other file types are
-refused with a note saying why.
+Send a photo, an image file up to 10 MB, or a video up to 20 MB, and it goes to the
+selected session; the caption becomes the prompt.
+
+A video arrives as still frames — up to six, sampled roughly every two seconds — because
+the agent reads images, not video streams. Frame extraction uses ffmpeg found at
+`OMNICODE_FFMPEG`, then `/opt/Omnicode/resources/ffmpeg/ffmpeg` (the desktop bundle),
+`/usr/local/bin/ffmpeg`, `/usr/bin/ffmpeg`. With no ffmpeg the bot says so and names the
+paths it looked in, instead of failing quietly. Other file types are refused with a note
+saying why, and anything over the size limit names both the size and the limit.
+
+## Alerts from other sessions
+
+While you drive one session, the bridge also watches the others. When a session that was
+working stops, you get a one-line alert in the chat — `✅ Finished · 1m 5s`, the project
+and session, and the first line of its reply — so you learn about it without leaving the
+session you are in. The session you have selected is excluded, since its own report
+already covers it.
+
+Telegram has no way for a bot to raise a *service* notification (the centred "X pinned a
+message" line); only messages can notify, so this arrives as a very short message.
+`/notify others off` turns these alerts off while keeping finish reports, and `/notify
+off` silences everything.
 
 ## Selecting a session
 
@@ -148,6 +167,11 @@ passed.
 running right now. `/project 2` (or `/project <part of the name>`) opens one and
 lists every session in it; that list is what `/use <n>` numbers. `/new <title>`
 creates a session in the open project and selects it.
+
+Both lists show **five entries at a time** with a `▸ More` button (and `‹ Back`) rather
+than a wall of buttons, and the numbering keeps counting across pages: the second page
+of sessions starts at 6, so `/use 7` means the same session wherever it is shown.
+`/sessions 2` and `/project 2 2` jump straight to a page.
 
 The bridge re-discovers the app's server every few seconds — the desktop app
 binds a new port on each launch — so restarting the app reconnects by itself,

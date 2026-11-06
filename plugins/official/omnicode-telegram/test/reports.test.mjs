@@ -14,6 +14,7 @@ import {
   questionText,
   sessionsKeyboard,
   summarizeTurn,
+  otherFinishLine,
 } from '../bin/omnicode-telegram.mjs';
 
 const TURN = {
@@ -137,6 +138,44 @@ describe('keyboards', () => {
     assert.equal(first.callback_data, 'cmd|/project 1');
     assert.equal(first.text, 'OmniCode');
   });
+
+  it('shows five sessions per page and offers more', () => {
+    const many = Array.from({ length: 12 }, (_, index) => ({ id: `s${String(index + 1)}`, title: `session ${String(index + 1)}` }));
+    const page1 = buttons(sessionsKeyboard(many, 1, 3));
+
+    assert.equal(page1.filter((button) => button.callback_data.startsWith('cmd|/use ')).length, 5);
+    assert.deepEqual(
+      page1.map((button) => button.callback_data).slice(-1),
+      ['cmd|/project 3 2'],
+    );
+    assert.match(page1.at(-1).text, /More/);
+  });
+
+  it('numbers the second page from six, so /use keeps working', () => {
+    const many = Array.from({ length: 12 }, (_, index) => ({ id: `s${String(index + 1)}`, title: `session ${String(index + 1)}` }));
+    const page2 = buttons(sessionsKeyboard(many, 2, 3)).map((button) => button.callback_data);
+
+    assert.equal(page2[0], 'cmd|/use 6');
+    assert.ok(page2.includes('cmd|/project 3 1'));
+    assert.ok(page2.includes('cmd|/project 3 3'));
+  });
+
+  it('shows five projects per page and offers more', () => {
+    const groups = Array.from({ length: 7 }, (_, index) => [`project ${String(index + 1)}`, [{ id: `s${String(index)}`, title: 't' }]]);
+    const page1 = buttons(projectsKeyboard(groups, 1)).map((button) => button.callback_data);
+
+    assert.equal(page1.filter((entry) => entry.startsWith('cmd|/project ')).length, 5);
+    assert.equal(page1.at(-1), 'cmd|/sessions 2');
+  });
+
+  it('says which page it is on', () => {
+    const many = Array.from({ length: 12 }, (_, index) => ({ id: `s${String(index + 1)}`, title: `session ${String(index + 1)}` }));
+    const text = projectReport(['OmniCode', many], '5488134280', 2);
+
+    assert.match(text, /page 2\/3/);
+    assert.match(text, /6\. session 6/);
+    assert.doesNotMatch(text, /1\. session 1/);
+  });
 });
 
 describe('approval and question rendering', () => {
@@ -168,5 +207,28 @@ describe('approval and question rendering', () => {
     };
     assert.equal(questionKeyboard(multi), undefined);
     assert.match(questionText(multi), /multi-select: reply with numbers/);
+  });
+});
+
+describe('otherFinishLine', () => {
+  it('names the project and session with the duration and first reply line', () => {
+    const line = otherFinishLine({ ...TURN }, { project: 'OmniHilbras', title: 'hi' });
+
+    assert.match(line, /^✅ Finished · 1m 5s/);
+    assert.match(line, /OmniHilbras · hi/);
+    assert.match(line, /Final \*\*report\*\*/);
+  });
+
+  it('copes with a session that has no project or reply', () => {
+    const line = otherFinishLine({ turnId: 't9', state: 'completed', steps: [] }, {});
+
+    assert.match(line, /^✅ Finished\nanother session$/);
+  });
+
+  it('keeps the reply short enough to read as a notification', () => {
+    const long = { turnId: 't9', state: 'completed', durationMs: 1000, steps: [{ stepId: 's', frames: [{ kind: 'text', text: 'x'.repeat(400) }] }] };
+    const line = otherFinishLine(long, { project: 'p' });
+
+    assert.ok(line.length < 260);
   });
 });

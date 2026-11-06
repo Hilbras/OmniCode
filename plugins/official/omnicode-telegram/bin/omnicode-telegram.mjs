@@ -13,11 +13,12 @@
 // The bot fails closed: with no allowedChatIds it answers only with the sender's
 // chat id and refuses every other command.
 
-import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, mkdtemp, rm } from 'node:fs/promises';
 import { existsSync, rmSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { execFile } from 'node:child_process';
-import { homedir } from 'node:os';
+import { promisify } from 'node:util';
+import { homedir, tmpdir } from 'node:os';
 import { setDefaultResultOrder } from 'node:dns';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -36,7 +37,7 @@ const POLL_TIMEOUT_S = 10;
 setDefaultResultOrder('ipv4first');
 const SESSIONS_PAGE = 100;
 
-const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, incoming: {}, clearHinted: {}, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
+const state = { offset: 0, selection: {}, overrides: {}, notify: {}, notified: {}, view: {}, provider: {}, models: {}, interactions: {}, pendingQuestion: {}, progress: {}, sent: {}, incoming: {}, clearHinted: {}, watching: {}, otherNotified: {}, others: {}, botName: undefined, nameRetryAt: undefined, profilePhotoHash: undefined };
 
 function log(message) {
   process.stdout.write(`[omnicode-telegram] ${message}\n`);
@@ -216,14 +217,42 @@ function chunkRows(buttons, perRow) {
   return rows;
 }
 
-function projectsKeyboard(groups) {
-  const buttons = groups.slice(0, 40).map(([project], index) => commandButton(project, `/project ${index + 1}`));
-  return buttons.length === 0 ? undefined : { inline_keyboard: chunkRows(buttons, 2) };
+const PAGE_SIZE = 5;
+
+function pageFromArgument(argument) {
+  const parsed = Number.parseInt(argument, 10);
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : 1;
 }
 
-function sessionsKeyboard(list) {
-  const buttons = list.slice(0, 40).map((session, index) => commandButton(session.title, `/use ${index + 1}`));
-  return buttons.length === 0 ? undefined : { inline_keyboard: chunkRows(buttons, 2) };
+function pageSlice(list, page) {
+  const total = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const safe = Math.min(Math.max(1, page), total);
+  const start = (safe - 1) * PAGE_SIZE;
+  return { items: list.slice(start, start + PAGE_SIZE), start, total, page: safe };
+}
+
+function pageNavRows(slice, buildCommand) {
+  const rows = [];
+  const nav = [];
+  if (slice.page > 1) nav.push(commandButton('‹ Back', buildCommand(slice.page - 1)));
+  if (slice.page < slice.total) nav.push(commandButton(`▸ More (${String(slice.total - slice.page)} left)`, buildCommand(slice.page + 1)));
+  if (nav.length > 0) rows.push(nav);
+  return rows;
+}
+
+function projectsKeyboard(groups, page = 1) {
+  const slice = pageSlice(groups, page);
+  const buttons = slice.items.map(([project], offset) => commandButton(project, `/project ${slice.start + offset + 1}`));
+  const rows = chunkRows(buttons, 2).concat(pageNavRows(slice, (next) => `/sessions ${String(next)}`));
+  return rows.length === 0 ? undefined : { inline_keyboard: rows };
+}
+
+function sessionsKeyboard(list, page = 1, projectIndex = 1) {
+  const slice = pageSlice(list, page);
+  const buttons = slice.items.map((session, offset) => commandButton(session.title, `/use ${slice.start + offset + 1}`));
+  const rows = chunkRows(buttons, 2)
+    .concat(pageNavRows(slice, (next) => `/project ${String(projectIndex)} ${String(next)}`));
+  return rows.length === 0 ? undefined : { inline_keyboard: rows };
 }
 
 function modelsKeyboard(shown) {
@@ -240,28 +269,34 @@ function sendPlain(config, chatId, text, keyboard) {
   });
 }
 
-function projectsReport(sessions, chatId) {
+function projectsReport(sessions, chatId, page = 1) {
   const groups = groupSessionsByProject(sessions);
-  const lines = [`Projects (${groups.length}) · ${sessions.length} sessions`, ''];
-  groups.forEach(([project, list], index) => {
+  const slice = pageSlice(groups, page);
+  const pageNote = slice.total > 1 ? ` · page ${String(slice.page)}/${String(slice.total)}` : '';
+  const lines = [`Projects (${groups.length}) · ${sessions.length} sessions${pageNote}`, ''];
+  slice.items.forEach(([project, list], offset) => {
     const running = list.filter((session) => session.status === 'running').length;
     const selected = list.some((session) => session.id === selectionFor(chatId)) ? ' ← selected' : '';
     const activity = running === 0 ? '' : ` · ${running} running`;
-    lines.push(`${index + 1}. ${project} — ${list.length}${activity}${selected}`);
+    lines.push(`${slice.start + offset + 1}. ${project} — ${list.length}${activity}${selected}`);
   });
+  if (slice.total > 1) lines.push('', 'Tap ▸ More for the next projects.');
   lines.push('', 'Open a project with /project <n>.');
   return lines.join('\n');
 }
 
-function projectReport(entry, chatId) {
+function projectReport(entry, chatId, page = 1) {
   const [project, list] = entry;
-  const lines = [`${project} — ${list.length} sessions`];
+  const slice = pageSlice(list, page);
+  const pageNote = slice.total > 1 ? ` · page ${String(slice.page)}/${String(slice.total)}` : '';
+  const lines = [`${project} — ${list.length} sessions${pageNote}`];
   const cwd = list[0]?.cwd ?? '';
   if (cwd !== '') lines.push(cwd);
   lines.push('');
-  list.forEach((session, index) => {
-    lines.push(`${index + 1}. ${session.title}${sessionMarks(session, chatId)}`);
+  slice.items.forEach((session, offset) => {
+    lines.push(`${slice.start + offset + 1}. ${session.title}${sessionMarks(session, chatId)}`);
   });
+  if (slice.total > 1) lines.push('', 'Tap ▸ More for the next sessions.');
   lines.push('', 'Select with /use <n>, or create one with /new <title>.');
   return lines.join('\n');
 }
@@ -677,7 +712,43 @@ async function answerQuestionByText(config, chatId, pending, text) {
   }
 }
 
-const MAX_IMAGE_BYTES = 5_000_000;
+const MAX_IMAGE_BYTES = 10_000_000;
+const MAX_VIDEO_BYTES = 20_000_000;
+const MAX_VIDEO_FRAMES = 6;
+
+const FFMPEG_CANDIDATES = [
+  process.env.OMNICODE_FFMPEG,
+  '/opt/Omnicode/resources/ffmpeg/ffmpeg',
+  '/usr/local/bin/ffmpeg',
+  '/usr/bin/ffmpeg',
+];
+
+const run = promisify(execFile);
+
+function findFfmpeg() {
+  for (const candidate of FFMPEG_CANDIDATES) {
+    if (typeof candidate === 'string' && candidate !== '' && existsSync(candidate)) return candidate;
+  }
+  return undefined;
+}
+
+async function videoFrames(bytes, name) {
+  const ffmpeg = findFfmpeg();
+  if (ffmpeg === undefined) return { frames: [], reason: 'ffmpeg is not installed on this machine' };
+  const dir = await mkdtemp(path.join(tmpdir(), 'omnicode-telegram-'));
+  try {
+    const input = path.join(dir, `input-${name.replaceAll(/[^\w.-]+/g, '_')}`);
+    await writeFile(input, bytes);
+    const pattern = path.join(dir, 'frame-%02d.jpg');
+    await run(ffmpeg, ['-y', '-loglevel', 'error', '-i', input, '-vf', 'fps=1/2,scale=960:-2', '-frames:v', String(MAX_VIDEO_FRAMES), '-q:v', '4', pattern]);
+    const files = (await readdir(dir)).filter((file) => file.startsWith('frame-')).sort();
+    const frames = [];
+    for (const file of files) frames.push(await readFile(path.join(dir, file)));
+    return { frames, reason: files.length === 0 ? 'ffmpeg could not decode any frame' : '' };
+  } finally {
+    await rm(dir, { recursive: true, force: true }).catch(() => undefined);
+  }
+}
 
 function promptOverrides(chatId) {
   const overrides = overridesFor(chatId);
@@ -714,6 +785,26 @@ function imagePartOf(message) {
   return { fileId: document.file_id, mediaType: mime, name: typeof document.file_name === 'string' ? document.file_name : 'telegram-image' };
 }
 
+function videoPartOf(message) {
+  const clip = message.video ?? message.animation ?? message.video_note;
+  if (clip !== undefined && typeof clip.file_id === 'string') {
+    return {
+      fileId: clip.file_id,
+      mediaType: typeof clip.mime_type === 'string' ? clip.mime_type : 'video/mp4',
+      name: typeof clip.file_name === 'string' ? clip.file_name : 'telegram-video.mp4',
+    };
+  }
+  const document = message.document;
+  if (document === undefined || typeof document.file_id !== 'string') return undefined;
+  const mime = typeof document.mime_type === 'string' ? document.mime_type : '';
+  if (!mime.startsWith('video/')) return undefined;
+  return { fileId: document.file_id, mediaType: mime, name: typeof document.file_name === 'string' ? document.file_name : 'telegram-video.mp4' };
+}
+
+function captionOf(message, fallback) {
+  return typeof message.caption === 'string' && message.caption.trim() !== '' ? message.caption.trim() : fallback;
+}
+
 async function handleMedia(config, chatId, message) {
   const sessionId = selectionFor(chatId);
   if (sessionId === undefined) {
@@ -721,25 +812,56 @@ async function handleMedia(config, chatId, message) {
     return;
   }
   const image = imagePartOf(message);
-  if (image === undefined) {
-    await send(config, chatId, 'Only images are supported right now.');
+  if (image !== undefined) {
+    const bytes = await downloadTelegramFile(config, image.fileId);
+    if (bytes.length > MAX_IMAGE_BYTES) {
+      await send(config, chatId, `That image is ${(bytes.length / 1_000_000).toFixed(1)} MB; the limit is ${String(MAX_IMAGE_BYTES / 1_000_000)} MB.`);
+      return;
+    }
+    const body = {
+      content: [
+        { type: 'image', source: { kind: 'base64', media_type: image.mediaType, data: bytes.toString('base64'), name: image.name } },
+        { type: 'text', text: captionOf(message, 'Please look at this image.') },
+      ],
+      ...promptOverrides(chatId),
+    };
+    await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/prompts`, body);
+    await send(config, chatId, `Sent ${image.name} to the session.`);
     return;
   }
-  const bytes = await downloadTelegramFile(config, image.fileId);
-  if (bytes.length > MAX_IMAGE_BYTES) {
-    await send(config, chatId, `That image is ${(bytes.length / 1_000_000).toFixed(1)} MB; the limit is 5 MB.`);
+  const video = videoPartOf(message);
+  if (video === undefined) {
+    await send(config, chatId, 'Only images and videos are supported here — send a photo, an image file, or a video.');
     return;
   }
-  const caption = typeof message.caption === 'string' && message.caption.trim() !== '' ? message.caption.trim() : 'Please look at this image.';
-  const body = {
-    content: [
-      { type: 'image', source: { kind: 'base64', media_type: image.mediaType, data: bytes.toString('base64'), name: image.name } },
-      { type: 'text', text: caption },
-    ],
-    ...promptOverrides(chatId),
-  };
-  await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/prompts`, body);
-  await send(config, chatId, `Sent ${image.name} to the session.`);
+  const bytes = await downloadTelegramFile(config, video.fileId);
+  if (bytes.length > MAX_VIDEO_BYTES) {
+    await send(
+      config,
+      chatId,
+      `That video is ${(bytes.length / 1_000_000).toFixed(1)} MB; Telegram lets a bot download at most ${String(MAX_VIDEO_BYTES / 1_000_000)} MB.`,
+    );
+    return;
+  }
+  const { frames, reason } = await videoFrames(bytes, video.name);
+  if (frames.length === 0) {
+    await send(
+      config,
+      chatId,
+      `Could not read that video: ${reason}.\nThe bridge looks for ffmpeg at $OMNICODE_FFMPEG, then ${FFMPEG_CANDIDATES.slice(1).join(', ')} — set OMNICODE_FFMPEG to a working binary to enable video.`,
+    );
+    return;
+  }
+  const parts = frames.map((frame, index) => ({
+    type: 'image',
+    source: { kind: 'base64', media_type: 'image/jpeg', data: frame.toString('base64'), name: `frame-${String(index + 1).padStart(2, '0')}.jpg` },
+  }));
+  parts.push({
+    type: 'text',
+    text: `${captionOf(message, 'Please look at this video.')}\n\n(${String(frames.length)} frames from "${video.name}", sampled every ~2 seconds)`,
+  });
+  await api(await server(), 'POST', `/api/v1/sessions/${encodeURIComponent(sessionId)}/prompts`, { content: parts, ...promptOverrides(chatId) });
+  await send(config, chatId, `Sent ${String(frames.length)} frames from ${video.name} to the session.`);
 }
 
 function formatTokens(value) {
@@ -1187,6 +1309,63 @@ async function deliverReport(config, chatId, turn, meta, progress) {
   return { via: 'document', messageId, documentMessageId };
 }
 
+function otherFinishLine(turn, meta) {
+  const project = typeof meta?.project === 'string' ? meta.project : '';
+  const title = typeof meta?.title === 'string' ? meta.title : '';
+  const label = [project, title].filter((part) => part !== '').join(' · ');
+  const duration = typeof turn.durationMs === 'number' ? formatDuration(turn.durationMs) : '';
+  const head = duration === '' ? '✅ Finished' : `✅ Finished · ${duration}`;
+  const reply = (finalTextOf(turn) ?? '').split('\n').find((line) => line.trim() !== '') ?? '';
+  const tail = reply === '' ? '' : `\n${reply.trim().slice(0, 160)}`;
+  return `${head}\n${label === '' ? 'another session' : label}${tail}`;
+}
+
+let otherChecks = false;
+let otherCheckedAt = 0;
+const OTHER_CHECK_MS = 5000;
+
+async function reportOtherFinishedTurns(config) {
+  if (otherChecks) return;
+  if (Date.now() - otherCheckedAt < OTHER_CHECK_MS) return;
+  otherChecks = true;
+  otherCheckedAt = Date.now();
+  try {
+    const chats = Object.keys(state.selection).filter((chatId) => reportsEnabled(chatId) && state.others[chatId] !== false);
+    if (chats.length === 0) return;
+    const info = await server();
+    const sessions = await listSessions(info).catch(() => []);
+    const selected = new Set(chats.map((chatId) => state.selection[chatId]));
+    let changed = false;
+    for (const session of sessions) {
+      const id = session.id;
+      if (typeof id !== 'string' || id === '') continue;
+      if (session.status === 'running') {
+        if (state.watching[id] !== true) {
+          state.watching[id] = true;
+          changed = true;
+        }
+        continue;
+      }
+      if (state.watching[id] !== true) continue;
+      delete state.watching[id];
+      changed = true;
+      if (selected.has(id)) continue;
+      const turn = await newestTurn(info, id).catch(() => undefined);
+      if (turn === undefined || turn.state !== 'completed' || turn.turnId === state.otherNotified[id]) continue;
+      state.otherNotified[id] = turn.turnId;
+      changed = true;
+      const line = otherFinishLine(turn, session);
+      for (const chatId of chats) {
+        if (state.selection[chatId] === id) continue;
+        await send(config, Number(chatId), line).catch((error) => log(`other finish notice failed: ${error.message}`));
+      }
+    }
+    if (changed) await saveState();
+  } finally {
+    otherChecks = false;
+  }
+}
+
 async function reportFinishedTurns(config) {
   if (reporting) return;
   reporting = true;
@@ -1544,11 +1723,11 @@ async function handle(config, chatId, text) {
         await send(config, chatId, 'No sessions.');
         return;
       }
-      const chunks = chunkText(projectsReport(sessions, chatId), 3800);
+      const chunks = chunkText(projectsReport(sessions, chatId, pageFromArgument(argument)), 3800);
       state.view[chatId] = { project: '', workspaceId: '', cwd: '', ids: [] };
       await saveState();
       await setMenu(config, chatId, COMMANDS_BROWSE);
-      const keyboard = projectsKeyboard(groupSessionsByProject(sessions));
+      const keyboard = projectsKeyboard(groupSessionsByProject(sessions), pageFromArgument(argument));
       for (let i = 0; i < chunks.length; i += 1) {
         const tail = chunks.length > 1 && i < chunks.length - 1 ? `\n\n(${i + 1}/${chunks.length})` : '';
         await sendPlain(config, chatId, `${chunks[i]}${tail}`, i === chunks.length - 1 ? keyboard : undefined);
@@ -1562,13 +1741,19 @@ async function handle(config, chatId, text) {
         await send(config, chatId, 'No sessions.');
         return;
       }
-      const wanted = Number.parseInt(argument, 10);
+      const [wantedText, pageText] = argument.split(/\s+/).filter((part) => part !== '');
+      const wanted = Number.parseInt(wantedText ?? '', 10);
+      const page = pageFromArgument(pageText ?? '');
       let entry;
+      let projectNumber = 1;
       if (Number.isInteger(wanted) && wanted >= 1 && wanted <= groups.length) {
         entry = groups[wanted - 1];
-      } else if (argument !== '') {
-        const needle = argument.toLowerCase();
-        entry = groups.find(([project]) => project.toLowerCase().includes(needle));
+        projectNumber = wanted;
+      } else if (wantedText !== undefined && wantedText !== '') {
+        const needle = wantedText.toLowerCase();
+        const index = groups.findIndex(([project]) => project.toLowerCase().includes(needle));
+        entry = index === -1 ? undefined : groups[index];
+        projectNumber = index + 1;
       }
       if (entry === undefined) {
         await send(config, chatId, 'Use /sessions first, then /project <n> or /project <name>.');
@@ -1580,11 +1765,12 @@ async function handle(config, chatId, text) {
         workspaceId: list[0]?.workspaceId ?? '',
         cwd: list[0]?.cwd ?? '',
         ids: list.map((session) => session.id),
+        projectNumber,
       };
       await saveState();
       await setMenu(config, chatId, COMMANDS_BROWSE);
-      const projectChunks = chunkText(projectReport(entry, chatId), 3800);
-      const sessionKeyboard = sessionsKeyboard(list);
+      const projectChunks = chunkText(projectReport(entry, chatId, page), 3800);
+      const sessionKeyboard = sessionsKeyboard(list, page, projectNumber);
       for (let i = 0; i < projectChunks.length; i += 1) {
         const tail = projectChunks.length > 1 && i < projectChunks.length - 1 ? `\n\n(${i + 1}/${projectChunks.length})` : '';
         await sendPlain(config, chatId, `${projectChunks[i]}${tail}`, i === projectChunks.length - 1 ? sessionKeyboard : undefined);
@@ -1677,9 +1863,21 @@ async function handle(config, chatId, text) {
       return;
     }
     case '/notify': {
-      const mode = argument.toLowerCase();
+      const [what, value] = argument.toLowerCase().split(/\s+/).filter((part) => part !== '');
+      const mode = what === 'others' ? value : what;
       if (mode !== 'on' && mode !== 'off') {
-        await send(config, chatId, 'Use /notify on or /notify off.');
+        const others = state.others[chatId] === false ? 'off' : 'on';
+        await send(
+          config,
+          chatId,
+          `Notifications here: ${reportsEnabled(chatId) ? 'on' : 'off'} · other sessions: ${others}\nUse /notify on|off, or /notify others on|off.`,
+        );
+        return;
+      }
+      if (what === 'others') {
+        state.others[chatId] = mode === 'on';
+        await saveState();
+        await send(config, chatId, `Alerts when another session finishes: ${mode}.`);
         return;
       }
       state.notify[chatId] = mode === 'on';
@@ -1861,6 +2059,9 @@ async function loadPersistedState() {
   state.sent = saved.sent ?? {};
   state.incoming = saved.incoming ?? {};
   state.clearHinted = saved.clearHinted ?? {};
+  state.watching = saved.watching ?? {};
+  state.otherNotified = saved.otherNotified ?? {};
+  state.others = saved.others ?? {};
   state.botName = saved.botName;
   state.nameRetryAt = saved.nameRetryAt;
   state.profilePhotoHash = saved.profilePhotoHash;
@@ -1931,6 +2132,9 @@ async function main() {
   setInterval(() => {
     maybeRefreshName(config).catch((error) => log(`name refresh failed: ${error.message}`));
   }, NAME_RETRY_INTERVAL_MS);
+  setInterval(() => {
+    reportOtherFinishedTurns(config).catch((error) => log(`other finish check failed: ${error.message}`));
+  }, OTHER_CHECK_MS);
 
   let backoffMs = 3000;
   for (;;) {
@@ -1959,11 +2163,17 @@ async function main() {
           const chatIdForMedia = message.chat?.id;
           if (typeof chatIdForMedia === 'number' && config.allowedChatIds.includes(chatIdForMedia)) {
             rememberIncoming(chatIdForMedia, message.message_id);
-            if (Array.isArray(message.photo) || message.document !== undefined) {
+            if (
+              Array.isArray(message.photo) ||
+              message.document !== undefined ||
+              message.video !== undefined ||
+              message.animation !== undefined ||
+              message.video_note !== undefined
+            ) {
               try {
                 await handleMedia(config, chatIdForMedia, message);
               } catch (error) {
-                await send(config, chatIdForMedia, `Could not send that image: ${error.message}`);
+                await send(config, chatIdForMedia, `Could not send that file: ${error.message}`);
               }
             }
           }
@@ -1990,7 +2200,7 @@ async function main() {
 
 const isEntryPoint = process.argv[1] !== undefined && import.meta.url === pathToFileURL(process.argv[1]).href;
 
-export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId, purgeUpperBound };
+export { api, discoverServer, listSessions, lastReply, handle, loadConfig, state, tg, statusReport, summarizeTurn, projectsReport, projectReport, groupSessionsByProject, markdownToHtml, modelCatalog, providerCounts, modelLabel, server, approvalText, approvalKeyboard, questionText, questionKeyboard, pendingApprovals, pendingQuestions, projectsKeyboard, sessionsKeyboard, modelsKeyboard, usageReport, diffReport, filesReport, formatDuration, chunkText, progressLine, handleCallback, imagePartOf, handleMedia, deliverReport, botNameFor, clearChatHistory, syncChatOnSelection, refreshPending, announcePending, shortId, longId, purgeUpperBound, videoPartOf, videoFrames, otherFinishLine };
 
 // Loaded at import time so that anything importing this module (tests, a one-off
 // command) sees the same state the daemon has, instead of an empty one that would
