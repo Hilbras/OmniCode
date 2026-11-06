@@ -87,6 +87,20 @@ describe('server-v2 /api/v1/config', () => {
     expect(cfg.yolo).toBe(false);
   });
 
+  it('reuses the models projection until the config actually changes', async () => {
+    const oneModel = '[models."alpha"]\nprovider = "openai"\nmodel = "gpt-4o"\n';
+    await boot(oneModel);
+    const first = await getConfig();
+    expect(Object.keys(first.models ?? {})).toEqual(['alpha']);
+
+    const second = await getConfig();
+    expect(second.models).toEqual(first.models);
+
+    await boot(`${oneModel}[models."beta"]\nprovider = "openai"\nmodel = "gpt-4o-mini"\n`);
+    const changed = await getConfig();
+    expect(Object.keys(changed.models ?? {}).toSorted()).toEqual(['alpha', 'beta']);
+  });
+
   it('POST { yolo: true } sets default_permission_mode = yolo and echoes yolo = true', async () => {
     await boot();
     const cfg = await patchConfig({ yolo: true });

@@ -76,6 +76,10 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
   declare readonly _serviceBrand: undefined;
 
   private readonly cache = new Map<string, CatalogEntry>();
+  private readonly protocolItems = new WeakMap<
+    Model,
+    { readonly record: ModelRecord; readonly item: ModelCatalogItem }
+  >();
 
   constructor(
     @IProviderCatalogRuntime private readonly runtime: IProviderCatalogRuntime,
@@ -208,8 +212,16 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
       if (definition === undefined) continue;
       const record = rawRecordOf(definition);
       const providerType = this.providerTypeOf(record);
+      const model = this.get(modelId);
+      const projected = this.protocolItems.get(model);
+      if (projected !== undefined && projected.record === record) {
+        out.push(projected.item);
+        continue;
+      }
       try {
-        out.push(toProtocolModel(this.get(modelId), record, providerType));
+        const item = toProtocolModel(model, record, providerType);
+        this.protocolItems.set(model, { record, item });
+        out.push(item);
       } catch (error) {
         this.log.warn('model catalog entry fell back to the raw record', {
           model: modelId,

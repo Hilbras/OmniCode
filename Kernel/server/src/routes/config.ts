@@ -114,6 +114,16 @@ interface ProviderLike {
   readonly oauth?: unknown;
 }
 
+const projectionCache = new WeakMap<object, unknown>();
+
+function projectOnce<T>(source: object, build: () => T): T {
+  const hit = projectionCache.get(source);
+  if (hit !== undefined) return hit as T;
+  const built = build();
+  projectionCache.set(source, built);
+  return built;
+}
+
 function toProviderResponses(value: unknown): Record<string, ProviderResponse> {
   const result: Record<string, ProviderResponse> = {};
   if (!isPlainObject(value)) return result;
@@ -144,8 +154,12 @@ interface ModelLike {
 }
 
 function toModelResponses(value: unknown): Record<string, unknown> {
+  if (!isPlainObject(value)) return {};
+  return projectOnce(value, () => buildModelResponses(value));
+}
+
+function buildModelResponses(value: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
-  if (!isPlainObject(value)) return result;
   for (const [id, raw] of Object.entries(value)) {
     if (!isPlainObject(raw)) {
       result[id] = raw;

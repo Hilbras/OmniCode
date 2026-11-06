@@ -2,6 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
+import compress from '@fastify/compress';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
@@ -21,6 +22,7 @@ describe('web asset cache policy', () => {
       writeFile(join(assetsDir, 'favicon.svg'), '<svg></svg>'),
     ]);
     app = Fastify();
+    await app.register(compress, { global: false, threshold: 1024 });
     await registerWebAssetRoutes(app, assetsDir);
   });
 
@@ -34,6 +36,35 @@ describe('web asset cache policy', () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.headers['cache-control']).toBe('public, max-age=31536000, immutable');
+  });
+
+  it('serves a large asset compressed when the client accepts gzip', async () => {
+    const body = 'export const payload = 1;\n'.repeat(200);
+    await writeFile(join(assetsDir, 'assets', 'large-Dy7xs5tu.js'), body);
+
+    const compressed = await app.inject({
+      method: 'GET',
+      url: '/assets/large-Dy7xs5tu.js',
+      headers: { 'accept-encoding': 'gzip' },
+    });
+    expect(compressed.statusCode).toBe(200);
+    expect(compressed.headers['content-encoding']).toBe('gzip');
+    expect(compressed.headers['cache-control']).toBe('public, max-age=31536000, immutable');
+
+    const plain = await app.inject({ method: 'GET', url: '/assets/large-Dy7xs5tu.js' });
+    expect(plain.statusCode).toBe(200);
+    expect(plain.headers['content-encoding']).toBeUndefined();
+  });
+
+  it('leaves assets under the compression threshold uncompressed', async () => {
+    const response = await app.inject({
+      method: 'GET',
+      url: '/assets/index-Dy7xs5tu.js',
+      headers: { 'accept-encoding': 'gzip' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['content-encoding']).toBeUndefined();
   });
 
   it.each([
