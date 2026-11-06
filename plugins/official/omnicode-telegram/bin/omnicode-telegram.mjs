@@ -767,7 +767,7 @@ function normalizeInteractions(saved) {
 }
 
 const SENDING_METHODS = new Set(['sendMessage', 'sendPhoto', 'sendDocument', 'sendVideo', 'sendVoice', 'sendMediaGroup']);
-const MAX_TRACKED_MESSAGES = 120;
+const MAX_TRACKED_MESSAGES = 300;
 
 let saveQueued = false;
 
@@ -840,7 +840,7 @@ async function sendLastReport(config, chatId, sessionId) {
   const turns = (Array.isArray(data?.items) ? data.items : []).filter((item) => item?.kind === 'turn');
   const turn = turns.find((item) => item.state === 'completed');
   if (turn === undefined) {
-    await send(config, chatId, 'No finished turn in this session yet.');
+    log(`no finished turn in ${sessionId}; nothing to report`);
     return;
   }
   const sessions = await listSessions(info).catch(() => []);
@@ -866,11 +866,6 @@ async function syncChatOnSelection(config, chatId, sessionId) {
     log(`rename failed: ${error.message}`);
   }
   log(`selection synced for ${String(chatId)} (cleared ${String(removed)} messages, name "${name}")`);
-  try {
-    await send(config, chatId, name === '' ? 'Selected.' : `Now driving ${name.replace(/^OmniCode - /, '')}.`);
-  } catch (error) {
-    log(`selection notice failed: ${error.message}`);
-  }
   try {
     await sendLastReport(config, chatId, sessionId);
   } catch (error) {
@@ -1463,8 +1458,6 @@ async function handle(config, chatId, text) {
         await send(config, chatId, `Use a number from the open project (1-${String(view.ids.length)}).`);
         return;
       }
-      const sessions = await listSessions(await server());
-      const picked = sessions.find((session) => session.id === id);
       state.selection[chatId] = id;
       delete state.notified[chatId];
       await rememberNewestTurn(chatId, id);
