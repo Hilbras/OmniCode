@@ -41,6 +41,8 @@
     "faster-startup.md": "1.4.30",
     "prune-stale-web-cache.md": "1.4.30",
     "session-tabs-clickable.md": "1.4.30",
-    "sidebar-spinner-direction.md": "1.4.30"
+    "sidebar-spinner-direction.md": "1.4.30",
+    "reuse-seeded-config-load.md": "1.4.30",
+    "slice-cjk-font.md": "1.4.30"
   }
 }
