@@ -15,7 +15,7 @@
 import type { KlientEventPayloads } from '#/contract/global/events';
 import type { EventRegistration } from '#/contract/types';
 
-import type { IDisposable, KlientChannel, ScopeRef } from '../channel.js';
+import type { IDisposable, KlientChannel, ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import { parseEvent } from '../validation.js';
 
 export interface KlientEvents<TPayloadMap extends object = KlientEventPayloads> {

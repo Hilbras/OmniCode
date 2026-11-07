@@ -374,7 +374,7 @@ import type {
   MemoryGetRpcInput,
   MemoryListRpcInput,
 } from '@hilbras/omnicode-sdk/rpc-exports';
-import { RPCError } from './core/errors';
+import { RPCError } from '@hilbras/omnicode-rpc/errors';
 import type { ImportCustomRegistryOptions, ImportCustomRegistryResult } from './core/facade/global';
 import type { AgentHandle, Klient } from './core/klient';
 import { createKlient } from './transports/memory';

@@ -8,6 +8,7 @@ const SCOPE = '@hilbras/omnicode-';
 
 const LEAVES = new Set([
   'base',
+  'rpc',
   'auth',
   'kaos',
   'llm',

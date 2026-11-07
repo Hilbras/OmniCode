@@ -107,6 +107,9 @@ importers:
       '@hilbras/omnicode-memory':
         specifier: workspace:^
         version: link:../memory
+      '@hilbras/omnicode-rpc':
+        specifier: workspace:^
+        version: link:../rpc
       '@hilbras/omnicode-sdk':
         specifier: workspace:^
         version: link:../SDK
@@ -491,6 +494,8 @@ importers:
       '@types/ws':
         specifier: ^8.18.0
         version: 8.18.1
+
+  Kernel/rpc: {}
 
   Kernel/server:
     dependencies:

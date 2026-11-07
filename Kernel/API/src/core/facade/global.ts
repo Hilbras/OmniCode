@@ -66,7 +66,7 @@ import type { Page } from '@hilbras/omnicode-core/persistence/interface/querySto
 import type { SessionMeta } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
 
 import type { McpServerConfig } from '../../contract/mcp.js';
-import type { CallOptions } from '../channel.js';
+import type { CallOptions } from '@hilbras/omnicode-rpc/channel';
 import type {
   AnonymousProviderInput,
   GenerateEvent,

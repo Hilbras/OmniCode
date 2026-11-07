@@ -4,7 +4,7 @@
  */
 
 import { createKlientFromChannel, type Klient, type KlientOptions } from '../../core/klient.js';
-import { IpcChannel, type IpcChannelOptions } from './channel.js';
+import { IpcChannel, type IpcChannelOptions } from '@hilbras/omnicode-rpc/ipc/channel';
 
 export {
   serveKlientIpc,

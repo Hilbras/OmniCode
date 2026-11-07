@@ -15,8 +15,8 @@ import type {
   IDisposable,
   KlientChannel,
   ScopeRef,
-} from '../../core/channel.js';
-import { RPCError } from '../../core/errors.js';
+} from '../channel.js';
+import { RPCError } from '../errors.js';
 import { trimTrailingUndefined } from '../args.js';
 import { encodeFrame, NdjsonDecoder, type IpcFrame } from './codec.js';
 

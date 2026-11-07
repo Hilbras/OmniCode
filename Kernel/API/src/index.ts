@@ -36,8 +36,8 @@ export type {
   IDisposable,
   KlientChannel,
   ScopeRef,
-} from './core/channel.js';
-export { RPCError } from './core/errors.js';
+} from '@hilbras/omnicode-rpc/channel';
+export { RPCError } from '@hilbras/omnicode-rpc/errors';
 export { KlientValidationError, type ValidationPhase } from './core/validation.js';
 export {
   createKlientFromChannel,

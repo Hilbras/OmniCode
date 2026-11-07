@@ -6,7 +6,7 @@
  * transports, so behavior is indistinguishable.
  */
 
-import type { EventSourceRef, IDisposable, KlientChannel, ScopeRef } from '../../core/channel.js';
+import type { EventSourceRef, IDisposable, KlientChannel, ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import { createKlientFromChannel, type Klient, type KlientOptions } from '../../core/klient.js';
 import { createMemoryDispatcher, type ScopeLike } from './dispatcher.js';
 

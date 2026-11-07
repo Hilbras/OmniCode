@@ -22,7 +22,7 @@ import type { ContentPart } from '@hilbras/omnicode-core/human/llm/message';
 import type { ISessionTokenCountingService } from '@hilbras/omnicode-core/session/tokenCounting/sessionTokenCounting';
 import type { ISessionUsageService } from '@hilbras/omnicode-core/session/usage/sessionUsage';
 
-import type { ScopeRef } from '../channel.js';
+import type { ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import type { ScopedCaller } from './session.js';
 
 // Wire-type aliases derived through the engine service interfaces (keeps

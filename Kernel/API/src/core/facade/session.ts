@@ -26,7 +26,7 @@ import type {
 } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
 import type { SkillSummary } from '@hilbras/omnicode-core/features/skill/catalog/types';
 
-import type { ScopeRef } from '../channel.js';
+import type { ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import type { McpServerConfig } from '../../contract/mcp.js';
 import type { ScopedCaller } from './global.js';
 

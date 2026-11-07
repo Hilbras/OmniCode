@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import { defineKlientConformance } from './helpers/conformance.js';
 import { createKlient } from '../src/transports/memory/index.js';
 import { createMemoryDispatcher } from '../src/transports/memory/dispatcher.js';
-import { RPCError } from '../src/core/errors.js';
+import { RPCError } from '@hilbras/omnicode-rpc/errors';
 import { makeEngine } from './helpers/engine.js';
 
 defineKlientConformance('memory', async () => {

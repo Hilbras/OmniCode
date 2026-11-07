@@ -46,6 +46,7 @@
     "@hilbras/omnicode-base": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-memory": "workspace:^",
+    "@hilbras/omnicode-rpc": "workspace:^",
     "@hilbras/omnicode-sdk": "workspace:^",
     "@hilbras/omnicode-tools": "workspace:^",
     "zod": "catalog:"

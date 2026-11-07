@@ -46,8 +46,8 @@ import { MAIN_AGENT_ID } from '@hilbras/omnicode-core/session/agentLifecycle/age
 import { ensureMainAgent } from '@hilbras/omnicode-core/session/agentLifecycle/mainAgent';
 import { IWorkspaceInstanceManager } from '@hilbras/omnicode-core/workspace/workspaceInstance/workspaceInstanceManager';
 
-import type { EventSourceRef, IDisposable, ScopeRef } from '../../core/channel.js';
-import { RPCError } from '../../core/errors.js';
+import type { EventSourceRef, IDisposable, ScopeRef } from '@hilbras/omnicode-rpc/channel';
+import { RPCError } from '@hilbras/omnicode-rpc/errors';
 import { IEventService, serviceTokens } from './serviceRegistry.js';
 
 /** Structural minimum of an engine `Scope` / `IScopeHandle`. */

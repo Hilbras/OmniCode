@@ -1,0 +1,31 @@
+{
+  "name": "@hilbras/omnicode-rpc",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The transport half of the kernel: the channel SPI every klient transport implements, the NDJSON frame codec and the IPC channel.",
+  "license": "MIT",
+  "author": "Hilbras",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hilbras/omnicode.git",
+    "directory": "Kernel/rpc"
+  },
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    "./package.json": {
+      "types": "./package.json",
+      "default": "./package.json"
+    },
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  }
+}

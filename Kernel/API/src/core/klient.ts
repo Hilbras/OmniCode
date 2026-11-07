@@ -11,7 +11,7 @@ import { globalContract, isStreamingContract } from '#/contract/index';
 import { sessionEvents, type SessionEventPayloads } from '#/contract/session/events';
 import type { EventRegistration, StreamingProcedureContract } from '#/contract/types';
 
-import type { KlientChannel, ScopeRef } from './channel.js';
+import type { KlientChannel, ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import { EventHub, type KlientEvents } from './events/hub.js';
 import { createAgentFacade, type AgentFacade } from './facade/agent.js';
 import {

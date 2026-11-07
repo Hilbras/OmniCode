@@ -8,10 +8,10 @@
 import { createServer, type Server, type Socket } from 'node:net';
 import { unlink } from 'node:fs/promises';
 
-import type { EventSourceRef, IDisposable, ScopeRef } from '../../core/channel.js';
-import { RPCError } from '../../core/errors.js';
+import type { EventSourceRef, IDisposable, ScopeRef } from '@hilbras/omnicode-rpc/channel';
+import { RPCError } from '@hilbras/omnicode-rpc/errors';
 import { createMemoryDispatcher, type ScopeLike } from '../memory/dispatcher.js';
-import { encodeFrame, NdjsonDecoder, type IpcFrame } from './codec.js';
+import { encodeFrame, NdjsonDecoder, type IpcFrame } from '@hilbras/omnicode-rpc/ipc/codec';
 
 const REQUEST_INVALID = 40001;
 const UNAUTHORIZED = 40100;

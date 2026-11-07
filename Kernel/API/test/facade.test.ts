@@ -5,7 +5,7 @@ import type {
   IDisposable,
   KlientChannel,
   ScopeRef,
-} from '../src/core/channel.js';
+} from '@hilbras/omnicode-rpc/channel';
 import { createKlientFromChannel } from '../src/core/klient.js';
 import { KlientValidationError } from '../src/core/validation.js';
 

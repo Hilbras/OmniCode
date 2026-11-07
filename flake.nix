@@ -63,6 +63,7 @@
       # -------------------------------------------------------------------
       workspacePaths = [
         ./Kernel/base
+        ./Kernel/rpc
         ./Kernel/ACP
         ./Kernel/core
         ./Kernel/server
@@ -91,6 +92,7 @@
 
       workspaceNames = [
         "@hilbras/omnicode-base"
+        "@hilbras/omnicode-rpc"
         "@hilbras/omnicode-acp"
         "@hilbras/omnicode-core"
         "@hilbras/omnicode-server"
