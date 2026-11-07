@@ -1,6 +1,6 @@
-import { createDecorator } from '#/_base/di/instantiation';
-import type { IDisposable } from '#/_base/di/lifecycle';
-import { Error2, isError2, type Error2Options } from '#/_base/errors/errors';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Error2, isError2, type Error2Options } from '@hilbras/omnicode-base/errors/errors';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import type { FinishReason } from '#human/llm/finish-reason';
 import type { ContentPart, TextPart } from '#human/llm/message';

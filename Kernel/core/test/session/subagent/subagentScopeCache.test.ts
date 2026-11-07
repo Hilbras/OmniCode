@@ -1,17 +1,17 @@
 import { createControlledPromise } from '@antfu/utils';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { ScopeUnits, type Fiber } from '#/_base/di/fiber';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import { TestInstantiationService } from '#/_base/di/test';
-import { userCancellationReason } from '#/_base/utils/abort';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { ScopeUnits, type Fiber } from '@hilbras/omnicode-base/di/fiber';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import '#/agent/profile/profileService';
-import { Emitter, Event } from '#/_base/event';
-import { Ledger } from '#/_base/lifecycle/ledger';
+import { Emitter, Event } from '@hilbras/omnicode-base/event';
+import { Ledger } from '@hilbras/omnicode-base/lifecycle/ledger';
 import '#/agent/permissionMode/permissionModeService';
-import { ILogService } from '#/_base/log/log';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import '#/agent/contextMemory/contextMemoryService';
 import { IAgentAgentsMdReminderService } from '#/agent/agentsMdReminder/agentsMdReminder';

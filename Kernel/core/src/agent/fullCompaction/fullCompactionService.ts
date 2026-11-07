@@ -1,10 +1,10 @@
-import type { IDisposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
-import { Emitter, type Event } from '#/_base/event';
-import { isAbortError } from '#/_base/utils/abort';
-import { retryBackoffDelay, sleepForRetry } from '#/_base/utils/retry';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
+import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
+import { retryBackoffDelay, sleepForRetry } from '@hilbras/omnicode-base/utils/retry';
 import {
   buildCompactionSummaryText,
   isRealUserInput,

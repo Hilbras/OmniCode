@@ -1,6 +1,6 @@
-import type { ServiceRegistration } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
-import type { ILogger } from '#/_base/log/log';
+import type { ServiceRegistration } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import type { ILogger } from '@hilbras/omnicode-base/log/log';
 
 export function stubLogger(): ILogger {
   const logger: ILogger = {

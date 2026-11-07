@@ -1,7 +1,7 @@
 import { promises as fs } from 'node:fs';
 import path from 'pathe';
 
-import { ILogService, type LogPayload } from '#/_base/log/log';
+import { ILogService, type LogPayload } from '@hilbras/omnicode-base/log/log';
 
 import { SkillParseError, UnsupportedSkillTypeError, parseSkillText } from './parser';
 import type { SkillDiscoveryResult, ISkillDiscovery } from './skillDiscovery';

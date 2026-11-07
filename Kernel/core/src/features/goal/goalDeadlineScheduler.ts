@@ -1,5 +1,5 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { IDisposable } from '#/_base/di/lifecycle';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 
 export interface IGoalDeadlineScheduler {
   readonly _serviceBrand: undefined;

@@ -2,7 +2,7 @@ import * as fs from 'node:fs';
 import * as nodePath from 'node:path';
 import { performance, type EventLoopUtilization } from 'node:perf_hooks';
 
-import { AsyncEventQueue } from '#/_base/asyncEventQueue';
+import { AsyncEventQueue } from '@hilbras/omnicode-base/asyncEventQueue';
 import { applyCredential } from '#human/credentials/credentials';
 import { emptyResponseError } from '#human/llm/empty-response';
 import type { LlmErrorMessage } from '#human/llm/errors';

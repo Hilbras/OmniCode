@@ -5,10 +5,10 @@ import { join, posix } from 'node:path';
 import { Immer } from 'immer';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { popConstructionFrame, pushConstructionFrame } from '#/_base/di/fiber';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { popConstructionFrame, pushConstructionFrame } from '@hilbras/omnicode-base/di/fiber';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { USER_PROMPT_ORIGIN } from '#/agent/contextMemory/types';
 import { TurnStarted } from '#/agent/loop/turnEvents';
 import { TurnEnded } from '#/agent/loop/turnOps';

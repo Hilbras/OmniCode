@@ -4,8 +4,8 @@ import { UpdateGoalToolInputSchema } from '@hilbras/omnicode-tools/features/goal
 import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { IDisposable } from '#/_base/di/lifecycle';
-import { isUserCancellation } from '#/_base/utils/abort';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { isUserCancellation } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { USER_PROMPT_ORIGIN } from '#/agent/contextMemory/types';
 import {

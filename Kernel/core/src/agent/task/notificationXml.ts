@@ -1,4 +1,4 @@
-import { escapeXmlAttr } from '#/_base/utils/xml-escape';
+import { escapeXmlAttr } from '@hilbras/omnicode-base/utils/xml-escape';
 
 export function renderNotificationXml(data: Record<string, unknown>): string {
   const id = stringAttr(data['id'], 'unknown');

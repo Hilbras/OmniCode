@@ -3,10 +3,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
-import { LedgerDisposedError } from '#/_base/lifecycle/errors';
-import { Ledger } from '#/_base/lifecycle/ledger';
-import type { Disposer, TeardownReason } from '#/_base/lifecycle/disposer';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
+import { LedgerDisposedError } from '@hilbras/omnicode-base/lifecycle/errors';
+import { Ledger } from '@hilbras/omnicode-base/lifecycle/ledger';
+import type { Disposer, TeardownReason } from '@hilbras/omnicode-base/lifecycle/disposer';
 
 function deferred<T = void>(): {
   promise: Promise<T>;

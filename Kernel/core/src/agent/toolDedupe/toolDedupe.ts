@@ -1,6 +1,6 @@
 import type { ContentPart } from '#human/llm/message';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { ExecutableToolErrorResult, ExecutableToolSuccessResult } from '#/tool/toolContract';
 
 export type ToolDedupeOutput = string | ContentPart[];

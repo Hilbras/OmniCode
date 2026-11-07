@@ -1,6 +1,6 @@
-import { BugIndicatingError } from '#/_base/errors/errors';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
-import type { StateKey } from '#/_base/state/stateRegistry';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
+import type { StateKey } from '@hilbras/omnicode-base/state/stateRegistry';
 import type { Event2 } from '#/app/event/event2';
 import {
   type AgentModel,

@@ -2,10 +2,10 @@ import type { Readable } from 'node:stream';
 
 import { z } from 'zod';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { registerErrorDomain, type ErrorDomain } from '#/_base/errors/codes';
-import { Error2 } from '#/_base/errors/errors';
-import { isoDateTimeSchema } from '#/_base/utils/isoDateTime';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { registerErrorDomain, type ErrorDomain } from '@hilbras/omnicode-base/errors/codes';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
+import { isoDateTimeSchema } from '@hilbras/omnicode-base/utils/isoDateTime';
 
 export const fileMetaSchema = z.object({
   id: z.string().min(1),

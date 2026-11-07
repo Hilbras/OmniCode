@@ -1,7 +1,7 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { LifecycleScope } from '#/app/scopes';
 

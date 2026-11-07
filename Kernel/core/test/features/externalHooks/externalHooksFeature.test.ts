@@ -1,13 +1,13 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { type CollectionToken, type CollectionView } from '#/_base/di/collection';
-import { ScopeUnits } from '#/_base/di/fiber';
-import { ScopeActivation } from '#/_base/di/instantiation';
-import { type InstantiationService } from '#/_base/di/instantiationService';
-import { _clearScopedRegistryForTests, registerScopedService, type Scope } from '#/_base/di/scope';
-import { createScopedTestHost } from '#/_base/di/test';
-import { Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { type CollectionToken, type CollectionView } from '@hilbras/omnicode-base/di/collection';
+import { ScopeUnits } from '@hilbras/omnicode-base/di/fiber';
+import { ScopeActivation } from '@hilbras/omnicode-base/di/instantiation';
+import { type InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { _clearScopedRegistryForTests, registerScopedService, type Scope } from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
+import { Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { IFeatureManager } from '#/app/feature/featureManager';

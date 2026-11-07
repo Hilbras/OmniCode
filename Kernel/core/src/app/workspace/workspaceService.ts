@@ -1,8 +1,8 @@
 import { basename, isAbsolute } from 'pathe';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
-import { encodeWorkDirKey, workspaceRootKey } from '#/_base/utils/workdir-slug';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { encodeWorkDirKey, workspaceRootKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 import { IEventService } from '#/app/event/event';
 import { LifecycleScope } from '#/app/scopes';
 import { ErrorCodes, Error2, unwrapErrorCause } from '#/errors';

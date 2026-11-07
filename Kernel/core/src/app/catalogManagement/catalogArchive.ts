@@ -5,8 +5,8 @@ import path from 'pathe';
 import { type Entry, fromBuffer as yauzlFromBuffer } from 'yauzl';
 import { ZipFile as ZipWriter } from 'yazl';
 
-import { CoreErrors } from '#/_base/errors/codes';
-import { Error2 } from '#/_base/errors/errors';
+import { CoreErrors } from '@hilbras/omnicode-base/errors/codes';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
 
 export const MAX_ARCHIVE_BYTES = 32 * 1024 * 1024;
 export const MAX_ARCHIVE_ENTRIES = 2000;

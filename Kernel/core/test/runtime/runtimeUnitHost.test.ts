@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { createDecorator } from '#/_base/di/instantiation';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices } from '#/_base/di/test';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices } from '@hilbras/omnicode-base/di/test';
 import { FakeRuntime } from '#/runtime/fakeRuntime';
 import { RuntimeRegistry } from '#/runtime/runtimeRegistry';
 import {

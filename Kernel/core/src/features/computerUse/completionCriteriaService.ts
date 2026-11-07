@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 
 import type { Criterion, Evidence } from '#/features/computerUse/goalVerifier';
 

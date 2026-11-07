@@ -2,13 +2,13 @@ import { randomUUID } from 'node:crypto';
 
 import { join } from 'pathe';
 
-import type { IInstantiationService } from '#/_base/di/instantiation';
-import { Disposable, type IDisposable } from '#/_base/di/lifecycle';
-import { createScopedChildHandle, type ISessionScopeHandle } from '#/_base/di/scope';
-import { unwrapErrorCause } from '#/_base/errors/errors';
-import { AsyncEmitter, Emitter, type Event, type IWaitUntil } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
-import { drainLogCloses } from '#/_base/log/logService';
+import type { IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import { Disposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { createScopedChildHandle, type ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { unwrapErrorCause } from '@hilbras/omnicode-base/errors/errors';
+import { AsyncEmitter, Emitter, type Event, type IWaitUntil } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { drainLogCloses } from '@hilbras/omnicode-base/log/logService';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';

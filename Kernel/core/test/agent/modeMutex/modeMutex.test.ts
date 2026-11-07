@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { IAgentModeMutexService } from '#/agent/modeMutex/modeMutex';
 import { AgentModeMutexService } from '#/agent/modeMutex/modeMutexService';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';

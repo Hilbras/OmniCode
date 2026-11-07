@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { parseBooleanEnv } from '#/_base/utils/env';
+import { parseBooleanEnv } from '@hilbras/omnicode-base/utils/env';
 import {
   type EnvBindings,
   envBindings,

@@ -5,7 +5,7 @@ import {
   resetUnexpectedErrorHandler,
   safelyCallListener,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
 
 describe('onUnexpectedError + setUnexpectedErrorHandler', () => {
   afterEach(() => {

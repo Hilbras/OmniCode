@@ -2,7 +2,7 @@ import { dirname, isAbsolute, join, normalize, resolve } from 'pathe';
 import { parse as parseToml, stringify as stringifyToml } from 'smol-toml';
 import { z } from 'zod';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import {
   IProjectLocalConfigService,

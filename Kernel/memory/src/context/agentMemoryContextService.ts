@@ -1,6 +1,6 @@
-import { createDecorator } from '@hilbras/omnicode-core/_base/di/instantiation';
-import { Service } from '@hilbras/omnicode-core/_base/di/service';
-import { ILogService, type ILogger } from '@hilbras/omnicode-core/_base/log/log';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { ILogService, type ILogger } from '@hilbras/omnicode-base/log/log';
 import { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
 import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
 import { IAgentContextMemoryService } from '@hilbras/omnicode-core/agent/contextMemory/contextMemory';

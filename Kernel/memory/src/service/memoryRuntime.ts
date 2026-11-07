@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import type { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
 import type { IConfigService } from '@hilbras/omnicode-core/app/config/config';
 import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import type { ILogger } from '@hilbras/omnicode-core/_base/log/log';
+import type { ILogger } from '@hilbras/omnicode-base/log/log';
 
 import { MemoryError, MemoryErrors } from '#/contracts/errors';
 

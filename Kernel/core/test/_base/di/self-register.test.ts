@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { IInstantiationService } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+import { IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 
 describe('IInstantiationService self-registration', () => {
   it('uses the conventional service id string', () => {

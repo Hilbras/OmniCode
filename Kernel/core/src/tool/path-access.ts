@@ -4,7 +4,7 @@ import {
   getShellPathBridge,
   translateShellDrivePath,
   type ShellPathBridge,
-} from '#/_base/execEnv/shellPathBridge';
+} from '@hilbras/omnicode-base/execEnv/shellPathBridge';
 import type { IHostEnvironment } from '#/os/interface/hostEnvironment';
 
 export interface WorkspaceConfig {

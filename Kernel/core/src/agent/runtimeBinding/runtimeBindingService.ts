@@ -1,7 +1,7 @@
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { defineState } from '#/state/state';
-import type { IDisposable } from '#/_base/di/lifecycle';
-import { Emitter } from '#/_base/event';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import { LifecycleScope } from '#/app/scopes';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentStateService } from '#/agent/state/agentState';

@@ -4,7 +4,7 @@ import { createControlledPromise } from '@antfu/utils';
 import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { describe, expect, it, vi } from 'vitest';
 
-import { abortError } from '#/_base/utils/abort';
+import { abortError } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentProfileService } from '#/agent/profile/profile';
 import { makeAgentScopeContext } from '#/agent/scopeContext/scopeContext';

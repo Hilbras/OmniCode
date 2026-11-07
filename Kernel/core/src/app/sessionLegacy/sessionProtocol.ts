@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { isoDateTimeSchema } from '#/_base/utils/isoDateTime';
+import { isoDateTimeSchema } from '@hilbras/omnicode-base/utils/isoDateTime';
 import type {
   SessionPendingInteraction,
   SessionTurnOutcome,

@@ -1,4 +1,4 @@
-import { StateRegistry } from '#/_base/state/stateRegistry';
+import { StateRegistry } from '@hilbras/omnicode-base/state/stateRegistry';
 import { IAppStateService } from '#/app/state/appState';
 
 import { IWorkspaceStateService } from './workspaceState';

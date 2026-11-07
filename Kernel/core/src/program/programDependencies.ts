@@ -1,5 +1,5 @@
-import type { LiveRef } from '#/_base/di/instantiation';
-import type { ILogService } from '#/_base/log/log';
+import type { LiveRef } from '@hilbras/omnicode-base/di/instantiation';
+import type { ILogService } from '@hilbras/omnicode-base/log/log';
 import type { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import type { IBuiltinAgentProfileLoader } from '#/app/agentProfileCatalog/builtinAgentProfileLoader';
 import type { IAgentProfileRegistry } from '#/app/agentProfileCatalog/agentProfileRegistry';

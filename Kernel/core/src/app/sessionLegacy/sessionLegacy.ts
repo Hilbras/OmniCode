@@ -1,6 +1,6 @@
 import type { GoalSnapshot } from '#/features/goal/types';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 
 import type { SessionStatusResponse } from './sessionProtocol';
 

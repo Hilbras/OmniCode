@@ -1,7 +1,7 @@
 import { join } from 'pathe';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { ScopeSeed } from '#/_base/di/scope';
+import { createDecorator, type ServiceIdentifier } from '#/di/instantiation';
+import type { ScopeSeed } from '#/di/scope';
 
 import type { LogLevel } from './log';
 

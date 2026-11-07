@@ -1,6 +1,6 @@
-import { ILogService } from '#/_base/log/log';
-import { subtreeWatchFilter } from '#/_base/utils/paths';
-import { TimeoutTimer } from '#/_base/utils/timer';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { subtreeWatchFilter } from '@hilbras/omnicode-base/utils/paths';
+import { TimeoutTimer } from '@hilbras/omnicode-base/utils/timer';
 import {
   AGENT_PROFILE_SOURCE_PRIORITY,
   type AgentProfileContribution,

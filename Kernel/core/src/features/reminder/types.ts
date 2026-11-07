@@ -1,4 +1,4 @@
-import type { IDisposable } from '#/_base/di/lifecycle';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import type { ContentPart, ToolDescription as Tool } from '#human/llm/message';
 

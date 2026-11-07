@@ -4,7 +4,7 @@ import type { VideoUploadEvent } from '#/app/telemetry/events';
 import type { ITelemetryService } from '#/app/telemetry/telemetry';
 import type { ISessionMediaStore } from './sessionMediaStore';
 
-import { toDisposable, type IDisposable } from '#/_base/di/lifecycle';
+import { toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type { WorkspaceConfig } from '#/tool/path-access';
 import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import type { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';

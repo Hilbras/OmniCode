@@ -1,7 +1,7 @@
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { Emitter, type Event, type IWaitUntil } from '#/_base/event';
-import { ScopeActivation, registerScopedService, type ISessionScopeHandle } from '#/_base/di/scope';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { Emitter, type Event, type IWaitUntil } from '@hilbras/omnicode-base/event';
+import { ScopeActivation, registerScopedService, type ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
 import { Error2, ErrorCodes } from '#/errors';
 import { ISessionIndex, type SessionSummary } from '#/app/sessionIndex/sessionIndex';

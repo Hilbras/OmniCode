@@ -1,4 +1,4 @@
-import { ScopeActivation } from '@hilbras/omnicode-core/_base/di/instantiation';
+import { ScopeActivation } from '@hilbras/omnicode-base/di/instantiation';
 import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
 import { LifecycleScope } from '@hilbras/omnicode-core/app/scopes';
 import { Feature } from '@hilbras/omnicode-core/features/feature';

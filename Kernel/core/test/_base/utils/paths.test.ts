@@ -9,7 +9,7 @@ import {
   findUpwardRoot,
   resolvePath,
   subtreeWatchFilter,
-} from '#/_base/utils/paths';
+} from '@hilbras/omnicode-base/utils/paths';
 
 describe('subtree watch filtering', () => {
   const root = '/repo';

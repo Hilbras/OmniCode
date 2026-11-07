@@ -1,9 +1,9 @@
 import type { z } from 'zod';
 import type { Draft } from 'immer';
 
-import { collection } from '#/_base/di/collection';
-import { BugIndicatingError } from '#/_base/errors/errors';
-import type { StateKey } from '#/_base/state/stateRegistry';
+import { collection } from '@hilbras/omnicode-base/di/collection';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
+import type { StateKey } from '@hilbras/omnicode-base/state/stateRegistry';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { registerEvent2Class, type Event2, type Event2Class } from '#/app/event/event2';
 

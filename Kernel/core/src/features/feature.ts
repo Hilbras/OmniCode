@@ -1,14 +1,14 @@
-import { type CollectionToken } from '#/_base/di/collection';
+import { type CollectionToken } from '@hilbras/omnicode-base/di/collection';
 import {
   ScopeUnits,
   type Fiber,
   type FiberHandle,
   type FiberProvideOptions,
   type ServiceClassRecipe,
-} from '#/_base/di/fiber';
-import { ScopeActivation, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { toDisposable } from '#/_base/di/lifecycle';
-import { Service } from '#/_base/di/service';
+} from '@hilbras/omnicode-base/di/fiber';
+import { ScopeActivation, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import {
   CommandContribution,
   type CommandContribution as CommandContributionPayload,

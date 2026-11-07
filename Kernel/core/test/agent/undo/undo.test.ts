@@ -1,10 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { type IDisposable } from '#/_base/di/lifecycle';
+import { type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
 import { ContextApplyCompaction } from '#/agent/contextMemory/contextEvents';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { isPromptOwnedInjection, isUndoAnchor } from '#/agent/contextMemory/conversationTime';

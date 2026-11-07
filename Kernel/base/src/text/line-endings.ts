@@ -1,4 +1,4 @@
-import { codePointAt } from '#/_base/text/code-point';
+import { codePointAt } from '#/text/code-point';
 export type LineEndingStyle = 'lf' | 'crlf' | 'mixed';
 
 export interface ModelTextView {

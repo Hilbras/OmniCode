@@ -1,5 +1,5 @@
-import type { CascadeEngine } from '#/_base/di/cascadeEngine';
-import type { InstantiationService } from '#/_base/di/instantiationService';
+import type { CascadeEngine } from '@hilbras/omnicode-base/di/cascadeEngine';
+import type { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
 
 export interface ScopeContainerInfo {
   readonly container: InstantiationService;

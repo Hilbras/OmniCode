@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createDecorator } from '#/_base/di/instantiation';
-import { _clearScopedRegistryForTests, registerScopedService } from '#/_base/di/scope';
-import { createScopedTestHost, stubPair } from '#/_base/di/test';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { _clearScopedRegistryForTests, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, stubPair } from '@hilbras/omnicode-base/di/test';
 import { LifecycleScope } from '#/app/scopes';
 
 interface IGreeter {

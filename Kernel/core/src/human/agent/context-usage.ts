@@ -1,4 +1,4 @@
-import { firstCodePoint } from '../../_base/text/code-point';
+import { firstCodePoint } from '@hilbras/omnicode-base/text/code-point';
 import type { Message, ToolDescription } from '#/llm/message';
 import { emptyUsage, type TokenUsage } from '#/llm/usage';
 

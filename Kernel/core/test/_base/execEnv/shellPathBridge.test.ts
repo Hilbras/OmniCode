@@ -4,7 +4,7 @@ import {
   createShellPathBridge,
   type ShellPathBridgeDeps,
   type ShellPathBridgeEnv,
-} from '#/_base/execEnv/shellPathBridge';
+} from '@hilbras/omnicode-base/execEnv/shellPathBridge';
 
 const WINDOWS_ENV: ShellPathBridgeEnv = {
   osKind: 'Windows',

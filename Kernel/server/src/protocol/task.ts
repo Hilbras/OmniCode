@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { isoDateTimeSchema } from '@hilbras/omnicode-core/_base/utils/isoDateTime';
+import { isoDateTimeSchema } from '@hilbras/omnicode-base/utils/isoDateTime';
 
 export const taskKindSchema = z.enum(['subagent', 'bash', 'tool']);
 export type TaskKind = z.infer<typeof taskKindSchema>;

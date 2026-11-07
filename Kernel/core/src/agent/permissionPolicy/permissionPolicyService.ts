@@ -1,5 +1,5 @@
-import { IInstantiationService } from "#/_base/di/instantiation";
-import { Service } from "#/_base/di/service";
+import { IInstantiationService } from "@hilbras/omnicode-base/di/instantiation";
+import { Service } from "@hilbras/omnicode-base/di/service";
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import type { ResolvedToolExecutionHookContext } from '#/agent/toolExecutor/toolHooks';
 import { AutoModeApprovePermissionPolicyService } from '#/agent/permissionPolicy/policies/auto-mode-approve';
@@ -21,7 +21,7 @@ import {
 } from './permissionPolicy';
 import type { PermissionPolicy } from "./types";
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 
 export class AgentPermissionPolicyService
   extends Service

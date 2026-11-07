@@ -9,11 +9,11 @@ import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vite
 
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
 
-import type { ServiceIdentifier } from '#/_base/di/instantiation';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices } from '#/_base/di/test';
-import { AsyncEmitter, Emitter } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices } from '@hilbras/omnicode-base/di/test';
+import { AsyncEmitter, Emitter } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IMcpOAuthService } from '#/app/mcpConfig/oauthService';
 import { ISessionManager } from '#/app/sessionManager/sessionManager';
 import { ITelemetryService, noopTelemetryService } from '#/app/telemetry/telemetry';

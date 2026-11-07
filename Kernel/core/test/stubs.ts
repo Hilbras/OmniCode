@@ -1,4 +1,4 @@
-import { Emitter, type Event } from '#/_base/event';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 import type { IOAuthService } from '#/app/auth/auth';
 import {
   type ConfigChangedEvent,

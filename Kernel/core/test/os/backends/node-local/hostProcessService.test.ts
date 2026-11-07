@@ -3,8 +3,8 @@ import { PassThrough, Readable } from 'node:stream';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { HostProcessService } from '#/os/backends/node-local/hostProcessService';
 import {
   HostProcessError,

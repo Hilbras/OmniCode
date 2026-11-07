@@ -1,4 +1,4 @@
-import { AsyncEmitter, type IWaitUntilData } from '#/_base/event';
+import { AsyncEmitter, type IWaitUntilData } from '@hilbras/omnicode-base/event';
 import type { IAgentToolExecutorService } from '#/agent/toolExecutor/toolExecutor';
 import { BeforeToolExecuteEmitter } from '#/agent/toolExecutor/beforeToolExecuteEvent';
 import type {

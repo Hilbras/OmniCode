@@ -1,5 +1,5 @@
-import { Disposable, DisposableStore } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { Disposable, DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { TurnStarted } from '#/agent/loop/turnEvents';
 import { TurnEnded, turnKey } from '#/agent/loop/turnOps';
 import { IAgentStateService } from '#/agent/state/agentState';

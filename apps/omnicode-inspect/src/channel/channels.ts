@@ -12,7 +12,7 @@
  * fallback — `probeDebugSurface` fails the connection with a clear error.
  */
 
-import { createDecorator } from '@hilbras/omnicode-core/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 
 import type { ServiceProxy } from './channel';
 import { DEBUG_RPC_BASE, type InspectClient } from './client';
@@ -74,7 +74,7 @@ export async function probeDebugSurface(options: {
     res = await fetch(url, { headers });
   } catch (error) {
     const reason = error instanceof Error ? error.message : String(error);
-    throw new Error(`cannot reach ${options.baseUrl} — is kap-server running? (${reason})`);
+    throw new Error(`cannot reach ${options.baseUrl} — is kap-server running? (${reason})`, { cause: error });
   }
   if (!res.ok) {
     throw new Error(

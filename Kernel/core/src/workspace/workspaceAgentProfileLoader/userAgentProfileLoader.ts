@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { AgentProfile } from '#/app/agentProfileCatalog/agentProfileCatalog';
 
 export interface IUserAgentProfileLoader {

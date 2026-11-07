@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { CascadeEngine, CascadeHistoryEntry, UnitStateChange } from '#/_base/di/cascadeEngine';
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { CascadeConflictError } from '#/_base/di/errors';
-import { createDecorator } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
-import type { Ledger } from '#/_base/lifecycle/ledger';
+import type { CascadeEngine, CascadeHistoryEntry, UnitStateChange } from '@hilbras/omnicode-base/di/cascadeEngine';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { CascadeConflictError } from '@hilbras/omnicode-base/di/errors';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
+import type { Ledger } from '@hilbras/omnicode-base/lifecycle/ledger';
 
 function deferred<T = void>(): {
   promise: Promise<T>;
@@ -498,7 +498,7 @@ describe('cascade engine — mechanism matrix', () => {
   it('14. a rejecting abort hook is logged, never a veto (best-effort §4.5)', async () => {
     const reported: unknown[] = [];
     const { setUnexpectedErrorHandler, resetUnexpectedErrorHandler } =
-      await import('#/_base/errors/unexpectedError');
+      await import('@hilbras/omnicode-base/errors/unexpectedError');
     setUnexpectedErrorHandler((err) => {
       reported.push(err);
     });

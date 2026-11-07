@@ -1,4 +1,4 @@
-import { BugIndicatingError } from '#/_base/errors/errors';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
 import type { ModelCapability as HumanModelCapability } from '#human/llm/capability';
 import type { ProtocolEndpoint, ProviderConnection } from '#human/llm/protocol/connection';
 import type { ProtocolTraitFor } from '#human/llm/provider/definition';

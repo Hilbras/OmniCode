@@ -1,6 +1,6 @@
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { Emitter, type Event } from '#/_base/event';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 import { IConfigService } from '#/app/config/config';
 import { LifecycleScope } from '#/app/scopes';
 import {

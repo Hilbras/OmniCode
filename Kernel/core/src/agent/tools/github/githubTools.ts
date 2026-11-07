@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { IFlagService } from '#/app/flag/flag';
 import { isGitHubError, redactGitHubSecrets } from '#/app/github/errors';
 import { GITHUB_FLAG_ID } from '#/app/github/flag';

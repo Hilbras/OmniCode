@@ -1,5 +1,5 @@
 import type { QuestionTaskInfo } from '@hilbras/omnicode-core/agent/task/types';
-import { isAbortError } from '@hilbras/omnicode-core/_base/utils/abort';
+import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
 import {
   type AgentTask,
   type AgentTaskInfoBase,

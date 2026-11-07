@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import type { BashSyntaxNode } from '#/app/bashParser/bashParser';
 import { IBashParserService } from '#/app/bashParser/bashParser';
 import { BashParserService } from '#/app/bashParser/bashParserService';

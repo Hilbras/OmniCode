@@ -1,6 +1,6 @@
 import { isAbsolute } from 'pathe';
 
-import { encodeWorkDirKey, workspaceRootKey } from '#/_base/utils/workdir-slug';
+import { encodeWorkDirKey, workspaceRootKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 import type { IAppendLogStore } from '#/persistence/interface/appendLogStore';
 import type { IFileSystemStorageService } from '#/persistence/interface/storage';
 

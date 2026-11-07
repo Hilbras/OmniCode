@@ -1,6 +1,6 @@
 import type { ContentPart } from '#human/llm/message';
 
-import { createDecorator } from "#/_base/di/instantiation";
+import { createDecorator } from "@hilbras/omnicode-base/di/instantiation";
 
 export const BLOBREF_PROTOCOL = 'blobref:';
 export const MISSING_MEDIA_PLACEHOLDER = '[media missing]';

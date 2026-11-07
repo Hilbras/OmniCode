@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { retryBackoffDelays } from '#/_base/utils/retry';
+import { retryBackoffDelays } from '@hilbras/omnicode-base/utils/retry';
 
 describe('retryBackoffDelays', () => {
   it('starts at 500 milliseconds and doubles with up to 25 percent jitter', () => {

@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
-import { encodeWorkDirKey } from '@hilbras/omnicode-core/_base/utils/workdir-slug';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 
 import { type RunningServer, startServer } from '../src/start';
 import { TEST_HOST_IDENTITY } from './helpers/hostIdentity';

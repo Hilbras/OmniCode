@@ -10,10 +10,10 @@ import { ReadTool } from '@hilbras/omnicode-tools/os/read/readTool';
 import { Jimp } from 'jimp';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, TestInstantiationService } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { renderToolResultForModel } from '#/agent/contextMemory/toolResultRender';
 import { createMcpTool } from '#/agent/mcp/tools/mcp';
 import { SessionMediaStoreService } from '#/agent/media/sessionMediaStoreService';

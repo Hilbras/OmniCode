@@ -1,4 +1,4 @@
-import { getShellPathBridge } from '#/_base/execEnv/shellPathBridge';
+import { getShellPathBridge } from '@hilbras/omnicode-base/execEnv/shellPathBridge';
 import { ErrorCodes, Error2 } from '#/errors';
 
 import type { Runtime, RuntimeBinding, RuntimeWorkspaceRoots } from './runtime';

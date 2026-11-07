@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import type {

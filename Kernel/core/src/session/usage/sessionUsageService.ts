@@ -1,5 +1,5 @@
-import { Service } from '#/_base/di/service';
-import { Emitter, type Event } from '#/_base/event';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { agentSpaceOf } from '#/agent/agentContext/agentSpace';
 import type { AgentLLMRequestSource } from '#/agent/llmRequester/llmRequester';

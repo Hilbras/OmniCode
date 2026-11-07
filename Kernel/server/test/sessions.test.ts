@@ -42,7 +42,7 @@ import { TurnSteer } from '@hilbras/omnicode-core/agent/loop/turnOps';
 import type { AgentTranscriptSnapshot } from '@hilbras/omnicode-transcript';
 import { TurnStarted } from '@hilbras/omnicode-core/agent/loop/turnEvents';
 import { sessionWarningsResponseSchema } from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
-import { encodeWorkDirKey } from '@hilbras/omnicode-core/_base/utils/workdir-slug';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 
 import { type RunningServer, startServer } from '../src/start';
 import { TEST_HOST_IDENTITY } from './helpers/hostIdentity';

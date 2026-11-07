@@ -5,9 +5,9 @@ import { join, relative } from 'pathe';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { encodeWorkDirKey } from '#/_base/utils/workdir-slug';
-import { createServices } from '#/_base/di/test';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
+import { createServices } from '@hilbras/omnicode-base/di/test';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import {
   IMcpConfigStore,

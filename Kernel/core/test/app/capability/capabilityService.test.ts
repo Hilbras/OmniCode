@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import { isError2 } from '#/_base/errors/errors';
-import type { ILogService, LogPayload } from '#/_base/log/log';
+import { isError2 } from '@hilbras/omnicode-base/errors/errors';
+import type { ILogService, LogPayload } from '@hilbras/omnicode-base/log/log';
 import { CapabilityErrors } from '#/app/capability/errors';
 import { CapabilityService } from '#/app/capability/capabilityService';
 import type {

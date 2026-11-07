@@ -5,11 +5,11 @@ import { Readable, type Writable } from 'node:stream';
 import { createControlledPromise } from '@antfu/utils';
 import { expect, vi } from 'vitest';
 
-import type { IInstantiationService } from '#/_base/di/instantiation';
-import { toDisposable } from '#/_base/di/lifecycle';
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import { Emitter, Event, type IWaitUntil } from '#/_base/event';
-import type { Promisable, PromisifyMethods } from '#/_base/utils/types';
+import type { IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import { toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { Emitter, Event, type IWaitUntil } from '@hilbras/omnicode-base/event';
+import type { Promisable, PromisifyMethods } from '@hilbras/omnicode-base/utils/types';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentBlobService } from '#/agent/blob/agentBlobService';
 import { AgentBlobServiceImpl } from '#/agent/blob/agentBlobServiceImpl';
@@ -122,8 +122,8 @@ interface UndoHistoryPayload {
 interface UnregisterToolPayload {
   readonly name: string;
 }
-import type { ILogger, LogContext, LogLevel } from '#/_base/log/log';
-import { ILogOptions } from '#/_base/log/logConfig';
+import type { ILogger, LogContext, LogLevel } from '@hilbras/omnicode-base/log/log';
+import { ILogOptions } from '@hilbras/omnicode-base/log/logConfig';
 import { type AgentModelInstanceOf } from '#/agent/agentContext/agentSpace';
 import type { ApprovalRequest, ApprovalResponse } from '#/agent/interaction/approval';
 import type { QuestionRequest, QuestionResult } from '#/agent/interaction/question';

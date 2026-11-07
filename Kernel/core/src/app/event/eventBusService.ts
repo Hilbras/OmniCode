@@ -1,8 +1,8 @@
-import { Disposable, type IDisposable } from '#/_base/di/lifecycle';
-import { Service } from '#/_base/di/service';
+import { Disposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Emitter } from '#/_base/event';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 

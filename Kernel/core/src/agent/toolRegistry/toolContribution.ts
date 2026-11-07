@@ -1,6 +1,6 @@
-import { collection } from '#/_base/di/collection';
-import type { ServiceIdentifier, ServicesAccessor } from '#/_base/di/instantiation';
-import { ScopeActivation, overrideScopedService, registerScopedService } from '#/_base/di/scope';
+import { collection } from '@hilbras/omnicode-base/di/collection';
+import type { ServiceIdentifier, ServicesAccessor } from '@hilbras/omnicode-base/di/instantiation';
+import { ScopeActivation, overrideScopedService, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
 import type { RuntimeCapability } from '#/runtime/runtime';
 import type { AgentTool, ToolDisclosure, ToolSource } from '#/tool/toolContract';

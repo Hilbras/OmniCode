@@ -2,7 +2,7 @@ import {
   type LineEndingStyle,
   materializeModelText,
   toModelTextView,
-} from '#/_base/text/line-endings';
+} from '@hilbras/omnicode-base/text/line-endings';
 
 export class TextModel {
   readonly lineEndingStyle: LineEndingStyle;

@@ -1,6 +1,6 @@
-import { Disposable } from '#/_base/di/lifecycle';
-import { Emitter } from '#/_base/event';
-import { parseBooleanEnv } from '#/_base/utils/env';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Emitter } from '@hilbras/omnicode-base/event';
+import { parseBooleanEnv } from '@hilbras/omnicode-base/utils/env';
 import { defineState } from '#/state/state';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { ITelemetryService } from '#/app/telemetry/telemetry';

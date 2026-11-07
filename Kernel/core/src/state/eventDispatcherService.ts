@@ -1,12 +1,12 @@
 import { freeze, Immer, produce } from 'immer';
 
-import { type CollectionView } from '#/_base/di/collection';
-import { toDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { BugIndicatingError } from '#/_base/errors/errors';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
-import { ILogService } from '#/_base/log/log';
+import { type CollectionView } from '@hilbras/omnicode-base/di/collection';
+import { toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { AgentSpaceImpl, type AgentSpaceHost } from '#/agent/agentContext/agentSpace';
 import { IAgentBlobService } from '#/agent/blob/agentBlobService';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';

@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
-import { Disposable, type IDisposable } from '#/_base/di/lifecycle';
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { Disposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import type {
   CreateTerminalRequest,
   Terminal,

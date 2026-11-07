@@ -1,6 +1,6 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { Event } from '#/_base/event';
-import type { IDisposable } from '#/_base/di/lifecycle';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { Event } from '@hilbras/omnicode-base/event';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 
 export type TaskState = 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
 

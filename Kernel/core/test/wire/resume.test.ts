@@ -7,7 +7,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { turnKey } from '#/agent/loop/turnOps';
 import { IAgentTaskService } from '#/agent/task/task';

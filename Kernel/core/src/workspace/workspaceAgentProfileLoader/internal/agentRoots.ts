@@ -1,6 +1,6 @@
 import { join } from 'pathe';
 
-import { findUpwardRoot } from '#/_base/utils/paths';
+import { findUpwardRoot } from '@hilbras/omnicode-base/utils/paths';
 import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
 import { HostFsError, OsFsErrors } from '#/os/interface/hostFsErrors';
 

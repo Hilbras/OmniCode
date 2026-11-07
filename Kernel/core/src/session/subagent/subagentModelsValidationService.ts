@@ -1,5 +1,5 @@
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IConfigService } from '#/app/config/config';
 import { IModelCatalog } from '#/llm-adapter/model/catalog';
 

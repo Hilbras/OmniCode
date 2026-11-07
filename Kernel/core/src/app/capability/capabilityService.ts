@@ -3,10 +3,10 @@ import { homedir } from 'node:os';
 import { OMNICODE_PROVIDER_NAME, resolveOmnicodeRegion } from '@hilbras/omnicode-auth';
 
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Disposable } from '#/_base/di/lifecycle';
-import { Emitter, type Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { Error2 } from '#/errors';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IPluginService } from '#/app/plugin/plugin';

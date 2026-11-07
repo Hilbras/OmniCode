@@ -11,7 +11,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { Service } from '@hilbras/omnicode-core/_base/di/service';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import { CommandContribution } from '@hilbras/omnicode-core/agent/command/commandContribution';
 import { IFeatureManager } from '@hilbras/omnicode-core/app/feature/featureManager';
 import {

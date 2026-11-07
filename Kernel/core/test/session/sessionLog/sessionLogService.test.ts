@@ -8,12 +8,12 @@ import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost } from '#/_base/di/test';
-import type { FileLogWriter } from '#/_base/log/fileLog';
-import { ILogService } from '#/_base/log/log';
-import { logSeed, resolveLoggingConfig, resolveSessionLogPath } from '#/_base/log/logConfig';
-import { AppLogService, drainLogCloses } from '#/_base/log/logService';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
+import type { FileLogWriter } from '@hilbras/omnicode-base/log/fileLog';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { logSeed, resolveLoggingConfig, resolveSessionLogPath } from '@hilbras/omnicode-base/log/logConfig';
+import { AppLogService, drainLogCloses } from '@hilbras/omnicode-base/log/logService';
 import { LifecycleScope } from '#/app/scopes';
 import { makeSessionContext, sessionContextSeed } from '#/session/sessionContext/sessionContext';
 import { SessionLogService } from '#/session/sessionLog/sessionLogService';

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { Emitter, Event } from '#/_base/event';
+import { Emitter, Event } from '@hilbras/omnicode-base/event';
 import { IAgentProfileService, type ResolvedAgentProfile } from '#/agent/profile/profile';
 import { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';

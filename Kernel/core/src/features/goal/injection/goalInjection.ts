@@ -1,6 +1,6 @@
 import type { GoalSnapshot } from '#/features/goal/types';
-import { Service } from "#/_base/di/service";
-import { renderPrompt } from "#/_base/utils/render-prompt";
+import { Service } from "@hilbras/omnicode-base/di/service";
+import { renderPrompt } from "@hilbras/omnicode-base/utils/render-prompt";
 import type { IAgentReminderService } from '#/features/reminder/reminderService';
 import GOAL_ACTIVE_REMINDER from './goal-active-reminder.md?raw';
 import GOAL_BLOCKED_REMINDER from './goal-blocked-reminder.md?raw';

@@ -1,12 +1,12 @@
-import type { Event } from '#/_base/event';
+import type { Event } from '@hilbras/omnicode-base/event';
 import type {
   FiberHandle,
   FiberProvideOptions,
   FiberState,
   ServiceClassRecipe,
   ServiceRecipe,
-} from '#/_base/di/fiber';
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+} from '@hilbras/omnicode-base/di/fiber';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { ContributedFeatureService } from './featureServiceContribution';
 
 export interface ManagedUnitInfo {

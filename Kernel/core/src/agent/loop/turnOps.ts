@@ -1,7 +1,7 @@
 /* oxlint-disable typescript-eslint/no-unsafe-declaration-merging, eslint-plugin-import/namespace -- Event2 class+payload-interface declaration merging is the sanctioned event-declaration idiom. */
 import { z } from 'zod';
 
-import type { OmnicodeErrorPayload } from '#/_base/errors/serialize';
+import type { OmnicodeErrorPayload } from '@hilbras/omnicode-base/errors/serialize';
 import {
   ContextAppendLoopEvent,
   ContextApplyCompaction,

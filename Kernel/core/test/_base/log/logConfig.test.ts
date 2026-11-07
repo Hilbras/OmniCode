@@ -11,8 +11,8 @@ import {
   resolveGlobalLogPath,
   resolveLoggingConfig,
   resolveSessionLogPath,
-} from '#/_base/log/logConfig';
-import { createScopedTestHost } from '#/_base/di/test';
+} from '@hilbras/omnicode-base/log/logConfig';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
 
 describe('resolveLoggingConfig', () => {
   it('uses defaults when env is empty', () => {

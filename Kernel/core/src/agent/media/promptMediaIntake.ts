@@ -1,5 +1,5 @@
 import type { IFileService } from '#/app/file/fileService';
-import { abortable } from '#/_base/utils/abort';
+import { abortable } from '@hilbras/omnicode-base/utils/abort';
 import type { ContentPart } from '#human/llm/message';
 
 import { daemonFileRefFromPart } from './mediaRef';

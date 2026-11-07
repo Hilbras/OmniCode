@@ -1,5 +1,5 @@
 import { IConfigService, ITelemetryService, type Scope } from '@hilbras/omnicode-core';
-import { FiberState } from '@hilbras/omnicode-core/_base/di/fiber';
+import { FiberState } from '@hilbras/omnicode-base/di/fiber';
 import { IFeatureManager } from '@hilbras/omnicode-core/app/feature/featureManager';
 import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
 import type { OmnicodeHostIdentity } from '@hilbras/omnicode-auth';

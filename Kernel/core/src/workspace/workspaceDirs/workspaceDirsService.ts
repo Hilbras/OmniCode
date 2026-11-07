@@ -1,9 +1,9 @@
-import { Disposable } from '#/_base/di/lifecycle';
-import { Emitter, type Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { defineState } from '#/state/state';
-import { TimeoutTimer } from '#/_base/utils/timer';
-import { subtreeWatchFilter } from '#/_base/utils/paths';
+import { TimeoutTimer } from '@hilbras/omnicode-base/utils/timer';
+import { subtreeWatchFilter } from '@hilbras/omnicode-base/utils/paths';
 import { IProjectLocalConfigService } from '#/app/projectLocalConfig/projectLocalConfig';
 import type { ISessionWorkspaceInfo } from '#/session/workspaceInfo/workspaceInfo';
 import { IWorkspaceStateService } from '#/workspace/state/workspaceState';

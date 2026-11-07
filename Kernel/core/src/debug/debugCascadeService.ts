@@ -1,8 +1,8 @@
-import type { CascadeEngine } from '#/_base/di/cascadeEngine';
-import { IInstantiationService, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { InstantiationService } from '#/_base/di/instantiationService';
-import { DisposableStore, type IDisposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import type { CascadeEngine } from '@hilbras/omnicode-base/di/cascadeEngine';
+import { IInstantiationService, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { DisposableStore, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IEventService } from '#/app/event/event';
 import { LifecycleScope } from '#/app/scopes';
 import { Error2, ErrorCodes } from '#/errors';

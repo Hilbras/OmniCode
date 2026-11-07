@@ -4,12 +4,12 @@ import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost } from '#/_base/di/test';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
 import { LifecycleScope } from '#/app/scopes';
 import type { TelemetryProperties } from '#/app/telemetry/context';
 import type { TurnStartedEvent as TurnStartedTelemetryEvent } from '#/app/telemetry/events';

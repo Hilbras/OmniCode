@@ -1,8 +1,8 @@
-import { toDisposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { AsyncEmitter, type Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
-import { isAbortError, isUserCancellation } from '#/_base/utils/abort';
+import { toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { AsyncEmitter, type Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { isAbortError, isUserCancellation } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentStateService } from '#/agent/state/agentState';
 import type {

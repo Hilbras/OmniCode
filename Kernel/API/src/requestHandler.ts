@@ -221,7 +221,7 @@ import {
   type ServicesAccessor,
   type SessionSummary as V2SessionSummary,
 } from '@hilbras/omnicode-core';
-import { encodeWorkDirKey } from '@hilbras/omnicode-core/_base/utils/workdir-slug';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 import { loadMcpServers } from '@hilbras/omnicode-core/app/mcpConfig/configLoader';
 import { readTowerStatusSummary } from '@hilbras/omnicode-core/features/tower/tools/status/statusReader';
 import { ITowerRateLimitService } from '@hilbras/omnicode-core/features/tower/towerRateLimit';

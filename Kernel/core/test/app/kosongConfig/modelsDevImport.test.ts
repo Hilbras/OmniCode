@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createScopedTestHost } from '#/_base/di/test';
-import { Error2, isError2 } from '#/_base/errors/errors';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
+import { Error2, isError2 } from '@hilbras/omnicode-base/errors/errors';
 import { DEFAULT_IDENTITY_SLUG, IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';

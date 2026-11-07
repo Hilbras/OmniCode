@@ -1,4 +1,4 @@
-import type { IAgentScopeHandle } from '#/_base/di/scope';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { AgentSpaceImpl } from '#/agent/agentContext/agentSpace';
 import type { MachineEngineAttachBundle } from '#/agent/loop/machine/engine';

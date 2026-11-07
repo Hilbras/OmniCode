@@ -1,4 +1,4 @@
-import type { ServiceRegistration } from '#/_base/di/test';
+import type { ServiceRegistration } from '@hilbras/omnicode-base/di/test';
 import {
   IAgentToolResultTruncationService,
   type IAgentToolResultTruncationService as ToolResultTruncationServiceStub,

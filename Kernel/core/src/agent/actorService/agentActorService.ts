@@ -1,10 +1,10 @@
 import { createActor, type ActorLogic, type AnyActorRef, type Snapshot } from '#human/xstate2';
 
-import { BugIndicatingError } from '#/_base/errors/errors';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
-import { IInstantiationService, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { Disposable, toDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import type { Event } from '#/_base/event';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
+import { IInstantiationService, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { Disposable, toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { Event } from '@hilbras/omnicode-base/event';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import type { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import type { Event2, Event2Class } from '#/app/event/event2';

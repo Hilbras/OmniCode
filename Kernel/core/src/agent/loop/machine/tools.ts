@@ -4,7 +4,7 @@ import type {
   ToolExecutionResult,
 } from '#/agent/toolExecutor/toolExecutor';
 import type { LLMRequestTrace } from '#/llm-adapter/contract/request-trace';
-import { toErrorMessage } from '#/_base/errors/errorMessage';
+import { toErrorMessage } from '@hilbras/omnicode-base/errors/errorMessage';
 import type {
   ToolDelivery,
   ToolInfo,

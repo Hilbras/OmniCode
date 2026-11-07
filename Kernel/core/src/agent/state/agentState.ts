@@ -1,6 +1,6 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { IDisposable } from '#/_base/di/lifecycle';
-import type { IStateRegistry } from '#/_base/state/stateRegistry';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { IStateRegistry } from '@hilbras/omnicode-base/state/stateRegistry';
 import type { ReplayableStateKey } from '#/state/state';
 
 export interface IAgentStateService extends IStateRegistry {

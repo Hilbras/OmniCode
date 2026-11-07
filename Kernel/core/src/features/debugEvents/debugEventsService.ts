@@ -1,6 +1,6 @@
-import { IInstantiationService } from '#/_base/di/instantiation';
-import type { InstantiationService } from '#/_base/di/instantiationService';
-import type { LedgerEntryInfo } from '#/_base/lifecycle/ledger';
+import { IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import type { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import type { LedgerEntryInfo } from '@hilbras/omnicode-base/lifecycle/ledger';
 import { IEventService } from '#/app/event/event';
 import { IEventBus } from '#/app/event/eventBus';
 import { walkScopeContainers } from '#/debug/scopeTree';

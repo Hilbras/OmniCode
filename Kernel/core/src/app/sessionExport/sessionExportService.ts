@@ -1,9 +1,9 @@
 import { join, resolve } from 'pathe';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import type { ISessionScopeHandle } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
-import { resolveGlobalLogPath } from '#/_base/log/logConfig';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { resolveGlobalLogPath } from '@hilbras/omnicode-base/log/logConfig';
 import { IWireService } from '#/wire/wire';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { ISessionIndex, type SessionSummary } from '#/app/sessionIndex/sessionIndex';

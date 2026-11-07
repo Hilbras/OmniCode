@@ -1,7 +1,7 @@
-import { Disposable, toDisposable, type IDisposable } from '#/_base/di/lifecycle';
+import { Disposable, toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Emitter, type Event } from '#/_base/event';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
 import {

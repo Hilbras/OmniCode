@@ -1,6 +1,6 @@
-import { Event } from '#/_base/event';
+import { Event } from '@hilbras/omnicode-base/event';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 
 import { ISessionToolPolicyGate } from './sessionToolPolicyGate';
 

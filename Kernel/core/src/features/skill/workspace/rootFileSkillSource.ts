@@ -1,8 +1,8 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { Disposable, DisposableStore } from '#/_base/di/lifecycle';
-import { Emitter, type Event } from '#/_base/event';
-import { TimeoutTimer } from '#/_base/utils/timer';
-import { subtreeWatchFilter } from '#/_base/utils/paths';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { Disposable, DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
+import { TimeoutTimer } from '@hilbras/omnicode-base/utils/timer';
+import { subtreeWatchFilter } from '@hilbras/omnicode-base/utils/paths';
 import { IConfigService } from '#/app/config/config';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import {

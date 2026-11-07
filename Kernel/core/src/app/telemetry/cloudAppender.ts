@@ -1,10 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import { release } from 'node:os';
 
-import type { ServicesAccessor } from '#/_base/di/instantiation';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
+import type { ServicesAccessor } from '@hilbras/omnicode-base/di/instantiation';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
-import { redactSecrets } from '#/_base/text/redaction';
+import { redactSecrets } from '@hilbras/omnicode-base/text/redaction';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
 
 import type { ITelemetryAppender, TelemetryAppenderRecord } from './telemetry';

@@ -4,10 +4,10 @@ import {
   declaredProviderCredential,
 } from '@hilbras/omnicode-auth/provider-credential';
 
-import { Disposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Error2 } from '#/_base/errors/errors';
-import { ILogService } from '#/_base/log/log';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { LifecycleScope } from '#/app/scopes';
 import {
   createOAuthCredentialProvider,

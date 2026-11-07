@@ -1,1 +1,1 @@
-export { LifecycleScope, SCOPE_TOPOLOGY } from '#/_base/di/scope';
+export { LifecycleScope, SCOPE_TOPOLOGY } from '@hilbras/omnicode-base/di/scope';

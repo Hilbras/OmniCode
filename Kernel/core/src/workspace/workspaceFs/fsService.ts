@@ -37,14 +37,14 @@ const FsWireErrorCode = {
 } as const;
 import ignore, { type Ignore } from 'ignore';
 
-import { classifyTextSample, decodeUtfText } from '#/_base/text/encoding';
+import { classifyTextSample, decodeUtfText } from '@hilbras/omnicode-base/text/encoding';
 import {
   buildEtag,
   countLines,
   FS_BINARY_SAMPLE_BYTES,
   guessLanguageId,
   guessMime,
-} from '#/_base/utils/fileMeta';
+} from '@hilbras/omnicode-base/utils/fileMeta';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { ErrorCodes, Error2, isError2, unwrapErrorCause } from '#/errors';
 import {

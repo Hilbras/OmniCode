@@ -6,11 +6,11 @@ import { CallToolResultSchema, ErrorCode, McpError } from '@modelcontextprotocol
 import { Jimp } from 'jimp';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
-import { Event } from '#/_base/event';
-import { abortError } from '#/_base/utils/abort';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Event } from '@hilbras/omnicode-base/event';
+import { abortError } from '@hilbras/omnicode-base/utils/abort';
 import { renderToolResultForModel } from '#/agent/contextMemory/toolResultRender';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentMcpService } from '#/agent/mcp/mcp';

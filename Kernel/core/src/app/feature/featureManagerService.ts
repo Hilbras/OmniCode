@@ -1,15 +1,15 @@
-import type { CollectionView } from '#/_base/di/collection';
+import type { CollectionView } from '@hilbras/omnicode-base/di/collection';
 import type {
   FiberHandle,
   FiberProvideOptions,
   RecipeStatics,
   ServiceClassRecipe,
   ServiceRecipe,
-} from '#/_base/di/fiber';
-import { isServiceIdentifier, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { Emitter, type Event } from '#/_base/event';
+} from '@hilbras/omnicode-base/di/fiber';
+import { isServiceIdentifier, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 import { LifecycleScope } from '#/app/scopes';
 
 import { IFeatureManager, type ManagedUnitInfo } from './featureManager';

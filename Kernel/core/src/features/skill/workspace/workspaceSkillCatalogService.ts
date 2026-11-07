@@ -1,5 +1,5 @@
-import { Disposable } from '#/_base/di/lifecycle';
-import { Emitter, type Event } from '#/_base/event';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 import { defineState } from '#/state/state';
 import { IBuiltinSkillSource } from '#/features/skill/catalog/builtinSkillSource';
 import { InMemorySkillCatalog } from '#/features/skill/catalog/registry';

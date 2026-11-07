@@ -1,4 +1,4 @@
-import { Error2 } from '#/_base/errors/errors';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
 
 import { WebErrors } from '../errors';
 

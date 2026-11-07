@@ -2,15 +2,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
-import { BugIndicatingError } from '#/_base/errors/errors';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
-import { ILogService } from '#/_base/log/log';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { AgentSpaceImpl } from '#/agent/agentContext/agentSpace';
 import '#/agent/contextMemory/conversationTime';
 import { IAgentBlobService } from '#/agent/blob/agentBlobService';

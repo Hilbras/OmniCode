@@ -6,10 +6,10 @@ import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { ServiceIdentifier } from '#/_base/di/instantiation';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
-import { userCancellationReason } from '#/_base/utils/abort';
+import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';

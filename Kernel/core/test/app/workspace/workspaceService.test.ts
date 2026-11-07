@@ -8,10 +8,10 @@ import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost, stubPair } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
-import { encodeWorkDirKey, workspaceRootKey } from '#/_base/utils/workdir-slug';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, stubPair } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { encodeWorkDirKey, workspaceRootKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IEventService } from '#/app/event/event';
 import type { Event2 } from '#/app/event/event2';

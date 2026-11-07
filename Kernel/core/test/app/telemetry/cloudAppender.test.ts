@@ -7,10 +7,10 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
 import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageService';
 import { CloudAppender, type CloudAppenderOptions } from '#/app/telemetry/cloudAppender';
-import { REDACTED } from '#/human/credentials/redaction';
+import { REDACTED } from '@hilbras/omnicode-base/text/redaction';
 
 import { stubBootstrap, stubClientIdentity } from '../bootstrap/stubs';
 

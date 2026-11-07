@@ -1,5 +1,5 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
 
 import { GitHubError, GitHubErrors } from './errors';

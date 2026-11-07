@@ -2,10 +2,10 @@ import { randomUUID } from 'node:crypto';
 
 import { assign, fromCallback, sendTo, setup, type Snapshot } from 'xstate';
 
-import { createDecorator, IInstantiationService } from '#/_base/di/instantiation';
-import { MutableDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import { abortError } from '#/_base/utils/abort';
-import { isPlainRecord } from '#/_base/utils/canonical-args';
+import { createDecorator, IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import { MutableDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { abortError } from '@hilbras/omnicode-base/utils/abort';
+import { isPlainRecord } from '@hilbras/omnicode-base/utils/canonical-args';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentReminderService } from '#/features/reminder/reminderService';
 import {

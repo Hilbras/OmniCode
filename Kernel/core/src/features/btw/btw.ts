@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 
 export const BTW_READONLY_TOOLS = new Set(['Read', 'Grep', 'Glob']);
 

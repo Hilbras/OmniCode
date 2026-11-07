@@ -1,6 +1,6 @@
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { userCancellationReason } from '#/_base/utils/abort';
-import { escapeXml } from '#/_base/utils/xml-escape';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
+import { escapeXml } from '@hilbras/omnicode-base/utils/xml-escape';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { PromptOrigin } from '#/agent/contextMemory/types';
 import { IAgentLoopService } from '#/agent/loop/loop';

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { KeyedResourceLeasePool } from '#/_base/lifecycle/keyedResource';
+import { KeyedResourceLeasePool } from '@hilbras/omnicode-base/lifecycle/keyedResource';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IFeatureManager } from '#/app/feature/featureManager';
 import { IAgentReminderService } from '#/features/reminder/reminderService';

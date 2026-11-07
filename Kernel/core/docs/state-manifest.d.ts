@@ -671,8 +671,8 @@ export interface SessionStateSnapshot {
     lastTurnReason?: 'completed' | 'cancelled' | 'failed';
   }>;
   // src/session/sessionLog/sessionLogService.ts
-  'sessionLog.rootLevel': /* LogLevelState — Kernel/core/src/_base/log/logService.ts */ {
-    level: /* LogLevel — Kernel/core/src/_base/log/log.ts */ 'info' | 'off' | 'error' | 'warn' | 'debug';
+  'sessionLog.rootLevel': /* LogLevelState — Kernel/base/src/log/logService.ts */ {
+    level: /* LogLevel — Kernel/base/src/log/log.ts */ 'info' | 'off' | 'error' | 'warn' | 'debug';
   };
   // src/session/sessionMetadata/sessionMetadataService.ts
   'sessionMetadata.data': /* SessionMeta — Kernel/core/src/session/sessionMetadata/sessionMetadata.ts */ {

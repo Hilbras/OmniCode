@@ -1,9 +1,9 @@
 import { spawn, type ChildProcess, type SpawnOptions } from 'node:child_process';
 import type { Readable, Writable } from 'node:stream';
 
-import { BufferedReadable } from '#/_base/execEnv/bufferedReadable';
+import { BufferedReadable } from '@hilbras/omnicode-base/execEnv/bufferedReadable';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 
 import {
   HostProcessError,

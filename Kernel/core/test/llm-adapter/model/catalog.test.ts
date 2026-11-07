@@ -2,10 +2,10 @@ import { createServer } from 'node:http';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createScopedTestHost } from '#/_base/di/test';
-import { isErrorCode } from '#/_base/errors/codes';
-import { isError2 } from '#/_base/errors/errors';
-import { ILogService } from '#/_base/log/log';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
+import { isErrorCode } from '@hilbras/omnicode-base/errors/codes';
+import { isError2 } from '@hilbras/omnicode-base/errors/errors';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IConfigService } from '#/app/config/config';
 import { ConfigErrors } from '#/app/config/errors';
 import { HostRequestHeadersAdapter } from '#/app/kosongConfig/hostRequestHeadersAdapter';

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { isoDateTimeSchema } from '@hilbras/omnicode-core/_base/utils/isoDateTime';
+import { isoDateTimeSchema } from '@hilbras/omnicode-base/utils/isoDateTime';
 
 export const messageRoleSchema = z.enum(['user', 'assistant', 'tool', 'system']);
 export type MessageRole = z.infer<typeof messageRoleSchema>;

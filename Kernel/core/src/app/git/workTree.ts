@@ -1,4 +1,4 @@
-import { firstCodePoint } from '#/_base/text/code-point';
+import { firstCodePoint } from '@hilbras/omnicode-base/text/code-point';
 import { dirname, isAbsolute, join, normalize } from 'pathe';
 
 import type { IHostFileSystem } from '#/os/interface/hostFileSystem';

@@ -1,7 +1,7 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { Disposable } from '#/_base/di/lifecycle';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IConfigService } from '#/app/config/config';
 import {
   setConfiguredMaxImageEdgePx,

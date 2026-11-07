@@ -1,5 +1,5 @@
-import { type IAgentScopeHandle, ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
+import { type IAgentScopeHandle, ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { LifecycleScope } from '#/app/scopes';
 import { ISessionManager } from '#/app/sessionManager/sessionManager';

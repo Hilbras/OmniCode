@@ -1,19 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { type CollectionView } from '#/_base/di/collection';
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { createDecorator } from '#/_base/di/instantiation';
-import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
+import { type CollectionView } from '@hilbras/omnicode-base/di/collection';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { DisposableStore, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   createAppScope,
   registerScopedService,
   type ScopeSeed,
-} from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { createServices } from '#/_base/di/test';
-import { Emitter, Event } from '#/_base/event';
+} from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { createServices } from '@hilbras/omnicode-base/di/test';
+import { Emitter, Event } from '@hilbras/omnicode-base/event';
 import { IAgentProfileService, type ProfileData } from '#/agent/profile/profile';
 import { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import { IAgentToolActivationService } from '#/agent/toolActivation/toolActivation';

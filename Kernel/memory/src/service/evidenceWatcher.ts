@@ -1,7 +1,7 @@
 import { watch } from 'node:fs';
 
-import type { IDisposable } from '@hilbras/omnicode-core/_base/di/lifecycle';
-import type { ILogger } from '@hilbras/omnicode-core/_base/log/log';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { ILogger } from '@hilbras/omnicode-base/log/log';
 
 import type { MemoryEvidenceRefreshReport } from '#/contracts/memoryContract';
 

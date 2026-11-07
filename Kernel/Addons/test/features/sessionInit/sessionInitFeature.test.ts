@@ -1,11 +1,11 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { ScopeActivation } from '@hilbras/omnicode-core/_base/di/instantiation';
+import { ScopeActivation } from '@hilbras/omnicode-base/di/instantiation';
 import {
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '@hilbras/omnicode-core/_base/di/scope';
-import { createScopedTestHost, stubPair } from '@hilbras/omnicode-core/_base/di/test';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, stubPair } from '@hilbras/omnicode-base/di/test';
 import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
 import { IFeatureManager } from '@hilbras/omnicode-core/app/feature/featureManager';
 import { FeatureManagerService } from '@hilbras/omnicode-core/app/feature/featureManagerService';

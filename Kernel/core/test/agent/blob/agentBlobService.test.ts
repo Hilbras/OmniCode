@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import type { ContentPart } from '#human/llm/message';
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { type ServiceIdentifier } from '#/_base/di/instantiation';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import { LifecycleScope } from '#/app/scopes';
-import { createScopedTestHost, stubPair } from '#/_base/di/test';
+import { createScopedTestHost, stubPair } from '@hilbras/omnicode-base/di/test';
 import {
   BLOBREF_PROTOCOL,
   IAgentBlobService,

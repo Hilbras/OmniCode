@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 
-import { encodeWorkDirKey } from '@hilbras/omnicode-core/_base/utils/workdir-slug';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 
 /**
  * Bucket directory name `wd_<slug>_<hash12>` for a workdir path.

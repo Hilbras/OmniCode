@@ -9,7 +9,7 @@ import type { ExecutableToolResult, ToolDeliveryMessage, ToolExecution } from '@
 import { isInlineSkillType } from '@hilbras/omnicode-core/features/skill/catalog/types';
 import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
 import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
-import { renderPrompt } from '@hilbras/omnicode-core/_base/utils/render-prompt';
+import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
 import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
 import { matchesGlobRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
 

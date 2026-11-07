@@ -1,6 +1,6 @@
-import { CoreErrors } from '#/_base/errors/codes';
-import { Error2 } from '#/_base/errors/errors';
-import { FrontmatterError, parseFrontmatter } from '#/_base/text/frontmatter';
+import { CoreErrors } from '@hilbras/omnicode-base/errors/codes';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
+import { FrontmatterError, parseFrontmatter } from '@hilbras/omnicode-base/text/frontmatter';
 
 import type { AgentFileDefinition, AgentFileSource } from './types';
 

@@ -1,6 +1,6 @@
-import { Disposable } from '#/_base/di/lifecycle';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IAgentProfileService, ProfileError, ProfileErrors } from '#/agent/profile/profile';
 import { TOOLS_SECTION, type ToolsConfig } from './configSection';
 import { IAgentToolExecutorService } from '#/agent/toolExecutor/toolExecutor';

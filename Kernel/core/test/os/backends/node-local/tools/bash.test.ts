@@ -5,7 +5,7 @@ import { BashTool } from '@hilbras/omnicode-tools/os/bash/bashTool';
 import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { describe, expect, it, vi } from 'vitest';
 
-import { userCancellationReason } from '#/_base/utils/abort';
+import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import {
   IAgentTaskService,

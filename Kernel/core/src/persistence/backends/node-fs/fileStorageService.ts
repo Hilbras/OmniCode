@@ -3,7 +3,7 @@ import { mkdir, open, readFile, readdir, stat, unlink } from 'node:fs/promises';
 
 import { dirname, join } from 'pathe';
 
-import { atomicWrite, atomicWriteStream, syncDir } from '#/_base/utils/fs';
+import { atomicWrite, atomicWriteStream, syncDir } from '@hilbras/omnicode-base/utils/fs';
 import type {
   IFileSystemStorageService,
   StorageAppendOptions,

@@ -2,7 +2,7 @@ import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import type { IDisposable } from '@hilbras/omnicode-core/_base/di/lifecycle';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { describe, expect, it } from 'vitest';
 
 import { evidenceForFile, fingerprintText, isFingerprintOfKind } from '#/service/evidence';

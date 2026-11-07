@@ -7,8 +7,8 @@ import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost, stubPair } from '#/_base/di/test';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, stubPair } from '@hilbras/omnicode-base/di/test';
 import { IGitService } from '#/app/git/git';
 import { LifecycleScope } from '#/app/scopes';
 import { ITelemetryService, type TelemetryProperties } from '#/app/telemetry/telemetry';

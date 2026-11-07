@@ -1,4 +1,4 @@
-import { Disposable } from '#/_base/di/lifecycle';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { IAgentReminderService } from '#/features/reminder/reminderService';
 import type { ContextInjectionContext, ContextInjectionResult } from '#/features/reminder/types';

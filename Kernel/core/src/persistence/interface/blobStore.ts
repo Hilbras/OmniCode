@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 
 export interface IBlobStore {
   readonly _serviceBrand: undefined;

@@ -6,7 +6,7 @@ import { Readability } from '@mozilla/readability';
 import { parseHTML as rawParseHTML } from 'linkedom';
 import { Agent, type Dispatcher } from 'undici';
 
-import { isProxyConfigured, makeNoProxyMatcher, resolveNoProxy } from '#/_base/utils/proxy';
+import { isProxyConfigured, makeNoProxyMatcher, resolveNoProxy } from '@hilbras/omnicode-base/utils/proxy';
 import { Error2, ErrorCodes } from '#/errors';
 
 import { HttpFetchError, type UrlFetcher, type UrlFetchResult } from '../tools/fetch-url-types';

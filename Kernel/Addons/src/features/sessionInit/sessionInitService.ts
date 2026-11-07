@@ -1,4 +1,4 @@
-import { isAbortError, isUserCancellation, userCancellationReason } from '@hilbras/omnicode-core/_base/utils/abort';
+import { isAbortError, isUserCancellation, userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
 import { IHostEnvironment } from '@hilbras/omnicode-core/os/interface/hostEnvironment';
 import { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';

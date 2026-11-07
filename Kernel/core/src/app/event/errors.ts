@@ -1,5 +1,5 @@
-import { registerErrorDomain, type ErrorDomain } from '#/_base/errors/codes';
-import { Error2, type Error2Options } from '#/_base/errors/errors';
+import { registerErrorDomain, type ErrorDomain } from '@hilbras/omnicode-base/errors/codes';
+import { Error2, type Error2Options } from '@hilbras/omnicode-base/errors/errors';
 
 export const EventErrors = {
   codes: {

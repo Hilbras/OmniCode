@@ -1,5 +1,5 @@
 import type { TowerMission, TowerRosterEntry } from '#/features/tower/protocol/index';
-import { userCancellationReason } from '#/_base/utils/abort';
+import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentTaskService } from '#/agent/task/task';
 import { ITowerRateLimitService } from '#/features/tower/towerRateLimit';

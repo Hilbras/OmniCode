@@ -1,4 +1,4 @@
-import { escapeXmlAttr, escapeXmlTags } from '#/_base/utils/xml-escape';
+import { escapeXmlAttr, escapeXmlTags } from '@hilbras/omnicode-base/utils/xml-escape';
 
 import type {
   SkillCatalog,

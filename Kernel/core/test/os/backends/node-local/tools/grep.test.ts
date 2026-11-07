@@ -5,11 +5,11 @@ import { GrepTool as ProductionGrepTool } from '@hilbras/omnicode-tools/os/grep/
 import { _setRgResolverForTests } from '@hilbras/omnicode-tools/os/rgResolver';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
-import { Service } from '#/_base/di/service';
-import { createServices } from '#/_base/di/test';
-import { Event } from '#/_base/event';
-import type { PathClass } from '#/_base/execEnv/environmentProbe';
+import { DisposableStore, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { createServices } from '@hilbras/omnicode-base/di/test';
+import { Event } from '@hilbras/omnicode-base/event';
+import type { PathClass } from '@hilbras/omnicode-base/execEnv/environmentProbe';
 import { IAgentProfileService, type ProfileData } from '#/agent/profile/profile';
 import { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import { IAgentToolActivationService } from '#/agent/toolActivation/toolActivation';

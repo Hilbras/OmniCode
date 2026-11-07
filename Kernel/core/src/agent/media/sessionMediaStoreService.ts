@@ -1,6 +1,6 @@
 import { extname } from 'node:path';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
 import { isFileId } from '#/app/file/fileService';
 import { IAtomicDocumentStore } from '#/persistence/interface/atomicDocumentStore';

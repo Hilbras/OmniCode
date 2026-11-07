@@ -1,18 +1,18 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { type CollectionToken, type CollectionView } from '#/_base/di/collection';
-import { ScopeUnits } from '#/_base/di/fiber';
-import { createDecorator, ScopeActivation } from '#/_base/di/instantiation';
-import { type InstantiationService } from '#/_base/di/instantiationService';
+import { type CollectionToken, type CollectionView } from '@hilbras/omnicode-base/di/collection';
+import { ScopeUnits } from '@hilbras/omnicode-base/di/fiber';
+import { createDecorator, ScopeActivation } from '@hilbras/omnicode-base/di/instantiation';
+import { type InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
 import {
   _clearScopedRegistryForTests,
   getScopedServiceDescriptors,
   registerScopedService,
   type Scope,
-} from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { createScopedTestHost } from '#/_base/di/test';
+} from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
 import { AgentToolContribution } from '#/agent/toolRegistry/toolContribution';
 import { AgentProfileContribution } from '#/app/agentProfileCatalog/agentProfileContribution';
 import { ConfigSectionContribution } from '#/app/config/configSectionContributions';

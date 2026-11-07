@@ -1,4 +1,4 @@
-import { isAbortError } from '#/_base/utils/abort';
+import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
 import { mcpResultToExecutableOutput, type McpOutputOptions } from '#/agent/mcp/output';
 import type { ITelemetryService } from '#/app/telemetry/telemetry';
 import { Error2, ErrorCodes, toErrorMessage } from '#/errors';

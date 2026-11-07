@@ -1,5 +1,5 @@
-import { CoreErrors } from '#/_base/errors/codes';
-import { BugIndicatingError, Error2 } from '#/_base/errors/errors';
+import { CoreErrors } from '@hilbras/omnicode-base/errors/codes';
+import { BugIndicatingError, Error2 } from '@hilbras/omnicode-base/errors/errors';
 import type { ModelCapability } from '#/llm-adapter/contract/capability';
 import type { ModelRecord } from '#/llm-adapter/model/model';
 

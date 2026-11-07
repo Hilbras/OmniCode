@@ -5,10 +5,10 @@ import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices } from '#/_base/di/test';
-import { Emitter } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices } from '@hilbras/omnicode-base/di/test';
+import { Emitter } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IProjectLocalConfigService } from '#/app/projectLocalConfig/projectLocalConfig';
 import { HostFileSystem } from '#/os/backends/node-local/hostFsService';

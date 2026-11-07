@@ -3,10 +3,10 @@ import { join } from 'pathe';
 import { classifyStorageError, type QueryOptions } from '@hilbras/omnicode-minidb';
 import { ClusterDb, wipeCluster } from '@hilbras/omnicode-minidb/cluster';
 
-import { Disposable, toDisposable } from '#/_base/di/lifecycle';
+import { Disposable, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import {
   IQueryStore,

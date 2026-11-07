@@ -7,7 +7,7 @@ import {
   parseProjectName,
   sanitizeRemoteUrl,
 } from '#/session/agentLifecycle/profile/gitContext';
-import type { ILogger } from '#/_base/log/log';
+import type { ILogger } from '@hilbras/omnicode-base/log/log';
 import type { IHostProcess, IHostProcessService } from '#/os/interface/hostProcess';
 
 function processWith(stdout: string, exitCode: number, stderr = ''): IHostProcess {

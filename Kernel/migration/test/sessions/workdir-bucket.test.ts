@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { computeWorkdirBucket, oldMd5BucketName } from '../../src/sessions/workdir-bucket.js';
-import { encodeWorkDirKey } from '@hilbras/omnicode-core/_base/utils/workdir-slug';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 import { createHash } from 'node:crypto';
 
 /**

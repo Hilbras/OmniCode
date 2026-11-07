@@ -4,8 +4,8 @@ import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost } from '#/_base/di/test';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
 import {
   IBootstrapService,
   bootstrap,

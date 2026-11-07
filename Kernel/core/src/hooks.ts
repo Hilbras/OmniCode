@@ -1,4 +1,4 @@
-import { toDisposable, type IDisposable } from "#/_base/di/lifecycle";
+import { toDisposable, type IDisposable } from "@hilbras/omnicode-base/di/lifecycle";
 import { BugIndicatingError } from "#/errors";
 
 export type Hooks<TEvents extends Record<string, unknown>> = {

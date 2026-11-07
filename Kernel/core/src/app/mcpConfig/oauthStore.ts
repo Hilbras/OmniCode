@@ -1,6 +1,6 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 
 import type { McpOAuthStore } from '#/mcpCore/oauth/store';
 import { IAtomicDocumentStore } from '#/persistence/interface/atomicDocumentStore';

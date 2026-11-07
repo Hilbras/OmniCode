@@ -1,7 +1,7 @@
-import { toDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import { Service } from '#/_base/di/service';
+import { toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { defineState } from '#/state/state';
 import { IAgentStateService } from '#/agent/state/agentState';
 import { IEventBus } from '#/app/event/eventBus';

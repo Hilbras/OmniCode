@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { AgentTaskPersistence, type AgentTaskInfo } from '#/agent/task/task';
 import { JsonAtomicDocumentStore } from '#/persistence/backends/node-fs/atomicDocumentStore';
 import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageService';

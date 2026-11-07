@@ -2,15 +2,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { z } from 'zod';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { IAgentBlobService } from '#/agent/blob/agentBlobService';
 import type { ContentPart } from '#human/llm/message';
 import { Event2 } from '#/app/event/event2';
 import { IEventBus } from '#/app/event/eventBus';
 import { EventBusService } from '#/app/event/eventBusService';
 import { noopTelemetryService } from '#/app/telemetry/telemetry';
-import { SyncDescriptor } from '#/_base/di/descriptors';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
 import { IAgentStateService } from '#/agent/state/agentState';
 import { AppendLogStore } from '#/persistence/backends/node-fs/appendLogStore';
 import { InMemoryStorageService } from '#/persistence/backends/memory/inMemoryStorageService';

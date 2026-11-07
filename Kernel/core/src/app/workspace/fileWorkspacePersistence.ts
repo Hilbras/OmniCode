@@ -2,10 +2,10 @@ import { join, normalize } from 'pathe';
 
 import { LifecycleScope } from '#/app/scopes';
 
-import { Disposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Emitter, type Event } from '#/_base/event';
-import { TimeoutTimer } from '#/_base/utils/timer';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
+import { TimeoutTimer } from '@hilbras/omnicode-base/utils/timer';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IAtomicDocumentStore } from '#/persistence/interface/atomicDocumentStore';
 import { watchCandidates } from '#human/utils/watch';

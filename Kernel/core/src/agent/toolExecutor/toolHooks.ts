@@ -1,4 +1,4 @@
-import type { IWaitUntil } from '#/_base/event';
+import type { IWaitUntil } from '@hilbras/omnicode-base/event';
 import type { ToolCall } from '#human/llm/message';
 import type { LLMRequestTrace } from '#/llm-adapter/contract/request-trace';
 

@@ -1,4 +1,4 @@
-import { Service } from '#/_base/di/service';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import { defineState } from '#/state/state';
 import type { IAgentReminderService } from '#/features/reminder/reminderService';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';

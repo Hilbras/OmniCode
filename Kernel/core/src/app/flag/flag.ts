@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import { registerConfigSection } from '#/app/config/configSectionContributions';
 import { cloneRecord, isPlainObject, setDefined } from '#/app/config/toml';
 

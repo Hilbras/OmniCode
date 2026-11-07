@@ -1,4 +1,4 @@
-import { abortError, isAbortError, linkAbortSignal } from '#/_base/utils/abort';
+import { abortError, isAbortError, linkAbortSignal } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentTaskService } from '#/agent/task/task';
 import type { AgentTaskInfo, AgentTaskOutputSnapshot } from '#/agent/task/task';

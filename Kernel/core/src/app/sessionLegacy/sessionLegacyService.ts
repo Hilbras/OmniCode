@@ -1,10 +1,10 @@
-import { IInstantiationService, type ServicesAccessor } from '#/_base/di/instantiation';
+import { IInstantiationService, type ServicesAccessor } from '@hilbras/omnicode-base/di/instantiation';
 import {
   type IAgentScopeHandle,
   type ISessionScopeHandle,
   ScopeActivation,
   registerScopedService,
-} from '#/_base/di/scope';
+} from '@hilbras/omnicode-base/di/scope';
 import { IAgentFullCompactionService } from '#/agent/fullCompaction/fullCompaction';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';

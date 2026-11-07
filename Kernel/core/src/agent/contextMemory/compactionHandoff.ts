@@ -1,4 +1,4 @@
-import { codePointAt, firstCodePoint } from '#/_base/text/code-point';
+import { codePointAt, firstCodePoint } from '@hilbras/omnicode-base/text/code-point';
 import { wrapSystemReminder } from '#/features/reminder/systemReminder';
 import {
   estimateTokens,

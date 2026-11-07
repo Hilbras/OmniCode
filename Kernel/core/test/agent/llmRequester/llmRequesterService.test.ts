@@ -1,10 +1,10 @@
 import { createControlledPromise } from '@antfu/utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { ContextMessage } from '#/agent/contextMemory/types';

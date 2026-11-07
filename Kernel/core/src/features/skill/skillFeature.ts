@@ -1,4 +1,4 @@
-import { ScopeActivation } from '#/_base/di/instantiation';
+import { ScopeActivation } from '@hilbras/omnicode-base/di/instantiation';
 import { Feature } from '#/features/feature';
 import { registerFeature } from '#/features/featureRegistry';
 

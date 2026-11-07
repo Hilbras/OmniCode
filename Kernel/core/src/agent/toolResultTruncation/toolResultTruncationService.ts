@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 import { basename, join, normalize } from 'pathe';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IFlagService } from '#/app/flag/flag';

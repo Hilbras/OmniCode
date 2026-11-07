@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { parseBooleanEnv } from '#/_base/utils/env';
+import { parseBooleanEnv } from '@hilbras/omnicode-base/utils/env';
 import { type EnvBindings, envBindings, stripEnvBoundFields } from '#/app/config/config';
 import { registerConfigSection } from '#/app/config/configSectionContributions';
 import { WATCH_ENV } from '#human/utils/watch';

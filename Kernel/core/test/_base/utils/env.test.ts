@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { parseBooleanEnv } from '#/_base/utils/env';
+import { parseBooleanEnv } from '@hilbras/omnicode-base/utils/env';
 
 describe('parseBooleanEnv', () => {
   it.each(['1', 'true', 'yes', 'on'])('parses %j as true', (value) => {

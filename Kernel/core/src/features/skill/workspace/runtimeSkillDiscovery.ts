@@ -1,6 +1,6 @@
 import path from 'pathe';
 
-import type { ILogService, LogPayload } from '#/_base/log/log';
+import type { ILogService, LogPayload } from '@hilbras/omnicode-base/log/log';
 import {
   SkillParseError,
   UnsupportedSkillTypeError,

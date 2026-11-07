@@ -1,5 +1,5 @@
-import { toDisposable } from '#/_base/di/lifecycle';
-import { Event } from '#/_base/event';
+import { toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Event } from '@hilbras/omnicode-base/event';
 import type {
   IAgentLoopService,
   LoopErrorHandler,

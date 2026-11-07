@@ -1,7 +1,7 @@
-import { type IAgentScopeHandle, ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { Emitter } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { type IAgentScopeHandle, ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { Emitter } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import { IAgentProfileService } from '#/agent/profile/profile';

@@ -1,6 +1,6 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { registerErrorDomain, type ErrorDomain } from '#/_base/errors/codes';
-import { Error2, type Error2Options } from '#/_base/errors/errors';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { registerErrorDomain, type ErrorDomain } from '@hilbras/omnicode-base/errors/codes';
+import { Error2, type Error2Options } from '@hilbras/omnicode-base/errors/errors';
 
 export const StorageErrors = {
   codes: {

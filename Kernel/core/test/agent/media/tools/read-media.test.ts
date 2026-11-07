@@ -7,8 +7,8 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
-import { Emitter } from '#/_base/event';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import { sniffImageDimensions } from '#/agent/media/file-type';
 import {
   MAX_IMAGE_DECODE_BYTES,

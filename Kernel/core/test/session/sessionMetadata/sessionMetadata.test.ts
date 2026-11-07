@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
-import { TestInstantiationService } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { ISessionIndexMirror } from '#/app/sessionIndex/sessionIndex';
 import { ISessionContext, makeSessionContext } from '#/session/sessionContext/sessionContext';
 import { ISessionMetadata } from '#/session/sessionMetadata/sessionMetadata';

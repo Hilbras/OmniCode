@@ -1,8 +1,8 @@
 import { fromCallback, setup } from 'xstate';
 
-import { createDecorator, IInstantiationService } from '#/_base/di/instantiation';
-import { toDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import { ILogService } from '#/_base/log/log';
+import { createDecorator, IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import { toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import {
   AgentActorService,
   type AgentActorContext,

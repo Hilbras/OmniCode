@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { DEFAULT_PROFILE_NAME } from '#/session/subagent/spawn';
 import { type AgentTool } from '#/tool/toolContract';
 

@@ -1,8 +1,8 @@
 import { dirname, isAbsolute, join } from 'node:path';
 
-import { Disposable, toDisposable } from '@hilbras/omnicode-core/_base/di/lifecycle';
-import type { IDisposable } from '@hilbras/omnicode-core/_base/di/lifecycle';
-import { ILogService } from '@hilbras/omnicode-core/_base/log/log';
+import { Disposable, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
 import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
 import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';

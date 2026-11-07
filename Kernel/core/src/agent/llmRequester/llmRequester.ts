@@ -1,4 +1,4 @@
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import type { FinishReason } from '#human/llm/finish-reason';
 import type { LlmCredentialProvider } from '#human/llm/requester/requester';
 import type { ThinkingEffort } from '#human/llm/thinking';
@@ -7,7 +7,7 @@ import type { StreamedMessagePart, ToolDescription as Tool } from '#human/llm/me
 import type { TokenUsage } from '#human/llm/usage';
 import type { LLMRequestTrace } from '#/llm-adapter/contract/request-trace';
 import type { ModelRequestTiming } from '#/llm-adapter/model/model-requester';
-import type { LogContext } from '#/_base/log/log';
+import type { LogContext } from '@hilbras/omnicode-base/log/log';
 
 export type AgentLLMRequestLogFields = Readonly<LogContext>;
 

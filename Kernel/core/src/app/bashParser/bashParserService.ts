@@ -1,7 +1,7 @@
 import { parse } from '@hilbras/omnicode-tree-sitter-bash';
 import type { SyntaxNode } from '@hilbras/omnicode-tree-sitter-bash';
 import { LifecycleScope } from '#/app/scopes';
-import { registerScopedService, ScopeActivation } from '#/_base/di/scope';
+import { registerScopedService, ScopeActivation } from '@hilbras/omnicode-base/di/scope';
 
 import type { BashParseOptions, BashParseResult, BashSyntaxNode } from './bashParser';
 import { IBashParserService } from './bashParser';

@@ -1,4 +1,4 @@
-import { Emitter, type Event } from '#/_base/event';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 import { ExplicitFileSkillSource } from '#/features/skill/workspace/explicitFileSkillSource';
 import { ExtraFileSkillSource } from '#/features/skill/workspace/extraFileSkillSource';
 import { PluginSkillSource } from '#/features/skill/workspace/pluginSkillSource';

@@ -833,50 +833,7 @@ interface TurnEndedPayload {
   agentId: string;
   turnId: number;
   reason: 'completed' | 'cancelled' | 'failed' | 'blocked';
-  /** OmnicodeErrorPayload */
-  error?: {
-    code: (typeof ErrorCodes)[keyof typeof ErrorCodes];
-    message: string;
-    name?: string;
-    details?: Readonly<Record<string, unknown>>;
-    retryable: boolean;
-    cause?: {
-      code: (typeof ErrorCodes)[keyof typeof ErrorCodes];
-      message: string;
-      name?: string;
-      details?: Readonly<Record<string, unknown>>;
-      retryable: boolean;
-      cause?: {
-        code: (typeof ErrorCodes)[keyof typeof ErrorCodes];
-        message: string;
-        name?: string;
-        details?: Readonly<Record<string, unknown>>;
-        retryable: boolean;
-        cause?: {
-          code: (typeof ErrorCodes)[keyof typeof ErrorCodes];
-          message: string;
-          name?: string;
-          details?: Readonly<Record<string, unknown>>;
-          retryable: boolean;
-          cause?: {
-            code: (typeof ErrorCodes)[keyof typeof ErrorCodes];
-            message: string;
-            name?: string;
-            details?: Readonly<Record<string, unknown>>;
-            retryable: boolean;
-            cause?: {
-              code: ErrorCode;
-              message: string;
-              name?: string;
-              details?: Readonly<Record<string, unknown>>;
-              retryable: boolean;
-              cause?: ErrorPayload;
-            };
-          };
-        };
-      };
-    };
-  };
+  error?: OmnicodeErrorPayload;
   durationMs?: number;
   stopReason?: string;
   traceId?: string;

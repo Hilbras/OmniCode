@@ -1,5 +1,5 @@
-import { encodeWorkDirKey } from '#/_base/utils/workdir-slug';
-import { canonicalWorkspaceRoot } from '#/_base/utils/paths';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
+import { canonicalWorkspaceRoot } from '@hilbras/omnicode-base/utils/paths';
 import type { ITelemetryService } from '#/app/telemetry/telemetry';
 import type { IAtomicDocumentStore } from '#/persistence/interface/atomicDocumentStore';
 

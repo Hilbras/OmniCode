@@ -3,16 +3,16 @@ import { describe, expect, it, afterEach } from 'vitest';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
-import { SyncDescriptor } from '#/_base/di/descriptors';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
 import {
   IInstantiationService,
   createDecorator,
   type IInstantiationService as IInstantiationServiceType,
-} from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { Disposable, type IDisposable } from '#/_base/di/lifecycle';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+} from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { Disposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 
 interface ILogger {
   log(msg: string): void;

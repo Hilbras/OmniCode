@@ -6,10 +6,10 @@ import { setTimeout as sleep } from 'node:timers/promises';
 import { join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices } from '#/_base/di/test';
-import { Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices } from '@hilbras/omnicode-base/di/test';
+import { Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { MCP_SECTION, type McpSection } from '#/app/mcpConfig/configSection';

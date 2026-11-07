@@ -1,5 +1,5 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { Event } from '#/_base/event';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { Event } from '@hilbras/omnicode-base/event';
 import type { HookDef } from '#/features/externalHooks/internal/types';
 import type { SkillRoot } from '#/features/skill/catalog/types';
 import type { McpServerConfig } from '#/mcpCore/config-schema';

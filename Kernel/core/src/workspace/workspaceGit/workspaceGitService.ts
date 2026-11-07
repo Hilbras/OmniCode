@@ -1,4 +1,4 @@
-import { ref, type LiveRef } from '#/_base/di/instantiation';
+import { ref, type LiveRef } from '@hilbras/omnicode-base/di/instantiation';
 import { type FsDiffResponse, type FsGitStatusResponse, IGitService } from '#/app/git/git';
 import { IWorkspaceContext } from '#/workspace/workspaceContext/workspaceContext';
 

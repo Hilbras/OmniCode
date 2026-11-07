@@ -1,6 +1,6 @@
-import { ref, type LiveRef } from '#/_base/di/instantiation';
-import { Disposable } from '#/_base/di/lifecycle';
-import { ILogService } from '#/_base/log/log';
+import { ref, type LiveRef } from '@hilbras/omnicode-base/di/instantiation';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IMcpOAuthService } from '#/app/mcpConfig/oauthService';
 import { ISessionManager } from '#/app/sessionManager/sessionManager';

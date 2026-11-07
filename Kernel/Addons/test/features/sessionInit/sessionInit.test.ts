@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '@hilbras/omnicode-core/_base/di/descriptors';
-import { DisposableStore } from '@hilbras/omnicode-core/_base/di/lifecycle';
-import { TestInstantiationService } from '@hilbras/omnicode-core/_base/di/test';
-import { UserCancellationError } from '@hilbras/omnicode-core/_base/utils/abort';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { UserCancellationError } from '@hilbras/omnicode-base/utils/abort';
 import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
 import { IEventBus } from '@hilbras/omnicode-core/app/event/eventBus';
 import { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';

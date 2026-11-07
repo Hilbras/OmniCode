@@ -1,4 +1,4 @@
-import type { ISessionScopeHandle } from '#/_base/di/scope';
+import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 
 import { type CreateAgentOptions, IAgentLifecycleService, MAIN_AGENT_ID } from './agentLifecycle';

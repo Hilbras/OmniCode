@@ -24,9 +24,9 @@ import {
 } from '@hilbras/omnicode-auth';
 import { declaredProviderCredential } from '@hilbras/omnicode-auth/provider-credential';
 
-import { Disposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { IEventService } from '#/app/event/event';

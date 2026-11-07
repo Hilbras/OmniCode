@@ -1,7 +1,7 @@
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { Emitter, type Event } from '#/_base/event';
-import { parseBooleanEnv } from '#/_base/utils/env';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
+import { parseBooleanEnv } from '@hilbras/omnicode-base/utils/env';
 import { PermissionModeInjection } from '#/agent/permissionMode/injection/permissionModeInjection';
 import type { PermissionMode } from '#/agent/permissionPolicy/types';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';

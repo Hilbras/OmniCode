@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { AsyncEmitter, Emitter } from '#/_base/event';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { AsyncEmitter, Emitter } from '@hilbras/omnicode-base/event';
 import { USER_PROMPT_ORIGIN } from '#/agent/contextMemory/types';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { TurnStarted } from '#/agent/loop/turnEvents';

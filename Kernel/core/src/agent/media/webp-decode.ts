@@ -1,4 +1,4 @@
-import { codePointAt } from '#/_base/text/code-point';
+import { codePointAt } from '@hilbras/omnicode-base/text/code-point';
 export interface DecodedWebp {
   readonly data: Uint8ClampedArray;
   readonly width: number;

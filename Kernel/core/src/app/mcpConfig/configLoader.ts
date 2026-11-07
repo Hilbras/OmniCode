@@ -2,7 +2,7 @@ import { dirname, join, normalize } from 'pathe';
 
 import { resolveOmnicodeHome } from '#/app/bootstrap/bootstrap';
 import { findGitWorkTree } from '#/app/git/workTree';
-import { resolvePath } from '#/_base/utils/paths';
+import { resolvePath } from '@hilbras/omnicode-base/utils/paths';
 import { ErrorCodes, Error2 } from '#/errors';
 import { McpServerConfigSchema, type McpServerConfig } from '#/mcpCore/config-schema';
 import type { IHostFileSystem } from '#/os/interface/hostFileSystem';

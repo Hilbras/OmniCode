@@ -1,14 +1,14 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { IDisposable } from '#/_base/di/lifecycle';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   ScopeActivation,
   Scope,
   _clearScopedRegistryForTests,
   createAppScope,
   registerScopedService,
-} from '#/_base/di/scope';
+} from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
 
 interface IAppSvc {

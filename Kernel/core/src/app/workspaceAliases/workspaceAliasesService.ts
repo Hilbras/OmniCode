@@ -1,6 +1,6 @@
-import { Disposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { encodeWorkDirKey, workspaceRootKey } from '#/_base/utils/workdir-slug';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { encodeWorkDirKey, workspaceRootKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 import { LifecycleScope } from '#/app/scopes';
 import { IWorkspaceService, type Workspace } from '#/app/workspace/workspace';
 import {

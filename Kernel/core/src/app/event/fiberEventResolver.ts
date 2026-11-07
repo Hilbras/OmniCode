@@ -1,5 +1,5 @@
-import { setFiberEventResolver } from '#/_base/di/fiber';
-import { toDisposable, type IDisposable } from '#/_base/di/lifecycle';
+import { setFiberEventResolver } from '@hilbras/omnicode-base/di/fiber';
+import { toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 
 import type { Event2 } from './event2';
 import { IEventBus } from './eventBus';

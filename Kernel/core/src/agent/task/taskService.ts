@@ -3,12 +3,12 @@ import { randomBytes } from 'node:crypto';
 import { join } from 'pathe';
 import { z } from 'zod';
 
-import { Disposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
-import { abortable, userCancellationReason } from '#/_base/utils/abort';
-import { setClampedTimeout } from '#/_base/utils/timer';
-import { escapeXml, escapeXmlAttr, escapeXmlTags } from '#/_base/utils/xml-escape';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { abortable, userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
+import { setClampedTimeout } from '@hilbras/omnicode-base/utils/timer';
+import { escapeXml, escapeXmlAttr, escapeXmlTags } from '@hilbras/omnicode-base/utils/xml-escape';
 import { ContextAppendMessage, ContextSpliced } from '#/agent/contextMemory/contextEvents';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IAgentConversationUndoParticipantRegistry } from '#/agent/contextMemory/conversationUndoParticipants';

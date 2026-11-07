@@ -1,5 +1,5 @@
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import { linkAbortSignal } from '#/_base/utils/abort';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { linkAbortSignal } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import { IAgentProfileService } from '#/agent/profile/profile';

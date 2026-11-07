@@ -7,9 +7,9 @@ import {
   resolveOmnicodeCodeRuntimeAuth,
 } from '@hilbras/omnicode-auth';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
-import { ILogService } from '#/_base/log/log';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IOAuthService } from '#/app/auth/auth';
 import { IEventService } from '#/app/event/event';
 import { IAgentLifecycleService, MAIN_AGENT_ID } from '#/session/agentLifecycle/agentLifecycle';

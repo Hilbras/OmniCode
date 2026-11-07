@@ -7,8 +7,8 @@ import { type EditInput, EditInputSchema } from '@hilbras/omnicode-tools/edit/ed
 import { EditTool } from '@hilbras/omnicode-tools/edit/editTool';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices } from '#/_base/di/test';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices } from '@hilbras/omnicode-base/di/test';
 import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import { IFileEditService } from '#/app/edit/fileEdit';
 import { FileEditService } from '#/app/edit/fileEditService';

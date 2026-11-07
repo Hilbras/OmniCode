@@ -1,8 +1,8 @@
-import { Disposable } from '#/_base/di/lifecycle';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
-import { IntervalTimer } from '#/_base/utils/timer';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { IntervalTimer } from '@hilbras/omnicode-base/utils/timer';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { ITelemetryService } from '#/app/telemetry/telemetry';

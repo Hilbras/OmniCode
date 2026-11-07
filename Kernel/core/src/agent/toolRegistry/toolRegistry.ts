@@ -1,5 +1,5 @@
-import { createDecorator } from '#/_base/di/instantiation';
-import { type IDisposable } from '#/_base/di/lifecycle';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type { ExecutableTool, ToolDisclosure, ToolInfo, ToolSource } from '#/tool/toolContract';
 
 export interface ToolRegistrationOptions {

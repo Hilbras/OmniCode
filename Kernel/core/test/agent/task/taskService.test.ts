@@ -3,10 +3,10 @@ import { Readable, type Writable } from 'node:stream';
 import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentBlobService } from '#/agent/blob/agentBlobService';
 import { ContextSpliced } from '#/agent/contextMemory/contextEvents';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { FrontmatterError, parseFrontmatter } from '#/_base/text/frontmatter';
+import { FrontmatterError, parseFrontmatter } from '@hilbras/omnicode-base/text/frontmatter';
 
 describe('parseFrontmatter', () => {
   it('parses yaml frontmatter and body', () => {

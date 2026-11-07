@@ -1,4 +1,4 @@
-import type { ServiceRegistration } from '#/_base/di/test';
+import type { ServiceRegistration } from '@hilbras/omnicode-base/di/test';
 import { AgentStateService } from '#/agent/state/agentStateService';
 import { IAgentStateService } from '#/agent/state/agentState';
 import { AppStateService } from '#/app/state/appStateService';

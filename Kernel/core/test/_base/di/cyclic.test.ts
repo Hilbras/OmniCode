@@ -1,14 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { CyclicDependencyError } from '#/_base/di/errors';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { CyclicDependencyError } from '@hilbras/omnicode-base/di/errors';
 import {
   createDecorator,
   IInstantiationService,
   type IInstantiationService as IInstantiationServiceType,
-} from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+} from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 
 
 describe('Cyclic dependency detection', () => {

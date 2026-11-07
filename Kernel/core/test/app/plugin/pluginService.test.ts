@@ -9,8 +9,8 @@ import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost, stubPair, type ScopedTestHost } from '#/_base/di/test';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, stubPair, type ScopedTestHost } from '@hilbras/omnicode-base/di/test';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IPluginService } from '#/app/plugin/plugin';
 import { PluginService } from '#/app/plugin/pluginService';

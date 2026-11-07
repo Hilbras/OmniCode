@@ -1,4 +1,4 @@
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
 import type { IHostProcessService } from '#/os/interface/hostProcess';
 
 import type { ExternalHooksRunnerTriggerArgs } from '../app/externalHooksRunner';

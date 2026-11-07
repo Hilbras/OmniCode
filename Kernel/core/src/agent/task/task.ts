@@ -1,4 +1,4 @@
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import type { ITaskHandle } from '#/app/task/task';
 
 import type { AgentTask, AgentTaskInfo, AgentTaskInfoBase, AgentTaskStatus } from './types';

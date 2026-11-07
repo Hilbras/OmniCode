@@ -4,7 +4,7 @@ import { join } from 'pathe';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { LifecycleScope } from '#/app/scopes';
-import { type IAgentScopeHandle } from '#/_base/di/scope';
+import { type IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import type { LlmRequester } from '#human/llm/requester/requester';
 import { IAgentTaskService } from '#/agent/task/task';
 import { SubagentTask } from '#/agent/tools/agent/subagent-task';

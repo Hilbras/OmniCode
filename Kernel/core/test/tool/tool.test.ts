@@ -10,10 +10,10 @@ import {
 } from '@hilbras/omnicode-tools/features/swarm/tools/agent-swarm/agent-swarm';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { type IAgentScopeHandle } from '#/_base/di/scope';
-import { Event, type Event as OmnicodeEvent } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
-import { userCancellationReason } from '#/_base/utils/abort';
+import { type IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { Event, type Event as OmnicodeEvent } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IAgentLoopService } from '#/agent/loop/loop';

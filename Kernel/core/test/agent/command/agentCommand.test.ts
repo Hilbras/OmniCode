@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { createDecorator, ScopeActivation } from '#/_base/di/instantiation';
-import { _clearScopedRegistryForTests, registerScopedService } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { createScopedTestHost, stubPair } from '#/_base/di/test';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { createDecorator, ScopeActivation } from '@hilbras/omnicode-base/di/instantiation';
+import { _clearScopedRegistryForTests, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { createScopedTestHost, stubPair } from '@hilbras/omnicode-base/di/test';
 import { IAgentCommandService } from '#/agent/command/agentCommand';
 import { AgentCommandService } from '#/agent/command/agentCommandService';
 import { CommandContribution, type CommandRunContext } from '#/agent/command/commandContribution';

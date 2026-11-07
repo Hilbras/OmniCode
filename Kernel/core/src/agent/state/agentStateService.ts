@@ -1,8 +1,8 @@
 import { LifecycleScope } from '#/app/scopes';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { type IDisposable, toDisposable } from '#/_base/di/lifecycle';
-import { StateRegistry, type StateKey } from '#/_base/state/stateRegistry';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { type IDisposable, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { StateRegistry, type StateKey } from '@hilbras/omnicode-base/state/stateRegistry';
 import { ISessionStateService } from '#/session/state/sessionState';
 import type { ReplayableStateKey } from '#/state/state';
 

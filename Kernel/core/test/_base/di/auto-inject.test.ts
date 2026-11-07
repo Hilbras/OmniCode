@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { CyclicDependencyError } from '#/_base/di/errors';
-import { IInstantiationService, createDecorator } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { CyclicDependencyError } from '@hilbras/omnicode-base/di/errors';
+import { IInstantiationService, createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 
 describe('@IFoo auto-injection', () => {
   it('pure-service ctor: both @IFoo params resolve from the container', () => {

@@ -1,15 +1,15 @@
 import { createHash } from 'node:crypto';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService, type LogContext } from '#/_base/log/log';
-import { isAbortError } from '#/_base/utils/abort';
-import { parseBooleanEnv } from '#/_base/utils/env';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService, type LogContext } from '@hilbras/omnicode-base/log/log';
+import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
+import { parseBooleanEnv } from '@hilbras/omnicode-base/utils/env';
 import {
   readRetryAfterMs,
   retryDelayMs,
   retryErrorFields,
   sleepForRetry,
-} from '#/_base/utils/retry';
+} from '@hilbras/omnicode-base/utils/retry';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import {

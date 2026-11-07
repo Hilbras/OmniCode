@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { type CollectionView } from '#/_base/di/collection';
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { IInstantiationService } from '#/_base/di/instantiation';
-import type { IDisposable } from '#/_base/di/lifecycle';
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import { Event } from '#/_base/event';
+import { type CollectionView } from '@hilbras/omnicode-base/di/collection';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { Event } from '@hilbras/omnicode-base/event';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { INHERITED_IN_FLIGHT_TOOL_OUTPUT } from '#/agent/contextMemory/openToolExchange';
 import type { ContextMessage } from '#/agent/contextMemory/types';

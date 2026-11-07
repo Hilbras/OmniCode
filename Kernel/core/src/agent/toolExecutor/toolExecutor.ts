@@ -1,6 +1,6 @@
-import { createDecorator } from '#/_base/di/instantiation';
-import type { IDisposable } from '#/_base/di/lifecycle';
-import type { Event } from '#/_base/event';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { Event } from '@hilbras/omnicode-base/event';
 import type {
   BeforeToolExecuteEvent,
   ToolDidExecuteContext,

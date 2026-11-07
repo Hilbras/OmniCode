@@ -7,7 +7,7 @@ import type {
 import type { McpServerConfig } from '#/mcpCore/config-schema';
 import type { McpOAuthService } from '#/mcpCore/oauth/service';
 import type { MCPClient } from '#/mcpCore/types';
-import { abortable } from '#/_base/utils/abort';
+import { abortable } from '@hilbras/omnicode-base/utils/abort';
 
 export class MergedMcpConnectionView implements McpConnectionView {
   constructor(

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IEventService } from '#/app/event/event';
 import { ErrorCodes, Error2 } from '#/errors';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';

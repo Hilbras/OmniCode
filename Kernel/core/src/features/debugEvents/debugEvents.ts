@@ -1,5 +1,5 @@
-import { createDecorator } from '#/_base/di/instantiation';
-import type { LedgerEntryInfo } from '#/_base/lifecycle/ledger';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import type { LedgerEntryInfo } from '@hilbras/omnicode-base/lifecycle/ledger';
 
 export interface DebugEventSubscription {
   readonly scopePath: string;

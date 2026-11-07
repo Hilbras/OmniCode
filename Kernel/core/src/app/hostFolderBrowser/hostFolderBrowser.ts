@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { CoreErrors } from '#/_base/errors/codes';
-import { Error2 } from '#/_base/errors/errors';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { CoreErrors } from '@hilbras/omnicode-base/errors/codes';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
 import { FsErrors } from '#/workspace/workspaceFs/internal/errors';
 
 export const fsBrowseQuerySchema = z.object({

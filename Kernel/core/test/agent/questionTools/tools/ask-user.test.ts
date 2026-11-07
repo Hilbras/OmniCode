@@ -7,8 +7,8 @@ import { AskUserQuestionTool } from '@hilbras/omnicode-tools/ask-user-question/a
 import type { QuestionBackgroundTask } from '@hilbras/omnicode-tools/ask-user-question/question-background-task';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
-import { createServices } from '#/_base/di/test';
+import { DisposableStore, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices } from '@hilbras/omnicode-base/di/test';
 import type { QuestionRequest, QuestionResult } from '#/agent/interaction/question';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentTaskService } from '#/agent/task/task';

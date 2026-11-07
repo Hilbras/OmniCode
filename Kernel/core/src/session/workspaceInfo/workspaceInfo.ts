@@ -1,6 +1,6 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { ScopeSeed } from '#/_base/di/scope';
-import type { Event } from '#/_base/event';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { ScopeSeed } from '@hilbras/omnicode-base/di/scope';
+import type { Event } from '@hilbras/omnicode-base/event';
 
 export interface ISessionWorkspaceInfo {
   readonly _serviceBrand: undefined;

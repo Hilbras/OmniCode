@@ -1,8 +1,8 @@
-import { Service } from '#/_base/di/service';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Emitter, type Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { defineState } from '#/state/state';
 import { ISessionIndexMirror } from '#/app/sessionIndex/sessionIndex';
 import { buildSessionSummary } from '#/app/sessionIndex/sessionIndexSource';

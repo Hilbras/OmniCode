@@ -1,4 +1,4 @@
-import type { ServiceRegistration } from '#/_base/di/test';
+import type { ServiceRegistration } from '@hilbras/omnicode-base/di/test';
 import { IConfigRegistry, IConfigService } from '#/app/config/config';
 import { ConfigRegistry } from '#/app/config/configService';
 import { IAtomicTomlDocumentStore } from '#/persistence/interface/atomicDocumentStore';

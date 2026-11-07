@@ -27,7 +27,7 @@
  *
  * Pure React + Tailwind, no graph or layout library.
  */
-import type { UnitState } from '@hilbras/omnicode-core/_base/di/cascadeEngine';
+import type { UnitState } from '@hilbras/omnicode-base/di/cascadeEngine';
 import type { DebugGraph, DebugGraphNode } from '@hilbras/omnicode-core/debug/debugGraph';
 import { useEffect, useMemo, useRef, useState } from 'react';
 

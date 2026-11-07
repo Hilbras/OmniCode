@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { createScopedTestHost } from '#/_base/di/test';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
 import {
   buildAgentIdentitySnapshot,
   DEFAULT_IDENTITY_SLUG,
@@ -13,7 +13,7 @@ import { IDENTITY_SECTION } from '#/app/agentIdentity/configSection';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { LifecycleScope } from '#/app/scopes';
-import { _clearScopedRegistryForTests, registerScopedService } from '#/_base/di/scope';
+import { _clearScopedRegistryForTests, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 
 import { stubBootstrap } from '../bootstrap/stubs';
 import { StubConfigService } from '../../stubs';

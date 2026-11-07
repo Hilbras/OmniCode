@@ -1,8 +1,8 @@
 import { ulid } from 'ulid';
 import { assign, fromCallback, sendTo, setup, type Snapshot } from 'xstate';
 
-import { createDecorator, IInstantiationService } from '#/_base/di/instantiation';
-import { IntervalTimer } from '#/_base/utils/timer';
+import { createDecorator, IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import { IntervalTimer } from '@hilbras/omnicode-base/utils/timer';
 import {
   AgentActorService,
   type AgentActorContext,

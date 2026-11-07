@@ -74,9 +74,9 @@ import { recordingTelemetry, type TelemetryRecord } from './telemetry';
 
 const hostEnvProbe = vi.hoisted(() => ({ failWithMissingShell: false }));
 
-vi.mock('@hilbras/omnicode-core/_base/execEnv/environmentProbe', async (importOriginal) => {
+vi.mock('@hilbras/omnicode-base/execEnv/environmentProbe', async (importOriginal) => {
   const actual = await importOriginal<
-    typeof import('@hilbras/omnicode-core/_base/execEnv/environmentProbe')
+    typeof import('@hilbras/omnicode-base/execEnv/environmentProbe')
   >();
   return {
     ...actual,

@@ -1,6 +1,6 @@
 import { Readable } from 'node:stream';
 
-import type { Scope } from '@hilbras/omnicode-core/_base/di/scope';
+import type { Scope } from '@hilbras/omnicode-base/di/scope';
 import {
   ISessionMediaStore,
   type SessionMediaFile,

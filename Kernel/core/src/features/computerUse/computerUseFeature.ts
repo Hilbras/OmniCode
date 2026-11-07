@@ -1,4 +1,4 @@
-import type { ServiceIdentifier } from '#/_base/di/instantiation';
+import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { AgentToolCtor, AnyAgentTool } from '#/agent/toolRegistry/toolContribution';
 import { IFlagService } from '#/app/flag/flag';
 import { LifecycleScope } from '#/app/scopes';

@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ProbeShellNotFoundError } from '#/_base/execEnv/environmentProbe';
+import { ProbeShellNotFoundError } from '@hilbras/omnicode-base/execEnv/environmentProbe';
 import { HostEnvironmentService } from '#/os/backends/node-local/hostEnvironmentService';
 import { HostProcessError, OsProcessErrors } from '#/os/interface/hostProcess';
 
-vi.mock('#/_base/execEnv/environmentProbe', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('#/_base/execEnv/environmentProbe')>();
+vi.mock('@hilbras/omnicode-base/execEnv/environmentProbe', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@hilbras/omnicode-base/execEnv/environmentProbe')>();
   return {
     ...actual,
     probeHostEnvironmentFromNode: () =>
@@ -17,7 +17,7 @@ vi.mock('#/_base/execEnv/environmentProbe', async (importOriginal) => {
   };
 });
 
-vi.mock('#/_base/execEnv/loginShellPath', () => ({
+vi.mock('@hilbras/omnicode-base/execEnv/loginShellPath', () => ({
   applyLoginShellPathFromNode: () => Promise.resolve(),
 }));
 

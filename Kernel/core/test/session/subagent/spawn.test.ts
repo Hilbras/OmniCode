@@ -1,11 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import { TestInstantiationService } from '#/_base/di/test';
-import { Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import { IAgentProfileService, type ProfileData } from '#/agent/profile/profile';
 import { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';

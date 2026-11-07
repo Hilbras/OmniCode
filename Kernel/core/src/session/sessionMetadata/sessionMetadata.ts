@@ -1,5 +1,5 @@
-import type { Event } from '#/_base/event';
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import type { Event } from '@hilbras/omnicode-base/event';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 
 export interface AgentMeta {
   readonly homedir?: string;

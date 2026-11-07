@@ -1,4 +1,4 @@
-import { readUtf8Lines } from '#/_base/execEnv/decodeText';
+import { readUtf8Lines } from '@hilbras/omnicode-base/execEnv/decodeText';
 import type { HostFileStat, IHostFileSystem } from '#/os/interface/hostFileSystem';
 import { parseDaemonFileUrl } from '#/agent/media/mediaRef';
 import type { ISessionMediaStore } from '#/agent/media/sessionMediaStore';

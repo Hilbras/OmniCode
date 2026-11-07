@@ -1,6 +1,6 @@
-import { MutableDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import { Service } from '#/_base/di/service';
-import type { ILogService } from '#/_base/log/log';
+import { MutableDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import type { ILogService } from '@hilbras/omnicode-base/log/log';
 import { AgentProfileContribution } from '#/app/agentProfileCatalog/agentProfileContribution';
 import type { IAgentProfileRegistry } from '#/app/agentProfileCatalog/agentProfileRegistry';
 

@@ -1,4 +1,4 @@
-import { Error2, type Error2Options } from '#/_base/errors/errors';
+import { Error2, type Error2Options } from '@hilbras/omnicode-base/errors/errors';
 import {
   appendThinkingEffortConfigHint,
   isAbortError,

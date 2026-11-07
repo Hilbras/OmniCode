@@ -6,9 +6,9 @@ import { join } from 'node:path';
 import { normalize } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
-import { Event } from '#/_base/event';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Event } from '@hilbras/omnicode-base/event';
 import { IGitService } from '#/app/git/git';
 import { GitService } from '#/app/git/gitService';
 import { findGitWorkTree } from '#/app/git/workTree';

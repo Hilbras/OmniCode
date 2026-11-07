@@ -10,7 +10,7 @@
  * `listen` throws and panels fetch on demand instead.
  */
 
-import type { ServiceIdentifier } from '@hilbras/omnicode-core/_base/di/instantiation';
+import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 
 export interface IDisposable {
   dispose(): void;

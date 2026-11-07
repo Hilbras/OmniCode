@@ -4,8 +4,8 @@ import { join } from 'pathe';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { FileLogWriter, PENDING_MAX, RotatingFileWriter } from '#/_base/log/fileLog';
-import type { LogEntry } from '#/_base/log/log';
+import { FileLogWriter, PENDING_MAX, RotatingFileWriter } from '@hilbras/omnicode-base/log/fileLog';
+import type { LogEntry } from '@hilbras/omnicode-base/log/log';
 
 let workDir: string;
 

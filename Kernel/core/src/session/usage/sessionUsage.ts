@@ -1,5 +1,5 @@
-import { createDecorator } from '#/_base/di/instantiation';
-import type { Event } from '#/_base/event';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import type { Event } from '@hilbras/omnicode-base/event';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import type { AgentLLMRequestSource } from '#/agent/llmRequester/llmRequester';
 import type { UsageRecordedContext, UsageStatus } from '#/agent/usage/usage';

@@ -1,5 +1,5 @@
-import { toDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
 import type { ExecutableTool, ToolDisclosure, ToolInfo, ToolSource } from '#/tool/toolContract';
 

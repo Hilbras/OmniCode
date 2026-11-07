@@ -16,8 +16,8 @@
 
 import { Readable } from 'node:stream';
 
-import type { ServiceIdentifier } from '@hilbras/omnicode-core/_base/di/instantiation';
-import type { IAgentScopeHandle } from '@hilbras/omnicode-core/_base/di/scope';
+import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import type { SkillActivationOrigin } from '@hilbras/omnicode-core/agent/contextMemory/types';
 import { IAgentLoopService } from '@hilbras/omnicode-core/agent/loop/loop';
 import { agentContextOf } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';

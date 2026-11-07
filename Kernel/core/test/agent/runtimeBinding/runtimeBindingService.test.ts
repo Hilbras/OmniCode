@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Emitter } from '#/_base/event';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import {
   AgentRuntimeService,
   snapshotAgentRuntimeBinding,

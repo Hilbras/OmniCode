@@ -6,8 +6,8 @@ import { Readable } from 'node:stream';
 import { Jimp } from 'jimp';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { renderToolResultForModel } from '#/agent/contextMemory/toolResultRender';
 import { degradeOlderMediaParts } from '#/agent/contextProjector/mediaProjection';
 import { mcpResultToExecutableOutput } from '#/agent/mcp/output';

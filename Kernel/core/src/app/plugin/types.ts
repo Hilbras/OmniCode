@@ -1,4 +1,4 @@
-import type { IWaitUntil } from '#/_base/event';
+import type { IWaitUntil } from '@hilbras/omnicode-base/event';
 import type { HookDefConfig } from '#/features/externalHooks/configSection';
 import type { McpServerConfig } from '#/mcpCore/config-schema';
 

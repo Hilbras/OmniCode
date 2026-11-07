@@ -1,6 +1,6 @@
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { canonicalWorkspaceRoot } from '#/_base/utils/paths';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { canonicalWorkspaceRoot } from '@hilbras/omnicode-base/utils/paths';
 
 import { ErrorCodes, Error2 } from '#/errors';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';

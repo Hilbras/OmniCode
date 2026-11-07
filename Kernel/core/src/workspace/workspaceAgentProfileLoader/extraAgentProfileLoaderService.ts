@@ -1,4 +1,4 @@
-import { ILogService } from '#/_base/log/log';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { discoverAgentFiles } from '#/workspace/workspaceAgentProfileLoader/internal/agentFileDiscovery';
 import { AgentProfileLoaderBase } from '#/workspace/workspaceAgentProfileLoader/internal/agentProfileLoader';
 import {

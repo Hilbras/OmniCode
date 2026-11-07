@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { Event } from '#/_base/event';
-import { isoDateTimeSchema } from '#/_base/utils/isoDateTime';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { Event } from '@hilbras/omnicode-base/event';
+import { isoDateTimeSchema } from '@hilbras/omnicode-base/utils/isoDateTime';
 
 const relativeCwdSchema = z
   .string()

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { getCoreVersion } from '#/_base/version';
+import { getCoreVersion } from '@hilbras/omnicode-base/version';
 
 describe('version', () => {
   it('exposes a non-empty version string', () => {

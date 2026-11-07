@@ -2,12 +2,12 @@ import { AgentSwarmToolInputSchema } from '@hilbras/omnicode-tools/features/swar
 import { AgentSwarmTool } from '@hilbras/omnicode-tools/features/swarm/tools/agent-swarm/agentSwarmTool';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
-import { type IAgentScopeHandle } from '#/_base/di/scope';
-import { TestInstantiationService } from '#/_base/di/test';
-import { Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { type IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { AgentContextMemoryService } from '#/agent/contextMemory/contextMemoryService';
 import type { ContextMessage } from '#/agent/contextMemory/types';

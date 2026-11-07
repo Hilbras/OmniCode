@@ -1,15 +1,15 @@
-export * from '#/_base/di/descriptors';
-export * from '#/_base/di/errors';
-export * from '#/_base/di/graph';
-export * from '#/_base/di/instantiation';
-export * from '#/_base/di/instantiationService';
-export * from '#/_base/di/lifecycle';
-export * from '#/_base/di/scope';
+export * from '@hilbras/omnicode-base/di/descriptors';
+export * from '@hilbras/omnicode-base/di/errors';
+export * from '@hilbras/omnicode-base/di/graph';
+export * from '@hilbras/omnicode-base/di/instantiation';
+export * from '@hilbras/omnicode-base/di/instantiationService';
+export * from '@hilbras/omnicode-base/di/lifecycle';
+export * from '@hilbras/omnicode-base/di/scope';
 export * from './app/scopes';
-export * from '#/_base/di/serviceCollection';
-export * from '#/_base/di/cascadeEngine';
-export * from '#/_base/di/dependencyGraph';
-export * from '#/_base/lifecycle/ledger';
+export * from '@hilbras/omnicode-base/di/serviceCollection';
+export * from '@hilbras/omnicode-base/di/cascadeEngine';
+export * from '@hilbras/omnicode-base/di/dependencyGraph';
+export * from '@hilbras/omnicode-base/lifecycle/ledger';
 export {
   collection,
   isCollectionToken,
@@ -17,7 +17,7 @@ export {
   type CollectionRecord,
   type CollectionToken,
   type CollectionView,
-} from '#/_base/di/collection';
+} from '@hilbras/omnicode-base/di/collection';
 export {
   FiberProtocolError,
   FiberState,
@@ -30,8 +30,8 @@ export {
   type FiberProvideOptions,
   type RecipeStatics,
   type ServiceRecipe,
-} from '#/_base/di/fiber';
-export { Service } from '#/_base/di/service';
+} from '@hilbras/omnicode-base/di/fiber';
+export { Service } from '@hilbras/omnicode-base/di/service';
 export * from './errors';
 export * from './events';
 export * from '#/runtime/runtime';
@@ -51,11 +51,11 @@ export * from '#/agent/runtimeBinding/agentRuntime';
 export * from '#/app/sessionManager/sessionManager';
 export * from '#/app/sessionManager/sessionManagerService';
 
-export * from '#/_base/log/log';
-export * from '#/_base/log/logConfig';
-export * from '#/_base/log/formatter';
-export * from '#/_base/log/fileLog';
-export * from '#/_base/log/logService';
+export * from '@hilbras/omnicode-base/log/log';
+export * from '@hilbras/omnicode-base/log/logConfig';
+export * from '@hilbras/omnicode-base/log/formatter';
+export * from '@hilbras/omnicode-base/log/fileLog';
+export * from '@hilbras/omnicode-base/log/logService';
 export * from '#/wire/wire';
 export * from '#/wire/wireService';
 export * from '#/wire/journal';
@@ -102,8 +102,8 @@ export * from '#/state/stateContribution';
 export * from '#/state/agentModel';
 export * from '#/state/eventDispatcher';
 import '#/state/eventDispatcherService';
-export * from '#/_base/state/stateRegistry';
-export * from '#/_base/contribution/registry';
+export * from '@hilbras/omnicode-base/state/stateRegistry';
+export * from '@hilbras/omnicode-base/contribution/registry';
 export * from '#/app/state/appState';
 import '#/app/state/appStateService';
 export * from '#/workspace/state/workspaceState';
@@ -649,9 +649,9 @@ export * from '#/agent/fullCompaction/configSection';
 export * from '#/agent/llmRequester/llmRequester';
 export * from '#/agent/llmRequester/llmRequesterService';
 export * from '#/agent/llmRequester/llmRequestOps';
-export * from '#/_base/utils/promise';
-export * from '#/_base/utils/retry';
-export * from '#/_base/utils/timer';
+export * from '@hilbras/omnicode-base/utils/promise';
+export * from '@hilbras/omnicode-base/utils/retry';
+export * from '@hilbras/omnicode-base/utils/timer';
 import '#/agent/loop/configSection';
 export * from '#/agent/loop/loop';
 export * from '#/agent/loop/loopService';

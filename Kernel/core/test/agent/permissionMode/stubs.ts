@@ -1,4 +1,4 @@
-import { Event } from '#/_base/event';
+import { Event } from '@hilbras/omnicode-base/event';
 import type {
   IAgentPermissionModeService,
   PermissionModeChangedContext,

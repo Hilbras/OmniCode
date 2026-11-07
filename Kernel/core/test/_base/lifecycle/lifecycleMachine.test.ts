@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { LifecycleMachine, LifecycleTransitionError } from '#/_base/lifecycle/lifecycleMachine';
+import { LifecycleMachine, LifecycleTransitionError } from '@hilbras/omnicode-base/lifecycle/lifecycleMachine';
 
 type State = 'idle' | 'running' | 'completed' | 'failed';
 

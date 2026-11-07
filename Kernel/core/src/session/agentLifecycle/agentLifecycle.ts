@@ -1,6 +1,6 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import type { Event } from '#/_base/event';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import type { Event } from '@hilbras/omnicode-base/event';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import type { PermissionMode } from '#/agent/permissionPolicy/types';
 import type { BindAgentInput } from '#/agent/profile/profile';

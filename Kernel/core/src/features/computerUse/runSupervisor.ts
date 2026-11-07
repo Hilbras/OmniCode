@@ -1,4 +1,4 @@
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import type { ActionFailureClass } from '#/features/computerUse/observation';
 import {
   DEFAULT_SUPERVISOR_LIMITS,

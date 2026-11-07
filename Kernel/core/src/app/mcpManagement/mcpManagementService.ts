@@ -2,9 +2,9 @@ import { randomUUID } from 'node:crypto';
 
 import { normalize } from 'pathe';
 
-import { Disposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IConfigService } from '#/app/config/config';
 import { MCP_SECTION, type McpSection } from '#/app/mcpConfig/configSection';

@@ -5,13 +5,13 @@ import { Readable } from 'node:stream';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost, createServices, stubPair } from '#/_base/di/test';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, createServices, stubPair } from '@hilbras/omnicode-base/di/test';
 import { IAgentMediaResolverService } from '#/agent/media/mediaResolver';
 import { AgentMediaResolverService } from '#/agent/media/mediaResolverService';
 import { buildOmnicodeFileUrl } from '#/agent/media/omnicodeFileUrl';

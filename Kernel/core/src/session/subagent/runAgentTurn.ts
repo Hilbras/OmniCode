@@ -1,7 +1,7 @@
 import { APIProviderRateLimitError, isProviderRateLimitError } from '#/llm-adapter/contract/errors';
 
-import { linkAbortSignal, userCancellationReason } from '#/_base/utils/abort';
-import type { IAgentScopeHandle } from '#/_base/di/scope';
+import { linkAbortSignal, userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { ContextMessage, PromptOrigin } from '#/agent/contextMemory/types';
 import { Error2, ErrorCodes, toOmnicodeErrorPayload, type OmnicodeErrorPayload } from '#/errors';

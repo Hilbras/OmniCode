@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { ScopeUnits } from '#/_base/di/fiber';
-import { createDecorator } from '#/_base/di/instantiation';
-import { Scope } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { ScopeUnits } from '@hilbras/omnicode-base/di/fiber';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { Scope } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
 
 interface IFoo {
   tag: string;

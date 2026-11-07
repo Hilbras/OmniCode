@@ -18,7 +18,7 @@ import {
   snakeToCamel,
   transformPlainObject,
 } from '#/app/config/toml';
-import { type AssertExact, type Equal } from '#/_base/utils/typeEquality';
+import { type AssertExact, type Equal } from '@hilbras/omnicode-base/utils/typeEquality';
 import type { OAuthRef } from '#/llm-adapter/provider/provider';
 
 export const SERVICES_SECTION = 'services';

@@ -1,6 +1,6 @@
 import type { Readable } from 'node:stream';
 
-import type { ILogger } from '#/_base/log/log';
+import type { ILogger } from '@hilbras/omnicode-base/log/log';
 import type { IHostProcess, IHostProcessService } from '#/os/interface/hostProcess';
 
 const GIT_TIMEOUT_MS = 5_000;

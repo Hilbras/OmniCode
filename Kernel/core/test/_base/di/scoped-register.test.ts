@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { LifecycleScope } from '#/app/scopes';
 import {
   ScopeActivation,
@@ -9,7 +9,7 @@ import {
   getScopedServiceDescriptors,
   overrideScopedService,
   registerScopedService,
-} from '#/_base/di/scope';
+} from '@hilbras/omnicode-base/di/scope';
 
 interface IApp {
   tag: 'app';

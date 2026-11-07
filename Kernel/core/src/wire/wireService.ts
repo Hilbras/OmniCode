@@ -1,6 +1,6 @@
-import { Service } from '#/_base/di/service';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
-import { ILogService } from '#/_base/log/log';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentBlobService } from '#/agent/blob/agentBlobService';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { ITelemetryService } from '#/app/telemetry/telemetry';

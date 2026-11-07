@@ -2,7 +2,7 @@ import { basename, join, relative } from 'pathe';
 
 import type { OmnicodeHostIdentity } from '@hilbras/omnicode-auth';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 
 import {
   IBootstrapOptions,

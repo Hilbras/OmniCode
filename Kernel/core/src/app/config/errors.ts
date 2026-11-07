@@ -1,4 +1,4 @@
-import { registerErrorDomain, type ErrorDomain } from '#/_base/errors/codes';
+import { registerErrorDomain, type ErrorDomain } from '@hilbras/omnicode-base/errors/codes';
 import { CONFIG_INVALID_ERROR_CODE } from '#/llm-adapter/contract/errors';
 
 export const ConfigErrors = {

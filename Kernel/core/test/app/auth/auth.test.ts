@@ -9,10 +9,10 @@ import {
 } from '@hilbras/omnicode-auth';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
-import { Emitter } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Emitter } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IAuthSummaryService, IOAuthService, IOAuthToolkit } from '#/app/auth/auth';
 import { AuthSummaryService, OAuthService } from '#/app/auth/authService';

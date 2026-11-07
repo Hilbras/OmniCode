@@ -1,7 +1,7 @@
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { ILogService } from '#/_base/log/log';
-import { escapeXmlAttr } from '#/_base/utils/xml-escape';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { escapeXmlAttr } from '@hilbras/omnicode-base/utils/xml-escape';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentStateService } from '#/agent/state/agentState';

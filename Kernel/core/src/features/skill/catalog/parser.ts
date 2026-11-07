@@ -1,7 +1,7 @@
 import path from 'pathe';
 
-import { Error2 } from '#/_base/errors/errors';
-import { FrontmatterError, parseFrontmatter } from '#/_base/text/frontmatter';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
+import { FrontmatterError, parseFrontmatter } from '@hilbras/omnicode-base/text/frontmatter';
 
 import { SkillErrors } from './errors';
 import type { SkillDefinition, SkillMetadata, SkillSource } from './types';

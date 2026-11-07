@@ -1,9 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
-import { createServices } from '#/_base/di/test';
-import type { TestInstantiationService } from '#/_base/di/test';
-import { UserCancellationError } from '#/_base/utils/abort';
+import { DisposableStore, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices } from '@hilbras/omnicode-base/di/test';
+import type { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { UserCancellationError } from '@hilbras/omnicode-base/utils/abort';
 import { type ApprovalRequest, type ApprovalResponse } from '#/agent/interaction/approval';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import type { PermissionMode, PermissionPolicyResult } from '#/agent/permissionPolicy/types';

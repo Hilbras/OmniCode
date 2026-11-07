@@ -1,4 +1,4 @@
-import { ILogService } from '#/_base/log/log';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IPluginService } from '#/app/plugin/plugin';
 import { IHostFileSystem } from '#/os/interface/hostFileSystem';
 import { IWorkspaceContext } from '#/workspace/workspaceContext/workspaceContext';

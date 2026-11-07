@@ -1,4 +1,4 @@
-import { firstCodePoint } from '#/_base/text/code-point';
+import { firstCodePoint } from '#/text/code-point';
 export type UtfTextEncoding = 'utf-8' | 'utf-16le' | 'utf-16be';
 
 export interface TextClassification {

@@ -1,7 +1,7 @@
-import { Disposable, type IDisposable } from '#/_base/di/lifecycle';
+import { Disposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import {
   createProviderCatalogSync,
   type CatalogModel,

@@ -402,8 +402,8 @@ function usageLine(usage: TokenUsage): string {
   return `in ${input} · out ${usage.output}`;
 }
 
-function formatContextSize(size: number): string {
-  if (size <= 0) return '—';
+function formatContextSize(size: number | undefined): string {
+  if (size === undefined || size <= 0) return '—';
   if (size >= 1_000_000) {
     const millions = size / 1_000_000;
     return `${millions.toFixed(Number.isInteger(millions) ? 0 : 1)}M ctx`;

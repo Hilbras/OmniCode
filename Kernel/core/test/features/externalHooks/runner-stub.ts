@@ -1,5 +1,5 @@
-import { Event } from '#/_base/event';
-import type { ILogService } from '#/_base/log/log';
+import { Event } from '@hilbras/omnicode-base/event';
+import type { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { IPluginService } from '#/app/plugin/plugin';

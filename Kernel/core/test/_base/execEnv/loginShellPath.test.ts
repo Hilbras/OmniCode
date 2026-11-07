@@ -9,7 +9,7 @@ import {
   type LoginShellPathDeps,
   mergeLoginShellPath,
   probeLoginShellPath,
-} from '#/_base/execEnv/loginShellPath';
+} from '@hilbras/omnicode-base/execEnv/loginShellPath';
 
 interface StubOpts {
   readonly platform?: string;
@@ -172,7 +172,7 @@ describe.skipIf(process.platform === 'win32')('applyLoginShellPathFromNode', () 
     process.env['SHELL'] = stubShell;
 
     vi.resetModules();
-    const { applyLoginShellPathFromNode } = await import('#/_base/execEnv/loginShellPath');
+    const { applyLoginShellPathFromNode } = await import('@hilbras/omnicode-base/execEnv/loginShellPath');
     await applyLoginShellPathFromNode();
 
     const entries = (process.env['PATH'] ?? '').split(':');

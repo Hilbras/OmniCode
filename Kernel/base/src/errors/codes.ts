@@ -1,3 +1,5 @@
+export type ErrorCode = string;
+
 export interface ErrorInfo {
   readonly title: string;
   readonly retryable: boolean;

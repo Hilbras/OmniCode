@@ -1,8 +1,8 @@
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { toDisposable } from '#/_base/di/lifecycle';
-import type { ServiceRegistration, TestInstantiationService } from '#/_base/di/test';
-import { Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { ServiceRegistration, TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentBlobService } from '#/agent/blob/agentBlobService';
 import {
   IAgentScopeContext,

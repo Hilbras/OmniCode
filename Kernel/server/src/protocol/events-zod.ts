@@ -9,7 +9,7 @@ import type {
   GoalStatus,
   GoalToolResult,
 } from '@hilbras/omnicode-core';
-import { isoDateTimeSchema } from '@hilbras/omnicode-core/_base/utils/isoDateTime';
+import { isoDateTimeSchema } from '@hilbras/omnicode-base/utils/isoDateTime';
 import type {
   BundledSkillActivation,
   CompactionSummaryOrigin,

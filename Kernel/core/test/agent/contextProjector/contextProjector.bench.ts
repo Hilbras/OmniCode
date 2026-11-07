@@ -1,9 +1,9 @@
 import { bench, describe } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
-import { ILogService, type ILogger } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { ILogService, type ILogger } from '@hilbras/omnicode-base/log/log';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import { IAgentContextProjectorService } from '#/agent/contextProjector/contextProjector';
 import { AgentContextProjectorService } from '#/agent/contextProjector/contextProjectorService';

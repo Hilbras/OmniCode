@@ -1,5 +1,5 @@
-import { createDecorator } from '#/_base/di/instantiation';
-import { registerScopedService, ScopeActivation } from '#/_base/di/scope';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { registerScopedService, ScopeActivation } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
 
 export type SessionSearchRole = 'user' | 'assistant' | 'title';

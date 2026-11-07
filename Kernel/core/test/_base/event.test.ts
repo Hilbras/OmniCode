@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { Disposable, DisposableStore, type IDisposable } from '#/_base/di/lifecycle';
+import { Disposable, DisposableStore, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
-import { Emitter, Event } from '#/_base/event';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
+import { Emitter, Event } from '@hilbras/omnicode-base/event';
 
 afterEach(() => {
   resetUnexpectedErrorHandler();

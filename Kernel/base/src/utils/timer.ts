@@ -1,4 +1,4 @@
-import type { IDisposable } from '#/_base/di/lifecycle';
+import type { IDisposable } from '#/di/lifecycle';
 
 export const MAX_TIMER_DELAY_MS = 0x7fffffff;
 

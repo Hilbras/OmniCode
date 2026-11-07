@@ -1,7 +1,7 @@
-import { Disposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
-import { retryBackoffDelays, sleepForRetry } from '#/_base/utils/retry';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { retryBackoffDelays, sleepForRetry } from '@hilbras/omnicode-base/utils/retry';
 import { type ConfigSectionChangedEvent, IConfigService } from '#/app/config/config';
 import { describeUnknownError } from '#/app/config/configPure';
 import { deepEqual } from '#/app/config/sectionDiff';

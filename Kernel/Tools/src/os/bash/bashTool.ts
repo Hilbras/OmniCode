@@ -8,7 +8,7 @@ import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspa
 import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-core/agent/runtimeBinding/agentRuntime';
 import { RuntimeWorkspaceView } from '@hilbras/omnicode-core/runtime/runtimeWorkspaceView';
 import { IAgentToolPolicyService } from '@hilbras/omnicode-core/agent/toolPolicy/toolPolicy';
-import { getShellPathBridge } from '@hilbras/omnicode-core/_base/execEnv/shellPathBridge';
+import { getShellPathBridge } from '@hilbras/omnicode-base/execEnv/shellPathBridge';
 import {
   DEFAULT_TOOL_RESULT_MAX_CHARS,
   type ExecutableToolResult,
@@ -22,8 +22,8 @@ import {
 import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
 import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
 import { literalRulePattern, matchesGlobRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
-import { renderPrompt } from '@hilbras/omnicode-core/_base/utils/render-prompt';
-import { userCancellationReason } from '@hilbras/omnicode-core/_base/utils/abort';
+import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
+import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import bashDescriptionTemplate from './bash.md?raw';
 import { ProcessTask } from './process-task';
 import {

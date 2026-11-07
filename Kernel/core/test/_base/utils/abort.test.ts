@@ -6,7 +6,7 @@ import {
   isAbortError,
   isUserCancellation,
   userCancellationReason,
-} from '#/_base/utils/abort';
+} from '@hilbras/omnicode-base/utils/abort';
 
 describe('userCancellationReason', () => {
   it('is recognised as a deliberate user cancellation', () => {

@@ -1,8 +1,8 @@
-import { IInstantiationService, ref, type LiveRef } from '#/_base/di/instantiation';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Emitter } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
-import { canonicalWorkspaceRoot } from '#/_base/utils/paths';
+import { IInstantiationService, ref, type LiveRef } from '@hilbras/omnicode-base/di/instantiation';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Emitter } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { canonicalWorkspaceRoot } from '@hilbras/omnicode-base/utils/paths';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IAgentProfileRegistry } from '#/app/agentProfileCatalog/agentProfileRegistry';
 import { IBuiltinAgentProfileLoader } from '#/app/agentProfileCatalog/builtinAgentProfileLoader';

@@ -1,6 +1,6 @@
-import { Disposable } from '#/_base/di/lifecycle';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { isUndoAnchor } from '#/agent/contextMemory/conversationTime';
 import type { ContextMessage } from '#/agent/contextMemory/types';

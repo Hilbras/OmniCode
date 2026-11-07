@@ -1,7 +1,7 @@
 import { LifecycleScope } from '#/app/scopes';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { BugIndicatingError } from '#/_base/errors/errors';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
 import { UNKNOWN_CAPABILITY, toLlmCapability, type ModelCapability } from '../contract/capability';
 import type { ModelThinkingMetadata } from '#human/llm/thinking';
 import type { ProviderMediaContribution } from '#human/llm/media/upload';

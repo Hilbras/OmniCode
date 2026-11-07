@@ -1,8 +1,8 @@
 import { enableMapSet, type Draft } from 'immer';
 import type { z } from 'zod';
 
-import { BugIndicatingError } from '#/_base/errors/errors';
-import type { StateKey } from '#/_base/state/stateRegistry';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
+import type { StateKey } from '@hilbras/omnicode-base/state/stateRegistry';
 import { Event2, registerEvent2Class, type Event2Class } from '#/app/event/event2';
 import type { PartsTransformer, RecordDehydrator } from '#/wire/record';
 
@@ -10,7 +10,7 @@ import { StateError, StateErrors } from './errors';
 
 enableMapSet();
 
-export type { StateKey } from '#/_base/state/stateRegistry';
+export type { StateKey } from '@hilbras/omnicode-base/state/stateRegistry';
 export type { PartsTransformer } from '#/wire/record';
 
 export interface StateBlobCodec<S> {

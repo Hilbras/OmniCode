@@ -8,12 +8,12 @@ import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost } from '#/_base/di/test';
-import { ConsoleLogWriter, MemoryLogWriter } from '#/_base/log/fileLog';
-import { ILogService, type LogEntry, levelEnabled } from '#/_base/log/log';
-import { logSeed, resolveGlobalLogPath, resolveLoggingConfig } from '#/_base/log/logConfig';
-import { AppLogService, BoundLogger } from '#/_base/log/logService';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
+import { ConsoleLogWriter, MemoryLogWriter } from '@hilbras/omnicode-base/log/fileLog';
+import { ILogService, type LogEntry, levelEnabled } from '@hilbras/omnicode-base/log/log';
+import { logSeed, resolveGlobalLogPath, resolveLoggingConfig } from '@hilbras/omnicode-base/log/logConfig';
+import { AppLogService, BoundLogger } from '@hilbras/omnicode-base/log/logService';
 import { LifecycleScope } from '#/app/scopes';
 
 describe('BoundLogger', () => {

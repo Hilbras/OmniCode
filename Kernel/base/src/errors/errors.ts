@@ -1,5 +1,5 @@
-import { CoreErrors } from './codes';
-import type { ErrorCode } from '#/errors';
+import { CoreErrors, type ErrorCode } from './codes';
+
 
 export class ExpectedError extends Error {
   readonly isExpected = true;

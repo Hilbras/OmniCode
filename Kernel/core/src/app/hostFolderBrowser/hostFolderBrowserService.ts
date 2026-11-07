@@ -4,7 +4,7 @@ import { dirname, isAbsolute, join } from 'node:path';
 
 import type { FsBrowseEntry, FsBrowseResponse, FsHomeResponse } from './hostFolderBrowser';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IWorkspaceService } from '#/app/workspace/workspace';
 
 import {

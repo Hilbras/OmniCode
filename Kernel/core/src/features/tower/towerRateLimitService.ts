@@ -1,4 +1,4 @@
-import { Disposable } from '#/_base/di/lifecycle';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   ITowerRateLimitService,
   type TowerRateLimitSnapshot,

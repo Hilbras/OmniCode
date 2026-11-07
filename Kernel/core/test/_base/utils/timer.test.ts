@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { IntervalTimer } from '#/_base/utils/timer';
+import { IntervalTimer } from '@hilbras/omnicode-base/utils/timer';
 
 describe('IntervalTimer', () => {
   beforeEach(() => {

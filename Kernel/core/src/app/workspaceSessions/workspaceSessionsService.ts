@@ -1,6 +1,6 @@
 import { LifecycleScope } from '#/app/scopes';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { ISessionIndex, type SessionSummary } from '#/app/sessionIndex/sessionIndex';
 import { IWorkspaceAliases } from '#/app/workspaceAliases/workspaceAliases';
 

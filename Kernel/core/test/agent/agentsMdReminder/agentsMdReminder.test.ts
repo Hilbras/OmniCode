@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import { join, normalize, basename, dirname } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
-import { Emitter } from '#/_base/event';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import { IAgentAgentsMdReminderService } from '#/agent/agentsMdReminder/agentsMdReminder';
 import { AgentAgentsMdReminderService } from '#/agent/agentsMdReminder/agentsMdReminderService';
 import { extractBashTargetDirs } from '#/agent/agentsMdReminder/bashTargets';

@@ -43,6 +43,7 @@
     "@hilbras/omnicode-acp": "workspace:^",
     "@hilbras/omnicode-addons": "workspace:^",
     "@hilbras/omnicode-auth": "workspace:^",
+    "@hilbras/omnicode-base": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-memory": "workspace:^",
     "@hilbras/omnicode-sdk": "workspace:^",

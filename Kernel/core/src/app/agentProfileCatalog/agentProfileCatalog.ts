@@ -1,4 +1,4 @@
-import type { ILogger } from '#/_base/log/log';
+import type { ILogger } from '@hilbras/omnicode-base/log/log';
 import type { IHostProcessService } from '#/os/interface/hostProcess';
 
 export const DEFAULT_AGENT_PROFILE_NAME = 'agent';

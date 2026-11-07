@@ -1,5 +1,5 @@
-import { Service } from '#/_base/di/service';
-import { IntervalTimer } from '#/_base/utils/timer';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { IntervalTimer } from '@hilbras/omnicode-base/utils/timer';
 import { ISessionManager } from '#/app/sessionManager/sessionManager';
 import { IModelService } from '#/llm-adapter/model/model';
 import { ISessionAgentProfileCatalog } from '#/session/sessionAgentProfileCatalog/sessionAgentProfileCatalog';

@@ -3,7 +3,7 @@ import { ReadBuffer, serializeMessage } from '@modelcontextprotocol/sdk/shared/s
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
 import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js';
 
-import { proxyEnvForChild, reconcileChildNoProxy } from '#/_base/utils/proxy';
+import { proxyEnvForChild, reconcileChildNoProxy } from '@hilbras/omnicode-base/utils/proxy';
 import { ErrorCodes, Error2 } from '#/errors';
 import type { IHostProcess } from '#/os/interface/hostProcess';
 import type { IRuntimeResolver } from '#/workspace/workspaceInstance/workspaceInstanceManager';

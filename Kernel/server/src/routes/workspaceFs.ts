@@ -13,12 +13,12 @@ import {
   type HostFileStat,
   type Scope,
 } from '@hilbras/omnicode-core';
-import { classifyTextSample } from '@hilbras/omnicode-core/_base/text/encoding';
+import { classifyTextSample } from '@hilbras/omnicode-base/text/encoding';
 import {
   buildEtag,
   FS_BINARY_SAMPLE_BYTES,
   guessMime,
-} from '@hilbras/omnicode-core/_base/utils/fileMeta';
+} from '@hilbras/omnicode-base/utils/fileMeta';
 import {
   fsBrowseQuerySchema,
   fsBrowseResponseSchema,

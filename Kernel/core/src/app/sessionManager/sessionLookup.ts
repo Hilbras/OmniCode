@@ -1,6 +1,6 @@
-import type { ServicesAccessor } from '#/_base/di/instantiation';
-import type { IDisposable } from '#/_base/di/lifecycle';
-import type { ISessionScopeHandle } from '#/_base/di/scope';
+import type { ServicesAccessor } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import { ISessionIndex } from '#/app/sessionIndex/sessionIndex';
 import {
   ISessionManager,

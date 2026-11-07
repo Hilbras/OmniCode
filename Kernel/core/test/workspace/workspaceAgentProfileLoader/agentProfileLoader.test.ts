@@ -4,12 +4,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { AsyncEmitter, Emitter, Event } from '#/_base/event';
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import type { ServiceIdentifier } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
-import { ILogService } from '#/_base/log/log';
+import { AsyncEmitter, Emitter, Event } from '@hilbras/omnicode-base/event';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { EXTRA_AGENT_DIRS_SECTION } from '#/workspace/workspaceAgentProfileLoader/configSection';
 import { UserAgentProfileLoaderService } from '#/workspace/workspaceAgentProfileLoader/userAgentProfileLoaderService';
 import type { PluginAgentRoot, PluginReloadEvent } from '#/app/plugin/types';

@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { Emitter } from '#/_base/event';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import {
   FiberProtocolError,
   FiberState,
@@ -9,11 +9,11 @@ import {
   setFiberEventResolver,
   type Fiber,
   type FiberHandle,
-} from '#/_base/di/fiber';
-import { createDecorator, ref, type LiveRef } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { Service } from '#/_base/di/service';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+} from '@hilbras/omnicode-base/di/fiber';
+import { createDecorator, ref, type LiveRef } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 
 interface IFoo {
   tag: string;

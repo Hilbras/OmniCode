@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { encodeWorkDirKey } from '@hilbras/omnicode-core/_base/utils/workdir-slug';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 import { reduceContextTranscript } from '@hilbras/omnicode-core';
 import { groupMessagesIntoSnapshot } from '@hilbras/omnicode-transcript';
 

@@ -4,16 +4,16 @@ import { join } from 'node:path';
 
 import { describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { Disposable, DisposableStore } from '#/_base/di/lifecycle';
-import type { ISessionScopeHandle } from '#/_base/di/scope';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { Disposable, DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import {
   createServices,
   type ServiceRegistration,
   type TestInstantiationService,
-} from '#/_base/di/test';
-import { AsyncEmitter, Emitter, Event, type IWaitUntil } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+} from '@hilbras/omnicode-base/di/test';
+import { AsyncEmitter, Emitter, Event, type IWaitUntil } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { buildContextCompactionShape } from '#/agent/contextMemory/compactionHandoff';
 import {
   IAgentContextMemoryService,

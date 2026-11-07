@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { type AssertExact, type Equal } from '#/_base/utils/typeEquality';
+import { type AssertExact, type Equal } from '@hilbras/omnicode-base/utils/typeEquality';
 import { type ConfigDiagnostic, type ConfigStripEnv, envBindings } from '#/app/config/config';
 import { registerConfigSection } from '#/app/config/configSectionContributions';
 import {

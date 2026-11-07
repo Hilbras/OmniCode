@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { FsDiffResponse, FsGitStatusResponse } from '#/app/git/git';
 
 export interface IWorkspaceGitService {

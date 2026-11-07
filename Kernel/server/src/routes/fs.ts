@@ -17,7 +17,7 @@ import {
   Error2,
   type Scope,
 } from '@hilbras/omnicode-core';
-import { encodeWorkDirKey } from '@hilbras/omnicode-core/_base/utils/workdir-slug';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 import { GitService } from '@hilbras/omnicode-core/app/git/gitService';
 import type { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
 import type { RuntimeCapability, RuntimeLease } from '@hilbras/omnicode-core/runtime/runtime';

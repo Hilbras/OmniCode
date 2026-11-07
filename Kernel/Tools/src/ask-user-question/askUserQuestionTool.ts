@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 
-import { CoreErrors } from '@hilbras/omnicode-core/_base/errors/codes';
-import { Error2 } from '@hilbras/omnicode-core/_base/errors/errors';
+import { CoreErrors } from '@hilbras/omnicode-base/errors/codes';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
 import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { isAbortError } from '@hilbras/omnicode-core/_base/utils/abort';
+import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentTaskService } from '@hilbras/omnicode-core/agent/task/task';
 import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
 import { IAgentToolPolicyService } from '@hilbras/omnicode-core/agent/toolPolicy/toolPolicy';

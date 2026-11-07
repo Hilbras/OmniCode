@@ -1,7 +1,7 @@
 /* oxlint-disable typescript-eslint/no-unsafe-declaration-merging, eslint-plugin-import/namespace -- Event2 class+payload-interface declaration merging is the sanctioned event-declaration idiom. */
-import { IInstantiationService } from '#/_base/di/instantiation';
-import { Service } from '#/_base/di/service';
-import { isPlainRecord } from '#/_base/utils/canonical-args';
+import { IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { isPlainRecord } from '@hilbras/omnicode-base/utils/canonical-args';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { USER_PROMPT_ORIGIN } from '#/agent/contextMemory/types';
 import {

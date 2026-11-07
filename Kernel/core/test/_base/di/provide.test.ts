@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { createDecorator } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import type { IDisposable } from '#/_base/di/lifecycle';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
-import type { AvailabilityChange } from '#/_base/di/serviceCollection';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
+import type { AvailabilityChange } from '@hilbras/omnicode-base/di/serviceCollection';
 
 interface IFoo {
   tag: string;
@@ -206,7 +206,7 @@ describe('persistent dependency graph (L2 substrate)', () => {
 
 describe('TestInstantiationService.set rerouting', () => {
   it('set() on a materialized token retires the previous generation', async () => {
-    const { TestInstantiationService } = await import('#/_base/di/testInstantiationService');
+    const { TestInstantiationService } = await import('@hilbras/omnicode-base/di/testInstantiationService');
     const ix = new TestInstantiationService(new ServiceCollection(), true);
     ix.set(IFoo, new SyncDescriptor(Foo));
     const first = ix.get(IFoo) as Foo;
@@ -218,7 +218,7 @@ describe('TestInstantiationService.set rerouting', () => {
   });
 
   it('set() returns the previous value like before', async () => {
-    const { TestInstantiationService } = await import('#/_base/di/testInstantiationService');
+    const { TestInstantiationService } = await import('@hilbras/omnicode-base/di/testInstantiationService');
     const ix = new TestInstantiationService(new ServiceCollection(), true);
     const seeded = new Foo();
     expect(ix.set(IFoo, seeded)).toBeUndefined();

@@ -1,4 +1,4 @@
-import { Event, type Emitter } from '#/_base/event';
+import { Event, type Emitter } from '@hilbras/omnicode-base/event';
 import type { IPluginService } from '#/app/plugin/plugin';
 import type {
   EnabledPluginSessionStart,

@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { configuredRoots } from '#/features/skill/catalog/skillRoots';
 import { ISkillDiscovery } from '#/features/skill/catalog/skillDiscovery';

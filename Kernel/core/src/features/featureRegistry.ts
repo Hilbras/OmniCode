@@ -1,4 +1,4 @@
-import type { ServiceClassRecipe } from '#/_base/di/fiber';
+import type { ServiceClassRecipe } from '@hilbras/omnicode-base/di/fiber';
 
 const _featureRecipes: ServiceClassRecipe[] = [];
 

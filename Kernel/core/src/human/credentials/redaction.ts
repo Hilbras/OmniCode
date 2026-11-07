@@ -3,4 +3,4 @@ export {
   REDACT_MAX_DEPTH,
   redactSecretString,
   redactSecrets,
-} from '../../_base/text/redaction';
+} from '@hilbras/omnicode-base/text/redaction';

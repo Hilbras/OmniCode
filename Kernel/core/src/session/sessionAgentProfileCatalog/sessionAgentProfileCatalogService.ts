@@ -1,8 +1,8 @@
-import { Disposable } from '#/_base/di/lifecycle';
-import { Emitter, type Event } from '#/_base/event';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { BugIndicatingError } from '#/errors';
 import type { AgentProfile } from '#/app/agentProfileCatalog/agentProfileCatalog';
 import { DEFAULT_AGENT_PROFILE_NAME } from '#/app/agentProfileCatalog/agentProfileCatalog';

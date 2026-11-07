@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import '#/errors';
 
-import { Error2 } from '#/_base/errors/errors';
-import { fromErrorPayload, toErrorPayload } from '#/_base/errors/serialize';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
+import { fromErrorPayload, toErrorPayload } from '@hilbras/omnicode-base/errors/serialize';
 
 describe('toErrorPayload', () => {
   it('passes a coded error through with registry retryability and details', () => {

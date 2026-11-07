@@ -1,4 +1,4 @@
-import { createDecorator } from '@hilbras/omnicode-core/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 
 import type { MemoryAuthority } from './memoryAuthority';
 import type {

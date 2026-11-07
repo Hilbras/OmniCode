@@ -1,6 +1,6 @@
-import { Disposable, DisposableStore, toDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService, type IAgentScopeHandle } from '#/_base/di/scope';
-import { Emitter, type Event } from '#/_base/event';
+import { Disposable, DisposableStore, toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService, type IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 import {
   CompactionCancelled,
   CompactionCompleted,

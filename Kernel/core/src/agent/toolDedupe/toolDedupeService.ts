@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 
-import { Service } from '#/_base/di/service';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { defineState } from '#/state/state';
-import { canonicalTelemetryArgs } from '#/_base/utils/canonical-args';
+import { canonicalTelemetryArgs } from '@hilbras/omnicode-base/utils/canonical-args';
 import type {
   ToolCallDedupDetectedEvent,
   ToolCallRepeatEvent,
@@ -13,7 +13,7 @@ import type {
 } from '#/app/telemetry/events';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import type { LLMRequestTrace } from '#/llm-adapter/contract/request-trace';
-import { parseBooleanEnv } from '#/_base/utils/env';
+import { parseBooleanEnv } from '@hilbras/omnicode-base/utils/env';
 import { parseToolCallArguments } from '#/tool/tool-args-parse';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IAgentLoopService } from '#/agent/loop/loop';

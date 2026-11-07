@@ -1,4 +1,4 @@
-import { toDisposable } from '#/_base/di/lifecycle';
+import { toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { isCompactionSummaryMessage } from '#/agent/contextMemory/compactionHandoff';
 import { ContextSpliced } from '#/agent/contextMemory/contextEvents';

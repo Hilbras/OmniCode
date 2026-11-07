@@ -1,4 +1,4 @@
-import { renderPrompt } from '#/_base/utils/render-prompt';
+import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
 import { MEDIA_SNIFF_BYTES, detectFileType, sniffImageDimensions } from '#/agent/media/file-type';
 import {
   MAX_IMAGE_DECODE_BYTES,

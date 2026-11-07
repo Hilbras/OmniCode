@@ -1,5 +1,5 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { IDisposable } from '#/_base/di/lifecycle';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type { Event2, Event2Class } from '#/app/event/event2';
 import type { Hooks } from '#/hooks';
 

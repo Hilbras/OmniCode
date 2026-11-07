@@ -7,11 +7,11 @@ import { promisify } from 'node:util';
 
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
-import { isUserCancellation } from '#/_base/utils/abort';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { isUserCancellation } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import { IAgentLoopService } from '#/agent/loop/loop';

@@ -1,12 +1,12 @@
 import { LifecycleScope } from '#/app/scopes';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { BugIndicatingError } from '#/_base/errors/errors';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
 import {
   probeHostEnvironmentFromNode,
   ProbeShellNotFoundError,
-} from '#/_base/execEnv/environmentProbe';
-import { applyLoginShellPathFromNode } from '#/_base/execEnv/loginShellPath';
+} from '@hilbras/omnicode-base/execEnv/environmentProbe';
+import { applyLoginShellPathFromNode } from '@hilbras/omnicode-base/execEnv/loginShellPath';
 
 import {
   type HostEnvironmentInfo,

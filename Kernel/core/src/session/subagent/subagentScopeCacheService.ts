@@ -1,8 +1,8 @@
-import { Disposable } from '#/_base/di/lifecycle';
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
-import { ILogService } from '#/_base/log/log';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentTaskService } from '#/agent/task/task';
 import { ISessionEventBus } from '#/app/event/eventBus';

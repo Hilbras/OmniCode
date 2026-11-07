@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isError2 } from '#/_base/errors/errors';
+import { isError2 } from '@hilbras/omnicode-base/errors/errors';
 import {
   createOAuthCredentialProvider,
   createStaticCredentialProvider,

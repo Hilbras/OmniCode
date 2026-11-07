@@ -2,9 +2,9 @@ import { getMaxListeners } from 'node:events';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { IDisposable } from '#/_base/di/lifecycle';
-import { Event } from '#/_base/event';
-import { isUserCancellation, userCancellationReason } from '#/_base/utils/abort';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Event } from '@hilbras/omnicode-base/event';
+import { isUserCancellation, userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import type { LoopRecordedEvent } from '#/agent/contextMemory/loopEventFold';
 import type { ContextMessage, PromptOrigin } from '#/agent/contextMemory/types';

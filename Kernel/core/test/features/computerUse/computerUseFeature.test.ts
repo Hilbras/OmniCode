@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { type CollectionToken, type CollectionView } from '#/_base/di/collection';
-import { ScopeActivation } from '#/_base/di/instantiation';
-import { type InstantiationService } from '#/_base/di/instantiationService';
-import { _clearScopedRegistryForTests, registerScopedService, type Scope } from '#/_base/di/scope';
-import { createScopedTestHost } from '#/_base/di/test';
+import { type CollectionToken, type CollectionView } from '@hilbras/omnicode-base/di/collection';
+import { ScopeActivation } from '@hilbras/omnicode-base/di/instantiation';
+import { type InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { _clearScopedRegistryForTests, registerScopedService, type Scope } from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
 import { AgentToolContribution } from '#/agent/toolRegistry/toolContribution';
 import { IFeatureManager } from '#/app/feature/featureManager';
 import { FeatureManagerService } from '#/app/feature/featureManagerService';

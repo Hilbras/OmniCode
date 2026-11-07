@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '#/di/instantiation';
 
 export type LogLevel = 'off' | 'error' | 'warn' | 'info' | 'debug';
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ContributionRegistry } from '#/_base/contribution/registry';
+import { ContributionRegistry } from '@hilbras/omnicode-base/contribution/registry';
 
 interface TestContribution {
   readonly items: readonly string[];

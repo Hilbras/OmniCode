@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { FiberState } from '#/_base/di/fiber';
-import { createDecorator } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { Service } from '#/_base/di/service';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { FiberState } from '@hilbras/omnicode-base/di/fiber';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 import { IFeatureManager } from '#/app/feature/featureManager';
 import { FeatureManagerService } from '#/app/feature/featureManagerService';
 

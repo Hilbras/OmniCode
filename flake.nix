@@ -62,6 +62,7 @@
       # pnpmConfigHook (dependencies for that workspace won't be fetched).
       # -------------------------------------------------------------------
       workspacePaths = [
+        ./Kernel/base
         ./Kernel/ACP
         ./Kernel/core
         ./Kernel/server
@@ -89,6 +90,7 @@
       ];
 
       workspaceNames = [
+        "@hilbras/omnicode-base"
         "@hilbras/omnicode-acp"
         "@hilbras/omnicode-core"
         "@hilbras/omnicode-server"

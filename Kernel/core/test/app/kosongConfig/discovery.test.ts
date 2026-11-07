@@ -1,9 +1,9 @@
 import { OMNICODE_PROVIDER_NAME } from '@hilbras/omnicode-auth';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createScopedTestHost } from '#/_base/di/test';
-import { isError2 } from '#/_base/errors/errors';
-import { ILogService, type LogPayload } from '#/_base/log/log';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
+import { isError2 } from '@hilbras/omnicode-base/errors/errors';
+import { ILogService, type LogPayload } from '@hilbras/omnicode-base/log/log';
 import { IOAuthService } from '#/app/auth/auth';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';

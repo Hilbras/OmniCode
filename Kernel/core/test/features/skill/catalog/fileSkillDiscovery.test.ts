@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
-import { ILogService, type LogPayload } from '#/_base/log/log';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { ILogService, type LogPayload } from '@hilbras/omnicode-base/log/log';
 import { FileSkillDiscovery } from '#/features/skill/catalog/fileSkillDiscovery';
 import { ISkillDiscovery } from '#/features/skill/catalog/skillDiscovery';
 import type { SkillRoot } from '#/features/skill/catalog/types';

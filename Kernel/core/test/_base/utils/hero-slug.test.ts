@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { generateHeroSlug, HERO_NAMES } from '#/_base/utils/hero-slug';
+import { generateHeroSlug, HERO_NAMES } from '@hilbras/omnicode-base/utils/hero-slug';
 
 describe('generateHeroSlug', () => {
   it('returns a slug made of exactly 3 hero names joined by "-"', () => {

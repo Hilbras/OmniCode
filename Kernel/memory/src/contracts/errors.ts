@@ -1,8 +1,8 @@
 import {
   type ErrorDomain,
   registerErrorDomain,
-} from '@hilbras/omnicode-core/_base/errors/codes';
-import { ExpectedError } from '@hilbras/omnicode-core/_base/errors/errors';
+} from '@hilbras/omnicode-base/errors/codes';
+import { ExpectedError } from '@hilbras/omnicode-base/errors/errors';
 
 export const MemoryErrors = {
   codes: {

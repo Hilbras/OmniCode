@@ -1,7 +1,7 @@
-import { Disposable } from '#/_base/di/lifecycle';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { parseBooleanEnv } from '#/_base/utils/env';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { parseBooleanEnv } from '@hilbras/omnicode-base/utils/env';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 

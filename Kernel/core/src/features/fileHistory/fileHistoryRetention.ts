@@ -1,7 +1,7 @@
 import { dirname, join } from 'pathe';
 
-import { unwrapErrorCause } from '#/_base/errors/errors';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
+import { unwrapErrorCause } from '@hilbras/omnicode-base/errors/errors';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
 import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
 import type { IAtomicDocumentStore } from '#/persistence/interface/atomicDocumentStore';
 

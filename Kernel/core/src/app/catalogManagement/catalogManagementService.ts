@@ -4,10 +4,10 @@ import { randomUUID } from 'node:crypto';
 import { dump as dumpYaml, load as loadYaml } from 'js-yaml';
 import path from 'pathe';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
-import { CoreErrors } from '#/_base/errors/codes';
-import { Error2 } from '#/_base/errors/errors';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { CoreErrors } from '@hilbras/omnicode-base/errors/codes';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService, ConfigTarget } from '#/app/config/config';
 import { IMcpManagementService } from '#/app/mcpManagement/mcpManagement';
@@ -624,7 +624,7 @@ async function pathExists(fs: IHostFileSystem, target: string): Promise<boolean>
 }
 
 function timestamp(): string {
-  return new Date().toISOString().replace(/[:.]/g, '-');
+  return new Date().toISOString().replaceAll(/[:.]/g, '-');
 }
 
 registerScopedService(

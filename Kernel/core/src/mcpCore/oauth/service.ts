@@ -5,7 +5,7 @@ import {
 } from '@modelcontextprotocol/sdk/client/auth.js';
 import type { OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js';
 
-import type { ILogger as Logger } from '#/_base/log/log';
+import type { ILogger as Logger } from '@hilbras/omnicode-base/log/log';
 import { ErrorCodes, Error2, isError2 } from '#/errors';
 
 import { startCallbackServer, type CallbackServer } from './callback-server';

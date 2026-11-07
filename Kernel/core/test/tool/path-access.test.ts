@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ShellPathBridge } from '#/_base/execEnv/shellPathBridge';
+import type { ShellPathBridge } from '@hilbras/omnicode-base/execEnv/shellPathBridge';
 import {
   DEFAULT_WORKSPACE_ACCESS_POLICY,
   extendWorkspaceWithSkillRoots,

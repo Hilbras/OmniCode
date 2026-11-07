@@ -1,10 +1,10 @@
-import { SyncDescriptor } from '#/_base/di/descriptors';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
 import {
   _util,
   type IInstantiationService,
   type ServiceIdentifier,
-} from '#/_base/di/instantiation';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+} from '@hilbras/omnicode-base/di/instantiation';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 
 import type { Runtime } from './runtime';
 import type { RuntimeRegistrationHandle, RuntimeRegistry } from './runtimeRegistry';

@@ -1,8 +1,8 @@
 import { isAbsolute, relative, resolve } from 'node:path';
 
-import { Service } from '#/_base/di/service';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { defineState } from '#/state/state';
 import { ErrorCodes, Error2 } from '#/errors';
 import { ISessionContext } from '#/session/sessionContext/sessionContext';

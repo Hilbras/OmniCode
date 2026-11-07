@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import type { ToolDescription as Tool } from '#human/llm/message';
 import type { ToolInfo } from '#/tool/toolContract';

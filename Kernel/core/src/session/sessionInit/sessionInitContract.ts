@@ -1,5 +1,5 @@
-import type { ServiceIdentifier } from '#/_base/di/instantiation';
-import { createDecorator } from '#/_base/di/instantiation';
+import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 
 export interface ISessionInitService {
   readonly _serviceBrand: undefined;

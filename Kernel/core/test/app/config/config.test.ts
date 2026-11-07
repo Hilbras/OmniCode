@@ -1,12 +1,12 @@
 import { READ_SECTION } from '@hilbras/omnicode-tools/os/read/configSection';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { createDecorator, type ProvideHandle } from '#/_base/di/instantiation';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { Service } from '#/_base/di/service';
-import { TestInstantiationService } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { createDecorator, type ProvideHandle } from '@hilbras/omnicode-base/di/instantiation';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import {
   LOOP_CONTROL_SECTION,
   LOOP_MAX_ATTEMPTS_PER_STEP_ENV,

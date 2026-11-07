@@ -4,9 +4,9 @@ import { homedir } from 'node:os';
 import type { OmnicodeHostIdentity } from '@hilbras/omnicode-auth';
 import { join } from 'pathe';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { createAppScope, type Scope, type ScopeSeed } from '#/_base/di/scope';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { createAppScope, type Scope, type ScopeSeed } from '@hilbras/omnicode-base/di/scope';
 import { FileSkillDiscovery } from '#/features/skill/catalog/fileSkillDiscovery';
 import { ISkillDiscovery } from '#/features/skill/catalog/skillDiscovery';
 import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageService';

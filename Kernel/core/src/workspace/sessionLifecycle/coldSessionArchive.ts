@@ -1,4 +1,4 @@
-import type { ServicesAccessor } from '#/_base/di/instantiation';
+import type { ServicesAccessor } from '@hilbras/omnicode-base/di/instantiation';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IEventService } from '#/app/event/event';
 import { ISessionIndex, ISessionIndexMirror } from '#/app/sessionIndex/sessionIndex';

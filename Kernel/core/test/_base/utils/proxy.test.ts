@@ -9,7 +9,7 @@ import {
   reconcileChildNoProxy,
   resolveNoProxy,
   resolveSocksProxy,
-} from '#/_base/utils/proxy';
+} from '@hilbras/omnicode-base/utils/proxy';
 
 describe('proxy utilities', () => {
   it('detects HTTP, HTTPS, ALL_PROXY, and SOCKS proxy configuration', () => {

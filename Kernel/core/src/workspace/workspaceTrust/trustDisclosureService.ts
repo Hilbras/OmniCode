@@ -1,6 +1,6 @@
 import { isAbsolute, relative } from 'pathe';
 
-import type { ILogService } from '#/_base/log/log';
+import type { ILogService } from '@hilbras/omnicode-base/log/log';
 import type { IAgentProfileRegistry } from '#/app/agentProfileCatalog/agentProfileRegistry';
 import { BUILTIN_AGENT_PROFILE_SOURCE_ID } from '#/app/agentProfileCatalog/builtinAgentProfileLoader';
 import type { IBootstrapService } from '#/app/bootstrap/bootstrap';

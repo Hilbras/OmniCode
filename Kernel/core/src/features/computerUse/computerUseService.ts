@@ -1,5 +1,5 @@
-import { Service } from '#/_base/di/service';
-import { createDecorator } from '#/_base/di/instantiation';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import type { MediaStore } from '#/human/llm/media/store';
 
 import {

@@ -1,7 +1,7 @@
 import { assign, fromCallback, setup, type Snapshot } from 'xstate';
 
-import { createDecorator, IInstantiationService } from '#/_base/di/instantiation';
-import type { Event } from '#/_base/event';
+import { createDecorator, IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import type { Event } from '@hilbras/omnicode-base/event';
 import { registerEvent2Class } from '#/app/event/event2';
 import {
   AgentActorService,

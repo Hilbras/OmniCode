@@ -1,8 +1,8 @@
 import { OMNICODE_PROVIDER_NAME } from '@hilbras/omnicode-auth';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
-import { AsyncEmitter, Emitter, type Event } from '#/_base/event';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { AsyncEmitter, Emitter, type Event } from '@hilbras/omnicode-base/event';
 import type { HookDef } from '#/features/externalHooks/internal/types';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { LifecycleScope } from '#/app/scopes';

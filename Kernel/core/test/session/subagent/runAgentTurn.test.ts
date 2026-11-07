@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { IAgentScopeHandle } from '#/_base/di/scope';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { ContextMessage } from '#/agent/contextMemory/types';

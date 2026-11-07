@@ -7,7 +7,7 @@ import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { join } from 'pathe';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { isUserCancellation, userCancellationReason } from '#/_base/utils/abort';
+import { isUserCancellation, userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentTaskService, type AgentTaskInfo } from '#/agent/task/task';
 import { SubagentTask, type SubagentHandle } from '#/agent/tools/agent/subagent-task';
 import type { IHostProcess } from '#/os/interface/hostProcess';

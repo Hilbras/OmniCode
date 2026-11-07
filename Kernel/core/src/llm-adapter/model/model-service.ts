@@ -1,7 +1,7 @@
-import { Disposable } from '#/_base/di/lifecycle';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { AsyncEmitter, type Event, type IWaitUntil } from '#/_base/event';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { AsyncEmitter, type Event, type IWaitUntil } from '@hilbras/omnicode-base/event';
 
 import { deepEqual, diffRecords, isEmptyDiff } from '../record-diff';
 

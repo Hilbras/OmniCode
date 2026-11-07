@@ -4,7 +4,7 @@ import {
   probeHostEnvironment,
   ProbeShellNotFoundError,
   type HostEnvironmentProbeDeps,
-} from '#/_base/execEnv/environmentProbe';
+} from '@hilbras/omnicode-base/execEnv/environmentProbe';
 
 interface StubOpts {
   readonly platform: string;

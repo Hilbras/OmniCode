@@ -2,7 +2,7 @@ import { createHash } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { isDeepStrictEqual } from 'node:util';
 
-import { textExtensionForMime } from '#/_base/utils/fileMeta';
+import { textExtensionForMime } from '@hilbras/omnicode-base/utils/fileMeta';
 import { compressImageContentParts, gateImageFormatParts } from '#/agent/media/image-compress';
 import {
   buildUnsupportedImageNotice,

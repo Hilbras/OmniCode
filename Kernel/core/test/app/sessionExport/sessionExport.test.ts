@@ -21,15 +21,15 @@ import { basename, dirname, join, resolve } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { open as openZip } from 'yauzl';
 
-import type { ServiceIdentifier, ServicesAccessor } from '#/_base/di/instantiation';
-import { Disposable, DisposableStore, type IDisposable } from '#/_base/di/lifecycle';
-import { type IAgentScopeHandle, type ISessionScopeHandle } from '#/_base/di/scope';
+import type { ServiceIdentifier, ServicesAccessor } from '@hilbras/omnicode-base/di/instantiation';
+import { Disposable, DisposableStore, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { type IAgentScopeHandle, type ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import {
   createServices,
   type ServiceRegistration,
   type TestInstantiationService,
-} from '#/_base/di/test';
-import { ILogService, type ILogService as LogService } from '#/_base/log/log';
+} from '@hilbras/omnicode-base/di/test';
+import { ILogService, type ILogService as LogService } from '@hilbras/omnicode-base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { LifecycleScope } from '#/app/scopes';
 import { openZipSource, type ZipSource } from '#/app/sessionExport/file-source';

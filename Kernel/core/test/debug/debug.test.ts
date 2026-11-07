@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { collection, type CollectionView } from '#/_base/di/collection';
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { createDecorator } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { Service } from '#/_base/di/service';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
-import { Emitter } from '#/_base/event';
+import { collection, type CollectionView } from '@hilbras/omnicode-base/di/collection';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import { IEventService } from '#/app/event/event';
 import type { Event2 } from '#/app/event/event2';
 import { EventService } from '#/app/event/eventService';

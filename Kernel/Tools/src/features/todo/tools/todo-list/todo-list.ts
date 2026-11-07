@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createDecorator } from '@hilbras/omnicode-core/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { type AgentTool } from '@hilbras/omnicode-core/tool/toolContract';
 import { type TodoStatus } from '@hilbras/omnicode-core/features/todo/todoItem';
 

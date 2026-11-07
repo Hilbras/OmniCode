@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { IFlagService } from '#/app/flag/flag';
 import { isVercelError, redactVercelSecrets } from '#/app/vercel/errors';
 import { VERCEL_FLAG_ID } from '#/app/vercel/flag';

@@ -1,5 +1,5 @@
-import { collection } from '#/_base/di/collection';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
+import { collection } from '@hilbras/omnicode-base/di/collection';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
 import { EventError, EventErrors } from '#/app/event/errors';
 import { EVENT2_REGISTRY, type Event2Class } from '#/app/event/event2';
 

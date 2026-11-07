@@ -13,7 +13,7 @@ import { GlobTool, splitCompletePaths } from '@hilbras/omnicode-tools/os/glob/gl
 import { _setRgResolverForTests } from '@hilbras/omnicode-tools/os/rgResolver';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { probeHostEnvironmentFromNode } from '#/_base/execEnv/environmentProbe';
+import { probeHostEnvironmentFromNode } from '@hilbras/omnicode-base/execEnv/environmentProbe';
 import type { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import { noopTelemetryService } from '#/app/telemetry/telemetry';
 import type { ITelemetryService, TelemetryProperties } from '#/app/telemetry/telemetry';

@@ -9,8 +9,8 @@ import type {
   OmnicodeOAuthTokenRef,
   OmnicodeRegion,
 } from '@hilbras/omnicode-auth';
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { Error2 } from '#/_base/errors/errors';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
 
 import { CONFIG_INVALID_ERROR_CODE } from '#/llm-adapter/contract/errors';
 import type { OAuthRef } from '#/llm-adapter/provider/provider';

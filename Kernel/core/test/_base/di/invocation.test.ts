@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
 import {
   createDecorator,
   type ServicesAccessor,
-} from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+} from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 
 interface IService1 {
   readonly _serviceBrand: undefined;

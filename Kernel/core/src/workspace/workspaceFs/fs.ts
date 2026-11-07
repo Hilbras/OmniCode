@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { isoDateTimeSchema } from '#/_base/utils/isoDateTime';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { isoDateTimeSchema } from '@hilbras/omnicode-base/utils/isoDateTime';
 import {
   fsGitStatusSchema,
   type FsDiffRequest,

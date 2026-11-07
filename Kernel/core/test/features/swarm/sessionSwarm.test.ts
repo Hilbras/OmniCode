@@ -1,12 +1,12 @@
 import { createControlledPromise } from '@antfu/utils';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import { TestInstantiationService } from '#/_base/di/test';
-import { Event } from '#/_base/event';
-import { userCancellationReason } from '#/_base/utils/abort';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Event } from '@hilbras/omnicode-base/event';
+import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';

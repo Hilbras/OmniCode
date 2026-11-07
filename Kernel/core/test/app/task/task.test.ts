@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   type ITaskHandle,
   type IDeferredHandle,

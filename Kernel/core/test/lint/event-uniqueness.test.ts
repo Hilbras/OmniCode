@@ -7,7 +7,7 @@ import { z } from 'zod';
 import {
   resetUnexpectedErrorHandler,
   setUnexpectedErrorHandler,
-} from '#/_base/errors/unexpectedError';
+} from '@hilbras/omnicode-base/errors/unexpectedError';
 import {
   DuplicateEventError,
   EVENT2_REGISTRY,

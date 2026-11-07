@@ -1,9 +1,9 @@
 import { isAbsolute, join, resolve } from 'node:path';
 
-import { Disposable, toDisposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService, type ISessionScopeHandle } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
-import { userCancellationReason } from '#/_base/utils/abort';
+import { Disposable, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService, type ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IAgentLoopService, type LoopNotifyHandle } from '#/agent/loop/loop';
 import { TurnStarted } from '#/agent/loop/turnEvents';

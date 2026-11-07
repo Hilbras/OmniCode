@@ -1,4 +1,4 @@
-import { escapeXml } from '#/_base/utils/xml-escape';
+import { escapeXml } from '@hilbras/omnicode-base/utils/xml-escape';
 import { promptMetadataTextFromContentParts } from '#/agent/prompt/promptMetadataText';
 import type { SkillSource } from '#/features/skill/catalog/types';
 

@@ -1,12 +1,12 @@
 import { SelectToolsTool } from '@hilbras/omnicode-tools/select-tools/selectToolsTool';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DisposableStore, toDisposable, type IDisposable } from '#/_base/di/lifecycle';
+import { DisposableStore, toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   createServices,
   type ServiceRegistration,
   type TestInstantiationService,
-} from '#/_base/di/test';
+} from '@hilbras/omnicode-base/di/test';
 import { ContextSpliced } from '#/agent/contextMemory/contextEvents';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { UndoCut } from '#/agent/contextMemory/contextOps';

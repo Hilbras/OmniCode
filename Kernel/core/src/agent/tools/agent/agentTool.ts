@@ -1,7 +1,7 @@
-import { type CollectionView } from '#/_base/di/collection';
-import type { IAgentScopeHandle } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
-import { isAbortError, isUserCancellation, userCancellationReason } from '#/_base/utils/abort';
+import { type CollectionView } from '@hilbras/omnicode-base/di/collection';
+import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { isAbortError, isUserCancellation, userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import { IAgentProfileService } from '#/agent/profile/profile';

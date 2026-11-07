@@ -4,9 +4,9 @@ import { tmpdir } from 'node:os';
 import { join, normalize } from 'pathe';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
-import { Emitter, Event } from '#/_base/event';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
+import { Emitter, Event } from '@hilbras/omnicode-base/event';
 import { IAgentAgentsMdReminderService } from '#/agent/agentsMdReminder/agentsMdReminder';
 import { IAgentProfileService, type ResolvedAgentProfile } from '#/agent/profile/profile';
 import { IAgentToolExecutorService } from '#/agent/toolExecutor/toolExecutor';

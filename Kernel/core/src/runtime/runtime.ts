@@ -1,4 +1,4 @@
-import type { Event } from '#/_base/event';
+import type { Event } from '@hilbras/omnicode-base/event';
 import type { HostEnvironmentInfo } from '#/os/interface/hostEnvironment';
 import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
 import type { IHostProcessService } from '#/os/interface/hostProcess';

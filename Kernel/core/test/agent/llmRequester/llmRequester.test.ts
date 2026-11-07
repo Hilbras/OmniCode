@@ -9,7 +9,7 @@ import {
   type AgentLLMRequestFinish,
 } from '#/agent/llmRequester/llmRequester';
 import { IAgentProfileService } from '#/agent/profile/profile';
-import type { ILogger as Logger, LogPayload } from '#/_base/log/log';
+import type { ILogger as Logger, LogPayload } from '@hilbras/omnicode-base/log/log';
 import {
   configServices,
   createTestAgent,

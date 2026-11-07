@@ -1,4 +1,4 @@
-import { isAbortError } from '#/_base/utils/abort';
+import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
 import { type AgentTask, type AgentTaskInfoBase, type AgentTaskSink } from '#/agent/task/types';
 import { REPEAT_BREAKER_STOP_REASON } from '#/agent/toolDedupe/toolDedupe';
 import { ErrorCodes, isError2 } from '#/errors';

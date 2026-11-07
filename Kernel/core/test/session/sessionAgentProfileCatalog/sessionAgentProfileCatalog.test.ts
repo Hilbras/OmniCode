@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { createDecorator } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import type { IDisposable } from '#/_base/di/lifecycle';
-import { Service } from '#/_base/di/service';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 import {
   DEFAULT_AGENT_PROFILE_NAME,
   normalizeAgentProfile,

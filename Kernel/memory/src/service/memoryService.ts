@@ -1,5 +1,5 @@
-import { Disposable, toDisposable } from '@hilbras/omnicode-core/_base/di/lifecycle';
-import type { ILogger } from '@hilbras/omnicode-core/_base/log/log';
+import { Disposable, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { ILogger } from '@hilbras/omnicode-base/log/log';
 
 import { MemoryError, MemoryErrors } from '#/contracts/errors';
 import { resolveMemoryAuthority } from '#/contracts/memoryAuthority';

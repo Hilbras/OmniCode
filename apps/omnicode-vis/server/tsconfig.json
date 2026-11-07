@@ -1,4 +1,9 @@
 {
   "extends": "../../../tsconfig.json",
-  "include": ["src", "test", "../../../Kernel/core/src/env.d.ts"]
+  "include": [
+    "src",
+    "test",
+    "../../../Kernel/core/src/env.d.ts",
+    "../../../Kernel/base/src"
+  ]
 }

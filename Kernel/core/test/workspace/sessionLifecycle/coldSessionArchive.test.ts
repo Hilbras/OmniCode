@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ServiceIdentifier, ServicesAccessor } from '#/_base/di/instantiation';
-import type { ISessionScopeHandle } from '#/_base/di/scope';
-import { Emitter, Event } from '#/_base/event';
+import type { ServiceIdentifier, ServicesAccessor } from '@hilbras/omnicode-base/di/instantiation';
+import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { Emitter, Event } from '@hilbras/omnicode-base/event';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IEventService } from '#/app/event/event';
 import {

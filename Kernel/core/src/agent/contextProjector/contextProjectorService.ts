@@ -1,5 +1,5 @@
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { ILogService } from '#/_base/log/log';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import { IAgentStateService } from '#/agent/state/agentState';
 import { LifecycleScope } from '#/app/scopes';

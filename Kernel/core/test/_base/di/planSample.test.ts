@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { collection, type CollectionView } from '#/_base/di/collection';
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { FiberState, ScopeUnits } from '#/_base/di/fiber';
-import { createDecorator, ScopeActivation } from '#/_base/di/instantiation';
-import { type InstantiationService } from '#/_base/di/instantiationService';
-import { Scope } from '#/_base/di/scope';
-import { Service } from '#/_base/di/service';
+import { collection, type CollectionView } from '@hilbras/omnicode-base/di/collection';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { FiberState, ScopeUnits } from '@hilbras/omnicode-base/di/fiber';
+import { createDecorator, ScopeActivation } from '@hilbras/omnicode-base/di/instantiation';
+import { type InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { Scope } from '@hilbras/omnicode-base/di/scope';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import { LifecycleScope } from '#/app/scopes';
 import { ConfigSectionContribution } from '#/app/config/configSectionContributions';
 import { AgentProfileContribution } from '#/app/agentProfileCatalog/agentProfileContribution';

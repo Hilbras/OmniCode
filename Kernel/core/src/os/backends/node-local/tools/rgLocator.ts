@@ -10,7 +10,7 @@ import { extract as extractTar } from 'tar';
 import { type Entry, fromBuffer as yauzlFromBuffer } from 'yauzl';
 import { basename, join } from 'pathe';
 
-import { abortable } from '#/_base/utils/abort';
+import { abortable } from '@hilbras/omnicode-base/utils/abort';
 import { ErrorCodes, Error2 } from '#/errors';
 
 const RG_VERSION = '15.0.0';

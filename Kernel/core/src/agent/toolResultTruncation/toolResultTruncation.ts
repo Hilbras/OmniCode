@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { ExecutableToolResult } from '#/tool/toolContract';
 
 export interface ToolResultTruncationInput<T extends ExecutableToolResult = ExecutableToolResult> {

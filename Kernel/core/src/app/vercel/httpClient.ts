@@ -1,7 +1,7 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { errorInfo } from '#/_base/errors/codes';
-import { retryDelayMs, sleepForRetry } from '#/_base/utils/retry';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { errorInfo } from '@hilbras/omnicode-base/errors/codes';
+import { retryDelayMs, sleepForRetry } from '@hilbras/omnicode-base/utils/retry';
 import { LifecycleScope } from '#/app/scopes';
 
 import { VercelError, VercelErrors } from './errors';

@@ -1,4 +1,4 @@
-import type { ServiceRegistration } from '#/_base/di/test';
+import type { ServiceRegistration } from '@hilbras/omnicode-base/di/test';
 import type { TelemetryContextPatch, TelemetryProperties } from '#/app/telemetry/context';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { composeTelemetryProperties } from '#/app/telemetry/telemetryService';

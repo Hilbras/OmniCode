@@ -1,7 +1,7 @@
 import { basename, dirname, isAbsolute, join, normalize } from 'pathe';
 
-import { Disposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import {
   AGENTS_MD_PLAIN_NAMES,
   agentsMdCandidatePaths,

@@ -1,4 +1,4 @@
-import type { ILogger, LogLevel } from '@hilbras/omnicode-core/_base/log/log';
+import type { ILogger, LogLevel } from '@hilbras/omnicode-base/log/log';
 
 import { MemoryError, MemoryErrors } from '#/contracts/errors';
 import type { MemoryCaptureInput } from '#/contracts/memoryContract';

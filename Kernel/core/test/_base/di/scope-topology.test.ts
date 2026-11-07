@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { createAppScope, setScopeTopology, _resetScopeTopologyForTests } from '#/_base/di/scope';
-import { BugIndicatingError } from '#/_base/errors/errors';
+import { createAppScope, setScopeTopology, _resetScopeTopologyForTests } from '@hilbras/omnicode-base/di/scope';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
 
 beforeEach(() => {
   _resetScopeTopologyForTests();

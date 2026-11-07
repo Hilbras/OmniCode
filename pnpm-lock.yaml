@@ -98,6 +98,9 @@ importers:
       '@hilbras/omnicode-auth':
         specifier: workspace:^
         version: link:../auth
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
@@ -129,6 +132,9 @@ importers:
 
   Kernel/Addons:
     dependencies:
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
@@ -157,6 +163,9 @@ importers:
       '@antfu/utils':
         specifier: ^9.3.0
         version: 9.3.0
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.2
         version: 1.32.2(zod@4.3.6)
@@ -203,6 +212,9 @@ importers:
 
   Kernel/Tools:
     dependencies:
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
@@ -233,6 +245,28 @@ importers:
         specifier: ^4.1.4
         version: 4.1.4
 
+  Kernel/base:
+    dependencies:
+      js-yaml:
+        specifier: ^4.1.1
+        version: 4.1.1
+      undici:
+        specifier: ^7.27.1
+        version: 7.27.1
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@types/js-yaml':
+        specifier: ^4.0.9
+        version: 4.0.9
+      '@types/sinon':
+        specifier: ^21.0.1
+        version: 21.0.1
+      sinon:
+        specifier: ^22.0.0
+        version: 22.0.0
+
   Kernel/core:
     dependencies:
       '@antfu/utils':
@@ -247,6 +281,9 @@ importers:
       '@hilbras/omnicode-auth':
         specifier: workspace:^
         version: link:../auth
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
       '@hilbras/omnicode-minidb':
         specifier: workspace:^
         version: link:../minidb
@@ -405,6 +442,9 @@ importers:
 
   Kernel/memory:
     dependencies:
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
@@ -417,6 +457,9 @@ importers:
 
   Kernel/migration:
     dependencies:
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
@@ -463,6 +506,9 @@ importers:
       '@hilbras/omnicode-auth':
         specifier: workspace:^
         version: link:../auth
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
@@ -671,6 +717,9 @@ importers:
       '@hilbras/omnicode-addons':
         specifier: workspace:^
         version: link:../../Kernel/Addons
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../../Kernel/base
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../../Kernel/core

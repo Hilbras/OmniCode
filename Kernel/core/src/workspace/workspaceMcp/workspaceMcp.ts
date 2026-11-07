@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { McpConnectionManager } from '#/mcpCore/connection-manager';
 import type { McpServerConfig } from '#/mcpCore/config-schema';
 import type { ISessionMcpHandle } from '#/session/mcp/sessionMcpHandle';

@@ -1,7 +1,7 @@
 import * as posixPath from 'node:path/posix';
 import * as win32Path from 'node:path/win32';
 
-import { Emitter } from '#/_base/event';
+import { Emitter } from '@hilbras/omnicode-base/event';
 
 import type { Runtime, RuntimeCapability, RuntimePath, RuntimeStatus } from './runtime';
 

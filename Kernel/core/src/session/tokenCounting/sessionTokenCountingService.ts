@@ -1,4 +1,4 @@
-import { Disposable } from '#/_base/di/lifecycle';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { agentSpaceOf } from '#/agent/agentContext/agentSpace';
 import { TurnEnded } from '#/agent/loop/turnOps';

@@ -5,10 +5,10 @@ import {
   ScopeActivation,
   _clearScopedRegistryForTests,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost, type ScopedTestHost } from '#/_base/di/test';
-import { BugIndicatingError } from '#/_base/errors/errors';
-import { StateRegistry, type StateChange } from '#/_base/state/stateRegistry';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, type ScopedTestHost } from '@hilbras/omnicode-base/di/test';
+import { BugIndicatingError } from '@hilbras/omnicode-base/errors/errors';
+import { StateRegistry, type StateChange } from '@hilbras/omnicode-base/state/stateRegistry';
 import { defineState } from '#/state/state';
 import { IAppStateService } from '#/app/state/appState';
 import { AppStateService } from '#/app/state/appStateService';

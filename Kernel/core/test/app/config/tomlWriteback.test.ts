@@ -5,10 +5,10 @@ import { join } from 'pathe';
 import { parse as parseToml } from 'smol-toml';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IMAGE_SECTION, type ImageConfig } from '#/agent/media/configSection';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigRegistry, IConfigService } from '#/app/config/config';

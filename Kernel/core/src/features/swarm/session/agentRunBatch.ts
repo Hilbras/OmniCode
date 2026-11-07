@@ -2,8 +2,8 @@ import { isProviderRateLimitError } from '#/llm-adapter/contract/errors';
 import { type TokenUsage } from '#human/llm/usage';
 import * as retry from 'retry';
 
-import { isUserCancellation } from '#/_base/utils/abort';
-import { setClampedTimeout } from '#/_base/utils/timer';
+import { isUserCancellation } from '@hilbras/omnicode-base/utils/abort';
+import { setClampedTimeout } from '@hilbras/omnicode-base/utils/timer';
 import { BugIndicatingError, Error2, ErrorCodes } from '#/errors';
 import type { SubagentSpawnPlan } from '#/session/subagent/spawn';
 import type { SessionSwarmRunResult, SessionSwarmTask } from './sessionSwarm';

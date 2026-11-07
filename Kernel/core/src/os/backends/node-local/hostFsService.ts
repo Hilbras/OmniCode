@@ -12,13 +12,13 @@ import {
   writeFile,
 } from 'node:fs/promises';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import {
   decodeTextWithErrors,
   readUtf8Lines,
   type TextDecodeErrors,
-} from '#/_base/execEnv/decodeText';
-import { codePointAt } from '#/_base/text/code-point';
+} from '@hilbras/omnicode-base/execEnv/decodeText';
+import { codePointAt } from '@hilbras/omnicode-base/text/code-point';
 import { LifecycleScope } from '#/app/scopes';
 import {
   type HostDirEntry,

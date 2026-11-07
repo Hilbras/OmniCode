@@ -1,5 +1,5 @@
-import { createDecorator } from '#/_base/di/instantiation';
-import type { Event } from '#/_base/event';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import type { Event } from '@hilbras/omnicode-base/event';
 import type { AgentProfile } from '#/app/agentProfileCatalog/agentProfileCatalog';
 
 export interface AgentProfileSuppressedCandidate {

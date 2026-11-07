@@ -1,5 +1,5 @@
-import { Error2 } from '#/_base/errors/errors';
-import { parseBooleanEnv } from '#/_base/utils/env';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
+import { parseBooleanEnv } from '@hilbras/omnicode-base/utils/env';
 import type { ConfigEffectiveOverlay } from '#/app/config/config';
 import { registerConfigOverlay } from '#/app/config/configOverlayContributions';
 import { isPlainObject } from '#/app/config/configPure';

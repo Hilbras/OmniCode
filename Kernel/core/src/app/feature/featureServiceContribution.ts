@@ -1,5 +1,5 @@
-import { collection } from '#/_base/di/collection';
-import type { ServiceIdentifier } from '#/_base/di/instantiation';
+import { collection } from '@hilbras/omnicode-base/di/collection';
+import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { LifecycleScope } from '#/app/scopes';
 
 export interface ContributedFeatureService {

@@ -12,7 +12,7 @@ import type { IHostEnvironment } from '@hilbras/omnicode-core/os/interface/hostE
 import type { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
 import type { IHostProcessService } from '@hilbras/omnicode-core/os/interface/hostProcess';
 import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-core/agent/runtimeBinding/agentRuntime';
-import { unwrapErrorCause } from '@hilbras/omnicode-core/_base/errors/errors';
+import { unwrapErrorCause } from '@hilbras/omnicode-base/errors/errors';
 import { RuntimeWorkspaceView } from '@hilbras/omnicode-core/runtime/runtimeWorkspaceView';
 import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
 import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspaceContext/workspaceContext';

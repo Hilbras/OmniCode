@@ -1,7 +1,7 @@
 import {
   installGlobalProxyDispatcher as v2InstallGlobalProxyDispatcher,
   type InstallProxyDeps,
-} from '@hilbras/omnicode-core/_base/utils/proxy';
+} from '@hilbras/omnicode-base/utils/proxy';
 
 type Env = Readonly<Record<string, string | undefined>>;
 

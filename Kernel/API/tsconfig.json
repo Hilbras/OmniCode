@@ -1,5 +1,10 @@
 {
   "extends": "../../tsconfig.json",
   "compilerOptions": {},
-  "include": ["src", "examples", "../../Kernel/core/src/env.d.ts"]
+  "include": [
+    "src",
+    "examples",
+    "../../Kernel/core/src/env.d.ts",
+    "../base/src"
+  ]
 }

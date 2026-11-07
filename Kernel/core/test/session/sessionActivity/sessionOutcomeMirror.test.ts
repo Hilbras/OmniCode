@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   _clearScopedRegistryForTests,
   ScopeActivation,
   registerScopedService,
   type IAgentScopeHandle,
   type Scope,
-} from '#/_base/di/scope';
-import { createScopedTestHost, stubPair, type ScopedTestHost } from '#/_base/di/test';
-import { Emitter, Event } from '#/_base/event';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, stubPair, type ScopedTestHost } from '@hilbras/omnicode-base/di/test';
+import { Emitter, Event } from '@hilbras/omnicode-base/event';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { TurnStarted } from '#/agent/loop/turnEvents';
 import { TurnEnded, turnKey, type TurnModelState } from '#/agent/loop/turnOps';

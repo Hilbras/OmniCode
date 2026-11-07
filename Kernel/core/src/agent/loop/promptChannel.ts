@@ -1,6 +1,6 @@
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IEventService } from '#/app/event/event';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';

@@ -2,9 +2,9 @@ import { resolve } from 'node:path';
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore, toDisposable } from '#/_base/di/lifecycle';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
-import { Emitter } from '#/_base/event';
+import { DisposableStore, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import { ErrorCodes } from '#/errors';
 import { HostTerminalService } from '#/os/backends/node-local/hostTerminalService';
 import {

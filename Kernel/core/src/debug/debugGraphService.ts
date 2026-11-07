@@ -1,6 +1,6 @@
-import { IInstantiationService } from '#/_base/di/instantiation';
-import type { InstantiationService } from '#/_base/di/instantiationService';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import type { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
 
 import {

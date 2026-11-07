@@ -1,4 +1,4 @@
-import { abortable } from '#/_base/utils/abort';
+import { abortable } from '#/utils/abort';
 
 export const DEFAULT_MAX_RETRY_ATTEMPTS = 10;
 

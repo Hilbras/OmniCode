@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { ScopeActivation } from '#/_base/di/instantiation';
+import { ScopeActivation } from '@hilbras/omnicode-base/di/instantiation';
 import {
   _clearScopedRegistryForTests,
   getScopedServiceDescriptors,
   registerScopedService,
-} from '#/_base/di/scope';
-import { createScopedTestHost } from '#/_base/di/test';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
 import { IFeatureManager } from '#/app/feature/featureManager';
 import { FeatureManagerService } from '#/app/feature/featureManagerService';
 import { LifecycleScope } from '#/app/scopes';

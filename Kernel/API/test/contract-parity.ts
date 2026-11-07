@@ -7,7 +7,7 @@
  * interfaces, so klient needs no direct dependency for most of them.
  */
 
-import type { ISessionScopeHandle } from '@hilbras/omnicode-core/_base/di/scope';
+import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import type { IAgentCommandService } from '@hilbras/omnicode-core/agent/command/agentCommand';
 import type { AgentContextData } from '@hilbras/omnicode-core/agent/contextMemory/types';
 import type {

@@ -3,18 +3,18 @@ import { EventEmitter } from 'node:events';
 
 import { createControlledPromise } from '@antfu/utils';
 
-import { IInstantiationService } from '#/_base/di/instantiation';
-import { Disposable, toDisposable, type IDisposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { toErrorMessage } from '#/_base/errors/errorMessage';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
+import { IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import { Disposable, toDisposable, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { toErrorMessage } from '@hilbras/omnicode-base/errors/errorMessage';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
 import {
   abortError,
   isAbortError,
   isUserCancellation,
   userCancellationReason,
-} from '#/_base/utils/abort';
-import { retryErrorFields } from '#/_base/utils/retry';
+} from '@hilbras/omnicode-base/utils/abort';
+import { retryErrorFields } from '@hilbras/omnicode-base/utils/retry';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { markInTurnOrigin } from '#/agent/contextMemory/conversationTime';
 import { isUserPromptSubmitHookPart } from '#/agent/contextMemory/hookParts';

@@ -3,5 +3,9 @@
   "compilerOptions": {
     "experimentalDecorators": true
   },
-  "include": ["src", "test"]
+  "include": [
+    "src",
+    "test",
+    "../base/src"
+  ]
 }

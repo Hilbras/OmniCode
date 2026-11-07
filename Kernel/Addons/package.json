@@ -19,6 +19,7 @@
     }
   },
   "dependencies": {
+    "@hilbras/omnicode-base": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
     "pathe": "^2.0.3",
     "xstate": "^5.32.5"

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { Error2 } from '#/_base/errors/errors';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
 import {
   APIConnectionError,
   APIContextOverflowError,

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { TestInstantiationService } from '#/_base/di/test';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { IConfigService } from '#/app/config/config';
 import { IFlagService } from '#/app/flag/flag';
 import { BUILTIN_SKILLS, visibleBuiltinSkills } from '#/features/skill/catalog/builtin/builtin';

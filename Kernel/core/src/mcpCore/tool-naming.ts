@@ -1,4 +1,4 @@
-import { codePointAt } from '#/_base/text/code-point';
+import { codePointAt } from '@hilbras/omnicode-base/text/code-point';
 const MCP_NAME_PREFIX = 'mcp__';
 const MCP_NAME_SEPARATOR = '__';
 

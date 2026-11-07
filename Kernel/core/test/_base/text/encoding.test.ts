@@ -5,8 +5,8 @@ import {
   decodeUtfText,
   detectTextEncoding,
   ENCODING_DETECTION_SAMPLE_BYTES,
-} from '#/_base/text/encoding';
-import { splitLinesKeepingTerminator } from '#/_base/text/line-endings';
+} from '@hilbras/omnicode-base/text/encoding';
+import { splitLinesKeepingTerminator } from '@hilbras/omnicode-base/text/line-endings';
 
 function utf16Le(text: string): Buffer {
   return Buffer.from(text, 'utf16le');

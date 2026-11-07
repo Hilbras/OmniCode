@@ -2,7 +2,7 @@ import { randomBytes } from 'node:crypto';
 
 import { omnicodeRegionProfile, resolveOmnicodeRegion } from '@hilbras/omnicode-auth';
 
-import { isAbortError } from '#/_base/utils/abort';
+import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
 import type { IFileSystemStorageService } from '#/persistence/interface/storage';
 
 export type CloudPrimitive = boolean | number | string | undefined | null;

@@ -1,5 +1,5 @@
-import { CoreErrors, registerErrorDomain, type ErrorDomain } from '#/_base/errors/codes';
-import { Error2, isError2, type Error2Options } from '#/_base/errors/errors';
+import { CoreErrors, registerErrorDomain, type ErrorDomain } from '@hilbras/omnicode-base/errors/codes';
+import { Error2, isError2, type Error2Options } from '@hilbras/omnicode-base/errors/errors';
 import { errorStatusCode } from '#human/llm/errors';
 import {
   authErrorKindForStatus,

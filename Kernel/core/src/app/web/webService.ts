@@ -1,6 +1,6 @@
 import { OMNICODE_PROVIDER_NAME, omnicodeCodeBaseUrl } from '@hilbras/omnicode-auth';
 
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { IOAuthService } from '#/app/auth/auth';
 import { SERVICES_SECTION, type ServicesConfig } from '#/app/auth/configSection';

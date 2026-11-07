@@ -4,11 +4,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { createScopedChildHandle } from '#/_base/di/scope';
-import { _clearScopedRegistryForTests, registerScopedService } from '#/_base/di/scope';
-import { createScopedTestHost, stubPair } from '#/_base/di/test';
-import { AsyncEmitter, Emitter, Event } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
+import { createScopedChildHandle } from '@hilbras/omnicode-base/di/scope';
+import { _clearScopedRegistryForTests, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, stubPair } from '@hilbras/omnicode-base/di/test';
+import { AsyncEmitter, Emitter, Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import { IFlagService } from '#/app/flag/flag';

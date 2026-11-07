@@ -1,5 +1,5 @@
-import { Disposable } from '#/_base/di/lifecycle';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IAgentAgentsMdReminderService } from '#/agent/agentsMdReminder/agentsMdReminder';
 import type { LoopControl } from '#/agent/loop/configSection';
 import type { ResolvedAgentProfile, SystemPromptContext } from '#/agent/profile/profile';

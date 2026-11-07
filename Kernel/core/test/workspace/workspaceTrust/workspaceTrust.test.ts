@@ -5,9 +5,9 @@ import { join } from 'pathe';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { encodeWorkDirKey } from '#/_base/utils/workdir-slug';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices } from '#/_base/di/test';
+import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices } from '@hilbras/omnicode-base/di/test';
 import { JsonAtomicDocumentStore } from '#/persistence/backends/node-fs/atomicDocumentStore';
 import { FileStorageService } from '#/persistence/backends/node-fs/fileStorageService';
 import { IAtomicDocumentStore } from '#/persistence/interface/atomicDocumentStore';

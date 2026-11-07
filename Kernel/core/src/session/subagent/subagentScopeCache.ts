@@ -1,4 +1,4 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import { Error2, ErrorCodes } from '#/errors';
 
 export const SUBAGENT_SCOPE_CACHE_SIZE_ENV = 'OMNICODE_SUBAGENT_SCOPE_CACHE_SIZE';

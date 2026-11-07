@@ -1,18 +1,18 @@
 import { join } from 'pathe';
 
-import { IInstantiationService } from '#/_base/di/instantiation';
-import type { InstantiationService } from '#/_base/di/instantiationService';
-import { Disposable, toDisposable } from '#/_base/di/lifecycle';
+import { IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
+import type { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { Disposable, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import {
   createScopedChildHandle,
   type IAgentScopeHandle,
   ScopeActivation,
   registerScopedService,
-} from '#/_base/di/scope';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
-import { Emitter } from '#/_base/event';
-import { ILogService } from '#/_base/log/log';
-import { abortError } from '#/_base/utils/abort';
+} from '@hilbras/omnicode-base/di/scope';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
+import { Emitter } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { abortError } from '@hilbras/omnicode-base/utils/abort';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentBlobService } from '#/agent/blob/agentBlobService';
 import { AgentBlobServiceImpl } from '#/agent/blob/agentBlobServiceImpl';

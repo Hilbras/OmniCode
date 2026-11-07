@@ -1,7 +1,7 @@
 import type { ToolDescription as KosongTool } from '#human/llm/message';
 
-import { createDecorator } from "#/_base/di/instantiation";
-import { type IDisposable } from "#/_base/di/lifecycle";
+import { createDecorator } from "@hilbras/omnicode-base/di/instantiation";
+import { type IDisposable } from "@hilbras/omnicode-base/di/lifecycle";
 import type { McpServerEntry } from '#/mcpCore/connection-manager';
 import type { McpOAuthService } from '#/mcpCore/oauth/service';
 import type { MCPClient, MCPToolDefinition } from '#/mcpCore/types';

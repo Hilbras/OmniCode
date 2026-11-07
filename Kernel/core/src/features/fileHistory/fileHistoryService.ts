@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 import { dirname, isAbsolute, relative, resolve } from 'pathe';
 
-import { Service } from '#/_base/di/service';
-import { unwrapErrorCause } from '#/_base/errors/errors';
-import { onUnexpectedError } from '#/_base/errors/unexpectedError';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { unwrapErrorCause } from '@hilbras/omnicode-base/errors/errors';
+import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError';
 import { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentStateService } from '#/agent/state/agentState';

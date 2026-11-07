@@ -4,12 +4,12 @@ import {
   collection,
   type CollectionChange,
   type CollectionView,
-} from '#/_base/di/collection';
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { createDecorator } from '#/_base/di/instantiation';
-import { InstantiationService } from '#/_base/di/instantiationService';
-import { Service } from '#/_base/di/service';
-import { ServiceCollection } from '#/_base/di/serviceCollection';
+} from '@hilbras/omnicode-base/di/collection';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { InstantiationService } from '@hilbras/omnicode-base/di/instantiationService';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { ServiceCollection } from '@hilbras/omnicode-base/di/serviceCollection';
 
 interface Tool {
   readonly name: string;

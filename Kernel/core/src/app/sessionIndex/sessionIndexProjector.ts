@@ -1,4 +1,4 @@
-import { ILogService } from '#/_base/log/log';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAtomicDocumentStore } from '#/persistence/interface/atomicDocumentStore';
 import { IQueryStore, type WriteOp } from '#/persistence/interface/queryStore';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';

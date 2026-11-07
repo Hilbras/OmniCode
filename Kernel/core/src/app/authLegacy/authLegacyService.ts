@@ -1,7 +1,7 @@
 import { OMNICODE_PROVIDER_NAME } from '@hilbras/omnicode-auth';
 import type { AuthSummary } from './authLegacy';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IOAuthService } from '#/app/auth/auth';
 import { IConfigService } from '#/app/config/config';
 import {

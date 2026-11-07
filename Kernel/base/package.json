@@ -1,0 +1,41 @@
+{
+  "name": "@hilbras/omnicode-base",
+  "version": "0.0.1",
+  "private": true,
+  "description": "The kernel foundation: DI container, lifecycle scopes, fibers, collections, ledgers, logging and text utilities.",
+  "license": "MIT",
+  "author": "Hilbras",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hilbras/omnicode.git",
+    "directory": "Kernel/base"
+  },
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    "./package.json": {
+      "types": "./package.json",
+      "default": "./package.json"
+    },
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "js-yaml": "^4.1.1",
+    "undici": "^7.27.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/sinon": "^21.0.1",
+    "sinon": "^22.0.0"
+  }
+}

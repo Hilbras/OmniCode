@@ -6,8 +6,8 @@ import {
   type RefreshResult,
 } from '@hilbras/omnicode-auth';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
-import { Error2 } from '#/_base/errors/errors';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
 import { IOAuthService } from '#/app/auth/auth';
 import { AuthErrors } from '#/app/auth/errors';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';

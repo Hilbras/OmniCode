@@ -1,4 +1,4 @@
-import { redactSecrets } from '#/_base/text/redaction';
+import { redactSecrets } from '@hilbras/omnicode-base/text/redaction';
 
 import type { ITelemetryAppender, TelemetryAppenderRecord } from './telemetry';
 import type { TelemetryProperties } from './context';

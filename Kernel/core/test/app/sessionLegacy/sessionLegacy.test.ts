@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import type { ServiceIdentifier, ServicesAccessor } from '#/_base/di/instantiation';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { type IAgentScopeHandle, type ISessionScopeHandle } from '#/_base/di/scope';
-import { TestInstantiationService } from '#/_base/di/test';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import type { ServiceIdentifier, ServicesAccessor } from '@hilbras/omnicode-base/di/instantiation';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { type IAgentScopeHandle, type ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { IAgentFullCompactionService } from '#/agent/fullCompaction/fullCompaction';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';

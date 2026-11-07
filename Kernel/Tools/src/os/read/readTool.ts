@@ -7,7 +7,7 @@ import { IAgentToolRegistryService } from '@hilbras/omnicode-core/agent/toolRegi
 import { isDaemonFileUrl } from '@hilbras/omnicode-core/agent/media/mediaRef';
 import { attachmentFileSource, runtimeFileSource, withAttachmentLocation, type FileReadSource } from '@hilbras/omnicode-core/agent/tools/fileReadSource';
 import { RuntimeWorkspaceView } from '@hilbras/omnicode-core/runtime/runtimeWorkspaceView';
-import { unwrapErrorCause } from '@hilbras/omnicode-core/_base/errors/errors';
+import { unwrapErrorCause } from '@hilbras/omnicode-base/errors/errors';
 import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
 import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspaceContext/workspaceContext';
 import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
@@ -25,9 +25,9 @@ import {
 import { MEDIA_SNIFF_BYTES, detectFileType } from '@hilbras/omnicode-core/agent/media/file-type';
 import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
 import { literalRulePattern, matchesGlobRuleSubject, matchesPathRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
-import { makeCarriageReturnsVisible, splitLinesKeepingTerminator, type LineEndingStyle } from '@hilbras/omnicode-core/_base/text/line-endings';
-import { detectTextEncoding, type UtfTextEncoding } from '@hilbras/omnicode-core/_base/text/encoding';
-import { renderPrompt } from '@hilbras/omnicode-core/_base/utils/render-prompt';
+import { makeCarriageReturnsVisible, splitLinesKeepingTerminator, type LineEndingStyle } from '@hilbras/omnicode-base/text/line-endings';
+import { detectTextEncoding, type UtfTextEncoding } from '@hilbras/omnicode-base/text/encoding';
+import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
 import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
 import {
   DEFAULT_MAX_CHARS,

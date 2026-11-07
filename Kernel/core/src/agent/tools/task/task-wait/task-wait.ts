@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { type AgentTool } from '#/tool/toolContract';
 
 export const WAIT_FOR_MAX_TIMEOUT_S = 90;

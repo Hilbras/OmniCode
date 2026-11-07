@@ -5,9 +5,9 @@ import { tmpdir } from 'node:os';
 import { join } from 'pathe';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { TestInstantiationService } from '#/_base/di/test';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { noopTelemetryService } from '#/app/telemetry/telemetry';
 import {
   AppendLogStore,

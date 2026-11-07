@@ -1,4 +1,4 @@
-import { codePointAt } from '#/_base/text/code-point';
+import { codePointAt } from '@hilbras/omnicode-base/text/code-point';
 import type { ParsedCronExpression } from './cron-expr';
 import { computeNextCronRun } from './cron-expr';
 

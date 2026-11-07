@@ -1,10 +1,10 @@
 import { OAuthConnectionError, OAuthUnauthorizedError } from '@hilbras/omnicode-auth';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
-import { DisposableStore, type IDisposable } from '#/_base/di/lifecycle';
-import { type IAgentScopeHandle } from '#/_base/di/scope';
-import { createServices, type TestInstantiationService } from '#/_base/di/test';
-import { Emitter } from '#/_base/event';
+import { DisposableStore, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { type IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import { IOAuthService } from '#/app/auth/auth';
 import { IEventService } from '#/app/event/event';
 import type { Event2 } from '#/app/event/event2';

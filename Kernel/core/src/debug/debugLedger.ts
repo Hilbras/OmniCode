@@ -1,6 +1,6 @@
-import type { UnitState } from '#/_base/di/cascadeEngine';
-import { createDecorator } from '#/_base/di/instantiation';
-import type { LedgerEntryInfo } from '#/_base/lifecycle/ledger';
+import type { UnitState } from '@hilbras/omnicode-base/di/cascadeEngine';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import type { LedgerEntryInfo } from '@hilbras/omnicode-base/lifecycle/ledger';
 
 export interface DebugUnit {
   readonly token: string;

@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 
-import { parseFrontmatter } from '#/_base/text/frontmatter';
+import { parseFrontmatter } from '@hilbras/omnicode-base/text/frontmatter';
 
 import type { PluginCommandDef } from './types';
 

@@ -1,6 +1,6 @@
-import { Service } from '#/_base/di/service';
+import { Service } from '@hilbras/omnicode-base/di/service';
 import { LifecycleScope } from '#/app/scopes';
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import { IAgentPermissionPolicyService } from '#/agent/permissionPolicy/permissionPolicy';
 import type { PermissionData } from '#/agent/permissionPolicy/types';

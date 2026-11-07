@@ -4,7 +4,7 @@ import type { AddressInfo as HttpAddress } from 'node:net';
 import type { OAuthClientInformationFull } from '@modelcontextprotocol/sdk/shared/auth.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { ILogger as Logger } from '#/_base/log/log';
+import type { ILogger as Logger } from '@hilbras/omnicode-base/log/log';
 import * as callbackServerModule from '#/mcpCore/oauth/callback-server';
 import {
   META_SUFFIX,

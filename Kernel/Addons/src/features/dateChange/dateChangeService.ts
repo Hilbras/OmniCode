@@ -1,6 +1,6 @@
 import { assign, fromCallback, setup } from 'xstate';
 
-import { createDecorator, IInstantiationService } from '@hilbras/omnicode-core/_base/di/instantiation';
+import { createDecorator, IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
 import {
   AgentActorService,
   type AgentActorContext,

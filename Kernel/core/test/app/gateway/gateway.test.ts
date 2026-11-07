@@ -1,18 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { SyncDescriptor } from '#/_base/di/descriptors';
-import type { ServiceIdentifier, ServicesAccessor } from '#/_base/di/instantiation';
-import { Disposable, DisposableStore } from '#/_base/di/lifecycle';
+import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
+import type { ServiceIdentifier, ServicesAccessor } from '@hilbras/omnicode-base/di/instantiation';
+import { Disposable, DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
-import { type IAgentScopeHandle, type ISessionScopeHandle } from '#/_base/di/scope';
-import { TestInstantiationService } from '#/_base/di/test';
+import { type IAgentScopeHandle, type ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { IAgentLifecycleService } from '#/session/agentLifecycle/agentLifecycle';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import type { ContextMessage, PromptOrigin } from '#/agent/contextMemory/types';
 import { IRestGateway } from '#/app/gateway/gateway';
 import { RestGateway } from '#/app/gateway/gatewayService';
 import { stubAgentContext } from '../../agent/agentContext/stubs';
-import { ILogService } from '#/_base/log/log';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { ISessionManager } from '#/app/sessionManager/sessionManager';
 import { ISessionLifecycleService } from '#/workspace/sessionLifecycle/sessionLifecycle';
 import type { SessionMeta } from '#/session/sessionMetadata/sessionMetadata';

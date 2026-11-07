@@ -1,4 +1,4 @@
-import { ScopeActivation, registerScopedService } from '#/_base/di/scope';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IFlagService } from '#/app/flag/flag';
 import { GITHUB_FLAG_ID } from '#/app/github/flag';
 import { IGitHubService } from '#/app/github/github';

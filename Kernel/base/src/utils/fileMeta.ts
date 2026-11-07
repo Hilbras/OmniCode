@@ -1,9 +1,9 @@
-import { codePointAt } from '#/_base/text/code-point';
+import { codePointAt } from '#/text/code-point';
 import { extname } from 'node:path';
 
-import { classifyTextSample } from '#/_base/text/encoding';
+import { classifyTextSample } from '#/text/encoding';
 
-export { FS_BINARY_NONPRINTABLE_FRACTION } from '#/_base/text/encoding';
+export { FS_BINARY_NONPRINTABLE_FRACTION } from '#/text/encoding';
 
 export const FS_BINARY_SAMPLE_BYTES = 4096;
 

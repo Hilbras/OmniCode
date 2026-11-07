@@ -5,7 +5,7 @@ import {
   ToolListChangedNotificationSchema,
 } from '@modelcontextprotocol/sdk/types.js';
 
-import { getCoreVersion } from '#/_base/version';
+import { getCoreVersion } from '@hilbras/omnicode-base/version';
 
 import type { MCPClient, MCPToolDefinition, MCPToolResult } from './types';
 

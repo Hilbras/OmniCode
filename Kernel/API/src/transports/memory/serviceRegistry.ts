@@ -5,7 +5,7 @@
  * beyond what the host already bootstrapped.
  */
 
-import type { ServiceIdentifier } from '@hilbras/omnicode-core/_base/di/instantiation';
+import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import { IAgentCommandService } from '@hilbras/omnicode-core/agent/command/agentCommand';
 import { IAgentContextMemoryService } from '@hilbras/omnicode-core/agent/contextMemory/contextMemory';
 import { IAgentFullCompactionService } from '@hilbras/omnicode-core/agent/fullCompaction/fullCompaction';

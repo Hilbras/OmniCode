@@ -1,6 +1,6 @@
-import type { UnitState } from '#/_base/di/cascadeEngine';
-import type { DependencyEdgeKind } from '#/_base/di/dependencyGraph';
-import { createDecorator } from '#/_base/di/instantiation';
+import type { UnitState } from '@hilbras/omnicode-base/di/cascadeEngine';
+import type { DependencyEdgeKind } from '@hilbras/omnicode-base/di/dependencyGraph';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 
 export interface DebugGraphNode {
   readonly id: string;

@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { ISessionScopeHandle } from '#/_base/di/scope';
-import { Emitter, Event } from '#/_base/event';
+import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import { Emitter, Event } from '@hilbras/omnicode-base/event';
 import type { ISessionIndex } from '#/app/sessionIndex/sessionIndex';
 import { SessionManager } from '#/app/sessionManager/sessionManagerService';
 import { Program } from '#/program/program';

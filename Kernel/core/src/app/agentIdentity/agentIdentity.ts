@@ -1,6 +1,6 @@
 import { replaceUserAgentProduct } from '@hilbras/omnicode-auth';
 
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 
 export const DEFAULT_IDENTITY_SLUG = 'agent';
 

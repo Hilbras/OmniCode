@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ILogService, type LogPayload } from '#/_base/log/log';
+import { ILogService, type LogPayload } from '@hilbras/omnicode-base/log/log';
 import {
   DEFAULT_MODEL_SECTION,
   DEFAULT_PROVIDER_SECTION,

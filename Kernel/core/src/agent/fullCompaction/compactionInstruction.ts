@@ -1,4 +1,4 @@
-import { renderPrompt } from '#/_base/utils/render-prompt';
+import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
 
 import compactionInstructionTemplate from './compaction-instruction.md?raw';
 

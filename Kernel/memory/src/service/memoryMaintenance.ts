@@ -1,5 +1,5 @@
-import type { IDisposable } from '@hilbras/omnicode-core/_base/di/lifecycle';
-import type { ILogger } from '@hilbras/omnicode-core/_base/log/log';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { ILogger } from '@hilbras/omnicode-base/log/log';
 
 import type { IMemoryService, MemoryReviewJob, MemoryReviewReport } from '#/contracts/memoryContract';
 

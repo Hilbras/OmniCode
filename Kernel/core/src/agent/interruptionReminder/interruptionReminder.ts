@@ -1,4 +1,4 @@
-import { createDecorator } from '#/_base/di/instantiation';
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 
 export interface IAgentInterruptionReminderService {
   readonly _serviceBrand: undefined;

@@ -1,6 +1,6 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
-import type { ISessionScopeHandle } from '#/_base/di/scope';
-import type { Event, IWaitUntil } from '#/_base/event';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
+import type { Event, IWaitUntil } from '@hilbras/omnicode-base/event';
 import type { SessionSummary } from '#/app/sessionIndex/sessionIndex';
 import type { SessionMeta } from '#/session/sessionMetadata/sessionMetadata';
 import type {

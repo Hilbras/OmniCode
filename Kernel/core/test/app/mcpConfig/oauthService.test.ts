@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { DisposableStore } from '#/_base/di/lifecycle';
-import { createServices } from '#/_base/di/test';
-import { ILogService } from '#/_base/log/log';
+import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
+import { createServices } from '@hilbras/omnicode-base/di/test';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { IAgentIdentity } from '#/app/agentIdentity/agentIdentity';
 import { AppMcpOAuthService, IMcpOAuthService } from '#/app/mcpConfig/oauthService';
 import { IMcpOAuthStore } from '#/app/mcpConfig/oauthStore';

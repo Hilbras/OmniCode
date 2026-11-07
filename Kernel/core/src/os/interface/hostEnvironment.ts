@@ -1,11 +1,11 @@
-import { createDecorator, type ServiceIdentifier } from '#/_base/di/instantiation';
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 
 import type {
   HostEnvironmentInfo,
   OsKind,
   PathClass,
   ShellName,
-} from '#/_base/execEnv/environmentProbe';
+} from '@hilbras/omnicode-base/execEnv/environmentProbe';
 
 export type { HostEnvironmentInfo, OsKind, PathClass, ShellName };
 

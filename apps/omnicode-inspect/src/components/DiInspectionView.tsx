@@ -26,8 +26,8 @@
  * invalidates the `['di']` query prefix).
  */
 
-import type { UnitState } from '@hilbras/omnicode-core/_base/di/cascadeEngine';
-import type { LedgerEntryInfo } from '@hilbras/omnicode-core/_base/lifecycle/ledger';
+import type { UnitState } from '@hilbras/omnicode-base/di/cascadeEngine';
+import type { LedgerEntryInfo } from '@hilbras/omnicode-base/lifecycle/ledger';
 import {
   IDebugCascadeService,
   type DebugCascadeEntry,

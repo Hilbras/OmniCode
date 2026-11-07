@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { DisposableStore, type IDisposable } from '#/_base/di/lifecycle';
+import { DisposableStore, type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { LifecycleScope } from '#/app/scopes';
 import {
   _clearScopedRegistryForTests,
@@ -8,9 +8,9 @@ import {
   registerScopedService,
   type IAgentScopeHandle,
   type Scope,
-} from '#/_base/di/scope';
-import { createScopedTestHost, stubPair, type ScopedTestHost } from '#/_base/di/test';
-import { Emitter } from '#/_base/event';
+} from '@hilbras/omnicode-base/di/scope';
+import { createScopedTestHost, stubPair, type ScopedTestHost } from '@hilbras/omnicode-base/di/test';
+import { Emitter } from '@hilbras/omnicode-base/event';
 import { IEventBus } from '#/app/event/eventBus';
 import { IEventDispatcher } from '#/state/eventDispatcher';
 import { OrderedHookSlot } from '#/hooks';

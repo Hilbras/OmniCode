@@ -7,9 +7,9 @@ import type { ModelCapability } from '#/llm-adapter/contract/capability';
 import type { ThinkingEffort } from '#human/llm/thinking';
 import type { ModelRequestParams } from '#/llm-adapter/model/model-requester';
 
-import { createDecorator } from "#/_base/di/instantiation";
+import { createDecorator } from "@hilbras/omnicode-base/di/instantiation";
 import type { ErrorCode } from '#/errors';
-import { Error2 } from '#/_base/errors/errors';
+import { Error2 } from '@hilbras/omnicode-base/errors/errors';
 
 import { ProfileErrors } from './errors';
 

@@ -2,10 +2,10 @@ import { createHash, randomUUID } from 'node:crypto';
 
 import { dirname, join } from 'pathe';
 
-import { type IDisposable } from '#/_base/di/lifecycle';
-import { Service } from '#/_base/di/service';
-import { unwrapErrorCause } from '#/_base/errors/errors';
-import { generateHeroSlug } from '#/_base/utils/hero-slug';
+import { type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Service } from '@hilbras/omnicode-base/di/service';
+import { unwrapErrorCause } from '@hilbras/omnicode-base/errors/errors';
+import { generateHeroSlug } from '@hilbras/omnicode-base/utils/hero-slug';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';

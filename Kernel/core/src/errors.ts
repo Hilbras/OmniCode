@@ -1,5 +1,5 @@
-import { CoreErrors } from '#/_base/errors/codes';
-import type { OmnicodeErrorPayload } from '#/_base/errors/serialize';
+import { CoreErrors } from '@hilbras/omnicode-base/errors/codes';
+import type { OmnicodeErrorPayload } from '@hilbras/omnicode-base/errors/serialize';
 import { AgentLifecycleErrors } from '#/session/agentLifecycle/errors';
 import { AuthErrors } from '#/app/auth/errors';
 import { TaskErrors } from '#/agent/task/errors';
@@ -33,11 +33,11 @@ import { WebErrors } from '#/app/web/errors';
 import { WireErrors } from '#/wire/errors';
 import { WorkspaceErrors } from '#/app/workspace/errors';
 
-export * from '#/_base/errors/codes';
-export * from '#/_base/errors/errorMessage';
-export * from '#/_base/errors/errors';
-export * from '#/_base/errors/serialize';
-export * from '#/_base/errors/unexpectedError';
+export * from '@hilbras/omnicode-base/errors/codes';
+export * from '@hilbras/omnicode-base/errors/errorMessage';
+export * from '@hilbras/omnicode-base/errors/errors';
+export * from '@hilbras/omnicode-base/errors/serialize';
+export * from '@hilbras/omnicode-base/errors/unexpectedError';
 export { AgentLifecycleErrors } from '#/session/agentLifecycle/errors';
 export { AuthErrors } from '#/app/auth/errors';
 export { TaskErrors } from '#/agent/task/errors';

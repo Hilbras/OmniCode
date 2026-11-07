@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 
-import { Graph } from '#/_base/di/graph';
+import { Graph } from '@hilbras/omnicode-base/di/graph';
 
 describe('Graph', () => {
   let graph: Graph<string>;
