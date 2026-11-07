@@ -495,7 +495,11 @@ importers:
         specifier: ^8.18.0
         version: 8.18.1
 
-  Kernel/rpc: {}
+  Kernel/rpc:
+    dependencies:
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
 
   Kernel/server:
     dependencies:

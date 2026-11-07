@@ -16,7 +16,6 @@
 
 import { Readable } from 'node:stream';
 
-import type { ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import type { SkillActivationOrigin } from '@hilbras/omnicode-core/agent/contextMemory/types';
 import { IAgentLoopService } from '@hilbras/omnicode-core/agent/loop/loop';
@@ -46,22 +45,20 @@ import { MAIN_AGENT_ID } from '@hilbras/omnicode-core/session/agentLifecycle/age
 import { ensureMainAgent } from '@hilbras/omnicode-core/session/agentLifecycle/mainAgent';
 import { IWorkspaceInstanceManager } from '@hilbras/omnicode-core/workspace/workspaceInstance/workspaceInstanceManager';
 
-import type { EventSourceRef, IDisposable, ScopeRef } from '@hilbras/omnicode-rpc/channel';
+import type { IDisposable, ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import { RPCError } from '@hilbras/omnicode-rpc/errors';
 import { IEventService, serviceTokens } from './serviceRegistry.js';
 
-/** Structural minimum of an engine `Scope` / `IScopeHandle`. */
-export interface ScopeLike {
-  readonly accessor: {
-    get<T>(id: ServiceIdentifier<T>): T;
-  };
-}
+import {
+  createDispatcher,
+  wireClone,
+  type Dispatcher as MemoryDispatcher,
+  type ResolvedScope,
+  type ScopeLike,
+} from '@hilbras/omnicode-rpc/dispatch';
 
-/** JSON round-trip so in-process data matches wire data exactly. */
-export function wireClone<T>(value: T): T {
-  if (value === undefined) return value;
-  return JSON.parse(JSON.stringify(value)) as T;
-}
+export { wireClone, type ResolvedScope, type ScopeLike };
+export type { Dispatcher as MemoryDispatcher } from '@hilbras/omnicode-rpc/dispatch';
 
 /**
  * `sessionInteractionService` stays on the wire after the engine moved the
@@ -198,17 +195,6 @@ function agentLoopServiceView(agent: IAgentScopeHandle): Record<string, unknown>
   };
 }
 
-export interface MemoryDispatcher {
-  call(scope: ScopeRef, service: string, method: string, args: unknown[]): Promise<unknown>;
-  stream(scope: ScopeRef, service: string, method: string, args: unknown[]): AsyncIterable<unknown>;
-  listen(
-    scope: ScopeRef,
-    source: EventSourceRef,
-    handler: (data: unknown) => void,
-    onError?: (error: Error) => void,
-  ): IDisposable;
-}
-
 const REQUEST_INVALID = 40001;
 const NOT_FOUND = 40404;
 /** kap-server wire codes mirrored so memory/ipc surface the same numeric codes as `/api/v2/mcp`. */
@@ -264,14 +250,6 @@ function rethrowMcpManagementErrorAsRpc(error: unknown): never {
     }
   }
   throw error;
-}
-
-type ScopeKind = 'core' | 'workspace' | 'session' | 'agent';
-
-interface ResolvedScope {
-  readonly kind: ScopeKind;
-  readonly like: ScopeLike;
-  readonly sessionId?: string;
 }
 
 /** Structural view of the engine's `IFileService` used by the wire adaptation. */
@@ -417,38 +395,14 @@ export function createMemoryDispatcher(root: ScopeLike): MemoryDispatcher {
     throw new RPCError(REQUEST_INVALID, `unknown event stream: ${name} (${resolved.kind})`);
   }
 
-  function subscribeSource(
-    resolved: ResolvedScope,
-    source: EventSourceRef,
-    handler: (data: unknown) => void,
-  ): IDisposable {
-    if (source.kind === 'stream') {
-      return subscribeStream(resolved, source.name, handler);
-    }
-    if (!/^on[A-Z]/.test(source.event)) {
-      throw new RPCError(REQUEST_INVALID, `not an event property: ${source.event}`);
-    }
-    const instance = resolveService(resolved, source.service);
-    const emitter = instance[source.event];
-    if (typeof emitter !== 'function') {
-      throw new RPCError(REQUEST_INVALID, `event not found: ${source.service}.${source.event}`);
-    }
-    return (emitter as (listener: (data: unknown) => void) => IDisposable).call(
-      instance,
-      (data) => {
-        handler(wireClone(data));
-      },
-    );
-  }
 
-  return {
-    async call(scope, service, method, args) {
-      const resolved = await resolveScope(scope);
-      const instance = resolveService(resolved, service);
-      // `fileService` adapts bytes ⇄ streams: the JSON wire cannot carry
-      // `save`'s Readable source or `get`'s result stream, so both cross as
-      // base64 strings (the same kind of wire adaptation as
-      // `modelResolver.generate` in `stream`).
+  return createDispatcher({
+    resolveScope,
+    resolveService,
+    subscribe: subscribeStream,
+
+    async handleCall(resolved, service, method, args, instance) {
+      void resolved;
       if (service === 'fileService' && method === 'save') {
         const [data, filename, options] = args as [string, string, SaveOptions | undefined];
         const files = instance as FileServiceWireTarget;
@@ -458,7 +412,7 @@ export function createMemoryDispatcher(root: ScopeLike): MemoryDispatcher {
             filename,
             options,
           );
-          return wireClone(meta);
+          return { handled: true, value: wireClone(meta) };
         } catch (error) {
           rethrowFileErrorAsRpc(error);
         }
@@ -472,130 +426,44 @@ export function createMemoryDispatcher(root: ScopeLike): MemoryDispatcher {
           for await (const chunk of stream()) {
             chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk as Uint8Array));
           }
-          return { meta: wireClone(meta), data: Buffer.concat(chunks).toString('base64') };
+          return {
+            handled: true,
+            value: { meta: wireClone(meta), data: Buffer.concat(chunks).toString('base64') },
+          };
         } catch (error) {
           rethrowFileErrorAsRpc(error);
         }
       }
-      const member = instance[method];
-      if (member === undefined) {
-        throw new RPCError(REQUEST_INVALID, `method not found: ${service}.${method}`);
-      }
-      if (typeof member !== 'function') {
-        return wireClone(member);
-      }
-      const clonedArgs = args.map(wireClone);
-      const callArgs = AGENT_CONTEXT_SERVICES.has(service)
-        ? [agentContextOf(resolved.like as IAgentScopeHandle), ...clonedArgs]
-        : clonedArgs;
-      try {
-        const result = await (member as (...a: unknown[]) => unknown).apply(instance, callArgs);
-        return wireClone(result);
-      } catch (error) {
-        if (service === 'modelsDevImport' && error instanceof Error2) {
-          throw new RPCError(REQUEST_INVALID, error.message, error.details);
-        }
-        if (service === MCP_MANAGEMENT_SERVICE) {
-          rethrowMcpManagementErrorAsRpc(error);
-        }
-        if (error instanceof Error2 && error.code === ErrorCodes.PROMPT_ID_CONFLICT) {
-          throw new RPCError(PROMPT_ID_CONFLICT, error.message, error.details);
-        }
-        throw error;
-      }
+      return { handled: false };
     },
 
-    stream(scope, service, method, args): AsyncIterable<unknown> {
-      // Special case: modelResolver.generate routes to IModelCatalog.generate
-      // (which owns credential recovery); the dispatcher only supplies the
-      // abort signal so client cancellation still reaches the request.
-      if (service === 'modelResolver' && method === 'generate') {
-        return {
-          [Symbol.asyncIterator]() {
-            let source: AsyncIterator<unknown> | undefined;
-            let started: Promise<void> | undefined;
-            const controller = new AbortController();
-
-            const ensureStarted = (): Promise<void> => {
-              started ??= (async () => {
-                const resolved = await resolveScope(scope);
-                const catalog = resolveService(resolved, 'modelResolver');
-                const [modelId, input, params] = args;
-                const iterable = (
-                  catalog as {
-                    generate(
-                      id: string,
-                      input: unknown,
-                      signal: AbortSignal,
-                      params: unknown,
-                    ): AsyncIterable<unknown>;
-                  }
-                ).generate(
-                  modelId as string,
-                  wireClone(input),
-                  controller.signal,
-                  wireClone(params),
-                );
-                source = iterable[Symbol.asyncIterator]();
-              })();
-              return started;
-            };
-
-            return {
-              async next() {
-                await ensureStarted();
-                const result = await source!.next();
-                if (result.done) return { done: true, value: undefined };
-                return { done: false, value: wireClone(result.value) };
-              },
-              async return(value?: unknown) {
-                controller.abort();
-                await source?.return?.(value);
-                return { done: true as const, value: undefined };
-              },
-            };
-          },
-        };
-      }
-
-      // The underlying service method returns an AsyncIterable; we wire-clone
-      // each yielded chunk so in-process consumers observe the same data as
-      // networked ones.
+    streamIterable(_resolved, service, method, args, instance) {
+      if (service !== 'modelResolver' || method !== 'generate') return undefined;
+      const [modelId, input, params] = args;
+      const controller = new AbortController();
       return {
         [Symbol.asyncIterator]() {
-          let source: AsyncIterator<unknown> | undefined;
-          let started: Promise<void> | undefined;
-
-          const ensureStarted = (): Promise<void> => {
-            started ??= (async () => {
-              const resolved = await resolveScope(scope);
-              const instance = resolveService(resolved, service);
-              const member = instance[method];
-              if (member === undefined) {
-                throw new RPCError(REQUEST_INVALID, `method not found: ${service}.${method}`);
-              }
-              if (typeof member !== 'function') {
-                throw new RPCError(REQUEST_INVALID, `not a streaming method: ${service}.${method}`);
-              }
-              const clonedArgs = args.map(wireClone);
-              const iterable = (member as (...a: unknown[]) => unknown).apply(
-                instance,
-                clonedArgs,
-              ) as AsyncIterable<unknown>;
-              source = iterable[Symbol.asyncIterator]();
-            })();
-            return started;
-          };
-
+          const iterator = (
+            instance as {
+              generate(
+                id: string,
+                input: unknown,
+                signal: AbortSignal,
+                params: unknown,
+              ): AsyncIterable<unknown>;
+            }
+          )
+            .generate(modelId as string, wireClone(input), controller.signal, wireClone(params))
+            [Symbol.asyncIterator]();
           return {
             async next() {
-              await ensureStarted();
-              const result = await source!.next();
+              const result = await iterator.next();
               if (result.done) return { done: true, value: undefined };
               return { done: false, value: wireClone(result.value) };
             },
             async return(value?: unknown) {
-              await source?.return?.(value);
+              controller.abort();
+              await iterator.return?.(value);
               return { done: true as const, value: undefined };
             },
           };
@@ -603,30 +471,23 @@ export function createMemoryDispatcher(root: ScopeLike): MemoryDispatcher {
       };
     },
 
-    listen(scope, source, handler, onError) {
-      // Scope resolution can be async (main-agent materialization); the
-      // subscription attaches once settled. Disposing early cancels it.
-      let inner: IDisposable | undefined;
-      let disposed = false;
-      void resolveScope(scope).then(
-        (resolved) => {
-          if (disposed) return;
-          try {
-            inner = subscribeSource(resolved, source, handler);
-          } catch (error) {
-            onError?.(error instanceof Error ? error : new Error(String(error)));
-          }
-        },
-        (error: unknown) => {
-          onError?.(error instanceof Error ? error : new Error(String(error)));
-        },
-      );
-      return {
-        dispose: () => {
-          disposed = true;
-          inner?.dispose();
-        },
-      };
+    adaptCallArgs(resolved, service, args) {
+      const cloned = args.map(wireClone);
+      return AGENT_CONTEXT_SERVICES.has(service)
+        ? [agentContextOf(resolved.like as IAgentScopeHandle), ...cloned]
+        : cloned;
     },
-  };
+
+    mapCallError(service, error) {
+      if (service === 'modelsDevImport' && error instanceof Error2) {
+        throw new RPCError(REQUEST_INVALID, error.message, error.details);
+      }
+      if (service === MCP_MANAGEMENT_SERVICE) {
+        rethrowMcpManagementErrorAsRpc(error);
+      }
+      if (error instanceof Error2 && error.code === ErrorCodes.PROMPT_ID_CONFLICT) {
+        throw new RPCError(PROMPT_ID_CONFLICT, error.message, error.details);
+      }
+    },
+  });
 }

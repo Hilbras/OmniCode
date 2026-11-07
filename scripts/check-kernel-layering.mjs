@@ -8,7 +8,6 @@ const SCOPE = '@hilbras/omnicode-';
 
 const LEAVES = new Set([
   'base',
-  'rpc',
   'auth',
   'kaos',
   'llm',
@@ -24,6 +23,11 @@ const RULES = [
     name: 'leaf packages must not import other kernel packages',
     test: (from, to) => LEAVES.has(from) && to !== null,
     hint: 'leaves are the bottom of the graph; import nothing from Kernel',
+  },
+  {
+    name: 'rpc may import base only',
+    test: (from, to) => from === 'rpc' && to !== null && to !== 'base',
+    hint: 'rpc is the transport layer above base; importing the engine would invert it',
   },
   {
     name: 'core may import leaf packages only',
