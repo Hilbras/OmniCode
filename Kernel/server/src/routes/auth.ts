@@ -1,5 +1,5 @@
 import { IAuthLegacyService, type Scope } from '@hilbras/omnicode-core';
-import { authSummarySchema } from '@hilbras/omnicode-core/app/authLegacy/authLegacy';
+import { authSummarySchema } from '@hilbras/omnicode-engine/app/authLegacy/authLegacy';
 
 import { okEnvelope } from '../envelope';
 import { defineRoute } from '../middleware/defineRoute';

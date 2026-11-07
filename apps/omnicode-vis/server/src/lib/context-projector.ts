@@ -1,13 +1,13 @@
 import {
   buildContextCompactionShape,
-} from '@hilbras/omnicode-core/agent/contextMemory/compactionHandoff';
+} from '@hilbras/omnicode-engine/agent/contextMemory/compactionHandoff';
 import {
   computeUndoCut,
   isFullyUndoable,
   readContextCompactionShapeInput,
-} from '@hilbras/omnicode-core/agent/contextMemory/contextOps';
-import { createLoopEventFold } from '@hilbras/omnicode-core/agent/contextMemory/loopEventFold';
-import { renderToolResultForModel } from '@hilbras/omnicode-core/agent/contextMemory/toolResultRender';
+} from '@hilbras/omnicode-engine/agent/contextMemory/contextOps';
+import { createLoopEventFold } from '@hilbras/omnicode-engine/agent/contextMemory/loopEventFold';
+import { renderToolResultForModel } from '@hilbras/omnicode-engine/agent/contextMemory/toolResultRender';
 import type {
   ContentPart,
   ContextMessage,

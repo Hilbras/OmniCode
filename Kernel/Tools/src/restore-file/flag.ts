@@ -1,4 +1,4 @@
-import { type FlagDefinitionInput, registerFlagDefinition } from '@hilbras/omnicode-core/app/flag/flagRegistry';
+import { type FlagDefinitionInput, registerFlagDefinition } from '@hilbras/omnicode-engine/app/flag/flagRegistry';
 
 export const FILE_RESTORE_FLAG_ID = 'file_restore';
 export const FILE_RESTORE_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_FILE_RESTORE';

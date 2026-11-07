@@ -1,6 +1,6 @@
 import { readFile, mkdir } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import { McpServerConfigSchema } from '@hilbras/omnicode-core/mcpCore/config-schema';
+import { McpServerConfigSchema } from '@hilbras/omnicode-engine/mcpCore/config-schema';
 import { atomicWrite } from '../atomic-write.js';
 import { siblingMcpJson, sourceMcpJson, targetMcpFile } from '../paths.js';
 

@@ -1,10 +1,10 @@
 import { Service } from '@hilbras/omnicode-base/di/service';
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { ILogService, type ILogger } from '@hilbras/omnicode-base/log/log';
-import { IEventBus } from '@hilbras/omnicode-core/app/event/eventBus';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import { CompactionCompleted } from '@hilbras/omnicode-core/agent/fullCompaction/compactionOps';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
+import { IEventBus } from '@hilbras/omnicode-engine/app/event/eventBus';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
+import { CompactionCompleted } from '@hilbras/omnicode-engine/agent/fullCompaction/compactionOps';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
 
 import { IAgentMemoryContextService } from '#/context/agentMemoryContextService';
 import { IMemoryService } from '#/contracts/memoryContract';

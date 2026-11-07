@@ -8,19 +8,19 @@
  */
 
 import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
-import type { IAgentCommandService } from '@hilbras/omnicode-core/agent/command/agentCommand';
-import type { AgentContextData } from '@hilbras/omnicode-core/agent/contextMemory/types';
+import type { IAgentCommandService } from '@hilbras/omnicode-engine/agent/command/agentCommand';
+import type { AgentContextData } from '@hilbras/omnicode-engine/agent/contextMemory/types';
 import type {
   CompactionBlockedEvent,
   CompactionCancelledEvent,
   CompactionCompletedEvent,
   CompactionStartedEvent,
-} from '@hilbras/omnicode-core/agent/fullCompaction/compactionOps';
-import type { FullCompactionInput } from '@hilbras/omnicode-core/agent/fullCompaction/fullCompaction';
+} from '@hilbras/omnicode-engine/agent/fullCompaction/compactionOps';
+import type { FullCompactionInput } from '@hilbras/omnicode-engine/agent/fullCompaction/fullCompaction';
 import type {
   ApprovalRequest,
   ApprovalResponse,
-} from '@hilbras/omnicode-core/agent/interaction/approval';
+} from '@hilbras/omnicode-engine/agent/interaction/approval';
 import type {
   QuestionAnswers,
   QuestionItem,
@@ -28,46 +28,46 @@ import type {
   QuestionRequest,
   QuestionResponse,
   QuestionResult,
-} from '@hilbras/omnicode-core/agent/interaction/question';
+} from '@hilbras/omnicode-engine/agent/interaction/question';
 import type {
   PromptLaunchResult,
   PromptPayload,
   SteerPayload,
-} from '@hilbras/omnicode-core/agent/loop/loop';
-import type { TurnEndReason } from '@hilbras/omnicode-core/agent/loop/turnEvents';
+} from '@hilbras/omnicode-engine/agent/loop/loop';
+import type { TurnEndReason } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
 import type {
   AssistantDeltaEvent,
   ThinkingDeltaEvent,
   TurnStartedEvent,
-} from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { TurnEndedEvent } from '@hilbras/omnicode-core/agent/loop/turnOps';
-import type { PermissionMode } from '@hilbras/omnicode-core/agent/permissionPolicy/types';
-import type { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
+} from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import type { TurnEndedEvent } from '@hilbras/omnicode-engine/agent/loop/turnOps';
+import type { PermissionMode } from '@hilbras/omnicode-engine/agent/permissionPolicy/types';
+import type { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
 import type {
   PromptAbortedEvent,
   PromptCompletedEvent,
-} from '@hilbras/omnicode-core/agent/prompt/promptEvents';
-import type { IAgentRuntimeBindingService } from '@hilbras/omnicode-core/agent/runtimeBinding/runtimeBinding';
-import type { IAgentShellCommandService } from '@hilbras/omnicode-core/agent/shellCommand/shellCommand';
-import type { TaskInfo } from '@hilbras/omnicode-core/agent/task/types';
+} from '@hilbras/omnicode-engine/agent/prompt/promptEvents';
+import type { IAgentRuntimeBindingService } from '@hilbras/omnicode-engine/agent/runtimeBinding/runtimeBinding';
+import type { IAgentShellCommandService } from '@hilbras/omnicode-engine/agent/shellCommand/shellCommand';
+import type { TaskInfo } from '@hilbras/omnicode-engine/agent/task/types';
 import type {
   ToolCallDeltaEvent,
   ToolCallStartedEvent,
   ToolProgressEvent,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
-import type { UsageStatus } from '@hilbras/omnicode-core/agent/usage/usage';
-import type { AuthStatus, IOAuthService } from '@hilbras/omnicode-core/app/auth/auth';
-import type { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
+} from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
+import type { UsageStatus } from '@hilbras/omnicode-engine/agent/usage/usage';
+import type { AuthStatus, IOAuthService } from '@hilbras/omnicode-engine/app/auth/auth';
+import type { IBootstrapService } from '@hilbras/omnicode-engine/app/bootstrap/bootstrap';
 import type {
   CapabilityInstallProgress,
   CapabilityStatus,
   CapabilityStep,
-} from '@hilbras/omnicode-core/app/capability/types';
+} from '@hilbras/omnicode-engine/app/capability/types';
 import type {
   ConfigDiagnostic,
   ConfigInspectValue,
   ConfigTarget,
-} from '@hilbras/omnicode-core/app/config/config';
+} from '@hilbras/omnicode-engine/app/config/config';
 import type {
   ConnectorAction,
   ConnectorCapability,
@@ -75,24 +75,24 @@ import type {
   ConnectorKind,
   ConnectorScope,
   ConnectorStatus,
-} from '@hilbras/omnicode-core/app/connectors/connectors';
-import type { FileMeta, SaveOptions } from '@hilbras/omnicode-core/app/file/fileService';
-import type { ExperimentalFeatureState } from '@hilbras/omnicode-core/app/flag/flag';
+} from '@hilbras/omnicode-engine/app/connectors/connectors';
+import type { FileMeta, SaveOptions } from '@hilbras/omnicode-engine/app/file/fileService';
+import type { ExperimentalFeatureState } from '@hilbras/omnicode-engine/app/flag/flag';
 import type {
   GitHubConnectResult,
   GitHubConnectionStatus,
   GitHubDeviceFlowStart,
   GitHubDisconnectResult,
-} from '@hilbras/omnicode-core/app/github/types';
+} from '@hilbras/omnicode-engine/app/github/types';
 import type {
   FsBrowseResponse,
   FsHomeResponse,
-} from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
-import type { IProviderDiscoveryService } from '@hilbras/omnicode-core/app/kosongConfig/discovery';
+} from '@hilbras/omnicode-engine/app/hostFolderBrowser/hostFolderBrowser';
+import type { IProviderDiscoveryService } from '@hilbras/omnicode-engine/app/kosongConfig/discovery';
 import type {
   ImportCustomRegistryOptions,
   ImportCustomRegistryResult,
-} from '@hilbras/omnicode-core/app/kosongConfig/modelsDevImport';
+} from '@hilbras/omnicode-engine/app/kosongConfig/modelsDevImport';
 import type {
   GlobalMcpServerConfig,
   McpAuthStatusQuery,
@@ -105,19 +105,19 @@ import type {
   McpServerLocator,
   McpServerTestResult,
   McpServerTestTarget,
-} from '@hilbras/omnicode-core/app/mcpManagement/mcpManagement';
+} from '@hilbras/omnicode-engine/app/mcpManagement/mcpManagement';
 import type {
   McpRegistryPluginOrigin,
   McpRegistryQuery,
   McpServerSource,
-} from '@hilbras/omnicode-core/app/mcpRegistry/mcpRegistry';
+} from '@hilbras/omnicode-engine/app/mcpRegistry/mcpRegistry';
 import type {
   GetPluginInfoInput,
   InstallPluginInput,
   RemovePluginInput,
   SetPluginEnabledInput,
   SetPluginMcpServerEnabledInput,
-} from '@hilbras/omnicode-core/app/plugin/plugin';
+} from '@hilbras/omnicode-engine/app/plugin/plugin';
 import type {
   PluginCommandDef,
   PluginDiagnostic,
@@ -128,44 +128,44 @@ import type {
   PluginSummary,
   PluginUpdateStatus,
   ReloadSummary,
-} from '@hilbras/omnicode-core/app/plugin/types';
+} from '@hilbras/omnicode-engine/app/plugin/types';
 import type {
   SessionListQuery,
   SessionSummary,
-} from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
-import type { Workspace, WorkspaceUpdate } from '@hilbras/omnicode-core/app/workspace/workspace';
-import type { WarningEvent } from '@hilbras/omnicode-core/errors';
+} from '@hilbras/omnicode-engine/app/sessionIndex/sessionIndex';
+import type { Workspace, WorkspaceUpdate } from '@hilbras/omnicode-engine/app/workspace/workspace';
+import type { WarningEvent } from '@hilbras/omnicode-engine/errors';
 // Test-only: the v1 wire event types now live in agent-core-v2; importing
 // them here (never in `src/`) strengthens parity for the agent event stream.
-import type { ToolResultEvent } from '@hilbras/omnicode-core/events';
-import type { PlanData } from '@hilbras/omnicode-core/features/plan/plan';
-import type { SkillSummary } from '@hilbras/omnicode-core/features/skill/catalog/types';
-import type { IAgentSkillService } from '@hilbras/omnicode-core/features/skill/skillService';
+import type { ToolResultEvent } from '@hilbras/omnicode-engine/events';
+import type { PlanData } from '@hilbras/omnicode-engine/features/plan/plan';
+import type { SkillSummary } from '@hilbras/omnicode-engine/features/skill/catalog/types';
+import type { IAgentSkillService } from '@hilbras/omnicode-engine/features/skill/skillService';
 import type {
   Interaction,
   InteractionResolution,
-} from '@hilbras/omnicode-core/human/interaction/interaction';
-import type { ContentPart } from '@hilbras/omnicode-core/human/llm/message';
-import type { IModelCatalog } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
-import type { ModelRecord } from '@hilbras/omnicode-core/llm-adapter/model/model';
-import type { ProviderConfig } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
-import type { McpServerConfig } from '@hilbras/omnicode-core/mcpCore/config-schema';
-import type { McpServerConfigView } from '@hilbras/omnicode-core/mcpCore/configView';
-import type { McpServerEntry } from '@hilbras/omnicode-core/mcpCore/connection-manager';
-import type { SessionActivityState } from '@hilbras/omnicode-core/session/sessionActivity/sessionActivity';
+} from '@hilbras/omnicode-engine/human/interaction/interaction';
+import type { ContentPart } from '@hilbras/omnicode-engine/human/llm/message';
+import type { IModelCatalog } from '@hilbras/omnicode-engine/llm-adapter/model/catalog';
+import type { ModelRecord } from '@hilbras/omnicode-engine/llm-adapter/model/model';
+import type { ProviderConfig } from '@hilbras/omnicode-engine/llm-adapter/provider/provider';
+import type { McpServerConfig } from '@hilbras/omnicode-engine/mcpCore/config-schema';
+import type { McpServerConfigView } from '@hilbras/omnicode-engine/mcpCore/configView';
+import type { McpServerEntry } from '@hilbras/omnicode-engine/mcpCore/connection-manager';
+import type { SessionActivityState } from '@hilbras/omnicode-engine/session/sessionActivity/sessionActivity';
 import type {
   AgentMeta,
   SessionMeta,
   SessionMetadataChangedEvent,
   SessionMetaPatch,
-} from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
-import type { ISessionTitleService } from '@hilbras/omnicode-core/session/sessionTitle/sessionTitle';
+} from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetadata';
+import type { ISessionTitleService } from '@hilbras/omnicode-engine/session/sessionTitle/sessionTitle';
 import type {
   CreateChildSessionOptions,
   CreateSessionOptions,
   ForkSessionOptions,
   ResumeSessionOptions,
-} from '@hilbras/omnicode-core/workspace/sessionLifecycle/sessionLifecycle';
+} from '@hilbras/omnicode-engine/workspace/sessionLifecycle/sessionLifecycle';
 import type { z } from 'zod';
 
 import {

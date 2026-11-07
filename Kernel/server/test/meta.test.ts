@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { IConfigService } from '@hilbras/omnicode-core';
-import { IFeatureManager } from '@hilbras/omnicode-core/app/feature/featureManager';
-import { getFeatureRecipes } from '@hilbras/omnicode-core/features/featureRegistry';
+import { IFeatureManager } from '@hilbras/omnicode-engine/app/feature/featureManager';
+import { getFeatureRecipes } from '@hilbras/omnicode-engine/features/featureRegistry';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';

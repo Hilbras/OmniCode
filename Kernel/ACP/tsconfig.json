@@ -3,5 +3,5 @@
   "compilerOptions": {
     "experimentalDecorators": true
   },
-  "include": ["src", "test", "../../Kernel/core/src/env.d.ts"]
+  "include": ["src", "test", "../../Kernel/engine/src/env.d.ts"]
 }

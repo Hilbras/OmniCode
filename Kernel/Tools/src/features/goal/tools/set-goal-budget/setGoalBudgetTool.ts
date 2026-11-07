@@ -1,12 +1,12 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { GOAL_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-core/agent/tools/mainAgentOnly';
-import { type ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { GOAL_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-engine/agent/tools/mainAgentOnly';
+import { type ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
 
-import { IAgentGoalService } from '@hilbras/omnicode-core/features/goal/goalService';
-import type { GoalBudgetLimits, GoalSnapshot } from '@hilbras/omnicode-core/features/goal/types';
+import { IAgentGoalService } from '@hilbras/omnicode-engine/features/goal/goalService';
+import type { GoalBudgetLimits, GoalSnapshot } from '@hilbras/omnicode-engine/features/goal/types';
 
 import DESCRIPTION from './set-goal-budget.md?raw';
 import {

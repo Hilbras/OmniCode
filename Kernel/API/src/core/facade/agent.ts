@@ -8,19 +8,19 @@
  * (`turn.*`, `assistant.delta`, `tool.call.*`, `prompt.completed`, …).
  */
 
-import type { IAgentCommandService } from '@hilbras/omnicode-core/agent/command/agentCommand';
-import type { IAgentContextMemoryService } from '@hilbras/omnicode-core/agent/contextMemory/contextMemory';
-import type { IAgentMcpService } from '@hilbras/omnicode-core/agent/mcp/mcp';
-import type { PermissionMode } from '@hilbras/omnicode-core/agent/permissionPolicy/types';
-import type { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
-import type { IAgentRuntimeBindingService } from '@hilbras/omnicode-core/agent/runtimeBinding/runtimeBinding';
-import type { IAgentShellCommandService } from '@hilbras/omnicode-core/agent/shellCommand/shellCommand';
-import type { IAgentTaskService } from '@hilbras/omnicode-core/agent/task/task';
-import type { IAgentPlanService } from '@hilbras/omnicode-core/features/plan/plan';
-import type { IAgentSkillService } from '@hilbras/omnicode-core/features/skill/skillService';
-import type { ContentPart } from '@hilbras/omnicode-core/human/llm/message';
-import type { ISessionTokenCountingService } from '@hilbras/omnicode-core/session/tokenCounting/sessionTokenCounting';
-import type { ISessionUsageService } from '@hilbras/omnicode-core/session/usage/sessionUsage';
+import type { IAgentCommandService } from '@hilbras/omnicode-engine/agent/command/agentCommand';
+import type { IAgentContextMemoryService } from '@hilbras/omnicode-engine/agent/contextMemory/contextMemory';
+import type { IAgentMcpService } from '@hilbras/omnicode-engine/agent/mcp/mcp';
+import type { PermissionMode } from '@hilbras/omnicode-engine/agent/permissionPolicy/types';
+import type { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
+import type { IAgentRuntimeBindingService } from '@hilbras/omnicode-engine/agent/runtimeBinding/runtimeBinding';
+import type { IAgentShellCommandService } from '@hilbras/omnicode-engine/agent/shellCommand/shellCommand';
+import type { IAgentTaskService } from '@hilbras/omnicode-engine/agent/task/task';
+import type { IAgentPlanService } from '@hilbras/omnicode-engine/features/plan/plan';
+import type { IAgentSkillService } from '@hilbras/omnicode-engine/features/skill/skillService';
+import type { ContentPart } from '@hilbras/omnicode-engine/human/llm/message';
+import type { ISessionTokenCountingService } from '@hilbras/omnicode-engine/session/tokenCounting/sessionTokenCounting';
+import type { ISessionUsageService } from '@hilbras/omnicode-engine/session/usage/sessionUsage';
 
 import type { ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import type { ScopedCaller } from './session.js';
@@ -28,7 +28,7 @@ import type { ScopedCaller } from './session.js';
 // Wire-type aliases derived through the engine service interfaces (keeps
 // klient free of protocol-package imports).
 export type PromptLaunchResult =
-  | import('@hilbras/omnicode-core/agent/loop/loop').PromptLaunchResult
+  | import('@hilbras/omnicode-engine/agent/loop/loop').PromptLaunchResult
   | undefined;
 export type PromptWithSkillsInput = Parameters<IAgentSkillService['promptWithSkills']>[0];
 export type PromptWithSkillsResult = Awaited<ReturnType<IAgentSkillService['promptWithSkills']>>;

@@ -5,10 +5,10 @@ import { messageContentSchema } from './message';
 import {
   promptPermissionModeSchema,
   promptThinkingSchema,
-} from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
+} from '@hilbras/omnicode-engine/app/sessionLegacy/sessionProtocol';
 
 export { promptPermissionModeSchema, promptThinkingSchema };
-export type { PromptPermissionMode, PromptThinking } from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
+export type { PromptPermissionMode, PromptThinking } from '@hilbras/omnicode-engine/app/sessionLegacy/sessionProtocol';
 
 export const promptSkillActivationSchema = z.object({
   name: z.string().min(1),

@@ -8,8 +8,8 @@ import type {
   CompressBase64Result,
   CompressImageResult,
   ImageCompressionCaptionInput,
-} from '@hilbras/omnicode-core/agent/media/image-compress';
-import type { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
+} from '@hilbras/omnicode-engine/agent/media/image-compress';
+import type { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
 
 import type { ImageConfig } from '#/config/index';
 import type { TelemetryClient, TelemetryProperties } from '#/telemetry';

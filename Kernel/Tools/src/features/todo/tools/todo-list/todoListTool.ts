@@ -1,16 +1,16 @@
-import type { ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
+import type { ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
 
 import {
   IAgentTodoService,
-} from '@hilbras/omnicode-core/features/todo/todoService';
+} from '@hilbras/omnicode-engine/features/todo/todoService';
 import {
   TODO_LIST_TOOL_NAME,
   renderTodoList,
   type TodoItem,
-} from '@hilbras/omnicode-core/features/todo/todoItem';
+} from '@hilbras/omnicode-engine/features/todo/todoItem';
 
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
 import {
   ITodoListTool,

@@ -16,7 +16,7 @@ import type {
   DebugEventBusSnapshot,
   DebugEventSubscription,
   DebugEventSubscriptions,
-} from '@hilbras/omnicode-core/features/debugEvents/debugEvents';
+} from '@hilbras/omnicode-engine/features/debugEvents/debugEvents';
 
 import { Badge } from '../../ui';
 

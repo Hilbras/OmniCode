@@ -1,4 +1,4 @@
-import { redactSecretString } from '@hilbras/omnicode-core/human/credentials/redaction';
+import { redactSecretString } from '@hilbras/omnicode-engine/human/credentials/redaction';
 
 const REDACTION_MARKER = '[REDACTED]';
 

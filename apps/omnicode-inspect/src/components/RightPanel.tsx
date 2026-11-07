@@ -13,7 +13,7 @@
  * rows) survives tab switches.
  */
 
-import { IAgentStateService } from '@hilbras/omnicode-core/agent/state/agentState';
+import { IAgentStateService } from '@hilbras/omnicode-engine/agent/state/agentState';
 import { useState } from 'react';
 
 import type { AuditTrail } from '../audit/trail';

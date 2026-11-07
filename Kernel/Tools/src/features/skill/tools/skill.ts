@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
-import { Error2, ErrorCodes } from '@hilbras/omnicode-core/errors';
-import { type AgentTool } from '@hilbras/omnicode-core/tool/toolContract';
+import { Error2, ErrorCodes } from '@hilbras/omnicode-engine/errors';
+import { type AgentTool } from '@hilbras/omnicode-engine/tool/toolContract';
 
 export const MAX_SKILL_QUERY_DEPTH = 3;
 

@@ -2,7 +2,7 @@ import { mkdir, readdir, readFile, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { readTodoItems } from '@hilbras/omnicode-core/features/todo/todoItem';
+import { readTodoItems } from '@hilbras/omnicode-engine/features/todo/todoItem';
 
 import { closeDanglingToolCalls } from './close-tool-calls.js';
 import { extractToolCallDisplays } from './tool-call-display.js';

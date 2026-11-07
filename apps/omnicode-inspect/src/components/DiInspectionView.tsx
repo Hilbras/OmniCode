@@ -32,17 +32,17 @@ import {
   IDebugCascadeService,
   type DebugCascadeEntry,
   type DebugPendingGroup,
-} from '@hilbras/omnicode-core/debug/debugCascade';
-import { IDebugGraphService, type DebugGraph } from '@hilbras/omnicode-core/debug/debugGraph';
+} from '@hilbras/omnicode-engine/debug/debugCascade';
+import { IDebugGraphService, type DebugGraph } from '@hilbras/omnicode-engine/debug/debugGraph';
 import {
   IDebugEventsService,
   type DebugEventSubscriptions,
-} from '@hilbras/omnicode-core/features/debugEvents/debugEvents';
+} from '@hilbras/omnicode-engine/features/debugEvents/debugEvents';
 import {
   IDebugLedgerService,
   type DebugLedgerNode,
   type DebugUnit,
-} from '@hilbras/omnicode-core/debug/debugLedger';
+} from '@hilbras/omnicode-engine/debug/debugLedger';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 

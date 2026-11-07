@@ -27,6 +27,7 @@
   "dependencies": {
     "@hilbras/omnicode-base": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
+    "@hilbras/omnicode-engine": "workspace:^",
     "@hilbras/omnicode-minidb": "workspace:^",
     "zod": "catalog:"
   }

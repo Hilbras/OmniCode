@@ -10,21 +10,21 @@
 import type {
   ApprovalRequest,
   ApprovalResponse,
-} from '@hilbras/omnicode-core/agent/interaction/approval';
+} from '@hilbras/omnicode-engine/agent/interaction/approval';
 import type {
   Interaction,
   InteractionKind,
-} from '@hilbras/omnicode-core/human/interaction/interaction';
+} from '@hilbras/omnicode-engine/human/interaction/interaction';
 import type {
   QuestionRequest,
   QuestionResult,
-} from '@hilbras/omnicode-core/agent/interaction/question';
+} from '@hilbras/omnicode-engine/agent/interaction/question';
 import type {
   AgentMeta,
   SessionMeta,
   SessionMetaPatch,
-} from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
-import type { SkillSummary } from '@hilbras/omnicode-core/features/skill/catalog/types';
+} from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetadata';
+import type { SkillSummary } from '@hilbras/omnicode-engine/features/skill/catalog/types';
 
 import type { ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import type { McpServerConfig } from '../../contract/mcp.js';

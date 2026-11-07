@@ -1,4 +1,4 @@
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
 /**
  * Recover the UI display attached to a legacy top-level ToolResult.

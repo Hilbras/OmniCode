@@ -1,34 +1,34 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
 import {
   ToolAccesses,
   type ExecutableToolContext,
   type ExecutableToolResult,
   type ToolExecution,
-} from '@hilbras/omnicode-core/tool/toolContract';
-import { Error2, ErrorCodes } from '@hilbras/omnicode-core/errors';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import { ISessionSwarmService, type SessionSwarmTask } from '@hilbras/omnicode-core/features/swarm/session/sessionSwarm';
-import { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
-import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { IAgentSwarmService } from '@hilbras/omnicode-core/features/swarm/agent/swarm';
-import { resolveSwarmTimeoutMs } from '@hilbras/omnicode-core/features/swarm/configSection';
-import { ISessionSubagentService } from '@hilbras/omnicode-core/session/subagent/subagent';
+} from '@hilbras/omnicode-engine/tool/toolContract';
+import { Error2, ErrorCodes } from '@hilbras/omnicode-engine/errors';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
+import { ISessionSwarmService, type SessionSwarmTask } from '@hilbras/omnicode-engine/features/swarm/session/sessionSwarm';
+import { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { IAgentSwarmService } from '@hilbras/omnicode-engine/features/swarm/agent/swarm';
+import { resolveSwarmTimeoutMs } from '@hilbras/omnicode-engine/features/swarm/configSection';
+import { ISessionSubagentService } from '@hilbras/omnicode-engine/session/subagent/subagent';
 import {
   FORK_EXPERIMENTAL_UNAVAILABLE,
   FORK_WITH_RESUME_UNAVAILABLE,
   forkIncompatibility,
   type SubagentSpawnPlan,
-} from '@hilbras/omnicode-core/session/subagent/spawn';
-import { SUBAGENT_FORK_FLAG_ID } from '@hilbras/omnicode-core/session/subagent/flag';
+} from '@hilbras/omnicode-engine/session/subagent/spawn';
+import { SUBAGENT_FORK_FLAG_ID } from '@hilbras/omnicode-engine/session/subagent/flag';
 import {
   buildSubagentModelSummary,
   exposesSubagentModelChoice,
   stripSubagentForkParameter,
   stripSubagentModelParameter,
-} from '@hilbras/omnicode-core/session/subagent/configSection';
+} from '@hilbras/omnicode-engine/session/subagent/configSection';
 import {
   AgentSwarmToolInputSchema,
   IAgentSwarmTool,

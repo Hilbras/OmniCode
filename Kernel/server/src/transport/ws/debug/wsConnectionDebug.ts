@@ -2,7 +2,7 @@ import {
   xstateInspectionCollector,
   type XstateInspectionCollector,
   type XstateInspectionEnvelope,
-} from '@hilbras/omnicode-core/human/xstateInspection';
+} from '@hilbras/omnicode-engine/human/xstateInspection';
 import type { WebSocket } from 'ws';
 
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 10_000;

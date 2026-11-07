@@ -9,7 +9,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from
 import {
   resetModelsDevUpstreamForTest,
   setModelsDevUpstreamForTest,
-} from '@hilbras/omnicode-core/app/kosongConfig/modelsDevUpstream';
+} from '@hilbras/omnicode-engine/app/kosongConfig/modelsDevUpstream';
 import { type RunningServer, startServer } from '../src/start';
 import { TEST_HOST_IDENTITY } from './helpers/hostIdentity';
 import { authHeaders } from './helpers/auth';

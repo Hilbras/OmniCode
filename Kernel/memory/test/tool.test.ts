@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { ToolAccesses } from '@hilbras/omnicode-core/tool/toolContract';
+import { ToolAccesses } from '@hilbras/omnicode-engine/tool/toolContract';
 
 import {
   IMemorySearchTool,

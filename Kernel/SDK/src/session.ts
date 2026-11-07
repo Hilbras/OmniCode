@@ -1,4 +1,4 @@
-import type { SwarmModeTrigger } from '@hilbras/omnicode-core/features/swarm/agent/swarm';
+import type { SwarmModeTrigger } from '@hilbras/omnicode-engine/features/swarm/agent/swarm';
 import type {
   MemoryControlMutation,
   MemoryControlScope,

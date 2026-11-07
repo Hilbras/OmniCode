@@ -1,5 +1,5 @@
-import { findGitWorkTree } from '@hilbras/omnicode-core/app/git/workTree';
-import type { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
+import { findGitWorkTree } from '@hilbras/omnicode-engine/app/git/workTree';
+import type { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
 
 import { hashContent } from './memoryRecordFactory';
 

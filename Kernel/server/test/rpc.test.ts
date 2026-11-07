@@ -29,7 +29,7 @@ import type {
   SessionWorkspaceAssociationSnapshot,
   WorkspaceInstanceSnapshot,
 } from '@hilbras/omnicode-core';
-import { FakeRuntime } from '@hilbras/omnicode-core/runtime/fakeRuntime';
+import { FakeRuntime } from '@hilbras/omnicode-engine/runtime/fakeRuntime';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';

@@ -60,6 +60,7 @@
   "dependencies": {
     "@antfu/utils": "^9.3.0",
     "@hilbras/omnicode-base": "workspace:^",
+    "@hilbras/omnicode-engine": "workspace:^",
     "@modelcontextprotocol/sdk": "^1.32.2",
     "immer": "^11.1.0",
     "smol-toml": "^1.6.1",

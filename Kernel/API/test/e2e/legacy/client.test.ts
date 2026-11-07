@@ -15,11 +15,11 @@
  */
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { FileMeta } from '@hilbras/omnicode-core/app/file/fileService';
+import type { FileMeta } from '@hilbras/omnicode-engine/app/file/fileService';
 import type {
   ModelCatalogItem,
   ProviderCatalogItem,
-} from '@hilbras/omnicode-core/llm-adapter/model/catalog';
+} from '@hilbras/omnicode-engine/llm-adapter/model/catalog';
 import { ErrorCode } from '@hilbras/omnicode-server/protocol/error-codes';
 import type { Message } from '@hilbras/omnicode-server/protocol/message';
 import type { SessionStatusResponse } from '@hilbras/omnicode-server/protocol/rest-session';

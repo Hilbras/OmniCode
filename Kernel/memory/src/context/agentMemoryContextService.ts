@@ -1,9 +1,9 @@
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { Service } from '@hilbras/omnicode-base/di/service';
 import { ILogService, type ILogger } from '@hilbras/omnicode-base/log/log';
-import { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
-import { IAgentContextMemoryService } from '@hilbras/omnicode-core/agent/contextMemory/contextMemory';
+import { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
+import { IAgentContextMemoryService } from '@hilbras/omnicode-engine/agent/contextMemory/contextMemory';
 
 import type { MemorySearchQuery } from '#/contracts/memoryContract';
 import type { MemoryScope, MemoryScopeTier } from '#/contracts/memoryTypes';

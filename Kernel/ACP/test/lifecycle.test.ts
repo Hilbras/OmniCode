@@ -12,7 +12,7 @@ import {
 } from '@hilbras/omnicode-core';
 import { afterEach, describe, expect, it } from 'vitest';
 
-import type { SessionSummary } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
+import type { SessionSummary } from '@hilbras/omnicode-engine/app/sessionIndex/sessionIndex';
 
 import { filterSessionSummariesByCwd } from '../src/server';
 import { createTestClient, type TestClient } from './_helpers/acpClient';

@@ -1,11 +1,11 @@
-import type { QuestionTaskInfo } from '@hilbras/omnicode-core/agent/task/types';
+import type { QuestionTaskInfo } from '@hilbras/omnicode-engine/agent/task/types';
 import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
 import {
   type AgentTask,
   type AgentTaskInfoBase,
   type AgentTaskSink,
-} from '@hilbras/omnicode-core/agent/task/types';
-import type { ExecutableToolResult } from '@hilbras/omnicode-core/tool/toolContract';
+} from '@hilbras/omnicode-engine/agent/task/types';
+import type { ExecutableToolResult } from '@hilbras/omnicode-engine/tool/toolContract';
 
 function errorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);

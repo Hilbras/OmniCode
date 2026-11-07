@@ -1,6 +1,6 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
 
-import type { SwarmModeTrigger } from '@hilbras/omnicode-core/features/swarm/agent/swarm';
+import type { SwarmModeTrigger } from '@hilbras/omnicode-engine/features/swarm/agent/swarm';
 import type { Kaos } from '@hilbras/omnicode-kaos';
 import type {
   MemoryControlMutation,

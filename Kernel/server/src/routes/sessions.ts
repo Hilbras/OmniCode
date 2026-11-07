@@ -31,7 +31,7 @@ import {
   type Scope,
   type SessionSummary,
 } from '@hilbras/omnicode-core';
-import { SessionMetaUpdated } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetaEvents';
+import { SessionMetaUpdated } from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetaEvents';
 import { ErrorCode } from '../protocol/error-codes';
 import { pageResponseSchema } from '../protocol/pagination';
 import { toProtocolMessage } from '../services/messages/messageProjection';

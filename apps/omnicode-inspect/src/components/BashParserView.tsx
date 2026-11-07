@@ -22,7 +22,7 @@ import {
   IBashParserService,
   type BashParseResult,
   type BashSyntaxNode,
-} from '@hilbras/omnicode-core/app/bashParser/bashParser';
+} from '@hilbras/omnicode-engine/app/bashParser/bashParser';
 
 import { useConnection } from '../connection';
 import { Badge, errorMessage } from '../ui';
@@ -139,9 +139,9 @@ export function BashParserView() {
           timeoutMs: timeoutMs === '' ? undefined : Number(timeoutMs),
           maxNodes: maxNodes === '' ? undefined : Number(maxNodes),
         })
-        .then(setResult, (e: unknown) => {
+        .then(setResult, (error: unknown) => {
           setResult(null);
-          setError(errorMessage(e));
+          setError(errorMessage(error));
         });
     }, PARSE_DEBOUNCE_MS);
     return () => {

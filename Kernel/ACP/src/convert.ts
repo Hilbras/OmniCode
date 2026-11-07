@@ -7,8 +7,8 @@ import {
   parseImageDataUrl,
   persistOriginalImage,
 } from '@hilbras/omnicode-core';
-import type { ToolResultEvent } from '@hilbras/omnicode-core/events';
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+import type { ToolResultEvent } from '@hilbras/omnicode-engine/events';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
 import { log } from './log';
 import { isHideOutputMarker } from './marker';

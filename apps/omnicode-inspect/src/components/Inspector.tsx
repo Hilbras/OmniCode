@@ -13,7 +13,7 @@
  * log — was removed server-side, so there is no live push to render.
  */
 
-import { ISessionMetadata } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
+import { ISessionMetadata } from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetadata';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useMemo, useState } from 'react';
 

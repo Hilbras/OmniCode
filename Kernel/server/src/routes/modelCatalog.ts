@@ -19,9 +19,9 @@ import {
   DEFAULT_PROVIDER_SECTION,
   MODELS_SECTION,
   PROVIDERS_SECTION,
-} from '@hilbras/omnicode-core/app/kosongConfig/configSection';
-import { refreshProviderModelsResponseSchema } from '@hilbras/omnicode-core/app/kosongConfig/discovery';
-import { setDefaultModelResponseSchema } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
+} from '@hilbras/omnicode-engine/app/kosongConfig/configSection';
+import { refreshProviderModelsResponseSchema } from '@hilbras/omnicode-engine/app/kosongConfig/discovery';
+import { setDefaultModelResponseSchema } from '@hilbras/omnicode-engine/llm-adapter/model/catalog';
 import { z } from 'zod';
 
 import { errEnvelope, okEnvelope } from '../envelope';

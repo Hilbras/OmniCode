@@ -4,7 +4,7 @@ import { PROVIDER_ID_PATTERN } from '@hilbras/omnicode-core';
 import {
   modelCatalogItemSchema,
   providerCatalogItemSchema,
-} from '@hilbras/omnicode-core/llm-adapter/model/catalog';
+} from '@hilbras/omnicode-engine/llm-adapter/model/catalog';
 
 export const listModelsResponseSchema = z.object({
   items: z.array(modelCatalogItemSchema),

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
-import { type AgentTool } from '@hilbras/omnicode-core/tool/toolContract';
+import { type AgentTool } from '@hilbras/omnicode-engine/tool/toolContract';
 
 export const FetchURLInputSchema = z.object({
   url: z.string().describe('The URL to fetch content from.'),

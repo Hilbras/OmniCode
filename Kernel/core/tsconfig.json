@@ -3,12 +3,5 @@
   "compilerOptions": {
     "experimentalDecorators": true
   },
-  "include": [
-    "src",
-    "test",
-    "../base/src"
-  ],
-  "exclude": [
-    "src/human/test"
-  ]
+  "include": ["src", "../engine/src/env.d.ts", "../base/src"]
 }

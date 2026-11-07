@@ -19,7 +19,7 @@
  * chat timeline.
  */
 
-import { ISessionManager } from '@hilbras/omnicode-core/app/sessionManager/sessionManager';
+import { ISessionManager } from '@hilbras/omnicode-engine/app/sessionManager/sessionManager';
 import { useEffect, useState } from 'react';
 
 import type { AuditTrail } from './audit/trail';

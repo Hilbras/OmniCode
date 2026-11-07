@@ -4,7 +4,7 @@ import {
   sessionWarningsResponseSchema,
   updateSessionProfileRequestSchema,
   type UpdateSessionProfileRequest,
-} from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
+} from '@hilbras/omnicode-engine/app/sessionLegacy/sessionProtocol';
 import { z } from 'zod';
 
 import { goalSnapshotSchema } from './goal';
@@ -28,7 +28,7 @@ export type {
   SessionWarning,
   SessionWarningsResponse,
   UpdateSessionProfileRequest,
-} from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
+} from '@hilbras/omnicode-engine/app/sessionLegacy/sessionProtocol';
 
 export const createSessionRequestSchema = sessionCreateSchema;
 export type CreateSessionRequest = z.infer<typeof createSessionRequestSchema>;

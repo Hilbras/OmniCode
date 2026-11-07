@@ -4,19 +4,19 @@ import { join } from 'pathe';
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
-import { IAgentContextMemoryService } from '@hilbras/omnicode-core/agent/contextMemory/contextMemory';
-import type { ContextMessage } from '@hilbras/omnicode-core/agent/contextMemory/types';
-import { IAgentLoopService } from '@hilbras/omnicode-core/agent/loop/loop';
-import { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
-import { IAgentConversationUndoService } from '@hilbras/omnicode-core/agent/undo/undo';
-import { DEFAULT_AGENT_PROFILE_NAME } from '@hilbras/omnicode-core/app/agentProfileCatalog/agentProfileCatalog';
+import { IAgentContextMemoryService } from '@hilbras/omnicode-engine/agent/contextMemory/contextMemory';
+import type { ContextMessage } from '@hilbras/omnicode-engine/agent/contextMemory/types';
+import { IAgentLoopService } from '@hilbras/omnicode-engine/agent/loop/loop';
+import { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
+import { IAgentConversationUndoService } from '@hilbras/omnicode-engine/agent/undo/undo';
+import { DEFAULT_AGENT_PROFILE_NAME } from '@hilbras/omnicode-engine/app/agentProfileCatalog/agentProfileCatalog';
 import {
   AgentDateChangeService,
   IAgentDateChangeService,
 } from '#/features/dateChange/dateChangeService';
 import '#/features/dateChange/dateChangeFeature';
-import { IHostClock } from '@hilbras/omnicode-core/os/interface/hostClock';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
+import { IHostClock } from '@hilbras/omnicode-engine/os/interface/hostClock';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
 
 import {
   appService,
@@ -24,8 +24,8 @@ import {
   hostEnvironmentServices,
   InMemoryWireRecordPersistence,
   type TestAgentContext,
-} from '@hilbras/omnicode-core/test/harness';
-import { runWillBeginStepHooks } from '@hilbras/omnicode-core/test/agent/loop/stubs';
+} from '@hilbras/omnicode-engine/test/harness';
+import { runWillBeginStepHooks } from '@hilbras/omnicode-engine/test/agent/loop/stubs';
 
 const TEST_TIME_ZONE = 'Asia/Shanghai';
 const INITIAL_INSTANT = '2026-07-29T04:00:00.000Z';

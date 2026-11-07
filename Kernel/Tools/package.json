@@ -21,6 +21,7 @@
   "dependencies": {
     "@hilbras/omnicode-base": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
+    "@hilbras/omnicode-engine": "workspace:^",
     "pathe": "^2.0.3",
     "yauzl": "^3.3.0",
     "zod": "^4.3.6"

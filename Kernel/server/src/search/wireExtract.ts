@@ -1,4 +1,4 @@
-import { matchSingleMediaPathTag } from '@hilbras/omnicode-core/agent/media/mediaRef';
+import { matchSingleMediaPathTag } from '@hilbras/omnicode-engine/agent/media/mediaRef';
 
 export interface ExtractedWireMessage {
   readonly role: 'user' | 'assistant';

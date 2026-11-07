@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
-import type { AgentTool, ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
+import type { AgentTool, ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
 
 import { IAgentMemoryContextService } from '#/context/agentMemoryContextService';
 import { IMemoryService, type MemoryCaptureResult } from '#/contracts/memoryContract';

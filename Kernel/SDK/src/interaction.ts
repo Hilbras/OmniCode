@@ -1,10 +1,10 @@
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 import type { ContentPart } from '@hilbras/omnicode-llm';
 
 export type {
   ApprovalDecision,
   ApprovalResponse,
-} from '@hilbras/omnicode-core/agent/interaction/approval';
+} from '@hilbras/omnicode-engine/agent/interaction/approval';
 export type {
   QuestionAnswerMethod,
   QuestionAnswers,
@@ -13,7 +13,7 @@ export type {
   QuestionRequest,
   QuestionResponse,
   QuestionResult,
-} from '@hilbras/omnicode-core/agent/interaction/question';
+} from '@hilbras/omnicode-engine/agent/interaction/question';
 
 export type ApprovalScope = 'session';
 

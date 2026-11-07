@@ -2,19 +2,19 @@ import { randomUUID } from 'node:crypto';
 
 import { CoreErrors } from '@hilbras/omnicode-base/errors/codes';
 import { Error2 } from '@hilbras/omnicode-base/errors/errors';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
 import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
-import { IAgentTaskService } from '@hilbras/omnicode-core/agent/task/task';
-import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { IAgentToolPolicyService } from '@hilbras/omnicode-core/agent/toolPolicy/toolPolicy';
-import { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
-import type { QuestionAnsweredEvent, QuestionDismissedEvent } from '@hilbras/omnicode-core/app/telemetry/events';
+import { IAgentTaskService } from '@hilbras/omnicode-engine/agent/task/task';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { IAgentToolPolicyService } from '@hilbras/omnicode-engine/agent/toolPolicy/toolPolicy';
+import { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
+import type { QuestionAnsweredEvent, QuestionDismissedEvent } from '@hilbras/omnicode-engine/app/telemetry/events';
 import type {
   ExecutableToolContext,
   ExecutableToolResult,
   ToolExecution,
-} from '@hilbras/omnicode-core/tool/toolContract';
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+} from '@hilbras/omnicode-engine/tool/toolContract';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
 import {
   INTERACTION_TAG_AGENT_ID,
@@ -23,16 +23,16 @@ import {
   INTERACTION_TAG_TURN_ID,
   isInteractionCancellation,
   type InteractionTags,
-} from '@hilbras/omnicode-core/human/interaction/interaction';
-import { interactions } from '@hilbras/omnicode-core/human/interaction/facade';
+} from '@hilbras/omnicode-engine/human/interaction/interaction';
+import { interactions } from '@hilbras/omnicode-engine/human/interaction/facade';
 import type {
   QuestionAnswers,
   QuestionAnswerMethod,
   QuestionRequest,
   QuestionResponse,
   QuestionResult,
-} from '@hilbras/omnicode-core/agent/interaction/question';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
+} from '@hilbras/omnicode-engine/agent/interaction/question';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
 import {
   AskUserQuestionInputSchema,
   AskUserQuestionInputSchemaWithBackground,

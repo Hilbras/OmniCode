@@ -19,7 +19,7 @@ import {
   type FsGitStatusResponse,
   type FsPullRequest,
   IGitService,
-} from '@hilbras/omnicode-core/app/git/git';
+} from '@hilbras/omnicode-engine/app/git/git';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';

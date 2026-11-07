@@ -42,6 +42,7 @@
   "dependencies": {
     "@hilbras/omnicode-auth": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
+    "@hilbras/omnicode-engine": "workspace:^",
     "ws": "^8.18.0"
   },
   "devDependencies": {

@@ -4,20 +4,20 @@ import { join } from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import '@hilbras/omnicode-core/features/featureAssemblyService';
-import '@hilbras/omnicode-core/app/feature/featureManagerService';
+import '@hilbras/omnicode-engine/features/featureAssemblyService';
+import '@hilbras/omnicode-engine/app/feature/featureManagerService';
 import { createServices } from '@hilbras/omnicode-base/di/testInstantiationService';
 import { createScopedTestHost } from '@hilbras/omnicode-base/di/test';
 import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
-import { getFeatureRecipes } from '@hilbras/omnicode-core/features/featureRegistry';
-import { getContributedFlags } from '@hilbras/omnicode-core/app/flag/flagRegistry';
-import { getConfigSectionContributions } from '@hilbras/omnicode-core/app/config/configSectionContributions';
-import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
-import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
+import { getFeatureRecipes } from '@hilbras/omnicode-engine/features/featureRegistry';
+import { getContributedFlags } from '@hilbras/omnicode-engine/app/flag/flagRegistry';
+import { getConfigSectionContributions } from '@hilbras/omnicode-engine/app/config/configSectionContributions';
+import { IBootstrapService } from '@hilbras/omnicode-engine/app/bootstrap/bootstrap';
+import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
 import { ILogService } from '@hilbras/omnicode-base/log/log';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
-import { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
+import { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
 
 import { IMemoryService } from '#/contracts/memoryContract';
 import { MEMORY_FLAG_ENV, MEMORY_FLAG_ID } from '#/feature/flag';

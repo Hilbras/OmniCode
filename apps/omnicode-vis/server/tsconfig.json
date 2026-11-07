@@ -3,7 +3,7 @@
   "include": [
     "src",
     "test",
-    "../../../Kernel/core/src/env.d.ts",
+    "../../../Kernel/engine/src/env.d.ts",
     "../../../Kernel/base/src"
   ]
 }

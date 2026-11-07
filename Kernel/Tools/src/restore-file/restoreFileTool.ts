@@ -1,24 +1,24 @@
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-core/agent/runtimeBinding/agentRuntime';
-import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { mainAgentOnlyExecution } from '@hilbras/omnicode-core/agent/tools/mainAgentOnly';
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
+import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-engine/agent/runtimeBinding/agentRuntime';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { mainAgentOnlyExecution } from '@hilbras/omnicode-engine/agent/tools/mainAgentOnly';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 import {
   IAgentFileHistoryService,
   type FileHistoryRestoreOutcome,
   type FileHistoryTurnSummary,
-} from '@hilbras/omnicode-core/features/fileHistory/fileHistory';
-import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
-import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspaceContext/workspaceContext';
-import { RuntimeWorkspaceView } from '@hilbras/omnicode-core/runtime/runtimeWorkspaceView';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { resolvePathAccessPath, type WorkspaceConfig } from '@hilbras/omnicode-core/tool/path-access';
-import { literalRulePattern, matchesPathRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
+} from '@hilbras/omnicode-engine/features/fileHistory/fileHistory';
+import { ISessionSkillCatalog } from '@hilbras/omnicode-engine/features/skill/session/skillCatalog';
+import { ISessionWorkspaceContext } from '@hilbras/omnicode-engine/session/workspaceContext/workspaceContext';
+import { RuntimeWorkspaceView } from '@hilbras/omnicode-engine/runtime/runtimeWorkspaceView';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { resolvePathAccessPath, type WorkspaceConfig } from '@hilbras/omnicode-engine/tool/path-access';
+import { literalRulePattern, matchesPathRuleSubject } from '@hilbras/omnicode-engine/tool/rule-match';
 import {
   ToolAccesses,
   type ExecutableToolResult,
   type ToolExecution,
-} from '@hilbras/omnicode-core/tool/toolContract';
+} from '@hilbras/omnicode-engine/tool/toolContract';
 import { FILE_RESTORE_FLAG_ID } from './flag';
 import { IRestoreFileTool, RestoreFileInputSchema, type RestoreFileInput } from './restore-file';
 import RESTORE_DESCRIPTION from './restore-file.md?raw';

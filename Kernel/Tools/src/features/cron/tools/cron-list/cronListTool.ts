@@ -1,14 +1,14 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
-import type { ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { IAgentCronService } from '@hilbras/omnicode-core/features/cron/cronService';
-import { cronToHuman, parseCronExpression } from '@hilbras/omnicode-core/features/cron/internal/cron-expr';
-import { type CronTask } from '@hilbras/omnicode-core/features/cron/cronTask';
-import { formatLocalIsoWithOffset } from '@hilbras/omnicode-core/features/cron/internal/format';
+import type { ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { IAgentCronService } from '@hilbras/omnicode-engine/features/cron/cronService';
+import { cronToHuman, parseCronExpression } from '@hilbras/omnicode-engine/features/cron/internal/cron-expr';
+import { type CronTask } from '@hilbras/omnicode-engine/features/cron/cronTask';
+import { formatLocalIsoWithOffset } from '@hilbras/omnicode-engine/features/cron/internal/format';
 
-import { CRON_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-core/agent/tools/mainAgentOnly';
+import { CRON_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-engine/agent/tools/mainAgentOnly';
 import { ICronListTool, CronListInputSchema, type CronListInput } from './cron-list';
 import CRON_LIST_DESCRIPTION from './cron-list.md?raw';
 

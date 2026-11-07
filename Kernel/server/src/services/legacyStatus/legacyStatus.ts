@@ -8,7 +8,7 @@ import {
   type IAgentScopeHandle,
   type UsageStatus,
 } from '@hilbras/omnicode-core';
-import type { TurnEndReason } from '@hilbras/omnicode-core/agent/loop/turnEvents';
+import type { TurnEndReason } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
 
 export type AgentPhase =
   | { readonly kind: 'idle' }

@@ -3,7 +3,7 @@ import {
   type EnsureRgPathOptions,
   type RgProbe,
   type RgResolution,
-} from '@hilbras/omnicode-core/os/backends/node-local/tools/rgLocator';
+} from '@hilbras/omnicode-engine/os/backends/node-local/tools/rgLocator';
 
 export type RgResolver = (probe: RgProbe, options: EnsureRgPathOptions) => Promise<RgResolution>;
 

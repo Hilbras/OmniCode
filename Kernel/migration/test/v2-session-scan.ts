@@ -1,11 +1,11 @@
-import { FileStorageService } from '@hilbras/omnicode-core/persistence/backends/node-fs/fileStorageService';
-import { JsonAtomicDocumentStore } from '@hilbras/omnicode-core/persistence/backends/node-fs/atomicDocumentStore';
+import { FileStorageService } from '@hilbras/omnicode-engine/persistence/backends/node-fs/fileStorageService';
+import { JsonAtomicDocumentStore } from '@hilbras/omnicode-engine/persistence/backends/node-fs/atomicDocumentStore';
 import {
   listWorkspaceIds,
   listSessionIds,
   readSessionSummary,
-} from '@hilbras/omnicode-core/app/sessionIndex/sessionIndexSource';
-import type { SessionSummary } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
+} from '@hilbras/omnicode-engine/app/sessionIndex/sessionIndexSource';
+import type { SessionSummary } from '@hilbras/omnicode-engine/app/sessionIndex/sessionIndex';
 
 export async function listSessionsV2(homeDir: string): Promise<readonly SessionSummary[]> {
   const storage = new FileStorageService(homeDir);

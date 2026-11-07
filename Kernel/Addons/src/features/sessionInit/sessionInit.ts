@@ -1,2 +1,2 @@
-export { ISessionInitService } from '@hilbras/omnicode-core/session/sessionInit/sessionInitContract';
+export { ISessionInitService } from '@hilbras/omnicode-engine/session/sessionInit/sessionInitContract';
 

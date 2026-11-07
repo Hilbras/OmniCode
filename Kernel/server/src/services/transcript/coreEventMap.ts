@@ -5,15 +5,15 @@ import {
   type CronFired,
   type GoalUpdated,
 } from '@hilbras/omnicode-core';
-import type { ContextSpliced } from '@hilbras/omnicode-core/agent/contextMemory/contextEvents';
-import { isUserPromptSubmitHookPart } from '@hilbras/omnicode-core/agent/contextMemory/hookParts';
+import type { ContextSpliced } from '@hilbras/omnicode-engine/agent/contextMemory/contextEvents';
+import { isUserPromptSubmitHookPart } from '@hilbras/omnicode-engine/agent/contextMemory/hookParts';
 import type {
   CompactionBlocked,
   CompactionCancelled,
   CompactionCompleted,
   CompactionStarted,
-} from '@hilbras/omnicode-core/agent/fullCompaction/compactionOps';
-import type { AgentActivitySnapshot } from '@hilbras/omnicode-core/agent/loop/loop';
+} from '@hilbras/omnicode-engine/agent/fullCompaction/compactionOps';
+import type { AgentActivitySnapshot } from '@hilbras/omnicode-engine/agent/loop/loop';
 import type {
   AssistantDelta,
   ThinkingDelta,
@@ -23,11 +23,11 @@ import type {
   TurnStepInterrupted,
   TurnStepRetrying,
   TurnStepStarted,
-} from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { TurnEnded, TurnSteer } from '@hilbras/omnicode-core/agent/loop/turnOps';
-import type { AgentErrorEvent } from '@hilbras/omnicode-core/agent/mcp/mcpEvents';
-import type { PluginCommandActivated } from '@hilbras/omnicode-core/agent/pluginCommand/pluginCommand';
-import type { WarningIssued } from '@hilbras/omnicode-core/agent/profile/profileOps';
+} from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import type { TurnEnded, TurnSteer } from '@hilbras/omnicode-engine/agent/loop/turnOps';
+import type { AgentErrorEvent } from '@hilbras/omnicode-engine/agent/mcp/mcpEvents';
+import type { PluginCommandActivated } from '@hilbras/omnicode-engine/agent/pluginCommand/pluginCommand';
+import type { WarningIssued } from '@hilbras/omnicode-engine/agent/profile/profileOps';
 import type {
   PromptAborted,
   PromptCompleted,
@@ -35,42 +35,42 @@ import type {
   PromptStarted,
   PromptSteered,
   PromptSubmitted,
-} from '@hilbras/omnicode-core/agent/prompt/promptEvents';
+} from '@hilbras/omnicode-engine/agent/prompt/promptEvents';
 import type {
   ShellCompleted,
   ShellOutput,
   ShellStarted,
-} from '@hilbras/omnicode-core/agent/shellCommand/shellCommandService';
+} from '@hilbras/omnicode-engine/agent/shellCommand/shellCommandService';
 import type {
   TaskNotified,
   TaskStarted,
   TaskTerminatedNotice,
-} from '@hilbras/omnicode-core/agent/task/taskOps';
+} from '@hilbras/omnicode-engine/agent/task/taskOps';
 import type {
   PermissionApprovalRequested,
   PermissionApprovalResolved,
-} from '@hilbras/omnicode-core/agent/toolApproval/toolApprovalService';
+} from '@hilbras/omnicode-engine/agent/toolApproval/toolApprovalService';
 import type {
   ToolCallStarted,
   ToolProgress,
   ToolResultEvent,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
-import type { AgentStatusUpdated } from '@hilbras/omnicode-core/agent/usage/usageEvents';
-import type { HookResult } from '@hilbras/omnicode-core/features/externalHooks/agent/agentExternalHooksService';
-import type { PlanRevision } from '@hilbras/omnicode-core/features/plan/planOps';
-import type { SkillActivated } from '@hilbras/omnicode-core/features/skill/skillOps';
-import type { SubagentSuspended } from '@hilbras/omnicode-core/features/swarm/session/sessionSwarmService';
+} from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
+import type { AgentStatusUpdated } from '@hilbras/omnicode-engine/agent/usage/usageEvents';
+import type { HookResult } from '@hilbras/omnicode-engine/features/externalHooks/agent/agentExternalHooksService';
+import type { PlanRevision } from '@hilbras/omnicode-engine/features/plan/planOps';
+import type { SkillActivated } from '@hilbras/omnicode-engine/features/skill/skillOps';
+import type { SubagentSuspended } from '@hilbras/omnicode-engine/features/swarm/session/sessionSwarmService';
 import {
   annotateBundledSkillParts,
   isSkillActivationPart,
-} from '@hilbras/omnicode-core/human/agent/origin';
+} from '@hilbras/omnicode-engine/human/agent/origin';
 import type {
   SubagentCancelled,
   SubagentCompleted,
   SubagentFailed,
   SubagentSpawned,
   SubagentStarted,
-} from '@hilbras/omnicode-core/session/subagent/mirrorAgentRun';
+} from '@hilbras/omnicode-engine/session/subagent/mirrorAgentRun';
 import {
   projectTranscriptUserOrigin,
   projectTranscriptUserTurnOrigin,

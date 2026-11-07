@@ -15,7 +15,7 @@
 import {
   McpServerConfigSchema,
   type McpServerConfig,
-} from '@hilbras/omnicode-core/mcpCore/config-schema';
+} from '@hilbras/omnicode-engine/mcpCore/config-schema';
 
 import { ErrorCodes, OmnicodeError } from '#/errors';
 import type { McpServerConfig as GlobalMcpServerConfig } from '#/mcp';

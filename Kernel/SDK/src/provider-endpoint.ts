@@ -1,4 +1,4 @@
-import { explainProviderEndpoint } from '@hilbras/omnicode-core/llm-adapter/provider/provider-definition';
+import { explainProviderEndpoint } from '@hilbras/omnicode-engine/llm-adapter/provider/provider-definition';
 
 /**
  * The vendor fallbacks a wire type resolves when a provider record declares no

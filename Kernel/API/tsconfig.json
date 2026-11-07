@@ -4,7 +4,7 @@
   "include": [
     "src",
     "examples",
-    "../../Kernel/core/src/env.d.ts",
+    "../../Kernel/engine/src/env.d.ts",
     "../base/src"
   ]
 }

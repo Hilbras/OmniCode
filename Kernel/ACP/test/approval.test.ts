@@ -15,7 +15,7 @@ import {
 
 import type { PermissionOption, RequestPermissionResponse } from '@agentclientprotocol/sdk';
 import type { SessionApprovalRequest } from '@hilbras/omnicode-core';
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
 function selected(optionId: string): RequestPermissionResponse {
   return { outcome: { outcome: 'selected', optionId } };

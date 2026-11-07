@@ -1,9 +1,9 @@
 import type { SessionSummary as V2SessionSummary } from '@hilbras/omnicode-core';
-import type { GoalChange, GoalSnapshot } from '@hilbras/omnicode-core/features/goal/types';
-import type { PlanData } from '@hilbras/omnicode-core/features/plan/plan';
+import type { GoalChange, GoalSnapshot } from '@hilbras/omnicode-engine/features/goal/types';
+import type { PlanData } from '@hilbras/omnicode-engine/features/plan/plan';
 import type { ModelCapability, ProviderConfig } from '@hilbras/omnicode-llm';
-import type { CompactionResult } from '@hilbras/omnicode-core/agent/fullCompaction/types';
-import type { UsageStatus } from '@hilbras/omnicode-core/agent/usage/usage';
+import type { CompactionResult } from '@hilbras/omnicode-engine/agent/fullCompaction/types';
+import type { UsageStatus } from '@hilbras/omnicode-engine/agent/usage/usage';
 
 import type { AgentContextData, ContextMessage } from '#/context';
 import type { PermissionApprovalResultRecord, PermissionData, PermissionMode } from '#/permission';

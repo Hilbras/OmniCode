@@ -27,12 +27,12 @@ import {
   type ITelemetryService,
   type PromptFileAttachment,
 } from '@hilbras/omnicode-core';
-import { sniffMediaFromMagic } from '@hilbras/omnicode-core/agent/media/file-type';
+import { sniffMediaFromMagic } from '@hilbras/omnicode-engine/agent/media/file-type';
 import {
   IMAGE_MIME_BY_SUFFIX,
   VIDEO_MIME_BY_SUFFIX,
-} from '@hilbras/omnicode-core/agent/media/mediaRef';
-import { isSensitiveFile } from '@hilbras/omnicode-core/tool/path-access';
+} from '@hilbras/omnicode-engine/agent/media/mediaRef';
+import { isSensitiveFile } from '@hilbras/omnicode-engine/tool/path-access';
 
 import type { PromptSubmission } from '../protocol/rest-prompt';
 

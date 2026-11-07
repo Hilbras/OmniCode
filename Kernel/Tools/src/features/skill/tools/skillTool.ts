@@ -1,17 +1,17 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
 import { randomUUID } from 'node:crypto';
 
-import type { SkillActivationOrigin } from '@hilbras/omnicode-core/agent/contextMemory/types';
-import { renderModelToolSkillPrompt } from '@hilbras/omnicode-core/features/skill/prompt';
-import { IAgentSkillService } from '@hilbras/omnicode-core/features/skill/skillService';
-import type { ExecutableToolResult, ToolDeliveryMessage, ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
-import { isInlineSkillType } from '@hilbras/omnicode-core/features/skill/catalog/types';
-import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
+import type { SkillActivationOrigin } from '@hilbras/omnicode-engine/agent/contextMemory/types';
+import { renderModelToolSkillPrompt } from '@hilbras/omnicode-engine/features/skill/prompt';
+import { IAgentSkillService } from '@hilbras/omnicode-engine/features/skill/skillService';
+import type { ExecutableToolResult, ToolDeliveryMessage, ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
+import { isInlineSkillType } from '@hilbras/omnicode-engine/features/skill/catalog/types';
+import { ISessionSkillCatalog } from '@hilbras/omnicode-engine/features/skill/session/skillCatalog';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
 import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { matchesGlobRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { matchesGlobRuleSubject } from '@hilbras/omnicode-engine/tool/rule-match';
 
 import {
   ISkillTool,

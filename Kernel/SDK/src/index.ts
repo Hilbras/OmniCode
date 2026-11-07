@@ -69,7 +69,7 @@ export { resolveConfigPath } from '@hilbras/omnicode-core';
 export { limitAgentReplayByTurns } from '#/replay';
 export { parseAgentFileText, resolveAgentPath } from '@hilbras/omnicode-core';
 export { SECONDARY_DERIVED_MODEL_ALIAS } from '#/config/index';
-export { PRIMARY_SUBAGENT_MODEL_CHOICE } from '@hilbras/omnicode-core/session/subagent/configSection';
+export { PRIMARY_SUBAGENT_MODEL_CHOICE } from '@hilbras/omnicode-engine/session/subagent/configSection';
 export type {
   AgentTaskInfo,
   AgentTaskInfoByKind,
@@ -115,11 +115,11 @@ export {
   isDaemonFileUrl,
   matchSingleMediaPathTag,
   parseDaemonFileUrl,
-} from '@hilbras/omnicode-core/agent/media/mediaRef';
+} from '@hilbras/omnicode-engine/agent/media/mediaRef';
 export type {
   DaemonFileRef,
   MediaKind,
-} from '@hilbras/omnicode-core/agent/media/mediaRef';
+} from '@hilbras/omnicode-engine/agent/media/mediaRef';
 
 export type {
   OmnicodeAuthCompleteFeedbackUploadInput,

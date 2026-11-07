@@ -15,14 +15,14 @@ export type {
   PromptOrigin,
   CronTask,
 } from '@hilbras/omnicode-core';
-export { WIRE_PROTOCOL_VERSION } from '@hilbras/omnicode-core/wire/migration/migration';
+export { WIRE_PROTOCOL_VERSION } from '@hilbras/omnicode-engine/wire/migration/migration';
 export type {
   AgentTaskInfo as BackgroundTaskInfo,
   AgentTaskStatus as BackgroundTaskStatus,
 } from '@hilbras/omnicode-core';
 export type { SubagentTaskInfo as AgentBackgroundTaskInfo } from '@hilbras/omnicode-core';
-export type { ProcessTaskInfo as ProcessBackgroundTaskInfo } from '@hilbras/omnicode-core/agent/task/types';
-export type { QuestionTaskInfo as QuestionBackgroundTaskInfo } from '@hilbras/omnicode-core/agent/task/types';
+export type { ProcessTaskInfo as ProcessBackgroundTaskInfo } from '@hilbras/omnicode-engine/agent/task/types';
+export type { QuestionTaskInfo as QuestionBackgroundTaskInfo } from '@hilbras/omnicode-engine/agent/task/types';
 
 import type {
   AgentTaskInfo as BackgroundTaskInfo,
@@ -75,23 +75,23 @@ import type {
   ContextApplyCompactionPayload,
   ContextClear,
   ContextUndo,
-} from '@hilbras/omnicode-core/agent/contextMemory/contextEvents';
-import type { TurnCancel, TurnEnded, TurnPrompt, TurnSteer } from '@hilbras/omnicode-core/agent/loop/turnOps';
-import type { TurnStepInterrupted } from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { TurnStepRetrying } from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { UsageRecord } from '@hilbras/omnicode-core/agent/usage/usageOps';
+} from '@hilbras/omnicode-engine/agent/contextMemory/contextEvents';
+import type { TurnCancel, TurnEnded, TurnPrompt, TurnSteer } from '@hilbras/omnicode-engine/agent/loop/turnOps';
+import type { TurnStepInterrupted } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import type { TurnStepRetrying } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import type { UsageRecord } from '@hilbras/omnicode-engine/agent/usage/usageOps';
 import type {
   ConfigUpdate,
   ProfileBind,
   ToolsResetActiveTools,
   ToolsSetActiveTools,
-} from '@hilbras/omnicode-core/agent/profile/profileOps';
-import type { PermissionSetMode } from '@hilbras/omnicode-core/agent/permissionMode/permissionModeOps';
-import type { PermissionRecordApprovalResult } from '@hilbras/omnicode-core/agent/permissionRules/permissionRulesOps';
-import type { RuntimeSetBinding } from '@hilbras/omnicode-core/agent/runtimeBinding/runtimeBindingOps';
-import type { SwarmModeEnter, SwarmModeExit } from '@hilbras/omnicode-core/features/swarm/swarmOps';
-import type { TowerModeEnter, TowerModeExit } from '@hilbras/omnicode-core/features/tower/towerOps';
-import type { ToolsUpdateStore } from '@hilbras/omnicode-core/features/todo/todoOps';
+} from '@hilbras/omnicode-engine/agent/profile/profileOps';
+import type { PermissionSetMode } from '@hilbras/omnicode-engine/agent/permissionMode/permissionModeOps';
+import type { PermissionRecordApprovalResult } from '@hilbras/omnicode-engine/agent/permissionRules/permissionRulesOps';
+import type { RuntimeSetBinding } from '@hilbras/omnicode-engine/agent/runtimeBinding/runtimeBindingOps';
+import type { SwarmModeEnter, SwarmModeExit } from '@hilbras/omnicode-engine/features/swarm/swarmOps';
+import type { TowerModeEnter, TowerModeExit } from '@hilbras/omnicode-engine/features/tower/towerOps';
+import type { ToolsUpdateStore } from '@hilbras/omnicode-engine/features/todo/todoOps';
 
 /** A wire record with v2's literal `type` discriminant restored. v2 declares
  *  records as Event2 class + payload interface mergings whose `type` field is

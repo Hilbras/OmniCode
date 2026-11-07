@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
-import { type AgentTool } from '@hilbras/omnicode-core/tool/toolContract';
-import { type TodoStatus } from '@hilbras/omnicode-core/features/todo/todoItem';
+import { type AgentTool } from '@hilbras/omnicode-engine/tool/toolContract';
+import { type TodoStatus } from '@hilbras/omnicode-engine/features/todo/todoItem';
 
 const TodoItemSchema = z.object({
   title: z.string().min(1).describe('Short, actionable title for the todo.'),

@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { registerConfigSection } from '@hilbras/omnicode-core/app/config/configSectionContributions';
+import { registerConfigSection } from '@hilbras/omnicode-engine/app/config/configSectionContributions';
 
 export const READ_SECTION = 'read';
 

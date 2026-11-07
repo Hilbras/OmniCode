@@ -7,7 +7,7 @@ import {
   oauthLoginCancelResponseSchema,
   oauthLogoutResponseSchema,
   oauthRegionResultSchema,
-} from '@hilbras/omnicode-core/app/auth/oauthProtocol';
+} from '@hilbras/omnicode-engine/app/auth/oauthProtocol';
 import { z } from 'zod';
 
 import { okEnvelope } from '../envelope';

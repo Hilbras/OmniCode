@@ -6,12 +6,12 @@ import type {
   McpServerInspection,
   McpServerLocator,
   McpServerTestResult,
-} from '@hilbras/omnicode-core/app/mcpManagement/mcpManagement';
+} from '@hilbras/omnicode-engine/app/mcpManagement/mcpManagement';
 import type {
   McpRegistryPluginOrigin,
   McpServerSource,
-} from '@hilbras/omnicode-core/app/mcpRegistry/mcpRegistry';
-import type { McpServerConfigView } from '@hilbras/omnicode-core/mcpCore/configView';
+} from '@hilbras/omnicode-engine/app/mcpRegistry/mcpRegistry';
+import type { McpServerConfigView } from '@hilbras/omnicode-engine/mcpCore/configView';
 
 export type { McpServerSource };
 export type { McpServerLocator };

@@ -1,19 +1,19 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { GOAL_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-core/agent/tools/mainAgentOnly';
-import { type ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { GOAL_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-engine/agent/tools/mainAgentOnly';
+import { type ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
 
-import { IAgentGoalService } from '@hilbras/omnicode-core/features/goal/goalService';
+import { IAgentGoalService } from '@hilbras/omnicode-engine/features/goal/goalService';
 import {
   buildGoalBlockedReasonPrompt,
   buildGoalCompletionSummaryPrompt,
 } from '@hilbras/omnicode-tools/features/goal/tools/outcome-prompts';
-import { ICompletionCriteriaService } from '@hilbras/omnicode-core/features/computerUse/completionCriteriaService';
-import { gateCompletion } from '@hilbras/omnicode-core/features/computerUse/completionGate';
-import { createNodeCheckContext } from '@hilbras/omnicode-core/features/computerUse/nodeCheckContext';
-import { isVerificationEnabled } from '@hilbras/omnicode-core/features/computerUse/verificationFlag';
+import { ICompletionCriteriaService } from '@hilbras/omnicode-engine/features/computerUse/completionCriteriaService';
+import { gateCompletion } from '@hilbras/omnicode-engine/features/computerUse/completionGate';
+import { createNodeCheckContext } from '@hilbras/omnicode-engine/features/computerUse/nodeCheckContext';
+import { isVerificationEnabled } from '@hilbras/omnicode-engine/features/computerUse/verificationFlag';
 
 import DESCRIPTION from './update-goal.md?raw';
 import {

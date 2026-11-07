@@ -14,11 +14,11 @@
 import {
   IHostFolderBrowser,
   type FsBrowseEntry,
-} from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
+} from '@hilbras/omnicode-engine/app/hostFolderBrowser/hostFolderBrowser';
 import {
   IWorkspaceService,
   type Workspace,
-} from '@hilbras/omnicode-core/app/workspace/workspace';
+} from '@hilbras/omnicode-engine/app/workspace/workspace';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 

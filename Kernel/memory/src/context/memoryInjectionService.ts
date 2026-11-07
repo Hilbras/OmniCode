@@ -1,10 +1,10 @@
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { Service } from '@hilbras/omnicode-base/di/service';
 import { ILogService, type ILogger } from '@hilbras/omnicode-base/log/log';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import { IAgentReminderService } from '@hilbras/omnicode-core/features/reminder/reminderService';
-import type { ContextInjectionProvider } from '@hilbras/omnicode-core/features/reminder/types';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
+import { IAgentReminderService } from '@hilbras/omnicode-engine/features/reminder/reminderService';
+import type { ContextInjectionProvider } from '@hilbras/omnicode-engine/features/reminder/types';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
 
 import {
   IAgentMemoryContextService,

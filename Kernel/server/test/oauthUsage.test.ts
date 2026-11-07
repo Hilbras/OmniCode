@@ -12,7 +12,7 @@ import {
   managedUserInfoResultSchema,
   type ManagedUsageResult,
   type ManagedUserInfoResult,
-} from '@hilbras/omnicode-core/app/auth/oauthProtocol';
+} from '@hilbras/omnicode-engine/app/auth/oauthProtocol';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';

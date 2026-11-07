@@ -1,5 +1,5 @@
-import type { PermissionMode } from '@hilbras/omnicode-core/agent/permissionPolicy/types';
-import type { UsageStatus } from '@hilbras/omnicode-core/agent/usage/usage';
+import type { PermissionMode } from '@hilbras/omnicode-engine/agent/permissionPolicy/types';
+import type { UsageStatus } from '@hilbras/omnicode-engine/agent/usage/usage';
 import type { z } from 'zod';
 
 import type { agentEventSchema } from '../../../protocol/events-zod';

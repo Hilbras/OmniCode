@@ -1,14 +1,14 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
-import { IAgentContextMemoryService } from '@hilbras/omnicode-core/agent/contextMemory/contextMemory';
-import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { ToolAccesses, type ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
-import { notifyUserAvailable } from '@hilbras/omnicode-core/features/notify/notifyUserAvailability';
-import { ISessionNotify } from '@hilbras/omnicode-core/features/notify/sessionNotify';
-import { notifyStreakBefore } from '@hilbras/omnicode-core/features/notify/notifyUserNudge';
+import { IAgentContextMemoryService } from '@hilbras/omnicode-engine/agent/contextMemory/contextMemory';
+import { IBootstrapService } from '@hilbras/omnicode-engine/app/bootstrap/bootstrap';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
+import { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { ToolAccesses, type ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
+import { notifyUserAvailable } from '@hilbras/omnicode-engine/features/notify/notifyUserAvailability';
+import { ISessionNotify } from '@hilbras/omnicode-engine/features/notify/sessionNotify';
+import { notifyStreakBefore } from '@hilbras/omnicode-engine/features/notify/notifyUserNudge';
 
 import {
   INotifyUserTool,

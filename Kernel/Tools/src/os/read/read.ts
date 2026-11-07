@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
-import { type AgentTool } from '@hilbras/omnicode-core/tool/toolContract';
+import { type AgentTool } from '@hilbras/omnicode-engine/tool/toolContract';
 
 export const DEFAULT_MAX_CHARS = 100_000;
 export const DEFAULT_MAX_CHARS_LIMIT = 500_000;

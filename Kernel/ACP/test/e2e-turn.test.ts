@@ -16,7 +16,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { getLiveSessionById, IAgentLifecycleService, IEventBus } from '@hilbras/omnicode-core';
-import { ToolProgress } from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
+import { ToolProgress } from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { mapPromptLaunchError } from '../src/session';

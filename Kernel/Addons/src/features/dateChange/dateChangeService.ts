@@ -5,17 +5,17 @@ import {
   AgentActorService,
   type AgentActorContext,
   type AgentActorRestoreEvent,
-} from '@hilbras/omnicode-core/agent/actorService/agentActorService';
-import { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
-import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { IAgentReminderService } from '@hilbras/omnicode-core/features/reminder/reminderService';
+} from '@hilbras/omnicode-engine/agent/actorService/agentActorService';
+import { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { IAgentReminderService } from '@hilbras/omnicode-engine/features/reminder/reminderService';
 import type {
   ContextInjectionContext,
   ContextInjectionResult,
-} from '@hilbras/omnicode-core/features/reminder/types';
-import { IHostClock } from '@hilbras/omnicode-core/os/interface/hostClock';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
-import { IEventDispatcher } from '@hilbras/omnicode-core/state/eventDispatcher';
+} from '@hilbras/omnicode-engine/features/reminder/types';
+import { IHostClock } from '@hilbras/omnicode-engine/os/interface/hostClock';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
+import { IEventDispatcher } from '@hilbras/omnicode-engine/state/eventDispatcher';
 
 import type { DateInjectionDisclosure } from './dateChange';
 import { pickDisclosureBaseline } from './disclosureBaseline';

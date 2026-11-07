@@ -19,7 +19,7 @@ import {
   type MarketplaceLocation,
   type PluginMarketplace,
   type PluginMarketplaceEntry,
-} from '@hilbras/omnicode-core/app/plugin/marketplace';
+} from '@hilbras/omnicode-engine/app/plugin/marketplace';
 
 import {
   OMNICODE_PLUGIN_MARKETPLACE_URL_ENV,
@@ -35,7 +35,7 @@ export {
   type PluginMarketplaceEntry,
   type PluginMarketplaceTier,
   type MarketplaceUpdateStatus,
-} from '@hilbras/omnicode-core/app/plugin/marketplace';
+} from '@hilbras/omnicode-engine/app/plugin/marketplace';
 
 export interface LoadPluginMarketplaceOptions {
   readonly workDir: string;

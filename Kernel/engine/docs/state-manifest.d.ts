@@ -130,14 +130,14 @@ export type AppStateKey = keyof AppStateSnapshot;
 export interface WorkspaceStateSnapshot {
   // src/features/skill/workspace/workspaceSkillCatalogService.ts
   'workspaceSkillCatalog.contributions': Map<string, {
-    readonly c: /* SkillContribution — Kernel/core/src/features/skill/catalog/skillSource.ts */ {
-      readonly skills: readonly /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    readonly c: /* SkillContribution — Kernel/engine/src/features/skill/catalog/skillSource.ts */ {
+      readonly skills: readonly /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name: string;
         readonly description: string;
         readonly path: string;
         readonly dir: string;
         readonly content: string;
-        readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+        readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
           readonly name?: string;
           readonly description?: string;
           readonly type?: string;
@@ -148,18 +148,18 @@ export interface WorkspaceStateSnapshot {
           readonly arguments?: string | readonly unknown[];
           [key: string]: unknown;
         };
-        readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-        readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+        readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+        readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
           readonly id: string;
           readonly instructions?: string;
         };
         readonly mermaid?: string;
         readonly d2?: string;
         readonly productSpecific?: boolean;
-        readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+        readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
         readonly experimentalFlag?: string;
       }[];
-      readonly skipped?: readonly /* SkippedSkill — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly skipped?: readonly /* SkippedSkill — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly path: string;
         readonly type: string;
         readonly reason: string;
@@ -168,14 +168,14 @@ export interface WorkspaceStateSnapshot {
     };
     readonly priority: number;
   }>;
-  'workspaceSkillCatalog.merged': /* InMemorySkillCatalog — Kernel/core/src/features/skill/catalog/registry.ts */ {
-    registerBuiltinSkill: (skill: /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+  'workspaceSkillCatalog.merged': /* InMemorySkillCatalog — Kernel/engine/src/features/skill/catalog/registry.ts */ {
+    registerBuiltinSkill: (skill: /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -186,24 +186,24 @@ export interface WorkspaceStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }) => void;
-    register: (skill: /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    register: (skill: /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -214,32 +214,32 @@ export interface WorkspaceStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }, options?: {
       readonly replace?: boolean;
     }) => void;
-    recordSkipped: (skills: readonly /* SkippedSkill — Kernel/core/src/features/skill/catalog/types.ts */ {
+    recordSkipped: (skills: readonly /* SkippedSkill — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly path: string;
       readonly type: string;
       readonly reason: string;
     }[]) => void;
     addRoots: (roots: readonly string[]) => void;
-    getSkill: (name: string) => /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    getSkill: (name: string) => /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -250,24 +250,24 @@ export interface WorkspaceStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     } | undefined;
-    getPluginSkill: (pluginId: string, name: string) => /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    getPluginSkill: (pluginId: string, name: string) => /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -278,24 +278,24 @@ export interface WorkspaceStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     } | undefined;
-    renderSkillPrompt: (skill: /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    renderSkillPrompt: (skill: /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -306,26 +306,26 @@ export interface WorkspaceStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }, rawArgs: string, context?: {
       readonly sessionId?: string;
     }) => string;
-    listSkills: () => readonly /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    listSkills: () => readonly /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -336,24 +336,24 @@ export interface WorkspaceStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }[];
-    listInvocableSkills: () => readonly /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    listInvocableSkills: () => readonly /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -364,19 +364,19 @@ export interface WorkspaceStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }[];
     getSkillRoots: () => readonly string[];
-    getSkippedByPolicy: () => readonly /* SkippedSkill — Kernel/core/src/features/skill/catalog/types.ts */ {
+    getSkippedByPolicy: () => readonly /* SkippedSkill — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly path: string;
       readonly type: string;
       readonly reason: string;
@@ -388,7 +388,7 @@ export interface WorkspaceStateSnapshot {
   'workspaceDirs.ephemeralDirs': readonly string[];
   'workspaceDirs.fileDirs': readonly string[];
   // src/workspace/workspaceInstructions/workspaceInstructionsService.ts
-  'workspaceInstructions.current': /* WorkspaceInstructionsSnapshot — Kernel/core/src/workspace/workspaceInstructions/workspaceInstructions.ts */ {
+  'workspaceInstructions.current': /* WorkspaceInstructionsSnapshot — Kernel/engine/src/workspace/workspaceInstructions/workspaceInstructions.ts */ {
     readonly agentsMd: string | undefined;
     readonly agentsMdWarning: string | undefined;
     readonly agentsMdPaths: readonly string[] | undefined;
@@ -403,14 +403,14 @@ export type WorkspaceStateKey = keyof WorkspaceStateSnapshot;
 export interface SessionStateSnapshot {
   // src/features/skill/session/skillCatalogService.ts
   'sessionSkillCatalog.contributions': Map<string, {
-    readonly c: /* SkillContribution — Kernel/core/src/features/skill/catalog/skillSource.ts */ {
-      readonly skills: readonly /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    readonly c: /* SkillContribution — Kernel/engine/src/features/skill/catalog/skillSource.ts */ {
+      readonly skills: readonly /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name: string;
         readonly description: string;
         readonly path: string;
         readonly dir: string;
         readonly content: string;
-        readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+        readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
           readonly name?: string;
           readonly description?: string;
           readonly type?: string;
@@ -421,18 +421,18 @@ export interface SessionStateSnapshot {
           readonly arguments?: string | readonly unknown[];
           [key: string]: unknown;
         };
-        readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-        readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+        readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+        readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
           readonly id: string;
           readonly instructions?: string;
         };
         readonly mermaid?: string;
         readonly d2?: string;
         readonly productSpecific?: boolean;
-        readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+        readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
         readonly experimentalFlag?: string;
       }[];
-      readonly skipped?: readonly /* SkippedSkill — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly skipped?: readonly /* SkippedSkill — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly path: string;
         readonly type: string;
         readonly reason: string;
@@ -441,14 +441,14 @@ export interface SessionStateSnapshot {
     };
     readonly priority: number;
   }>;
-  'sessionSkillCatalog.merged': /* InMemorySkillCatalog — Kernel/core/src/features/skill/catalog/registry.ts */ {
-    registerBuiltinSkill: (skill: /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+  'sessionSkillCatalog.merged': /* InMemorySkillCatalog — Kernel/engine/src/features/skill/catalog/registry.ts */ {
+    registerBuiltinSkill: (skill: /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -459,24 +459,24 @@ export interface SessionStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }) => void;
-    register: (skill: /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    register: (skill: /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -487,32 +487,32 @@ export interface SessionStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }, options?: {
       readonly replace?: boolean;
     }) => void;
-    recordSkipped: (skills: readonly /* SkippedSkill — Kernel/core/src/features/skill/catalog/types.ts */ {
+    recordSkipped: (skills: readonly /* SkippedSkill — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly path: string;
       readonly type: string;
       readonly reason: string;
     }[]) => void;
     addRoots: (roots: readonly string[]) => void;
-    getSkill: (name: string) => /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    getSkill: (name: string) => /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -523,24 +523,24 @@ export interface SessionStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     } | undefined;
-    getPluginSkill: (pluginId: string, name: string) => /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    getPluginSkill: (pluginId: string, name: string) => /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -551,24 +551,24 @@ export interface SessionStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     } | undefined;
-    renderSkillPrompt: (skill: /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    renderSkillPrompt: (skill: /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -579,26 +579,26 @@ export interface SessionStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }, rawArgs: string, context?: {
       readonly sessionId?: string;
     }) => string;
-    listSkills: () => readonly /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    listSkills: () => readonly /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -609,24 +609,24 @@ export interface SessionStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }[];
-    listInvocableSkills: () => readonly /* SkillDefinition — Kernel/core/src/features/skill/catalog/types.ts */ {
+    listInvocableSkills: () => readonly /* SkillDefinition — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly name: string;
       readonly description: string;
       readonly path: string;
       readonly dir: string;
       readonly content: string;
-      readonly metadata: /* SkillMetadata — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly metadata: /* SkillMetadata — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly name?: string;
         readonly description?: string;
         readonly type?: string;
@@ -637,19 +637,19 @@ export interface SessionStateSnapshot {
         readonly arguments?: string | readonly unknown[];
         [key: string]: unknown;
       };
-      readonly source: /* SkillSource — Kernel/core/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
-      readonly plugin?: /* SkillPluginContext — Kernel/core/src/features/skill/catalog/types.ts */ {
+      readonly source: /* SkillSource — Kernel/engine/src/features/skill/catalog/types.ts */ 'project' | 'user' | 'extra' | 'builtin';
+      readonly plugin?: /* SkillPluginContext — Kernel/engine/src/features/skill/catalog/types.ts */ {
         readonly id: string;
         readonly instructions?: string;
       };
       readonly mermaid?: string;
       readonly d2?: string;
       readonly productSpecific?: boolean;
-      readonly scopes?: readonly (/* SkillScope — Kernel/core/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
+      readonly scopes?: readonly (/* SkillScope — Kernel/engine/src/features/skill/catalog/types.ts */ 'tui' | 'web')[];
       readonly experimentalFlag?: string;
     }[];
     getSkillRoots: () => readonly string[];
-    getSkippedByPolicy: () => readonly /* SkippedSkill — Kernel/core/src/features/skill/catalog/types.ts */ {
+    getSkippedByPolicy: () => readonly /* SkippedSkill — Kernel/engine/src/features/skill/catalog/types.ts */ {
       readonly path: string;
       readonly type: string;
       readonly reason: string;
@@ -658,13 +658,13 @@ export interface SessionStateSnapshot {
     getModelSkillListing: () => string;
   };
   // src/session/sessionActivity/sessionActivityService.ts
-  'sessionActivity.current': /* SessionActivityState — Kernel/core/src/session/sessionActivity/sessionActivity.ts */ {
+  'sessionActivity.current': /* SessionActivityState — Kernel/engine/src/session/sessionActivity/sessionActivity.ts */ {
     readonly busy: boolean;
     readonly mainTurnActive: boolean;
-    readonly pendingInteraction: /* SessionPendingInteraction — Kernel/core/src/session/sessionActivity/sessionActivity.ts */ 'none' | 'approval' | 'question';
+    readonly pendingInteraction: /* SessionPendingInteraction — Kernel/engine/src/session/sessionActivity/sessionActivity.ts */ 'none' | 'approval' | 'question';
     readonly lastTurnReason?: 'completed' | 'cancelled' | 'failed';
   };
-  'sessionActivity.folds': Map<string, /* AgentWorkFold — Kernel/core/src/session/sessionActivity/sessionActivityService.ts */ {
+  'sessionActivity.folds': Map<string, /* AgentWorkFold — Kernel/engine/src/session/sessionActivity/sessionActivityService.ts */ {
     turnActive: boolean;
     background: ReadonlySet<string>;
     compacting: boolean;
@@ -675,7 +675,7 @@ export interface SessionStateSnapshot {
     level: /* LogLevel — Kernel/base/src/log/log.ts */ 'info' | 'off' | 'error' | 'warn' | 'debug';
   };
   // src/session/sessionMetadata/sessionMetadataService.ts
-  'sessionMetadata.data': /* SessionMeta — Kernel/core/src/session/sessionMetadata/sessionMetadata.ts */ {
+  'sessionMetadata.data': /* SessionMeta — Kernel/engine/src/session/sessionMetadata/sessionMetadata.ts */ {
     readonly id: string;
     readonly version?: number;
     readonly title?: string;
@@ -687,7 +687,7 @@ export interface SessionStateSnapshot {
     readonly archivedAt?: number;
     readonly cwd?: string;
     readonly forkedFrom?: string;
-    readonly agents?: Readonly<Record<string, /* AgentMeta — Kernel/core/src/session/sessionMetadata/sessionMetadata.ts */ {
+    readonly agents?: Readonly<Record<string, /* AgentMeta — Kernel/engine/src/session/sessionMetadata/sessionMetadata.ts */ {
       readonly homedir?: string;
       readonly type?: 'main' | 'sub' | 'independent';
       readonly parentAgentId?: string | null;
@@ -699,7 +699,7 @@ export interface SessionStateSnapshot {
     readonly lastTurnReason?: 'completed' | 'cancelled' | 'failed';
   } | undefined;
   // src/session/sessionToolPolicy/sessionToolPolicyService.ts
-  'sessionToolPolicy.state': /* SessionToolPolicyState — Kernel/core/src/session/sessionToolPolicy/sessionToolPolicyService.ts */ {
+  'sessionToolPolicy.state': /* SessionToolPolicyState — Kernel/engine/src/session/sessionToolPolicy/sessionToolPolicyService.ts */ {
     readonly disabledTools: readonly string[];
   };
   // src/session/workspaceContext/workspaceContextService.ts
@@ -717,39 +717,39 @@ export interface AgentStateSnapshot {
   'agentsMdReminder.seeded': boolean;
   // src/agent/contextMemory/contextOps.ts
   // replayable · durable · undoable — folds: ContextAppendMessage, ContextAppendLoopEvent, ContextClear, ContextApplyCompaction
-  'contextMemory': (/* ContextMessage — Kernel/core/src/agent/contextMemory/types.ts */ /* Message — Kernel/core/src/llm-adapter/contract/message.ts */ {
-    readonly role: /* Role — Kernel/core/src/human/llm/message.ts */ 'user' | 'system' | 'assistant' | 'tool';
+  'contextMemory': (/* ContextMessage — Kernel/engine/src/agent/contextMemory/types.ts */ /* Message — Kernel/engine/src/llm-adapter/contract/message.ts */ {
+    readonly role: /* Role — Kernel/engine/src/human/llm/message.ts */ 'user' | 'system' | 'assistant' | 'tool';
     readonly name?: string;
-    readonly content: (/* ContentPart — Kernel/core/src/human/llm/message.ts */ /* TextPart — Kernel/core/src/human/llm/message.ts */ {
+    readonly content: (/* ContentPart — Kernel/engine/src/human/llm/message.ts */ /* TextPart — Kernel/engine/src/human/llm/message.ts */ {
       type: 'text';
       text: string;
-      meta?: /* TextPartMeta — Kernel/core/src/human/llm/message.ts */ {
+      meta?: /* TextPartMeta — Kernel/engine/src/human/llm/message.ts */ {
         source?: string;
         contentType?: string;
         activationId?: string;
         [key: string]: unknown;
       };
-    } | /* ThinkPart — Kernel/core/src/human/llm/message.ts */ {
+    } | /* ThinkPart — Kernel/engine/src/human/llm/message.ts */ {
       type: 'think';
       think: string;
       encrypted?: string;
       detailsIndex?: number;
       hidden?: boolean;
       reasoningKey?: string;
-    } | /* ImageURLPart — Kernel/core/src/human/llm/message.ts */ {
+    } | /* ImageURLPart — Kernel/engine/src/human/llm/message.ts */ {
       type: 'image_url';
       imageUrl: {
         url: string;
         id?: string;
         name?: string;
       };
-    } | /* AudioURLPart — Kernel/core/src/human/llm/message.ts */ {
+    } | /* AudioURLPart — Kernel/engine/src/human/llm/message.ts */ {
       type: 'audio_url';
       audioUrl: {
         url: string;
         id?: string;
       };
-    } | /* VideoURLPart — Kernel/core/src/human/llm/message.ts */ {
+    } | /* VideoURLPart — Kernel/engine/src/human/llm/message.ts */ {
       type: 'video_url';
       videoUrl: {
         url: string;
@@ -757,7 +757,7 @@ export interface AgentStateSnapshot {
         name?: string;
       };
     })[];
-    readonly toolCalls: /* ToolCall — Kernel/core/src/human/llm/message.ts */ {
+    readonly toolCalls: /* ToolCall — Kernel/engine/src/human/llm/message.ts */ {
       type: 'function';
       id: string;
       name: string;
@@ -768,7 +768,7 @@ export interface AgentStateSnapshot {
     }[];
     readonly toolCallId?: string;
     readonly partial?: boolean;
-    readonly tools?: readonly /* ToolDescription — Kernel/core/src/human/llm/message.ts */ {
+    readonly tools?: readonly /* ToolDescription — Kernel/engine/src/human/llm/message.ts */ {
       name: string;
       description: string;
       parameters: Record<string, unknown>;
@@ -782,11 +782,11 @@ export interface AgentStateSnapshot {
   } & {
     readonly id?: string;
     readonly providerMessageId?: string;
-    readonly origin?: /* UserPromptOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    readonly origin?: /* UserPromptOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'user';
       readonly inTurn?: true;
       readonly clientMetadata?: readonly Readonly<Record<string, unknown>>[];
-      readonly skillActivations?: readonly /* BundledSkillActivation — Kernel/core/src/agent/contextMemory/types.ts */ {
+      readonly skillActivations?: readonly /* BundledSkillActivation — Kernel/engine/src/agent/contextMemory/types.ts */ {
         readonly activationId: string;
         readonly skillName: string;
         readonly skillArgs?: string;
@@ -794,13 +794,13 @@ export interface AgentStateSnapshot {
         readonly skillPath?: string;
         readonly skillSource?: 'project' | 'user' | 'extra' | 'builtin';
       }[];
-      readonly attachments?: readonly /* PromptFileAttachment — Kernel/core/src/agent/contextMemory/types.ts */ {
+      readonly attachments?: readonly /* PromptFileAttachment — Kernel/engine/src/agent/contextMemory/types.ts */ {
         readonly name: string;
         readonly mediaType: string;
         readonly size: number;
         readonly path: string;
       }[];
-    } | /* SkillActivationOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* SkillActivationOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'skill_activation';
       readonly inTurn?: true;
       readonly clientMetadata?: readonly Readonly<Record<string, unknown>>[];
@@ -811,13 +811,13 @@ export interface AgentStateSnapshot {
       readonly skillType?: string;
       readonly skillPath?: string;
       readonly skillSource?: 'project' | 'user' | 'extra' | 'builtin';
-      readonly attachments?: readonly /* PromptFileAttachment — Kernel/core/src/agent/contextMemory/types.ts */ {
+      readonly attachments?: readonly /* PromptFileAttachment — Kernel/engine/src/agent/contextMemory/types.ts */ {
         readonly name: string;
         readonly mediaType: string;
         readonly size: number;
         readonly path: string;
       }[];
-    } | /* PluginCommandOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* PluginCommandOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'plugin_command';
       readonly inTurn?: true;
       readonly activationId: string;
@@ -825,45 +825,45 @@ export interface AgentStateSnapshot {
       readonly commandName: string;
       readonly commandArgs?: string;
       readonly trigger: 'user-slash';
-    } | /* InjectionOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* InjectionOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'injection';
       readonly variant: string;
       readonly ownerPromptId?: string;
       readonly disclosure?: unknown;
-    } | /* ShellCommandOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* ShellCommandOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'shell_command';
       readonly phase: 'input' | 'output';
       readonly isError?: boolean;
-    } | /* CompactionSummaryOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* CompactionSummaryOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'compaction_summary';
-    } | /* SystemTriggerOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* SystemTriggerOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'system_trigger';
       readonly name: string;
-    } | /* TaskOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* TaskOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'task';
       readonly taskId: string;
-      readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
+      readonly status: /* AgentTaskStatus — Kernel/engine/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
       readonly notificationId: string;
-    } | /* CronJobOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* CronJobOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'cron_job';
       readonly jobId: string;
       readonly cron: string;
       readonly recurring: boolean;
       readonly coalescedCount: number;
       readonly stale: boolean;
-    } | /* CronMissedOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* CronMissedOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'cron_missed';
       readonly count: number;
-    } | /* HookResultOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* HookResultOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'hook_result';
       readonly event: string;
       readonly blocked?: boolean;
-    } | /* RetryOrigin — Kernel/core/src/agent/contextMemory/types.ts */ {
+    } | /* RetryOrigin — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly kind: 'retry';
       readonly trigger?: string;
     };
     readonly isError?: boolean;
-    toolCallDisplays?: Record<string, /* ToolInputDisplay — Kernel/core/src/tool/toolInputDisplay.ts */ {
+    toolCallDisplays?: Record<string, /* ToolInputDisplay — Kernel/engine/src/tool/toolInputDisplay.ts */ {
       kind: 'command';
       command: string;
       cwd?: string;
@@ -935,14 +935,14 @@ export interface AgentStateSnapshot {
       detail?: unknown;
     }>;
     readonly note?: string;
-    readonly usage?: /* TokenUsage — Kernel/core/src/human/llm/usage.ts */ {
+    readonly usage?: /* TokenUsage — Kernel/engine/src/human/llm/usage.ts */ {
       inputOther: number;
       output: number;
       inputCacheRead: number;
       inputCacheCreation: number;
       raw?: Record<string, unknown>;
     };
-    readonly llmTiming?: /* ContextMessageTiming — Kernel/core/src/agent/contextMemory/types.ts */ {
+    readonly llmTiming?: /* ContextMessageTiming — Kernel/engine/src/agent/contextMemory/types.ts */ {
       readonly llmFirstTokenLatencyMs?: number;
       readonly llmStreamDurationMs?: number;
     };
@@ -952,11 +952,11 @@ export interface AgentStateSnapshot {
   'contextProjector.lastRepairSignature': string | null;
   // src/agent/fullCompaction/compactionOps.ts
   // replayable · durable — folds: FullCompactionBegin, FullCompactionCancel, FullCompactionComplete
-  'fullCompaction': /* CompactionState — Kernel/core/src/agent/fullCompaction/compactionOps.ts */ {
-    readonly phase: /* CompactionPhase — Kernel/core/src/agent/fullCompaction/compactionOps.ts */ 'completed' | 'cancelled' | 'running' | 'idle';
+  'fullCompaction': /* CompactionState — Kernel/engine/src/agent/fullCompaction/compactionOps.ts */ {
+    readonly phase: /* CompactionPhase — Kernel/engine/src/agent/fullCompaction/compactionOps.ts */ 'completed' | 'cancelled' | 'running' | 'idle';
   };
   // replayable · durable — folds: ContextApplyCompaction, ContextClear
-  'fullCompaction.wireRanges': readonly /* WireLineRange — Kernel/core/src/wire/record.ts */ {
+  'fullCompaction.wireRanges': readonly /* WireLineRange — Kernel/engine/src/wire/record.ts */ {
     readonly start: number;
     readonly end: number;
   }[];
@@ -971,20 +971,20 @@ export interface AgentStateSnapshot {
   'interruptionReminder': null;
   // src/agent/llmRequester/llmRequestOps.ts
   // replayable · durable — folds: LlmToolsSnapshot, LlmRequest
-  'llm.requestTrace': /* LlmRequestTraceState — Kernel/core/src/agent/llmRequester/llmRequestOps.ts */ {
+  'llm.requestTrace': /* LlmRequestTraceState — Kernel/engine/src/agent/llmRequester/llmRequestOps.ts */ {
     readonly seenToolsHashes: readonly string[];
   };
   // src/agent/llmRequester/llmRequesterService.ts
   'llmRequester.emittedThinkingEffortWarnings': Set<string>;
   'llmRequester.lastConfigLogSignature': string | undefined;
   'llmRequester.mediaDegradedTurns': Set<number>;
-  'llmRequester.mediaStrippedTurns': Map<number, /* MediaStripSnapshot — Kernel/core/src/agent/contextProjector/contextProjector.ts */ {
+  'llmRequester.mediaStrippedTurns': Map<number, /* MediaStripSnapshot — Kernel/engine/src/agent/contextProjector/contextProjector.ts */ {
     readonly "__@mediaStripSnapshotBrand": undefined;
   }>;
-  'llmRequester.turnConfigs': Map<number, /* TurnRequestConfig — Kernel/core/src/agent/llmRequester/llmRequesterService.ts */ {
-    readonly resolved: /* ProfileModelContext — Kernel/core/src/agent/profile/profile.ts */ {
+  'llmRequester.turnConfigs': Map<number, /* TurnRequestConfig — Kernel/engine/src/agent/llmRequester/llmRequesterService.ts */ {
+    readonly resolved: /* ProfileModelContext — Kernel/engine/src/agent/profile/profile.ts */ {
       readonly modelAlias: string;
-      readonly modelCapabilities: /* ModelCapability — Kernel/core/src/llm-adapter/contract/capability.ts */ {
+      readonly modelCapabilities: /* ModelCapability — Kernel/engine/src/llm-adapter/contract/capability.ts */ {
         readonly image_in: boolean;
         readonly video_in: boolean;
         readonly audio_in: boolean;
@@ -996,14 +996,14 @@ export interface AgentStateSnapshot {
       };
       readonly maxOutputSize: number | undefined;
       readonly alwaysThinking: boolean | undefined;
-      readonly thinkingLevel: /* ThinkingEffort — Kernel/core/src/human/llm/thinking.ts */ 'off' | 'on' | (string & {});
+      readonly thinkingLevel: /* ThinkingEffort — Kernel/engine/src/human/llm/thinking.ts */ 'off' | 'on' | (string & {});
       readonly reservedContextSize: number | undefined;
       readonly compactionTriggerRatio: number | undefined;
       readonly compactionMaxAttempts: number | undefined;
     };
-    readonly params: /* ModelRequestParams — Kernel/core/src/llm-adapter/model/model-requester.ts */ {
+    readonly params: /* ModelRequestParams — Kernel/engine/src/llm-adapter/model/model-requester.ts */ {
       readonly cacheKey?: string;
-      readonly sampling?: /* SamplingOptions — Kernel/core/src/llm-adapter/model/model-requester.ts */ {
+      readonly sampling?: /* SamplingOptions — Kernel/engine/src/llm-adapter/model/model-requester.ts */ {
         readonly temperature?: number;
         readonly topP?: number;
       };
@@ -1021,7 +1021,7 @@ export interface AgentStateSnapshot {
   'loop.lastRequestTraceId': string | undefined;
   // src/agent/loop/turnOps.ts
   // replayable · durable — folds: ContextAppendLoopEvent, TurnPrompt, TurnSteer, ContextUndo, ContextApplyCompaction, ContextClear, TurnCancel, TurnEnded
-  'turn': /* TurnModelState — Kernel/core/src/agent/loop/turnOps.ts */ {
+  'turn': /* TurnModelState — Kernel/engine/src/agent/loop/turnOps.ts */ {
     readonly nextTurnId: number;
     readonly cancelledTurnIds: readonly number[];
     readonly anchorTurnIds: readonly number[];
@@ -1033,7 +1033,7 @@ export interface AgentStateSnapshot {
   };
   // src/agent/mcp/mcpDiscoveryOps.ts
   // replayable · durable — folds: McpToolsDiscovered
-  'mcp.discovery': /* McpDiscoveryState — Kernel/core/src/agent/mcp/mcpDiscoveryOps.ts */ {
+  'mcp.discovery': /* McpDiscoveryState — Kernel/engine/src/agent/mcp/mcpDiscoveryOps.ts */ {
     readonly seen: readonly string[];
   };
   // src/agent/mcp/mcpService.ts
@@ -1041,36 +1041,36 @@ export interface AgentStateSnapshot {
   'mcp.mcpToolsByServer': Map<string, string[]>;
   // src/agent/media/mediaResolverService.ts
   'media.budgetDropped': Set<string>;
-  'media.resolved': Map<string, /* ContentPart — Kernel/core/src/human/llm/message.ts */ /* TextPart — Kernel/core/src/human/llm/message.ts */ {
+  'media.resolved': Map<string, /* ContentPart — Kernel/engine/src/human/llm/message.ts */ /* TextPart — Kernel/engine/src/human/llm/message.ts */ {
     type: 'text';
     text: string;
-    meta?: /* TextPartMeta — Kernel/core/src/human/llm/message.ts */ {
+    meta?: /* TextPartMeta — Kernel/engine/src/human/llm/message.ts */ {
       source?: string;
       contentType?: string;
       activationId?: string;
       [key: string]: unknown;
     };
-  } | /* ThinkPart — Kernel/core/src/human/llm/message.ts */ {
+  } | /* ThinkPart — Kernel/engine/src/human/llm/message.ts */ {
     type: 'think';
     think: string;
     encrypted?: string;
     detailsIndex?: number;
     hidden?: boolean;
     reasoningKey?: string;
-  } | /* ImageURLPart — Kernel/core/src/human/llm/message.ts */ {
+  } | /* ImageURLPart — Kernel/engine/src/human/llm/message.ts */ {
     type: 'image_url';
     imageUrl: {
       url: string;
       id?: string;
       name?: string;
     };
-  } | /* AudioURLPart — Kernel/core/src/human/llm/message.ts */ {
+  } | /* AudioURLPart — Kernel/engine/src/human/llm/message.ts */ {
     type: 'audio_url';
     audioUrl: {
       url: string;
       id?: string;
     };
-  } | /* VideoURLPart — Kernel/core/src/human/llm/message.ts */ {
+  } | /* VideoURLPart — Kernel/engine/src/human/llm/message.ts */ {
     type: 'video_url';
     videoUrl: {
       url: string;
@@ -1084,15 +1084,15 @@ export interface AgentStateSnapshot {
   'permissionMode.lastMode': 'manual' | 'yolo' | 'auto' | undefined;
   // src/agent/permissionMode/permissionModeOps.ts
   // replayable · durable — folds: PermissionSetMode
-  'permissionMode': /* PermissionMode — Kernel/core/src/agent/permissionPolicy/types.ts */ 'manual' | 'yolo' | 'auto';
+  'permissionMode': /* PermissionMode — Kernel/engine/src/agent/permissionPolicy/types.ts */ 'manual' | 'yolo' | 'auto';
   // replayable · durable — folds: PermissionSetMode
   'permissionMode.configured': boolean;
   // src/agent/permissionRules/permissionRulesOps.ts
   // replayable · durable — folds: PermissionRulesAdd, PermissionRecordApprovalResult
-  'permissionRules': /* PermissionRulesModelState — Kernel/core/src/agent/permissionRules/permissionRulesOps.ts */ {
-    readonly rules: readonly /* PermissionRule — Kernel/core/src/agent/permissionRules/permissionRules.ts */ {
-      readonly decision: /* PermissionRuleDecision — Kernel/core/src/agent/permissionRules/permissionRules.ts */ 'allow' | 'deny' | 'ask';
-      readonly scope: /* PermissionRuleScope — Kernel/core/src/agent/permissionRules/permissionRules.ts */ 'project' | 'user' | 'turn-override' | 'session-runtime';
+  'permissionRules': /* PermissionRulesModelState — Kernel/engine/src/agent/permissionRules/permissionRulesOps.ts */ {
+    readonly rules: readonly /* PermissionRule — Kernel/engine/src/agent/permissionRules/permissionRules.ts */ {
+      readonly decision: /* PermissionRuleDecision — Kernel/engine/src/agent/permissionRules/permissionRules.ts */ 'allow' | 'deny' | 'ask';
+      readonly scope: /* PermissionRuleScope — Kernel/engine/src/agent/permissionRules/permissionRules.ts */ 'project' | 'user' | 'turn-override' | 'session-runtime';
       readonly pattern: string;
       readonly reason?: string;
     }[];
@@ -1100,7 +1100,7 @@ export interface AgentStateSnapshot {
   };
   // src/agent/plugin/agentPluginOps.ts
   // replayable · durable — folds: PluginSessionStartEvent
-  'pluginSessionStartSnapshot': /* PluginSessionStartSnapshotState — Kernel/core/src/agent/plugin/agentPluginOps.ts */ {
+  'pluginSessionStartSnapshot': /* PluginSessionStartSnapshotState — Kernel/engine/src/agent/plugin/agentPluginOps.ts */ {
     readonly initialized: boolean;
     readonly content?: string;
   };
@@ -1108,12 +1108,12 @@ export interface AgentStateSnapshot {
   'agentPlugin.sessionStartRefreshPending': boolean;
   // src/agent/profile/profileOps.ts
   // replayable · durable — folds: ProfileBind, ConfigUpdate
-  'profile': /* ProfileModelState — Kernel/core/src/agent/profile/profileOps.ts */ {
+  'profile': /* ProfileModelState — Kernel/engine/src/agent/profile/profileOps.ts */ {
     readonly modelAlias?: string;
     readonly profileName?: string;
     readonly thinkingLevel: string;
     readonly systemPrompt: string;
-    readonly environmentDisclosure?: /* EnvironmentDisclosureSnapshot — Kernel/core/src/app/agentProfileCatalog/agentProfileCatalog.ts */ {
+    readonly environmentDisclosure?: /* EnvironmentDisclosureSnapshot — Kernel/engine/src/app/agentProfileCatalog/agentProfileCatalog.ts */ {
       readonly cwd: string;
     };
     readonly renderGeneration: number;
@@ -1122,7 +1122,7 @@ export interface AgentStateSnapshot {
     readonly subagents?: readonly string[];
   };
   // replayable · durable — folds: ToolsSetActiveTools, ToolsResetActiveTools, ProfileBind
-  'profile.activeTools': /* ActiveToolsState — Kernel/core/src/agent/profile/profileOps.ts */ readonly string[] | undefined;
+  'profile.activeTools': /* ActiveToolsState — Kernel/engine/src/agent/profile/profileOps.ts */ readonly string[] | undefined;
   // src/agent/profile/profileService.ts
   'profile.activeToolNamesOverlay': readonly string[] | undefined;
   'profile.agentsMdWarning': string | undefined;
@@ -1131,12 +1131,12 @@ export interface AgentStateSnapshot {
   'profile.emittedToolPatternWarnings': Set<string>;
   // src/agent/runtimeBinding/runtimeBindingOps.ts
   // replayable · durable — folds: RuntimeSetBinding
-  'runtimeBinding': /* RuntimeBinding — Kernel/core/src/runtime/runtime.ts */ {
+  'runtimeBinding': /* RuntimeBinding — Kernel/engine/src/runtime/runtime.ts */ {
     readonly workspaceId: string;
     readonly runtimeId: string;
   } | undefined;
   // src/agent/runtimeBinding/runtimeBindingService.ts
-  'runtime.binding': /* RuntimeBinding — Kernel/core/src/runtime/runtime.ts */ {
+  'runtime.binding': /* RuntimeBinding — Kernel/engine/src/runtime/runtime.ts */ {
     readonly workspaceId: string;
     readonly runtimeId: string;
   };
@@ -1144,13 +1144,13 @@ export interface AgentStateSnapshot {
   'shellCommand.tasks': Map<string, string>;
   // src/agent/task/taskOps.ts
   // replayable · durable — folds: TaskStarted, TaskTerminated
-  'task': /* TaskModelState — Kernel/core/src/agent/task/taskOps.ts */ Map<string, /* AgentTaskInfo — Kernel/core/src/agent/task/types.ts */ /* QuestionTaskInfo — Kernel/core/src/agent/task/types.ts */ {
+  'task': /* TaskModelState — Kernel/engine/src/agent/task/taskOps.ts */ Map<string, /* AgentTaskInfo — Kernel/engine/src/agent/task/types.ts */ /* QuestionTaskInfo — Kernel/engine/src/agent/task/types.ts */ {
     readonly kind: 'question';
     readonly questionCount: number;
     readonly toolCallId?: string;
     readonly taskId: string;
     readonly description: string;
-    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
+    readonly status: /* AgentTaskStatus — Kernel/engine/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
     readonly detached?: boolean;
     readonly startedAt: number;
     readonly endedAt: number | null;
@@ -1158,7 +1158,7 @@ export interface AgentStateSnapshot {
     readonly terminalNotificationSuppressed?: boolean;
     readonly resumeReminded?: boolean;
     readonly timeoutMs?: number;
-  } | /* ProcessTaskInfo — Kernel/core/src/agent/task/types.ts */ {
+  } | /* ProcessTaskInfo — Kernel/engine/src/agent/task/types.ts */ {
     readonly kind: 'process';
     readonly command: string;
     readonly pid: number;
@@ -1166,7 +1166,7 @@ export interface AgentStateSnapshot {
     readonly parentToolCallId?: string;
     readonly taskId: string;
     readonly description: string;
-    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
+    readonly status: /* AgentTaskStatus — Kernel/engine/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
     readonly detached?: boolean;
     readonly startedAt: number;
     readonly endedAt: number | null;
@@ -1174,7 +1174,7 @@ export interface AgentStateSnapshot {
     readonly terminalNotificationSuppressed?: boolean;
     readonly resumeReminded?: boolean;
     readonly timeoutMs?: number;
-  } | /* SubagentTaskInfo — Kernel/core/src/agent/tools/agent/subagent-task.ts */ {
+  } | /* SubagentTaskInfo — Kernel/engine/src/agent/tools/agent/subagent-task.ts */ {
     readonly kind: 'agent';
     readonly agentId?: string;
     readonly subagentType?: string;
@@ -1184,7 +1184,7 @@ export interface AgentStateSnapshot {
     readonly stopCode?: string;
     readonly taskId: string;
     readonly description: string;
-    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
+    readonly status: /* AgentTaskStatus — Kernel/engine/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
     readonly detached?: boolean;
     readonly startedAt: number;
     readonly endedAt: number | null;
@@ -1196,13 +1196,13 @@ export interface AgentStateSnapshot {
   // src/agent/task/taskService.ts
   'task.activeTaskReminderPending': boolean;
   'task.deliveredNotificationKeys': Set<string>;
-  'task.ghosts': Map<string, /* AgentTaskInfo — Kernel/core/src/agent/task/types.ts */ /* QuestionTaskInfo — Kernel/core/src/agent/task/types.ts */ {
+  'task.ghosts': Map<string, /* AgentTaskInfo — Kernel/engine/src/agent/task/types.ts */ /* QuestionTaskInfo — Kernel/engine/src/agent/task/types.ts */ {
     readonly kind: 'question';
     readonly questionCount: number;
     readonly toolCallId?: string;
     readonly taskId: string;
     readonly description: string;
-    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
+    readonly status: /* AgentTaskStatus — Kernel/engine/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
     readonly detached?: boolean;
     readonly startedAt: number;
     readonly endedAt: number | null;
@@ -1210,7 +1210,7 @@ export interface AgentStateSnapshot {
     readonly terminalNotificationSuppressed?: boolean;
     readonly resumeReminded?: boolean;
     readonly timeoutMs?: number;
-  } | /* ProcessTaskInfo — Kernel/core/src/agent/task/types.ts */ {
+  } | /* ProcessTaskInfo — Kernel/engine/src/agent/task/types.ts */ {
     readonly kind: 'process';
     readonly command: string;
     readonly pid: number;
@@ -1218,7 +1218,7 @@ export interface AgentStateSnapshot {
     readonly parentToolCallId?: string;
     readonly taskId: string;
     readonly description: string;
-    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
+    readonly status: /* AgentTaskStatus — Kernel/engine/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
     readonly detached?: boolean;
     readonly startedAt: number;
     readonly endedAt: number | null;
@@ -1226,7 +1226,7 @@ export interface AgentStateSnapshot {
     readonly terminalNotificationSuppressed?: boolean;
     readonly resumeReminded?: boolean;
     readonly timeoutMs?: number;
-  } | /* SubagentTaskInfo — Kernel/core/src/agent/tools/agent/subagent-task.ts */ {
+  } | /* SubagentTaskInfo — Kernel/engine/src/agent/tools/agent/subagent-task.ts */ {
     readonly kind: 'agent';
     readonly agentId?: string;
     readonly subagentType?: string;
@@ -1236,7 +1236,7 @@ export interface AgentStateSnapshot {
     readonly stopCode?: string;
     readonly taskId: string;
     readonly description: string;
-    readonly status: /* AgentTaskStatus — Kernel/core/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
+    readonly status: /* AgentTaskStatus — Kernel/engine/src/agent/task/types.ts */ 'completed' | 'failed' | 'running' | 'timed_out' | 'killed' | 'lost';
     readonly detached?: boolean;
     readonly startedAt: number;
     readonly endedAt: number | null;
@@ -1254,23 +1254,23 @@ export interface AgentStateSnapshot {
   'toolDedupe.callKeyByCallId': Map<string, string>;
   'toolDedupe.consecutiveCount': number;
   'toolDedupe.consecutiveKey': string | null;
-  'toolDedupe.handoffPhase': /* HandoffPhase — Kernel/core/src/agent/toolDedupe/toolDedupeService.ts */ 'idle' | 'active' | 'pending' | 'done';
+  'toolDedupe.handoffPhase': /* HandoffPhase — Kernel/engine/src/agent/toolDedupe/toolDedupeService.ts */ 'idle' | 'active' | 'pending' | 'done';
   'toolDedupe.originalCallIndex': Map<string, number>;
   'toolDedupe.stepCalls': string[];
   'toolDedupe.syntheticCallIds': Set<string>;
-  'toolDedupe.turnCallRecords': Map<string, /* TurnCallRecord — Kernel/core/src/agent/toolDedupe/toolDedupeService.ts */ {
+  'toolDedupe.turnCallRecords': Map<string, /* TurnCallRecord — Kernel/engine/src/agent/toolDedupe/toolDedupeService.ts */ {
     count: number;
     lastStep: number;
   }>;
   'toolDedupe.turnRepeatCount': number;
   // src/agent/toolExecutor/toolExecutorService.ts
   'toolExecutor.dupTypeTurnId': number | undefined;
-  'toolExecutor.toolCallDupTypes': Map<string, /* ToolCallDupType — Kernel/core/src/agent/toolExecutor/toolExecutor.ts */ 'same_step' | 'cross_step'>;
+  'toolExecutor.toolCallDupTypes': Map<string, /* ToolCallDupType — Kernel/engine/src/agent/toolExecutor/toolExecutor.ts */ 'same_step' | 'cross_step'>;
   // src/agent/toolSelect/toolSelectService.ts
   'toolSelect.pendingLoaded': Set<string>;
   // src/agent/userTool/userToolOps.ts
   // replayable · durable — folds: ToolsRegisterUserTool, ToolsUnregisterUserTool
-  'userTool': /* UserToolModelState — Kernel/core/src/agent/userTool/userToolOps.ts */ Map<string, /* UserToolRegistration — Kernel/core/src/agent/userTool/userTool.ts */ {
+  'userTool': /* UserToolModelState — Kernel/engine/src/agent/userTool/userToolOps.ts */ Map<string, /* UserToolRegistration — Kernel/engine/src/agent/userTool/userTool.ts */ {
     readonly name: string;
     readonly description: string;
     readonly parameters: Record<string, unknown>;
@@ -1280,11 +1280,11 @@ export interface AgentStateSnapshot {
   'externalHooks.stopHookContinuationUsed': boolean;
   // src/features/fileHistory/fileHistoryOps.ts
   // replayable · durable — folds: FileHistoryCheckpointed, FileHistoryTracked
-  'fileHistory': /* FileHistoryState — Kernel/core/src/features/fileHistory/fileHistory.ts */ {
-    readonly checkpoints: readonly /* FileHistoryCheckpointRecord — Kernel/core/src/features/fileHistory/fileHistory.ts */ {
+  'fileHistory': /* FileHistoryState — Kernel/engine/src/features/fileHistory/fileHistory.ts */ {
+    readonly checkpoints: readonly /* FileHistoryCheckpointRecord — Kernel/engine/src/features/fileHistory/fileHistory.ts */ {
       readonly turnId: number;
       readonly phase?: 'start' | 'end';
-      readonly entries: Readonly<Record<string, /* FileBackupEntry — Kernel/core/src/features/fileHistory/fileHistory.ts */ {
+      readonly entries: Readonly<Record<string, /* FileBackupEntry — Kernel/engine/src/features/fileHistory/fileHistory.ts */ {
         readonly key: string | null;
         readonly version: number;
         readonly contentHash?: string;
@@ -1299,7 +1299,7 @@ export interface AgentStateSnapshot {
   'plan.wasActive': boolean;
   // src/features/plan/planOps.ts
   // replayable · durable · undoable — folds: PlanModeEnter, PlanModeCancel, PlanModeExit, PlanRevision
-  'plan': /* PlanState — Kernel/core/src/features/plan/planOps.ts */ {
+  'plan': /* PlanState — Kernel/engine/src/features/plan/planOps.ts */ {
     readonly active: boolean;
     readonly id?: string;
     readonly revisionCount?: Readonly<Record<string, number>>;

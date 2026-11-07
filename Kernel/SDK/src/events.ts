@@ -7,17 +7,17 @@ import type {
 
 export type { OmnicodeErrorPayload } from '#/errors';
 
-export type { Event, ToolResultEvent } from '@hilbras/omnicode-core/events';
+export type { Event, ToolResultEvent } from '@hilbras/omnicode-engine/events';
 
-export { MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE } from '@hilbras/omnicode-core/tool/toolContract';
+export { MCP_OAUTH_AUTHORIZATION_URL_TOOL_UPDATE } from '@hilbras/omnicode-engine/tool/toolContract';
 
-export type { AgentStatusUpdatedEvent } from '@hilbras/omnicode-core/agent/usage/usageEvents';
-export type { SessionMetaUpdatedEvent } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetaEvents';
-export type { GoalUpdatedEvent } from '@hilbras/omnicode-core/features/goal/goalOps';
-export type { SkillActivatedEvent } from '@hilbras/omnicode-core/features/skill/skillOps';
-export type { PluginCommandActivatedEvent } from '@hilbras/omnicode-core/agent/pluginCommand/pluginCommand';
-export type { ErrorEvent, WarningEvent } from '@hilbras/omnicode-core/errors';
-export type { UsageStatus } from '@hilbras/omnicode-core/agent/usage/usage';
+export type { AgentStatusUpdatedEvent } from '@hilbras/omnicode-engine/agent/usage/usageEvents';
+export type { SessionMetaUpdatedEvent } from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetaEvents';
+export type { GoalUpdatedEvent } from '@hilbras/omnicode-engine/features/goal/goalOps';
+export type { SkillActivatedEvent } from '@hilbras/omnicode-engine/features/skill/skillOps';
+export type { PluginCommandActivatedEvent } from '@hilbras/omnicode-engine/agent/pluginCommand/pluginCommand';
+export type { ErrorEvent, WarningEvent } from '@hilbras/omnicode-engine/errors';
+export type { UsageStatus } from '@hilbras/omnicode-engine/agent/usage/usage';
 
 export type {
   TurnStartedEvent,
@@ -26,40 +26,40 @@ export type {
   TurnStepRetryingEvent,
   TurnStepInterruptedEvent,
   TurnEndReason,
-} from '@hilbras/omnicode-core/agent/loop/turnEvents';
-export type { TurnEndedEvent } from '@hilbras/omnicode-core/agent/loop/turnOps';
+} from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+export type { TurnEndedEvent } from '@hilbras/omnicode-engine/agent/loop/turnOps';
 
 export type {
   AssistantDeltaEvent,
   ThinkingDeltaEvent,
-} from '@hilbras/omnicode-core/agent/loop/turnEvents';
+} from '@hilbras/omnicode-engine/agent/loop/turnEvents';
 
-export type { HookResultEvent } from '@hilbras/omnicode-core/features/externalHooks/agent/agentExternalHooksService';
+export type { HookResultEvent } from '@hilbras/omnicode-engine/features/externalHooks/agent/agentExternalHooksService';
 
 export type {
   ToolCallStartedEvent,
   ToolCallDeltaEvent,
   ToolProgressEvent,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
+} from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
 
-export type { ToolUpdate } from '@hilbras/omnicode-core/tool/toolContract';
-export type { McpOAuthAuthorizationUrlUpdateData } from '@hilbras/omnicode-core/agent/mcp/tools/auth';
+export type { ToolUpdate } from '@hilbras/omnicode-engine/tool/toolContract';
+export type { McpOAuthAuthorizationUrlUpdateData } from '@hilbras/omnicode-engine/agent/mcp/tools/auth';
 
 export type { ToolCallRequest, ToolCallResponse } from '#/interaction';
 
 export type {
   ToolListUpdatedEvent,
   McpServerStatusEvent,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
+} from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
 export type {
   ToolListUpdatedReason,
   McpServerStatusPayload,
-} from '@hilbras/omnicode-core/agent/mcp/mcpEvents';
+} from '@hilbras/omnicode-engine/agent/mcp/mcpEvents';
 
 export type { ApprovalRequest, ApprovalScope } from '#/interaction';
 export type { ApprovalDecision, ApprovalResponse } from '#/interaction';
 
-export type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+export type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
 export type {
   QuestionRequest,
@@ -77,23 +77,23 @@ export type {
   SubagentCompletedEvent,
   SubagentFailedEvent,
   SubagentCancelledEvent,
-} from '@hilbras/omnicode-core/session/subagent/mirrorAgentRun';
-export type { SubagentSuspendedEvent } from '@hilbras/omnicode-core/features/swarm/session/sessionSwarmService';
+} from '@hilbras/omnicode-engine/session/subagent/mirrorAgentRun';
+export type { SubagentSuspendedEvent } from '@hilbras/omnicode-engine/features/swarm/session/sessionSwarmService';
 
 export type {
   CompactionStartedEvent,
   CompactionBlockedEvent,
   CompactionCancelledEvent,
   CompactionCompletedEvent,
-} from '@hilbras/omnicode-core/agent/fullCompaction/compactionOps';
-export type { CompactionResult } from '@hilbras/omnicode-core/agent/fullCompaction/types';
+} from '@hilbras/omnicode-engine/agent/fullCompaction/compactionOps';
+export type { CompactionResult } from '@hilbras/omnicode-engine/agent/fullCompaction/types';
 
 export type {
   BackgroundTaskStartedEvent,
   BackgroundTaskTerminatedEvent,
-} from '@hilbras/omnicode-core/agent/task/types';
+} from '@hilbras/omnicode-engine/agent/task/types';
 
-export type { CronFiredEvent } from '@hilbras/omnicode-core/features/cron/cronOps';
+export type { CronFiredEvent } from '@hilbras/omnicode-engine/features/cron/cronOps';
 
 export type MaybePromise<T> = T | Promise<T>;
 

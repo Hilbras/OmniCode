@@ -1,23 +1,23 @@
 import { dirname } from 'pathe';
 
-import type { HostFileStat, IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
-import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-core/agent/runtimeBinding/agentRuntime';
-import { RuntimeWorkspaceView } from '@hilbras/omnicode-core/runtime/runtimeWorkspaceView';
+import type { HostFileStat, IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
+import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-engine/agent/runtimeBinding/agentRuntime';
+import { RuntimeWorkspaceView } from '@hilbras/omnicode-engine/runtime/runtimeWorkspaceView';
 import { unwrapErrorCause } from '@hilbras/omnicode-base/errors/errors';
-import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
-import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspaceContext/workspaceContext';
+import { ISessionSkillCatalog } from '@hilbras/omnicode-engine/features/skill/session/skillCatalog';
+import { ISessionWorkspaceContext } from '@hilbras/omnicode-engine/session/workspaceContext/workspaceContext';
 import {
   ToolAccesses,
   type ExecutableToolResult,
   type ToolExecution,
-} from '@hilbras/omnicode-core/tool/toolContract';
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+} from '@hilbras/omnicode-engine/tool/toolContract';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 import {
   resolvePathAccessPath,
   type WorkspaceConfig,
-} from '@hilbras/omnicode-core/tool/path-access';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { literalRulePattern, matchesPathRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
+} from '@hilbras/omnicode-engine/tool/path-access';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { literalRulePattern, matchesPathRuleSubject } from '@hilbras/omnicode-engine/tool/rule-match';
 import { IWriteTool, WriteInputSchema, type WriteInput } from './write';
 import WRITE_DESCRIPTION from './write.md?raw';
 

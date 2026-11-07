@@ -1,4 +1,4 @@
-import { assign, createActor, fromPromise, setup, waitFor } from '@hilbras/omnicode-core/human/xstate2';
+import { assign, createActor, fromPromise, setup, waitFor } from '@hilbras/omnicode-engine/human/xstate2';
 
 import { startRemoteControl, type RemoteControlHandle } from './remote-control';
 

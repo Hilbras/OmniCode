@@ -10,28 +10,28 @@ import type {
   AuthStatus,
   IOAuthService,
   OAuthLoginOptions,
-} from '@hilbras/omnicode-core/app/auth/auth';
-import type { CapabilityStatus } from '@hilbras/omnicode-core/app/capability/types';
+} from '@hilbras/omnicode-engine/app/auth/auth';
+import type { CapabilityStatus } from '@hilbras/omnicode-engine/app/capability/types';
 import type {
   ConfigDiagnostic,
   ConfigInspectValue,
   ConfigTarget,
-} from '@hilbras/omnicode-core/app/config/config';
-import type { ConnectorEntry } from '@hilbras/omnicode-core/app/connectors/connectors';
-import type { FileMeta } from '@hilbras/omnicode-core/app/file/fileService';
-import type { ExperimentalFeatureState } from '@hilbras/omnicode-core/app/flag/flag';
+} from '@hilbras/omnicode-engine/app/config/config';
+import type { ConnectorEntry } from '@hilbras/omnicode-engine/app/connectors/connectors';
+import type { FileMeta } from '@hilbras/omnicode-engine/app/file/fileService';
+import type { ExperimentalFeatureState } from '@hilbras/omnicode-engine/app/flag/flag';
 import type {
   GitHubConnectResult,
   GitHubConnectionStatus,
   GitHubDeviceFlowStart,
   GitHubDisconnectResult,
-} from '@hilbras/omnicode-core/app/github/types';
+} from '@hilbras/omnicode-engine/app/github/types';
 import type {
   FsBrowseResponse,
   FsHomeResponse,
-} from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
-import type { IProviderDiscoveryService } from '@hilbras/omnicode-core/app/kosongConfig/discovery';
-import type { IModelsDevImportService } from '@hilbras/omnicode-core/app/kosongConfig/modelsDevImport';
+} from '@hilbras/omnicode-engine/app/hostFolderBrowser/hostFolderBrowser';
+import type { IProviderDiscoveryService } from '@hilbras/omnicode-engine/app/kosongConfig/discovery';
+import type { IModelsDevImportService } from '@hilbras/omnicode-engine/app/kosongConfig/modelsDevImport';
 import type {
   GlobalMcpServerConfig,
   McpManagedServer,
@@ -41,29 +41,29 @@ import type {
   McpServerLocator,
   McpServerTestResult,
   McpServerTestTarget,
-} from '@hilbras/omnicode-core/app/mcpManagement/mcpManagement';
+} from '@hilbras/omnicode-engine/app/mcpManagement/mcpManagement';
 import type {
   PluginCommandDef,
   PluginInfo,
   PluginSummary,
   PluginUpdateStatus,
   ReloadSummary,
-} from '@hilbras/omnicode-core/app/plugin/types';
+} from '@hilbras/omnicode-engine/app/plugin/types';
 import type {
   SessionListQuery,
   SessionSummary,
-} from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
+} from '@hilbras/omnicode-engine/app/sessionIndex/sessionIndex';
 import type {
   VercelConnectResult,
   VercelConnectionStatus,
   VercelDisconnectResult,
-} from '@hilbras/omnicode-core/app/vercel/types';
-import type { Workspace, WorkspaceUpdate } from '@hilbras/omnicode-core/app/workspace/workspace';
-import type { IModelCatalog } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
-import type { ModelRecord } from '@hilbras/omnicode-core/llm-adapter/model/model';
-import type { ProviderConfig } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
-import type { Page } from '@hilbras/omnicode-core/persistence/interface/queryStore';
-import type { SessionMeta } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
+} from '@hilbras/omnicode-engine/app/vercel/types';
+import type { Workspace, WorkspaceUpdate } from '@hilbras/omnicode-engine/app/workspace/workspace';
+import type { IModelCatalog } from '@hilbras/omnicode-engine/llm-adapter/model/catalog';
+import type { ModelRecord } from '@hilbras/omnicode-engine/llm-adapter/model/model';
+import type { ProviderConfig } from '@hilbras/omnicode-engine/llm-adapter/provider/provider';
+import type { Page } from '@hilbras/omnicode-engine/persistence/interface/queryStore';
+import type { SessionMeta } from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetadata';
 
 import type { McpServerConfig } from '../../contract/mcp.js';
 import type { CallOptions } from '@hilbras/omnicode-rpc/channel';

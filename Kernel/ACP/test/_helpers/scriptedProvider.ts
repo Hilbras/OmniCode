@@ -29,9 +29,9 @@ import {
   type TokenUsage,
   type Tool,
 } from '@hilbras/omnicode-core';
-import type { FinishReason } from '@hilbras/omnicode-core/human/llm/finish-reason';
-import { fromLlmMessage } from '@hilbras/omnicode-core/llm-adapter/contract/message';
-import type { LlmRequester } from '@hilbras/omnicode-core/human/llm/requester/requester';
+import type { FinishReason } from '@hilbras/omnicode-engine/human/llm/finish-reason';
+import { fromLlmMessage } from '@hilbras/omnicode-engine/llm-adapter/contract/message';
+import type { LlmRequester } from '@hilbras/omnicode-engine/human/llm/requester/requester';
 
 interface ScriptedResponse {
   readonly parts: readonly StreamedMessagePart[];

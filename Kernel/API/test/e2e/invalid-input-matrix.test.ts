@@ -36,8 +36,8 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { bootstrap, logSeed, resolveLoggingConfig } from '@hilbras/omnicode-core';
 
 import { TEST_CLIENT_IDENTITY } from '../helpers/engine.js';
-import type { ContentPart } from '@hilbras/omnicode-core/human/llm/message';
-import { IModelService } from '@hilbras/omnicode-core/llm-adapter/model/model';
+import type { ContentPart } from '@hilbras/omnicode-engine/human/llm/message';
+import { IModelService } from '@hilbras/omnicode-engine/llm-adapter/model/model';
 
 import type { Klient } from '../../src/index.js';
 import type { AgentHandle } from '../../src/core/klient.js';

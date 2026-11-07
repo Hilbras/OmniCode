@@ -62,14 +62,14 @@ import {
 } from '@hilbras/omnicode-core';
 import { INotifyUserTool } from '@hilbras/omnicode-tools/features/notify/tools/notify-user/notify-user';
 
-import { McpOAuthService as McpOAuthServiceV2 } from '@hilbras/omnicode-core/mcpCore/oauth/service';
-import { TowerStore } from '@hilbras/omnicode-core/features/tower/protocol/store';
+import { McpOAuthService as McpOAuthServiceV2 } from '@hilbras/omnicode-engine/mcpCore/oauth/service';
+import { TowerStore } from '@hilbras/omnicode-engine/features/tower/protocol/store';
 
 import { TEST_IDENTITY } from './test-identity';
 import {
   resetModelsDevUpstreamForTest,
   setModelsDevUpstreamForTest,
-} from '@hilbras/omnicode-core/app/kosongConfig/modelsDevUpstream';
+} from '@hilbras/omnicode-engine/app/kosongConfig/modelsDevUpstream';
 import { recordingTelemetry, type TelemetryRecord } from './telemetry';
 
 const hostEnvProbe = vi.hoisted(() => ({ failWithMissingShell: false }));

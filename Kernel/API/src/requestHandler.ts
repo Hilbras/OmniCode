@@ -222,13 +222,13 @@ import {
   type SessionSummary as V2SessionSummary,
 } from '@hilbras/omnicode-core';
 import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
-import { loadMcpServers } from '@hilbras/omnicode-core/app/mcpConfig/configLoader';
-import { readTowerStatusSummary } from '@hilbras/omnicode-core/features/tower/tools/status/statusReader';
-import { ITowerRateLimitService } from '@hilbras/omnicode-core/features/tower/towerRateLimit';
-import { McpConnectionManager } from '@hilbras/omnicode-core/mcpCore/connection-manager';
-import { IAppendLogStore } from '@hilbras/omnicode-core/persistence/interface/appendLogStore';
-import { ISessionInitService } from '@hilbras/omnicode-core/session/sessionInit/sessionInitContract';
-import { fsSuggestRequestSchema } from '@hilbras/omnicode-core/workspace/workspaceFs/fs';
+import { loadMcpServers } from '@hilbras/omnicode-engine/app/mcpConfig/configLoader';
+import { readTowerStatusSummary } from '@hilbras/omnicode-engine/features/tower/tools/status/statusReader';
+import { ITowerRateLimitService } from '@hilbras/omnicode-engine/features/tower/towerRateLimit';
+import { McpConnectionManager } from '@hilbras/omnicode-engine/mcpCore/connection-manager';
+import { IAppendLogStore } from '@hilbras/omnicode-engine/persistence/interface/appendLogStore';
+import { ISessionInitService } from '@hilbras/omnicode-engine/session/sessionInit/sessionInitContract';
+import { fsSuggestRequestSchema } from '@hilbras/omnicode-engine/workspace/workspaceFs/fs';
 import { RegistryImportError } from '@hilbras/omnicode-sdk/rpc-exports';
 import { OmnicodeAuthFacade } from '@hilbras/omnicode-sdk/rpc-exports';
 import { ensureConfigFile, HookDefSchema } from '@hilbras/omnicode-sdk/rpc-exports';

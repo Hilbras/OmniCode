@@ -21,11 +21,11 @@
  * derives from transcript state (`meta.activity` / running turns).
  */
 
-import { IAgentLoopService } from '@hilbras/omnicode-core/agent/loop/loop';
+import { IAgentLoopService } from '@hilbras/omnicode-engine/agent/loop/loop';
 import {
   type QuestionItem,
   type QuestionRequest,
-} from '@hilbras/omnicode-core/agent/interaction/question';
+} from '@hilbras/omnicode-engine/agent/interaction/question';
 import {
   EMPTY_AGENT_STATE,
   itemId,

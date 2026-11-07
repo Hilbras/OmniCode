@@ -3,7 +3,7 @@ import { readFile, mkdir, rm, stat, utimes } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import type { OldSessionState } from '../omnicode-cli-schema.js';
-import { readTodoItems } from '@hilbras/omnicode-core/features/todo/todoItem';
+import { readTodoItems } from '@hilbras/omnicode-engine/features/todo/todoItem';
 import { targetSessionsDir } from '../paths.js';
 import { computeWorkdirBucket } from './workdir-bucket.js';
 import { closeDanglingToolCalls } from './close-tool-calls.js';

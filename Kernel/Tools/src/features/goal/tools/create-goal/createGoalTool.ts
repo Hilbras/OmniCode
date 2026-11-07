@@ -1,14 +1,14 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { IAgentPermissionModeService } from '@hilbras/omnicode-core/agent/permissionMode/permissionMode';
-import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { GOAL_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-core/agent/tools/mainAgentOnly';
-import { type ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { IAgentPermissionModeService } from '@hilbras/omnicode-engine/agent/permissionMode/permissionMode';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { GOAL_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-engine/agent/tools/mainAgentOnly';
+import { type ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
 
-import { IAgentGoalService } from '@hilbras/omnicode-core/features/goal/goalService';
+import { IAgentGoalService } from '@hilbras/omnicode-engine/features/goal/goalService';
 import { goalForModel } from '@hilbras/omnicode-tools/features/goal/tools/serialize';
 
 import DESCRIPTION from './create-goal.md?raw';

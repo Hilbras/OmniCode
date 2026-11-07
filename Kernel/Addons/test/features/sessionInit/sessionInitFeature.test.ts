@@ -6,23 +6,23 @@ import {
   registerScopedService,
 } from '@hilbras/omnicode-base/di/scope';
 import { createScopedTestHost, stubPair } from '@hilbras/omnicode-base/di/test';
-import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
-import { IFeatureManager } from '@hilbras/omnicode-core/app/feature/featureManager';
-import { FeatureManagerService } from '@hilbras/omnicode-core/app/feature/featureManagerService';
-import { LifecycleScope } from '@hilbras/omnicode-core/app/scopes';
+import { IBootstrapService } from '@hilbras/omnicode-engine/app/bootstrap/bootstrap';
+import { IFeatureManager } from '@hilbras/omnicode-engine/app/feature/featureManager';
+import { FeatureManagerService } from '@hilbras/omnicode-engine/app/feature/featureManagerService';
+import { LifecycleScope } from '@hilbras/omnicode-engine/app/scopes';
 import { SessionInitFeature } from '#/features/sessionInit/sessionInitFeature';
 import { ISessionInitService } from '#/features/sessionInit/sessionInit';
-import { IHostEnvironment } from '@hilbras/omnicode-core/os/interface/hostEnvironment';
-import { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
-import { IFeatureAssemblyService } from '@hilbras/omnicode-core/features/featureAssembly';
-import { FeatureAssemblyService } from '@hilbras/omnicode-core/features/featureAssemblyService';
+import { IHostEnvironment } from '@hilbras/omnicode-engine/os/interface/hostEnvironment';
+import { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
+import { IFeatureAssemblyService } from '@hilbras/omnicode-engine/features/featureAssembly';
+import { FeatureAssemblyService } from '@hilbras/omnicode-engine/features/featureAssemblyService';
 import {
   _clearFeatureRecipesForTests,
   registerFeature,
-} from '@hilbras/omnicode-core/features/featureRegistry';
-import { IAgentLifecycleService } from '@hilbras/omnicode-core/session/agentLifecycle/agentLifecycle';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
-import { ISessionSubagentService } from '@hilbras/omnicode-core/session/subagent/subagent';
+} from '@hilbras/omnicode-engine/features/featureRegistry';
+import { IAgentLifecycleService } from '@hilbras/omnicode-engine/session/agentLifecycle/agentLifecycle';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
+import { ISessionSubagentService } from '@hilbras/omnicode-engine/session/subagent/subagent';
 
 describe('SessionInitFeature', () => {
   beforeEach(() => {

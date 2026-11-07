@@ -66,7 +66,7 @@ vi.mock('@hilbras/omnicode-core', async (importOriginal) => {
   };
 });
 
-vi.mock('@hilbras/omnicode-core/app/mcpConfig/configLoader', () => ({
+vi.mock('@hilbras/omnicode-engine/app/mcpConfig/configLoader', () => ({
   loadMcpServersDetailed: mocks.loadMcpServersDetailed,
   resolveMcpJsonPaths: mocks.resolveMcpJsonPaths,
 }));

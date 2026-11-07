@@ -12,7 +12,7 @@ import type { OmnicodeConfig, OmnicodeHarness } from '@hilbras/omnicode-api';
 import {
   resetModelsDevUpstreamForTest,
   setModelsDevUpstreamForTest,
-} from '@hilbras/omnicode-core/app/kosongConfig/modelsDevUpstream';
+} from '@hilbras/omnicode-engine/app/kosongConfig/modelsDevUpstream';
 import { Command } from 'commander';
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 

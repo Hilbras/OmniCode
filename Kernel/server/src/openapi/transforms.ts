@@ -3,7 +3,7 @@ import {
   fsDiffResponseSchema,
   fsGitStatusRequestSchema,
   fsGitStatusResponseSchema,
-} from '@hilbras/omnicode-core/app/git/git';
+} from '@hilbras/omnicode-engine/app/git/git';
 import {
   fsGrepRequestSchema,
   fsGrepResponseSchema,
@@ -21,7 +21,7 @@ import {
   fsStatManyResponseSchema,
   fsStatRequestSchema,
   fsStatResponseSchema,
-} from '@hilbras/omnicode-core/workspace/workspaceFs/fs';
+} from '@hilbras/omnicode-engine/workspace/workspaceFs/fs';
 import { z } from 'zod';
 
 import { openApiDocumentEnvelopeJsonSchema, openApiDocumentJsonSchema } from '../middleware/schema';

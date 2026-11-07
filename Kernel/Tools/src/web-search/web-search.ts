@@ -1,13 +1,13 @@
 import { z } from 'zod';
 
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
-import { type AgentTool } from '@hilbras/omnicode-core/tool/toolContract';
+import { type AgentTool } from '@hilbras/omnicode-engine/tool/toolContract';
 
 export type {
   WebSearchProvider,
   WebSearchResult,
-} from '@hilbras/omnicode-core/app/auth/webSearch/webSearchContract';
-import type { WebSearchResult } from '@hilbras/omnicode-core/app/auth/webSearch/webSearchContract';
+} from '@hilbras/omnicode-engine/app/auth/webSearch/webSearchContract';
+import type { WebSearchResult } from '@hilbras/omnicode-engine/app/auth/webSearch/webSearchContract';
 
 export const WebSearchInputSchema = z.object({
   query: z.string().describe('The query text to search for.'),

@@ -1,4 +1,4 @@
-import { IWorkspaceService, type Workspace } from '@hilbras/omnicode-core/app/workspace/workspace';
+import { IWorkspaceService, type Workspace } from '@hilbras/omnicode-engine/app/workspace/workspace';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 

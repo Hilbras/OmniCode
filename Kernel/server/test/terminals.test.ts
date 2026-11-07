@@ -11,7 +11,7 @@ import {
   type TerminalSpawnOptions,
 } from '@hilbras/omnicode-core';
 import { ErrorCode } from '../src/protocol/error-codes';
-import type { Terminal } from '@hilbras/omnicode-core/os/interface/terminal';
+import type { Terminal } from '@hilbras/omnicode-engine/os/interface/terminal';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';

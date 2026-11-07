@@ -18,12 +18,12 @@ import {
   type Scope,
 } from '@hilbras/omnicode-core';
 import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
-import { GitService } from '@hilbras/omnicode-core/app/git/gitService';
-import type { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
-import type { RuntimeCapability, RuntimeLease } from '@hilbras/omnicode-core/runtime/runtime';
-import { RuntimeError } from '@hilbras/omnicode-core/runtime/runtimeRegistry';
-import type { IWorkspaceContext } from '@hilbras/omnicode-core/workspace/workspaceContext/workspaceContext';
-import type { IWorkspaceDirs } from '@hilbras/omnicode-core/workspace/workspaceDirs/workspaceDirs';
+import { GitService } from '@hilbras/omnicode-engine/app/git/gitService';
+import type { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
+import type { RuntimeCapability, RuntimeLease } from '@hilbras/omnicode-engine/runtime/runtime';
+import { RuntimeError } from '@hilbras/omnicode-engine/runtime/runtimeRegistry';
+import type { IWorkspaceContext } from '@hilbras/omnicode-engine/workspace/workspaceContext/workspaceContext';
+import type { IWorkspaceDirs } from '@hilbras/omnicode-engine/workspace/workspaceDirs/workspaceDirs';
 import {
   fsDiffRequestSchema,
   fsGitStatusRequestSchema,
@@ -38,9 +38,9 @@ import {
   fsStatRequestSchema,
   fsSuggestRequestSchema,
   fsSuggestResponseSchema,
-} from '@hilbras/omnicode-core/workspace/workspaceFs/fs';
-import { WorkspaceFsService } from '@hilbras/omnicode-core/workspace/workspaceFs/fsService';
-import { WorkspaceGitService } from '@hilbras/omnicode-core/workspace/workspaceGit/workspaceGitService';
+} from '@hilbras/omnicode-engine/workspace/workspaceFs/fs';
+import { WorkspaceFsService } from '@hilbras/omnicode-engine/workspace/workspaceFs/fsService';
+import { WorkspaceGitService } from '@hilbras/omnicode-engine/workspace/workspaceGit/workspaceGitService';
 import { z } from 'zod';
 
 import { errEnvelope, okEnvelope } from '../envelope';

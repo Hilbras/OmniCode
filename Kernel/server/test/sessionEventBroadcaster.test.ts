@@ -34,13 +34,13 @@ import {
   interactions,
   makeAgentScopeContext,
 } from '@hilbras/omnicode-core';
-import { TurnStarted } from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import { Event2 } from '@hilbras/omnicode-core/app/event/event2';
+import { TurnStarted } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import { Event2 } from '@hilbras/omnicode-engine/app/event/event2';
 import {
   AgentEventBusView,
   EventBusService,
-} from '@hilbras/omnicode-core/app/event/eventBusService';
-import type { AgentActivitySnapshot } from '@hilbras/omnicode-core/agent/loop/loop';
+} from '@hilbras/omnicode-engine/app/event/eventBusService';
+import type { AgentActivitySnapshot } from '@hilbras/omnicode-engine/agent/loop/loop';
 import type { AgentEvent } from '../src/transport/ws/v1/events';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 

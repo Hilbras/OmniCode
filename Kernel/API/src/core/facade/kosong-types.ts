@@ -8,10 +8,10 @@
 import type {
   StreamedMessagePart,
   ToolDescription as Tool,
-} from '@hilbras/omnicode-core/human/llm/message';
-import type { ResponseFormat } from '@hilbras/omnicode-core/human/llm/response-format';
-import type { TokenUsage } from '@hilbras/omnicode-core/human/llm/usage';
-import type { Message } from '@hilbras/omnicode-core/llm-adapter/contract/message';
+} from '@hilbras/omnicode-engine/human/llm/message';
+import type { ResponseFormat } from '@hilbras/omnicode-engine/human/llm/response-format';
+import type { TokenUsage } from '@hilbras/omnicode-engine/human/llm/usage';
+import type { Message } from '@hilbras/omnicode-engine/llm-adapter/contract/message';
 
 // ---------------------------------------------------------------------------
 // Provider auth

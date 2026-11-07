@@ -1,4 +1,4 @@
-import type { XstateInspectionCollector } from '@hilbras/omnicode-core/human/xstateInspection';
+import type { XstateInspectionCollector } from '@hilbras/omnicode-engine/human/xstateInspection';
 import { WebSocketServer } from 'ws';
 
 import { selectWsBearerProtocol } from '../bearerProtocol';

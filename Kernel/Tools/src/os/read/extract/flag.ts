@@ -1,4 +1,4 @@
-import { type FlagDefinitionInput, registerFlagDefinition } from '@hilbras/omnicode-core/app/flag/flagRegistry';
+import { type FlagDefinitionInput, registerFlagDefinition } from '@hilbras/omnicode-engine/app/flag/flagRegistry';
 
 export const DOCUMENT_EXTRACT_FLAG_ID = 'document_extract';
 export const DOCUMENT_EXTRACT_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_DOCUMENT_EXTRACT';

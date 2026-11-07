@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { fileMetaSchema } from '@hilbras/omnicode-core/app/file/fileService';
+import { fileMetaSchema } from '@hilbras/omnicode-engine/app/file/fileService';
 
 export const uploadFileResponseSchema = fileMetaSchema;
 export type UploadFileResponse = z.infer<typeof uploadFileResponseSchema>;

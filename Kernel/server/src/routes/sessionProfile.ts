@@ -6,8 +6,8 @@ import {
   resumeSessionById,
   type Scope,
 } from '@hilbras/omnicode-core';
-import type { SessionWireFields } from '@hilbras/omnicode-core/app/sessionLegacy/sessionLegacy';
-import type { UpdateSessionProfileRequest } from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
+import type { SessionWireFields } from '@hilbras/omnicode-engine/app/sessionLegacy/sessionLegacy';
+import type { UpdateSessionProfileRequest } from '@hilbras/omnicode-engine/app/sessionLegacy/sessionProtocol';
 
 export async function updateSessionProfile(
   core: Scope,

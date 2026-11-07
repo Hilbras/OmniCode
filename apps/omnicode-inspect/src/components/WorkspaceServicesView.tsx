@@ -11,7 +11,7 @@
  * manual join needed.
  */
 
-import { IWorkspaceService } from '@hilbras/omnicode-core/app/workspace/workspace';
+import { IWorkspaceService } from '@hilbras/omnicode-engine/app/workspace/workspace';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState, type ReactNode } from 'react';
 

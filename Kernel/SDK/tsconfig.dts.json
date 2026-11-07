@@ -12,7 +12,7 @@
   "include": [
     "src/**/*.ts",
     "../../Kernel/core/src/**/*.ts",
-    "../../Kernel/core/src/env.d.ts",
+    "../../Kernel/engine/src/env.d.ts",
     "../kaos/src/**/*.ts",
     "../client/src/**/*.ts",
     "../llm/src/**/*.ts",

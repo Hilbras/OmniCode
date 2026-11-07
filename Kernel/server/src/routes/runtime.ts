@@ -5,7 +5,7 @@ import {
   resumeSessionById,
   type Scope,
 } from '@hilbras/omnicode-core';
-import { RuntimeError } from '@hilbras/omnicode-core/runtime/runtimeRegistry';
+import { RuntimeError } from '@hilbras/omnicode-engine/runtime/runtimeRegistry';
 
 import { errEnvelope, okEnvelope } from '../envelope';
 import { defineRoute } from '../middleware/defineRoute';

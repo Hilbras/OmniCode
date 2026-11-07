@@ -5,15 +5,15 @@
 import type {
   FsBrowseResponse,
   FsHomeResponse,
-} from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
-import type { AuthSummary } from '@hilbras/omnicode-core/app/authLegacy/authLegacy';
-import type { FileMeta } from '@hilbras/omnicode-core/app/file/fileService';
-import type { UpdateSessionProfileRequest as SessionUpdate } from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
+} from '@hilbras/omnicode-engine/app/hostFolderBrowser/hostFolderBrowser';
+import type { AuthSummary } from '@hilbras/omnicode-engine/app/authLegacy/authLegacy';
+import type { FileMeta } from '@hilbras/omnicode-engine/app/file/fileService';
+import type { UpdateSessionProfileRequest as SessionUpdate } from '@hilbras/omnicode-engine/app/sessionLegacy/sessionProtocol';
 import type {
   ProviderCatalogItem,
   SetDefaultModelResponse,
-} from '@hilbras/omnicode-core/llm-adapter/model/catalog';
-import type { Terminal } from '@hilbras/omnicode-core/os/interface/terminal';
+} from '@hilbras/omnicode-engine/llm-adapter/model/catalog';
+import type { Terminal } from '@hilbras/omnicode-engine/os/interface/terminal';
 import type { ApprovalResponse } from '@hilbras/omnicode-server/protocol/approval';
 import type { Envelope } from '@hilbras/omnicode-server/protocol/envelope';
 import type { Message } from '@hilbras/omnicode-server/protocol/message';

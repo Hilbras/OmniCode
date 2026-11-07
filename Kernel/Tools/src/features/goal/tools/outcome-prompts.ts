@@ -1,4 +1,4 @@
-import type { GoalSnapshot } from '@hilbras/omnicode-core/features/goal/types';
+import type { GoalSnapshot } from '@hilbras/omnicode-engine/features/goal/types';
 
 export function buildGoalCompletionSummaryPrompt(goal: GoalSnapshot): string {
   return [

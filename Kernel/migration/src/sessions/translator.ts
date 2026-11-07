@@ -1,4 +1,4 @@
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
 import { normalizeContentPart, type NormalizedContentPart } from './content-part.js';
 

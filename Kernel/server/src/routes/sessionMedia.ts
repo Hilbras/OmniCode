@@ -4,9 +4,9 @@ import type { Scope } from '@hilbras/omnicode-base/di/scope';
 import {
   ISessionMediaStore,
   type SessionMediaFile,
-} from '@hilbras/omnicode-core/agent/media/sessionMediaStore';
-import { FileErrors, IFileService, isFileError } from '@hilbras/omnicode-core/app/file/fileService';
-import { resumeSessionById } from '@hilbras/omnicode-core/app/sessionManager/sessionLookup';
+} from '@hilbras/omnicode-engine/agent/media/sessionMediaStore';
+import { FileErrors, IFileService, isFileError } from '@hilbras/omnicode-engine/app/file/fileService';
+import { resumeSessionById } from '@hilbras/omnicode-engine/app/sessionManager/sessionLookup';
 import { z } from 'zod';
 
 import { buildContentDisposition } from '../lib/contentDisposition';

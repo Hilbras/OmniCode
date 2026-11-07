@@ -8,7 +8,7 @@ import {
   migrateWireRecord,
   resolveWireMigrations,
   type WireMigration,
-} from '@hilbras/omnicode-core/wire/migration/migration';
+} from '@hilbras/omnicode-engine/wire/migration/migration';
 
 import type { AgentRecord, WireEntry } from './agent-record-types';
 

@@ -1,4 +1,4 @@
-import type { UserPromptOrigin } from '@hilbras/omnicode-core/agent/contextMemory/types';
+import type { UserPromptOrigin } from '@hilbras/omnicode-engine/agent/contextMemory/types';
 import { join } from 'node:path';
 import { readFile } from 'node:fs/promises';
 
@@ -26,7 +26,7 @@ import {
 import {
   TowerStore,
   resolveTowerRepoRoot,
-} from '@hilbras/omnicode-core/features/tower/protocol/index';
+} from '@hilbras/omnicode-engine/features/tower/protocol/index';
 import {
   TranscriptStore,
   foldWireRecordFacts,

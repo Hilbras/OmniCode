@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { IModelCatalog } from '@hilbras/omnicode-core';
-import { createActor, setup } from '@hilbras/omnicode-core/human/xstate2';
+import { createActor, setup } from '@hilbras/omnicode-engine/human/xstate2';
 import { afterEach, describe, expect, it } from 'vitest';
 import { WebSocket, type RawData } from 'ws';
 

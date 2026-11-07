@@ -6,7 +6,7 @@ import {
   sessionAgentConfigPartialSchema,
   sessionAgentConfigSchema,
   sessionMetadataSchema,
-} from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
+} from '@hilbras/omnicode-engine/app/sessionLegacy/sessionProtocol';
 
 import { workspaceIdSchema } from './workspace';
 

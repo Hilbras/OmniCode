@@ -3,9 +3,9 @@ import { dirname, isAbsolute, join } from 'node:path';
 import { Disposable, toDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { ILogService } from '@hilbras/omnicode-base/log/log';
-import { IBootstrapService } from '@hilbras/omnicode-core/app/bootstrap/bootstrap';
-import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
+import { IBootstrapService } from '@hilbras/omnicode-engine/app/bootstrap/bootstrap';
+import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
 
 import { IMemoryService } from '#/contracts/memoryContract';
 import type {
@@ -30,7 +30,7 @@ import type {
 import type { MemoryRecord, MemoryScope, MemoryTier } from '#/contracts/memoryTypes';
 import type { RetrievalResult } from '#/contracts/retrieval';
 
-import { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
+import { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
 
 import { EvidenceWatcher, createNodeEvidenceWatchPort } from './evidenceWatcher';
 import { MemoryMaintenanceScheduler } from './memoryMaintenance';

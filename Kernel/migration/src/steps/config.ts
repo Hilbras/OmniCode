@@ -7,25 +7,25 @@ import {
   ProviderConfigSchema,
   modelsFromToml,
   providersFromToml,
-} from '@hilbras/omnicode-core/app/kosongConfig/configSection';
-import { HookDefSchema } from '@hilbras/omnicode-core/features/externalHooks/configSection';
-import { getConfigSectionContributions } from '@hilbras/omnicode-core/app/config/configSectionContributions';
-import { getContributedFlags } from '@hilbras/omnicode-core/app/flag/flagRegistry';
-import { camelToSnake } from '@hilbras/omnicode-core/app/config/toml';
+} from '@hilbras/omnicode-engine/app/kosongConfig/configSection';
+import { HookDefSchema } from '@hilbras/omnicode-engine/features/externalHooks/configSection';
+import { getConfigSectionContributions } from '@hilbras/omnicode-engine/app/config/configSectionContributions';
+import { getContributedFlags } from '@hilbras/omnicode-engine/app/flag/flagRegistry';
+import { camelToSnake } from '@hilbras/omnicode-engine/app/config/toml';
 
-import '@hilbras/omnicode-core/agent/loop/configSection';
-import '@hilbras/omnicode-core/agent/task/configSection';
-import '@hilbras/omnicode-core/agent/permissionMode/configSection';
-import '@hilbras/omnicode-core/app/mcpConfig/configSection';
-import '@hilbras/omnicode-core/app/auth/configSection';
-import '@hilbras/omnicode-core/app/flag/flag';
-import '@hilbras/omnicode-core/features/skill/catalog/configSection';
+import '@hilbras/omnicode-engine/agent/loop/configSection';
+import '@hilbras/omnicode-engine/agent/task/configSection';
+import '@hilbras/omnicode-engine/agent/permissionMode/configSection';
+import '@hilbras/omnicode-engine/app/mcpConfig/configSection';
+import '@hilbras/omnicode-engine/app/auth/configSection';
+import '@hilbras/omnicode-engine/app/flag/flag';
+import '@hilbras/omnicode-engine/features/skill/catalog/configSection';
 
-import '@hilbras/omnicode-core/session/subagent/flag';
-import '@hilbras/omnicode-core/features/tower/flag';
-import '@hilbras/omnicode-core/agent/toolSelect/flag';
-import '@hilbras/omnicode-core/agent/tools/task/task-wait/flag';
-import '@hilbras/omnicode-core/persistence/configSection';
+import '@hilbras/omnicode-engine/session/subagent/flag';
+import '@hilbras/omnicode-engine/features/tower/flag';
+import '@hilbras/omnicode-engine/agent/toolSelect/flag';
+import '@hilbras/omnicode-engine/agent/tools/task/task-wait/flag';
+import '@hilbras/omnicode-engine/persistence/configSection';
 
 import { atomicWrite } from '../atomic-write.js';
 import { DEFAULT_CONFIG_FILE_TEXT, isTuiStubOrMissing } from '../stub-detect.js';

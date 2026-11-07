@@ -5,7 +5,7 @@ import {
   McpServerHttpConfigSchema,
   McpServerSseConfigSchema,
   McpServerStdioConfigSchema,
-} from '@hilbras/omnicode-core/mcpCore/config-schema';
+} from '@hilbras/omnicode-engine/mcpCore/config-schema';
 import { z } from 'zod';
 
 import { defineRoute } from '../../middleware/defineRoute';

@@ -3,7 +3,7 @@ import { z } from 'zod';
 import {
   createTerminalRequestSchema as engineCreateTerminalRequestSchema,
   terminalSchema,
-} from '@hilbras/omnicode-core/os/interface/terminal';
+} from '@hilbras/omnicode-engine/os/interface/terminal';
 
 export const createTerminalRequestSchema = engineCreateTerminalRequestSchema.extend({
   runtime_id: z.string().min(1).optional(),

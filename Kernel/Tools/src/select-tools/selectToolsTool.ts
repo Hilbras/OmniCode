@@ -1,7 +1,7 @@
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import type { ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
-import { IAgentToolSelectService, SELECT_TOOLS_TOOL_NAME } from '@hilbras/omnicode-core/agent/toolSelect/toolSelect';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import type { ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
+import { IAgentToolSelectService, SELECT_TOOLS_TOOL_NAME } from '@hilbras/omnicode-engine/agent/toolSelect/toolSelect';
 
 import {
   ISelectToolsTool,

@@ -1,34 +1,34 @@
 import { normalize } from 'pathe';
 
-import { ToolOutputAccumulator } from '@hilbras/omnicode-core/tool/output-accumulator';
+import { ToolOutputAccumulator } from '@hilbras/omnicode-engine/tool/output-accumulator';
 import {
   ToolAccesses,
   type ExecutableToolResult,
   type ToolExecution,
-} from '@hilbras/omnicode-core/tool/toolContract';
-import { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
-import type { IHostEnvironment } from '@hilbras/omnicode-core/os/interface/hostEnvironment';
-import type { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
-import type { IHostProcessService } from '@hilbras/omnicode-core/os/interface/hostProcess';
-import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-core/agent/runtimeBinding/agentRuntime';
-import { RuntimeWorkspaceView } from '@hilbras/omnicode-core/runtime/runtimeWorkspaceView';
+} from '@hilbras/omnicode-engine/tool/toolContract';
+import { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
+import type { IHostEnvironment } from '@hilbras/omnicode-engine/os/interface/hostEnvironment';
+import type { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
+import type { IHostProcessService } from '@hilbras/omnicode-engine/os/interface/hostProcess';
+import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-engine/agent/runtimeBinding/agentRuntime';
+import { RuntimeWorkspaceView } from '@hilbras/omnicode-engine/runtime/runtimeWorkspaceView';
 import { unwrapErrorCause } from '@hilbras/omnicode-base/errors/errors';
-import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
-import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspaceContext/workspaceContext';
+import { ISessionSkillCatalog } from '@hilbras/omnicode-engine/features/skill/session/skillCatalog';
+import { ISessionWorkspaceContext } from '@hilbras/omnicode-engine/session/workspaceContext/workspaceContext';
 import {
   resolvePathAccessPath,
   type PathClass,
   isSensitiveFile,
   SENSITIVE_DOT_VARIANT_SUFFIXES,
   type WorkspaceConfig,
-} from '@hilbras/omnicode-core/tool/path-access';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { literalRulePattern, matchesGlobRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
+} from '@hilbras/omnicode-engine/tool/path-access';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { literalRulePattern, matchesGlobRuleSubject } from '@hilbras/omnicode-engine/tool/rule-match';
 import {
   rgUnavailableMessage,
   type RgProbe,
-} from '@hilbras/omnicode-core/os/backends/node-local/tools/rgLocator';
+} from '@hilbras/omnicode-engine/os/backends/node-local/tools/rgLocator';
 import { resolveRgPath } from '#/os/rgResolver';
 import {
   DEFAULT_TIMEOUT_MS,
@@ -36,7 +36,7 @@ import {
   runRgOnce,
   shouldRetryRipgrepEagain,
   type RunRgResult,
-} from '@hilbras/omnicode-core/os/backends/node-local/tools/runRg';
+} from '@hilbras/omnicode-engine/os/backends/node-local/tools/runRg';
 import GREP_DESCRIPTION from './grep.md?raw';
 import { type GrepInput, GrepInputSchema, IGrepTool } from './grep';
 

@@ -66,6 +66,7 @@
         ./Kernel/rpc
         ./Kernel/ACP
         ./Kernel/core
+        ./Kernel/engine
         ./Kernel/server
         ./Kernel/Kaos
         ./Kernel/llm
@@ -95,6 +96,7 @@
         "@hilbras/omnicode-rpc"
         "@hilbras/omnicode-acp"
         "@hilbras/omnicode-core"
+        "@hilbras/omnicode-engine"
         "@hilbras/omnicode-server"
         "@hilbras/omnicode-kaos"
         "@hilbras/omnicode-llm"

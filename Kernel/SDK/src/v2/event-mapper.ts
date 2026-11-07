@@ -15,7 +15,7 @@ import type { Event2 } from '@hilbras/omnicode-core';
  * `IEventService` (`session.meta.updated`) is unwrapped from its
  * `{type, payload}` envelope.
  */
-import type { Event } from '@hilbras/omnicode-core/events';
+import type { Event } from '@hilbras/omnicode-engine/events';
 
 /**
  * DomainEvent types the v1 SDK event stream never carries:

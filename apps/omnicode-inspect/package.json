@@ -25,6 +25,7 @@
     "@hilbras/omnicode-addons": "workspace:^",
     "@hilbras/omnicode-base": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
+    "@hilbras/omnicode-engine": "workspace:^",
     "@hilbras/omnicode-transcript": "workspace:^",
     "@tanstack/react-query": "^5.74.4",
     "react": "^19.1.0",

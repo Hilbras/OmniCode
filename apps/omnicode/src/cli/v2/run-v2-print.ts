@@ -67,20 +67,20 @@ import type {
   AssistantDelta,
   ThinkingDelta,
   ToolCallDelta,
-} from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { TurnStepRetrying } from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { TurnEnded } from '@hilbras/omnicode-core/agent/loop/turnOps';
+} from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import type { TurnStepRetrying } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import type { TurnEnded } from '@hilbras/omnicode-engine/agent/loop/turnOps';
 import type {
   ToolCallStarted,
   ToolProgress,
   ToolResultEvent,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
+} from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
 import {
   loadMcpServersDetailed,
   resolveMcpJsonPaths,
-} from '@hilbras/omnicode-core/app/mcpConfig/configLoader';
-import type { HookResult } from '@hilbras/omnicode-core/features/externalHooks/agent/agentExternalHooksService';
-import type { GoalUpdated } from '@hilbras/omnicode-core/features/goal/goalOps';
+} from '@hilbras/omnicode-engine/app/mcpConfig/configLoader';
+import type { HookResult } from '@hilbras/omnicode-engine/features/externalHooks/agent/agentExternalHooksService';
+import type { GoalUpdated } from '@hilbras/omnicode-engine/features/goal/goalOps';
 import {
   initializeTelemetry,
   setCrashPhase,

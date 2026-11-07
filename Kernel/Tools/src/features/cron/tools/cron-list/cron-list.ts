@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
-import type { AgentTool } from '@hilbras/omnicode-core/tool/toolContract';
+import type { AgentTool } from '@hilbras/omnicode-engine/tool/toolContract';
 
 export const CronListInputSchema = z.object({}).strict();
 export type CronListInput = z.infer<typeof CronListInputSchema>;

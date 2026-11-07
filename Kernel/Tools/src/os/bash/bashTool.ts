@@ -1,27 +1,27 @@
-import { IAgentTaskService } from '@hilbras/omnicode-core/agent/task/task';
-import { resolveAgentTaskConfig } from '@hilbras/omnicode-core/agent/task/configSection';
-import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
-import type { HostEnvironmentInfo } from '@hilbras/omnicode-core/os/interface/hostEnvironment';
-import type { IHostProcess, IHostProcessService } from '@hilbras/omnicode-core/os/interface/hostProcess';
-import { ISessionContext } from '@hilbras/omnicode-core/session/sessionContext/sessionContext';
-import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspaceContext/workspaceContext';
-import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-core/agent/runtimeBinding/agentRuntime';
-import { RuntimeWorkspaceView } from '@hilbras/omnicode-core/runtime/runtimeWorkspaceView';
-import { IAgentToolPolicyService } from '@hilbras/omnicode-core/agent/toolPolicy/toolPolicy';
+import { IAgentTaskService } from '@hilbras/omnicode-engine/agent/task/task';
+import { resolveAgentTaskConfig } from '@hilbras/omnicode-engine/agent/task/configSection';
+import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
+import type { HostEnvironmentInfo } from '@hilbras/omnicode-engine/os/interface/hostEnvironment';
+import type { IHostProcess, IHostProcessService } from '@hilbras/omnicode-engine/os/interface/hostProcess';
+import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
+import { ISessionWorkspaceContext } from '@hilbras/omnicode-engine/session/workspaceContext/workspaceContext';
+import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-engine/agent/runtimeBinding/agentRuntime';
+import { RuntimeWorkspaceView } from '@hilbras/omnicode-engine/runtime/runtimeWorkspaceView';
+import { IAgentToolPolicyService } from '@hilbras/omnicode-engine/agent/toolPolicy/toolPolicy';
 import { getShellPathBridge } from '@hilbras/omnicode-base/execEnv/shellPathBridge';
 import {
   DEFAULT_TOOL_RESULT_MAX_CHARS,
   type ExecutableToolResult,
   type ToolExecution,
   type ToolUpdate,
-} from '@hilbras/omnicode-core/tool/toolContract';
+} from '@hilbras/omnicode-engine/tool/toolContract';
 import {
   type ToolOutputAccumulatorResult,
   ToolOutputAccumulator,
-} from '@hilbras/omnicode-core/tool/output-accumulator';
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { literalRulePattern, matchesGlobRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
+} from '@hilbras/omnicode-engine/tool/output-accumulator';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { literalRulePattern, matchesGlobRuleSubject } from '@hilbras/omnicode-engine/tool/rule-match';
 import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
 import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import bashDescriptionTemplate from './bash.md?raw';

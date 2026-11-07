@@ -10,18 +10,18 @@ import type {
   ToolCallLocation,
   ToolKind,
 } from '@agentclientprotocol/sdk';
-import type { ToolResultEvent } from '@hilbras/omnicode-core/events';
+import type { ToolResultEvent } from '@hilbras/omnicode-engine/events';
 import type {
   AssistantDeltaEvent,
   ThinkingDeltaEvent,
   TurnEndReason,
-} from '@hilbras/omnicode-core/agent/loop/turnEvents';
+} from '@hilbras/omnicode-engine/agent/loop/turnEvents';
 import type {
   ToolCallDeltaEvent,
   ToolCallStartedEvent,
   ToolProgressEvent,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+} from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
 import { displayBlockToAcpContent, toolResultToAcpContent } from './convert';
 import type { AcpStopReason } from './types';

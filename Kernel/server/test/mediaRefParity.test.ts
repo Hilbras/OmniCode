@@ -11,7 +11,7 @@ import {
   parseDaemonFileRef as mirrorParse,
   type MediaRefPart,
 } from '@hilbras/omnicode-transcript';
-import type { ContentPart } from '@hilbras/omnicode-core/human/llm/message';
+import type { ContentPart } from '@hilbras/omnicode-engine/human/llm/message';
 
 const URLS = [
   'omnicode-file://f_1?path=%2Fcache%2Fshot.png',

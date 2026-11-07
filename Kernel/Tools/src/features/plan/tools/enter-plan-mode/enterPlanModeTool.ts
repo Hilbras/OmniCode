@@ -1,9 +1,9 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
-import type { ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
-import { IAgentPlanService } from '@hilbras/omnicode-core/features/plan/plan';
+import type { ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
+import { IAgentPlanService } from '@hilbras/omnicode-engine/features/plan/plan';
 
 import DESCRIPTION from './enter-plan-mode.md?raw';
 import {

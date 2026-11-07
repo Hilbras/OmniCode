@@ -98,7 +98,7 @@ describe('check-import-boundaries', () => {
 
   it('flags a package-self human implementation import outside llm-adapter', () => {
     const violations = checkSource(
-      `import { createOpenAIRequester } from '@hilbras/omnicode-core/human/llm/requester/bases/openai/requester';`,
+      `import { createOpenAIRequester } from '@hilbras/omnicode-engine/human/llm/requester/bases/openai/requester';`,
       at('agent', 'loop.ts'),
     );
     expect(violations).toHaveLength(1);

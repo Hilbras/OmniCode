@@ -1,17 +1,17 @@
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 import {
   ISessionSearchService,
   type SessionSearchHit,
   type SessionSearchPage,
-} from '@hilbras/omnicode-core/features/sessionSearch/sessionSearch';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { literalRulePattern } from '@hilbras/omnicode-core/tool/rule-match';
+} from '@hilbras/omnicode-engine/features/sessionSearch/sessionSearch';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { literalRulePattern } from '@hilbras/omnicode-engine/tool/rule-match';
 import {
   ToolAccesses,
   type ExecutableToolResult,
   type ToolExecution,
-} from '@hilbras/omnicode-core/tool/toolContract';
+} from '@hilbras/omnicode-engine/tool/toolContract';
 import { SESSION_SEARCH_FLAG_ID } from './flag';
 import {
   DEFAULT_PAGE_SIZE,

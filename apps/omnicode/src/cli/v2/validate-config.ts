@@ -24,13 +24,13 @@
  */
 
 import { ConfigRegistry, type AnyEnvBindings, type EnvBinding } from '@hilbras/omnicode-core';
-import { collectKeyDeprecations } from '@hilbras/omnicode-core/app/config/deprecations';
+import { collectKeyDeprecations } from '@hilbras/omnicode-engine/app/config/deprecations';
 import {
   camelToSnake,
   describeTomlSyntaxError,
   isPlainObject,
   transformTomlData,
-} from '@hilbras/omnicode-core/app/config/toml';
+} from '@hilbras/omnicode-engine/app/config/toml';
 import { parse as parseToml } from 'smol-toml';
 import { z } from 'zod';
 

@@ -1,4 +1,4 @@
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 import type { ContentPart, Message } from '@hilbras/omnicode-llm';
 
 import type { BackgroundTaskStatus } from '#/task';

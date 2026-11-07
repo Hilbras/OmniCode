@@ -1,34 +1,34 @@
-import type { IHostFileSystem } from '@hilbras/omnicode-core/os/interface/hostFileSystem';
-import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-core/agent/runtimeBinding/agentRuntime';
-import { ISessionMediaStore } from '@hilbras/omnicode-core/agent/media/sessionMediaStore';
-import { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
-import { IAgentToolPolicyService } from '@hilbras/omnicode-core/agent/toolPolicy/toolPolicy';
-import { IAgentToolRegistryService } from '@hilbras/omnicode-core/agent/toolRegistry/toolRegistry';
-import { isDaemonFileUrl } from '@hilbras/omnicode-core/agent/media/mediaRef';
-import { attachmentFileSource, runtimeFileSource, withAttachmentLocation, type FileReadSource } from '@hilbras/omnicode-core/agent/tools/fileReadSource';
-import { RuntimeWorkspaceView } from '@hilbras/omnicode-core/runtime/runtimeWorkspaceView';
+import type { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
+import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-engine/agent/runtimeBinding/agentRuntime';
+import { ISessionMediaStore } from '@hilbras/omnicode-engine/agent/media/sessionMediaStore';
+import { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
+import { IAgentToolPolicyService } from '@hilbras/omnicode-engine/agent/toolPolicy/toolPolicy';
+import { IAgentToolRegistryService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolRegistry';
+import { isDaemonFileUrl } from '@hilbras/omnicode-engine/agent/media/mediaRef';
+import { attachmentFileSource, runtimeFileSource, withAttachmentLocation, type FileReadSource } from '@hilbras/omnicode-engine/agent/tools/fileReadSource';
+import { RuntimeWorkspaceView } from '@hilbras/omnicode-engine/runtime/runtimeWorkspaceView';
 import { unwrapErrorCause } from '@hilbras/omnicode-base/errors/errors';
-import { ISessionSkillCatalog } from '@hilbras/omnicode-core/features/skill/session/skillCatalog';
-import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspaceContext/workspaceContext';
-import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
-import { renderToolResultForModel } from '@hilbras/omnicode-core/agent/contextMemory/toolResultRender';
+import { ISessionSkillCatalog } from '@hilbras/omnicode-engine/features/skill/session/skillCatalog';
+import { ISessionWorkspaceContext } from '@hilbras/omnicode-engine/session/workspaceContext/workspaceContext';
+import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
+import { renderToolResultForModel } from '@hilbras/omnicode-engine/agent/contextMemory/toolResultRender';
 import {
   ToolAccesses,
   type ExecutableToolResult,
   type ToolExecution,
-} from '@hilbras/omnicode-core/tool/toolContract';
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+} from '@hilbras/omnicode-engine/tool/toolContract';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 import {
   resolvePathAccessPath,
   type WorkspaceConfig,
-} from '@hilbras/omnicode-core/tool/path-access';
-import { MEDIA_SNIFF_BYTES, detectFileType } from '@hilbras/omnicode-core/agent/media/file-type';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { literalRulePattern, matchesGlobRuleSubject, matchesPathRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
+} from '@hilbras/omnicode-engine/tool/path-access';
+import { MEDIA_SNIFF_BYTES, detectFileType } from '@hilbras/omnicode-engine/agent/media/file-type';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { literalRulePattern, matchesGlobRuleSubject, matchesPathRuleSubject } from '@hilbras/omnicode-engine/tool/rule-match';
 import { makeCarriageReturnsVisible, splitLinesKeepingTerminator, type LineEndingStyle } from '@hilbras/omnicode-base/text/line-endings';
 import { detectTextEncoding, type UtfTextEncoding } from '@hilbras/omnicode-base/text/encoding';
 import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
 import {
   DEFAULT_MAX_CHARS,
   DEFAULT_MAX_CHARS_LIMIT,
@@ -37,7 +37,7 @@ import {
   TRANSCODE_MAX_BYTES,
   type ReadInput,
 } from './read';
-import { IAgentToolResultTruncationService } from '@hilbras/omnicode-core/agent/toolResultTruncation/toolResultTruncation';
+import { IAgentToolResultTruncationService } from '@hilbras/omnicode-engine/agent/toolResultTruncation/toolResultTruncation';
 import { READ_SECTION, type ReadConfig } from './configSection';
 import { DOCUMENT_EXTRACT_FLAG_ID } from './extract/flag';
 import {

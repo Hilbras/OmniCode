@@ -1,8 +1,8 @@
-export { NOTIFY_USER_TOOL_NAME } from '@hilbras/omnicode-core/features/notify/notifyToolName';
+export { NOTIFY_USER_TOOL_NAME } from '@hilbras/omnicode-engine/features/notify/notifyToolName';
 import { z } from 'zod';
 
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
-import { type AgentTool } from '@hilbras/omnicode-core/tool/toolContract';
+import { type AgentTool } from '@hilbras/omnicode-engine/tool/toolContract';
 
 
 export interface NotifyUserInput {

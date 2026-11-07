@@ -1,12 +1,12 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
-import { type ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { literalRulePattern } from '@hilbras/omnicode-core/tool/rule-match';
-import { IAgentScopeContext } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { IAgentCronService } from '@hilbras/omnicode-core/features/cron/cronService';
-import { computeNextCronRun, cronToHuman, hasFireWithinYears, parseCronExpression, type ParsedCronExpression } from '@hilbras/omnicode-core/features/cron/internal/cron-expr';
-import { formatLocalIsoWithOffset } from '@hilbras/omnicode-core/features/cron/internal/format';
+import { type ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { literalRulePattern } from '@hilbras/omnicode-engine/tool/rule-match';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { IAgentCronService } from '@hilbras/omnicode-engine/features/cron/cronService';
+import { computeNextCronRun, cronToHuman, hasFireWithinYears, parseCronExpression, type ParsedCronExpression } from '@hilbras/omnicode-engine/features/cron/internal/cron-expr';
+import { formatLocalIsoWithOffset } from '@hilbras/omnicode-engine/features/cron/internal/format';
 
 import {
   ICronCreateTool,
@@ -16,7 +16,7 @@ import {
   type CronCreateInput,
   type CronCreateOutput,
 } from './cron-create';
-import { CRON_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-core/agent/tools/mainAgentOnly';
+import { CRON_MAIN_AGENT_ONLY, mainAgentOnlyExecution } from '@hilbras/omnicode-engine/agent/tools/mainAgentOnly';
 import CRON_CREATE_DESCRIPTION from './cron-create.md?raw';
 
 const ONE_SHOT_MAX_FUTURE_MS = 350 * 24 * 60 * 60 * 1000;

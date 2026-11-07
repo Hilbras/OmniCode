@@ -1,4 +1,4 @@
-export type { PermissionApprovalResultRecord } from '@hilbras/omnicode-core/agent/permissionRules/permissionRules';
-export type { PermissionData } from '@hilbras/omnicode-core/agent/permissionPolicy/types';
+export type { PermissionApprovalResultRecord } from '@hilbras/omnicode-engine/agent/permissionRules/permissionRules';
+export type { PermissionData } from '@hilbras/omnicode-engine/agent/permissionPolicy/types';
 
 export type PermissionMode = 'yolo' | 'manual' | 'auto';

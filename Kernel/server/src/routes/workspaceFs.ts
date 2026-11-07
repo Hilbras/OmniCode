@@ -23,7 +23,7 @@ import {
   fsBrowseQuerySchema,
   fsBrowseResponseSchema,
   fsHomeResponseSchema,
-} from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
+} from '@hilbras/omnicode-engine/app/hostFolderBrowser/hostFolderBrowser';
 import { z } from 'zod';
 
 import { errEnvelope, okEnvelope } from '../envelope';

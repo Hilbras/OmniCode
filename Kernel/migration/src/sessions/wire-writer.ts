@@ -1,6 +1,6 @@
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
-import type { TodoItem } from '@hilbras/omnicode-core/features/todo/todoItem';
+import type { TodoItem } from '@hilbras/omnicode-engine/features/todo/todoItem';
 import type { NormalizedMessage } from './translator.js';
 import { buildTurnRecords, splitIntoTurns, type WireRecord } from './turn-structure.js';
 

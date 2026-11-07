@@ -12,12 +12,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 import { Service } from '@hilbras/omnicode-base/di/service';
-import { CommandContribution } from '@hilbras/omnicode-core/agent/command/commandContribution';
-import { IFeatureManager } from '@hilbras/omnicode-core/app/feature/featureManager';
+import { CommandContribution } from '@hilbras/omnicode-engine/agent/command/commandContribution';
+import { IFeatureManager } from '@hilbras/omnicode-engine/app/feature/featureManager';
 import {
   resetModelsDevUpstreamForTest,
   setModelsDevUpstreamForTest,
-} from '@hilbras/omnicode-core/app/kosongConfig/modelsDevUpstream';
+} from '@hilbras/omnicode-engine/app/kosongConfig/modelsDevUpstream';
 
 import type { Klient } from '../../src/index.js';
 import type { TestEngine } from './engine.js';

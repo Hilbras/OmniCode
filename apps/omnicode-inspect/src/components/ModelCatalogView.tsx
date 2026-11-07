@@ -12,16 +12,16 @@
  * There is no live event push; the queries refresh on a slow poll.
  */
 
-import { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
-import { ISessionManager } from '@hilbras/omnicode-core/app/sessionManager/sessionManager';
-import type { TokenUsage } from '@hilbras/omnicode-core/human/llm/usage';
+import { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
+import { ISessionManager } from '@hilbras/omnicode-engine/app/sessionManager/sessionManager';
+import type { TokenUsage } from '@hilbras/omnicode-engine/human/llm/usage';
 import {
   IModelCatalog,
   type ModelCatalogItem,
   type ModelPingResult,
   type ProviderCatalogItem,
-} from '@hilbras/omnicode-core/llm-adapter/model/catalog';
-import { IModelService } from '@hilbras/omnicode-core/llm-adapter/model/model';
+} from '@hilbras/omnicode-engine/llm-adapter/model/catalog';
+import { IModelService } from '@hilbras/omnicode-engine/llm-adapter/model/model';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 

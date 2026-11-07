@@ -42,13 +42,13 @@ import type {
   SessionHandle,
   SkillSummary,
 } from '@hilbras/omnicode-api';
-import type { ToolResultEvent } from '@hilbras/omnicode-core/events';
+import type { ToolResultEvent } from '@hilbras/omnicode-engine/events';
 import type {
   ToolCallDeltaEvent,
   ToolCallStartedEvent,
   ToolProgressEvent,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+} from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
 import type { AcpClient } from './acp-client';
 import type { AcpTerminalCreatedEvent, IAcpConnection } from './acp-fs';

@@ -1,4 +1,4 @@
-import { parsePattern } from '@hilbras/omnicode-core/agent/permissionRules/matchesRule';
+import { parsePattern } from '@hilbras/omnicode-engine/agent/permissionRules/matchesRule';
 import { z } from 'zod';
 
 import { ErrorCodes, OmnicodeError } from '#/errors';
@@ -250,7 +250,7 @@ export type ServicesConfig = z.infer<typeof ServicesConfigSchema>;
 
 /**
  * The MCP server wire shapes live in the engine
- * (`@hilbras/omnicode-core/mcpCore/config-schema`) — the package that owns
+ * (`@hilbras/omnicode-engine/mcpCore/config-schema`) — the package that owns
  * the `mcp.json` file and the servers themselves. They are re-exported here
  * so there is exactly one definition: a second copy silently drifts, and a
  * drifted copy accepts fields the engine rejects (and drops fields it needs).
@@ -262,14 +262,14 @@ export {
   McpServerStdioConfigSchema,
   McpTimeoutMsSchema,
   MAX_MCP_TIMEOUT_MS,
-} from '@hilbras/omnicode-core/mcpCore/config-schema';
+} from '@hilbras/omnicode-engine/mcpCore/config-schema';
 export type {
   McpRemoteServerConfig,
   McpServerConfig,
   McpServerHttpConfig,
   McpServerSseConfig,
   McpServerStdioConfig,
-} from '@hilbras/omnicode-core/mcpCore/config-schema';
+} from '@hilbras/omnicode-engine/mcpCore/config-schema';
 
 export const OmnicodeConfigSchema = z.object({
   providers: z.record(z.string(), ProviderConfigSchema).default({}),

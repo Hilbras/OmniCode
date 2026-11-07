@@ -83,6 +83,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
       '@hilbras/omnicode-tools':
         specifier: workspace:^
         version: link:../Tools
@@ -104,6 +107,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
       '@hilbras/omnicode-memory':
         specifier: workspace:^
         version: link:../memory
@@ -141,6 +147,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
       pathe:
         specifier: ^2.0.3
         version: 2.0.3
@@ -169,6 +178,9 @@ importers:
       '@hilbras/omnicode-base':
         specifier: workspace:^
         version: link:../base
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
       '@modelcontextprotocol/sdk':
         specifier: ^1.32.2
         version: 1.32.2(zod@4.3.6)
@@ -221,6 +233,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
       pathe:
         specifier: ^2.0.3
         version: 2.0.3
@@ -271,6 +286,15 @@ importers:
         version: 22.0.0
 
   Kernel/core:
+    dependencies:
+      '@hilbras/omnicode-base':
+        specifier: workspace:^
+        version: link:../base
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
+
+  Kernel/engine:
     dependencies:
       '@antfu/utils':
         specifier: ^9.3.0
@@ -337,7 +361,7 @@ importers:
         version: 2.0.3
       picomatch:
         specifier: ^4.0.4
-        version: 4.0.4
+        version: 4.0.7
       radashi:
         specifier: ^12.9.1
         version: 12.9.1
@@ -451,6 +475,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
       '@hilbras/omnicode-minidb':
         specifier: workspace:^
         version: link:../minidb
@@ -466,6 +493,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
       smol-toml:
         specifier: ^1.6.1
         version: 1.6.1
@@ -487,6 +517,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
       ws:
         specifier: ^8.18.0
         version: 8.20.0
@@ -521,6 +554,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../engine
       '@hilbras/omnicode-memory':
         specifier: workspace:^
         version: link:../memory
@@ -609,6 +645,9 @@ importers:
 
   apps/omnicode:
     dependencies:
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../../Kernel/engine
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
@@ -732,6 +771,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../../Kernel/core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../../Kernel/engine
       '@hilbras/omnicode-transcript':
         specifier: workspace:^
         version: link:../../Kernel/transcript
@@ -781,6 +823,9 @@ importers:
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../../../Kernel/core
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../../../Kernel/engine
       '@hilbras/omnicode-tools':
         specifier: workspace:^
         version: link:../../../Kernel/Tools
@@ -812,6 +857,9 @@ importers:
 
   apps/omnicode-vis/web:
     dependencies:
+      '@hilbras/omnicode-engine':
+        specifier: workspace:^
+        version: link:../../../Kernel/engine
       '@tanstack/react-query':
         specifier: ^5.74.4
         version: 5.99.2(react@19.2.5)
@@ -6014,10 +6062,6 @@ packages:
     resolution: {integrity: sha512-V7+vQEJ06Z+c5tSye8S+nHUfI51xoXIXjHQ99cQtKUkQqqO1kO/KCJUfZXuB47h/YBlDhah2H3hdUGXn8ie0oA==}
     engines: {node: '>=8.6'}
 
-  picomatch@4.0.4:
-    resolution: {integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A==}
-    engines: {node: '>=12'}
-
   picomatch@4.0.7:
     resolution: {integrity: sha512-qcJu88Q2IWqJsDD529JKMdwGm/dvInW4HvQnRwiH9JtihJvzGOscDtHE3x1pBKeUOTysQ8kVmLnJ2kJu7yhcGA==}
     engines: {node: '>=12'}
@@ -9659,7 +9703,7 @@ snapshots:
     dependencies:
       minimatch: 10.2.5
       path-browserify: 1.0.1
-      tinyglobby: 0.2.16
+      tinyglobby: 0.2.17
 
   '@tybys/wasm-util@0.10.1':
     dependencies:
@@ -11431,10 +11475,6 @@ snapshots:
     dependencies:
       format: 0.2.2
 
-  fdir@6.5.0(picomatch@4.0.4):
-    optionalDependencies:
-      picomatch: 4.0.4
-
   fdir@6.5.0(picomatch@4.0.7):
     optionalDependencies:
       picomatch: 4.0.7
@@ -12252,7 +12292,7 @@ snapshots:
     dependencies:
       commander: 14.0.3
       listr2: 9.0.5
-      picomatch: 4.0.4
+      picomatch: 4.0.7
       string-argv: 0.3.2
       tinyexec: 1.1.1
       yaml: 2.8.3
@@ -12971,8 +13011,6 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@2.3.2: {}
-
-  picomatch@4.0.4: {}
 
   picomatch@4.0.7: {}
 
@@ -13857,8 +13895,8 @@ snapshots:
 
   tinyglobby@0.2.16:
     dependencies:
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
 
   tinyglobby@0.2.17:
     dependencies:
@@ -13947,7 +13985,7 @@ snapshots:
       hookable: 6.1.1
       import-without-cache: 0.4.0
       obug: 2.1.1
-      picomatch: 4.0.4
+      picomatch: 4.0.7
       rolldown: 1.0.1
       rolldown-plugin-dts: 0.25.1(rolldown@1.0.1)(typescript@6.0.2)(vue-tsc@3.2.9(typescript@6.0.2))
       semver: 7.7.4
@@ -14146,8 +14184,8 @@ snapshots:
   vite@6.4.2(@types/node@24.19.2)(jiti@2.6.1)(lightningcss@1.33.0)(tsx@4.21.0)(yaml@2.8.3):
     dependencies:
       esbuild: 0.25.12
-      fdir: 6.5.0(picomatch@4.0.4)
-      picomatch: 4.0.4
+      fdir: 6.5.0(picomatch@4.0.7)
+      picomatch: 4.0.7
       postcss: 8.5.15
       rollup: 4.60.2
       tinyglobby: 0.2.16
@@ -14278,7 +14316,7 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 4.0.4
+      picomatch: 4.0.7
       std-env: 4.0.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
@@ -14307,7 +14345,7 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 4.0.4
+      picomatch: 4.0.7
       std-env: 4.0.0
       tinybench: 2.9.0
       tinyexec: 1.1.2
@@ -14336,7 +14374,7 @@ snapshots:
       magic-string: 0.30.21
       obug: 2.1.1
       pathe: 2.0.3
-      picomatch: 4.0.4
+      picomatch: 4.0.7
       std-env: 4.0.0
       tinybench: 2.9.0
       tinyexec: 1.1.2

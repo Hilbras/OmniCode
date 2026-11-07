@@ -8,11 +8,11 @@
 
 import { z } from 'zod';
 
-import type { ConfigChangedEvent } from '@hilbras/omnicode-core/app/config/config';
-import type { ModelsChangedEvent } from '@hilbras/omnicode-core/llm-adapter/model/model';
-import type { ProvidersChangedEvent } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
-import type { ReloadSummary } from '@hilbras/omnicode-core/app/plugin/types';
-import type { IOAuthService } from '@hilbras/omnicode-core/app/auth/auth';
+import type { ConfigChangedEvent } from '@hilbras/omnicode-engine/app/config/config';
+import type { ModelsChangedEvent } from '@hilbras/omnicode-engine/llm-adapter/model/model';
+import type { ProvidersChangedEvent } from '@hilbras/omnicode-engine/llm-adapter/provider/provider';
+import type { ReloadSummary } from '@hilbras/omnicode-engine/app/plugin/types';
+import type { IOAuthService } from '@hilbras/omnicode-engine/app/auth/auth';
 
 import { stringDeltaSchema } from '../helpers.js';
 import type { EventRegistration } from '../types.js';

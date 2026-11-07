@@ -41,8 +41,8 @@ import {
  *   The kernel's `respond` no-ops on an id that is no longer
  *   pending, so a late answer after a turn cancellation is safe.
  */
-import type { Event } from '@hilbras/omnicode-core/events';
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+import type { Event } from '@hilbras/omnicode-engine/events';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
 import type {
   ApprovalRequest,

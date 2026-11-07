@@ -30,10 +30,14 @@ const RULES = [
     hint: 'rpc is the transport layer above base; importing the engine would invert it',
   },
   {
-    name: 'core may import leaf packages only',
-    test: (from, to) =>
-      from === 'core' && to !== null && !LEAVES.has(to),
-    hint: 'core is the engine; anything that depends on core must not be imported by it',
+    name: 'engine may import leaf packages only',
+    test: (from, to) => from === 'engine' && to !== null && !LEAVES.has(to),
+    hint: 'the engine is the top of the foundation; anything above it would invert the graph',
+  },
+  {
+    name: 'core may import base and engine only',
+    test: (from, to) => from === 'core' && to !== null && to !== 'base' && to !== 'engine',
+    hint: 'core is now a re-export facade over base and engine',
   },
   {
     name: 'sdk must not import api',

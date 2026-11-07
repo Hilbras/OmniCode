@@ -1,6 +1,6 @@
-import { LifecycleScope } from '@hilbras/omnicode-core/app/scopes';
-import { Feature } from '@hilbras/omnicode-core/features/feature';
-import { registerFeature } from '@hilbras/omnicode-core/features/featureRegistry';
+import { LifecycleScope } from '@hilbras/omnicode-engine/app/scopes';
+import { Feature } from '@hilbras/omnicode-engine/features/feature';
+import { registerFeature } from '@hilbras/omnicode-engine/features/featureRegistry';
 
 import { ISessionInitService } from './sessionInit';
 import { SessionInitService } from './sessionInitService';

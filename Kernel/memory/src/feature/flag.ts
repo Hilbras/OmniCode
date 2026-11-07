@@ -1,7 +1,7 @@
 import {
   type FlagDefinitionInput,
   registerFlagDefinition,
-} from '@hilbras/omnicode-core/app/flag/flagRegistry';
+} from '@hilbras/omnicode-engine/app/flag/flagRegistry';
 
 export const MEMORY_FLAG_ID = 'memory';
 export const MEMORY_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY';

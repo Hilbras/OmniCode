@@ -1,7 +1,7 @@
 // apps/omnicode-vis/server/test/lib/context-projector.test.ts
 import { describe, it, expect, afterEach } from 'vitest';
-import { estimateTokensForMessages } from '@hilbras/omnicode-core/llm-adapter/contract/tokens';
-import { buildCompactionContinuationText } from '@hilbras/omnicode-core/agent/contextMemory/compactionHandoff';
+import { estimateTokensForMessages } from '@hilbras/omnicode-engine/llm-adapter/contract/tokens';
+import { buildCompactionContinuationText } from '@hilbras/omnicode-engine/agent/contextMemory/compactionHandoff';
 import { buildSessionFixture } from '../fixtures/build';
 import { projectContext } from '../../src/lib/context-projector';
 import { readAgentWire } from '../../src/lib/wire-reader';

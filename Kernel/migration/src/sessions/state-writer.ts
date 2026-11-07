@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import {
   SESSION_META_VERSION,
   type SessionTitleKind,
-} from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
+} from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetadata';
 
 import type { OldSessionState } from '../omnicode-cli-schema.js';
 

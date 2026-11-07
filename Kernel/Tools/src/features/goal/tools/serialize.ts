@@ -1,4 +1,4 @@
-import type { GoalSnapshot, GoalToolResult } from '@hilbras/omnicode-core/features/goal/types';
+import type { GoalSnapshot, GoalToolResult } from '@hilbras/omnicode-engine/features/goal/types';
 
 export function goalForModel(goal: GoalSnapshot): Omit<GoalSnapshot, 'goalId'> {
   const { goalId: _goalId, ...rest } = goal;

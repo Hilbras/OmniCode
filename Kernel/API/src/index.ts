@@ -118,43 +118,43 @@ export type { AgentEventPayloads } from './contract/agent/events.js';
 
 // Wire types re-exported for consumer convenience (type-only; the engine is
 // not pulled in at runtime for http consumers).
-export type { SessionListQuery } from '@hilbras/omnicode-core/app/sessionIndex/sessionIndex';
-export type { Page } from '@hilbras/omnicode-core/persistence/interface/queryStore';
-export type { Workspace, WorkspaceUpdate } from '@hilbras/omnicode-core/app/workspace/workspace';
+export type { SessionListQuery } from '@hilbras/omnicode-engine/app/sessionIndex/sessionIndex';
+export type { Page } from '@hilbras/omnicode-engine/persistence/interface/queryStore';
+export type { Workspace, WorkspaceUpdate } from '@hilbras/omnicode-engine/app/workspace/workspace';
 export type {
   ConfigDiagnostic,
   ConfigInspectValue,
-} from '@hilbras/omnicode-core/app/config/config';
+} from '@hilbras/omnicode-engine/app/config/config';
 export type { ProviderConfig } from '@hilbras/omnicode-sdk/rpc-exports';
-export type { AuthStatus } from '@hilbras/omnicode-core/app/auth/auth';
-export type { ExperimentalFeatureState } from '@hilbras/omnicode-core/app/flag/flag';
+export type { AuthStatus } from '@hilbras/omnicode-engine/app/auth/auth';
+export type { ExperimentalFeatureState } from '@hilbras/omnicode-engine/app/flag/flag';
 export type {
   FsBrowseResponse,
   FsHomeResponse,
-} from '@hilbras/omnicode-core/app/hostFolderBrowser/hostFolderBrowser';
-export type { FileMeta } from '@hilbras/omnicode-core/app/file/fileService';
+} from '@hilbras/omnicode-engine/app/hostFolderBrowser/hostFolderBrowser';
+export type { FileMeta } from '@hilbras/omnicode-engine/app/file/fileService';
 export type {
   PluginCommandDef,
   PluginInfo,
   PluginSummary,
   PluginUpdateStatus,
   ReloadSummary,
-} from '@hilbras/omnicode-core/app/plugin/types';
+} from '@hilbras/omnicode-engine/app/plugin/types';
 export type {
   AgentMeta,
   SessionMeta,
   SessionMetaPatch,
-} from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
-export type { ApprovalResponse } from '@hilbras/omnicode-core/agent/interaction/approval';
+} from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetadata';
+export type { ApprovalResponse } from '@hilbras/omnicode-engine/agent/interaction/approval';
 export type {
   QuestionRequest,
   QuestionResult,
-} from '@hilbras/omnicode-core/agent/interaction/question';
+} from '@hilbras/omnicode-engine/agent/interaction/question';
 export type {
   Interaction,
   InteractionKind,
-} from '@hilbras/omnicode-core/human/interaction/interaction';
-export type { SkillSummary } from '@hilbras/omnicode-core/features/skill/catalog/types';
+} from '@hilbras/omnicode-engine/human/interaction/interaction';
+export type { SkillSummary } from '@hilbras/omnicode-engine/features/skill/catalog/types';
 export type { AgentProfileSummary } from '@hilbras/omnicode-sdk/rpc-exports';
 export type {
   ConnectorAction,
@@ -163,7 +163,7 @@ export type {
   ConnectorKind,
   ConnectorScope,
   ConnectorStatus,
-} from '@hilbras/omnicode-core/app/connectors/connectors';
+} from '@hilbras/omnicode-engine/app/connectors/connectors';
 export type {
   GlobalMcpServerConfig,
   McpManagedServer,
@@ -174,9 +174,9 @@ export type {
   McpServerLocator,
   McpServerTestResult,
   McpServerTestTarget,
-} from '@hilbras/omnicode-core/app/mcpManagement/mcpManagement';
-export type { ContentPart } from '@hilbras/omnicode-core/human/llm/message';
-export type { PermissionMode } from '@hilbras/omnicode-core/agent/permissionPolicy/types';
+} from '@hilbras/omnicode-engine/app/mcpManagement/mcpManagement';
+export type { ContentPart } from '@hilbras/omnicode-engine/human/llm/message';
+export type { PermissionMode } from '@hilbras/omnicode-engine/agent/permissionPolicy/types';
 
 export {
   createOmnicodeHarness,

@@ -1,16 +1,16 @@
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { literalRulePattern, matchesGlobRuleSubject } from '@hilbras/omnicode-core/tool/rule-match';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { literalRulePattern, matchesGlobRuleSubject } from '@hilbras/omnicode-engine/tool/rule-match';
 import {
   ToolAccesses,
   type ExecutableToolContext,
   type ExecutableToolResult,
   type ToolExecution,
-} from '@hilbras/omnicode-core/tool/toolContract';
-import { ToolOutputAccumulator } from '@hilbras/omnicode-core/tool/output-accumulator';
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+} from '@hilbras/omnicode-engine/tool/toolContract';
+import { ToolOutputAccumulator } from '@hilbras/omnicode-engine/tool/output-accumulator';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
-import { IWebFetchService } from '@hilbras/omnicode-core/app/web/web';
-import { HttpFetchError } from '@hilbras/omnicode-core/app/web/tools/fetch-url-types';
+import { IWebFetchService } from '@hilbras/omnicode-engine/app/web/web';
+import { HttpFetchError } from '@hilbras/omnicode-engine/app/web/tools/fetch-url-types';
 import { FetchURLInputSchema, IFetchURLTool, type FetchURLInput } from './fetch-url';
 import DESCRIPTION from './fetch-url.md?raw';
 

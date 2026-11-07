@@ -36,6 +36,7 @@
     "@hilbras/omnicode-auth": "workspace:^",
     "@hilbras/omnicode-base": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
+    "@hilbras/omnicode-engine": "workspace:^",
     "@hilbras/omnicode-memory": "workspace:^",
     "@hilbras/omnicode-minidb": "workspace:*",
     "@hilbras/omnicode-remote": "workspace:^",

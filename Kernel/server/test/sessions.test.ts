@@ -3,9 +3,9 @@ import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promis
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { inflateRawSync } from 'node:zlib';
-import { ISessionMediaStore } from '@hilbras/omnicode-core/agent/media/sessionMediaStore';
-import { mcpResultToExecutableOutput } from '@hilbras/omnicode-core/agent/mcp/output';
-import { renderToolResultForModel } from '@hilbras/omnicode-core/agent/contextMemory/toolResultRender';
+import { ISessionMediaStore } from '@hilbras/omnicode-engine/agent/media/sessionMediaStore';
+import { mcpResultToExecutableOutput } from '@hilbras/omnicode-engine/agent/mcp/output';
+import { renderToolResultForModel } from '@hilbras/omnicode-engine/agent/contextMemory/toolResultRender';
 import { IReadTool, ReadInputSchema, type ReadInput } from '@hilbras/omnicode-tools/os/read/read';
 
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
@@ -37,11 +37,11 @@ import {
   type ContextMessage,
   type ScopeSeed,
 } from '@hilbras/omnicode-core';
-import { SessionMetaUpdated } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetaEvents';
-import { TurnSteer } from '@hilbras/omnicode-core/agent/loop/turnOps';
+import { SessionMetaUpdated } from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetaEvents';
+import { TurnSteer } from '@hilbras/omnicode-engine/agent/loop/turnOps';
 import type { AgentTranscriptSnapshot } from '@hilbras/omnicode-transcript';
-import { TurnStarted } from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import { sessionWarningsResponseSchema } from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
+import { TurnStarted } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import { sessionWarningsResponseSchema } from '@hilbras/omnicode-engine/app/sessionLegacy/sessionProtocol';
 import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 
 import { type RunningServer, startServer } from '../src/start';

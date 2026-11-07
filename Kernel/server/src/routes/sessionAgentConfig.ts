@@ -12,7 +12,7 @@ import {
   type PermissionMode,
   type Scope,
 } from '@hilbras/omnicode-core';
-import type { SessionAgentConfigPartial } from '@hilbras/omnicode-core/app/sessionLegacy/sessionProtocol';
+import type { SessionAgentConfigPartial } from '@hilbras/omnicode-engine/app/sessionLegacy/sessionProtocol';
 
 import { ensureMainAgent } from '../transport/mainAgent';
 

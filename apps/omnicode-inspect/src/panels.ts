@@ -16,22 +16,22 @@
  * every Service.
  */
 
-import { IAgentLoopService } from '@hilbras/omnicode-core/agent/loop/loop';
-import { IAgentMcpService } from '@hilbras/omnicode-core/agent/mcp/mcp';
-import { IAgentPermissionModeService } from '@hilbras/omnicode-core/agent/permissionMode/permissionMode';
-import { IAgentPermissionRulesService } from '@hilbras/omnicode-core/agent/permissionRules/permissionRules';
-import { IAgentPlanService } from '@hilbras/omnicode-core/features/plan/plan';
-import { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
-import { IAgentSwarmService } from '@hilbras/omnicode-core/features/swarm/agent/swarm';
-import { IAgentTaskService } from '@hilbras/omnicode-core/agent/task/task';
-import { IAgentToolRegistryService } from '@hilbras/omnicode-core/agent/toolRegistry/toolRegistry';
-import { IAuthSummaryService } from '@hilbras/omnicode-core/app/auth/auth';
-import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
-import { IProviderService } from '@hilbras/omnicode-core/llm-adapter/provider/provider';
-import { ISessionInitService } from '@hilbras/omnicode-core/session/sessionInit/sessionInitContract';
-import { ISessionMetadata } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
-import { ISessionWorkspaceContext } from '@hilbras/omnicode-core/session/workspaceContext/workspaceContext';
+import { IAgentLoopService } from '@hilbras/omnicode-engine/agent/loop/loop';
+import { IAgentMcpService } from '@hilbras/omnicode-engine/agent/mcp/mcp';
+import { IAgentPermissionModeService } from '@hilbras/omnicode-engine/agent/permissionMode/permissionMode';
+import { IAgentPermissionRulesService } from '@hilbras/omnicode-engine/agent/permissionRules/permissionRules';
+import { IAgentPlanService } from '@hilbras/omnicode-engine/features/plan/plan';
+import { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
+import { IAgentSwarmService } from '@hilbras/omnicode-engine/features/swarm/agent/swarm';
+import { IAgentTaskService } from '@hilbras/omnicode-engine/agent/task/task';
+import { IAgentToolRegistryService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolRegistry';
+import { IAuthSummaryService } from '@hilbras/omnicode-engine/app/auth/auth';
+import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
+import { IProviderService } from '@hilbras/omnicode-engine/llm-adapter/provider/provider';
+import { ISessionInitService } from '@hilbras/omnicode-engine/session/sessionInit/sessionInitContract';
+import { ISessionMetadata } from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetadata';
+import { ISessionWorkspaceContext } from '@hilbras/omnicode-engine/session/workspaceContext/workspaceContext';
 
 /** Loosely-typed view of a scoped service proxy (every member is a remote call). */
 export type AnyService = Record<string, (...args: unknown[]) => Promise<unknown>>;

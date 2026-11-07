@@ -13,14 +13,14 @@
  * status badge. Session creation still goes through the v1 REST endpoint.
  */
 
-import { IAgentProfileService } from '@hilbras/omnicode-core/agent/profile/profile';
-import { IConfigService } from '@hilbras/omnicode-core/app/config/config';
-import { ISessionManager } from '@hilbras/omnicode-core/app/sessionManager/sessionManager';
+import { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
+import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
+import { ISessionManager } from '@hilbras/omnicode-engine/app/sessionManager/sessionManager';
 import {
   IWorkspaceService,
   type Workspace,
-} from '@hilbras/omnicode-core/app/workspace/workspace';
-import { IModelCatalog } from '@hilbras/omnicode-core/llm-adapter/model/catalog';
+} from '@hilbras/omnicode-engine/app/workspace/workspace';
+import { IModelCatalog } from '@hilbras/omnicode-engine/llm-adapter/model/catalog';
 import { useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 

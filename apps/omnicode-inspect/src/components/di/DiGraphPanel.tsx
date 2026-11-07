@@ -28,7 +28,7 @@
  * Pure React + Tailwind, no graph or layout library.
  */
 import type { UnitState } from '@hilbras/omnicode-base/di/cascadeEngine';
-import type { DebugGraph, DebugGraphNode } from '@hilbras/omnicode-core/debug/debugGraph';
+import type { DebugGraph, DebugGraphNode } from '@hilbras/omnicode-engine/debug/debugGraph';
 import { useEffect, useMemo, useRef, useState } from 'react';
 
 const STATE_COLORS: Record<UnitState | 'none', string> = {

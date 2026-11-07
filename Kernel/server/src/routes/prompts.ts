@@ -35,11 +35,11 @@ import {
   type ISessionScopeHandle,
   type Scope,
 } from '@hilbras/omnicode-core';
-import { isUserPromptSubmitHookPart } from '@hilbras/omnicode-core/agent/contextMemory/hookParts';
+import { isUserPromptSubmitHookPart } from '@hilbras/omnicode-engine/agent/contextMemory/hookParts';
 import {
   annotateBundledSkillParts,
   isSkillActivationPart,
-} from '@hilbras/omnicode-core/human/agent/origin';
+} from '@hilbras/omnicode-engine/human/agent/origin';
 import { z } from 'zod';
 
 import { errEnvelope, okEnvelope } from '../envelope';

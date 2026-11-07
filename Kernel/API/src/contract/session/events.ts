@@ -8,8 +8,8 @@
 import type {
   Interaction,
   InteractionResolution,
-} from '@hilbras/omnicode-core/human/interaction/interaction';
-import type { SessionMetadataChangedEvent } from '@hilbras/omnicode-core/session/sessionMetadata/sessionMetadata';
+} from '@hilbras/omnicode-engine/human/interaction/interaction';
+import type { SessionMetadataChangedEvent } from '@hilbras/omnicode-engine/session/sessionMetadata/sessionMetadata';
 import { z } from 'zod';
 
 import type { EventRegistration } from '../types.js';

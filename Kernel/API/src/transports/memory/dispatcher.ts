@@ -17,33 +17,33 @@
 import { Readable } from 'node:stream';
 
 import type { IAgentScopeHandle } from '@hilbras/omnicode-base/di/scope';
-import type { SkillActivationOrigin } from '@hilbras/omnicode-core/agent/contextMemory/types';
-import { IAgentLoopService } from '@hilbras/omnicode-core/agent/loop/loop';
-import { agentContextOf } from '@hilbras/omnicode-core/agent/scopeContext/scopeContext';
-import { IEventBus } from '@hilbras/omnicode-core/app/event/eventBus';
-import type { FileMeta, GetResult, SaveOptions } from '@hilbras/omnicode-core/app/file/fileService';
-import { FileErrors } from '@hilbras/omnicode-core/app/file/fileService';
-import { getLiveSessionById } from '@hilbras/omnicode-core/app/sessionManager/sessionLookup';
-import { ISessionManager } from '@hilbras/omnicode-core/app/sessionManager/sessionManager';
-import { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
-import { Error2, ErrorCodes } from '@hilbras/omnicode-core/errors';
+import type { SkillActivationOrigin } from '@hilbras/omnicode-engine/agent/contextMemory/types';
+import { IAgentLoopService } from '@hilbras/omnicode-engine/agent/loop/loop';
+import { agentContextOf } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { IEventBus } from '@hilbras/omnicode-engine/app/event/eventBus';
+import type { FileMeta, GetResult, SaveOptions } from '@hilbras/omnicode-engine/app/file/fileService';
+import { FileErrors } from '@hilbras/omnicode-engine/app/file/fileService';
+import { getLiveSessionById } from '@hilbras/omnicode-engine/app/sessionManager/sessionLookup';
+import { ISessionManager } from '@hilbras/omnicode-engine/app/sessionManager/sessionManager';
+import { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
+import { Error2, ErrorCodes } from '@hilbras/omnicode-engine/errors';
 import type {
   PromptWithSkillsInput,
   SkillActivationInput,
-} from '@hilbras/omnicode-core/features/skill/skill';
-import { IAgentSkillService } from '@hilbras/omnicode-core/features/skill/skillService';
-import { interactions } from '@hilbras/omnicode-core/human/interaction/facade';
+} from '@hilbras/omnicode-engine/features/skill/skill';
+import { IAgentSkillService } from '@hilbras/omnicode-engine/features/skill/skillService';
+import { interactions } from '@hilbras/omnicode-engine/human/interaction/facade';
 import {
   INTERACTION_TAG_AGENT_ID,
   INTERACTION_TAG_SESSION_ID,
   type Interaction,
   type InteractionKind,
   type InteractionRequest,
-} from '@hilbras/omnicode-core/human/interaction/interaction';
-import { IAgentLifecycleService } from '@hilbras/omnicode-core/session/agentLifecycle/agentLifecycle';
-import { MAIN_AGENT_ID } from '@hilbras/omnicode-core/session/agentLifecycle/agentLifecycle';
-import { ensureMainAgent } from '@hilbras/omnicode-core/session/agentLifecycle/mainAgent';
-import { IWorkspaceInstanceManager } from '@hilbras/omnicode-core/workspace/workspaceInstance/workspaceInstanceManager';
+} from '@hilbras/omnicode-engine/human/interaction/interaction';
+import { IAgentLifecycleService } from '@hilbras/omnicode-engine/session/agentLifecycle/agentLifecycle';
+import { MAIN_AGENT_ID } from '@hilbras/omnicode-engine/session/agentLifecycle/agentLifecycle';
+import { ensureMainAgent } from '@hilbras/omnicode-engine/session/agentLifecycle/mainAgent';
+import { IWorkspaceInstanceManager } from '@hilbras/omnicode-engine/workspace/workspaceInstance/workspaceInstanceManager';
 
 import type { IDisposable, ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import { RPCError } from '@hilbras/omnicode-rpc/errors';

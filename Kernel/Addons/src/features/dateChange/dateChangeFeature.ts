@@ -1,5 +1,5 @@
-import { Feature } from '@hilbras/omnicode-core/features/feature';
-import { registerFeature } from '@hilbras/omnicode-core/features/featureRegistry';
+import { Feature } from '@hilbras/omnicode-engine/features/feature';
+import { registerFeature } from '@hilbras/omnicode-engine/features/featureRegistry';
 import { AgentDateChangeService, IAgentDateChangeService } from '#/features/dateChange/dateChangeService';
 
 export class DateChangeFeature extends Feature {

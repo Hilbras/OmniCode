@@ -25,14 +25,14 @@ import type {
   SystemTriggerOrigin,
   TaskOrigin,
   UserPromptOrigin,
-} from '@hilbras/omnicode-core/agent/contextMemory/types';
+} from '@hilbras/omnicode-engine/agent/contextMemory/types';
 import type {
   CompactionBlockedPayload,
   CompactionCompletedPayload,
   CompactionStartedPayload,
-} from '@hilbras/omnicode-core/agent/fullCompaction/compactionOps';
-import type { CompactionResult } from '@hilbras/omnicode-core/agent/fullCompaction/types';
-import type { TurnEndReason } from '@hilbras/omnicode-core/agent/loop/turnEvents';
+} from '@hilbras/omnicode-engine/agent/fullCompaction/compactionOps';
+import type { CompactionResult } from '@hilbras/omnicode-engine/agent/fullCompaction/types';
+import type { TurnEndReason } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
 import type {
   AssistantDeltaPayload,
   ThinkingDeltaPayload,
@@ -40,42 +40,42 @@ import type {
   TurnStepCompletedPayload,
   TurnStepInterruptedPayload,
   TurnStepStartedPayload,
-} from '@hilbras/omnicode-core/agent/loop/turnEvents';
-import type { TurnStepRetryingPayload } from '@hilbras/omnicode-core/agent/loop/turnEvents';
+} from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import type { TurnStepRetryingPayload } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
 import type {
   McpServerStatusEventPayload,
   McpServerStatusPayload,
   ToolListUpdatedPayload,
   ToolListUpdatedReason,
-} from '@hilbras/omnicode-core/agent/mcp/mcpEvents';
-import type { McpOAuthAuthorizationUrlUpdateData } from '@hilbras/omnicode-core/agent/mcp/tools/auth';
-import type { PermissionMode } from '@hilbras/omnicode-core/agent/permissionPolicy/types';
-import type { PluginCommandActivatedPayload } from '@hilbras/omnicode-core/agent/pluginCommand/pluginCommand';
-import type { WarningEvent } from '@hilbras/omnicode-core/agent/profile/profileService';
+} from '@hilbras/omnicode-engine/agent/mcp/mcpEvents';
+import type { McpOAuthAuthorizationUrlUpdateData } from '@hilbras/omnicode-engine/agent/mcp/tools/auth';
+import type { PermissionMode } from '@hilbras/omnicode-engine/agent/permissionPolicy/types';
+import type { PluginCommandActivatedPayload } from '@hilbras/omnicode-engine/agent/pluginCommand/pluginCommand';
+import type { WarningEvent } from '@hilbras/omnicode-engine/agent/profile/profileService';
 import type {
   ShellCompletedPayload,
   ShellOutputPayload,
   ShellStartedPayload,
-} from '@hilbras/omnicode-core/agent/shellCommand/shellCommandService';
-import type { AgentTaskStatus } from '@hilbras/omnicode-core/agent/task/types';
+} from '@hilbras/omnicode-engine/agent/shellCommand/shellCommandService';
+import type { AgentTaskStatus } from '@hilbras/omnicode-engine/agent/task/types';
 import type {
   ToolCallStartedPayload,
   ToolProgressPayload,
   ToolResultEventPayload,
-} from '@hilbras/omnicode-core/agent/toolExecutor/toolExecutorEvents';
-import type { UsageStatus } from '@hilbras/omnicode-core/agent/usage/usage';
-import type { HookResultPayload } from '@hilbras/omnicode-core/features/externalHooks/agent/agentExternalHooksService';
-import type { SubagentSuspendedPayload } from '@hilbras/omnicode-core/features/swarm/session/sessionSwarmService';
-import type { FinishReason } from '@hilbras/omnicode-core/human/llm/finish-reason';
-import type { TokenUsage } from '@hilbras/omnicode-core/human/llm/usage';
+} from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
+import type { UsageStatus } from '@hilbras/omnicode-engine/agent/usage/usage';
+import type { HookResultPayload } from '@hilbras/omnicode-engine/features/externalHooks/agent/agentExternalHooksService';
+import type { SubagentSuspendedPayload } from '@hilbras/omnicode-engine/features/swarm/session/sessionSwarmService';
+import type { FinishReason } from '@hilbras/omnicode-engine/human/llm/finish-reason';
+import type { TokenUsage } from '@hilbras/omnicode-engine/human/llm/usage';
 import type {
   SubagentCancelledPayload,
   SubagentCompletedPayload,
   SubagentFailedPayload,
   SubagentSpawnedPayload,
   SubagentStartedPayload,
-} from '@hilbras/omnicode-core/session/subagent/mirrorAgentRun';
-import type { ToolUpdate } from '@hilbras/omnicode-core/tool/toolContract';
+} from '@hilbras/omnicode-engine/session/subagent/mirrorAgentRun';
+import type { ToolUpdate } from '@hilbras/omnicode-engine/tool/toolContract';
 import { z } from 'zod';
 
 import { ToolInputDisplaySchema } from './display';

@@ -126,7 +126,7 @@ export function omnicodeCodeCdnBinariesBase(): string {
 // The marketplace env override name lives in the shared agent-core-v2 plugin
 // domain (kap-server consumes it from there). Deep-path import: this module is
 // evaluated on every CLI invocation, so it must not pull in the engine root.
-export { OMNICODE_PLUGIN_MARKETPLACE_URL_ENV } from '@hilbras/omnicode-core/app/plugin/marketplace';
+export { OMNICODE_PLUGIN_MARKETPLACE_URL_ENV } from '@hilbras/omnicode-engine/app/plugin/marketplace';
 // The CLI-side default catalog derives from the current region profile; the
 // env override above takes priority at the call site.
 export function omnicodeCodePluginMarketplaceUrl(): string {

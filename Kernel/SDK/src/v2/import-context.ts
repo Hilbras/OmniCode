@@ -12,7 +12,7 @@
  * v2-written import reduce to the same history.
  */
 import type { ContextMessage } from '@hilbras/omnicode-core';
-import { estimateTokensForMessages } from '@hilbras/omnicode-core/llm-adapter/contract/tokens';
+import { estimateTokensForMessages } from '@hilbras/omnicode-engine/llm-adapter/contract/tokens';
 
 import { ErrorCodes, OmnicodeError } from '#/errors';
 

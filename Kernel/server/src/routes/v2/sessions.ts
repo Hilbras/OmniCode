@@ -9,7 +9,7 @@ import {
   type Scope,
   type SessionSummary,
 } from '@hilbras/omnicode-core';
-import { IGitService, type FsPullRequest } from '@hilbras/omnicode-core/app/git/git';
+import { IGitService, type FsPullRequest } from '@hilbras/omnicode-engine/app/git/git';
 import { z } from 'zod';
 
 import { defineRoute } from '../../middleware/defineRoute';

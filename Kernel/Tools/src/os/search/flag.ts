@@ -1,4 +1,4 @@
-import { type FlagDefinitionInput, registerFlagDefinition } from '@hilbras/omnicode-core/app/flag/flagRegistry';
+import { type FlagDefinitionInput, registerFlagDefinition } from '@hilbras/omnicode-engine/app/flag/flagRegistry';
 
 export const SESSION_SEARCH_FLAG_ID = 'session_search';
 export const SESSION_SEARCH_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_SESSION_SEARCH';

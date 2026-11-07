@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { buildCompactionContinuationText } from '@hilbras/omnicode-core/agent/contextMemory/compactionHandoff';
+import { buildCompactionContinuationText } from '@hilbras/omnicode-engine/agent/contextMemory/compactionHandoff';
 import { buildSessionFixture } from '../fixtures/build';
 import { contextRoute } from '../../src/routes/context';
 

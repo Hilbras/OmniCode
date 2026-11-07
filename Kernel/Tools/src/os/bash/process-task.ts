@@ -1,7 +1,7 @@
-import type { ProcessTaskInfo } from '@hilbras/omnicode-core/agent/task/types';
+import type { ProcessTaskInfo } from '@hilbras/omnicode-engine/agent/task/types';
 import type { Readable } from 'node:stream';
 
-import type { IHostProcess } from '@hilbras/omnicode-core/os/interface/hostProcess';
+import type { IHostProcess } from '@hilbras/omnicode-engine/os/interface/hostProcess';
 
 type ProcessHandle = Omit<IHostProcess, '_serviceBrand'>;
 
@@ -10,7 +10,7 @@ import type {
   AgentTaskInfoBase,
   AgentTaskSink,
   AgentTaskSettlement,
-} from '@hilbras/omnicode-core/agent/task/types';
+} from '@hilbras/omnicode-engine/agent/task/types';
 
 export type ProcessTaskOutputKind = 'stdout' | 'stderr';
 

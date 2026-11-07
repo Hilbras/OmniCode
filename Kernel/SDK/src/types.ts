@@ -3,7 +3,7 @@ import type { HostUiCapability } from '@hilbras/omnicode-core';
 import type {
   ExportSessionManifest,
   ShellEnvironment,
-} from '@hilbras/omnicode-core/app/sessionExport/sessionExport';
+} from '@hilbras/omnicode-engine/app/sessionExport/sessionExport';
 import type { Kaos } from '@hilbras/omnicode-kaos';
 import type { ContentPart } from '@hilbras/omnicode-llm';
 
@@ -18,7 +18,7 @@ export type JsonObject = { readonly [key: string]: JsonValue };
 export type {
   ImportCustomRegistryOptions,
   ImportCustomRegistryResult,
-} from '@hilbras/omnicode-core/app/kosongConfig/modelsDevImport';
+} from '@hilbras/omnicode-engine/app/kosongConfig/modelsDevImport';
 
 export type Unsubscribe = () => void;
 
@@ -27,7 +27,7 @@ export interface AgentRuntimeBinding {
   readonly runtimeId: string;
 }
 
-export type { CapabilityStatus } from '@hilbras/omnicode-core/app/capability/types';
+export type { CapabilityStatus } from '@hilbras/omnicode-engine/app/capability/types';
 
 export type { AgentReplayRecord, ResumedAgentState } from '#/replay';
 export type {
@@ -71,7 +71,7 @@ export type {
   ExperimentalFeatureState,
   ExperimentalFlagMap,
   ExperimentalFlagSource,
-} from '@hilbras/omnicode-core/app/flag/flag';
+} from '@hilbras/omnicode-engine/app/flag/flag';
 export type {
   GoalBudgetLimits,
   GoalBudgetReport,
@@ -80,7 +80,7 @@ export type {
   GoalSnapshot,
   GoalStatus,
   GoalToolResult,
-} from '@hilbras/omnicode-core/features/goal/types';
+} from '@hilbras/omnicode-engine/features/goal/types';
 export type {
   PluginCommandDef,
   PluginGithubMetadata,
@@ -90,8 +90,8 @@ export type {
   PluginSource,
   PluginSummary,
   ReloadSummary,
-} from '@hilbras/omnicode-core/app/plugin/types';
-export type { SkillSummary } from '@hilbras/omnicode-core/features/skill/catalog/types';
+} from '@hilbras/omnicode-engine/app/plugin/types';
+export type { SkillSummary } from '@hilbras/omnicode-engine/features/skill/catalog/types';
 export type {
   ConnectorAction,
   ConnectorCapability,
@@ -99,18 +99,18 @@ export type {
   ConnectorKind,
   ConnectorScope,
   ConnectorStatus,
-} from '@hilbras/omnicode-core/app/connectors/connectors';
+} from '@hilbras/omnicode-engine/app/connectors/connectors';
 export type {
   GitHubConnectResult,
   GitHubConnectionStatus,
   GitHubDeviceFlowStart,
   GitHubDisconnectResult,
-} from '@hilbras/omnicode-core/app/github/types';
+} from '@hilbras/omnicode-engine/app/github/types';
 export type {
   VercelConnectResult,
   VercelConnectionStatus,
   VercelDisconnectResult,
-} from '@hilbras/omnicode-core/app/vercel/types';
+} from '@hilbras/omnicode-engine/app/vercel/types';
 
 /** Read-only summary of an agent profile definition (a subagent preset). */
 export interface AgentProfileSummary {
@@ -123,7 +123,7 @@ export type { ToolInfo } from '#/tool';
 export type {
   ExportSessionManifest,
   ShellEnvironment,
-} from '@hilbras/omnicode-core/app/sessionExport/sessionExport';
+} from '@hilbras/omnicode-engine/app/sessionExport/sessionExport';
 
 export interface CronTaskSnapshot {
   readonly id: string;
@@ -146,7 +146,7 @@ export type { TelemetryClient, TelemetryContextPatch, TelemetryProperties };
 export type { ContentPart, Role, ThinkingEffort, ToolCall } from '@hilbras/omnicode-llm';
 // Contributed commands are an agent-core-v2 seam; the type is re-exported
 // from the v2 engine (v1 sessions report an empty command set).
-export type { AgentCommandInfo } from '@hilbras/omnicode-core/agent/command/agentCommand';
+export type { AgentCommandInfo } from '@hilbras/omnicode-engine/agent/command/agentCommand';
 
 export type { PermissionMode };
 
@@ -210,7 +210,7 @@ export interface SuggestFilesResult {
 }
 
 /** Metadata of one upload in the engine's daemon file store. */
-export type { FileMeta } from '@hilbras/omnicode-core/app/file/fileService';
+export type { FileMeta } from '@hilbras/omnicode-engine/app/file/fileService';
 
 /** Turn-level file history, as kept by the engine's per-turn backup checkpoints. */
 export type {
@@ -220,7 +220,7 @@ export type {
   FileHistoryRestoreResult,
   FileHistoryRestoreState,
   FileHistoryTurnSummary,
-} from '@hilbras/omnicode-core/features/fileHistory/fileHistory';
+} from '@hilbras/omnicode-engine/features/fileHistory/fileHistory';
 
 /** Input for `restoreFiles`: which of the turn's files to rewind, and whether to overwrite drift. */
 export interface RestoreFilesOptions {

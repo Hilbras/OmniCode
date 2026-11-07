@@ -3,8 +3,8 @@ import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
 
 import { IModelCatalog, IWorkspaceInstanceManager } from '@hilbras/omnicode-core';
-import { HostFileSystem } from '@hilbras/omnicode-core/os/backends/node-local/hostFsService';
-import { FakeRuntime } from '@hilbras/omnicode-core/runtime/fakeRuntime';
+import { HostFileSystem } from '@hilbras/omnicode-engine/os/backends/node-local/hostFsService';
+import { FakeRuntime } from '@hilbras/omnicode-engine/runtime/fakeRuntime';
 import { ErrorCode } from '../src/protocol/error-codes';
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
-import type { ContextInjectionContext } from '@hilbras/omnicode-core/features/reminder/types';
-import type { IAgentReminderService } from '@hilbras/omnicode-core/features/reminder/reminderService';
+import type { ContextInjectionContext } from '@hilbras/omnicode-engine/features/reminder/types';
+import type { IAgentReminderService } from '@hilbras/omnicode-engine/features/reminder/reminderService';
 
 import type { IAgentMemoryContextService } from '#/context/agentMemoryContextService';
 import { AgentMemoryInjectionService } from '#/context/memoryInjectionService';
@@ -9,7 +9,7 @@ import type { MemoryInjectionDisclosure } from '#/context/memoryInjectionService
 import type { IMemoryService, MemoryTaskStateInput } from '#/contracts/memoryContract';
 
 import type { MemoryStorePort } from '#/storage/memoryStore';
-import { IFlagService } from '@hilbras/omnicode-core/app/flag/flag';
+import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
 
 import {
   captureInput,

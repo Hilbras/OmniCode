@@ -5,8 +5,8 @@ import {
   type EnvBindings,
   envBindings,
   stripEnvBoundFields,
-} from '@hilbras/omnicode-core/app/config/config';
-import { registerConfigSection } from '@hilbras/omnicode-core/app/config/configSectionContributions';
+} from '@hilbras/omnicode-engine/app/config/config';
+import { registerConfigSection } from '@hilbras/omnicode-engine/app/config/configSectionContributions';
 
 export const MEMORY_SECTION = 'memory';
 

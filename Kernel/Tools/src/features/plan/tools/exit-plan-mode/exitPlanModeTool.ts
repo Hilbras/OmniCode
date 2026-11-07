@@ -1,13 +1,13 @@
-import { registerAgentToolService } from '@hilbras/omnicode-core/agent/toolRegistry/toolContribution';
+import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 
-import type { ToolInputDisplay } from '@hilbras/omnicode-core/tool/toolInputDisplay';
+import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 
-import type { ExecutableToolResult, ToolExecution } from '@hilbras/omnicode-core/tool/toolContract';
-import { toInputJsonSchema } from '@hilbras/omnicode-core/tool/input-schema';
-import { ITelemetryService } from '@hilbras/omnicode-core/app/telemetry/telemetry';
-import { IAgentPlanService } from '@hilbras/omnicode-core/features/plan/plan';
-import type { PlanData } from '@hilbras/omnicode-core/features/plan/plan';
-import { IAgentPermissionModeService } from '@hilbras/omnicode-core/agent/permissionMode/permissionMode';
+import type { ExecutableToolResult, ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
+import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
+import { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
+import { IAgentPlanService } from '@hilbras/omnicode-engine/features/plan/plan';
+import type { PlanData } from '@hilbras/omnicode-engine/features/plan/plan';
+import { IAgentPermissionModeService } from '@hilbras/omnicode-engine/agent/permissionMode/permissionMode';
 
 import DESCRIPTION from './exit-plan-mode.md?raw';
 import {
