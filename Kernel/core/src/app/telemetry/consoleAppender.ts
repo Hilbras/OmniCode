@@ -1,4 +1,4 @@
-import { redactSecrets } from '#/human/credentials/redaction';
+import { redactSecrets } from '#/_base/text/redaction';
 
 import type { ITelemetryAppender, TelemetryAppenderRecord } from './telemetry';
 import type { TelemetryProperties } from './context';

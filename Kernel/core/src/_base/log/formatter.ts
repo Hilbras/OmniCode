@@ -1,4 +1,4 @@
-import { REDACT_MAX_DEPTH, redactSecretString, redactSecrets } from '#/human/credentials/redaction';
+import { REDACT_MAX_DEPTH, redactSecretString, redactSecrets } from '../text/redaction';
 
 import type { LogContext, LogEntry, LogEntryError } from './log';
 

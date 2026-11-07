@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { REDACTED, redactSecretString, redactSecrets } from '#/credentials/redaction';
+import { REDACTED, redactSecretString, redactSecrets } from '../../../_base/text/redaction';
 import {
   applyCredential,
   credentialsRecovery,

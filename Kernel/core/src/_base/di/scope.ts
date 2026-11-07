@@ -30,6 +30,20 @@ export function setScopeTopology(kinds: readonly string[]): void {
   );
 }
 
+export enum LifecycleScope {
+  App = 'app',
+  Session = 'session',
+  Agent = 'agent',
+}
+
+export const SCOPE_TOPOLOGY: readonly LifecycleScope[] = [
+  LifecycleScope.App,
+  LifecycleScope.Session,
+  LifecycleScope.Agent,
+];
+
+setScopeTopology(SCOPE_TOPOLOGY);
+
 export interface ScopedEntry {
   readonly scope: ScopeKind;
   readonly id: ServiceIdentifier<unknown>;

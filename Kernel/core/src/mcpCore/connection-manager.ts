@@ -3,7 +3,7 @@ import { McpError } from '@modelcontextprotocol/sdk/types.js';
 import type { ILogger as Logger } from '#/_base/log/log';
 import { abortable } from '#/_base/utils/abort';
 import { ErrorCodes, Error2 } from '#/errors';
-import { redactSecretString } from '#/human/credentials/redaction';
+import { redactSecretString } from '#/_base/text/redaction';
 import type { McpOAuthService } from '#/mcpCore/oauth/service';
 import { HostProcessError, HostProcessErrorCode } from '#/os/interface/hostProcess';
 import type { ToolDescription as Tool } from '#human/llm/message';

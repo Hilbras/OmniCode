@@ -4,7 +4,7 @@ import { release } from 'node:os';
 import type { ServicesAccessor } from '#/_base/di/instantiation';
 import { onUnexpectedError } from '#/_base/errors/unexpectedError';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
-import { redactSecrets } from '#/human/credentials/redaction';
+import { redactSecrets } from '#/_base/text/redaction';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
 
 import type { ITelemetryAppender, TelemetryAppenderRecord } from './telemetry';
