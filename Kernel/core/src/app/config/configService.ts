@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, statSync } from 'node:fs';
 
 import { join, normalize } from 'pathe';
 import { parse as parseToml } from 'smol-toml';
@@ -339,6 +339,15 @@ export class ConfigRegistry extends Disposable implements IConfigRegistry {
   }
 }
 
+interface SeededConfigLoad {
+  readonly size: number;
+  readonly mtimeMs: number;
+  readonly rawSnake: ResolvedConfig;
+  readonly raw: ResolvedConfig;
+  readonly validated: ResolvedConfig;
+  readonly validationDiagnostics: readonly ConfigDiagnostic[];
+}
+
 export class ConfigService extends Disposable implements IConfigService {
   declare readonly _serviceBrand: undefined;
   private readonly _onDidChangeConfiguration = this._register(new Emitter<ConfigChangedEvent>());
@@ -364,6 +373,7 @@ export class ConfigService extends Disposable implements IConfigService {
   private readonly diagnosticsList: ConfigDiagnostic[] = [];
   private lastDiagnosticsSnapshot = '[]';
   private readonly configKey: string;
+  private seededLoad: SeededConfigLoad | undefined;
   private tainted = false;
   private readonly envNamesBySection = new WeakMap<ConfigSection, readonly string[]>();
   private readonly envSectionResolutions = new WeakMap<ConfigSection, EnvSectionResolution>();
@@ -628,9 +638,11 @@ export class ConfigService extends Disposable implements IConfigService {
     return run;
   }
 
-  private seedInitialLoad(): void {
+private seedInitialLoad(): void {
     let fileData: ResolvedConfig;
+    let fileInfo: { size: number; mtimeMs: number };
     try {
+      fileInfo = statSync(this.bootstrap.configPath);
       const text = readFileSync(this.bootstrap.configPath, 'utf8');
       const data: unknown = text.trim().length === 0 ? {} : parseToml(text);
       if (!isPlainObject(data)) return;
@@ -640,15 +652,62 @@ export class ConfigService extends Disposable implements IConfigService {
     }
     this.rawSnake = cloneRecord(fileData);
     this.raw = transformTomlData(fileData, this.registry);
+    const diagnosed = this.diagnosticsList.length;
     this.validated = this.buildValidated(this.raw);
+    const validationDiagnostics = this.diagnosticsList.slice(diagnosed);
     const next = { ...this.validated };
     this.applySectionEnvBindings(next, true);
     this.applyEnvOverlay(next);
     this.effective = next;
+    this.seededLoad = {
+      size: fileInfo.size,
+      mtimeMs: fileInfo.mtimeMs,
+      rawSnake: this.rawSnake,
+      raw: this.raw,
+      validated: this.validated,
+      validationDiagnostics,
+    };
+  }
+
+  private reuseSeededLoad(): SeededConfigLoad | undefined {
+    const seeded = this.seededLoad;
+    if (seeded === undefined) return undefined;
+    try {
+      const info = statSync(this.bootstrap.configPath);
+      if (info.size !== seeded.size || info.mtimeMs !== seeded.mtimeMs) return undefined;
+    } catch {
+      return undefined;
+    }
+    return seeded;
+  }
+
+  private applyFileDiagnostics(rawSnake: ResolvedConfig): void {
+    for (const diagnostic of collectKeyDeprecations(rawSnake, this.registry.listSections())) {
+      this.pushDiagnostic(diagnostic);
+    }
+    for (const section of this.registry.listSections()) {
+      if (section.collectDiagnostics === undefined) continue;
+      const rawSection = rawSnake[camelToSnake(section.domain)];
+      for (const diagnostic of section.collectDiagnostics(rawSection)) {
+        this.pushDiagnostic(diagnostic);
+      }
+    }
   }
 
   private async load(source: ConfigChangeSource): Promise<void> {
     this.diagnosticsList.length = 0;
+    if (source === 'load') {
+      const seeded = this.reuseSeededLoad();
+      if (seeded !== undefined) {
+        this.tainted = false;
+        for (const diagnostic of seeded.validationDiagnostics) this.pushDiagnostic(diagnostic);
+        this.applyFileDiagnostics(seeded.rawSnake);
+        this.rawSnake = seeded.rawSnake;
+        this.raw = seeded.raw;
+        this.rebuildEffective(source, undefined, seeded.validated);
+        return;
+      }
+    }
     let fileData: ResolvedConfig = {};
     let failed = false;
     try {
@@ -670,16 +729,7 @@ export class ConfigService extends Disposable implements IConfigService {
     }
     this.tainted = failed;
     const nextRawSnake = cloneRecord(fileData);
-    for (const diagnostic of collectKeyDeprecations(nextRawSnake, this.registry.listSections())) {
-      this.pushDiagnostic(diagnostic);
-    }
-    for (const section of this.registry.listSections()) {
-      if (section.collectDiagnostics === undefined) continue;
-      const rawSection = nextRawSnake[camelToSnake(section.domain)];
-      for (const diagnostic of section.collectDiagnostics(rawSection)) {
-        this.pushDiagnostic(diagnostic);
-      }
-    }
+    this.applyFileDiagnostics(nextRawSnake);
     if (source !== 'load' && JSON.stringify(nextRawSnake) === JSON.stringify(this.rawSnake)) {
       const scratch = { ...this.validated };
       this.applySectionEnvBindings(scratch, true);
@@ -695,9 +745,10 @@ export class ConfigService extends Disposable implements IConfigService {
   private rebuildEffective(
     source: ConfigChangeSource = 'reload',
     domains?: readonly string[],
+    validated?: ResolvedConfig,
   ): void {
     const previous = this.effective;
-    this.validated = this.buildValidated(this.raw);
+    this.validated = validated ?? this.buildValidated(this.raw);
     const next = { ...this.validated };
     this.applySectionEnvBindings(next, true);
     this.applyEnvOverlay(next);
