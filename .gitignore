@@ -48,3 +48,6 @@ handover.md
 
 # Disposable VM created by install.sh --vm (disk images and ISOs, tens of GB)
 .vm/
+
+# Agent harness scratch
+.zcode/
