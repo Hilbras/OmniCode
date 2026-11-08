@@ -2,19 +2,105 @@
 
 <img src="assets/logo-256.png" alt="Omnicode" width="128" />
 
-# Omnicode CLI
+# Omnicode
 
-**An AI coding agent that runs in your terminal — with any OpenAI-compatible endpoint as a
-first-class provider.**
+**The agent workbench for professional developers — one engine, four surfaces: terminal,
+desktop, browser, and a local server you can script.**
 
 [![License](https://img.shields.io/badge/license-MIT-C06014?style=flat-square)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%E2%89%A524.15-339933?style=flat-square&logo=nodedotjs&logoColor=white)](https://nodejs.org)
 [![npm](https://img.shields.io/badge/npm-%40hilbras%2Fomnicode-CB3837?style=flat-square&logo=npm&logoColor=white)](https://www.npmjs.com/package/@hilbras/omnicode)
 
-Omnicode works against any provider you can point it at. No registry document, no catalog
-entry, no hand-written model metadata — you type the endpoint, it discovers the models itself.
+Sessions with real tool use, per-workspace context, approval gates, subagents, plan mode and a
+transcript you can replay — driven by any provider you can point it at.
 
 </div>
+
+---
+
+## What Omnicode is
+
+Omnicode is a coding agent you can live in. It runs an agent loop against your repository with
+tools that read, write, search and execute; it keeps each session's context in a workspace of
+its own; and it exposes the whole thing over a local server so the terminal, the desktop app
+and the browser UI are the same product with different chrome.
+
+- **One engine, many front ends.** The CLI/TUI, the desktop app and the web UI all drive the
+  same kernel over the same API. Nothing is a second implementation.
+- **Any provider.** OpenAI-compatible endpoints, the built-in vendor list, or a hand-added
+  endpoint — Omnicode discovers the models itself (see [Adding a provider](#adding-a-provider)).
+- **Sessions that survive.** Per-session workspaces, resumable context, transcript pagination,
+  session search and export.
+- **Supervised by default.** Permission modes (ask / auto / yolo), approval and question
+  prompts, per-workspace trust, tool policies.
+- **Extensible.** Built-in skills, MCP servers (stdio, SSE, HTTP), plugins from a marketplace,
+  and a feature seam for first-party capabilities such as plan mode, todos, goals, swarm,
+  computer use and cron.
+
+## Built on the Kimi core
+
+Omnicode is a **fork, and proud of it.** The agent core is Kimi's:
+
+> This project began as a fork of [kimi-code](https://github.com/MoonshotAI/kimi-code), released
+> under the MIT License. The engine, the agent loop and the wire protocol descend from that
+> work; everything else in this repository is built on top of it.
+
+| Inherited from the Kimi core | Built here, on top of it |
+|---|---|
+| The agent loop, tool execution and tool-result truncation | Multi-provider discovery and the provider/model CLI |
+| Context memory, compaction and the wire record format | The local server: REST + WebSocket API, sessions, debug RPC |
+| The DI × Scope container, lifecycle ledgers and the feature seam | The web UI and the desktop app |
+| Session lifecycle and the transcript data layer | Plugins, marketplace and the MCP management plane |
+| Permission gates, approval and question prompts | Persistent memory, remote control tunnel, ACP host |
+
+The full attribution — the upstream base commit and a per-file breakdown of what was added —
+is recorded in [CREDITS.md](CREDITS.md); the license text keeps the fork notice in
+[LICENSE](LICENSE). Upstream is MIT, so this stays MIT.
+
+## Four surfaces, one engine
+
+| Surface | What it is | Where |
+|---|---|---|
+| **Terminal** | The CLI and the TUI — the primary way to work | `apps/omnicode` |
+| **Desktop** | Electron shell around the local server and the web UI | `apps/omnicode-desktop` |
+| **Browser** | The web UI, served by the local server | `apps/omnicode/dist-web` (built in the code-app repo) |
+| **Server** | REST + WebSocket API over `127.0.0.1`, scriptable and headless | `Kernel/server` |
+
+Every surface talks to the same API, and the API is versioned for external consumers in
+`Kernel/core/docs/wire-manifest.d.ts`.
+
+## Architecture
+
+```
+Kernel/
+  base/       dependency-injection container, scopes, fibers, ledger, logging
+  engine/     the agent: loop, tools, sessions, permissions, features, providers
+  rpc/        transport SPI, IPC channel, the shared dispatcher
+  API/        the single surface consumers import
+  server/     REST + WebSocket host
+  SDK/  ACP/  remote/  memory/  transcript/  minidb/  kaos/  llm/  auth/  telemetry/
+apps/
+  omnicode/           CLI + TUI, plus the bundled web assets
+  omnicode-desktop/   Electron app
+  omnicode-inspect/   web inspector for the debug RPC surface
+  omnicode-vis/       session and replay visual debugging
+```
+
+Three ideas carry the whole design:
+
+- **Dependency injection by token.** Services depend on interfaces (`IAgentLoopService`,
+  `ISessionIndex`), not implementations. The container resolves them per scope and owns their
+  teardown, so a service can be swapped in a test without touching its callers.
+- **Lifecycle scopes.** Three tiers — `App` → `Session` → `Agent` — decide how long anything
+  lives. Open five sessions and each has its own agent containers; close one and nothing else
+  is touched. Deeper scopes see shallower ones, never the reverse.
+- **Contribution points.** Features and plugins add capability by contributing records —
+  tools, commands, config sections, state models, skills — to collections the engine reads.
+  Nothing in the core needs editing to add a feature.
+
+The dependency graph is enforced, not aspirational: `scripts/check-kernel-layering.mjs` fails
+the build if a leaf package imports another kernel package, if the engine imports anything
+above it, or if a cycle appears (`pnpm lint` runs it).
 
 ---
 
@@ -438,7 +524,7 @@ Run the provider tests specifically:
 
 ```sh
 npx vitest run apps/omnicode/test/cli/provider.test.ts
-npx vitest run packages/omnicode-core/test/app/kosongConfig/discovery.test.ts
+npx vitest run Kernel/engine/test/app/kosongConfig/discovery.test.ts
 ```
 
 Architecture, coding rules, and contribution guidance live in [AGENTS.md](AGENTS.md) and
@@ -446,18 +532,21 @@ Architecture, coding rules, and contribution guidance live in [AGENTS.md](AGENTS
 
 ---
 
+---
+
 ## Project
 
 - **Maintained by:** Hilbras · <https://github.com/hilbras/omnicode>
-- **Branches:** `main` (canonical, full history) · `lite` (same content, squashed to a single
-  commit, much smaller clone)
-- **History and attribution:** Omnicode builds on prior work that remains under the MIT
-  License. [CREDITS.md](CREDITS.md) records the upstream base commit and a per-file breakdown
-  of what was added on top of it.
+- **Upstream:** a fork of [kimi-code](https://github.com/MoonshotAI/kimi-code) (MIT); the
+  inherited core and the per-file breakdown of additions are recorded in
+  [CREDITS.md](CREDITS.md).
+- **History and attribution:** everything here is MIT. The fork notice is kept verbatim in
+  [LICENSE](LICENSE).
 
 ## Acknowledgements
 
-- **Hilbras** for Omnicode CLI, the foundation of this project.
+- **MoonshotAI / kimi-code** — the agent core this project builds on.
+- **Hilbras** — the surfaces, the server, the provider layer and everything above the core.
 - [`pi-tui`](https://github.com/earendil-works/pi-mono/tree/main/packages/tui) — the TUI
   layer, used under its original license.
 
