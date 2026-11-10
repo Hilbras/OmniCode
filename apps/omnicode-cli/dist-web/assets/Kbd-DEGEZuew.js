@@ -1,0 +1,1 @@
+import{U as n,aN as s,A as e,F as r,aY as c,bc as o,bS as _}from"./index-DRkCgUH5.js";const d={class:"ui-kbd"},p=n({__name:"Kbd",props:{keys:{}},setup(t){return(i,b)=>(s(),e("span",d,[(s(!0),e(r,null,c(t.keys,a=>(s(),e("kbd",{key:a,class:"ui-kbd__key"},o(a),1))),128))]))}}),u=_(p,[["__scopeId","data-v-0da7f4bc"]]);export{u as K};

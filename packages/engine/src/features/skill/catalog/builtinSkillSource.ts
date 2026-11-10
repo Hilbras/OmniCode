@@ -1,0 +1,59 @@
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
+import { IConfigService } from '#/app/config/config';
+import { IFlagService } from '#/app/flag/flag';
+import { LifecycleScope } from '#/app/scopes';
+
+import { visibleBuiltinSkills } from './builtin/builtin';
+import { BUILTIN_PRODUCT_SKILLS_SECTION, builtinProductSkillsEnabled } from './configSection';
+import {
+  BUILTIN_SKILL_SOURCE_ID,
+  SKILL_SOURCE_PRIORITY,
+  type ISkillSource,
+  type SkillContribution,
+} from './skillSource';
+
+export interface IBuiltinSkillSource extends ISkillSource {
+  readonly _serviceBrand: undefined;
+}
+
+export const IBuiltinSkillSource: ServiceIdentifier<IBuiltinSkillSource> =
+  createDecorator<IBuiltinSkillSource>('builtinSkillSource');
+
+export class BuiltinSkillSource extends Disposable implements IBuiltinSkillSource {
+  declare readonly _serviceBrand: undefined;
+
+  readonly id = BUILTIN_SKILL_SOURCE_ID;
+  readonly priority = SKILL_SOURCE_PRIORITY.builtin;
+  private readonly onDidChangeEmitter = this._register(new Emitter<void>());
+  readonly onDidChange: Event<void> = this.onDidChangeEmitter.event;
+
+  constructor(
+    @IConfigService private readonly config: IConfigService,
+    @IFlagService private readonly flags: IFlagService,
+  ) {
+    super();
+    this._register(
+      this.config.onDidSectionChange((event) => {
+        if (event.domain === BUILTIN_PRODUCT_SKILLS_SECTION) this.onDidChangeEmitter.fire();
+      }),
+    );
+  }
+
+  async load(): Promise<SkillContribution> {
+    await this.config.ready;
+    return {
+      skills: visibleBuiltinSkills(builtinProductSkillsEnabled(this.config), this.flags),
+    };
+  }
+}
+
+registerScopedService(
+  LifecycleScope.App,
+  IBuiltinSkillSource,
+  BuiltinSkillSource,
+  ScopeActivation.OnScopeCreated,
+  'skillCatalog',
+);

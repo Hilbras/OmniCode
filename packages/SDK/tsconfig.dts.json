@@ -1,0 +1,22 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "emitDeclarationOnly": true,
+    "declaration": true,
+    "declarationMap": false,
+    "sourceMap": false,
+    "outDir": ".tmp-api-extractor/dts",
+    "rootDir": ".."
+  },
+  "include": [
+    "src/**/*.ts",
+    "../../packages/core/src/**/*.ts",
+    "../../packages/engine/src/env.d.ts",
+    "../kaos/src/**/*.ts",
+    "../client/src/**/*.ts",
+    "../llm/src/**/*.ts",
+    "../auth/src/**/*.ts"
+  ],
+  "exclude": ["dist", ".tmp-api-extractor", "examples", "test", "../../packages/*/dist", "../../packages/*/test", "../../packages/core/src/human/test"]
+}

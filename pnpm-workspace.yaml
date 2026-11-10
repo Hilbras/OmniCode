@@ -1,0 +1,26 @@
+packages:
+  - "apps/*"
+  - "apps/omnicode-vis/server"
+  - "apps/omnicode-vis/web"
+  - "packages/*"
+
+catalog:
+  zod: 4.3.6
+
+minimumReleaseAgeExclude:
+  - '@anthropic-ai/sdk@1.7.0'
+  - openai@7.54.0
+
+minimumReleaseAge: 0
+
+allowBuilds:
+  '@google/genai': true
+  cpu-features: true
+  esbuild: true
+  node-pty: true
+  protobufjs: true
+  ssh2: true
+  tree-sitter-bash: true
+
+overrides:
+  zod: 4.3.6

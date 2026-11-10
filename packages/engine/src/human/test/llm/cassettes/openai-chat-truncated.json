@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "name": "openai-chat-truncated",
+  "entries": [
+    {
+      "key": "POST https://example.test/v1/chat/completions",
+      "request": {
+        "method": "POST",
+        "url": "https://example.test/v1/chat/completions",
+        "headers": {
+          "content-type": "application/json",
+          "accept": "application/json",
+          "authorization": "[redacted]"
+        },
+        "body": "{\"model\":\"gpt-5-mini\",\"messages\":[{\"role\":\"user\",\"content\":\"hi\"}],\"stream\":true}"
+      },
+      "response": {
+        "status": 200,
+        "statusText": "OK",
+        "headers": {
+          "content-type": "text/event-stream",
+          "x-request-id": "req-cassette-2"
+        },
+        "body": "data: {\"id\":\"chatcmpl-cassette-2\",\"object\":\"chat.completion.chunk\",\"created\":1750000000,\"model\":\"gpt-5-mini\",\"choices\":[{\"index\":0,\"delta\":{\"role\":\"assistant\",\"content\":\"\"},\"finish_reason\":null}]}\n\ndata: {\"id\":\"chatcmpl-cassette-2\",\"object\":\"chat.completion.chunk\",\"created\":1750000000,\"model\":\"gpt-5-mini\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Partial\"},\"finish_reason\":null}]}\n\n"
+      }
+    }
+  ]
+}

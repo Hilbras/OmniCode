@@ -1,0 +1,153 @@
+/**
+ * The transport-agnostic klient factory. Every transport entry point
+ * (`@hilbras/omnicode-api/ipc|memory`) builds a `KlientChannel` and hands
+ * it here; the returned `Klient` is identical in shape and behavior no matter
+ * which transport carried the bytes.
+ */
+
+import { agentEvents, type AgentEventPayloads } from '#/contract/agent/events';
+import { globalEvents, type KlientEventPayloads } from '#/contract/global/events';
+import { globalContract, isStreamingContract } from '#/contract/index';
+import { sessionEvents, type SessionEventPayloads } from '#/contract/session/events';
+import type { EventRegistration, StreamingProcedureContract } from '#/contract/types';
+
+import type { KlientChannel, ScopeRef } from '@hilbras/omnicode-rpc/channel';
+import { EventHub, type KlientEvents } from './events/hub.js';
+import { createAgentFacade, type AgentFacade } from './facade/agent.js';
+import {
+  createGlobalFacade,
+  type GlobalFacade,
+  type ScopedCaller,
+  type ScopedStreamCaller,
+} from './facade/global.js';
+import { createSessionFacade, type SessionFacade } from './facade/session.js';
+import { parseChunk, parseInput, parseOutput } from './validation.js';
+
+export interface KlientOptions {
+  /**
+   * Validate wire inputs/outputs and event payloads against the contract.
+   * Default `true`. Disable only on measured hot paths — validation is cheap
+   * (sub-µs for typical payloads) and is the drift tripwire.
+   */
+  readonly validate?: boolean;
+}
+
+export interface SessionHandle extends SessionFacade {
+  readonly events: KlientEvents<SessionEventPayloads>;
+  agent(agentId: string): AgentHandle;
+}
+
+export interface AgentHandle extends AgentFacade {
+  readonly events: KlientEvents<AgentEventPayloads>;
+}
+
+export interface Klient {
+  readonly global: GlobalFacade;
+  readonly events: KlientEvents;
+  session(sessionId: string): SessionHandle;
+  close(): Promise<void>;
+}
+
+export function createKlientFromChannel(
+  channel: KlientChannel,
+  options: KlientOptions = {},
+): Klient {
+  const validate = options.validate ?? true;
+
+  const call: ScopedCaller = async (scope, service, method, args, options) => {
+    const procedure = globalContract[service]?.[method];
+    if (procedure === undefined) {
+      // A facade method without a contract entry is a klient bug, not a wire error.
+      throw new Error(`no contract registered for ${service}.${method}`);
+    }
+    if (isStreamingContract(procedure)) {
+      throw new Error(`${service}.${method} is a streaming procedure — use callStream instead`);
+    }
+    const name = `${service}.${method}`;
+    const wireArgs = validate ? parseInput(name, procedure, args) : args;
+    const data = await channel.call(scope, service, method, wireArgs, options);
+    return validate ? parseOutput(name, procedure, data) : data;
+  };
+
+  const callStream: ScopedStreamCaller = (scope, service, method, args) => {
+    const procedure = globalContract[service]?.[method];
+    if (procedure === undefined) {
+      throw new Error(`no contract registered for ${service}.${method}`);
+    }
+    if (!isStreamingContract(procedure)) {
+      throw new Error(`${service}.${method} is not a streaming procedure — use call instead`);
+    }
+    const name = `${service}.${method}`;
+    const wireArgs = validate ? parseInput(name, procedure, args) : args;
+    const source = channel.stream(scope, service, method, wireArgs);
+    if (!validate) return source;
+
+    // Wrap the iterable to validate each chunk.
+    const contract = procedure as StreamingProcedureContract;
+    return {
+      [Symbol.asyncIterator]() {
+        const iter = source[Symbol.asyncIterator]();
+        return {
+          async next() {
+            const result = await iter.next();
+            if (result.done) return { done: true as const, value: undefined };
+            return { done: false, value: parseChunk(name, contract, result.value) };
+          },
+          async return(value?: unknown) {
+            await iter.return?.(value);
+            return { done: true as const, value: undefined };
+          },
+        };
+      },
+    };
+  };
+
+  const hubs = new Set<{ close(): void }>();
+  // One hub per scope. A hub per *call* grew the set for every `session(id)` or
+  // `agent(id)` the client made, and nothing ever closed them before the
+  // client was closed.
+  const hubsByScope = new Map<string, { close(): void }>();
+  const makeHub = <TPayloadMap extends object>(
+    scope: ScopeRef,
+    registrations: Record<string, EventRegistration>,
+    scopeKey: string,
+  ): KlientEvents<TPayloadMap> => {
+    const existing = hubsByScope.get(scopeKey);
+    if (existing !== undefined) return existing as unknown as KlientEvents<TPayloadMap>;
+    const hub = new EventHub<TPayloadMap>(channel, validate, scope, registrations);
+    hubs.add(hub);
+    hubsByScope.set(scopeKey, hub);
+    return hub;
+  };
+
+  return {
+    global: createGlobalFacade(call, callStream),
+    events: makeHub<KlientEventPayloads>({}, globalEvents, 'global'),
+    session(sessionId: string): SessionHandle {
+      const scope: ScopeRef = { sessionId };
+      return {
+        ...createSessionFacade(call, sessionId),
+        events: makeHub<SessionEventPayloads>(scope, sessionEvents, `session:${sessionId}`),
+        agent(agentId: string): AgentHandle {
+          const agentScope: ScopeRef = { sessionId, agentId };
+          return {
+            ...createAgentFacade(call, agentScope),
+            events: makeHub<AgentEventPayloads>(
+              agentScope,
+              agentEvents,
+              `session:${sessionId}:agent:${agentId}`,
+            ),
+          };
+        },
+      };
+    },
+    close: () => {
+      for (const hub of hubs) {
+        hub.close();
+      }
+      hubs.clear();
+      hubsByScope.clear();
+      return channel.close();
+    },
+  };
+}

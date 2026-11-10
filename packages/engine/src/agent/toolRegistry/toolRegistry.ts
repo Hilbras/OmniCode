@@ -1,0 +1,26 @@
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { type IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { ExecutableTool, ToolDisclosure, ToolInfo, ToolSource } from '#/tool/toolContract';
+
+export interface ToolRegistrationOptions {
+  readonly source?: ToolSource;
+  readonly disclosure?: ToolDisclosure;
+}
+
+export interface ToolReference {
+  readonly name: string;
+  readonly source: ToolSource;
+}
+
+export interface IAgentToolRegistryService {
+  readonly _serviceBrand: undefined;
+
+  register(tool: ExecutableTool, options?: ToolRegistrationOptions): IDisposable;
+  list(): readonly ToolInfo[];
+  listReferences(): readonly ToolReference[];
+  resolve(name: string): ExecutableTool | undefined;
+}
+
+export const IAgentToolRegistryService = createDecorator<IAgentToolRegistryService>(
+  'agentToolRegistryService',
+);

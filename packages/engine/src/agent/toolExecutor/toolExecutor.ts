@@ -1,0 +1,72 @@
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
+import type { Event } from '@hilbras/omnicode-base/event';
+import type {
+  BeforeToolExecuteEvent,
+  ToolDidExecuteContext,
+  WillExecuteToolEvent,
+} from '#/agent/toolExecutor/toolHooks';
+import type { OrderedHookSlot } from '#/hooks';
+import type { LLMRequestTrace } from '#/llm-adapter/contract/request-trace';
+import type { ToolResult } from '#/tool/toolContract';
+import type { ToolSource } from '#/tool/toolContract';
+import type { ToolInputDisplay } from '#/tool/toolInputDisplay';
+import type { ToolCall } from '#human/llm/message';
+
+export interface ToolCallStartedPayload {
+  readonly toolCallId: string;
+  readonly name: string;
+  readonly args: unknown;
+  readonly display?: ToolInputDisplay;
+}
+
+export interface ToolExecutorExecuteOptions {
+  readonly signal: AbortSignal;
+  readonly steerSignal?: AbortSignal;
+  readonly turnId: number;
+  readonly trace?: LLMRequestTrace;
+  readonly onToolCall?: (payload: ToolCallStartedPayload) => void;
+}
+
+export interface ToolExecutionResult {
+  readonly toolCallId: string;
+  readonly toolName: string;
+  readonly result: ToolResult;
+  readonly durationMs: number;
+}
+
+export type MissingToolDescriber = (toolName: string) => string | undefined;
+export type UnavailableToolDescriber = (toolName: string) => string | undefined;
+export type ToolCallGuard = (tool: {
+  readonly name: string;
+  readonly source: ToolSource;
+}) => string | undefined;
+
+export type ToolCallDupType = 'same_step' | 'cross_step';
+
+export interface IAgentToolExecutorService {
+  readonly _serviceBrand: undefined;
+
+  execute(
+    calls: ToolCall[],
+    options: ToolExecutorExecuteOptions,
+  ): AsyncIterable<ToolExecutionResult>;
+
+  readonly onBeforeExecuteTool: Event<BeforeToolExecuteEvent>;
+
+  readonly onWillExecuteTool: Event<WillExecuteToolEvent>;
+
+  readonly hooks: {
+    readonly onDidExecuteTool: OrderedHookSlot<ToolDidExecuteContext>;
+  };
+
+  recordDupType(toolCallId: string, dupType: ToolCallDupType): void;
+
+  registerToolCallGuard(guard: ToolCallGuard): IDisposable;
+  registerUnavailableToolDescriber(describer: UnavailableToolDescriber): IDisposable;
+  registerMissingToolDescriber(describer: MissingToolDescriber): IDisposable;
+}
+
+export const IAgentToolExecutorService = createDecorator<IAgentToolExecutorService>(
+  'agentToolExecutorService',
+);

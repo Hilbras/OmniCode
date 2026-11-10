@@ -1,0 +1,10 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {},
+  "include": [
+    "src",
+    "examples",
+    "../../packages/engine/src/env.d.ts",
+    "../base/src"
+  ]
+}

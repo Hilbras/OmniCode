@@ -1,0 +1,89 @@
+{
+  "name": "@hilbras/omnicode-sdk",
+  "version": "0.23.0",
+  "private": true,
+  "description": "TypeScript SDK for the Omnicode Agent",
+  "license": "MIT",
+  "author": "Hilbras",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/Kernel/SDK#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Hilbras/omnicode.git",
+    "directory": "Kernel/SDK"
+  },
+  "bugs": {
+    "url": "https://github.com/Hilbras/omnicode/issues"
+  },
+  "keywords": [
+    "omnicode",
+    "sdk",
+    "typescript",
+    "agent",
+    "api"
+  ],
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "type": "module",
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    "./core-interop": {
+      "types": "./src/core-interop.ts",
+      "default": "./src/core-interop.ts"
+    },
+    "./engine-interop": {
+      "types": "./src/engine-interop.ts",
+      "default": "./src/engine-interop.ts"
+    },
+    "./rpc-exports": {
+      "types": "./src/rpc-exports.ts",
+      "default": "./src/rpc-exports.ts"
+    },
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.mts",
+        "import": "./dist/index.mjs",
+        "default": "./dist/index.mjs"
+      }
+    },
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "build:dts": "node scripts/build-dts.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "clean": "rm -rf dist .tmp-api-extractor"
+  },
+  "dependencies": {
+    "@antfu/utils": "^9.3.0",
+    "@hilbras/omnicode-base": "workspace:^",
+    "@hilbras/omnicode-core": "workspace:^",
+    "@hilbras/omnicode-engine": "workspace:^",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "immer": "^11.1.0",
+    "smol-toml": "^1.6.1",
+    "yazl": "^3.3.1",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@hilbras/omnicode-addons": "workspace:^",
+    "@hilbras/omnicode-auth": "workspace:^",
+    "@hilbras/omnicode-kaos": "workspace:^",
+    "@hilbras/omnicode-llm": "workspace:^",
+    "@hilbras/omnicode-memory": "workspace:^",
+    "@hilbras/omnicode-tools": "workspace:^",
+    "@types/yazl": "^2.4.6",
+    "jimp": "^1.6.1"
+  }
+}

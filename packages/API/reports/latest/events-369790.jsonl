@@ -1,0 +1,1 @@
+{"kind":"http","method":"GET","path":"/api/v1/meta","url":"http://127.0.0.1:58627/api/v1/meta","durationMs":13,"request":{},"error":{"name":"TypeError","message":"fetch failed"},"at":"2026-10-20T04:41:56.108Z","caseName":"unassigned","pid":369790,"ordinal":0}

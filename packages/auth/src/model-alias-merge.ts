@@ -1,0 +1,75 @@
+import { isRecord } from './utils';
+import type { ManagedOmnicodeModelAlias, ManagedOmnicodeModelAliasOverrides } from './managed-omnicode';
+
+export const MANAGED_OMNICODE_MODEL_FIELDS: ReadonlySet<string> = new Set([
+  'provider',
+  'model',
+  'maxContextSize',
+  'capabilities',
+  'displayName',
+  'protocol',
+  'betaApi',
+  'adaptiveThinking',
+  'supportEfforts',
+  'defaultEffort',
+]);
+
+export const CUSTOM_REGISTRY_MODEL_FIELDS: ReadonlySet<string> = new Set([
+  'provider',
+  'model',
+  'maxContextSize',
+  'capabilities',
+  'displayName',
+  'supportEfforts',
+  'defaultEffort',
+]);
+
+function cloneOverrides(
+  overrides: ManagedOmnicodeModelAliasOverrides | undefined,
+): ManagedOmnicodeModelAliasOverrides | undefined {
+  if (overrides === undefined) return undefined;
+  return structuredClone(overrides);
+}
+
+function userExtras(
+  existing: Record<string, unknown>,
+  remoteOwnedFields: ReadonlySet<string>,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(existing)) {
+    if (key === 'overrides') continue;
+    if (!remoteOwnedFields.has(key)) out[key] = value;
+  }
+  return out;
+}
+
+function preservedMaxContextSize(
+  current: Record<string, unknown>,
+  remote: ManagedOmnicodeModelAlias,
+): number | undefined {
+  if (remote.maxContextSize !== undefined) return undefined;
+  const existing = current['maxContextSize'];
+  return typeof existing === 'number' && Number.isFinite(existing) && existing > 0
+    ? existing
+    : undefined;
+}
+
+export function mergeRefreshedModelAlias(
+  existing: unknown,
+  remote: ManagedOmnicodeModelAlias,
+  remoteOwnedFields: ReadonlySet<string>,
+): ManagedOmnicodeModelAlias {
+  const current = isRecord(existing) ? existing : {};
+  const overrides = cloneOverrides(
+    isRecord(current['overrides'])
+      ? (current['overrides'] as ManagedOmnicodeModelAliasOverrides)
+      : undefined,
+  );
+  const carried = preservedMaxContextSize(current, remote);
+  return {
+    ...userExtras(current, remoteOwnedFields),
+    ...remote,
+    maxContextSize: remote.maxContextSize ?? carried,
+    ...(overrides !== undefined ? { overrides } : {}),
+  };
+}

@@ -1,0 +1,219 @@
+import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
+import { Emitter, type Event } from '@hilbras/omnicode-base/event';
+import { ILogService } from '@hilbras/omnicode-base/log/log';
+import { defineState } from '#/state/state';
+import { TimeoutTimer } from '@hilbras/omnicode-base/utils/timer';
+import { subtreeWatchFilter } from '@hilbras/omnicode-base/utils/paths';
+import { IProjectLocalConfigService } from '#/app/projectLocalConfig/projectLocalConfig';
+import type { ISessionWorkspaceInfo } from '#/session/workspaceInfo/workspaceInfo';
+import { IWorkspaceStateService } from '#/workspace/state/workspaceState';
+import { IWorkspaceContext } from '#/workspace/workspaceContext/workspaceContext';
+import { IWorkspaceTrust } from '#/workspace/workspaceTrust/workspaceTrust';
+import { watchCandidates } from '#human/utils/watch';
+
+import {
+  IWorkspaceDirs,
+  type WorkspaceAddDirInput,
+  type WorkspaceAdditionalDirsResult,
+} from './workspaceDirs';
+
+const WATCH_DEBOUNCE_MS = 200;
+
+export const workspaceDirsFileDirsKey = defineState<readonly string[]>(
+  'workspaceDirs.fileDirs',
+  () => [],
+);
+export const workspaceDirsEphemeralDirsKey = defineState<readonly string[]>(
+  'workspaceDirs.ephemeralDirs',
+  () => [],
+);
+
+export class WorkspaceDirsService extends Disposable implements IWorkspaceDirs {
+  declare readonly _serviceBrand: undefined;
+
+  private projectRoot: string;
+  private configPath: string;
+  readonly ready: Promise<void>;
+  private readonly onDidChangeEmitter = this._register(new Emitter<void>());
+  readonly onDidChange: Event<void> = this.onDidChangeEmitter.event;
+  private readonly watchDebounce = this._register(new TimeoutTimer());
+  private mutationTail: Promise<void> = Promise.resolve();
+
+  constructor(
+    @IWorkspaceContext private readonly workspace: IWorkspaceContext,
+    @IProjectLocalConfigService private readonly localConfig: IProjectLocalConfigService,
+    @IWorkspaceTrust private readonly trust: IWorkspaceTrust,
+    @ILogService private readonly log: ILogService,
+    @IWorkspaceStateService private readonly states: IWorkspaceStateService,
+  ) {
+    super();
+    this.states.contributeState(workspaceDirsFileDirsKey);
+    this.states.contributeState(workspaceDirsEphemeralDirsKey);
+    this.projectRoot = workspace.cwd;
+    this.configPath = '';
+    this.ready = this.enqueue(() => this.reloadFromDisk());
+    void this.ready.then(() => this.watchLocalToml());
+    this._register(
+      this.trust.onDidChange(() => {
+        void this.enqueue(() => this.reloadFromDisk()).catch((error: unknown) => {
+          this.log.warn(`workspace directory reload after a trust change failed: ${String(error)}`);
+        });
+      }),
+    );
+  }
+
+  private get fileDirs(): readonly string[] {
+    return this.states.get(workspaceDirsFileDirsKey);
+  }
+
+  private set fileDirs(value: readonly string[]) {
+    this.states.set(workspaceDirsFileDirsKey, value);
+  }
+
+  private get ephemeralDirs(): readonly string[] {
+    return this.states.get(workspaceDirsEphemeralDirsKey);
+  }
+
+  private set ephemeralDirs(value: readonly string[]) {
+    this.states.set(workspaceDirsEphemeralDirsKey, value);
+  }
+
+  get additionalDirs(): readonly string[] {
+    return [...new Set([...this.fileDirs, ...this.ephemeralDirs])];
+  }
+
+  addDir(input: WorkspaceAddDirInput): Promise<WorkspaceAdditionalDirsResult> {
+    return this.enqueue(() => this.applyAddDir(input));
+  }
+
+  mergeAdditionalDirs(baseDir: string, dirs: readonly string[]): Promise<void> {
+    if (dirs.length === 0) return Promise.resolve();
+    return this.enqueue(async () => {
+      const resolved = await this.localConfig.resolveAdditionalDirs(baseDir, dirs);
+      if (this.unionEphemeral(resolved)) {
+        this.onDidChangeEmitter.fire();
+      }
+    });
+  }
+
+  sessionInfo(): ISessionWorkspaceInfo {
+    const currentDirs = (): readonly string[] => this.additionalDirs;
+    return {
+      _serviceBrand: undefined,
+      ready: this.ready,
+      onDidChange: this.onDidChange,
+      get additionalDirs() {
+        return currentDirs();
+      },
+    };
+  }
+
+  private async applyAddDir(input: WorkspaceAddDirInput): Promise<WorkspaceAdditionalDirsResult> {
+    const persist = input.persist ?? true;
+
+    if (persist) {
+      const persisted = await this.localConfig.appendAdditionalDir(
+        this.workspace.cwd,
+        input.path,
+      );
+      this.projectRoot = persisted.projectRoot;
+      this.configPath = persisted.configPath;
+      const applied = await this.applyFileDirs(persisted.additionalDirs, persisted.configPath);
+      if (!applied) {
+        await this.addEphemeral(input.path);
+      }
+      return {
+        projectRoot: persisted.projectRoot,
+        configPath: persisted.configPath,
+        additionalDirs: this.additionalDirs,
+        persisted: true,
+      };
+    }
+
+    const onDisk = await this.localConfig.readAdditionalDirs(this.workspace.cwd);
+    this.projectRoot = onDisk.projectRoot;
+    this.configPath = onDisk.configPath;
+    await this.addEphemeral(input.path);
+    return {
+      projectRoot: onDisk.projectRoot,
+      configPath: onDisk.configPath,
+      additionalDirs: this.additionalDirs,
+      persisted: false,
+    };
+  }
+
+  private async addEphemeral(path: string): Promise<void> {
+    const resolved = await this.localConfig.resolveAdditionalDirs(this.workspace.cwd, [path]);
+    if (this.unionEphemeral(resolved)) {
+      this.onDidChangeEmitter.fire();
+    }
+  }
+
+  private async reloadFromDisk(): Promise<void> {
+    const onDisk = await this.localConfig.readAdditionalDirs(this.workspace.cwd);
+    this.projectRoot = onDisk.projectRoot;
+    this.configPath = onDisk.configPath;
+    await this.applyFileDirs(onDisk.additionalDirs, onDisk.configPath);
+  }
+
+  private async applyFileDirs(dirs: readonly string[], configPath: string): Promise<boolean> {
+    await this.trust.ready;
+    const trusted = this.trust.isTrusted();
+    if (!trusted && dirs.length > 0) {
+      this.log.warn(
+        `ignoring the ${dirs.length} workspace.additional_dir ${dirs.length === 1 ? 'entry' : 'entries'} declared in ${configPath}: the workspace is not trusted`,
+      );
+    }
+    const applied = trusted ? dirs : [];
+    if (this.setFileDirs(applied)) {
+      this.onDidChangeEmitter.fire();
+    }
+    return trusted;
+  }
+
+  private setFileDirs(dirs: readonly string[]): boolean {
+    const before = this.additionalDirs;
+    this.fileDirs = dirs;
+    return !sameStringList(before, this.additionalDirs);
+  }
+
+  private unionEphemeral(dirs: readonly string[]): boolean {
+    const before = this.additionalDirs;
+    this.ephemeralDirs = [...new Set([...this.ephemeralDirs, ...dirs])];
+    return !sameStringList(before, this.additionalDirs);
+  }
+
+  private watchLocalToml(): void {
+    try {
+      const handle = watchCandidates(this.projectRoot, [this.configPath], {
+        ignored: subtreeWatchFilter(this.projectRoot, [this.configPath]),
+      });
+      this._register(handle);
+      this._register(
+        handle.onDidChange(() => {
+          this.watchDebounce.cancelAndSet(() => {
+            void this.enqueue(() => this.reloadFromDisk()).catch((error) => {
+              this.log.warn(`local.toml reload failed: ${String(error)}`);
+            });
+          }, WATCH_DEBOUNCE_MS);
+        }),
+      );
+    } catch (error) {
+      this.log.warn(`cannot watch project-local config ${this.configPath}: ${String(error)}`);
+    }
+  }
+
+  private enqueue<T>(work: () => Promise<T>): Promise<T> {
+    const run = this.mutationTail.then(work, work);
+    this.mutationTail = run.then(
+      () => undefined,
+      () => undefined,
+    );
+    return run;
+  }
+}
+
+function sameStringList(a: readonly string[], b: readonly string[]): boolean {
+  return a.length === b.length && a.every((value, index) => value === b[index]);
+}
+
