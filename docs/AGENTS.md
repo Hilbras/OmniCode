@@ -8,9 +8,14 @@ span packages. Current contents are sparse and plan-oriented:
 - `memory-upgrade-plan.md` — memory package upgrade scope and phases
 - `telegram-upgrade-plan.md` — original Telegram connector plan
 - `telegram-upgrade-plan-v2.md` — supersedes the original Telegram plan
+- `plans/qwen-parity-improvement-plan.md` — active seven-workstream plan
+- `en/architecture/` and `zh/architecture/` — bilingual architecture and
+  workstream status, English as source of truth
+- `en/quality/` and `zh/quality/` — bilingual E2E test plan and memory recall
+  evaluation baseline, English as source of truth
 
-These are working plans, not published user documentation or generated API
-reference.
+These are working plans and internal design notes, not published user
+documentation or generated API reference.
 
 Non-goals:
 
@@ -22,19 +27,16 @@ Non-goals:
 
 ## Bilingual status
 
-`docs/zh/` and `docs/en/` do not exist in this tree. Do not invent a bilingual
-mirror for a document that never had one, and do not add a language tree on one
-side only.
+`docs/en/` and `docs/zh/` now exist for the architecture and quality areas
+listed above. English is the source of truth for both trees; every mirrored
+document carries a cross-link and states that rule. Keep matching relative
+paths and keep the two versions structurally aligned.
 
-When creating bilingual documentation, you must create both `docs/en/` and
-`docs/zh/` with matching relative paths, keep the English and Chinese versions
-structurally aligned, add cross-links between them, and state which side is the
-source of truth when they diverge. A one-sided translation is incomplete work.
-
-Existing single-language plans stay single-language unless the task explicitly
-asks for translation. Package-level bilingual docs only exist under
-`packages/engine/docs/en/` and `packages/engine/docs/zh/`; do not move or mirror
-them here.
+Do not invent a bilingual mirror for a document that never had one, and do not
+add a language tree on one side only. Existing single-language plans stay
+single-language unless the task explicitly asks for translation. Package-level
+bilingual docs only exist under `packages/engine/docs/en/` and
+`packages/engine/docs/zh/`; do not move or mirror them here.
 
 ## Writing rules
 

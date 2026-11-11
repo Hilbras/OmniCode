@@ -136,3 +136,5 @@ export type {
 
 export * from '#/events';
 export type * from '#/types';
+
+export * from '@hilbras/omnicode-kaos/sandbox';

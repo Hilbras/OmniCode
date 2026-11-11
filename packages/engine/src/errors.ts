@@ -8,6 +8,7 @@ import { ConfigErrors } from '#/app/config/errors';
 import { CapabilityErrors } from '#/app/capability/errors';
 import { CronErrors } from '#/features/cron/errors';
 import { DebugErrors } from '#/debug/errors';
+import { TeamErrors } from '#/agent/team/errors';
 import { EventErrors } from '#/app/event/errors';
 import { FileErrors } from '#/app/file/fileService';
 import { FsErrors } from '#/workspace/workspaceFs/internal/errors';
@@ -46,6 +47,7 @@ export { ConfigErrors } from '#/app/config/errors';
 export { CapabilityErrors } from '#/app/capability/errors';
 export { CronErrors } from '#/features/cron/errors';
 export { DebugErrors } from '#/debug/errors';
+export { TeamErrors } from '#/agent/team/errors';
 export { FileErrors } from '#/app/file/fileService';
 export { FsErrors } from '#/workspace/workspaceFs/internal/errors';
 export { FullCompactionErrors } from '#/agent/fullCompaction/errors';
@@ -81,6 +83,7 @@ export const ErrorCodes = {
   ...CapabilityErrors.codes,
   ...CronErrors.codes,
   ...DebugErrors.codes,
+  ...TeamErrors.codes,
   ...FileErrors.codes,
   ...FsErrors.codes,
   ...FullCompactionErrors.codes,
@@ -181,6 +184,31 @@ export type OmnicodeErrorCode =
   | 'compaction.unable'
   | 'task.task_id_empty'
   | 'task.limit_exceeded'
+  | 'team.not_found'
+  | 'team.already_exists'
+  | 'team.id_empty'
+  | 'team.name_empty'
+  | 'team.agent_required'
+  | 'team.member_exists'
+  | 'team.member_not_found'
+  | 'team.task_not_found'
+  | 'team.task_id_empty'
+  | 'team.task_title_empty'
+  | 'team.task_already_claimed'
+  | 'team.task_terminal'
+  | 'team.task_assignee_not_member'
+  | 'team.invalid_transition'
+  | 'arena.too_few_contenders'
+  | 'arena.contender_duplicate'
+  | 'arena.contender_invalid'
+  | 'arena.prompt_empty'
+  | 'budget.not_found'
+  | 'budget.already_set'
+  | 'budget.invalid'
+  | 'budget.exhausted'
+  | 'budget.reservation_not_found'
+  | 'budget.reservation_settled'
+  | 'fork_cache.key_invalid'
   | 'usage.turn_id_conflict'
   | 'mcp.server_not_found'
   | 'mcp.server_disabled'

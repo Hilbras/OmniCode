@@ -6,11 +6,14 @@ name is `@hilbras/omnicode-kaos` (`kaos` in the layering guard).
 
 Execution-environment abstraction: one `Kaos` interface over local and SSH
 filesystems/processes, plus environment probing, path/glob behavior, text
-decoding, login-shell PATH bridging, and a current-environment binding.
+decoding, login-shell PATH bridging, a current-environment binding, and
+OS-sandbox execution plumbing.
 
-Non-goals: no agent policy, permission decisions, workspace trust, command
-allowlists, shell parsing, or remote-host configuration management. Callers
-decide whether a command may run; `Kaos` executes it.
+Non-goals: no agent policy, permission-mode decisions, workspace trust,
+command allowlists, or remote-host configuration management. The sandbox layer
+validates argv and can require argv mode, but it does not decide whether an
+agent action is approved. Callers decide whether a command may run; `Kaos`
+executes it.
 ## Entry points and modules
 
 Root `src/index.ts` exports:
@@ -25,6 +28,13 @@ Root `src/index.ts` exports:
   `translateShellDrivePath`.
 - Errors: `KaosError`, `KaosValueError`, `KaosFileExistsError`,
   `KaosShellNotFoundError`.
+- Sandbox: `probeBwrap`, `probeLandlock`, `BwrapSandboxBackend`,
+  `LandlockSandboxBackend`, `createSandboxBackend`, `buildBwrapArgv`,
+  `evaluateRuntimeShellPolicy`, `createSandboxExecutionPlan`,
+  `selectSandboxBackend`, `createSandboxStatus`, `summarizeSandboxPolicy`,
+  `SandboxFileWorker`, `createNodeFileWorkerFs`, `parseFileWorkerRequest`,
+  `isSandboxPathContained`, `resolveSandboxPath`, `normalizeSandboxRoot`, and
+  the sandbox result/availability/policy types.
 
 `SSHKaos` is not on the root barrel. Import it from
 `@hilbras/omnicode-kaos/ssh`.
@@ -37,6 +47,16 @@ Key files:
 - `src/current.ts`: `AsyncLocalStorage` current-instance binding.
 - `src/environment.ts`, `src/login-shell-path.ts`, `src/shell-path-bridge.ts`.
 - `src/internal.ts`: buffered streams, decode-with-errors, glob regex.
+- `src/sandbox/types.ts`: backend, availability, policy, failure, status types.
+- `src/sandbox/availability.ts`: injected `bwrap` / landlock probes.
+- `src/sandbox/bwrap.ts`, `src/sandbox/backends.ts`: safe bwrap argv and
+  backend adapters.
+- `src/sandbox/shell-policy.ts`, `src/sandbox/execution.ts`: argv validation
+  and execution-plan construction.
+- `src/sandbox/paths.ts`, `src/sandbox/file-worker.ts`: containment and the
+  staged file-worker protocol.
+- `src/sandbox/selection.ts`, `src/sandbox/status.ts`: pure backend selection
+  and diagnostics.
 ## Layering rules
 
 - Leaf law: no `@hilbras/omnicode-*` imports.
@@ -60,6 +80,20 @@ Key files:
   `runWithKaos` for an isolated subtree; do not add a mutable global singleton.
 - Workspace trust and `resolveCommandPath` are caller responsibilities. This
   package does no PATH trust check before spawn.
+- Sandbox argv is always `bwrap` plus an argument array. Never build a shell
+  string. The workspace is bound read-write, system paths read-only, and the
+  network is unshared unless policy explicitly shares it.
+- `probeBwrap` runs only `bwrap --version` and a fixed
+  `bwrap --unshare-all ... /bin/true` probe. Tests must inject the probe seam
+  and never execute real `bwrap` or landlock syscalls.
+- Landlock has no pure-TypeScript syscall bridge. `LandlockSandboxBackend`
+  reports unavailable with a reason and falls back to bwrap; do not fabricate
+  enforcement.
+- The file worker stages writes and applies them on `commit`; `abort` discards
+  staged writes. Enforce lexical containment plus `realpath` containment when
+  the filesystem backend exposes it, and keep payload/read/list bounds.
+- Sandbox permission selection is a pure function. Permission-mode approval
+  stays in the engine; do not import engine policy here.
 ## Tests
 Test root: `packages/Kaos/test/`, with setup that creates a `LocalKaos` and
 binds it in `beforeEach`. Vitest project: `kaos`. No `test` script exists.
@@ -67,24 +101,39 @@ binds it in `beforeEach`. Vitest project: `kaos`. No `test` script exists.
 pnpm --filter @hilbras/omnicode-kaos exec vitest run
 pnpm --filter @hilbras/omnicode-kaos exec vitest run test/local.test.ts
 pnpm --filter @hilbras/omnicode-kaos exec vitest run test/e2e
+pnpm --filter @hilbras/omnicode-kaos exec vitest run test/sandbox
 pnpm --filter @hilbras/omnicode-kaos typecheck
 ```
 `test/e2e/` includes real local filesystem/process tests (concurrency, glob
 parity, lifecycle, large stdout) plus SSH validation/mocked-SFTP tests, not a
 live SSH server. Some tests skip on Windows (`kill`, symlinks).
 `test/fixtures/killtree.cjs` supports process-tree tests.
+`test/sandbox/` covers bwrap argv shape, availability/failure states, shell
+policy, file-worker commit/abort, path and symlink containment, and selection.
+It uses injected probes and an in-memory filesystem; it never runs real
+sandboxing tools.
 ## Local traps
 
 - Directory casing is `Kaos`; package name is lowercase `kaos`; Vitest project
   name is also `kaos`.
 - SSH is a subpath export only. Importing it from the root fails.
-- Keywords mention sandbox, but only `LocalKaos` and `SSHKaos` exist; there is
-  no container/sandbox backend here.
+- Sandbox backends exist under `src/sandbox/`, but `LocalKaos.exec` remains
+  unsandboxed. Callers must build an execution plan and spawn `bwrap` through
+  `Kaos` themselves.
 - Do not confuse this with `base/src/execEnv` (environment-agnostic probing).
 - Tests bind via `enterWith` in `beforeEach`; an `await` there breaks
   inheritance.
 ## Belongs here vs neighbours
 - Command permission analysis: `engine` plus
   `@hilbras/omnicode-tree-sitter-bash`.
-- Bare-command trust and workspace trust: `engine`/host.
+- Bare-command trust, workspace trust, and sandbox-vs-permission-mode wiring:
+  `engine`/host.
 - Transport channels: `rpc`. Agent tools calling this: `Tools`/`engine`.
+
+
+## Sandbox subpath
+
+`@hilbras/omnicode-kaos/sandbox` is the public sandbox surface for host adapters. Root `index.ts` also re-exports it for existing consumers.
+
+
+The `@hilbras/omnicode-kaos/sandbox` surface is consumed by the Bash tool through `OMNICODE_SANDBOX_MODE` (`off`, `auto`, `required`). It never grants approval; it only executes an already-approved command under bwrap when available.

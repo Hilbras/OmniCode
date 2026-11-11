@@ -19,6 +19,7 @@ export * from '@hilbras/omnicode-sdk';
 export * from '@hilbras/omnicode-addons';
 export * from '@hilbras/omnicode-tools';
 export * from '@hilbras/omnicode-memory';
+export * from '@hilbras/omnicode-channels';
 
 export async function loadAcpServer(): Promise<typeof import('@hilbras/omnicode-acp')> {
   return import('@hilbras/omnicode-acp');

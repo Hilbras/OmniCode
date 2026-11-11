@@ -20,9 +20,9 @@ internals.
 
 ## 2. Public entry points and important modules
 
-- `src/index.ts` — the main surface: `export *` from SDK, Addons, Tools, and
-  Memory, plus `loadAcpServer()`. Importing it activates those packages'
-  load-time registrations.
+- `src/index.ts` — the main surface: `export *` from SDK, Addons, Tools, Memory,
+  and Channels, plus `loadAcpServer()`. Importing it activates those packages'
+  load-time registrations. SDK re-exports the Kaos sandbox surface.
 - `src/core/klient.ts` — `createKlientFromChannel`, `Klient`, `SessionHandle`,
   `AgentHandle`. Every transport produces the same facade.
 - `src/core/facade/global.ts`, `session.ts`, `agent.ts` — scoped facade shapes.
@@ -62,7 +62,8 @@ Run `pnpm check:architecture` after touching imports.
 
 ## 5. Tests
 
-Tests live in `packages/API/test/`, mirroring `src/`: `facade`, `contract`,
+Tests live in `packages/API/test/`, mirroring `src/`: `workstream-connectivity.test.ts` pins tool,
+channel, memory, and sandbox exports through the public barrel; `facade`, `contract`,
 `memory`/`ipc` transport conformance, `sdk-rpc-client-v2`, `session-*`, and
 `test/e2e/` for harness-driven and legacy flows.
 

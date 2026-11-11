@@ -1,0 +1,30 @@
+{
+  "name": "@hilbras/omnicode-channels",
+  "version": "0.1.0",
+  "description": "Channel platform contracts, adapters, session binding, and lifecycle commands for OmniCode.",
+  "license": "MIT",
+  "author": "Hilbras",
+  "type": "module",
+  "private": true,
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5"
+  }
+}

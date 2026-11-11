@@ -258,8 +258,8 @@ describe('AgentPermissionPolicyService chain', () => {
     });
   });
 
-  it.each(['shutdown -h now', 'reboot', 'rm -rf /tmp/build', 'dd if=/dev/zero of=/dev/sda bs=1M'])(
-    'approves `%s` in auto mode',
+  it.each(['shutdown -h now', 'reboot', 'dd if=/dev/zero of=/dev/sda bs=1M'])(
+    'asks for `%s` in auto mode',
     async (command) => {
       mode = 'auto';
 
@@ -269,8 +269,8 @@ describe('AgentPermissionPolicyService chain', () => {
           args: { command, timeout: 60 },
         }),
       ).resolves.toMatchObject({
-        policyName: 'auto-mode-approve',
-        result: { kind: 'approve' },
+        policyName: 'dangerous-command-ask',
+        result: { kind: 'ask', reason: { dangerous_command: expect.any(String) } },
       });
     },
   );
@@ -352,25 +352,13 @@ describe('AgentPermissionPolicyService chain', () => {
   );
 
   it.each([
-    'init 3',
-    'dd if=/dev/zero of=/dev/null bs=1M count=1',
     'echo shutdown',
-    'systemctl status sshd',
-    'bash -c "echo ok"',
-    'rm -r dir',
-    'rm -f file',
-    'rm -i file',
-    'rm --recursive dir',
-    'rm --force file',
-    'rm dir',
     'env FOO=bar echo ok',
     'command -v rm',
     'command echo ok',
     'nohup echo ok',
     'nice echo ok',
-    'busybox --list',
-    'eval "echo ok"',
-  ])('does not flag `%s` in auto mode', async (command) => {
+  ])('approves read-only commands via the auto-mode classifier', async (command) => {
     mode = 'auto';
 
     await expect(
@@ -379,8 +367,32 @@ describe('AgentPermissionPolicyService chain', () => {
         args: { command, timeout: 60 },
       }),
     ).resolves.toMatchObject({
-      policyName: 'auto-mode-approve',
+      policyName: 'auto-mode-classifier',
       result: { kind: 'approve' },
+    });
+  });
+
+  it.each([
+    'init 3',
+    'dd if=/dev/zero of=/dev/null bs=1M count=1',
+    'systemctl status sshd',
+    'rm -r dir',
+    'rm -f file',
+    'rm -i file',
+    'rm --recursive dir',
+    'rm --force file',
+    'rm dir',
+  ])('asks for mutating commands via the auto-mode classifier', async (command) => {
+    mode = 'auto';
+
+    await expect(
+      evaluate({
+        toolName: 'Bash',
+        args: { command, timeout: 60 },
+      }),
+    ).resolves.toMatchObject({
+      policyName: 'auto-mode-classifier',
+      result: { kind: 'ask' },
     });
   });
 
@@ -416,7 +428,7 @@ describe('AgentPermissionPolicyService chain', () => {
   });
 
   it.each(['$CMD --force', 'bash -c "echo $HOME"', 'env $FLAGS'])(
-    'approves unanalyzable command `%s` in auto mode',
+    'asks for unanalyzable command `%s` in auto mode',
     async (command) => {
       mode = 'auto';
 
@@ -426,8 +438,8 @@ describe('AgentPermissionPolicyService chain', () => {
           args: { command, timeout: 60 },
         }),
       ).resolves.toMatchObject({
-        policyName: 'auto-mode-approve',
-        result: { kind: 'approve' },
+        policyName: 'dangerous-command-ask',
+        result: { kind: 'ask', reason: { unanalyzable_command: true } },
       });
     },
   );
@@ -442,8 +454,8 @@ describe('AgentPermissionPolicyService chain', () => {
         args: { command: 'rm -rf /tmp/build', timeout: 60 },
       }),
     ).resolves.toMatchObject({
-      policyName: 'auto-mode-approve',
-      result: { kind: 'approve' },
+      policyName: 'auto-mode-classifier',
+      result: { kind: 'ask' },
     });
   });
 
@@ -689,7 +701,7 @@ describe('AgentPermissionPolicyService git cwd write approval', () => {
         accesses: ToolAccesses.writeFile(join(workspaceDir, 'src/a.ts')),
       }),
     ).resolves.toMatchObject({
-      policyName: 'auto-mode-approve',
+      policyName: 'auto-mode-classifier',
       result: { kind: 'approve' },
     });
   });

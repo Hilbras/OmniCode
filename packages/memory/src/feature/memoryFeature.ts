@@ -14,6 +14,7 @@ import { IMemoryService } from '#/contracts/memoryContract';
 import { AppMemoryService } from '#/service/appMemoryService';
 import { IMemorySearchTool, MemorySearchTool } from '#/tool/memorySearchTool';
 import { IMemoryForgetTool, IMemorySaveTool, MemoryForgetTool, MemorySaveTool } from '#/tool/memoryWriteTools';
+import { IMemoryManageTool, MemoryManageTool } from '#/tool/memoryManageTool';
 
 import { MEMORY_FLAG_ID } from './flag';
 
@@ -46,6 +47,11 @@ export class MemoryFeature extends Feature {
     });
     this.contributeTool(IMemoryForgetTool, MemoryForgetTool, {
       name: 'memory_forget',
+      domain: 'memory',
+      when: (accessor) => accessor.get(IFlagService).enabled(MEMORY_FLAG_ID),
+    });
+    this.contributeTool(IMemoryManageTool, MemoryManageTool, {
+      name: 'memory_manage',
       domain: 'memory',
       when: (accessor) => accessor.get(IFlagService).enabled(MEMORY_FLAG_ID),
     });

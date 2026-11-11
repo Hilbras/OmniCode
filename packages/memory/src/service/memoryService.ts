@@ -13,6 +13,7 @@ import type {
   MemoryDigestDecision,
   MemoryDigestInput,
   MemoryDigestResult,
+  MemoryDreamConsolidationResult,
   MemoryEvidenceRefreshOptions,
   MemoryEvidenceRefreshReport,
   MemoryListQuery,
@@ -35,7 +36,8 @@ import type {
   MemoryRecalibrationResult,
   MemoryVersion,
 } from '#/contracts/memoryContract';
-import type { MemoryLifecycle, MemoryRecord, MemoryScope, MemoryTier, MemoryTrust } from '#/contracts/memoryTypes';
+import type { MemoryCategory, MemoryLifecycle, MemoryRecord, MemoryRetention, MemoryScope, MemorySensitivity, MemoryTier, MemoryTrust } from '#/contracts/memoryTypes';
+import { SENSITIVITY_RANK } from '#/contracts/memoryTypes';
 import { MEMORY_LIFECYCLES, MEMORY_TIERS, parseMemoryRecord, TRUST_RANK } from '#/contracts/memoryTypes';
 import type { RetrievalResult } from '#/contracts/retrieval';
 import { MemoryRetriever, unavailableResult } from '#/retrieval/memoryRetriever';
@@ -285,6 +287,186 @@ export class MemoryService extends Disposable implements IMemoryService {
       });
     }
     return { stored, deduplicated, merged, skipped, rejected, items };
+  }
+
+  async dreamConsolidate(input?: unknown): Promise<MemoryDreamConsolidationResult> {
+    return this.consolidateDream(input);
+  }
+
+  async dream(input?: unknown): Promise<MemoryDreamConsolidationResult> {
+    return this.consolidate(input);
+  }
+
+  async runDreamConsolidation(input?: unknown): Promise<MemoryDreamConsolidationResult> {
+    return this.consolidate(input);
+  }
+
+  async consolidateDream(input?: unknown): Promise<MemoryDreamConsolidationResult> {
+    return this.consolidate(input);
+  }
+
+  async consolidate(input?: unknown): Promise<MemoryDreamConsolidationResult> {
+    const normalized = this.normalizeDreamInput(input);
+    const scope = normalized.scope;
+    if (!this.available()) {
+      return {
+        status: 'disabled',
+        scope,
+        scanned: 0,
+        groups: 0,
+        consolidated: 0,
+        superseded: 0,
+        skipped: 0,
+        ids: [],
+        reason: 'memory is disabled',
+      };
+    }
+    const now = this.now();
+    try {
+      const records = await this.list({
+        workspaceId: scope.workspaceId,
+        projectId: scope.projectId,
+        sessionId: scope.sessionId,
+        taskId: scope.taskId,
+        scopes: [scope.tier],
+        lifecycle: ['active'],
+        limit: normalized.limit ?? 200,
+      });
+      const scoped = records.filter((record) => {
+        if (scopeKeyFor(record.scope) !== scopeKeyFor(scope)) return false;
+        if (normalized.tier !== undefined && record.tier !== normalized.tier) return false;
+        if (normalized.category !== undefined && record.category !== normalized.category) return false;
+        if (record.tier === 'canonical') return false;
+        if (record.category === 'task') return false;
+        return !record.legalHold;
+      });
+
+      const groups = new Map<string, MemoryRecord[]>();
+      for (const record of scoped) {
+        const key = `${record.category}:${(record.subject ?? record.content).slice(0, 64).toLowerCase()}`;
+        const group = groups.get(key);
+        if (group === undefined) groups.set(key, [record]);
+        else group.push(record);
+      }
+      const eligibleGroups = [...groups.values()].filter((group) => group.length >= 2);
+
+      let consolidated = 0;
+      let supersededCount = 0;
+      let skipped = 0;
+      const ids: string[] = [];
+      for (const group of eligibleGroups) {
+        if (normalized.dryRun === true) {
+          skipped += 1;
+          continue;
+        }
+        const sources = [...group].sort((a, b) => a.updatedAt - b.updatedAt || a.id.localeCompare(b.id));
+        const uniqueContents = [...new Set(sources.map((record) => record.content.trim()))];
+        const content = uniqueContents.join(' | ').slice(0, this.settings.maxContentChars).trim();
+        if (content.length === 0) {
+          skipped += 1;
+          continue;
+        }
+        const category = sources[0]!.category;
+        const subjectBase = sources.find((record) => record.subject !== undefined)?.subject;
+        const subject = subjectBase ?? `dream.${category}`.slice(0, 64);
+        const sensitivity = sources.reduce<MemorySensitivity>((current, record) => {
+          return SENSITIVITY_RANK[record.sensitivity] > SENSITIVITY_RANK[current] ? record.sensitivity : current;
+        }, sources[0]!.sensitivity);
+        const retention = sources.reduce<MemoryRetention>((current, record) => {
+          const order = ['neverExpire', 'pinned', 'persistent', 'decaying', 'ephemeral'] as const;
+          return order.indexOf(record.retention) < order.indexOf(current) ? record.retention : current;
+        }, sources[0]!.retention);
+        const allVerified = sources.every((record) => record.trust === 'verified' || record.trust === 'system');
+        const evidence = allVerified
+          ? sources.map((record) => ({
+              kind: 'memory' as const,
+              ref: record.id,
+              state: 'present' as const,
+              fingerprint: fingerprintText(record.content),
+              observedAt: now,
+            }))
+          : [];
+        const result = await this.capture({
+          content,
+          tier: 'distilled',
+          category,
+          sourceType: 'derived',
+          origin: 'application',
+          scope,
+          subject,
+          sensitivity,
+          retention,
+          importance: Math.round(sources.reduce((sum, record) => sum + record.importance, 0) / sources.length),
+          confidence: 0.5,
+          evidence,
+        });
+        const consolidatedId = result.record?.id ?? result.id;
+        if ((result.status === 'stored' || result.status === 'deduplicated') && consolidatedId !== undefined) {
+          consolidated += 1;
+          ids.push(consolidatedId);
+          for (const source of sources) {
+            const superseded = await this.supersede(source.id, {
+              successorId: consolidatedId,
+              reason: 'dream consolidation',
+            });
+            if (superseded.status === 'updated') supersededCount += 1;
+          }
+        } else {
+          skipped += 1;
+        }
+      }
+
+      return {
+        status: 'completed',
+        scope,
+        scanned: scoped.length,
+        groups: eligibleGroups.length,
+        consolidated,
+        superseded: supersededCount,
+        skipped,
+        ids,
+      };
+    } catch (error) {
+      return {
+        status: 'failed',
+        scope,
+        scanned: 0,
+        groups: 0,
+        consolidated: 0,
+        superseded: 0,
+        skipped: 0,
+        ids: [],
+        reason: String(error),
+      };
+    }
+  }
+
+  private normalizeDreamInput(input: unknown): {
+    readonly scope: MemoryScope;
+    readonly tier?: MemoryTier;
+    readonly category?: MemoryCategory;
+    readonly limit?: number;
+    readonly dryRun?: boolean;
+  } {
+    if (input !== null && typeof input === 'object' && 'scope' in input) {
+      const value = input as { scope?: MemoryScope; tier?: MemoryTier; category?: MemoryCategory; limit?: number; dryRun?: boolean };
+      return {
+        scope: value.scope ?? { tier: 'global' },
+        tier: value.tier,
+        category: value.category,
+        limit: value.limit,
+        dryRun: value.dryRun,
+      };
+    }
+    try {
+      const scope = input as MemoryScope;
+      if (scopeKeyFor(scope) !== undefined) {
+        return { scope, tier: undefined, category: undefined, limit: undefined, dryRun: undefined };
+      }
+    } catch {
+      // Fall through.
+    }
+    return { scope: { tier: 'global' }, tier: undefined, category: undefined, limit: undefined, dryRun: undefined };
   }
 
   private async digestDecision(

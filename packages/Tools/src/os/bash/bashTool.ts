@@ -26,6 +26,7 @@ import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
 import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import bashDescriptionTemplate from './bash.md?raw';
 import { ProcessTask } from './process-task';
+import { IBashSandboxService } from './sandbox';
 import {
   type BashInput,
   BashInputSchema,
@@ -105,6 +106,7 @@ export class BashTool implements IBashTool {
     @IAgentTaskService private readonly tasks: IAgentTaskService,
     @IAgentToolPolicyService private readonly toolPolicy: IAgentToolPolicyService,
     @IConfigService private readonly config: IConfigService,
+    @IBashSandboxService private readonly sandbox?: IBashSandboxService,
   ) {}
 
   private allowBackground(): boolean {
@@ -154,7 +156,7 @@ export class BashTool implements IBashTool {
     };
   }
 
-  private spawn(
+  private async spawn(
     processService: IHostProcessService,
     env: HostEnvironmentInfo,
     effectiveCwd: string,
@@ -168,6 +170,20 @@ export class BashTool implements IBashTool {
       GIT_TERMINAL_PROMPT: process.env['GIT_TERMINAL_PROMPT'] ?? '0',
       SHELL: env.shellPath,
     };
+
+    const prepared = await this.sandbox?.prepare({
+      command,
+      cwd: effectiveCwd,
+      workspace: this.workspaceCtx.workDir,
+      shellPath: env.shellPath,
+      env: noninteractiveEnv,
+    });
+    if (prepared?.kind === 'denied') throw new Error(prepared.message);
+    if (prepared?.kind === 'sandbox') {
+      return processService.spawn(prepared.plan.command, prepared.plan.args, {
+        env: noninteractiveEnv,
+      });
+    }
 
     return processService.spawn(env.shellPath, ['-c', shellCommand], { env: noninteractiveEnv });
   }

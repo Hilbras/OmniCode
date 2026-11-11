@@ -29,6 +29,20 @@ const DEFAULT_APPROVE_TOOLS = new Set([
   'memory_search',
   'memory_save',
   'memory_forget',
+  'memory_manage',
+  'Arena',
+  'Lsp',
+  'WorktreeList',
+  'TaskBoardCreate',
+  'TaskBoardUpdate',
+  'TaskBoardList',
+  'Team',
+  'TeamCreate',
+  'TeamJoin',
+  'TeamLeave',
+  'TeamList',
+  'ArtifactRecord',
+  'SourceRecord',
 ]);
 
 export class DefaultToolApprovePermissionPolicyService implements PermissionPolicy {

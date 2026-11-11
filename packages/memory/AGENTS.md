@@ -16,10 +16,10 @@ step and no `dist`, matching `packages/Addons` and `packages/Tools`.
 | `src/security/` | secret redaction (wraps core) and instruction-like-content detection |
 | `src/storage/` | the `MemoryStorePort` seam, an in-memory store, and the minidb store |
 | `src/layers/` | deterministic extractors for preferences, phrases and explicit auto-capture requests |
-| `src/retrieval/` | normalize → scope → sensitivity ceiling → lexical → gates → rank (importance/confidence/recency/pinned) → relation expansion → dedup/superseded suppression → budget → explanation |
+| `src/retrieval/` | normalize → scope → sensitivity ceiling → lexical → gates → rank (importance/confidence/recency/pinned) → relation expansion → dedup/superseded suppression → budget → explanation; `relevanceSelector.ts` provides the deterministic term-overlap selector used by callers and tests |
 | `src/service/` | the `IMemoryService` implementation, record factory, runtime wiring, maintenance scheduler, evidence watcher |
 | `src/context/` | agent-scope project identity and the reminder providers |
-| `src/tool/` | the `memory_search`, `memory_save` and `memory_forget` agent tools |
+| `src/tool/` | the `memory_search`, `memory_save`, `memory_forget`, and `memory_manage` agent tools |
 | `src/control/` | the user-facing read/confirm/forget/export surface, shared by the REST routes and the CLI |
 | `src/capture/` | compaction-summary parsing and the agent-scoped capture that stores it as task state |
 | `src/feature/` | the `Feature`, the `[memory]` config section, the experimental flag |
@@ -92,6 +92,20 @@ noun. When a new record lands on a subject that already has an active record:
 
 Recency never decides a conflict on its own. Identical content in the same scope
 and tier is deduplicated by fingerprint instead.
+
+## Dream consolidation
+
+`IMemoryService.dreamConsolidate()` (aliases `consolidateDream`, `consolidate`, `dream`,
+`runDreamConsolidation`) groups active, non-legal-held memories in one scope by category and
+subject/content prefix, captures one distilled application-origin memory with source evidence,
+and supersedes the sources. Trust is never raised beyond the sources: evidence is attached only when every source is
+`verified` or `system`, otherwise the consolidated record stays `unverified`; sensitivity is
+the maximum of the sources; retention is the most durable source retention.
+
+The `memory_manage` tool exposes `dream`, `consolidate`, and `list` actions. `list`
+returns ids and metadata only, never content, and omits `secret` and `confidential` records. `channel` is a first-class scope tier with an optional `channelId`.
+
+`MemoryMaintenanceScheduler` can run dream consolidation on an interval without a tool call. It is opt-in through `[memory] dreamConsolidationEnabled`, uses `dreamConsolidationIntervalMs`, supports `dreamConsolidationDryRun`, and defaults to repository scope. Logs contain counts only, never memory content.
 
 ## Storage
 
@@ -239,7 +253,9 @@ rather than reporting a perfect 1.0.
 
 ### Measured injection cost
 
-Automatic injection runs under `AUTO_INJECT_RETRIEVAL_BUDGET` (5 results, 1500
+Automatic canonical/preference injection applies `selectRelevantMemories()` as a
+second-stage term-overlap filter after retrieval, then runs under
+`AUTO_INJECT_RETRIEVAL_BUDGET` (5 results, 1500
 context characters, 300 per memory). Measured over the labelled queries against
 the whole corpus: 278 characters of injected context on average, 292 at the
 maximum, and 0.3–1.1 ms per query once warm (about 16 ms for the first pass,

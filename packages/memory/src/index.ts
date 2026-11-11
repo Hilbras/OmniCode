@@ -14,6 +14,8 @@ export type {
   MemoryCaptureResult,
   MemoryCaptureStatus,
   MemoryDiagnostics,
+  MemoryDreamConsolidationInput,
+  MemoryDreamConsolidationResult,
   MemoryListQuery,
   MemoryMutationResult,
   MemoryPolicyViolation,
@@ -181,6 +183,15 @@ export {
 } from '#/tool/memoryWriteTools';
 export type { MemoryForgetInput, MemorySaveInput } from '#/tool/memoryWriteTools';
 export {
+  IMemoryManageTool,
+  MEMORY_MANAGE_ACTIONS,
+  MEMORY_MANAGE_DESCRIPTION,
+  MEMORY_MANAGE_TOOL_NAME,
+  MemoryManageInputSchema,
+  MemoryManageTool,
+} from '#/tool/memoryManageTool';
+export type { MemoryManageInput } from '#/tool/memoryManageTool';
+export {
   captureCompactionTaskState,
   parseCompactionSummary,
   toTaskStateInput,
@@ -218,3 +229,5 @@ export type {
   MemoryView,
   MemoryViewer,
 } from '#/control/memoryControl';
+
+export * from './retrieval/relevanceSelector';

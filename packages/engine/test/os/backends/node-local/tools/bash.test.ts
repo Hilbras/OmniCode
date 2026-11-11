@@ -2,6 +2,7 @@ import { PassThrough, Readable, type Writable } from 'node:stream';
 
 import { type BashInput, BashInputSchema } from '@hilbras/omnicode-tools/os/bash/bash';
 import { BashTool } from '@hilbras/omnicode-tools/os/bash/bashTool';
+import type { IBashSandboxService } from '@hilbras/omnicode-tools/os/bash/sandbox';
 import { ProcessTask } from '@hilbras/omnicode-tools/os/bash/process-task';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -721,6 +722,7 @@ function bashTool(
   background: IAgentTaskService = createFakeTaskService().service,
   toolPolicy: IAgentToolPolicyService = stubToolPolicy(),
   config: IConfigService = stubConfig(),
+  sandbox?: IBashSandboxService,
 ): BashTool {
   const processService: IHostProcessService = {
     _serviceBrand: undefined,
@@ -744,7 +746,7 @@ function bashTool(
       dispose: () => {},
     }),
   };
-  return new BashTool(runtime, ctx, stubWorkspaceContext(ctx.cwd), background, toolPolicy, config);
+  return new BashTool(runtime, ctx, stubWorkspaceContext(ctx.cwd), background, toolPolicy, config, sandbox);
 }
 
 describe('BashTool', () => {
@@ -854,6 +856,39 @@ describe('BashTool', () => {
       output: 'ok\n',
       isError: false,
     });
+  });
+
+  it('uses the sandbox plan when the sandbox service returns one', async () => {
+    const proc = processWithOutput({ stdout: 'ok\n' });
+    const { runner, exec } = createTestRunner(proc);
+    const sandbox: IBashSandboxService = {
+      _serviceBrand: undefined,
+      prepare: vi.fn(async () => ({
+        kind: 'sandbox' as const,
+        plan: {
+          backend: 'bwrap' as const,
+          permissionMode: 'auto' as const,
+          command: 'bwrap' as const,
+          args: ['--bind', '/workspace', '/workspace', '--', '/bin/bash', '-c', 'printf ok'],
+          cwd: '/workspace',
+        },
+      })),
+    };
+    const tool = bashTool(runner, createTestEnv(), createTestCtx(), undefined, undefined, undefined, sandbox);
+
+    const result = await executeTool(tool, context({ command: 'printf ok', timeout: 60 }));
+
+    expect(result.isError).toBe(false);
+    expect(exec.mock.calls[0]?.[0]).toBe('bwrap');
+    expect(exec.mock.calls[0]?.[1]).toEqual([
+      '--bind',
+      '/workspace',
+      '/workspace',
+      '--',
+      '/bin/bash',
+      '-c',
+      'printf ok',
+    ]);
   });
 
   it('uses args.cwd when provided', async () => {

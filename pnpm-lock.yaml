@@ -431,6 +431,9 @@ importers:
       '@hilbras/omnicode-base':
         specifier: workspace:^
         version: link:../base
+      '@hilbras/omnicode-channels':
+        specifier: workspace:^
+        version: link:../channels
       '@hilbras/omnicode-core':
         specifier: workspace:^
         version: link:../core
@@ -563,6 +566,9 @@ importers:
       '@hilbras/omnicode-engine':
         specifier: workspace:^
         version: link:../engine
+      '@hilbras/omnicode-kaos':
+        specifier: workspace:^
+        version: link:../Kaos
       pathe:
         specifier: ^2.0.3
         version: 2.0.3
@@ -861,6 +867,12 @@ importers:
       sinon:
         specifier: ^22.0.0
         version: 22.1.0
+
+  packages/channels:
+    devDependencies:
+      '@types/node':
+        specifier: ^22.20.5
+        version: 22.20.5
 
   packages/cli-commands: {}
 

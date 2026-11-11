@@ -15,7 +15,7 @@ memory in `packages/memory`; host/UI surfaces in `apps/*`, `packages/API`, and
 
 `packages/engine/src/index.ts` is the package entry and composition root; it
 exports contracts and imports services/features for registration side effects.
-Ownership: `agent/` loop/tools/permissions/media; `session/` lifecycle/profile/
+Ownership: `agent/` loop/tools/permissions/media/teams; `session/` lifecycle/profile/
 state/subagent/MCP overlay; `app/` app-scope services; `features/` feature seam;
 `human/` pure LLM/agent kernel; `llm-adapter/` compatibility boundary; `mcpCore/`
 transports/config/OAuth; `workspace/` workspace/session lifecycle; `state/` state
@@ -105,3 +105,8 @@ pnpm --filter @hilbras/omnicode-engine exec vitest run test/agent/loop
 Do not add tool implementations, add-on features, memory-package behavior, UI
 or host-specific code, a second DI facade, direct provider SDK calls outside
 `human/llm`, or handwritten edits to generated manifests.
+
+
+## Permission policy
+
+Auto mode now uses `AutoModeClassifierPermissionPolicyService` (`auto-mode-classifier`) instead of blanket auto-approval. Denial tracking state resets on mode change. Dangerous-command and ask-user-question-deny policies remain ahead of the classifier.

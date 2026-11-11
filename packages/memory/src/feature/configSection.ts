@@ -15,6 +15,9 @@ export const MEMORY_ENABLED_ENV = 'OMNICODE_MEMORY_ENABLED';
 export const MEMORY_MAX_CONTENT_ENV = 'OMNICODE_MEMORY_MAX_CONTENT_CHARS';
 export const MEMORY_WORKING_TTL_ENV = 'OMNICODE_MEMORY_WORKING_TTL_MS';
 export const MEMORY_INJECT_CANONICAL_ENV = 'OMNICODE_MEMORY_INJECT_CANONICAL';
+export const MEMORY_DREAM_ENABLED_ENV = 'OMNICODE_MEMORY_DREAM_ENABLED';
+export const MEMORY_DREAM_INTERVAL_ENV = 'OMNICODE_MEMORY_DREAM_INTERVAL_MS';
+export const MEMORY_DREAM_DRY_RUN_ENV = 'OMNICODE_MEMORY_DREAM_DRY_RUN';
 
 export const MemoryConfigSchema = z.object({
   enabled: z.boolean().optional(),
@@ -23,6 +26,9 @@ export const MemoryConfigSchema = z.object({
   workingTtlMs: z.number().int().min(0).optional(),
   workingGraceMs: z.number().int().min(0).optional(),
   injectCanonical: z.boolean().optional(),
+  dreamConsolidationEnabled: z.boolean().optional(),
+  dreamConsolidationIntervalMs: z.number().int().min(60_000).optional(),
+  dreamConsolidationDryRun: z.boolean().optional(),
   reviewMaxAttempts: z.number().int().min(1).max(10).optional(),
   reviewBackoffMs: z.number().int().min(0).optional(),
   maxQueuedReviews: z.number().int().min(1).max(100_000).optional(),
@@ -36,6 +42,9 @@ export const memoryEnvBindings: EnvBindings<MemoryConfig> = envBindings(MemoryCo
   maxContentChars: { env: MEMORY_MAX_CONTENT_ENV, parse: parseNumberEnv },
   workingTtlMs: { env: MEMORY_WORKING_TTL_ENV, parse: parseNumberEnv },
   injectCanonical: { env: MEMORY_INJECT_CANONICAL_ENV, parse: parseBooleanEnv },
+  dreamConsolidationEnabled: { env: MEMORY_DREAM_ENABLED_ENV, parse: parseBooleanEnv },
+  dreamConsolidationIntervalMs: { env: MEMORY_DREAM_INTERVAL_ENV, parse: parseNumberEnv },
+  dreamConsolidationDryRun: { env: MEMORY_DREAM_DRY_RUN_ENV, parse: parseBooleanEnv },
 });
 
 export const stripMemoryEnv = stripEnvBoundFields(memoryEnvBindings);

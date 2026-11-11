@@ -31,6 +31,12 @@ Non-goals:
   directory references in every `AGENTS.md`. Run `pnpm check:agent-docs`.
 - `pnpm check:guards` runs workspace + architecture + agent-docs together. This
   is the default pre-handoff guard command.
+- `preflight.mjs` — local delivery gate. Runs the workspace check, guards,
+  typechecks for engine, memory, channels, Tools, Kaos, API, and the CLI, then targeted
+  permission-policy, memory-lifecycle, channels, API-connectivity, Tools, engine-team, and Kaos-sandbox tests. `--dry-run` prints the steps, `--skip-typecheck`
+  and `--skip-tests` narrow the run while iterating. Root script:
+  `pnpm preflight`. It is a runner, not a guard; it does not replace the
+  package test suites.
 
 ## Fix the violation, not the guard
 
@@ -73,9 +79,11 @@ pnpm check:workspace
 pnpm check:architecture
 pnpm check:agent-docs
 pnpm check:guards
+node scripts/preflight.mjs --dry-run
 ```
 
 Run the narrow guard while iterating, then `pnpm check:guards` before handoff.
-There is no test suite for these scripts; a guard change is validated by running
-it against this tree and, when changing detection logic, against a deliberate
-local violation that you remove afterward.
+`pnpm preflight` adds package typechecks and targeted tests. There is no test
+suite for these scripts; a guard change is validated by running it against this
+tree and, when changing detection logic, against a deliberate local violation
+that you remove afterward.

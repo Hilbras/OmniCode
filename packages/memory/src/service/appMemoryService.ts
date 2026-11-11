@@ -20,6 +20,8 @@ import type {
   MemoryVersion,
   MemoryDigestInput,
   MemoryDigestResult,
+  MemoryDreamConsolidationInput,
+  MemoryDreamConsolidationResult,
   MemoryEvidenceRefreshOptions,
   MemoryEvidenceRefreshReport,
   MemoryListQuery,
@@ -102,6 +104,13 @@ export class AppMemoryService extends Disposable implements IMemoryService {
       workingGraceMs: runtime.settings.workingGraceMs,
       now,
       evidenceProjectId: () => this.evidenceProjectId(),
+      dreamEnabled: () => runtime.settings.dreamConsolidationEnabled,
+      dreamIntervalMs: runtime.settings.dreamConsolidationIntervalMs,
+      dreamDryRun: runtime.settings.dreamConsolidationDryRun,
+      dreamScope: () =>
+        this.resolvedProjectId === undefined
+          ? undefined
+          : { tier: 'repository', projectId: this.resolvedProjectId },
     });
     this.maintenance.start();
     this.evidenceWatcher = new EvidenceWatcher({
@@ -256,6 +265,26 @@ export class AppMemoryService extends Disposable implements IMemoryService {
 
   runReview(limit: number): Promise<MemoryReviewReport> {
     return this.delegate.runReview(limit);
+  }
+
+  dreamConsolidate(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult> {
+    return this.delegate.dreamConsolidate(input);
+  }
+
+  consolidateDream(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult> {
+    return this.delegate.consolidateDream(input);
+  }
+
+  consolidate(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult> {
+    return this.delegate.consolidate(input);
+  }
+
+  dream(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult> {
+    return this.delegate.dream(input);
+  }
+
+  runDreamConsolidation(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult> {
+    return this.delegate.runDreamConsolidation(input);
   }
 
   pendingReviews(now: number, limit: number): Promise<readonly MemoryReviewJob[]> {

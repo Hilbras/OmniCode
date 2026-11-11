@@ -7,6 +7,9 @@ export interface MemoryPolicySettings {
   readonly reviewMaxAttempts: number;
   readonly reviewBackoffMs: number;
   readonly maxQueuedReviews: number;
+  readonly dreamConsolidationEnabled: boolean;
+  readonly dreamConsolidationIntervalMs: number;
+  readonly dreamConsolidationDryRun: boolean;
 }
 
 export const DEFAULT_MEMORY_SETTINGS: MemoryPolicySettings = Object.freeze({
@@ -18,4 +21,7 @@ export const DEFAULT_MEMORY_SETTINGS: MemoryPolicySettings = Object.freeze({
   reviewMaxAttempts: 3,
   reviewBackoffMs: 30_000,
   maxQueuedReviews: 500,
+  dreamConsolidationEnabled: false,
+  dreamConsolidationIntervalMs: 24 * 60 * 60 * 1000,
+  dreamConsolidationDryRun: false,
 });

@@ -1,5 +1,6 @@
 import { AgentSwarmToolInputSchema } from '@hilbras/omnicode-tools/features/swarm/tools/agent-swarm/agent-swarm';
 import { AgentSwarmTool } from '@hilbras/omnicode-tools/features/swarm/tools/agent-swarm/agentSwarmTool';
+import { WorkflowBudgetLedger } from '#/agent/team/workflowBudget';
 import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from 'vitest';
 
 import { SyncDescriptor } from '@hilbras/omnicode-base/di/descriptors';
@@ -151,6 +152,9 @@ function mockSwarmMode() {
 
 function stubConfig(section?: {
   timeoutMs?: number;
+  maxTurnsPerSwarm?: number;
+  maxTokensPerSwarm?: number;
+  maxTimeMsPerSwarm?: number;
   defaultModel?: string;
   models?: Record<string, string>;
 }): IConfigService {
@@ -852,6 +856,31 @@ describe('AgentSwarmTool', () => {
       ].join('\n'),
     );
     expect(result.isError).toBeUndefined();
+  });
+
+  it('refuses a swarm that exceeds the configured turn budget before spawning', async () => {
+    const host = mockSwarmHost();
+    const tool = new AgentSwarmTool(
+      host.swarmService,
+      makeAgentScopeContext({ agentId: host.callerAgentId, agentScope: '' }),
+      mockSwarmMode(),
+      stubConfig({ maxTurnsPerSwarm: 1 }),
+      stubFlag(true),
+      realSubagents(stubSwarmCatalog(), stubConfig(), stubCallerProfile()),
+      stubCallerProfile(),
+      new WorkflowBudgetLedger(),
+    );
+    const result = await executeTool(
+      tool,
+      context({
+        description: 'Review files',
+        prompt_template: 'Review {{item}}',
+        items: ['src/a.ts', 'src/b.ts'],
+      }),
+    );
+    expect(result.isError).toBe(true);
+    expect(result.output).toContain('exhausted turns');
+    expect(host.swarmService.run).not.toHaveBeenCalled();
   });
 
   it('does not expose permission rule argument matching', () => {

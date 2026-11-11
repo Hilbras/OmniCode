@@ -90,6 +90,7 @@ export const MEMORY_SCOPE_TIERS = [
   'repository',
   'session',
   'task',
+  'channel',
 ] as const;
 export type MemoryScopeTier = (typeof MEMORY_SCOPE_TIERS)[number];
 
@@ -98,6 +99,7 @@ export const SCOPE_TIER_RANK: Readonly<Record<MemoryScopeTier, number>> = Object
   workspace: 1,
   repository: 2,
   session: 3,
+  channel: 3,
   task: 4,
 });
 
@@ -121,6 +123,7 @@ export const MemoryScopeSchema = z.object({
   projectId: z.string().min(1).optional(),
   sessionId: z.string().min(1).optional(),
   taskId: z.string().min(1).optional(),
+  channelId: z.string().min(1).optional(),
 });
 export type MemoryScope = z.infer<typeof MemoryScopeSchema>;
 

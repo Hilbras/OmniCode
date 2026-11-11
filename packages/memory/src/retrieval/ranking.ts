@@ -18,6 +18,7 @@ const SCOPE_WEIGHT: Readonly<Record<MemoryScopeTier, number>> = Object.freeze({
   repository: 0.2,
   session: 0.3,
   task: 0.2,
+  channel: 0.25,
 });
 
 export function trustWeight(trust: MemoryTrust): number {

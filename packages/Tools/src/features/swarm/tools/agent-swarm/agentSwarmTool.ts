@@ -14,7 +14,8 @@ import { ISessionSwarmService, type SessionSwarmTask } from '@hilbras/omnicode-e
 import { IAgentProfileService } from '@hilbras/omnicode-engine/agent/profile/profile';
 import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
 import { IAgentSwarmService } from '@hilbras/omnicode-engine/features/swarm/agent/swarm';
-import { resolveSwarmTimeoutMs } from '@hilbras/omnicode-engine/features/swarm/configSection';
+import { resolveSwarmBudget, resolveSwarmTimeoutMs } from '@hilbras/omnicode-engine/features/swarm/configSection';
+import { IWorkflowBudgetLedger, WorkflowBudgetLedger } from '@hilbras/omnicode-engine/agent/team/workflowBudget';
 import { ISessionSubagentService } from '@hilbras/omnicode-engine/session/subagent/subagent';
 import {
   FORK_EXPERIMENTAL_UNAVAILABLE,
@@ -94,6 +95,7 @@ export class AgentSwarmTool implements IAgentSwarmTool {
     @IFlagService private readonly flags: IFlagService,
     @ISessionSubagentService private readonly subagents: ISessionSubagentService,
     @IAgentProfileService private readonly profile: IAgentProfileService,
+    @IWorkflowBudgetLedger private readonly budget?: WorkflowBudgetLedger,
   ) {
     this.callerAgentId = scopeContext.agentId;
   }
@@ -202,13 +204,33 @@ export class AgentSwarmTool implements IAgentSwarmTool {
         plan: plan!,
       };
     });
-    const results = await this.swarmService.run({
-      callerAgentId: this.callerAgentId,
-      tasks,
-    });
-    return renderSwarmResults(
-      results.map(({ task, ...result }) => ({ spec: task.data, ...result })),
-    );
+    const limits = resolveSwarmBudget(this.config);
+    const ledger = limits === undefined ? undefined : (this.budget ?? new WorkflowBudgetLedger());
+    let workflowId: string | undefined;
+    let reservation: ReturnType<WorkflowBudgetLedger['reserve']> | undefined;
+    if (ledger !== undefined && limits !== undefined) {
+      workflowId = `${this.callerAgentId}:swarm:${toolCallId}`;
+      ledger.setBudget(workflowId, limits);
+      reservation = ledger.reserve(workflowId, {
+        turns: tasks.length,
+        ...(limits.tokens === undefined ? {} : { tokens: limits.tokens }),
+        ...(limits.timeMs === undefined ? {} : { timeMs: limits.timeMs }),
+      });
+    }
+    let completed = false;
+    try {
+      const results = await this.swarmService.run({
+        callerAgentId: this.callerAgentId,
+        tasks,
+      });
+      completed = true;
+      if (ledger !== undefined && reservation !== undefined) ledger.record(reservation.id);
+      return renderSwarmResults(
+        results.map(({ task, ...result }) => ({ spec: task.data, ...result })),
+      );
+    } finally {
+      if (!completed && ledger !== undefined && reservation !== undefined) ledger.release(reservation.id);
+    }
   }
 }
 

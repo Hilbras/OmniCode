@@ -64,6 +64,15 @@ export interface MemoryDigestInput {
   readonly adjudicate?: (candidate: MemoryDigestCandidate) => Promise<MemoryDigestDecision>;
 }
 
+export interface MemoryDreamConsolidationInput {
+  readonly scope?: MemoryScope;
+  readonly tier?: MemoryTier;
+  readonly category?: MemoryCategory;
+  readonly limit?: number;
+  readonly dryRun?: boolean;
+}
+
+
 export type MemoryFeedback = 'useful' | 'harmful' | 'irrelevant';
 
 export interface MemoryFeedbackInput {
@@ -118,6 +127,19 @@ export interface MemoryDigestResult {
   readonly rejected: number;
   readonly items: readonly MemoryDigestItemResult[];
 }
+
+export interface MemoryDreamConsolidationResult {
+  readonly status: 'completed' | 'disabled' | 'failed';
+  readonly scope: MemoryScope;
+  readonly scanned: number;
+  readonly groups: number;
+  readonly consolidated: number;
+  readonly superseded: number;
+  readonly skipped: number;
+  readonly ids: readonly string[];
+  readonly reason?: string;
+}
+
 
 export interface MemoryCaptureResult {
   readonly status: MemoryCaptureStatus;
@@ -285,6 +307,16 @@ export interface IMemoryService {
   capture(input: MemoryCaptureInput): Promise<MemoryCaptureResult>;
 
   digest(input: MemoryDigestInput): Promise<MemoryDigestResult>;
+
+  dreamConsolidate(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult>;
+
+  consolidateDream(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult>;
+
+  consolidate(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult>;
+
+  dream(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult>;
+
+  runDreamConsolidation(input?: MemoryScope | MemoryDreamConsolidationInput): Promise<MemoryDreamConsolidationResult>;
 
   history(id: string): Promise<readonly MemoryVersion[]>;
 

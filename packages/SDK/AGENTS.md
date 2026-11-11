@@ -97,3 +97,8 @@ Do not claim `... test` works. `build:dts` is also currently broken:
 - Engine services, tools, permission policy, or storage backends.
 - App/UI logic, CLI commands, or TUI components.
 - New transport implementations; transports live in API.
+
+
+## Sandbox surface
+
+The SDK barrel re-exports `@hilbras/omnicode-kaos/sandbox` so host adapters can use backend selection, execution planning, shell policy, and status without importing Kaos internals.

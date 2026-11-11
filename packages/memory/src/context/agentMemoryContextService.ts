@@ -21,7 +21,7 @@ export interface IAgentMemoryContextService {
   lastUserPrompt(): string | undefined;
   sessionId(): string;
   workspaceId(): string;
-  scopeFor(tier: MemoryWriteScopeTier): Promise<MemoryScope | undefined>;
+  scopeFor(tier: MemoryWriteScopeTier, channelId?: string): Promise<MemoryScope | undefined>;
 }
 
 export const IAgentMemoryContextService = createDecorator<IAgentMemoryContextService>(
@@ -83,9 +83,10 @@ export class AgentMemoryContextService extends Service implements IAgentMemoryCo
     return this.session.workspaceId;
   }
 
-  async scopeFor(tier: MemoryWriteScopeTier): Promise<MemoryScope | undefined> {
+  async scopeFor(tier: MemoryWriteScopeTier, channelId?: string): Promise<MemoryScope | undefined> {
     if (tier === 'global') return { tier };
     if (tier === 'workspace') return { tier, workspaceId: this.session.workspaceId };
+    if (tier === 'channel') return channelId === undefined ? undefined : { tier, channelId };
     const projectId = await this.projectId();
     if (projectId === undefined) return undefined;
     if (tier === 'repository') return { tier, workspaceId: this.session.workspaceId, projectId };

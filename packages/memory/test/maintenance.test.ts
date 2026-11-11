@@ -87,6 +87,67 @@ describe('maintenance scheduler', () => {
     scheduler.dispose();
   });
 
+  it('runs dream consolidation without an explicit memory tool call', async () => {
+    const harness = createHarness();
+    await harness.service.capture(
+      captureInput('the cli bundles with tsup', {
+        tier: 'working',
+        subject: 'dream.subject',
+        scope: { tier: 'repository', projectId: REPO_A },
+      }),
+    );
+    await harness.service.capture(
+      captureInput('the cli output goes to dist', {
+        tier: 'working',
+        subject: 'dream.subject',
+        scope: { tier: 'repository', projectId: REPO_A },
+      }),
+    );
+    const timers = new FakeTimers();
+    const scheduler = new MemoryMaintenanceScheduler({
+      memory: harness.service,
+      log: harness.log,
+      enabled: () => true,
+      now: harness.clock.now,
+      timers,
+      reviewDebounceMs: 100_000,
+      retentionSweepMs: 100_000,
+      evidenceSweepMs: 100_000,
+      dreamEnabled: () => true,
+      dreamIntervalMs: 100_000,
+      dreamScope: () => ({ tier: 'repository', projectId: REPO_A }),
+    });
+
+    await scheduler.dreamNow();
+
+    expect(scheduler.lastDream?.consolidated).toBe(1);
+    const entry = harness.log.entriesAt('info').find((item) => item.message === 'memory dream consolidation');
+    expect(entry).toBeDefined();
+    expect(JSON.stringify(entry)).not.toContain('the cli bundles');
+    expect(JSON.stringify(entry)).not.toContain('the cli output');
+    scheduler.dispose();
+  });
+
+  it('skips dream consolidation when disabled', async () => {
+    const harness = createHarness();
+    const timers = new FakeTimers();
+    const scheduler = new MemoryMaintenanceScheduler({
+      memory: harness.service,
+      log: harness.log,
+      enabled: () => true,
+      now: harness.clock.now,
+      timers,
+      reviewDebounceMs: 100_000,
+      retentionSweepMs: 100_000,
+      evidenceSweepMs: 100_000,
+      dreamEnabled: () => false,
+      dreamScope: () => ({ tier: 'repository', projectId: REPO_A }),
+    });
+    expect(await scheduler.dreamNow()).toBeUndefined();
+    expect(scheduler.lastDream).toBeUndefined();
+    scheduler.dispose();
+  });
+
   it('keeps polling and stops once disposed', async () => {
     const harness = createHarness();
     const timers = new FakeTimers();

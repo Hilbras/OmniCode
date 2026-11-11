@@ -21,6 +21,7 @@ export const ALL_SCOPE_PREFIXES: readonly string[] = Object.freeze([
   `${SCOPE_PREFIX}r:`,
   `${SCOPE_PREFIX}s:`,
   `${SCOPE_PREFIX}t:`,
+  `${SCOPE_PREFIX}c:`,
 ]);
 
 function encode(value: string): string {
@@ -39,6 +40,8 @@ export function scopeKeyFor(scope: MemoryScope): string | undefined {
       return scope.sessionId === undefined ? undefined : `s:${encode(scope.sessionId)}`;
     case 'task':
       return scope.taskId === undefined ? undefined : `t:${encode(scope.taskId)}`;
+    case 'channel':
+      return scope.channelId === undefined ? undefined : `c:${encode(scope.channelId)}`;
   }
 }
 

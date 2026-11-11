@@ -21,6 +21,7 @@ import { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileS
 
 import { IMemoryService } from '#/contracts/memoryContract';
 import { MEMORY_FLAG_ENV, MEMORY_FLAG_ID } from '#/feature/flag';
+import { MemoryConfigSchema } from '#/feature/configSection';
 import { MemoryFeature } from '#/feature/memoryFeature';
 import { AppMemoryService } from '#/service/appMemoryService';
 
@@ -100,6 +101,16 @@ describe('feature activation', () => {
 
   it('registers the memory config section', () => {
     expect(getConfigSectionContributions().some((section) => section.domain === 'memory')).toBe(true);
+  });
+
+  it('accepts dream maintenance and bounded relevance settings', () => {
+    const parsed = MemoryConfigSchema.parse({
+      dreamConsolidationEnabled: true,
+      dreamConsolidationIntervalMs: 60_000,
+      dreamConsolidationDryRun: true,
+    });
+    expect(parsed.dreamConsolidationEnabled).toBe(true);
+    expect(MemoryConfigSchema.safeParse({ dreamConsolidationIntervalMs: 1 }).success).toBe(false);
   });
 
 

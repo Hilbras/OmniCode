@@ -1,7 +1,13 @@
 import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type { ILogger } from '@hilbras/omnicode-base/log/log';
 
-import type { IMemoryService, MemoryReviewJob, MemoryReviewReport } from '#/contracts/memoryContract';
+import type {
+  IMemoryService,
+  MemoryDreamConsolidationResult,
+  MemoryReviewJob,
+  MemoryReviewReport,
+} from '#/contracts/memoryContract';
+import type { MemoryScope } from '#/contracts/memoryTypes';
 
 
 export const REVIEW_BATCH = 25;
@@ -10,6 +16,7 @@ export const REVIEW_POLL_MS = 60_000;
 export const RETENTION_SWEEP_MS = 60 * 60_000;
 export const WORKING_GRACE_MS = 24 * 60 * 60_000;
 export const EVIDENCE_SWEEP_MS = 15 * 60_000;
+export const DREAM_CONSOLIDATION_MS = 24 * 60 * 60_000;
 
 export interface MemoryTimers {
   setTimeout(handler: () => void, ms: number): unknown;
@@ -39,6 +46,10 @@ export interface MemoryMaintenanceOptions {
   readonly workingGraceMs?: number;
   readonly evidenceSweepMs?: number;
   readonly evidenceProjectId?: () => string | undefined;
+  readonly dreamEnabled?: () => boolean;
+  readonly dreamIntervalMs?: number;
+  readonly dreamDryRun?: boolean;
+  readonly dreamScope?: () => MemoryScope | undefined;
 }
 
 /**
@@ -58,6 +69,10 @@ export class MemoryMaintenanceScheduler implements IDisposable {
   private readonly workingGraceMs: number;
   private readonly evidenceSweepMs: number;
   private readonly evidenceProjectId: () => string | undefined;
+  private readonly dreamEnabled: () => boolean;
+  private readonly dreamIntervalMs: number;
+  private readonly dreamDryRun: boolean;
+  private readonly dreamScope: () => MemoryScope | undefined;
 
   private debounceHandle: unknown;
   private pollHandle: unknown;
@@ -66,8 +81,11 @@ export class MemoryMaintenanceScheduler implements IDisposable {
   private retentionInFlight: Promise<void> | undefined;
   private evidenceInFlight: Promise<void> | undefined;
   private evidenceHandle: unknown;
+  private dreamHandle: unknown;
+  private dreamInFlight: Promise<MemoryDreamConsolidationResult | undefined> | undefined;
   private disposed = false;
   private lastReport: MemoryReviewReport | undefined;
+  private lastDreamReport: MemoryDreamConsolidationResult | undefined;
 
   constructor(options: MemoryMaintenanceOptions) {
     this.memory = options.memory;
@@ -81,10 +99,18 @@ export class MemoryMaintenanceScheduler implements IDisposable {
     this.workingGraceMs = options.workingGraceMs ?? WORKING_GRACE_MS;
     this.evidenceSweepMs = options.evidenceSweepMs ?? EVIDENCE_SWEEP_MS;
     this.evidenceProjectId = options.evidenceProjectId ?? (() => undefined);
+    this.dreamEnabled = options.dreamEnabled ?? (() => false);
+    this.dreamIntervalMs = options.dreamIntervalMs ?? DREAM_CONSOLIDATION_MS;
+    this.dreamDryRun = options.dreamDryRun ?? false;
+    this.dreamScope = options.dreamScope ?? (() => undefined);
   }
 
   get lastReview(): MemoryReviewReport | undefined {
     return this.lastReport;
+  }
+
+  get lastDream(): MemoryDreamConsolidationResult | undefined {
+    return this.lastDreamReport;
   }
 
   start(): void {
@@ -92,6 +118,9 @@ export class MemoryMaintenanceScheduler implements IDisposable {
     this.pollHandle = this.timers.setTimeout(this.onPoll, this.reviewPollMs);
     this.retentionHandle = this.timers.setTimeout(this.onRetention, this.retentionSweepMs);
     this.evidenceHandle = this.timers.setTimeout(this.onEvidence, this.evidenceSweepMs);
+    if (this.dreamEnabled()) {
+      this.dreamHandle = this.timers.setTimeout(this.onDream, this.dreamIntervalMs);
+    }
   }
 
   private readonly startupDrain = (): void => {
@@ -134,15 +163,21 @@ export class MemoryMaintenanceScheduler implements IDisposable {
     return this.runNow('explicit');
   }
 
+  dreamNow(): Promise<MemoryDreamConsolidationResult | undefined> {
+    return this.runDream('explicit');
+  }
+
   async whenIdle(): Promise<void> {
     while (
       this.inFlight !== undefined ||
       this.retentionInFlight !== undefined ||
-      this.evidenceInFlight !== undefined
+      this.evidenceInFlight !== undefined ||
+      this.dreamInFlight !== undefined
     ) {
       await this.inFlight;
       await this.retentionInFlight;
       await this.evidenceInFlight;
+      await this.dreamInFlight;
     }
   }
 
@@ -153,10 +188,12 @@ export class MemoryMaintenanceScheduler implements IDisposable {
     this.clear(this.pollHandle);
     this.clear(this.retentionHandle);
     this.clear(this.evidenceHandle);
+    this.clear(this.dreamHandle);
     this.debounceHandle = undefined;
     this.pollHandle = undefined;
     this.retentionHandle = undefined;
     this.evidenceHandle = undefined;
+    this.dreamHandle = undefined;
   }
 
   private readonly onEvidence = (): void => {
@@ -183,6 +220,48 @@ export class MemoryMaintenanceScheduler implements IDisposable {
       }
     } catch (error) {
       this.log.warn('memory evidence sweep failed', { error: String(error) });
+    }
+  }
+
+  private readonly onDream = (): void => {
+    if (this.disposed) return;
+    this.dreamHandle = this.timers.setTimeout(this.onDream, this.dreamIntervalMs);
+    void this.runDream('interval');
+  };
+
+  private runDream(reason: string): Promise<MemoryDreamConsolidationResult | undefined> {
+    if (this.disposed || !this.enabled() || !this.dreamEnabled() || this.dreamInFlight !== undefined) {
+      return Promise.resolve(undefined);
+    }
+    const scope = this.dreamScope();
+    if (scope === undefined) return Promise.resolve(undefined);
+    const run = this.dream(scope, reason);
+    this.dreamInFlight = run.finally(() => {
+      this.dreamInFlight = undefined;
+    });
+    return this.dreamInFlight;
+  }
+
+  private async dream(scope: MemoryScope, reason: string): Promise<MemoryDreamConsolidationResult | undefined> {
+    try {
+      const report = await this.memory.dreamConsolidate({ scope, dryRun: this.dreamDryRun });
+      this.lastDreamReport = report;
+      if (report.status === 'completed' && report.groups > 0) {
+        this.log.info('memory dream consolidation', {
+          reason,
+          scope: report.scope.tier,
+          scanned: report.scanned,
+          groups: report.groups,
+          consolidated: report.consolidated,
+          superseded: report.superseded,
+          skipped: report.skipped,
+          dryRun: this.dreamDryRun,
+        });
+      }
+      return report;
+    } catch (error) {
+      this.log.warn('memory dream consolidation failed', { reason, error: String(error) });
+      return undefined;
     }
   }
 

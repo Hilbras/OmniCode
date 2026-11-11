@@ -42,6 +42,12 @@ export function resolveMemorySettings(
     reviewMaxAttempts: section?.reviewMaxAttempts ?? DEFAULT_MEMORY_SETTINGS.reviewMaxAttempts,
     reviewBackoffMs: section?.reviewBackoffMs ?? DEFAULT_MEMORY_SETTINGS.reviewBackoffMs,
     maxQueuedReviews: section?.maxQueuedReviews ?? DEFAULT_MEMORY_SETTINGS.maxQueuedReviews,
+    dreamConsolidationEnabled:
+      section?.dreamConsolidationEnabled ?? DEFAULT_MEMORY_SETTINGS.dreamConsolidationEnabled,
+    dreamConsolidationIntervalMs:
+      section?.dreamConsolidationIntervalMs ?? DEFAULT_MEMORY_SETTINGS.dreamConsolidationIntervalMs,
+    dreamConsolidationDryRun:
+      section?.dreamConsolidationDryRun ?? DEFAULT_MEMORY_SETTINGS.dreamConsolidationDryRun,
   };
 }
 

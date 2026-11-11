@@ -29,6 +29,11 @@ implementations (`packages/Tools`).
   own transports or session overlays.
 - `media/`, `task/`, `undo/`, `blob/`, `usage/`, `tokenCounting/`, and
   `replayBuilder/` own their named agent concerns.
+- `team/` owns the in-memory team lifecycle and shared task list, arena model
+  comparison, workflow budget ledger, forked-context cache, and background-task
+  notification queue. `team/teamTools.ts` registers the `Team` tool and
+  `team/arenaTool.ts` registers the `Arena` tool; both are admitted through
+  profiles and permission rules.
 
 ## Registration, events, and session rules
 
@@ -75,8 +80,8 @@ Never hand-edit `packages/engine/docs/wire-manifest.d.ts`,
 Tests mirror source under `packages/engine/test/agent/` — `loop/`,
 `toolExecutor/`, `toolRegistry/`, `permissionPolicy/`, `permissionMode/`,
 `contextMemory/`, `fullCompaction/`, `contextProjector/`, `mcp/`, `media/`,
-`task/`, `undo/`, and the other sibling directories. Stubs and shared harness
-live in `test/agent/*/stubs.ts`, `test/harness/`, and `test/stubs.ts`.
+`task/`, `team/`, `undo/`, and the other sibling directories. Stubs and shared
+harness live in `test/agent/*/stubs.ts`, `test/harness/`, and `test/stubs.ts`.
 
 ```bash
 pnpm --filter @hilbras/omnicode-engine typecheck

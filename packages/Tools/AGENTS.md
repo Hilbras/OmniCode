@@ -5,8 +5,12 @@
 `@hilbras/omnicode-tools` ships the built-in tools the model can call:
 filesystem (`Read`, `Write`, `Edit`, `Glob`, `Grep`), shell (`Bash`), document
 extraction, `WebSearch`, `FetchURL`, `AskUserQuestion`, `SelectTools`,
-`RestoreFile`, and feature tools for plan, goal, cron, swarm, todo, notify, and
-skill.
+`RestoreFile`, feature tools for plan, goal, cron, swarm, todo, notify, and
+skill, plus code intelligence (`Lsp`), git worktrees (`WorktreeList`,
+`WorktreeCreate`, `WorktreeRemove`), notebooks (`NotebookEdit`), shared task
+boards (`TaskBoardCreate`, `TaskBoardUpdate`, `TaskBoardList`), teams
+(`TeamCreate`, `TeamJoin`, `TeamLeave`, `TeamList`), and session records
+(`ArtifactRecord`, `SourceRecord`).
 
 Not here: the tool contract and registry (`packages/engine/src/tool` and
 `agent/toolRegistry/`), permission policy, profile allowlists, MCP transports,
@@ -24,6 +28,21 @@ or UI. Tools are implementations; the engine owns admission and execution.
 - `src/features/<feature>/tools/` owns feature-specific tools such as plan,
   goal, cron, swarm, todo, notify, and skill. The feature service itself stays
   in `packages/engine/src/features/`.
+- `src/code-intelligence/lsp/` owns the deterministic LSP fallback. It never
+  spawns a language server; symbols, references, diagnostics, and hover are
+  computed from file text and bounded.
+- `src/git-worktree/` owns worktree list/create/remove. It uses the host process
+  seam with argument arrays, never a shell, never `--force`, and rejects
+  creation outside the repository.
+- `src/notebook/` owns `.ipynb` parsing and cell edits with JSON schema
+  validation and atomic writes.
+- `src/tasks/` owns the session task board store and tools. `TaskBoardList` is
+  distinct from the engine background-task `TaskList`; do not merge them.
+- `src/teams/` owns team lifecycle tools backed by the engine session-scoped `ITeamService`; they share state with the engine `Team` tool. The task-board team records remain a store compatibility layer, not the tool backend.
+- `src/records/` owns bounded artifact/source recording under `sessionDir`;
+  user paths are never used as record output paths.
+- `src/diagnostics/` owns pure tool-result retention, truncation, and
+  context-budget diagnostics.
 - Each tool normally has a pure contract/schema file (`<tool>.ts`), a tool class
   (`<tool>Tool.ts`), and a prompt template (`<tool>.md`) imported as raw text.
 
@@ -71,20 +90,24 @@ wired into an engine-owned section. There are no wire/state manifests here.
 
 ## Tests
 
-Only `packages/Tools/test/extract.test.ts` exists today. It covers document
-format detection and RTF extraction; there are no per-tool tests for Bash, Edit,
-Read, Grep, Glob, Write, WebSearch, FetchURL, or the feature tools. The package
-Vitest config uses `passWithNoTests`, so a missing or unmatched test file does
-not fail the run.
+`packages/Tools/test/extract.test.ts` covers document format detection and RTF
+extraction. The expansion tools have per-area tests under `test/tasks/`,
+`test/teams/`, `test/code-intelligence/`, `test/git-worktree/`,
+`test/notebook/`, `test/records/`, and `test/diagnostics/`. There are still no
+per-tool tests for Bash, Edit, Read, Grep, Glob, Write, WebSearch, FetchURL, or
+the feature tools. The package Vitest config uses `passWithNoTests`, so a
+missing or unmatched test file does not fail the run.
 
 ```bash
 pnpm --filter @hilbras/omnicode-tools typecheck
 pnpm --filter @hilbras/omnicode-tools test
-pnpm --filter @hilbras/omnicode-tools exec vitest run test/extract.test.ts
+pnpm --filter @hilbras/omnicode-tools exec vitest run test/notebook/notebook.test.ts
 ```
 
 When adding a test, mirror `src/` under `test/` and drive the real tool class
-through `resolveExecution`, not only the schema.
+through `resolveExecution`, not only the schema. `test/helpers/testRuntime.ts`
+provides a fake agent runtime, host workspace/session contexts, and a fake git
+process for worktree tool tests.
 
 ## Local traps and where new logic belongs
 
@@ -105,3 +128,8 @@ through `resolveExecution`, not only the schema.
 
 Do not add engine services, permission policy, profile definitions, MCP
 transports, agent loop logic, UI code, or tests that only read source text.
+
+
+## Bash sandbox
+
+`src/os/bash/sandbox.ts` selects a Kaos sandbox backend for Bash. `OMNICODE_SANDBOX_MODE=off|auto|required` controls it; default is `off`. `auto` falls back to direct execution with an explicit reason, while `required` fails closed. `OMNICODE_SANDBOX_NETWORK=shared` keeps the network namespace shared; default is denied. Permission mode still gates execution first.

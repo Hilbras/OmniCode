@@ -1,0 +1,108 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  guards:
+    name: Guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run guards
+        run: pnpm check:guards
+
+  typecheck-and-test:
+    name: Typecheck and targeted tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck engine
+        run: pnpm --filter @hilbras/omnicode-engine typecheck
+
+      - name: Typecheck memory
+        run: pnpm --filter @hilbras/omnicode-memory typecheck
+
+      - name: Typecheck channels
+        run: pnpm --filter @hilbras/omnicode-channels typecheck
+
+      - name: Typecheck tools
+        run: pnpm --filter @hilbras/omnicode-tools typecheck
+
+      - name: Typecheck Kaos
+        run: pnpm --filter @hilbras/omnicode-kaos typecheck
+
+      - name: Typecheck API
+        run: pnpm --filter @hilbras/omnicode-api typecheck
+
+      - name: Typecheck CLI
+        run: pnpm --filter @omnicode/cli typecheck
+
+      - name: Test permission policy
+        run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/agent/permissionPolicy
+
+      - name: Test memory lifecycle
+        run: pnpm --filter @hilbras/omnicode-memory exec vitest run test/evaluation.test.ts test/dreamConsolidation.test.ts test/relevanceSelector.test.ts test/maintenance.test.ts test/injection.test.ts
+
+      - name: Test Bash sandbox
+        run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/os/backends/node-local/tools/bash.test.ts
+
+      - name: Test channels
+        run: pnpm --filter @hilbras/omnicode-channels test
+
+      - name: Test API connectivity
+        run: pnpm --filter @hilbras/omnicode-api exec vitest run test/workstream-connectivity.test.ts
+
+      - name: Test tools
+        run: pnpm --filter @hilbras/omnicode-tools test
+
+      - name: Test engine teams
+        run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/agent/team
+
+      - name: Test Kaos sandbox
+        run: pnpm --filter @hilbras/omnicode-kaos exec vitest run test/sandbox
+
