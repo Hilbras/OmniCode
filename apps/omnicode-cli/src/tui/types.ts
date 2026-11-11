@@ -94,6 +94,8 @@ export interface AppState {
   availableModels: Record<string, ModelAlias>;
   availableProviders: Record<string, ProviderConfig>;
   sessionTitle: string | null;
+  /** Telegram connector badge shown in the footer; null when unconfigured. */
+  telegram?: { readonly connected: boolean; readonly label: string; readonly state: string } | null;
   /** Current goal snapshot for the footer badge; null/undefined when no active goal. */
   goal?: GoalSnapshot | null;
   mcpServersSummary: string | null;

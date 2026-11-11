@@ -1,0 +1,259 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { createOmnicodeI18n } from '@hilbras/app-i18n';
+import type { Translator } from '@hilbras/app-core/contracts';
+import { STORAGE_KEYS, safeGetString } from '@hilbras/app-core/lib';
+import {
+  approvalNotificationCopy,
+  completionNotificationCopy,
+  questionNotificationCopy,
+  shouldNotifyCompletion,
+} from '../src/composables/useNotification';
+import { notificationsStore } from '../src/stores/notifications';
+import { resetOmnicodeClientDeps, setOmnicodeClientDeps } from '../src/client/deps';
+import type { OmnicodeWebApi } from '@hilbras/app-core/api';
+
+// Real i18n (the tests assert on localized output); the copy builders take the
+// translator by injection.
+const i18n = createOmnicodeI18n({ locale: 'en' });
+const t: Translator = (key, params) => (params === undefined ? i18n.global.t(key) : i18n.global.t(key, params));
+
+function createMemoryStorage(): Storage {
+  const data = new Map<string, string>();
+  return {
+    get length() {
+      return data.size;
+    },
+    clear() {
+      data.clear();
+    },
+    getItem(key: string) {
+      return data.get(key) ?? null;
+    },
+    key(index: number) {
+      return Array.from(data.keys()).at(index) ?? null;
+    },
+    removeItem(key: string) {
+      data.delete(key);
+    },
+    setItem(key: string, value: string) {
+      data.set(key, value);
+    },
+  };
+}
+
+function installStorage(storage: Storage): void {
+  Object.defineProperty(globalThis, 'localStorage', {
+    configurable: true,
+    value: storage,
+  });
+}
+
+// Store-backed preferences. The OS Notification API is absent in the test env,
+// so the *enable* path is a no-op; the disable path and the load-from-storage
+// defaults are what we exercise here.
+const store = notificationsStore();
+const importedEnabledDefault = store.notifyEnabled;
+const importedSoundDefault = store.notifySound;
+
+describe('useNotification preferences', () => {
+  beforeEach(() => {
+    installStorage(createMemoryStorage());
+  });
+
+  afterEach(() => {
+    installStorage(createMemoryStorage());
+  });
+
+  it('notifications default to on', () => {
+    expect(importedEnabledDefault).toBe(true);
+  });
+
+  it('the notification sound defaults to on', () => {
+    expect(importedSoundDefault).toBe(true);
+  });
+
+  it('disabling notifications persists "0" and updates the state', () => {
+    void store.setNotifyEnabled(false);
+    expect(store.notifyEnabled).toBe(false);
+    expect(safeGetString(STORAGE_KEYS.notifyEnabled)).toBe('0');
+  });
+
+  it('disabling the notification sound persists "0" and updates the state', () => {
+    store.setNotifySound(false);
+    expect(store.notifySound).toBe(false);
+    expect(safeGetString(STORAGE_KEYS.notifySound)).toBe('0');
+  });
+});
+
+describe('notification copy', () => {
+  beforeEach(() => {
+    i18n.global.locale.value = 'en';
+  });
+
+  it('uses an event title and session-title body for completion notifications', () => {
+    expect(completionNotificationCopy(t, 'Refactor auth flow')).toEqual({
+      title: 'Omnicode · Turn finished',
+      body: 'Refactor auth flow',
+    });
+  });
+
+  it('falls back to a result hint when there is no session title', () => {
+    expect(completionNotificationCopy(t, '  ')).toEqual({
+      title: 'Omnicode · Turn finished',
+      body: 'View result',
+    });
+  });
+
+  it('prefers the question preview in question notifications', () => {
+    expect(questionNotificationCopy(t, 'Storage migration', 'Which database?')).toEqual({
+      title: 'Omnicode · Needs answer',
+      body: 'Which database?',
+    });
+  });
+
+  it('falls back to the session title before the generic question line', () => {
+    expect(questionNotificationCopy(t, 'Storage migration', ' ')).toEqual({
+      title: 'Omnicode · Needs answer',
+      body: 'Storage migration',
+    });
+  });
+
+  it('uses tool name in approval notifications', () => {
+    expect(approvalNotificationCopy(t, 'Refactor auth flow', 'bash')).toEqual({
+      title: 'Omnicode · Approval required',
+      body: 'bash',
+    });
+  });
+
+  it('falls back to session title and then generic approval line', () => {
+    expect(approvalNotificationCopy(t, 'Refactor auth flow', ' ')).toEqual({
+      title: 'Omnicode · Approval required',
+      body: 'Refactor auth flow',
+    });
+    expect(approvalNotificationCopy(t, '  ', '  ')).toEqual({
+      title: 'Omnicode · Approval required',
+      body: 'A tool needs your approval',
+    });
+  });
+
+  it('localizes approval notification copy', () => {
+    i18n.global.locale.value = 'zh';
+    expect(approvalNotificationCopy(t, '', '')).toEqual({
+      title: 'Omnicode · 等待审批',
+      body: '有工具等待你审批',
+    });
+  });
+
+  it('localizes the notification copy', () => {
+    i18n.global.locale.value = 'zh';
+
+    expect(completionNotificationCopy(t, '')).toEqual({
+      title: 'Omnicode · 回合完成',
+      body: '点击查看结果',
+    });
+    expect(questionNotificationCopy(t, '', '')).toEqual({
+      title: 'Omnicode · 待回答',
+      body: '有提问等待你回答',
+    });
+  });
+});
+
+describe('shouldNotifyCompletion', () => {
+  it('returns true only for idle + no pending approval + no pending question', () => {
+    expect(shouldNotifyCompletion('idle', false, false)).toBe(true);
+  });
+
+  it('returns false for aborted', () => {
+    expect(shouldNotifyCompletion('aborted', false, false)).toBe(false);
+  });
+
+  it('returns false when pending approval exists', () => {
+    expect(shouldNotifyCompletion('idle', true, false)).toBe(false);
+  });
+
+  it('returns false when pending question exists', () => {
+    expect(shouldNotifyCompletion('idle', false, true)).toBe(false);
+  });
+});
+
+// Same-tag notifications replace silently (renotify is unreliable), so the tag
+// must be unique per turn/request for follow-up alerts in a session to pop.
+describe('notification tags', () => {
+  class FakeNotification {
+    static permission = 'granted';
+    static fired: Array<{ title: string; tag?: string; silent?: boolean }> = [];
+    onclick: (() => void) | null = null;
+    constructor(title: string, options?: { body?: string; tag?: string; icon?: string; silent?: boolean }) {
+      FakeNotification.fired.push({ title, tag: options?.tag, silent: options?.silent });
+    }
+    close(): void {}
+  }
+
+  const { maybeNotifyCompletion, maybeNotifyQuestion, maybeNotifyApproval } = store;
+  const base = { isUserWatching: false, sessionTitle: 'T', onClick: () => {} };
+
+  beforeEach(() => {
+    FakeNotification.fired = [];
+    (globalThis as Record<string, unknown>).Notification = FakeNotification;
+    // The store's copy builders translate through the deps registry.
+    setOmnicodeClientDeps({ api: () => ({}) as unknown as OmnicodeWebApi, t });
+    store.notifyEnabled = true;
+    store.notifySound = true;
+  });
+
+  afterEach(() => {
+    delete (globalThis as Record<string, unknown>).Notification;
+    resetOmnicodeClientDeps();
+    store.notifyEnabled = true;
+    store.notifySound = true;
+  });
+
+  it('completion tags carry the prompt id so each turn in a session alerts', () => {
+    maybeNotifyCompletion('s1', { ...base, promptId: 'p1' });
+    maybeNotifyCompletion('s1', { ...base, promptId: 'p2' });
+    expect(FakeNotification.fired.map((f) => f.tag)).toEqual([
+      'omnicode-complete-s1-p1',
+      'omnicode-complete-s1-p2',
+    ]);
+  });
+
+  it('a replayed idle event for the same turn keeps the same tag', () => {
+    maybeNotifyCompletion('s1', { ...base, promptId: 'p1' });
+    maybeNotifyCompletion('s1', { ...base, promptId: 'p1' });
+    expect(FakeNotification.fired).toHaveLength(2);
+    expect(FakeNotification.fired[0]?.tag).toBe(FakeNotification.fired[1]?.tag);
+  });
+
+  it('question and approval tags are per-request', () => {
+    maybeNotifyQuestion({ ...base, questionPreview: 'q', questionId: 'q1' });
+    maybeNotifyApproval({ ...base, toolName: 'bash', approvalId: 'a1' });
+    expect(FakeNotification.fired.map((f) => f.tag)).toEqual([
+      'omnicode-question-q1',
+      'omnicode-approval-a1',
+    ]);
+  });
+
+  it('suppresses the notification while the user is watching the session', () => {
+    maybeNotifyCompletion('s1', { ...base, isUserWatching: true, promptId: 'p1' });
+    expect(FakeNotification.fired).toHaveLength(0);
+  });
+
+  it('fires nothing while the master toggle is off', () => {
+    store.notifyEnabled = false;
+    maybeNotifyCompletion('s1', { ...base, promptId: 'p1' });
+    maybeNotifyQuestion({ ...base, questionPreview: 'q', questionId: 'q1' });
+    maybeNotifyApproval({ ...base, toolName: 'bash', approvalId: 'a1' });
+    expect(FakeNotification.fired).toHaveLength(0);
+  });
+
+  it('fires silent notifications while the sound toggle is off', () => {
+    store.notifySound = false;
+    maybeNotifyCompletion('s1', { ...base, promptId: 'p1' });
+    expect(FakeNotification.fired[0]?.silent).toBe(true);
+  });
+
+  it('lets the system play the sound while the sound toggle is on', () => {
+    maybeNotifyCompletion('s1', { ...base, promptId: 'p1' });
+    expect(FakeNotification.fired[0]?.silent).toBe(false);
+  });
+});

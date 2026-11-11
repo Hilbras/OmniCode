@@ -7,6 +7,7 @@ import type {
   MemoryControlStatus,
   MemoryControlMutation,
   MemoryExportView,
+  MemoryHistoryView,
   MemoryListView,
   MemoryView,
 } from '@hilbras/omnicode-api';
@@ -35,7 +36,7 @@ type ParsedMemoryCommand =
       readonly scope?: MemoryControlScope;
       readonly status?: MemoryControlStatus;
     }
-  | { readonly action: 'show' | 'confirm'; readonly id: string }
+  | { readonly action: 'show' | 'confirm' | 'history'; readonly id: string }
   | { readonly action: 'forget'; readonly id: string; readonly reason?: string }
   | { readonly action: 'export'; readonly path?: string };
 
@@ -64,7 +65,7 @@ export function parseMemoryCommand(rawArgs: string): ParsedMemoryCommand | { rea
   if (head === 'export') {
     return { action: 'export', path: rest.join(' ') || undefined };
   }
-  if (head === 'show' || head === 'confirm' || head === 'forget') {
+  if (head === 'show' || head === 'confirm' || head === 'history' || head === 'forget') {
     const id = rest[0];
     if (id === undefined) {
       return { error: `Usage: /memory ${head} <id>` };
@@ -75,7 +76,7 @@ export function parseMemoryCommand(rawArgs: string): ParsedMemoryCommand | { rea
     return { action: head, id };
   }
   return {
-    error: `Unknown subcommand "${head}". Usage: /memory [list [scope] [status] | show <id> | confirm <id> | forget <id> [reason] | export [path]]`,
+    error: `Unknown subcommand "${head}". Usage: /memory [list [scope] [status] | show <id> | history <id> | confirm <id> | forget <id> [reason] | export [path]]`,
   };
 }
 
@@ -96,6 +97,9 @@ export async function handleMemoryCommand(host: SlashCommandHost, args: string):
         return;
       case 'show':
         renderShow(host, await session.getMemory(parsed.id));
+        return;
+      case 'history':
+        renderHistory(host, await session.historyMemory(parsed.id));
         return;
       case 'confirm':
         renderMutation(host, 'confirmed', await session.confirmMemory(parsed.id));
@@ -182,6 +186,30 @@ function renderShow(host: SlashCommandHost, view: { enabled: boolean; memory?: M
   if (memory.stale) lines.push('stale: a cited file changed since capture');
   if (memory.suspicious) lines.push(`flagged: ${memory.suspicionReasons.join(', ')}`);
   host.showNotice('Memory', lines.join('\n'));
+}
+
+function renderHistory(host: SlashCommandHost, view: MemoryHistoryView): void {
+  if (!view.enabled) {
+    host.showError(MEMORY_DISABLED_MESSAGE);
+    return;
+  }
+  if (view.memory === undefined) {
+    host.showError(MEMORY_NOT_FOUND_MESSAGE);
+    return;
+  }
+  if (view.versions.length === 0) {
+    host.showNotice('Memory history', `No previous versions for ${view.memory.id}.`);
+    return;
+  }
+  const lines = [`id: ${view.memory.id}`, ''];
+  for (const version of view.versions) {
+    lines.push(
+      `r${String(version.revision)}  ${new Date(version.at).toISOString()}  ${version.reason}`,
+      `  ${version.memory.content}`,
+      '',
+    );
+  }
+  host.showNotice('Memory history', lines.join('\n').trimEnd());
 }
 
 function renderMutation(

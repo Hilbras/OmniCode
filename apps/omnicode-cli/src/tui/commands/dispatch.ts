@@ -11,6 +11,7 @@ import type {
   SkillsBrowserController,
   SubagentsBrowserController,
 } from '../controllers/catalog-browser';
+import type { ConnectorsController } from '../controllers/connectors';
 import type { McpManagerController } from '../controllers/mcp-manager';
 import type { UpdateRecommenderController } from '../controllers/update-recommender';
 import type { StreamingUIController } from '../controllers/streaming-ui';
@@ -226,6 +227,7 @@ export interface SlashCommandHost {
   readonly tasksBrowserController: TasksBrowserController;
   readonly skillsBrowserController: SkillsBrowserController;
   readonly subagentsBrowserController: SubagentsBrowserController;
+  readonly connectorsController: ConnectorsController;
   readonly mcpManagerController: McpManagerController;
   readonly updateRecommenderController: UpdateRecommenderController;
   readonly authFlow: AuthFlowController;
@@ -499,6 +501,11 @@ async function handleBuiltInSlashCommand(
       return;
     case 'subagents':
       void host.subagentsBrowserController.show();
+      return;
+    case 'connectors':
+      void host.connectorsController.show().catch((error: unknown) => {
+        host.showError(formatErrorMessage(error));
+      });
       return;
     case 'mcp':
       void host.mcpManagerController.show();

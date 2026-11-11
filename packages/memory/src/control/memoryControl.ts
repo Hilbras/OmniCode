@@ -10,6 +10,8 @@ import type {
   MemoryOrigin,
   MemoryRecord,
   MemoryScope,
+  MemoryRetention,
+  MemorySensitivity,
   MemorySourceType,
   MemoryTier,
   MemoryTrust,
@@ -46,6 +48,9 @@ export interface MemoryView {
   readonly category: MemoryCategory;
   readonly tier: MemoryTier;
   readonly trust: MemoryTrust;
+  readonly sensitivity: MemorySensitivity;
+  readonly retention: MemoryRetention;
+  readonly legalHold: boolean;
   readonly trustReason: string;
   readonly origin: MemoryOrigin;
   readonly sourceType: MemorySourceType;
@@ -81,6 +86,19 @@ export interface MemoryListView {
 export interface MemoryGetView {
   readonly enabled: boolean;
   readonly memory?: MemoryView;
+}
+
+export interface MemoryHistoryEntryView {
+  readonly revision: number;
+  readonly at: number;
+  readonly reason: string;
+  readonly memory: MemoryView;
+}
+
+export interface MemoryHistoryView {
+  readonly enabled: boolean;
+  readonly memory?: MemoryView;
+  readonly versions: readonly MemoryHistoryEntryView[];
 }
 
 export type MemoryControlMutationStatus =
@@ -123,6 +141,9 @@ export function toMemoryView(record: MemoryRecord): MemoryView {
     category: record.category,
     tier: record.tier,
     trust: record.trust,
+    sensitivity: record.sensitivity,
+    retention: record.retention,
+    legalHold: record.legalHold,
     trustReason: record.trustReason,
     origin: record.origin,
     sourceType: record.sourceType,
@@ -181,6 +202,27 @@ export async function getVisibleMemory(
   if (!service.enabled) return { enabled: false };
   const record = await readVisible(service, viewer, id);
   return { enabled: true, memory: record === undefined ? undefined : toMemoryView(record) };
+}
+
+export async function historyVisibleMemory(
+  service: IMemoryService,
+  viewer: MemoryViewer,
+  id: string,
+): Promise<MemoryHistoryView> {
+  const current = await getVisibleMemory(service, viewer, id);
+  if (!current.enabled) return { enabled: false, versions: [] };
+  if (current.memory === undefined) return { enabled: true, versions: [] };
+  const versions = await service.history(id);
+  return {
+    enabled: true,
+    memory: current.memory,
+    versions: versions.map((version) => ({
+      revision: version.revision,
+      at: version.at,
+      reason: version.reason,
+      memory: toMemoryView(version.record),
+    })),
+  };
 }
 
 export async function confirmMemory(

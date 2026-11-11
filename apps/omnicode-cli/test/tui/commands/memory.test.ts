@@ -16,6 +16,9 @@ function memoryView(overrides: Partial<MemoryView> = {}): MemoryView {
     category: 'observation',
     tier: 'working',
     trust: 'unverified',
+    sensitivity: 'internal',
+    retention: 'persistent',
+    legalHold: false,
     trustReason: 'model observation',
     origin: 'model',
     sourceType: 'agent_observation',
@@ -73,6 +76,7 @@ describe('parseMemoryCommand', () => {
   it('parses the mutation subcommands', () => {
     expect(parseMemoryCommand('show mem_1')).toEqual({ action: 'show', id: 'mem_1' });
     expect(parseMemoryCommand('confirm mem_1')).toEqual({ action: 'confirm', id: 'mem_1' });
+    expect(parseMemoryCommand('history mem_1')).toEqual({ action: 'history', id: 'mem_1' });
     expect(parseMemoryCommand('forget mem_1 stale fact')).toEqual({
       action: 'forget',
       id: 'mem_1',

@@ -1,7 +1,7 @@
 import { MemoryError, MemoryErrors } from '#/contracts/errors';
 import type { MemorySearchQuery, RetrievalResult } from '#/contracts/memoryContract';
-import type { MemoryRecord } from '#/contracts/memoryTypes';
-import { MEMORY_SCOPE_TIERS, parseMemoryRecord, TRUST_RANK } from '#/contracts/memoryTypes';
+import type { MemoryRecord, MemorySensitivity } from '#/contracts/memoryTypes';
+import { MEMORY_SCOPE_TIERS, parseMemoryRecord, SENSITIVITY_RANK, TRUST_RANK } from '#/contracts/memoryTypes';
 import {
   type BudgetConstraint,
   RETRIEVAL_NOTICE_INCOMPLETE,
@@ -12,7 +12,13 @@ import {
   type RetrievalStatus,
 } from '#/contracts/retrieval';
 
-import { pointerIds, recordKey, scopePrefix } from '#/storage/memoryKeys';
+import {
+  pointerIds,
+  recordKey,
+  relationPrefixFor,
+  reverseRelationPrefixFor,
+  scopePrefix,
+} from '#/storage/memoryKeys';
 import type { MemoryStorePort } from '#/storage/memoryStore';
 
 import { applyBudget, CONTEXT_HEADER, resolveBudget } from './budget';
@@ -114,6 +120,11 @@ export class MemoryRetriever {
           trust: entry.record.trust,
           scope: entry.record.scope.tier,
           accessCount: entry.record.accessCount,
+          importance: entry.record.importance,
+          confidence: entry.record.confidence,
+          updatedAt: entry.record.updatedAt,
+          now: Date.now(),
+          retention: entry.record.retention,
         });
         return { record: entry.record, explanation: this.explain(entry, components) };
       });
@@ -124,9 +135,13 @@ export class MemoryRetriever {
         return a.record.id.localeCompare(b.record.id);
       });
 
+      const expanded = await this.expandRelations(ranked, prefixes, query, significantGroups, diagnostics);
+      const deduped = this.dedupeResults(expanded, diagnostics);
+      const rankedForBudget = this.suppressSuperseded(deduped, diagnostics);
+
       const applied = applyBudget({
         budget: resolved.budget,
-        ranked,
+        ranked: rankedForBudget,
         constraints,
         lexicalTruncated: diagnostics.lexicalTruncated,
         scopeCandidatesTruncated: constraints.includes('scope_candidates'),
@@ -157,6 +172,124 @@ export class MemoryRetriever {
         unavailable ? 'unavailable' : 'failed',
       );
     }
+  }
+
+  private async expandRelations(
+    ranked: readonly RetrievedMemory[],
+    prefixes: readonly string[],
+    query: MemorySearchQuery,
+    groups: readonly QueryGroup[],
+    diagnostics: MutableDiagnostics,
+  ): Promise<RetrievedMemory[]> {
+    if (query.expandRelations === false) return [...ranked];
+    const depth = Math.min(Math.max(query.maxRelationDepth ?? 1, 1), 2);
+    if (depth < 1) return [...ranked];
+    const seeds = ranked.slice(0, 10);
+    const present = new Set(ranked.map((memory) => memory.record.id));
+    const edges: { targetId: string; kind: string }[] = [];
+    const seenEdges = new Set<string>();
+    const addEdge = (targetId: string, kind: string): void => {
+      const key = `${kind}:${targetId}`;
+      if (seenEdges.has(key) || edges.length >= 32) return;
+      seenEdges.add(key);
+      edges.push({ targetId, kind });
+    };
+    for (const memory of seeds) {
+      const record = memory.record;
+      for (const relation of record.relations) addEdge(relation.targetId, relation.kind);
+      const reverse = await this.options.store.prefixKeys(reverseRelationPrefixFor(record.id), 32);
+      for (const key of reverse) {
+        const parts = key.split(':');
+        const sourceId = parts[3];
+        const kind = parts[2];
+        if (sourceId !== undefined && kind !== undefined) addEdge(sourceId, kind);
+      }
+    }
+    if (edges.length === 0) return [...ranked];
+    const loaded = await this.loadRecords(
+      edges.map((edge) => recordKey(edge.targetId)),
+      diagnostics,
+    );
+    const expanded: RetrievedMemory[] = [];
+    for (const edge of edges) {
+      if (present.has(edge.targetId)) continue;
+      const record = loaded.get(recordKey(edge.targetId));
+      if (record === undefined) continue;
+      const gates = this.evaluateGates(record, prefixes, query, groups, false);
+      if (gates.some((gate) => !gate.allowed)) continue;
+      const lexical =
+        edge.kind === 'supports' || edge.kind === 'refines' || edge.kind === 'caused'
+          ? 0.5
+          : edge.kind === 'related'
+            ? 0.3
+            : 0.15;
+      const components = composeScore({
+        lexical,
+        trust: record.trust,
+        scope: record.scope.tier,
+        accessCount: record.accessCount,
+        importance: record.importance,
+        confidence: record.confidence,
+        updatedAt: record.updatedAt,
+        now: Date.now(),
+        retention: record.retention,
+      });
+      present.add(record.id);
+      expanded.push({
+        record,
+        explanation: {
+          ...this.explain({ record, gates: [...gates, { gate: 'relation', allowed: true, detail: `${edge.kind} ${edge.targetId}` }] }, components),
+        },
+      });
+    }
+    expanded.sort((a, b) => {
+      if (b.explanation.score !== a.explanation.score) return b.explanation.score - a.explanation.score;
+      return a.record.id.localeCompare(b.record.id);
+    });
+    diagnostics.relationExpanded = expanded.length;
+    return [...ranked, ...expanded];
+  }
+
+  private dedupeResults(
+    ranked: readonly RetrievedMemory[],
+    diagnostics: MutableDiagnostics,
+  ): RetrievedMemory[] {
+    const seen = new Set<string>();
+    const out: RetrievedMemory[] = [];
+    for (const memory of ranked) {
+      const record = memory.record;
+      const scope = scopePrefix(record.scope) ?? record.scope.tier;
+      const text = (record.searchText ?? searchTextFor(record.content)).trim().toLowerCase();
+      const key = `${scope}|${record.category}|${text}`;
+      if (seen.has(key)) {
+        diagnostics.duplicatesRemoved = (diagnostics.duplicatesRemoved ?? 0) + 1;
+        continue;
+      }
+      seen.add(key);
+      out.push(memory);
+    }
+    return out;
+  }
+
+  private suppressSuperseded(
+    ranked: readonly RetrievedMemory[],
+    diagnostics: MutableDiagnostics,
+  ): RetrievedMemory[] {
+    const present = new Set(ranked.map((memory) => memory.record.id));
+    const out: RetrievedMemory[] = [];
+    for (const memory of ranked) {
+      const record = memory.record;
+      if (
+        record.lifecycle === 'superseded' &&
+        record.supersededBy !== undefined &&
+        present.has(record.supersededBy)
+      ) {
+        diagnostics.supersededSuppressed = (diagnostics.supersededSuppressed ?? 0) + 1;
+        continue;
+      }
+      out.push(memory);
+    }
+    return out;
   }
 
   private explain(
@@ -298,6 +431,7 @@ export class MemoryRetriever {
     prefixes: readonly string[],
     query: MemorySearchQuery,
     groups: readonly QueryGroup[],
+    requireRelevance = true,
   ): readonly RetrievalGateDecision[] {
     const prefix = scopePrefix(record.scope);
     const scopeAllowed = prefix !== undefined && prefixes.includes(prefix);
@@ -315,7 +449,11 @@ export class MemoryRetriever {
         detail: scopeAllowed ? `scope ${record.scope.tier} is eligible` : `scope ${record.scope.tier} is outside the request`,
       },
       { gate: 'tier', allowed: tiers === undefined || tiers.includes(record.tier), detail: `tier ${record.tier}` },
-      { gate: 'lifecycle', allowed: record.lifecycle === 'active', detail: `lifecycle ${record.lifecycle}` },
+      {
+        gate: 'lifecycle',
+        allowed: record.lifecycle === 'active' || record.lifecycle === 'superseded',
+        detail: `lifecycle ${record.lifecycle}`,
+      },
       { gate: 'expiry', allowed: !expired, detail: expired ? 'retention window elapsed' : 'within retention' },
       {
         gate: 'trust',
@@ -334,7 +472,15 @@ export class MemoryRetriever {
           ? `suspicious content: ${record.suspicionReasons.join(', ')}${approvedCanonical ? ' (explicitly approved)' : ''}`
           : 'no injection signals',
       },
-      ...(groups.length === 0 ? [] : [this.relevanceGate(record, groups)]),
+      { gate: 'legal_hold', allowed: query.includeHeld === true || !record.legalHold, detail: 'legal hold' },
+      {
+        gate: 'sensitivity',
+        allowed:
+          SENSITIVITY_RANK[record.sensitivity] <=
+          SENSITIVITY_RANK[query.maxSensitivity ?? 'internal'],
+        detail: `sensitivity ${record.sensitivity} > ${query.maxSensitivity ?? 'internal'}`,
+      },
+      ...(!requireRelevance || groups.length === 0 ? [] : [this.relevanceGate(record, groups)]),
     ];
   }
 
@@ -396,6 +542,9 @@ interface MutableDiagnostics {
   lexicalTruncated: boolean;
   lexicalVisits: number;
   rejected: RetrievalGateDecision[];
+  duplicatesRemoved?: number;
+  supersededSuppressed?: number;
+  relationExpanded?: number;
 }
 
 export type { RetrievalStatus };

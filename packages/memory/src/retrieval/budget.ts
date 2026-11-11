@@ -55,6 +55,7 @@ export function applyBudget(input: BudgetInput): BudgetApplication {
   let dropped = 0;
   const kept: RetrievedMemory[] = [];
   let usedChars = 0;
+  let usedBytes = 0;
 
   for (const memory of input.ranked) {
     if (kept.length >= input.budget.maxResults) {
@@ -64,12 +65,22 @@ export function applyBudget(input: BudgetInput): BudgetApplication {
     }
     const rendered = renderMemory(memory.record, input.budget.maxMemoryChars);
     const wouldUse = usedChars + rendered.length + SEPARATOR.length;
+    const renderedBytes = Buffer.byteLength(rendered + SEPARATOR, 'utf8');
+    if (input.budget.maxBytes !== undefined) {
+      const bytes = usedBytes + renderedBytes;
+      if (bytes > input.budget.maxBytes && kept.length > 0) {
+        constraints.add('maxBytes');
+        dropped += 1;
+        continue;
+      }
+    }
     if (wouldUse > input.budget.maxContextChars && kept.length > 0) {
       constraints.add('maxContextChars');
       dropped += 1;
       continue;
     }
     usedChars = wouldUse;
+    usedBytes += renderedBytes;
     kept.push({ ...memory, explanation: { ...memory.explanation } });
   }
 
@@ -87,6 +98,7 @@ export function applyBudget(input: BudgetInput): BudgetApplication {
       applied: input.budget,
       truncated,
       constraints: [...constraints],
+      truncatedBy: [...constraints],
       droppedByBudget: dropped,
       mayBeIncomplete: truncated,
     },

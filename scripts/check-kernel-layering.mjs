@@ -3,7 +3,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = process.cwd();
-const KERNEL = join(ROOT, 'Kernel');
+const PACKAGES_DIR = join(ROOT, 'packages');
 const SCOPE = '@hilbras/omnicode-';
 
 const LEAVES = new Set([
@@ -58,8 +58,8 @@ const RULES = [
 
 function packageDirs() {
   const out = new Map();
-  for (const entry of readdirSync(KERNEL)) {
-    const dir = join(KERNEL, entry);
+  for (const entry of readdirSync(PACKAGES_DIR)) {
+    const dir = join(PACKAGES_DIR, entry);
     try {
       if (!statSync(dir).isDirectory()) continue;
       const pkg = JSON.parse(readFileSync(join(dir, 'package.json'), 'utf8'));
@@ -90,6 +90,10 @@ function walk(dir, files = []) {
 }
 
 const packages = packageDirs();
+if (packages.size === 0) {
+  console.error(`kernel layering: no packages found under ${relative(ROOT, PACKAGES_DIR) || PACKAGES_DIR}`);
+  process.exit(1);
+}
 const KERNEL_PACKAGE = '@hilbras\\/omnicode-([a-z0-9-]+)(?:\\/[^\']*)?';
 const STATIC_FORMS = [
   new RegExp(`(?:import|export)\\s+[^;]*?from\\s+'(?:${KERNEL_PACKAGE})'`, 'g'),

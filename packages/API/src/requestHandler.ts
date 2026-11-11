@@ -212,6 +212,9 @@ import {
   resolveLoggingConfig,
   resolvePrintBackgroundMode,
   summarizeSkill,
+  ITelegramConnectorService,
+  type TelegramConnectorStatus,
+  type TelegramPairingCode,
   towerEnterFailureMessage,
   type IAgentScopeHandle,
   type IDisposable,
@@ -358,6 +361,7 @@ import {
   exportVisibleMemories,
   forgetMemory,
   getVisibleMemory,
+  historyVisibleMemory,
   IAgentMemoryContextService,
   IMemoryService,
   listVisibleMemories,
@@ -365,6 +369,7 @@ import {
   type MemoryControlMutation,
   type MemoryExportView,
   type MemoryGetView,
+  type MemoryHistoryView,
   type MemoryListView,
   type MemoryViewer,
 } from '@hilbras/omnicode-memory';
@@ -750,6 +755,30 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
 
   override async connectGitHubWithToken(token: string): Promise<GitHubConnectResult> {
     return this.klient.global.github.connectWithToken(token);
+  }
+
+  override async getTelegramConnectorStatus(): Promise<TelegramConnectorStatus> {
+    return this.engineAccessor.get(ITelegramConnectorService).status({ probe: true });
+  }
+
+  override async createTelegramPairingCode(): Promise<TelegramPairingCode> {
+    return this.engineAccessor.get(ITelegramConnectorService).createPairingCode();
+  }
+
+  override async startTelegramBot(): Promise<TelegramConnectorStatus> {
+    return this.engineAccessor.get(ITelegramConnectorService).start();
+  }
+
+  override async stopTelegramBot(): Promise<TelegramConnectorStatus> {
+    return this.engineAccessor.get(ITelegramConnectorService).stop();
+  }
+
+  override async addTelegramAllowedChat(chatId: number): Promise<TelegramConnectorStatus> {
+    return this.engineAccessor.get(ITelegramConnectorService).addAllowedChat(chatId);
+  }
+
+  override async removeTelegramAllowedChat(chatId: number): Promise<TelegramConnectorStatus> {
+    return this.engineAccessor.get(ITelegramConnectorService).removeAllowedChat(chatId);
   }
 
   override async disconnectGitHub(): Promise<GitHubDisconnectResult> {
@@ -2028,6 +2057,11 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
   override async getMemory(input: MemoryGetRpcInput): Promise<MemoryGetView> {
     const { service, viewer } = await this.memoryControl(input.sessionId);
     return getVisibleMemory(service, viewer, input.id);
+  }
+
+  override async historyMemory(input: MemoryGetRpcInput): Promise<MemoryHistoryView> {
+    const { service, viewer } = await this.memoryControl(input.sessionId);
+    return historyVisibleMemory(service, viewer, input.id);
   }
 
   override async confirmMemory(input: MemoryGetRpcInput): Promise<MemoryControlMutation> {

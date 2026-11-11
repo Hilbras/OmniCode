@@ -521,7 +521,7 @@ export class CatalogBrowserApp extends Container implements Focusable {
     if (entry.badges !== undefined && entry.badges.length > 0) {
       lines.push(line(currentTheme.fg('textMuted', `  ${entry.badges.join(' · ')}`)));
     }
-    if (selected && entry.actions !== undefined && entry.actions.length > 0) {
+    if (selected && ((entry.actions !== undefined && entry.actions.length > 0) || this.props.onSelect !== undefined)) {
       lines.push(line(currentTheme.fg('textMuted', '  Enter to open')));
     }
     lines.push(bottom, '');

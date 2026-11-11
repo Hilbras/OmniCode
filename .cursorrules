@@ -1,0 +1,3 @@
+Read AGENTS.md at the repository root, then the nearest package or app
+AGENTS.md. Follow the kernel layering law and run `pnpm check:guards` before
+declaring work done.

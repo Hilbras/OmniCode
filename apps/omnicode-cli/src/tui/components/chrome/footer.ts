@@ -30,7 +30,7 @@ import { formatTokenCount, usagePercent, usagePercentFromRatio } from '#/utils/u
 /** What the footer's fixed ctrl+o hint offers: expand collapsed tool output, or collapse it again. */
 export type ToolOutputExpandHint = 'expand' | 'collapse';
 
-const DEFAULT_STATUS_LINE_ITEMS = ['mode', 'goal', 'model', 'tasks', 'cwd', 'git'] as const;
+const DEFAULT_STATUS_LINE_ITEMS = ['mode', 'goal', 'telegram', 'model', 'tasks', 'cwd', 'git'] as const;
 
 const MAX_CWD_SEGMENTS = 3;
 const GOAL_TIMER_INTERVAL_MS = 1_000;
@@ -423,6 +423,7 @@ export class FooterComponent implements Component {
     const slots: Record<string, string[]> = {
       mode: [],
       goal: [],
+      telegram: [],
       model: [],
       tasks: [],
       cwd: [],
@@ -448,6 +449,15 @@ export class FooterComponent implements Component {
 
     const goalBadge = formatGoalBadge(state.goal, colors, this.goalWallClockMs(state.goal));
     if (goalBadge !== null) slots['goal'] = [goalBadge];
+
+    if (state.telegram !== null && state.telegram !== undefined) {
+      const tone = state.telegram.connected
+        ? colors.primary
+        : state.telegram.state === 'needs-auth'
+          ? colors.warning
+          : colors.textMuted;
+      slots['telegram'] = [chalk.hex(tone)(state.telegram.label)];
+    }
 
     const model = modelDisplayName(state);
     if (model) {

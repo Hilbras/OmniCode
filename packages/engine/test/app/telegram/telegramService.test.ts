@@ -6,6 +6,8 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 import { TelegramConnectorService } from '#/app/telegram/telegramService';
 import type { IBootstrapService } from '#/app/bootstrap/bootstrap';
+import type { ISessionManager } from '#/app/sessionManager/sessionManager';
+import type { IWorkspaceService } from '#/app/workspace/workspace';
 
 const TOKEN = '123456:ABC-DEF';
 const CONFIG_FILE = 'telegram.json';
@@ -36,7 +38,11 @@ async function readConfig(): Promise<Record<string, unknown>> {
 }
 
 function makeService(home: string): TelegramConnectorService {
-  return new TelegramConnectorService({ homeDir: home } as unknown as IBootstrapService);
+  return new TelegramConnectorService(
+    { homeDir: home } as unknown as IBootstrapService,
+    { createOrTouch: vi.fn() } as unknown as IWorkspaceService,
+    { create: vi.fn(), list: vi.fn(() => []), get: vi.fn() } as unknown as ISessionManager,
+  );
 }
 
 function botResponse(payload: unknown, status = 200): Response {
@@ -75,6 +81,15 @@ describe('TelegramConnectorService status', () => {
       running: false,
       pid: undefined,
       heartbeatAt: undefined,
+      lastUpdateAt: undefined,
+      lastError: undefined,
+      pairing: undefined,
+      boundChats: 0,
+      startedAt: undefined,
+      uptimeMs: undefined,
+      metrics: { updates: 0, messages: 0, errors: 0, retries: 0 },
+      mode: 'polling',
+      webhookUrl: undefined,
     });
   });
 
@@ -105,7 +120,11 @@ describe('TelegramConnectorService saveSettings', () => {
     const status = await service.saveSettings({ botToken: TOKEN, allowedChatIds: [1, 2] });
 
     expect(status.state).toBe('ready');
-    expect(await readConfig()).toEqual({ note: 'keep me', botToken: TOKEN, allowedChatIds: [1, 2] });
+    const config = await readConfig();
+    expect(config['note']).toBe('keep me');
+    expect(config['allowedChatIds']).toEqual([1, 2]);
+    expect(typeof config['botTokenEncrypted']).toBe('string');
+    expect(config['botToken']).toBeUndefined();
   });
 
   it('keeps an existing token when only chat ids are saved', async () => {
@@ -114,7 +133,8 @@ describe('TelegramConnectorService saveSettings', () => {
     await service.saveSettings({ allowedChatIds: [7] });
 
     const config = await readConfig();
-    expect(config['botToken']).toBe(TOKEN);
+    expect(typeof config['botTokenEncrypted']).toBe('string');
+    expect(config['botToken']).toBeUndefined();
     expect(config['allowedChatIds']).toEqual([7]);
   });
 });

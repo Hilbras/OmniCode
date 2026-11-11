@@ -36,6 +36,8 @@ import type {
   GitHubConnectResult,
   GitHubConnectionStatus,
   GitHubDeviceFlowStart,
+  TelegramConnectorStatus,
+  TelegramPairingCode,
   GitHubDisconnectResult,
   VercelConnectResult,
   VercelConnectionStatus,
@@ -406,6 +408,30 @@ export class OmnicodeHarness {
   /** Connects GitHub with a manually supplied access token. */
   async connectGitHubWithToken(token: string): Promise<GitHubConnectResult> {
     return this.rpc.connectGitHubWithToken(token);
+  }
+
+  async getTelegramConnectorStatus(): Promise<TelegramConnectorStatus> {
+    return this.rpc.getTelegramConnectorStatus();
+  }
+
+  async createTelegramPairingCode(): Promise<TelegramPairingCode> {
+    return this.rpc.createTelegramPairingCode();
+  }
+
+  async startTelegramBot(): Promise<TelegramConnectorStatus> {
+    return this.rpc.startTelegramBot();
+  }
+
+  async stopTelegramBot(): Promise<TelegramConnectorStatus> {
+    return this.rpc.stopTelegramBot();
+  }
+
+  async addTelegramAllowedChat(chatId: number): Promise<TelegramConnectorStatus> {
+    return this.rpc.addTelegramAllowedChat(chatId);
+  }
+
+  async removeTelegramAllowedChat(chatId: number): Promise<TelegramConnectorStatus> {
+    return this.rpc.removeTelegramAllowedChat(chatId);
   }
 
   /** Removes the stored GitHub credential. */

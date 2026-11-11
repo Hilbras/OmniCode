@@ -27,11 +27,13 @@ export interface CatalogBrowserHost {
     readonly appState: Pick<AppState, 'workDir'>;
     readonly skillsBrowser: CatalogBrowserState | undefined;
     readonly subagentsBrowser: CatalogBrowserState | undefined;
+    readonly connectorsBrowser: CatalogBrowserState | undefined;
   };
   readonly harness: OmnicodeHarness;
   readonly session: Session | undefined;
   setSkillsBrowser(value: CatalogBrowserState | undefined): void;
   setSubagentsBrowser(value: CatalogBrowserState | undefined): void;
+  setConnectorsBrowser(value: CatalogBrowserState | undefined): void;
 }
 
 export interface CatalogBrowserState {
@@ -152,7 +154,7 @@ export class SubagentsBrowserController {
   }
 }
 
-function openCatalogBrowser(
+export function openCatalogBrowser(
   host: CatalogBrowserHost,
   props: CatalogBrowserProps,
   setBrowser: (value: CatalogBrowserState | undefined) => void,
@@ -170,7 +172,7 @@ function openCatalogBrowser(
   return component;
 }
 
-function closeCatalogBrowser(
+export function closeCatalogBrowser(
   host: CatalogBrowserHost,
   browser: CatalogBrowserState | undefined,
   setBrowser: (value: CatalogBrowserState | undefined) => void,

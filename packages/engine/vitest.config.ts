@@ -2,7 +2,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   ssr: {
-    noExternal: [/\/Kernel\/core\//, /\/Kernel\/Tools\//],
+    noExternal: [/\/packages\/core\//, /\/packages\/Tools\//],
   },
   test: {
     name: 'omnicode-core',

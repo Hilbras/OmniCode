@@ -508,3 +508,9 @@ export type ResumedSessionState = Pick<
 >;
 
 export interface ResumedSessionSummary extends SessionSummary, ResumedSessionState {}
+
+export type {
+  TelegramConnectorStatus,
+  TelegramPairingCode,
+  TelegramSettingsInput,
+} from '@hilbras/omnicode-engine/app/telegram/types';

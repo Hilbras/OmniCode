@@ -114,3 +114,72 @@ describe('SessionEventHandler — update panel lifecycle', () => {
     expect(host.streamingUI.completeToolResult).not.toHaveBeenCalled();
   });
 });
+
+describe('SessionEventHandler — memory notices', () => {
+  it('renders a saved-memory notice in the transcript', () => {
+    const { host } = makeHost();
+    const handler = new SessionEventHandler(host);
+
+    handler.handleEvent(
+      {
+        type: 'memory.saved',
+        agentId: 'main',
+        memoryId: 'mem-1',
+        content: 'the deploy target is staging',
+        category: 'fact',
+        trust: 'trusted',
+        scope: 'repository',
+      } as unknown as Event,
+      vi.fn(),
+    );
+
+    expect(host.appendTranscriptEntry).toHaveBeenCalledWith(
+      expect.objectContaining({
+        renderMode: 'notice',
+        content: expect.stringContaining('Memory saved'),
+      }),
+    );
+  });
+});
+
+describe('SessionEventHandler — external user prompts', () => {
+  it('renders a Telegram prompt echoed by turn.started', () => {
+    const { host } = makeHost();
+    const handler = new SessionEventHandler(host);
+
+    handler.handleEvent(
+      {
+        sessionId: 's1',
+        agentId: 'main',
+        type: 'turn.started',
+        turnId: 1,
+        prompt: 'hello from Telegram',
+        origin: { kind: 'user', clientMetadata: [{ source: 'telegram' }] },
+      } as unknown as Event,
+      vi.fn(),
+    );
+
+    expect(host.appendTranscriptEntry).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'user', content: 'hello from Telegram' }),
+    );
+  });
+
+  it('does not render a local prompt that the TUI already echoed', () => {
+    const { host } = makeHost();
+    const handler = new SessionEventHandler(host);
+
+    handler.handleEvent(
+      {
+        sessionId: 's1',
+        agentId: 'main',
+        type: 'turn.started',
+        turnId: 1,
+        prompt: 'typed locally',
+        origin: { kind: 'user' },
+      } as unknown as Event,
+      vi.fn(),
+    );
+
+    expect(host.appendTranscriptEntry).not.toHaveBeenCalled();
+  });
+});

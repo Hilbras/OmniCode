@@ -14,7 +14,9 @@ import {
   connectorsListQuerySchema,
   connectorsListResponseSchema,
   telegramSettingsRequestSchema,
+  telegramHealthResponseSchema,
   telegramStatusResponseSchema,
+  telegramWebhookResponseSchema,
   type ConnectorEntryWire,
   type TelegramStatusWire,
 } from '../protocol/rest-connector';
@@ -40,7 +42,11 @@ interface ConnectorsRouteHost {
     path: string,
     options: { preHandler: unknown[]; schema?: Record<string, unknown> },
     handler: (
-      req: { id: string; body: unknown },
+      req: {
+        id: string;
+        body: unknown;
+        headers?: Record<string, string | string[] | undefined>;
+      },
       reply: { send(payload: unknown): unknown },
     ) => Promise<void> | void,
   ): unknown;
@@ -88,6 +94,34 @@ export function registerConnectorsRoutes(app: ConnectorsRouteHost, core: Scope):
     statusRoute.handler as Parameters<ConnectorsRouteHost['get']>[2],
   );
 
+  const healthRoute = defineRoute(
+    {
+      method: 'GET',
+      path: '/connectors/telegram/health',
+      success: { data: telegramHealthResponseSchema },
+      description: 'Read Telegram connector health and runtime metrics',
+      tags: ['connectors'],
+      operationId: 'getTelegramConnectorHealth',
+    },
+    async (req, reply) => {
+      const status = await core.accessor.get(ITelegramConnectorService).status();
+      reply.send(
+        okEnvelope(
+          {
+            healthy: status.hasToken && status.running,
+            telegram: toWireTelegram(status),
+          },
+          req.id,
+        ),
+      );
+    },
+  );
+  app.get(
+    healthRoute.path,
+    healthRoute.options,
+    healthRoute.handler as Parameters<ConnectorsRouteHost['get']>[2],
+  );
+
   const saveRoute = defineRoute(
     {
       method: 'PUT',
@@ -123,6 +157,36 @@ export function registerConnectorsRoutes(app: ConnectorsRouteHost, core: Scope):
     saveRoute.path,
     saveRoute.options,
     saveRoute.handler as Parameters<ConnectorsRouteHost['put']>[2],
+  );
+
+  const webhookRoute = defineRoute(
+    {
+      method: 'POST',
+      path: '/connectors/telegram/webhook',
+      success: { data: telegramWebhookResponseSchema },
+      description: 'Receive Telegram bot updates in webhook mode',
+      tags: ['connectors'],
+      operationId: 'telegramWebhook',
+    },
+    async (req, reply) => {
+      const header = req.headers?.['x-telegram-bot-api-secret-token'];
+      const secret = Array.isArray(header) ? header[0] : header;
+      const ok = await core.accessor
+        .get(ITelegramConnectorService)
+        .handleWebhookUpdate(req.body, secret);
+      if (!ok) {
+        reply.send(
+          errEnvelope(ErrorCode.VALIDATION_FAILED, 'Invalid Telegram webhook update', req.id),
+        );
+        return;
+      }
+      reply.send(okEnvelope({ ok: true }, req.id));
+    },
+  );
+  app.post(
+    webhookRoute.path,
+    webhookRoute.options,
+    webhookRoute.handler as Parameters<ConnectorsRouteHost['post']>[2],
   );
 
   const verifyRoute = defineRoute(
@@ -184,5 +248,13 @@ function toWireTelegram(status: TelegramConnectorStatus): TelegramStatusWire {
         ? undefined
         : { id: status.bot.id, username: status.bot.username, name: status.bot.name },
     error: status.error,
+    last_update_at: status.lastUpdateAt,
+    last_error: status.lastError,
+    bound_chats: status.boundChats,
+    started_at: status.startedAt,
+    uptime_ms: status.uptimeMs,
+    metrics: status.metrics,
+    mode: status.mode,
+    webhook_url: status.webhookUrl,
   };
 }

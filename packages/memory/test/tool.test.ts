@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { ToolAccesses } from '@hilbras/omnicode-engine/tool/toolContract';
 
@@ -110,6 +110,11 @@ function fakeRecord(overrides: Partial<MemoryRecord> = {}): MemoryRecord {
     content: 'a recorded fact',
     redactionCount: 0,
     trust: 'verified',
+    sensitivity: 'internal',
+    retention: 'persistent',
+    legalHold: false,
+    importance: 3,
+    confidence: 0.5,
     trustReason: 'supported by present evidence',
     sourceType: 'repository_file',
     origin: 'application',
@@ -126,6 +131,7 @@ function fakeRecord(overrides: Partial<MemoryRecord> = {}): MemoryRecord {
     conflictsWith: [],
     suspicious: false,
     suspicionReasons: [],
+    relations: [],
   };
   return { ...base, ...overrides };
 }
@@ -226,6 +232,12 @@ describe('memory_search tool contract', () => {
     });
   });
 
+  it('includes unverified memories by default for explicit searches', async () => {
+    const { tool, queries } = buildTool(stubResult());
+    await run(tool, { query: 'user name' });
+    expect(queries[0]).toMatchObject({ includeUntrusted: true });
+  });
+
   it('says plainly when memory is disabled', async () => {
     const { tool } = buildTool(stubResult(), { enabled: false });
     const output = await run(tool, { query: 'anything' });
@@ -320,7 +332,8 @@ function writeContext(knownProject: string | null = REPO_A): IAgentMemoryContext
 describe('memory_save tool', () => {
   it('stores a model-authored working memory that stays unverified', async () => {
     const harness = createHarness();
-    const tool = new MemorySaveTool(writeContext(), harness.service);
+    const dispatch = vi.fn(async () => undefined);
+    const tool = new MemorySaveTool(writeContext(), harness.service, { agentId: 'main' } as never, { dispatch } as never);
     const { output, isError } = await runTool(tool, {
       content: 'The dev server listens on port 5173.',
       category: 'fact',
@@ -328,6 +341,7 @@ describe('memory_save tool', () => {
     });
     expect(isError).toBe(false);
     expect(output).toContain('memory save status: stored');
+    expect(output).toContain('Unverified: run /memory confirm');
     const [record] = await harness.service.list({ projectId: REPO_A, workspaceId: WORKSPACE });
     expect(record).toMatchObject({
       tier: 'working',
@@ -337,11 +351,12 @@ describe('memory_save tool', () => {
       sourceType: 'agent_observation',
       scope: { tier: 'repository', projectId: REPO_A },
     });
+    expect(dispatch).toHaveBeenCalledOnce();
   });
 
   it('cannot raise its own trust by claiming a preference', async () => {
     const harness = createHarness();
-    const tool = new MemorySaveTool(writeContext(), harness.service);
+    const tool = new MemorySaveTool(writeContext(), harness.service, { agentId: 'main' } as never, { dispatch: async () => undefined } as never);
     await runTool(tool, { content: 'The user prefers tabs over spaces.', category: 'preference' });
     const [record] = await harness.service.list({ projectId: REPO_A, workspaceId: WORKSPACE });
     expect(record?.trust).toBe('unverified');
@@ -349,7 +364,7 @@ describe('memory_save tool', () => {
 
   it('is idempotent for a replayed tool call', async () => {
     const harness = createHarness();
-    const tool = new MemorySaveTool(writeContext(), harness.service);
+    const tool = new MemorySaveTool(writeContext(), harness.service, { agentId: 'main' } as never, { dispatch: async () => undefined } as never);
     const args = { content: 'Tests run with vitest.', category: 'fact' };
     await runTool(tool, args, 'call-7');
     await runTool(tool, args, 'call-7');
@@ -358,7 +373,7 @@ describe('memory_save tool', () => {
 
   it('honours session and global scopes', async () => {
     const harness = createHarness();
-    const tool = new MemorySaveTool(writeContext(), harness.service);
+    const tool = new MemorySaveTool(writeContext(), harness.service, { agentId: 'main' } as never, { dispatch: async () => undefined } as never);
     await runTool(tool, { content: 'Only for this session.', category: 'task', scope: 'session' }, 'call-a');
     await runTool(tool, { content: 'Applies everywhere.', category: 'preference', scope: 'global' }, 'call-b');
     const records = await harness.service.list({ projectId: REPO_A, workspaceId: WORKSPACE, sessionId: SESSION });
@@ -367,7 +382,7 @@ describe('memory_save tool', () => {
 
   it('refuses a repository memory when the project cannot be identified', async () => {
     const harness = createHarness();
-    const tool = new MemorySaveTool(writeContext(null), harness.service);
+    const tool = new MemorySaveTool(writeContext(null), harness.service, { agentId: 'main' } as never, { dispatch: async () => undefined } as never);
     const { output, isError } = await runTool(tool, { content: 'Something about the repo.', category: 'fact' });
     expect(isError).toBe(true);
     expect(output).toContain('could not be identified');
@@ -376,13 +391,13 @@ describe('memory_save tool', () => {
 
   it('says plainly when memory is disabled and stores nothing', async () => {
     const harness = createHarness({ available: () => false });
-    const tool = new MemorySaveTool(writeContext(), harness.service);
+    const tool = new MemorySaveTool(writeContext(), harness.service, { agentId: 'main' } as never, { dispatch: async () => undefined } as never);
     const { output } = await runTool(tool, { content: 'Should not be stored.', category: 'fact' });
     expect(output).toContain('Memory is disabled');
   });
 
   it('requires its own approval rule and validates input', () => {
-    const tool = new MemorySaveTool(writeContext(), createHarness().service);
+    const tool = new MemorySaveTool(writeContext(), createHarness().service, { agentId: 'main' } as never, { dispatch: async () => undefined } as never);
     const resolved = tool.resolveExecution({ content: 'x', category: 'fact' });
     if (resolved === null || typeof resolved !== 'object' || !('execute' in resolved)) {
       throw new Error('expected a runnable execution');

@@ -8,6 +8,7 @@ import type {
   MemoryControlStatus,
   MemoryExportView,
   MemoryGetView,
+  MemoryHistoryView,
   MemoryListView,
 } from '@hilbras/omnicode-memory';
 
@@ -38,6 +39,8 @@ import type {
   GitHubConnectResult,
   GitHubConnectionStatus,
   GitHubDeviceFlowStart,
+  TelegramConnectorStatus,
+  TelegramPairingCode,
   GitHubDisconnectResult,
   VercelConnectResult,
   VercelConnectionStatus,
@@ -256,6 +259,12 @@ export abstract class SDKRpcClientBase {
   abstract getGitHubStatus(): Promise<GitHubConnectionStatus>;
 
   abstract startGitHubDeviceFlow(): Promise<GitHubDeviceFlowStart>;
+  abstract getTelegramConnectorStatus(): Promise<TelegramConnectorStatus>;
+  abstract createTelegramPairingCode(): Promise<TelegramPairingCode>;
+  abstract startTelegramBot(): Promise<TelegramConnectorStatus>;
+  abstract stopTelegramBot(): Promise<TelegramConnectorStatus>;
+  abstract addTelegramAllowedChat(chatId: number): Promise<TelegramConnectorStatus>;
+  abstract removeTelegramAllowedChat(chatId: number): Promise<TelegramConnectorStatus>;
   abstract connectGitHubWithToken(token: string): Promise<GitHubConnectResult>;
 
   abstract pollGitHubDeviceFlow(flowId: string): Promise<GitHubConnectResult>;
@@ -460,6 +469,8 @@ export abstract class SDKRpcClientBase {
   abstract listMemories(input: MemoryListRpcInput): Promise<MemoryListView>;
 
   abstract getMemory(input: MemoryGetRpcInput): Promise<MemoryGetView>;
+
+  abstract historyMemory(input: MemoryGetRpcInput): Promise<MemoryHistoryView>;
 
   abstract confirmMemory(input: MemoryGetRpcInput): Promise<MemoryControlMutation>;
 

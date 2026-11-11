@@ -3,15 +3,15 @@ import { defineConfig } from 'vitest/config';
 export default defineConfig({
   test: {
     projects: [
-      'Kernel/*/vitest.config.ts',
-      'apps/omnicode',
+      'packages/*/vitest.config.ts',
+      'apps/omnicode-cli/vitest.config.ts',
       'apps/omnicode-vis/server',
       'apps/omnicode-vis/web',
     ],
     coverage: {
       provider: 'v8',
       include: [
-        'Kernel/*/src/**/*.ts',
+        'packages/*/src/**/*.ts',
         'apps/*/src/**/*.ts',
         'apps/omnicode-vis/*/src/**/*.{ts,tsx}',
       ],

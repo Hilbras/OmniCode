@@ -1,0 +1,34 @@
+{
+  "name": "@hilbras/app-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./api": "./src/api/index.ts",
+    "./client": "./src/client/index.ts",
+    "./client/types": "./src/client/types.ts",
+    "./contracts": "./src/contracts.ts",
+    "./lib": "./src/lib/index.ts",
+    "./lib/slashCommands": "./src/lib/slashCommands.ts",
+    "./lib/skillCommandPrefix": "./src/lib/skillCommandPrefix.ts",
+    "./transcript": "./src/transcript/index.ts"
+  },
+  "dependencies": {
+    "@hilbras/omnicode-transcript": "workspace:*",
+    "fuse.js": "^7.5.0",
+    "pinyin-pro": "^3.28.2"
+  },
+  "peerDependencies": {
+    "shiki": "^4.3.0",
+    "vue": "^3.5.35"
+  },
+  "devDependencies": {
+    "@hilbras/app-i18n": "workspace:^",
+    "shiki": "^4.3.0",
+    "typescript": "6.0.2",
+    "vitest": "4.1.4",
+    "vue": "^3.5.35",
+    "vue-tsc": "~3.2.0"
+  }
+}

@@ -61,6 +61,21 @@ describe('storage: record integrity', () => {
     expect(await store.prefixKeys('f:', 10)).toHaveLength(1);
   });
 
+  it('writes forward and reverse relation indexes', async () => {
+    const { service, store } = createHarness();
+    const stored = await service.capture(
+      captureInput('the deploy note supports the rollout note', {
+        relations: [{ kind: 'supports', targetId: 'mem_target' }],
+      }),
+    );
+    const id = stored.id as string;
+    expect(stored.record?.relations).toEqual([{ kind: 'supports', targetId: 'mem_target' }]);
+    expect(await store.prefixKeys('r:', 10)).toEqual([`r:${id}:supports:mem_target`]);
+    expect(await store.prefixKeys('rb:mem_target:supports:', 10)).toEqual([
+      `rb:mem_target:supports:${id}`,
+    ]);
+  });
+
   it('supersedes a memory only when the successor exists', async () => {
     const { service } = createHarness();
     const older = await service.capture(captureInput('the lint script runs oxlint'));

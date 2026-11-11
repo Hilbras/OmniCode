@@ -6,7 +6,7 @@ Vendored fork of [`earendil-works/pi`](https://github.com/earendil-works/pi) `pa
 
 ## Changing this package
 
-Put TUI product behavior in `apps/omnicode/src/tui` (composition, subclassing, existing host callbacks). Change this package only when the public API cannot express the behavior.
+Put TUI product behavior in `apps/omnicode-cli/src/tui` (composition, subclassing, existing host callbacks). Change this package only when the public API cannot express the behavior.
 
 A patch that lands here must:
 

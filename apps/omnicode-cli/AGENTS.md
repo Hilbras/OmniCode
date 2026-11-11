@@ -1,12 +1,12 @@
-# apps/omnicode Development Guide
+# apps/omnicode-cli Development Guide
 
-This file only contains rules local to `apps/omnicode`. For cross-repo rules, see the root `AGENTS.md`.
+This file only contains rules local to `apps/omnicode-cli`. For cross-repo rules, see the root `AGENTS.md`.
 
 > **Writing or modifying the TUI?** Use the `write-tui` skill (`.agents/skills/write-tui/SKILL.md`). It covers the architecture orientation, where new features go, test placement, theme mechanics, and the dialog interaction/visual spec (`DESIGN.md`). This file keeps only the map, boundaries, and hard constraints.
 
 ## TUI File Layout
 
-`apps/omnicode` is the terminal UI / CLI app. The entry chain is:
+`apps/omnicode-cli` is the terminal UI / CLI app. The entry chain is:
 
 `src/main.ts` -> `src/cli/commands.ts` -> `src/cli/run-shell.ts` -> SDK `OmnicodeHarness` -> `src/tui/omnicode-tui.ts`
 
@@ -42,7 +42,7 @@ Main directories:
 - `reverse-rpc` converts SDK approval/question requests into the data shape a UI panel/dialog needs, and converts the user's choice back into an SDK response.
 - `theme` is the single source of truth for colors and styles. Components must not bypass the theme system and use chalk named colors directly.
 - `utils` holds utility functions with no UI-state dependency. Logic that needs `TUIState` or a component instance must not live under app-level `src/utils`.
-- `apps/omnicode` may only use core capabilities through `@hilbras/omnicode-sdk`. Do not import engine packages directly in app code.
+- `apps/omnicode-cli` may only use core capabilities through `@hilbras/omnicode-sdk`. Do not import engine packages directly in app code.
 
 ## TUI Coding Conventions
 

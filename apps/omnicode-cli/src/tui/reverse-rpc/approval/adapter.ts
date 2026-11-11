@@ -14,6 +14,11 @@ const DEFAULT_APPROVAL_CHOICES: ApprovalPanelChoice[] = [
 const PLAN_REJECT_CHOICES: ApprovalPanelChoice[] = [
   { label: 'Reject', response: 'rejected', selected_label: 'Reject' },
   { label: 'Revise', response: 'rejected', selected_label: 'Revise', requires_feedback: true },
+  {
+    label: 'Reject and Exit',
+    response: 'rejected',
+    selected_label: 'Reject and Exit',
+  },
 ];
 
 export function adaptApprovalRequest(event: ApprovalRequest): ApprovalPanelData {

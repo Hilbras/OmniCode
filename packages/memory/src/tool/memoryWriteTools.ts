@@ -5,6 +5,9 @@ import type { AgentTool, ToolExecution } from '@hilbras/omnicode-engine/tool/too
 import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
 
 import { IAgentMemoryContextService } from '#/context/agentMemoryContextService';
+import { MemorySaved } from '#/context/memoryEvents';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { IEventDispatcher } from '@hilbras/omnicode-engine/state/eventDispatcher';
 import { IMemoryService, type MemoryCaptureResult } from '#/contracts/memoryContract';
 import type { MemoryRecord, MemoryScope } from '#/contracts/memoryTypes';
 
@@ -88,6 +91,8 @@ export class MemorySaveTool implements IMemorySaveTool {
   constructor(
     @IAgentMemoryContextService private readonly memory: IAgentMemoryContextService,
     @IMemoryService private readonly service: IMemoryService,
+    @IAgentScopeContext private readonly scopeContext: IAgentScopeContext,
+    @IEventDispatcher private readonly dispatcher: IEventDispatcher,
   ) {}
 
   resolveExecution(args: MemorySaveInput): ToolExecution {
@@ -117,6 +122,18 @@ export class MemorySaveTool implements IMemorySaveTool {
           subject: args.subject,
           requestKey: `${this.memory.sessionId()}:${toolCallId}`,
         });
+        if (result.status === 'stored' && result.record !== undefined) {
+          await this.dispatcher.dispatch(
+            new MemorySaved({
+              agentId: this.scopeContext.agentId,
+              memoryId: result.record.id,
+              content: result.record.content,
+              category: result.record.category,
+              trust: result.record.trust,
+              scope: result.record.scope.tier,
+            }),
+          );
+        }
         return { isError: result.status === 'rejected' || result.status === 'failed', output: renderCapture(result) };
       },
     };
@@ -197,6 +214,9 @@ export function renderCapture(result: MemoryCaptureResult): string {
     }
     if (result.record.conflictsWith.length > 0) {
       lines.push(`Conflicts with: ${result.record.conflictsWith.join(', ')}`);
+    }
+    if (result.record.trust === 'unverified') {
+      lines.push(`Unverified: run /memory confirm ${result.record.id} to make it auto-injected.`);
     }
   } else if (result.id !== undefined) {
     lines.push(`id=${result.id}`);

@@ -1,0 +1,36 @@
+{
+  "name": "@hilbras/app-markdown",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./lib/filePathLinks": "./src/lib/filePathLinks.ts"
+  },
+  "dependencies": {
+    "@hilbras/app-composer": "workspace:^",
+    "@hilbras/app-core": "workspace:*",
+    "@hilbras/app-client": "workspace:*",
+    "@hilbras/app-i18n": "workspace:*",
+    "@hilbras/app-ui": "workspace:*",
+    "katex": "^0.17.0",
+    "markstream-vue": "1.1.4",
+    "monaco-editor": "^0.55.1",
+    "stream-diffs": "0.0.2",
+    "stream-markdown": "0.0.16",
+    "stream-monaco": "0.0.49"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.35",
+    "vue-i18n": "^11.4.5"
+  },
+  "devDependencies": {
+    "stream-markdown-parser": "1.2.6",
+    "vue": "^3.5.35",
+    "vue-i18n": "^11.4.5",
+    "vue-tsc": "~3.2.0",
+    "typescript": "6.0.2",
+    "@hilbras/vite-preset": "workspace:*",
+    "vitest": "4.1.4"
+  }
+}

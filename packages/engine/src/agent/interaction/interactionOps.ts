@@ -17,6 +17,7 @@ export class InteractionRequestEvent extends AgentEvent2<
 > {
   static override readonly type = 'interaction.request';
   static override readonly durable = true;
+  static override readonly observable = true;
   static override readonly schema = interactionRequestSchema;
 }
 export interface InteractionRequestEvent {

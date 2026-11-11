@@ -9,6 +9,9 @@ export const MEMORY_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY';
 export const MEMORY_PREFERENCES_FLAG_ID = 'memory_preferences';
 export const MEMORY_PREFERENCES_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY_PREFERENCES';
 
+export const MEMORY_AUTO_CAPTURE_FLAG_ID = 'memory_auto_capture';
+export const MEMORY_AUTO_CAPTURE_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY_AUTO_CAPTURE';
+
 export const MEMORY_PHRASES_FLAG_ID = 'memory_phrases';
 export const MEMORY_PHRASES_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY_PHRASES';
 
@@ -32,6 +35,16 @@ export const memoryPreferencesFlag: FlagDefinitionInput = {
   surface: 'both',
 };
 
+export const memoryAutoCaptureFlag: FlagDefinitionInput = {
+  id: MEMORY_AUTO_CAPTURE_FLAG_ID,
+  title: 'Memory auto-capture',
+  description:
+    'Opt-in fallback: automatically save explicit user memory requests such as "remember that ..." when the agent does not call memory_save.',
+  env: MEMORY_AUTO_CAPTURE_FLAG_ENV,
+  default: false,
+  surface: 'both',
+};
+
 export const memoryPhrasesFlag: FlagDefinitionInput = {
   id: MEMORY_PHRASES_FLAG_ID,
   title: 'Memory phrases',
@@ -44,4 +57,5 @@ export const memoryPhrasesFlag: FlagDefinitionInput = {
 
 registerFlagDefinition(memoryFlag);
 registerFlagDefinition(memoryPreferencesFlag);
+registerFlagDefinition(memoryAutoCaptureFlag);
 registerFlagDefinition(memoryPhrasesFlag);

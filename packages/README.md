@@ -1,7 +1,7 @@
-# Kernel
+# Packages
 
 Holds the packages that connect the rest of the repository to each other. Systems
-reach these through `Kernel/API` rather than importing each other directly.
+reach these through `packages/API` rather than importing each other directly.
 
 ## Contents
 
@@ -12,15 +12,15 @@ reach these through `Kernel/API` rather than importing each other directly.
 | `ACP` | `@hilbras/omnicode-acp` | the Agent Client Protocol host, so editors can drive Omnicode |
 | `Addons` | `@hilbras/omnicode-addons` | optional agent behaviours that plug in through the Feature seam |
 | `Tools` | `@hilbras/omnicode-tools` | the built-in agent tools — filesystem, shell, search, prompts |
-| `Memory` | `@hilbras/omnicode-memory` | trust-gated persistent memory — provenance, deterministic promotion, lexical retrieval with honest budgets; behind `OMNICODE_EXPERIMENTAL_MEMORY` |
+| `memory` | `@hilbras/omnicode-memory` | trust-gated persistent memory — provenance, deterministic promotion, lexical retrieval with honest budgets; behind `OMNICODE_EXPERIMENTAL_MEMORY` |
 
 ## Current status
 
 | | |
 |---|---|
-| pnpm workspace | yes — `pnpm-workspace.yaml` globs `Kernel/*` |
+| pnpm workspace | yes — `pnpm-workspace.yaml` globs `packages/*` |
 | Nix build | `flake.nix`'s `workspacePaths` and `workspaceNames` list every package here |
-| vitest | the root `vitest.config.ts` project glob covers `Kernel/*/vitest.config.ts` |
+| vitest | the root `vitest.config.ts` project glob covers `packages/*/vitest.config.ts` |
 
 ## What Addons can and cannot hold
 
@@ -47,22 +47,21 @@ from `reminder`, so moving `reminder` out strands it.
 
 ## Wiring to remember
 
-Adding a package under `Kernel/` needs four manual edits, all of which fail
+Adding a package under `packages/` needs four manual edits, all of which fail
 silently when missed: the pnpm workspace globs, `flake.nix` (an explicit fileset,
 not globs), the root `vitest.config.ts` project glob (an unmatched project root
 stops its tests from running while the suite still reports green), and the
-`--filter './Kernel/*'` arguments in the root `build:packages` and `typecheck`
-scripts.
+package filters in the root build and typecheck scripts.
 
 Features register through a module-level array populated by `registerFeature()`
 at import time, so anything that moves out of core also needs an explicit
 activation import at its composition root — the CLI does this in
-`apps/omnicode/src/main.ts`.
+`apps/omnicode-cli/src/main.ts`.
 
-That activation import is not free, and `Memory` shows why. `Kernel/API` re-exports
-it, so importing the Kernel surface is the activation point — but `omnicode-core`
+That activation import is not free, and `memory` shows why. `packages/API` re-exports
+it, so importing the packages surface is the activation point — but `omnicode-core`
 must **not** import it, not even in `test/setup.ts`. `test/_base/di/scope-topology.test.ts`
 asserts that no scope topology has been declared at import time, and any import
 that reaches `app/scopes` fails those tests. Addons and Tools get away with the
 core `test/setup.ts` import because core features genuinely depend on them;
-nothing in core depends on memory, so it is wired only through `Kernel/API`.
+nothing in core depends on memory, so it is wired only through `packages/API`.

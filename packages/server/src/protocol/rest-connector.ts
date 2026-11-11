@@ -61,6 +61,20 @@ export const telegramStatusSchema = z.object({
     })
     .optional(),
   error: z.string().optional(),
+  last_update_at: z.number().optional(),
+  last_error: z.string().optional(),
+  bound_chats: z.number().optional(),
+  started_at: z.number().optional(),
+  uptime_ms: z.number().optional(),
+  metrics: z
+    .object({
+      updates: z.number(),
+      messages: z.number(),
+      errors: z.number(),
+    })
+    .optional(),
+  mode: z.enum(['polling', 'webhook']).optional(),
+  webhook_url: z.string().optional(),
 });
 export type TelegramStatusWire = z.infer<typeof telegramStatusSchema>;
 
@@ -69,8 +83,22 @@ export const telegramStatusResponseSchema = z.object({
 });
 export type TelegramStatusResponse = z.infer<typeof telegramStatusResponseSchema>;
 
+export const telegramHealthResponseSchema = z.object({
+  healthy: z.boolean(),
+  telegram: telegramStatusSchema,
+});
+export type TelegramHealthResponse = z.infer<typeof telegramHealthResponseSchema>;
+
 export const telegramSettingsRequestSchema = z.object({
   botToken: z.string().optional(),
   allowedChatIds: z.array(z.number()).optional(),
+  mode: z.enum(['polling', 'webhook']).optional(),
+  webhookUrl: z.string().optional(),
+  webhookSecret: z.string().optional(),
 });
+
+export const telegramWebhookResponseSchema = z.object({
+  ok: z.boolean(),
+});
+export type TelegramWebhookResponse = z.infer<typeof telegramWebhookResponseSchema>;
 export type TelegramSettingsRequest = z.infer<typeof telegramSettingsRequestSchema>;

@@ -299,6 +299,13 @@ export const BUILTIN_SLASH_COMMANDS = [
     availability: 'always',
   },
   {
+    name: 'connectors',
+    aliases: [],
+    description: 'Set up connectors (Telegram)',
+    priority: 80,
+    availability: 'always',
+  },
+  {
     name: 'skills',
     aliases: [],
     description: 'Browse available skills',

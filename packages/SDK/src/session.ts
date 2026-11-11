@@ -5,6 +5,7 @@ import type {
   MemoryControlStatus,
   MemoryExportView,
   MemoryGetView,
+  MemoryHistoryView,
   MemoryListView,
 } from '@hilbras/omnicode-memory';
 
@@ -464,6 +465,11 @@ export class Session {
   async getMemory(id: string): Promise<MemoryGetView> {
     this.ensureOpen();
     return this.rpc.getMemory({ sessionId: this.id, id });
+  }
+
+  async historyMemory(id: string): Promise<MemoryHistoryView> {
+    this.ensureOpen();
+    return this.rpc.historyMemory({ sessionId: this.id, id });
   }
 
   async confirmMemory(id: string): Promise<MemoryControlMutation> {

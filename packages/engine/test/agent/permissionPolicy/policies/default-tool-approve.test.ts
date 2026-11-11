@@ -69,6 +69,9 @@ describe('DefaultToolApprovePermissionPolicyService', () => {
     ['GetGoal', {}],
     ['SetGoalBudget', { tokenBudget: 1000 }],
     ['UpdateGoal', { status: 'complete' }],
+    ['memory_search', { query: 'deploy target' }],
+    ['memory_save', { content: 'the deploy target is staging', category: 'fact' }],
+    ['memory_forget', { id: 'mem_1', reason: 'outdated' }],
   ] as const)('approves %s', (toolName, args) => {
     expect(policy.evaluate(policyContext(toolName, args))).toEqual({ kind: 'approve' });
   });

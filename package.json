@@ -12,16 +12,23 @@
     "dev:cli": "pnpm --filter @omnicode/cli dev",
     "build:cli": "pnpm --filter @omnicode/cli build",
     "typecheck:cli": "pnpm --filter @omnicode/cli typecheck",
-    "typecheck:tui": "pnpm --filter @hilbras/omnicode-tui typecheck"
+    "typecheck:tui": "pnpm --filter @hilbras/omnicode-tui typecheck",
+    "check:workspace": "node scripts/check-workspace-globs.mjs",
+    "check:architecture": "node scripts/check-kernel-layering.mjs && node scripts/check-no-comments.mjs",
+    "check:agent-docs": "node scripts/check-agents-docs.mjs",
+    "check:guards": "pnpm check:workspace && pnpm check:architecture && pnpm check:agent-docs"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",
     "eslint": "^9.18.0",
+    "fontkit": "^2.0.4",
     "prettier": "^3.4.0",
+    "subset-font": "^2.9.0",
     "tsdown": "^0.22.14",
     "tsx": "^4.23.15",
     "turbo": "^2.5.0",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.4"
+    "vitest": "^4.1.4",
+    "woff2-encoder": "2.0.0"
   }
 }

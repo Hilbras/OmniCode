@@ -324,6 +324,7 @@ export class QuestionDialogComponent extends Container implements Focusable {
     this.lastAnswerMethod = method;
     this.updateAnswer(questionIdx);
     this.advanceAfterSingleSelect(questionIdx);
+    if (this.maybeSubmitSingleQuestion(method)) return;
   }
 
   private enterOtherInput(questionIdx: number): void {
@@ -358,7 +359,17 @@ export class QuestionDialogComponent extends Container implements Focusable {
     this.editingOther = false;
     this.reviewMessage = undefined;
 
-    if (!question.multi_select) this.advanceAfterSingleSelect(questionIdx);
+    if (!question.multi_select) {
+      this.advanceAfterSingleSelect(questionIdx);
+      if (this.maybeSubmitSingleQuestion(method)) return;
+    }
+  }
+
+  private maybeSubmitSingleQuestion(method: QuestionSubmissionMethod): boolean {
+    if (this.request.data.questions.length !== 1) return false;
+    if (this.hasUnansweredQuestions()) return false;
+    this.emitAnswers(method);
+    return true;
   }
 
   private advanceAfterSingleSelect(questionIdx: number): void {

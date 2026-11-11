@@ -9,6 +9,10 @@ import type {
   MemoryCaptureInput,
   MemoryCaptureResult,
   MemoryDiagnostics,
+  MemoryDigestCandidate,
+  MemoryDigestDecision,
+  MemoryDigestInput,
+  MemoryDigestResult,
   MemoryEvidenceRefreshOptions,
   MemoryEvidenceRefreshReport,
   MemoryListQuery,
@@ -25,13 +29,24 @@ import type {
   MemoryTaskStateInput,
   MemoryTaskState,
   MemoryUpdatePatch,
+  MemoryAuditRecord,
+  MemoryFeedbackInput,
+  MemoryFeedbackResult,
+  MemoryRecalibrationResult,
+  MemoryVersion,
 } from '#/contracts/memoryContract';
-import type { MemoryLifecycle, MemoryRecord, MemoryScope, MemoryTier } from '#/contracts/memoryTypes';
+import type { MemoryLifecycle, MemoryRecord, MemoryScope, MemoryTier, MemoryTrust } from '#/contracts/memoryTypes';
 import { MEMORY_LIFECYCLES, MEMORY_TIERS, parseMemoryRecord, TRUST_RANK } from '#/contracts/memoryTypes';
 import type { RetrievalResult } from '#/contracts/retrieval';
 import { MemoryRetriever, unavailableResult } from '#/retrieval/memoryRetriever';
 import {
   ALL_SCOPE_PREFIXES,
+  AUDIT_PREFIX,
+  auditKey,
+  FEEDBACK_PREFIX,
+  feedbackCooldownKey,
+  feedbackKey,
+  feedbackPrefixFor,
   fingerprintKey,
   idempotencyKey,
   MEMORY_SCHEMA_VERSION,
@@ -45,6 +60,8 @@ import {
   scopeKeyFor,
   scopePrefix,
   subjectPrefixFor,
+  versionKey,
+  versionPrefixFor,
 } from '#/storage/memoryKeys';
 import type { MemoryStoreOp, MemoryStorePort } from '#/storage/memoryStore';
 import { checkTierAdmission, evaluatePromotion } from '#/trust/trustPolicy';
@@ -53,6 +70,7 @@ import { fingerprintText, isFingerprintOfKind } from './evidence';
 import { buildRecord, withUpdated } from './memoryRecordFactory';
 import { DEFAULT_MEMORY_SETTINGS, type MemoryPolicySettings } from './memorySettings';
 import { subjectFor } from './subjectInference';
+import { isFuzzyDigestDuplicate, isSupersetContent } from './digest';
 
 export interface MemoryServiceDeps {
   readonly store: MemoryStorePort;
@@ -214,6 +232,265 @@ export class MemoryService extends Disposable implements IMemoryService {
     return { status: 'stored', id: record.id, record };
   }
 
+  async digest(input: MemoryDigestInput): Promise<MemoryDigestResult> {
+    const items: MemoryDigestResult['items'][number][] = [];
+    let stored = 0;
+    let deduplicated = 0;
+    let merged = 0;
+    let skipped = 0;
+    let rejected = 0;
+    for (const item of input.items) {
+      const fuzzy = await this.findFuzzyDigestDuplicate(item);
+      if (fuzzy !== undefined) {
+        const decision = await this.digestDecision(input, fuzzy, item);
+        if (decision === 'store') {
+          const storedResult = await this.capture(item);
+          if (storedResult.status === 'stored') stored += 1;
+          else rejected += 1;
+          items.push({
+            status: storedResult.status === 'stored' ? 'stored' : 'rejected',
+            id: storedResult.id,
+            reason: storedResult.reason ?? 'adjudicated store',
+          });
+          continue;
+        }
+        if (decision === 'merge') {
+          const updated = await this.update(fuzzy.id, { content: item.content });
+          if (updated.status === 'updated') {
+            merged += 1;
+            items.push({ status: 'merged', id: fuzzy.id, reason: 'fuzzy duplicate merged' });
+            continue;
+          }
+        }
+        deduplicated += 1;
+        items.push({ status: 'deduplicated', id: fuzzy.id, reason: 'fuzzy duplicate in scope' });
+        continue;
+      }
+      const result = await this.capture(item);
+      if (result.status === 'stored') stored += 1;
+      else if (result.status === 'deduplicated') deduplicated += 1;
+      else if (result.status === 'queued') skipped += 1;
+      else rejected += 1;
+      items.push({
+        status:
+          result.status === 'stored'
+            ? 'stored'
+            : result.status === 'deduplicated'
+              ? 'deduplicated'
+              : result.status === 'queued'
+                ? 'skipped'
+                : 'rejected',
+        id: result.id,
+        reason: result.reason,
+      });
+    }
+    return { stored, deduplicated, merged, skipped, rejected, items };
+  }
+
+  private async digestDecision(
+    input: MemoryDigestInput,
+    existing: MemoryRecord,
+    incoming: MemoryCaptureInput,
+  ): Promise<MemoryDigestDecision> {
+    if (input.adjudicate !== undefined) {
+      try {
+        const candidate: MemoryDigestCandidate = { existing, incoming };
+        return await input.adjudicate(candidate);
+      } catch {
+        return 'store';
+      }
+    }
+    return input.merge === true && isSupersetContent(existing.content, incoming.content)
+      ? 'merge'
+      : 'skip';
+  }
+
+  private async findFuzzyDigestDuplicate(input: MemoryCaptureInput): Promise<MemoryRecord | undefined> {
+    const existing = await this.list({
+      workspaceId: input.scope.workspaceId,
+      projectId: input.scope.projectId,
+      sessionId: input.scope.sessionId,
+      taskId: input.scope.taskId,
+      scopes: [input.scope.tier],
+      categories: [input.category],
+      lifecycle: ['active'],
+      limit: 200,
+    });
+    const scopeKey = scopeKeyFor(input.scope);
+    for (const record of existing) {
+      if (scopeKeyFor(record.scope) !== scopeKey) continue;
+      if (isFuzzyDigestDuplicate(record.content, input.content)) return record;
+    }
+    return undefined;
+  }
+
+  private async writeAudit(input: {
+    readonly operation: string;
+    readonly memoryId: string;
+    readonly reason: string;
+    readonly effect: string;
+    readonly actor?: MemoryAuditRecord['actor'];
+  }): Promise<void> {
+    const at = this.now();
+    const record: MemoryAuditRecord = {
+      id: this.newId(),
+      at,
+      actor: input.actor ?? 'application',
+      operation: input.operation,
+      memoryId: input.memoryId,
+      reason: input.reason,
+      effect: input.effect,
+    };
+    await this.store.commit([{ op: 'set', key: auditKey(at, record.id), value: record }]);
+  }
+
+  private async pruneVersions(id: string): Promise<void> {
+    const keys = await this.store.prefixKeys(versionPrefixFor(id), 1_000);
+    if (keys.length <= 20) return;
+    const remove = keys.slice(0, keys.length - 20).map((key) => ({ op: 'del' as const, key }));
+    await this.store.commit(remove);
+  }
+
+  private versionOp(record: MemoryRecord, reason: string): MemoryStoreOp {
+    return {
+      op: 'set',
+      key: versionKey(record.id, record.revision),
+      value: { revision: record.revision, record, reason, at: this.now() },
+    };
+  }
+
+  async auditLog(limit: number): Promise<readonly MemoryAuditRecord[]> {
+    if (!this.available()) return [];
+    const keys = await this.store.prefixKeys(AUDIT_PREFIX, Math.max(1, limit));
+    const values = await this.store.getMany(keys);
+    return [...values.values()]
+      .filter((value): value is MemoryAuditRecord =>
+        typeof value === 'object' && value !== null && typeof (value as { operation?: unknown }).operation === 'string',
+      )
+      .sort((a, b) => b.at - a.at)
+      .slice(0, Math.max(1, limit));
+  }
+
+  async setLegalHold(id: string, hold: boolean, reason: string): Promise<MemoryMutationResult> {
+    const existing = await this.read(id);
+    if (existing === undefined) return { status: 'not_found' };
+    const now = this.now();
+    const next = withUpdated(existing, { legalHold: hold }, now);
+    if (!(await this.commit([this.versionOp(existing, `legal hold: ${hold ? 'set' : 'released'}`), { op: 'set', key: recordKey(id), value: next }]))) {
+      return { status: 'failed', reason: 'legal hold was not durable' };
+    }
+    await this.writeAudit({
+      operation: hold ? 'legal_hold_set' : 'legal_hold_released',
+      memoryId: id,
+      reason,
+      effect: hold ? 'hold set' : 'hold released',
+      actor: 'user',
+    });
+    return { status: 'updated', record: next };
+  }
+
+  async recordFeedback(input: MemoryFeedbackInput): Promise<MemoryFeedbackResult> {
+    if (!this.available()) return { status: 'disabled' };
+    const existing = await this.read(input.memoryId);
+    if (existing === undefined) return { status: 'not_found' };
+    const at = this.now();
+    const id = this.newId();
+    await this.store.commit([
+      {
+        op: 'set',
+        key: feedbackKey(input.memoryId, at, id),
+        value: {
+          id,
+          memoryId: input.memoryId,
+          feedback: input.feedback,
+          actor: input.actor ?? 'user',
+          turnId: input.turnId,
+          at,
+        },
+      },
+    ]);
+    const keys = await this.store.prefixKeys(feedbackPrefixFor(input.memoryId), 1000);
+    return { status: 'recorded', feedback: input.feedback, count: keys.length };
+  }
+
+  async recalibrateTrust(memoryId: string, now = this.now()): Promise<MemoryRecalibrationResult> {
+    if (!this.available()) return { status: 'disabled' };
+    const existing = await this.read(memoryId);
+    if (existing === undefined) return { status: 'not_found' };
+    if (existing.trust === 'system') return { status: 'system' };
+    const cooldown = await this.store.get(feedbackCooldownKey(memoryId));
+    if (
+      typeof cooldown === 'object' &&
+      cooldown !== null &&
+      typeof (cooldown as { at?: unknown }).at === 'number' &&
+      now - (cooldown as { at: number }).at < 7 * 86_400_000
+    ) {
+      return { status: 'cooldown' };
+    }
+    const keys = await this.store.prefixKeys(feedbackPrefixFor(memoryId), 1000);
+    const values = await this.store.getMany(keys);
+    let useful = 0;
+    let harmful = 0;
+    for (const value of values.values()) {
+      const feedback = (value as { feedback?: string }).feedback;
+      if (feedback === 'useful') useful += 1;
+      if (feedback === 'harmful') harmful += 1;
+    }
+    const rank = TRUST_RANK[existing.trust];
+    let nextTrust: MemoryTrust | undefined;
+    if (useful >= 3 && useful > harmful) {
+      nextTrust = rank >= 3 ? undefined : (Object.entries(TRUST_RANK).find(([, value]) => value === rank + 1)?.[0] as MemoryTrust | undefined);
+    } else if (harmful >= 2 && harmful > useful) {
+      nextTrust = rank <= 0 ? undefined : (Object.entries(TRUST_RANK).find(([, value]) => value === rank - 1)?.[0] as MemoryTrust | undefined);
+    }
+    if (nextTrust === undefined || nextTrust === 'system') return { status: 'skipped' };
+    if (rank < TRUST_RANK[nextTrust]) {
+      const decision = evaluatePromotion(existing, nextTrust, 'user', { at: now, evidence: existing.evidence });
+      if (!decision.allowed) return { status: 'skipped', reason: decision.reason };
+    }
+    const next = withUpdated(
+      existing,
+      { trust: nextTrust, trustReason: 'feedback recalibration' },
+      now,
+    );
+    if (!(await this.commit([{ op: 'set', key: recordKey(memoryId), value: next }]))) {
+      return { status: 'skipped', reason: 'recalibration was not durable' };
+    }
+    await this.store.commit([{ op: 'set', key: feedbackCooldownKey(memoryId), value: { at: now } }]);
+    await this.writeAudit({
+      operation: 'feedback_recalibration',
+      memoryId,
+      reason: `useful=${String(useful)} harmful=${String(harmful)}`,
+      effect: `${existing.trust} -> ${nextTrust}`,
+    });
+    return {
+      status: TRUST_RANK[nextTrust] > rank ? 'promoted' : 'demoted',
+      from: existing.trust,
+      to: nextTrust,
+    };
+  }
+
+  async history(id: string): Promise<readonly MemoryVersion[]> {
+    if (!this.available()) return [];
+    const keys = await this.store.prefixKeys(versionPrefixFor(id), 100);
+    const values = await this.store.getMany(keys);
+    const versions: MemoryVersion[] = [];
+    for (const value of values.values()) {
+      if (typeof value !== 'object' || value === null) continue;
+      const candidate = value as Record<string, unknown>;
+      const record = parseMemoryRecord(candidate['record']);
+      if (record === undefined) continue;
+      versions.push({
+        memoryId: id,
+        revision: typeof candidate['revision'] === 'number' ? candidate['revision'] : record.revision,
+        record,
+        reason: typeof candidate['reason'] === 'string' ? candidate['reason'] : 'unknown',
+        at: typeof candidate['at'] === 'number' ? candidate['at'] : record.updatedAt,
+      });
+    }
+    return versions.sort((a, b) => a.revision - b.revision);
+  }
+
   async get(id: string): Promise<MemoryRecord | undefined> {
     return this.read(id);
   }
@@ -286,9 +563,11 @@ export class MemoryService extends Disposable implements IMemoryService {
       },
       now,
     );
-    if (!(await this.commit([{ op: 'set', key: recordKey(id), value: next }]))) {
+    if (!(await this.commit([this.versionOp(existing, 'update'), { op: 'set', key: recordKey(id), value: next }]))) {
       return { status: 'failed', reason: 'memory could not be updated' };
     }
+    await this.pruneVersions(id);
+    await this.writeAudit({ operation: 'update', memoryId: id, reason: 'content update', effect: 'updated' });
     return { status: 'updated', record: next };
   }
 
@@ -302,15 +581,20 @@ export class MemoryService extends Disposable implements IMemoryService {
     if (successor.id === existing.id) {
       return { status: 'rejected', reason: 'a record cannot supersede itself' };
     }
+    if (existing.legalHold) {
+      return { status: 'rejected', reason: 'legal hold blocks supersession' };
+    }
     const now = this.now();
     const next = withUpdated(
       existing,
       { lifecycle: 'superseded' satisfies MemoryLifecycle, supersededBy: successor.id },
       now,
     );
-    if (!(await this.commit([{ op: 'set', key: recordKey(existing.id), value: next }]))) {
+    if (!(await this.commit([this.versionOp(existing, `supersede: ${input.reason}`), { op: 'set', key: recordKey(existing.id), value: next }]))) {
       return { status: 'failed', reason: 'supersession was not durable' };
     }
+    await this.pruneVersions(existing.id);
+    await this.writeAudit({ operation: 'supersede', memoryId: existing.id, reason: input.reason, effect: `superseded by ${successor.id}` });
     this.log.info('memory superseded', { memoryId: existing.id, successorId: successor.id, reason: input.reason });
     return { status: 'updated', record: next };
   }
@@ -327,17 +611,26 @@ export class MemoryService extends Disposable implements IMemoryService {
       },
       now,
     );
-    if (!(await this.commit([{ op: 'set', key: recordKey(id), value: next }]))) {
+    if (!(await this.commit([this.versionOp(existing, `invalidate: ${reason}`), { op: 'set', key: recordKey(id), value: next }]))) {
       return { status: 'failed', reason: 'invalidation was not durable' };
     }
+    await this.pruneVersions(id);
+    await this.writeAudit({ operation: 'invalidate', memoryId: id, reason, effect: 'invalidated' });
     return { status: 'updated', record: next };
   }
 
   async delete(id: string, reason: string): Promise<MemoryMutationResult> {
     const existing = await this.read(id);
     if (existing === undefined) return { status: 'not_found' };
+    if (existing.legalHold) {
+      return { status: 'rejected', reason: 'legal hold blocks deletion' };
+    }
     const ops: MemoryStoreOp[] = referenceKeys(existing).map((key) => ({ op: 'del' as const, key }));
-    if (!(await this.commit(ops))) return { status: 'failed', reason: 'deletion was not durable' };
+    if (!(await this.commit([this.versionOp(existing, `delete: ${reason}`), ...ops]))) {
+      return { status: 'failed', reason: 'deletion was not durable' };
+    }
+    await this.pruneVersions(id);
+    await this.writeAudit({ operation: 'delete', memoryId: id, reason, effect: 'deleted' });
     this.log.info('memory deleted', { memoryId: id, reason });
     return { status: 'updated', record: withUpdated(existing, { lifecycle: 'deleted' }, this.now()) };
   }
@@ -486,6 +779,7 @@ export class MemoryService extends Disposable implements IMemoryService {
     for (const tier of MEMORY_TIERS) {
       const records = await this.listAll({ tiers: [tier], lifecycle: ['active'], limit: 1000 });
       for (const record of records) {
+        if (record.retention === 'pinned' || record.retention === 'neverExpire') continue;
         if (record.expiresAt === undefined || record.expiresAt > now) continue;
         const next = withUpdated(record, { lifecycle: 'expired' satisfies MemoryLifecycle }, now);
         if (await this.commit([{ op: 'set', key: recordKey(record.id), value: next }])) expired.push(next);
@@ -677,6 +971,7 @@ export class MemoryService extends Disposable implements IMemoryService {
     const jobs: MemoryReviewJobReport[] = [];
     let stored = 0;
     let deduplicated = 0;
+    let merged = 0;
     let skipped = 0;
     let retrying = 0;
     let failed = 0;

@@ -179,6 +179,11 @@ describe('approval adapter', () => {
         selected_label: 'Revise',
         requires_feedback: true,
       },
+      {
+        label: 'Reject and Exit',
+        response: 'rejected',
+        selected_label: 'Reject and Exit',
+      },
     ]);
   });
 
@@ -207,6 +212,11 @@ describe('approval adapter', () => {
         response: 'rejected',
         selected_label: 'Revise',
         requires_feedback: true,
+      },
+      {
+        label: 'Reject and Exit',
+        response: 'rejected',
+        selected_label: 'Reject and Exit',
       },
     ]);
   });

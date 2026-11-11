@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import type { ContextInjectionContext } from '@hilbras/omnicode-engine/features/reminder/types';
 import type { IAgentReminderService } from '@hilbras/omnicode-engine/features/reminder/reminderService';
@@ -35,6 +35,7 @@ function compose(options: {
   readonly enabled?: boolean;
   readonly prompt?: string;
   readonly store?: MemoryStorePort;
+  readonly autoCapture?: boolean;
 }) {
   const harness = createHarness(options.store === undefined ? {} : { store: options.store });
   const registrations: Registration[] = [];
@@ -48,6 +49,10 @@ function compose(options: {
   const context = {
     lastUserPrompt: () => options.prompt,
     projectId: async () => REPO_A,
+    scopeFor: async (tier: 'repository' | 'session' | 'global' | 'workspace') =>
+      tier === 'repository'
+        ? { tier: 'repository', workspaceId: 'workspace-inject', projectId: REPO_A }
+        : { tier },
     search: (query: Parameters<IAgentMemoryContextService['search']>[0]) => harness.service.search(query),
   } as unknown as IAgentMemoryContextService;
 
@@ -55,6 +60,7 @@ function compose(options: {
     ...harness.service,
     enabled: options.enabled ?? true,
     injectCanonical: options.injectCanonical ?? true,
+    capture: harness.service.capture.bind(harness.service),
     noteAccess: harness.service.noteAccess.bind(harness.service),
     restoreTaskState: (input: MemoryTaskStateInput) => harness.service.restoreTaskState(input),
   } as unknown as IMemoryService;
@@ -66,7 +72,7 @@ function compose(options: {
   } as never;
 
   const flags = {
-    enabled: () => false,
+    enabled: (id: string) => options.autoCapture === true && id === 'memory_auto_capture',
     registry: {} as never,
     snapshot: () => ({}),
     enabledIds: () => [] as never,
@@ -76,6 +82,8 @@ function compose(options: {
     setConfigOverrides: () => undefined,
     _serviceBrand: undefined,
   } as unknown as IFlagService;
+  const scopeContext = { agentId: 'main' } as never;
+  const dispatcher = { dispatch: vi.fn(async () => undefined) } as never;
   const service = new AgentMemoryInjectionService(
     harness.log as never,
     memory,
@@ -83,9 +91,11 @@ function compose(options: {
     context,
     reminders,
     flags,
+    scopeContext,
+    dispatcher,
   );
   expect(service).toBeInstanceOf(AgentMemoryInjectionService);
-  return { harness, registrations, memory };
+  return { harness, registrations, memory, dispatcher };
 }
 
 const freshTurn: ContextInjectionContext<MemoryInjectionDisclosure> = {
@@ -250,6 +260,33 @@ describe('automatic memory injection', () => {
     expect((await harness.service.get(stored.id as string))?.accessCount).toBe(0);
     await registrations[0]?.provider(freshTurn);
     expect((await harness.service.get(stored.id as string))?.accessCount).toBe(1);
+  });
+
+  it('auto-captures explicit user memory requests', async () => {
+    const { harness, registrations, dispatcher } = compose({
+      prompt: 'Remember that the deploy target is staging.',
+      autoCapture: true,
+    });
+    const capture = registrations.find((entry) => entry.variant === 'memory_auto_capture');
+    expect(capture).toBeDefined();
+
+    await capture?.provider(freshTurn);
+    await capture?.provider(freshTurn);
+
+    const records = await harness.service.list({
+      workspaceId: 'workspace-inject',
+      projectId: REPO_A,
+      scopes: ['repository'],
+    });
+    expect(records).toHaveLength(1);
+    expect(records[0]).toMatchObject({
+      content: 'the deploy target is staging',
+      category: 'fact',
+      trust: 'trusted',
+      sourceType: 'user_statement',
+      origin: 'user',
+    });
+    expect((dispatcher as { dispatch: ReturnType<typeof vi.fn> }).dispatch).toHaveBeenCalledOnce();
   });
 
   it('states the constraint when the injection budget bound it', async () => {

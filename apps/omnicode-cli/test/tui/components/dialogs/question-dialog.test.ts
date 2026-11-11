@@ -205,7 +205,7 @@ describe('QuestionDialogComponent', () => {
     expect(collected).toEqual([[]]);
   });
 
-  it('single-select Other input is inline and auto-advances after commit', () => {
+  it('single-select Other input submits immediately for a single question', () => {
     const pending = makePending([
       {
         question: 'Pick one?',
@@ -226,13 +226,6 @@ describe('QuestionDialogComponent', () => {
     dialog.handleInput('i');
     dialog.handleInput('\r');
 
-    out = strip(dialog.render(80).join('\n'));
-    expect(out).toContain('Review your answer before submit');
-    expect(out).toContain('Ready to submit your answers?');
-    expect(out).not.toContain('? Ready to submit your answers?');
-    expect(out).toContain('Hi');
-
-    dialog.handleInput('1');
     expect(collected).toEqual([['Hi']]);
     expect(methods).toEqual(['enter']);
   });

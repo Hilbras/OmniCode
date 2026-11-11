@@ -1,7 +1,15 @@
 import { createHash } from 'node:crypto';
 
 import type { MemoryAuthority } from '#/contracts/memoryAuthority';
-import type { MemoryApproval, MemoryEvidence, MemoryRecord, MemoryScope } from '#/contracts/memoryTypes';
+import type {
+  MemoryApproval,
+  MemoryEvidence,
+  MemoryRecord,
+  MemoryRelation,
+  MemoryScope,
+  MemoryRetention,
+  MemorySensitivity,
+} from '#/contracts/memoryTypes';
 
 import { redactMemoryContent } from '#/security/redaction';
 import { analyzeMemoryContent } from '#/security/suspicion';
@@ -39,8 +47,13 @@ export interface RecordDraft {
   readonly origin: MemoryRecord['origin'];
   readonly scope: MemoryScope;
   readonly subject?: string;
+  readonly sensitivity?: MemorySensitivity;
+  readonly retention?: MemoryRetention;
+  readonly importance?: number;
+  readonly confidence?: number;
   readonly evidence?: readonly MemoryEvidence[];
   readonly derivedFrom?: readonly string[];
+  readonly relations?: readonly MemoryRelation[];
   readonly authority?: MemoryAuthority;
   readonly approval?: MemoryApproval;
   readonly repoRevision?: string;
@@ -81,6 +94,11 @@ export function buildRecord(draft: RecordDraft, id: string, now: number): BuiltR
     searchText: searchTextFor(redaction.content),
     redactionCount: redaction.redactionCount,
     trust: trust.trust,
+    sensitivity: draft.sensitivity ?? 'internal',
+    retention: draft.retention ?? 'persistent',
+    importance: draft.importance ?? 3,
+    confidence: draft.confidence ?? 0.5,
+    legalHold: false,
     trustReason: trust.reason,
     sourceType: draft.sourceType,
     origin: draft.origin,
@@ -90,6 +108,7 @@ export function buildRecord(draft: RecordDraft, id: string, now: number): BuiltR
     lifecycle: 'active',
     evidence,
     derivedFrom: [...(draft.derivedFrom ?? [])],
+    relations: [...(draft.relations ?? [])],
     expiresAt: draft.expiresAt,
     revision: 0,
     accessCount: 0,

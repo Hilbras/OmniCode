@@ -1,0 +1,89 @@
+import type { AppTask } from '../api/types';
+
+/**
+ * Append the live-only swarm subagents that a fresh REST `/tasks` list does not
+ * contain.
+ *
+ * REST `/tasks` lists only the main agent's background-task store — it never
+ * returns foreground swarm subagents (kind `'subagent'`), which arrive purely
+ * through the WS event stream. Both the session-load task fetch and the 1s
+ * output poll rebuild `tasksBySession` from that REST list, so a plain replace
+ * would drop the subagents on every refresh and the next event would re-add
+ * them, flickering the swarm/subagent cards (and their live "currently doing"
+ * line) about once per second.
+ *
+ * Keep WS-owned subagent tasks that REST omits, so the REST refresh only governs
+ * background tasks. REST stays authoritative for anything it does return.
+ *
+ * One exception: REST DOES return background subagents — keyed by their
+ * background-task id, while the WS stream keys the same agent by agent id
+ * (`backgroundTaskId` links the two, set from the `task.started`
+ * registration). Fold the REST copy into the WS-owned row so one agent does
+ * not surface as two rows; REST still corrects a terminal status the WS row
+ * may have missed while disconnected.
+ *
+ * A foreground agent run briefly appears here too: the daemon registers a
+ * non-detached task record at spawn and lists it while the run is live, but
+ * the WS stream keys that agent purely by agent id (no `task.started` ever
+ * fires for it). Fold that copy by agent id — left alone it becomes a
+ * zombie: the record vanishes from the list when the run ends, never
+ * carrying a terminal status, so the folded-out copy would keep showing
+ * "running" and answer no cancel.
+ */
+export function keepLiveSubagents(restBased: AppTask[], existing: AppTask[]): AppTask[] {
+  const restIds = new Set(restBased.map((t) => t.id));
+  const liveSubagents = existing.filter((t) => t.kind === 'subagent' && !restIds.has(t.id));
+  if (liveSubagents.length === 0) return restBased;
+  const restById = new Map(restBased.map((t) => [t.id, t] as const));
+  // A foreground agent run also registers a task-store record (non-detached,
+  // memory-only) that REST /tasks lists while the run is live — keyed by a
+  // task id the WS stream never references, carrying no run_in_background
+  // flag, and never settled server-side. Fold it into the agent's WS row by
+  // agent id, or it surfaces as a second dock row (defaulted to background)
+  // that stays "running" forever and answers no cancel.
+  const restByAgentId = new Map(
+    restBased
+      .filter((t) => t.kind === 'subagent' && t.agentId !== undefined)
+      .map((t) => [t.agentId!, t] as const),
+  );
+  const foldedRestIds = new Set<string>();
+  const merged = liveSubagents.map((live) => {
+    const rest =
+      (live.backgroundTaskId !== undefined ? restById.get(live.backgroundTaskId) : undefined) ??
+      restByAgentId.get(live.agentId ?? live.id);
+    if (rest === undefined) return live;
+    foldedRestIds.add(rest.id);
+    // True when the fold — not the event stream — is what makes the row terminal.
+    const restCompletesLiveRow = live.status === 'running' && rest.status !== 'running';
+    return {
+      ...live,
+      // Terminal-stickiness: never let a lagging poll flip a finished row back
+      // to running, but let REST complete a row whose finish event was missed.
+      status: live.status === 'running' ? rest.status : live.status,
+      // toAgentMember prefers subagentPhase over status, so sync it too —
+      // otherwise the detail panel badge keeps showing a stale Working/Queued.
+      // The wire phase enum has no 'cancelled'; the UI still renders 已取消
+      // from the terminal status (it wins over the phase in toAgentMember).
+      subagentPhase: restCompletesLiveRow
+        ? rest.status === 'completed'
+          ? 'completed'
+          : 'failed'
+        : live.subagentPhase,
+      // REST's daemon-stamped time beats a locally estimated one (and
+      // clears the marker); the live stamp is the fallback only.
+      completedAt: rest.completedAt ?? live.completedAt,
+      completedAtEstimated: rest.completedAt !== undefined ? undefined : live.completedAtEstimated,
+      // REST output is authoritative once present: agent tasks persist their
+      // result at completion, and a previously folded preview would otherwise
+      // freeze the detail panel's Result.
+      outputPreview: rest.outputPreview ?? live.outputPreview,
+      outputBytes: rest.outputBytes ?? live.outputBytes,
+      // Display metadata: the live row wins when it has it (the event stream
+      // is fresher); a skeleton live row picks it up from the REST record.
+      model: live.model ?? rest.model,
+      thinkingEffort: live.thinkingEffort ?? rest.thinkingEffort,
+    };
+  });
+  const rest = restBased.filter((t) => !foldedRestIds.has(t.id));
+  return [...rest, ...merged];
+}

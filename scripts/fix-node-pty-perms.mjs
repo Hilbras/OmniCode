@@ -17,10 +17,10 @@ import { dirname, join } from 'node:path';
 
 function nodePtyRoot() {
   const require = createRequire(import.meta.url);
-  // Resolve from Kernel/core (where node-pty is declared) so we find the
+  // Resolve from packages/engine (where node-pty is declared) so we find the
   // workspace's hoisted copy regardless of where this script runs.
   const entry = require.resolve('node-pty', {
-    paths: [join(process.cwd(), 'Kernel/core'), process.cwd()],
+    paths: [join(process.cwd(), 'packages/engine'), join(process.cwd(), 'apps/omnicode-cli'), process.cwd()],
   });
   // .../node-pty/lib/index.js -> .../node-pty
   return dirname(dirname(entry));

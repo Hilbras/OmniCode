@@ -3,12 +3,15 @@ import { Service } from '@hilbras/omnicode-base/di/service';
 import { ILogService, type ILogger } from '@hilbras/omnicode-base/log/log';
 import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
 import { IAgentReminderService } from '@hilbras/omnicode-engine/features/reminder/reminderService';
+import { IAgentScopeContext } from '@hilbras/omnicode-engine/agent/scopeContext/scopeContext';
+import { IEventDispatcher } from '@hilbras/omnicode-engine/state/eventDispatcher';
 import type { ContextInjectionProvider } from '@hilbras/omnicode-engine/features/reminder/types';
 import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
 
 import {
   IAgentMemoryContextService,
   MEMORY_INJECTION_VARIANT,
+  MEMORY_AUTO_CAPTURE_VARIANT,
   MEMORY_PHRASES_VARIANT,
   MEMORY_PREFERENCES_VARIANT,
   MEMORY_RESTORE_VARIANT,
@@ -18,12 +21,23 @@ import type { MemoryScope } from '#/contracts/memoryTypes';
 import type { MemoryTaskStateInput } from '#/contracts/memoryContract';
 import type { RetrievedMemory, RetrievalResult } from '#/contracts/retrieval';
 import { AUTO_INJECT_RETRIEVAL_BUDGET } from '#/contracts/retrieval';
-import { MEMORY_PHRASES_FLAG_ID, MEMORY_PREFERENCES_FLAG_ID } from '#/feature/flag';
+import {
+  MEMORY_AUTO_CAPTURE_FLAG_ID,
+  MEMORY_PHRASES_FLAG_ID,
+  MEMORY_PREFERENCES_FLAG_ID,
+} from '#/feature/flag';
+import { extractAutoCaptureStatements } from '#/layers/autoCapture';
+import { MemorySaved } from '#/context/memoryEvents';
 import { extractPhrases } from '#/layers/phrases';
 import { extractPreferences, preferenceSubject } from '#/layers/preferences';
 
 export interface MemoryInjectionDisclosure {
-  readonly variant: typeof MEMORY_INJECTION_VARIANT | typeof MEMORY_RESTORE_VARIANT | typeof MEMORY_PREFERENCES_VARIANT | typeof MEMORY_PHRASES_VARIANT;
+  readonly variant:
+    | typeof MEMORY_INJECTION_VARIANT
+    | typeof MEMORY_RESTORE_VARIANT
+    | typeof MEMORY_PREFERENCES_VARIANT
+    | typeof MEMORY_PHRASES_VARIANT
+    | typeof MEMORY_AUTO_CAPTURE_VARIANT;
   readonly status: RetrievalResult['status'];
   readonly memoryIds: readonly string[];
   readonly truncated: boolean;
@@ -62,6 +76,8 @@ export class AgentMemoryInjectionService extends Service implements IMemoryInjec
     @IAgentMemoryContextService context: IAgentMemoryContextService,
     @IAgentReminderService reminders: IAgentReminderService,
     @IFlagService flags: IFlagService,
+    @IAgentScopeContext private readonly scopeContext: IAgentScopeContext,
+    @IEventDispatcher private readonly dispatcher: IEventDispatcher,
   ) {
     super();
     this.log = log.child({ memory: 'injection' });
@@ -71,6 +87,9 @@ export class AgentMemoryInjectionService extends Service implements IMemoryInjec
     this.flags = flags;
     this._register(reminders.register<MemoryInjectionDisclosure>(MEMORY_INJECTION_VARIANT, this.canonicalProvider()));
     this._register(reminders.register<MemoryInjectionDisclosure>(MEMORY_RESTORE_VARIANT, this.restoreProvider()));
+    if (this.flags.enabled(MEMORY_AUTO_CAPTURE_FLAG_ID)) {
+      this._register(reminders.register<MemoryInjectionDisclosure>(MEMORY_AUTO_CAPTURE_VARIANT, this.autoCaptureProvider()));
+    }
     if (this.flags.enabled(MEMORY_PREFERENCES_FLAG_ID)) {
       this._register(reminders.register<MemoryInjectionDisclosure>(MEMORY_PREFERENCES_VARIANT, this.preferencesProvider()));
     }
@@ -214,6 +233,47 @@ export class AgentMemoryInjectionService extends Service implements IMemoryInjec
           truncated: false,
         },
       };
+    };
+  }
+
+  private autoCaptureProvider(): ContextInjectionProvider<MemoryInjectionDisclosure> {
+    return async (context) => {
+      if (!this.memory.enabled) return undefined;
+      if (!context.isNewTurn) return undefined;
+      const prompt = this.context.lastUserPrompt();
+      if (prompt === undefined || prompt.length === 0) return undefined;
+      const statements = extractAutoCaptureStatements(prompt);
+      for (const statement of statements) {
+        const scope =
+          statement.scope === 'global'
+            ? { tier: 'global' as const }
+            : ((await this.context.scopeFor('repository')) ?? { tier: 'global' as const });
+        const captured = await this.memory.capture({
+          content: statement.content,
+          tier: 'distilled',
+          category: statement.category,
+          sourceType: 'user_statement',
+          origin: 'user',
+          scope,
+          subject:
+            statement.category === 'preference'
+              ? preferenceSubject(statement.content)
+              : undefined,
+        });
+        if (captured.status === 'stored' && captured.record !== undefined) {
+          await this.dispatcher.dispatch(
+            new MemorySaved({
+              agentId: this.scopeContext.agentId,
+              memoryId: captured.record.id,
+              content: captured.record.content,
+              category: captured.record.category,
+              trust: captured.record.trust,
+              scope: captured.record.scope.tier,
+            }),
+          );
+        }
+      }
+      return undefined;
     };
   }
 

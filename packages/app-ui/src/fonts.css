@@ -1,0 +1,27 @@
+/* Self-hosted variable fonts, generated once into ./assets/fonts by
+   scripts/prepare-fonts.mjs (gitignored) and fingerprinted by Vite into each
+   final build. Kept as a separate entry from style.css so font-free consumers
+   (e.g. apps/auth-login, which falls back to platform fonts) don't ship
+   ~7.5MB of CJK. Consumers that want the Omnicode typefaces import this once,
+   alongside style.css. */
+
+/* Noto Sans SC is sliced by scripts/prepare-fonts.mjs into unicode-range
+   chunks, so a page only downloads the CJK glyphs it actually renders. One
+   label of four Chinese characters used to pull the whole 7.6MB file. */
+@import "./assets/fonts/noto-sc.css";
+
+@font-face {
+  font-family: "Schibsted Grotesk Variable";
+  font-style: normal;
+  font-display: swap;
+  font-weight: 400 900;
+  src: url("./assets/fonts/SchibstedGrotesk[wght].woff2") format("woff2-variations");
+}
+
+@font-face {
+  font-family: "Schibsted Grotesk Variable";
+  font-style: italic;
+  font-display: swap;
+  font-weight: 400 900;
+  src: url("./assets/fonts/SchibstedGrotesk-Italic[wght].woff2") format("woff2-variations");
+}

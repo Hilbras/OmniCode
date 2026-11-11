@@ -13,6 +13,7 @@ const PLAN_TOOLS = [
   'Grep',
   'WebSearch',
   'FetchURL',
+  'memory_search',
 ] as const;
 
 const PLAN_ROLE =

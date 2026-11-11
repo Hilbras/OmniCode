@@ -26,6 +26,9 @@ const DEFAULT_APPROVE_TOOLS = new Set([
   'SetGoalBudget',
   'UpdateGoal',
   'select_tools',
+  'memory_search',
+  'memory_save',
+  'memory_forget',
 ]);
 
 export class DefaultToolApprovePermissionPolicyService implements PermissionPolicy {

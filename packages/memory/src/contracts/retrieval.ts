@@ -1,4 +1,5 @@
 import type {
+  MemorySensitivity,
   MemoryCategory,
   MemoryEvidence,
   MemoryRecord,
@@ -27,6 +28,7 @@ export const BUDGET_CONSTRAINTS = [
   'maxPostingsVisits',
   'text_index_building',
   'scope_candidates',
+  'maxBytes',
 ] as const;
 export type BudgetConstraint = (typeof BUDGET_CONSTRAINTS)[number];
 
@@ -52,12 +54,14 @@ export interface RetrievalBudget {
   readonly maxMemoryChars: number;
   readonly maxCandidates: number;
   readonly maxPostingsVisits: number;
+  readonly maxBytes?: number;
 }
 
 export interface RetrievalBudgetReport {
   readonly applied: RetrievalBudget;
   readonly truncated: boolean;
   readonly constraints: readonly BudgetConstraint[];
+  readonly truncatedBy?: readonly BudgetConstraint[];
   readonly droppedByBudget: number;
   readonly mayBeIncomplete: boolean;
 }
@@ -72,10 +76,14 @@ export interface MemorySearchQuery {
   readonly tiers?: readonly MemoryTier[];
   readonly categories?: readonly MemoryCategory[];
   readonly minTrust?: MemoryTrust;
+  readonly maxSensitivity?: MemorySensitivity;
+  readonly includeHeld?: boolean;
   readonly includeUntrusted?: boolean;
   readonly purpose?: RetrievalPurpose;
   readonly budget?: Partial<RetrievalBudget>;
   readonly limit?: number;
+  readonly expandRelations?: boolean;
+  readonly maxRelationDepth?: number;
 }
 
 export interface RetrievalGateDecision {
@@ -88,7 +96,10 @@ export interface RetrievalGateDecision {
     | 'category'
     | 'suspicion'
     | 'integrity'
-    | 'relevance';
+    | 'relevance'
+    | 'relation'
+    | 'sensitivity'
+    | 'legal_hold';
   readonly allowed: boolean;
   readonly detail: string;
 }
@@ -98,6 +109,10 @@ export interface RetrievalScoreComponents {
   readonly trust: number;
   readonly scope: number;
   readonly reinforcement: number;
+  readonly importance?: number;
+  readonly confidence?: number;
+  readonly recency?: number;
+  readonly pinned?: number;
   readonly total: number;
 }
 
@@ -133,6 +148,9 @@ export interface RetrievalDiagnostics {
   readonly lexicalTruncated: boolean;
   readonly lexicalVisits: number;
   readonly rejected: readonly RetrievalGateDecision[];
+  readonly duplicatesRemoved?: number;
+  readonly supersededSuppressed?: number;
+  readonly relationExpanded?: number;
 }
 
 export interface RetrievalResult {

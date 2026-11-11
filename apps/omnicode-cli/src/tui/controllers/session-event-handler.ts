@@ -276,6 +276,10 @@ export class SessionEventHandler {
       this.host.streamingUI.setTurnId(String(event.turnId));
     }
 
+    if ((event as unknown as { readonly type?: string }).type === 'memory.saved') {
+      this.handleMemorySaved(event);
+      return;
+    }
     switch (event.type) {
       case 'turn.started':
         this.handleTurnBegin(event);
@@ -393,7 +397,26 @@ export class SessionEventHandler {
   // Private handlers
   // ---------------------------------------------------------------------------
 
+  private handleMemorySaved(event: unknown): void {
+    const saved = event as {
+      readonly content?: string;
+      readonly category?: string;
+      readonly trust?: string;
+    };
+    const content = (saved.content ?? '').trim();
+    if (content.length === 0) return;
+    this.host.appendTranscriptEntry({
+      id: nextTranscriptId(),
+      kind: 'status',
+      turnId: undefined,
+      renderMode: 'notice',
+      content: `🧠 Memory saved (${saved.category ?? 'fact'}, ${saved.trust ?? 'trusted'}): ${content.slice(0, 300)}`,
+    });
+    this.host.showStatus('Memory saved', 'success');
+  }
+
   private handleTurnBegin(event: TurnStartedEvent): void {
+    this.renderExternalUserPrompt(event);
     this.host.handleTurnStarted?.(event);
     this.currentTurnHasAssistantText = false;
     if (event.origin?.kind === 'plugin_command') {
@@ -410,6 +433,20 @@ export class SessionEventHandler {
     this.host.setAppState({
       streamingPhase: 'waiting',
       streamingStartTime: Date.now(),
+    });
+  }
+
+  private renderExternalUserPrompt(event: TurnStartedEvent): void {
+    if (event.prompt === undefined || event.origin?.kind !== 'user') return;
+    const fromTelegram =
+      event.origin.clientMetadata?.some((entry) => entry['source'] === 'telegram') === true;
+    if (!fromTelegram) return;
+    this.host.appendTranscriptEntry({
+      id: nextTranscriptId(),
+      kind: 'user',
+      turnId: undefined,
+      renderMode: 'plain',
+      content: event.prompt,
     });
   }
 

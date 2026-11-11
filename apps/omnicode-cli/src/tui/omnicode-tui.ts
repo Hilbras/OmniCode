@@ -133,6 +133,7 @@ import {
   SkillsBrowserController,
   SubagentsBrowserController,
 } from './controllers/catalog-browser';
+import { ConnectorsController } from './controllers/connectors';
 import { ClipboardImageHintController } from './controllers/clipboard-image-hint';
 import { EditorKeyboardController } from './controllers/editor-keyboard';
 import { McpManagerController } from './controllers/mcp-manager';
@@ -315,6 +316,7 @@ function createInitialAppState(input: OmnicodeTUIStartupInput): AppState {
     availableProviders: {},
     sessionTitle: null,
     goal: null,
+    telegram: null,
     mcpServersSummary: null,
     banner: undefined,
   };
@@ -358,6 +360,7 @@ export class OmnicodeTUI {
   state: TUIState;
   /** In-flight lazy session creation (v2 engine), shared by concurrent first-use triggers. */
   private ensureSessionPromise: Promise<Session | undefined> | null = null;
+  private telegramAutoStartAttempted = false;
   private readonly cacheHint = new CacheHintController(this);
   /** Staged prompt media lifecycle (daemon uploads + cache copies) — see StagingLeaseTracker. */
   private readonly staging: StagingLeaseTracker;
@@ -410,6 +413,7 @@ export class OmnicodeTUI {
   readonly tasksBrowserController: TasksBrowserController;
   readonly skillsBrowserController: SkillsBrowserController;
   readonly subagentsBrowserController: SubagentsBrowserController;
+  readonly connectorsController: ConnectorsController;
   readonly mcpManagerController: McpManagerController;
   readonly updateRecommenderController: UpdateRecommenderController;
   readonly surveyController: SurveyController;
@@ -524,6 +528,7 @@ export class OmnicodeTUI {
     this.tasksBrowserController = new TasksBrowserController(this);
     this.skillsBrowserController = new SkillsBrowserController(this);
     this.subagentsBrowserController = new SubagentsBrowserController(this);
+    this.connectorsController = new ConnectorsController(this);
     this.mcpManagerController = new McpManagerController(this, () => this.session);
     this.updateRecommenderController = new UpdateRecommenderController(this);
     this.surveyController = new SurveyController(this, {
@@ -902,6 +907,7 @@ export class OmnicodeTUI {
       void this.cacheHint.maybeShowOnResume();
     }
     void this.fetchSessions();
+    void this.autoStartTelegram();
     if (this.session !== undefined) {
       this.updateTerminalTitle();
     }
@@ -1101,6 +1107,7 @@ export class OmnicodeTUI {
     this.updateRecommenderController.close();
     this.skillsBrowserController.close();
     this.subagentsBrowserController.close();
+    this.connectorsController.close();
     this.mcpManagerController.close();
     this.btwPanelController.clear();
     this.stopActivitySpinner();
@@ -2347,6 +2354,10 @@ export class OmnicodeTUI {
     this.state.subagentsBrowser = value;
   }
 
+  setConnectorsBrowser(value: TUIState['connectorsBrowser']): void {
+    this.state.connectorsBrowser = value;
+  }
+
   setUpdateRecommender(value: UpdateRecommenderState | undefined): void {
     this.state.updateRecommender = value;
   }
@@ -2635,10 +2646,54 @@ export class OmnicodeTUI {
     // before the engine's intake can read it.
     if (previous !== undefined) this.staging.releaseAll();
     this.session = session;
+    void this.autoStartTelegram();
+    void this.refreshTelegramStatus();
     this.surveyController.seedUserTurnCount(initialUserTurnCount);
     this.harness.setTelemetryContext({ sessionId: session.id });
     this.registerSessionHandlers(session);
     this.syncAdditionalDirs(session);
+  }
+
+  private async autoStartTelegram(): Promise<void> {
+    if (this.telegramAutoStartAttempted) return;
+    this.telegramAutoStartAttempted = true;
+    try {
+      const status = await this.harness.getTelegramConnectorStatus();
+      if (!status.hasToken || status.running) return;
+      await this.harness.startTelegramBot();
+      await this.refreshTelegramStatus();
+    } catch {
+      // Best-effort: another process may own the bot, or it may be unconfigured.
+    }
+  }
+
+  private async refreshTelegramStatus(): Promise<void> {
+    try {
+      const connectors = await this.harness.listWorkspaceConnectors(this.state.appState.workDir);
+      const telegram = connectors.find((connector) => connector.id === 'telegram');
+      if (
+        telegram === undefined ||
+        telegram.status === 'not-configured' ||
+        telegram.status === 'unavailable'
+      ) {
+        this.setAppState({ telegram: null });
+        return;
+      }
+      const connected = telegram.status === 'active';
+      const label =
+        connected
+          ? 'Telegram connected'
+          : telegram.status === 'needs-auth'
+            ? 'Telegram awaiting chat'
+            : telegram.status === 'inactive'
+              ? 'Telegram offline'
+              : 'Telegram error';
+      this.setAppState({
+        telegram: { connected, label, state: telegram.status },
+      });
+    } catch {
+      this.setAppState({ telegram: null });
+    }
   }
 
   async syncRuntimeState(session: Session = this.requireSession()): Promise<void> {
@@ -2861,13 +2916,14 @@ export class OmnicodeTUI {
     this.updateRecommenderController.close();
     this.skillsBrowserController.close();
     this.subagentsBrowserController.close();
+    this.connectorsController.close();
     this.mcpManagerController.close();
     this.btwPanelController.clear();
     this.state.footer.setBackgroundCounts({ bashTasks: 0, agentTasks: 0 });
     this.streamingUI.setTodoList([]);
     this.sessionEventHandler.notifications.clear();
     this.streamingUI.setTurnId(undefined);
-    this.setAppState({ mcpServersSummary: null });
+    this.setAppState({ mcpServersSummary: null, telegram: null });
     this.streamingUI.setStep(0);
     this.streamingUI.resetLiveText();
     this.updateQueueDisplay();

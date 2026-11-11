@@ -1,4 +1,4 @@
-import type { MemoryScopeTier, MemoryTrust } from '#/contracts/memoryTypes';
+import type { MemoryRetention, MemoryScopeTier, MemoryTrust } from '#/contracts/memoryTypes';
 import type { RetrievalScoreComponents } from '#/contracts/retrieval';
 
 export const LEXICAL_WEIGHT = 1;
@@ -49,16 +49,33 @@ export function composeScore(input: {
   readonly trust: MemoryTrust;
   readonly scope: MemoryScopeTier;
   readonly accessCount: number;
+  readonly importance?: number;
+  readonly confidence?: number;
+  readonly updatedAt?: number;
+  readonly now?: number;
+  readonly retention?: MemoryRetention;
 }): RetrievalScoreComponents {
   const lexical = input.lexical * LEXICAL_WEIGHT;
   const trust = trustWeight(input.trust);
   const scope = scopeWeight(input.scope);
   const reinforcement = reinforcementWeight(input.accessCount);
+  const importance = ((input.importance ?? 3) - 3) * 0.05;
+  const confidence = ((input.confidence ?? 0.5) - 0.5) * 0.2;
+  const ageDays =
+    input.updatedAt === undefined || input.now === undefined
+      ? 0
+      : Math.max(0, (input.now - input.updatedAt) / 86_400_000);
+  const recency = Math.max(0, 0.1 - ageDays * 0.01);
+  const pinned = input.retention === 'pinned' ? 0.1 : 0;
   return {
     lexical,
     trust,
     scope,
     reinforcement,
-    total: Number((lexical + trust + scope + reinforcement).toFixed(6)),
+    importance,
+    confidence,
+    recency,
+    pinned,
+    total: Number((lexical + trust + scope + reinforcement + importance + confidence + recency + pinned).toFixed(6)),
   };
 }

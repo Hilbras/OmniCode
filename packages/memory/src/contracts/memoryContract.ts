@@ -8,8 +8,11 @@ import type {
   MemoryLifecycle,
   MemoryOrigin,
   MemoryRecord,
+  MemoryRelation,
   MemoryScope,
   MemoryScopeTier,
+  MemoryRetention,
+  MemorySensitivity,
   MemorySourceType,
   MemoryTier,
   MemoryTrust,
@@ -31,8 +34,13 @@ export interface MemoryCaptureInput {
   readonly origin: MemoryOrigin;
   readonly scope: MemoryScope;
   readonly subject?: string;
+  readonly sensitivity?: MemorySensitivity;
+  readonly retention?: MemoryRetention;
+  readonly importance?: number;
+  readonly confidence?: number;
   readonly evidence?: readonly MemoryEvidence[];
   readonly derivedFrom?: readonly string[];
+  readonly relations?: readonly MemoryRelation[];
   readonly authority?: MemoryAuthority;
   readonly approval?: MemoryApproval;
   readonly repoRevision?: string;
@@ -42,6 +50,74 @@ export interface MemoryCaptureInput {
 }
 
 export type MemoryCaptureStatus = 'stored' | 'queued' | 'deduplicated' | 'rejected' | 'failed';
+
+export type MemoryDigestDecision = 'store' | 'skip' | 'merge';
+
+export interface MemoryDigestCandidate {
+  readonly existing: MemoryRecord;
+  readonly incoming: MemoryCaptureInput;
+}
+
+export interface MemoryDigestInput {
+  readonly items: readonly MemoryCaptureInput[];
+  readonly merge?: boolean;
+  readonly adjudicate?: (candidate: MemoryDigestCandidate) => Promise<MemoryDigestDecision>;
+}
+
+export type MemoryFeedback = 'useful' | 'harmful' | 'irrelevant';
+
+export interface MemoryFeedbackInput {
+  readonly memoryId: string;
+  readonly feedback: MemoryFeedback;
+  readonly actor?: 'user' | 'model' | 'application';
+  readonly turnId?: number;
+}
+
+export interface MemoryFeedbackResult {
+  readonly status: 'recorded' | 'not_found' | 'disabled';
+  readonly feedback?: MemoryFeedback;
+  readonly count?: number;
+}
+
+export interface MemoryRecalibrationResult {
+  readonly status: 'promoted' | 'demoted' | 'skipped' | 'cooldown' | 'not_found' | 'system' | 'disabled';
+  readonly from?: MemoryTrust;
+  readonly to?: MemoryTrust;
+  readonly reason?: string;
+}
+
+export interface MemoryAuditRecord {
+  readonly id: string;
+  readonly at: number;
+  readonly actor: 'user' | 'model' | 'application';
+  readonly operation: string;
+  readonly memoryId: string;
+  readonly reason: string;
+  readonly effect: string;
+}
+
+export interface MemoryVersion {
+  readonly memoryId: string;
+  readonly revision: number;
+  readonly record: MemoryRecord;
+  readonly reason: string;
+  readonly at: number;
+}
+
+export interface MemoryDigestItemResult {
+  readonly status: 'stored' | 'deduplicated' | 'merged' | 'skipped' | 'rejected';
+  readonly id?: string;
+  readonly reason?: string;
+}
+
+export interface MemoryDigestResult {
+  readonly stored: number;
+  readonly deduplicated: number;
+  readonly merged: number;
+  readonly skipped: number;
+  readonly rejected: number;
+  readonly items: readonly MemoryDigestItemResult[];
+}
 
 export interface MemoryCaptureResult {
   readonly status: MemoryCaptureStatus;
@@ -54,6 +130,10 @@ export interface MemoryCaptureResult {
 export interface MemoryUpdatePatch {
   readonly content?: string;
   readonly subject?: string;
+  readonly sensitivity?: MemorySensitivity;
+  readonly retention?: MemoryRetention;
+  readonly importance?: number;
+  readonly confidence?: number;
   readonly evidence?: readonly MemoryEvidence[];
   readonly expiresAt?: number;
 }
@@ -203,6 +283,18 @@ export interface IMemoryService {
   readonly injectCanonical: boolean;
 
   capture(input: MemoryCaptureInput): Promise<MemoryCaptureResult>;
+
+  digest(input: MemoryDigestInput): Promise<MemoryDigestResult>;
+
+  history(id: string): Promise<readonly MemoryVersion[]>;
+
+  auditLog(limit: number): Promise<readonly MemoryAuditRecord[]>;
+
+  setLegalHold(id: string, hold: boolean, reason: string): Promise<MemoryMutationResult>;
+
+  recordFeedback(input: MemoryFeedbackInput): Promise<MemoryFeedbackResult>;
+
+  recalibrateTrust(memoryId: string, now?: number): Promise<MemoryRecalibrationResult>;
 
   get(id: string): Promise<MemoryRecord | undefined>;
 

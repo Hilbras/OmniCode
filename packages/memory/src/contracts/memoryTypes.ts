@@ -47,6 +47,43 @@ export const MEMORY_LIFECYCLES = [
 ] as const;
 export type MemoryLifecycle = (typeof MEMORY_LIFECYCLES)[number];
 
+export const MEMORY_RELATION_KINDS = [
+  'supports',
+  'contradicts',
+  'supersedes',
+  'refines',
+  'duplicates',
+  'related',
+  'caused',
+  'invalidated_by',
+] as const;
+export type MemoryRelationKind = (typeof MEMORY_RELATION_KINDS)[number];
+
+export const MemoryRelationSchema = z.object({
+  kind: z.enum(MEMORY_RELATION_KINDS),
+  targetId: z.string().min(1),
+});
+export type MemoryRelation = z.infer<typeof MemoryRelationSchema>;
+
+export const MEMORY_RETENTION_MODES = [
+  'pinned',
+  'persistent',
+  'ephemeral',
+  'decaying',
+  'neverExpire',
+] as const;
+export type MemoryRetention = (typeof MEMORY_RETENTION_MODES)[number];
+
+export const MEMORY_SENSITIVITIES = ['public', 'internal', 'confidential', 'secret'] as const;
+export type MemorySensitivity = (typeof MEMORY_SENSITIVITIES)[number];
+
+export const SENSITIVITY_RANK: Readonly<Record<MemorySensitivity, number>> = Object.freeze({
+  public: 0,
+  internal: 1,
+  confidential: 2,
+  secret: 3,
+});
+
 export const MEMORY_SCOPE_TIERS = [
   'global',
   'workspace',
@@ -120,6 +157,11 @@ export const MemoryRecordSchema = z.object({
   searchText: z.string().optional(),
   redactionCount: z.number().int().nonnegative(),
   trust: z.enum(MEMORY_TRUST_LEVELS),
+  sensitivity: z.enum(MEMORY_SENSITIVITIES).default('internal'),
+  retention: z.enum(MEMORY_RETENTION_MODES).default('persistent'),
+  importance: z.number().int().min(1).max(5).default(3),
+  confidence: z.number().min(0).max(1).default(0.5),
+  legalHold: z.boolean().default(false),
   trustReason: z.string().min(1).max(256),
   sourceType: z.enum(MEMORY_SOURCE_TYPES),
   origin: z.enum(MEMORY_ORIGINS),
@@ -129,6 +171,7 @@ export const MemoryRecordSchema = z.object({
   lifecycle: z.enum(MEMORY_LIFECYCLES),
   evidence: z.array(MemoryEvidenceSchema),
   derivedFrom: z.array(z.string().min(1)),
+  relations: z.array(MemoryRelationSchema).default([]),
   supersedes: z.string().min(1).optional(),
   supersededBy: z.string().min(1).optional(),
   expiresAt: z.number().int().nonnegative().optional(),

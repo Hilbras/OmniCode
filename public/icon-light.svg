@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fbf7ee"/><stop offset="1" stop-color="#efe6d2"/></linearGradient>
+    <linearGradient id="face" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#e9bd4f"/><stop offset="1" stop-color="#c9922a"/></linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.52" r="0.5"><stop offset="0" stop-color="#e5b94a" stop-opacity="0.18"/><stop offset="1" stop-color="#e5b94a" stop-opacity="0"/></radialGradient>
+    <mask id="eyes" maskUnits="userSpaceOnUse">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <rect x="406" y="414" width="76" height="196" rx="38" fill="#000"/>
+      <rect x="542" y="414" width="76" height="196" rx="38" fill="#000"/>
+    </mask>
+  </defs>
+  <rect x="48" y="48" width="928" height="928" rx="216" fill="url(#tile)"/>
+  <rect x="50" y="50" width="924" height="924" rx="214" fill="none" stroke="rgba(80,60,20,0.10)" stroke-width="4"/>
+  <circle cx="512" cy="530" r="400" fill="url(#glow)"/>
+  <rect x="192" y="292" width="640" height="440" rx="132" fill="url(#face)" mask="url(#eyes)"/>
+</svg>

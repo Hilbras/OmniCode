@@ -17,6 +17,17 @@ describe('builtin agent profiles', () => {
     expect(agent.tools).toContain('TowerTeardown');
   });
 
+  it('wires the memory tools into the default and coder profiles', () => {
+    for (const name of ['agent', 'coder']) {
+      const selected = profile(name);
+      expect(selected.tools).toContain('memory_search');
+      expect(selected.tools).toContain('memory_save');
+      expect(selected.tools).toContain('memory_forget');
+    }
+    expect(profile('explore').tools).toContain('memory_search');
+    expect(profile('explore').tools).not.toContain('memory_save');
+  });
+
   it('caps the default profile delegation at non-spawning profiles', () => {
     const agent = profile('agent');
     expect(agent.subagents).toEqual(['coder', 'explore', 'plan']);

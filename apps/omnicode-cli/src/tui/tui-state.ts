@@ -88,6 +88,7 @@ export interface TUIState {
   tasksBrowser: TasksBrowserState | undefined;
   skillsBrowser: CatalogBrowserState | undefined;
   subagentsBrowser: CatalogBrowserState | undefined;
+  connectorsBrowser: CatalogBrowserState | undefined;
   updateRecommender: UpdateRecommenderState | undefined;
   mcpManager: McpManagerState | undefined;
   externalEditorRunning: boolean;
@@ -219,6 +220,7 @@ export function createTUIState(options: OmnicodeTUIOptions): TUIState {
     tasksBrowser: undefined,
     skillsBrowser: undefined,
     subagentsBrowser: undefined,
+    connectorsBrowser: undefined,
     updateRecommender: undefined,
     mcpManager: undefined,
     externalEditorRunning: false,

@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { AUTO_INJECT_RETRIEVAL_BUDGET, RETRIEVAL_NOTICE_INCOMPLETE } from '#/contracts/retrieval';
 import { composeScore, reinforcementWeight } from '#/retrieval/ranking';
+import { buildRecord } from '#/service/memoryRecordFactory';
+import { recordKey, scopePrefix } from '#/storage/memoryKeys';
 import { queryGroups } from '#/retrieval/stem';
 
 import {
@@ -157,6 +159,71 @@ describe('retrieval: trust and lifecycle gates', () => {
   });
 });
 
+describe('retrieval: result dedup', () => {
+  it('returns one result for identical records in the same scope', async () => {
+    const store = new InMemoryMemoryStore();
+    const draft = {
+      content: 'shared guidance for the parser',
+      tier: 'distilled' as const,
+      category: 'fact' as const,
+      sourceType: 'user_statement' as const,
+      origin: 'user' as const,
+      scope: globalScope(),
+    };
+    const first = buildRecord(draft, 'mem_dup_a', 1).record;
+    const second = buildRecord(draft, 'mem_dup_b', 2).record;
+    const prefix = scopePrefix(globalScope());
+    await store.commit([
+      { op: 'set', key: recordKey(first.id), value: first },
+      { op: 'set', key: `${prefix ?? ''}${first.id}`, value: { id: first.id } },
+      { op: 'set', key: recordKey(second.id), value: second },
+      { op: 'set', key: `${prefix ?? ''}${second.id}`, value: { id: second.id } },
+    ]);
+
+    const { service } = createHarness({ store });
+    const result = await service.search({ query: 'shared guidance parser', projectId: REPO_A });
+    expect(result.memories).toHaveLength(1);
+    expect(result.diagnostics.duplicatesRemoved).toBe(1);
+  });
+});
+
+describe('retrieval: superseded handling', () => {
+  it('suppresses a superseded result when its successor is present', async () => {
+    const { service } = createHarness();
+    const old = await service.capture(
+      captureInput('the deploy target is staging', { evidence: evidenceFor('docs/deploy.md') }),
+    );
+    const next = await service.capture(
+      captureInput('the deploy target is production', { evidence: evidenceFor('docs/deploy.md') }),
+    );
+    await service.supersede(old.id as string, {
+      successorId: next.id as string,
+      reason: 'deploy target changed',
+    });
+
+    const result = await service.search({ query: 'deploy target', projectId: REPO_A });
+    expect(result.memories.map((memory) => memory.record.id)).toEqual([next.id]);
+    expect(result.diagnostics.supersededSuppressed).toBe(1);
+  });
+
+  it('keeps a superseded result when its successor is not retrievable', async () => {
+    const { service } = createHarness();
+    const old = await service.capture(
+      captureInput('legacy codename falcon', { evidence: evidenceFor('docs/legacy.md') }),
+    );
+    const next = await service.capture(
+      captureInput('legacy codename hawk', { evidence: evidenceFor('docs/legacy.md') }),
+    );
+    await service.supersede(old.id as string, {
+      successorId: next.id as string,
+      reason: 'renamed',
+    });
+
+    const result = await service.search({ query: 'falcon', projectId: REPO_A });
+    expect(result.memories.map((memory) => memory.record.id)).toEqual([old.id]);
+  });
+});
+
 describe('retrieval: ranking', () => {
   it('weights lexical relevance above reinforcement and never promotes an untrusted record', () => {
     const direct = composeScore({ lexical: 1, trust: 'verified', scope: 'repository', accessCount: 0 });
@@ -168,6 +235,36 @@ describe('retrieval: ranking', () => {
     const trusted = composeScore({ lexical: 0.3, trust: 'trusted', scope: 'global', accessCount: 0 });
     const system = composeScore({ lexical: 0.3, trust: 'system', scope: 'global', accessCount: 0 });
     expect(system.total).toBeGreaterThan(trusted.total);
+  });
+
+  it('ranks higher importance, confidence and pinned retention above equal matches', () => {
+    const base = composeScore({ lexical: 0.5, trust: 'verified', scope: 'repository', accessCount: 0 });
+    const high = composeScore({
+      lexical: 0.5,
+      trust: 'verified',
+      scope: 'repository',
+      accessCount: 0,
+      importance: 5,
+      confidence: 1,
+    });
+    const low = composeScore({
+      lexical: 0.5,
+      trust: 'verified',
+      scope: 'repository',
+      accessCount: 0,
+      importance: 1,
+      confidence: 0,
+    });
+    const pinned = composeScore({
+      lexical: 0.5,
+      trust: 'verified',
+      scope: 'repository',
+      accessCount: 0,
+      retention: 'pinned',
+    });
+    expect(high.total).toBeGreaterThan(base.total);
+    expect(base.total).toBeGreaterThan(low.total);
+    expect(pinned.total).toBeGreaterThan(base.total);
   });
 
   it('prefers a more specific scope when relevance ties', async () => {
@@ -188,6 +285,52 @@ describe('retrieval: ranking', () => {
     const result = await service.search({ query: 'shared documentation guidance', projectId: REPO_A });
     expect(result.memories[0]?.explanation.scopeTier).toBe('repository');
     expect(result.memories).toHaveLength(2);
+  });
+});
+
+describe('retrieval: relation expansion', () => {
+  it('adds a directly related record that did not match the query', async () => {
+    const { service } = createHarness();
+    const target = await service.capture(
+      captureInput('the rollout is behind a feature flag', { evidence: evidenceFor('docs/rollout.md') }),
+    );
+    const seed = await service.capture(
+      captureInput('the deploy note links to the rollout', {
+        evidence: evidenceFor('docs/deploy.md'),
+        relations: [{ kind: 'supports', targetId: target.id as string }],
+      }),
+    );
+
+    const result = await service.search({
+      query: 'deploy note',
+      projectId: REPO_A,
+      expandRelations: true,
+    });
+    expect(result.memories.map((memory) => memory.record.id)).toEqual([seed.id, target.id]);
+    expect(result.diagnostics.relationExpanded).toBe(1);
+  });
+
+  it('never expands across a scope boundary', async () => {
+    const { service } = createHarness();
+    const foreign = await service.capture(
+      captureInput('the foreign rollout is hidden', {
+        evidence: evidenceFor('docs/foreign.md'),
+        scope: repoScope(REPO_B),
+      }),
+    );
+    await service.capture(
+      captureInput('the local deploy note points elsewhere', {
+        evidence: evidenceFor('docs/deploy.md'),
+        relations: [{ kind: 'related', targetId: foreign.id as string }],
+      }),
+    );
+
+    const result = await service.search({
+      query: 'local deploy note',
+      projectId: REPO_A,
+      expandRelations: true,
+    });
+    expect(result.memories.map((memory) => memory.record.id)).not.toContain(foreign.id);
   });
 });
 

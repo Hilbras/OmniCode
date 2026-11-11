@@ -1,0 +1,35 @@
+{
+  "name": "@hilbras/app-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client/index.ts",
+    "./composables": "./src/composables/index.ts",
+    "./contracts": "./src/contracts.ts",
+    "./icons": "./src/icons/icons.ts",
+    "./lib": "./src/lib/index.ts",
+    "./lib/mediaPreview": "./src/lib/mediaPreview.ts",
+    "./stores": "./src/stores/index.ts",
+    "./package.json": "./package.json"
+  },
+  "dependencies": {
+    "@hilbras/app-composer": "workspace:^",
+    "@hilbras/app-core": "workspace:^",
+    "@hilbras/app-i18n": "workspace:^",
+    "@hilbras/app-ui": "workspace:^",
+    "photoswipe": "^5.4.4",
+    "pinia": "4.0.3"
+  },
+  "peerDependencies": {
+    "vue": "^3.5.35"
+  },
+  "devDependencies": {
+    "@hilbras/vite-preset": "workspace:*",
+    "typescript": "6.0.2",
+    "vitest": "4.1.4",
+    "vue": "^3.5.35",
+    "vue-tsc": "~3.2.0"
+  }
+}

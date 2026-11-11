@@ -41,6 +41,9 @@ const AGENT_TOOLS = [
   'TowerStatus',
   'TowerTeardown',
   'mcp__*',
+  'memory_search',
+  'memory_save',
+  'memory_forget',
 ] as const;
 
 const CODER_TOOLS = [
@@ -66,6 +69,9 @@ const CODER_TOOLS = [
   'FetchURL',
   'Write',
   'mcp__*',
+  'memory_search',
+  'memory_save',
+  'memory_forget',
 ] as const;
 
 const EXPLORE_TOOLS = [
@@ -77,6 +83,7 @@ const EXPLORE_TOOLS = [
   'Grep',
   'WebSearch',
   'FetchURL',
+  'memory_search',
 ] as const;
 
 const CODER_ROLE =

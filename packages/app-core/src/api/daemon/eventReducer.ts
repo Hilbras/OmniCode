@@ -1,0 +1,911 @@
+// app-core daemon event reducer.
+// Pure TypeScript state reducer for OmnicodeClient.
+// Operates on plain TS state — no Vue reactivity here.
+// The reducer consumes AppEvent (camelCase), produced by toAppEvent() in mappers.ts.
+//
+// No-op-but-known events (tool.*, assistant streaming, assistant.completed)
+// are mapped to { type: 'unknown', raw: { _noop: true, ... } } by mappers.ts.
+// The reducer detects `_noop: true` and silently advances lastSeqBySession
+// without pushing a warning.
+
+import type {
+  AppApprovalRequest,
+  AppConfig,
+  AppEvent,
+  AppGoal,
+  AppNotice,
+  AppNoticeDetail,
+  AppTaskStatus,
+  AppTurnError,
+  AppTurnRetry,
+  AppWarning,
+  AppQuestionRequest,
+  AppSession,
+  AppTask,
+} from '../types';
+
+/** Translator injected by the consumer so the reducer stays free of any
+ *  concrete i18n instance. Defaults to the identity (returns the key), which
+ *  keeps pure/reducer tests independent of a host locale. */
+export interface ReduceContext {
+  t: (key: string, params?: Record<string, unknown>) => string;
+}
+
+const DEFAULT_REDUCE_CONTEXT: ReduceContext = { t: (key) => key };
+
+/** Tail cap for accumulated output of non-subagent (bash / background tool)
+ *  tasks, whose stdout can be noisy and unbounded. Subagent progress is kept
+ *  in full (small synthesized lines). */
+const MAX_BACKGROUND_OUTPUT_LINES = 40;
+
+/** Skeleton description used by `patchSubagent` in agentEventProjector.ts when
+ *  a lifecycle event re-projects a subagent the projector never saw spawn
+ *  (e.g. after a page refresh, where the snapshot roster — not the WS stream —
+ *  carried the real description). */
+const PLACEHOLDER_SUBAGENT_DESCRIPTION = 'Sub Agent';
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+
+/** Live compaction progress for a session: present (status 'running') only
+    while the daemon is compacting. Completion is recorded as a persistent
+    divider marker message in the transcript, not as transient status. */
+export interface CompactionStatus {
+  status: 'running';
+  trigger: 'manual' | 'auto';
+}
+
+export interface OmnicodeClientState {
+  sessions: AppSession[];
+  activeSessionId?: string;
+  approvalsBySession: Record<string, AppApprovalRequest[]>;
+  /** Preserved `plan_review` displays keyed by toolCallId. Plan content survives
+   *  approval resolution so the ExitPlanMode tool card can keep rendering the
+   *  plan (approved / rejected / revised) instead of losing it. */
+  planReviewByToolCallId: Record<string, { plan: string; path?: string }>;
+  questionsBySession: Record<string, AppQuestionRequest[]>;
+  tasksBySession: Record<string, AppTask[]>;
+  goalBySession: Record<string, AppGoal>;
+  /** Monotonic per-session counter bumped on EVERY `goalUpdated` event —
+   *  including delete/clear ones — so an async recovery read can detect that a
+   *  live event won the race even when the goal entry stayed absent. */
+  goalVersionBySession: Record<string, number>;
+  lastSeqBySession: Record<string, number>;
+  /** MAIN-agent turn in flight, per session — set from the main agent's
+   *  turn.started/turn.ended boundary events and seeded from the snapshot's
+   *  (main-only) inFlightTurn. Half of the working moon; subagent turns never
+   *  reach the events that set this. */
+  turnActiveBySession: Record<string, boolean>;
+  /** promptId served by the most recently ended main turn, per session. When
+   *  prompt.aborted arrives for that same prompt it is an active-turn abort —
+   *  turn.ended already provided the recency moment, so promptAborted skips
+   *  its (no-turn) bump. Cleared when the next main turn starts. */
+  turnEndedPromptIdBySession: Record<string, string>;
+  /** Latest main-turn terminal error per session, captured from the agent's
+   *  `error` event. Drives the persistent failed-turn card in the conversation
+   *  (the warning toast alone is transient); cleared when the next main turn
+   *  starts. */
+  turnErrorBySession: Record<string, AppTurnError>;
+  /** Live step-retry state per session (present only while the main turn's
+   *  current step is backing off before a retry). Drives the working
+   *  indicator's retry label. */
+  turnRetryBySession: Record<string, AppTurnRetry>;
+  compactionBySession: Record<string, CompactionStatus>;
+  config?: AppConfig | null;
+  warnings: AppWarning[];
+}
+
+export function createInitialState(): OmnicodeClientState {
+  return {
+    sessions: [],
+    activeSessionId: undefined,
+    approvalsBySession: {},
+    planReviewByToolCallId: {},
+    questionsBySession: {},
+    tasksBySession: {},
+    goalBySession: {},
+    goalVersionBySession: {},
+    lastSeqBySession: {},
+    turnActiveBySession: {},
+    turnEndedPromptIdBySession: {},
+    turnErrorBySession: {},
+    turnRetryBySession: {},
+    compactionBySession: {},
+    warnings: [],
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function cloneState(s: OmnicodeClientState): OmnicodeClientState {
+  return {
+    ...s,
+    // Reuse the `sessions` array reference when an event does not touch it.
+    // Every session-mutating case below already builds its own array via
+    // `[...]` / `.map` / `.filter`, so sharing the reference is safe — and it
+    // keeps `rawState.sessions` stable for events that don't change sessions,
+    // so the sidebar computeds (sessionsForView / workspaceGroups /
+    // mergedWorkspaces) are not dirtied by unrelated events.
+    sessions: s.sessions,
+    approvalsBySession: { ...s.approvalsBySession },
+    planReviewByToolCallId: { ...s.planReviewByToolCallId },
+    questionsBySession: { ...s.questionsBySession },
+    tasksBySession: { ...s.tasksBySession },
+    goalBySession: { ...s.goalBySession },
+    goalVersionBySession: { ...s.goalVersionBySession },
+    lastSeqBySession: { ...s.lastSeqBySession },
+    turnActiveBySession: { ...s.turnActiveBySession },
+    turnEndedPromptIdBySession: { ...s.turnEndedPromptIdBySession },
+    turnErrorBySession: { ...s.turnErrorBySession },
+    turnRetryBySession: { ...s.turnRetryBySession },
+    compactionBySession: { ...s.compactionBySession },
+    warnings: [...s.warnings],
+  };
+}
+
+function advanceSeq(state: OmnicodeClientState, sessionId: string | undefined, seq: number | undefined): void {
+  if (sessionId !== undefined && seq !== undefined && seq > 0) {
+    const prev = state.lastSeqBySession[sessionId] ?? 0;
+    if (seq > prev) {
+      state.lastSeqBySession[sessionId] = seq;
+    }
+  }
+}
+
+/** Float a session to the top of the sidebar by bumping its `updatedAt` to now
+ *  (never backwards). Recency is deliberately coarse: only moments the user
+ *  should look at bump it — main-turn start and end, and new approval/question
+ *  requests. Per-step and per-tool-call messages do NOT (they re-sorted the
+ *  session list mid-turn). */
+function bumpSessionRecency(state: OmnicodeClientState, sessionId: string): void {
+  const now = new Date().toISOString();
+  state.sessions = state.sessions.map((s) =>
+    s.id === sessionId && now > s.updatedAt ? { ...s, updatedAt: now } : s,
+  );
+}
+
+/** True when the event actually advances the session's durable seq cursor —
+ *  i.e. it is fresh, not a stale/replayed frame arriving after a snapshot
+ *  resync already moved the cursor past it (the same gate processEvent
+ *  applies to its turn-end side effects). Recency bumps must only fire for
+ *  fresh events, or a replay floats an idle session to the top. */
+function isFreshEvent(state: OmnicodeClientState, meta: EventMeta): boolean {
+  return meta.seq > (state.lastSeqBySession[meta.sessionId] ?? 0);
+}
+
+// ---------------------------------------------------------------------------
+// Reducer
+// ---------------------------------------------------------------------------
+
+/** Agent error code → semantic title key under `warnings.agentError`. Codes
+ *  come from the protocol error domain (agent-core-v2 `ProtocolErrors`);
+ *  anything unmapped falls back to the generic `title`. */
+const AGENT_ERROR_TITLE_KEYS: Readonly<Record<string, string>> = {
+  'provider.connection_error': 'connection',
+  'provider.auth_error': 'auth',
+  'provider.rate_limit': 'rateLimit',
+  'provider.overloaded': 'overloaded',
+  'provider.filtered': 'filtered',
+  'provider.api_error': 'api',
+  'context.overflow': 'contextOverflow',
+};
+
+export interface AgentErrorRaw {
+  code?: string;
+  message?: string;
+  name?: string;
+  details?: Record<string, unknown>;
+}
+
+/**
+ * Build the structured error notice for a failed agent turn (typically a
+ * model-provider failure). The wire payload already carries the coded error —
+ * surface it in full so a rate-limit / auth / endpoint failure is diagnosable
+ * from the toast: semantic title, the provider's raw message as the body, and
+ * a diagnostics list (error code, HTTP status, request id, SDK error name,
+ * plus any extra detail fields such as finishReason).
+ */
+export function buildAgentErrorNotice(raw: AgentErrorRaw, t: ReduceContext['t']): AppNotice {
+  const details: AppNoticeDetail[] = [];
+  const push = (label: string, value: unknown): void => {
+    if (typeof value === 'number' || typeof value === 'boolean') {
+      details.push({ label, value: String(value) });
+    } else if (typeof value === 'string' && value.length > 0) {
+      details.push({ label, value });
+    }
+  };
+  push(t('warnings.details.code'), raw.code);
+  const rawDetails = raw.details ?? {};
+  push(t('warnings.details.status'), rawDetails['statusCode']);
+  push(t('warnings.details.requestId'), rawDetails['requestId']);
+  push(t('warnings.details.errorName'), raw.name);
+  // Keep any remaining detail fields (finishReason, rawFinishReason, …) so no
+  // diagnostics the daemon sent are hidden.
+  for (const [key, value] of Object.entries(rawDetails)) {
+    if (key === 'statusCode' || key === 'requestId') continue;
+    push(key, value);
+  }
+  const titleKey = (raw.code !== undefined ? AGENT_ERROR_TITLE_KEYS[raw.code] : undefined) ?? 'title';
+  return {
+    severity: 'error',
+    title: t(`warnings.agentError.${titleKey}`),
+    message: raw.message,
+    details: details.length > 0 ? details : undefined,
+  };
+}
+
+/**
+ * Apply a single AppEvent to the state, returning a new state object.
+ * The event carries `_wireSeq` and `_wireSessionId` as hidden extras when
+ * produced by the client wrapper, but the reducer only depends on the
+ * AppEvent.type discriminant.
+ *
+ * Extra metadata attached by the caller:
+ *   meta.sessionId — wire session_id for lastSeqBySession update
+ *   meta.seq       — wire seq for lastSeqBySession update
+ */
+export interface EventMeta {
+  sessionId: string;
+  seq: number;
+}
+
+export function reduceAppEvent(
+  state: OmnicodeClientState,
+  event: AppEvent,
+  meta: EventMeta,
+  ctx: ReduceContext = DEFAULT_REDUCE_CONTEXT,
+): OmnicodeClientState {
+  const next = cloneState(state);
+
+  // Always advance lastSeqBySession for every event that carries seq info.
+  advanceSeq(next, meta.sessionId, meta.seq);
+
+  switch (event.type) {
+    // -------------------------------------------------------------------------
+    case 'sessionCreated': {
+      const exists = next.sessions.some((s) => s.id === event.session.id);
+      if (!exists) {
+        next.sessions = [event.session, ...next.sessions];
+      }
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'sessionUpdated': {
+      // v1 frames never carry the v2-only git domain — preserve a previously
+      // seeded pullRequest instead of dropping it on every session update.
+      next.sessions = next.sessions.map((s) =>
+        s.id === event.session.id ? { ...event.session, pullRequest: s.pullRequest } : s,
+      );
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'sessionDeleted': {
+      const id = event.sessionId;
+      next.sessions = next.sessions.filter((s) => s.id !== id);
+      delete next.tasksBySession[id];
+      delete next.goalBySession[id];
+      delete next.approvalsBySession[id];
+      delete next.questionsBySession[id];
+      delete next.lastSeqBySession[id];
+      delete next.turnActiveBySession[id];
+      delete next.turnEndedPromptIdBySession[id];
+      delete next.turnErrorBySession[id];
+      delete next.turnRetryBySession[id];
+      if (next.activeSessionId === id) {
+        next.activeSessionId = undefined;
+      }
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'sessionWorkChanged': {
+      // A replayed work_changed (stale seq after a reconnect) carries a stale
+      // busy/liveness/outcome aggregate — applying it could idle a turn that
+      // is actually mid-retry or clear the latest turn outcome. The current
+      // aggregate is restored from the snapshot, so only fresh frames apply.
+      if (!isFreshEvent(state, meta)) break;
+      let pendingInteraction: AppSession['pendingInteraction'];
+      next.sessions = next.sessions.map((s) => {
+        if (s.id !== event.sessionId) return s;
+        pendingInteraction =
+          event.pendingInteraction ?? (event.busy ? s.pendingInteraction : 'none');
+        return {
+          ...s,
+          busy: event.busy,
+          mainTurnActive: event.mainTurnActive ?? (event.busy ? s.mainTurnActive : false),
+          pendingInteraction,
+          // Authoritative, not nullish-merge: an omitted last_turn_reason is
+          // how the server says "no current outcome" (a fresh turn cleared
+          // the previous one), so the stale value must not survive.
+          lastTurnReason: event.lastTurnReason,
+        };
+      });
+      if (pendingInteraction === 'none') {
+        delete next.approvalsBySession[event.sessionId];
+        delete next.questionsBySession[event.sessionId];
+      } else if (pendingInteraction === 'question') {
+        delete next.approvalsBySession[event.sessionId];
+      }
+      if (event.mainTurnActive === true) {
+        next.turnActiveBySession[event.sessionId] = true;
+      } else if (event.mainTurnActive === false || !event.busy) {
+        // The fallback end-of-turn path: turn.ended was lost (abrupt agent
+        // disposal) and this work_changed retires the main turn instead.
+        // Give the turn its recency bump — but only when the flag was still
+        // set (a normal turn.ended already cleared it and bumped).
+        if (state.turnActiveBySession[event.sessionId]) {
+          bumpSessionRecency(next, event.sessionId);
+        }
+        delete next.turnActiveBySession[event.sessionId];
+        // A retired turn cannot be mid-retry — drop the backoff state too.
+        delete next.turnRetryBySession[event.sessionId];
+      }
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'sessionMetaUpdated': {
+      // Lightweight meta patch — the daemon's auto-generated title (or a title
+      // changed by another client) and the latest user prompt arrive via
+      // session.meta.updated. We keep prior values for any field the event does
+      // not carry; the full session object otherwise stays as-is. Keeping
+      // lastPrompt fresh lets sidebar search match the most recent prompt
+      // without a full reload.
+      next.sessions = next.sessions.map((s) =>
+        s.id === event.sessionId
+          ? { ...s, title: event.title ?? s.title, lastPrompt: event.lastPrompt ?? s.lastPrompt }
+          : s,
+      );
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'sessionUsageUpdated': {
+      next.sessions = next.sessions.map((s) => {
+        if (s.id !== event.sessionId) return s;
+        // The live model name (from agent.status.updated) rides along with usage.
+        // Only overwrite model when a non-empty one is supplied.
+        const model = event.model && event.model.length > 0 ? event.model : s.model;
+        return { ...s, usage: event.usage, model };
+      });
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'historyCompacted': {
+      // Only advance lastSeqBySession; actual reload is triggered by client wrapper
+      // when it sees this event type (before_seq is in event.beforeSeq).
+      // The advanceSeq at top already handled seq update.
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'compactionStarted': {
+      next.compactionBySession = {
+        ...next.compactionBySession,
+        [event.sessionId]: { status: 'running', trigger: event.trigger },
+      };
+      break;
+    }
+
+    case 'compactionCompleted': {
+      const sid = event.sessionId;
+      const { [sid]: _doneEntry, ...rest } = next.compactionBySession;
+      next.compactionBySession = rest;
+      break;
+    }
+
+    case 'compactionCancelled': {
+      const { [event.sessionId]: _gone, ...rest } = next.compactionBySession;
+      next.compactionBySession = rest;
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    // Message-stream events no longer build client state: the main agent's
+    // transcript arrives over the transcript channel, and the side-channel
+    // (BTW) user echo is intercepted by the web layer. Advance seq silently.
+    case 'messageCreated':
+    case 'messageUpdated':
+    case 'assistantDelta':
+    case 'toolOutput':
+      break;
+
+    // -------------------------------------------------------------------------
+    case 'approvalRequested': {
+      const sid = event.sessionId;
+      const list = next.approvalsBySession[sid] ?? [];
+      const exists = list.some((a) => a.approvalId === event.approval.approvalId);
+      if (!exists) {
+        next.approvalsBySession[sid] = [...list, event.approval];
+        // A fresh approval waits on the user: float the session to the top.
+        // A replayed request whose approval has since been resolved (so the
+        // id dedupe misses it) must not — the session may already be running
+        // a later turn.
+        if (isFreshEvent(state, meta)) {
+          bumpSessionRecency(next, sid);
+        }
+      }
+      // Preserve a plan_review display so the plan stays visible in the
+      // ExitPlanMode tool card after the approval resolves.
+      const display = event.approval.display as
+        | { kind?: unknown; plan?: unknown; path?: unknown }
+        | null
+        | undefined;
+      if (display?.kind === 'plan_review' && typeof display.plan === 'string' && display.plan.length > 0) {
+        next.planReviewByToolCallId = {
+          ...next.planReviewByToolCallId,
+          [event.approval.toolCallId]: {
+            plan: display.plan,
+            path: typeof display.path === 'string' ? display.path : undefined,
+          },
+        };
+      }
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'approvalResolved':
+    case 'approvalExpired': {
+      const sid = event.sessionId;
+      const aid = event.approvalId;
+      const list = next.approvalsBySession[sid] ?? [];
+      next.approvalsBySession[sid] = list.filter((a) => a.approvalId !== aid);
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'questionRequested': {
+      const sid = event.sessionId;
+      const list = next.questionsBySession[sid] ?? [];
+      const exists = list.some((q) => q.questionId === event.question.questionId);
+      if (!exists) {
+        next.questionsBySession[sid] = [...list, event.question];
+        // Same freshness gate as approvals (see there).
+        if (isFreshEvent(state, meta)) {
+          bumpSessionRecency(next, sid);
+        }
+      }
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'questionAnswered':
+    case 'questionDismissed': {
+      const sid = event.sessionId;
+      const qid = event.questionId;
+      const list = next.questionsBySession[sid] ?? [];
+      next.questionsBySession[sid] = list.filter((q) => q.questionId !== qid);
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'taskCreated': {
+      const sid = event.sessionId;
+      const list = next.tasksBySession[sid] ?? [];
+      // A spawned that carries the registered task id folds the skeleton row
+      // an agent-id-less task.started seeded under that id — match it here so
+      // the row is rekeyed in place instead of duplicated. When the agent row
+      // already exists too (subagent.started landed first), drop the skeleton
+      // copy outright: rekeying it would leave two rows for one agent.
+      const idIdx = list.findIndex((t) => t.id === event.task.id);
+      const bgIdx = event.task.backgroundTaskId === undefined
+        ? -1
+        : list.findIndex((t) => t.id === event.task.backgroundTaskId);
+      // When the agent row already exists too (subagent.started landed first),
+      // drop the skeleton copy outright: rekeying it would leave two rows for
+      // one agent. A skeleton already settled (cancelled from its card before
+      // the fold) still feeds the terminal-stickiness below.
+      const droppedSkeleton = bgIdx !== -1 && idIdx !== -1 && bgIdx !== idIdx ? list[bgIdx] : undefined;
+      const work = droppedSkeleton !== undefined ? list.filter((_, i) => i !== bgIdx) : list;
+      const idx = work.findIndex(
+        (t) =>
+          t.id === event.task.id ||
+          (event.task.backgroundTaskId !== undefined && t.id === event.task.backgroundTaskId),
+      );
+      if (idx === -1) {
+        next.tasksBySession[sid] = [...work, event.task];
+      } else {
+        const patched = [...work];
+        const previous = work[idx]!;
+        // Terminal-stickiness: a replayed/resynced projection (a spawned or
+        // task.started re-announce of the SAME registered run) must not
+        // resurrect a row the stream already finished — the settled terminal
+        // fields win. A projection whose binding differs (a resume registers a
+        // fresh task or ships none) starts a new run and is exempt; a dropped
+        // skeleton's terminal state sticks unconditionally — the task already
+        // died before its row folded. Rows keyed by their own task id (a bash
+        // task, or an agent-id-less skeleton) are id-keyed to that single run:
+        // an id hit is always the same run. An AGENT-id-keyed row is not — it
+        // outlives runs, so only the binding speaks there.
+        const sameRun =
+          (event.task.backgroundTaskId !== undefined &&
+            (event.task.backgroundTaskId === previous.backgroundTaskId ||
+              previous.id === event.task.backgroundTaskId)) ||
+          (previous.id === event.task.id &&
+            (previous.kind !== 'subagent' || previous.agentId === undefined));
+        const sticky =
+          (sameRun && previous.status !== 'running' ? previous : undefined) ??
+          (droppedSkeleton !== undefined && droppedSkeleton.status !== 'running'
+            ? droppedSkeleton
+            : undefined);
+        // The first terminal wins for the same run: a running re-announce
+        // resurrects nothing, and a terminal of a DIFFERENT kind (a replayed
+        // subagent.completed over a kernel-cancelled/-failed row) never
+        // downgrades it either — the taskCompleted leg guards the rest.
+        const keepTerminal = sticky !== undefined
+          && (event.task.status === 'running' || event.task.status !== sticky.status);
+        // Confirmed NEW run (a settled row whose binding changed): adopt the
+        // event's run-scoped facts wholesale — outputs, background mode, task
+        // binding — instead of inheriting the previous run's. Anything else
+        // (same run replay, or a running row being re-projected) preserves
+        // accumulated output and identity metadata as before.
+        const resetOutputs = (!sameRun && previous.status !== 'running')
+          // Two DEFINED and different bindings confirm a new run even while
+          // the previous row still reads running (its terminal event was
+          // missed) — the new run must not inherit the old text/results.
+          || (event.task.backgroundTaskId !== undefined
+              && previous.backgroundTaskId !== undefined
+              && event.task.backgroundTaskId !== previous.backgroundTaskId);
+        // A replay of the same terminal must not overwrite the daemon's REAL
+        // completion stamp with a fresh client-observed (estimated) one.
+        const keepRealStamp = sameRun
+          && previous.completedAt !== undefined
+          && previous.completedAtEstimated !== true;
+        patched[idx] = {
+          ...event.task,
+          status: keepTerminal ? sticky.status : event.task.status,
+          subagentPhase: keepTerminal ? sticky.subagentPhase : event.task.subagentPhase,
+          completedAt: keepTerminal ? sticky.completedAt : (keepRealStamp ? previous.completedAt : event.task.completedAt),
+          completedAtEstimated: keepTerminal
+            ? sticky.completedAtEstimated
+            : (keepRealStamp ? previous.completedAtEstimated : event.task.completedAtEstimated),
+          outputLines: keepTerminal
+            ? sticky.outputLines
+            : resetOutputs
+              ? (droppedSkeleton?.outputLines ?? event.task.outputLines)
+              : (previous.outputLines ?? droppedSkeleton?.outputLines ?? event.task.outputLines),
+          text: keepTerminal
+            ? sticky.text
+            : resetOutputs
+              ? (droppedSkeleton?.text ?? event.task.text)
+              : (previous.text ?? droppedSkeleton?.text ?? event.task.text),
+          // A replayed projection omits the output a poll already fetched —
+          // keep it instead of blanking the final result until the next poll.
+          outputPreview: keepTerminal
+            ? sticky.outputPreview
+            : (event.task.outputPreview ??
+              (resetOutputs ? droppedSkeleton?.outputPreview : (previous.outputPreview ?? droppedSkeleton?.outputPreview))),
+          outputBytes: keepTerminal
+            ? sticky.outputBytes
+            : (event.task.outputBytes ??
+              (resetOutputs ? droppedSkeleton?.outputBytes : (previous.outputBytes ?? droppedSkeleton?.outputBytes))),
+          // A post-refresh lifecycle event re-projects the task with skeleton
+          // metadata; don't let its placeholder clobber the roster-seeded
+          // description.
+          description:
+            event.task.description === PLACEHOLDER_SUBAGENT_DESCRIPTION &&
+            previous.description !== PLACEHOLDER_SUBAGENT_DESCRIPTION
+              ? previous.description
+              : event.task.description,
+          swarmIndex: event.task.swarmIndex ?? previous.swarmIndex,
+          parentToolCallId: event.task.parentToolCallId ?? previous.parentToolCallId,
+          subagentType: event.task.subagentType ?? previous.subagentType,
+          // Skeleton re-projections omit the display metadata too — keep the
+          // roster/REST-seeded model and effort across the replacement.
+          model: event.task.model ?? previous.model,
+          thinkingEffort: event.task.thinkingEffort ?? previous.thinkingEffort,
+          runInBackground: resetOutputs
+            ? event.task.runInBackground
+            : (event.task.runInBackground ?? previous.runInBackground),
+          // A confirmed new run adopts the event's binding verbatim — even
+          // undefined: resurrecting the old binding would let a late/replayed
+          // task.terminated for the previous run kill THIS live row.
+          backgroundTaskId: resetOutputs
+            ? event.task.backgroundTaskId
+            : (event.task.backgroundTaskId ?? previous.backgroundTaskId),
+          // The roster-seeded agent id anchors transcript resumes; a skeleton
+          // re-projection (no wire agent_id) must not drop it.
+          agentId: event.task.agentId ?? previous.agentId,
+        };
+        next.tasksBySession[sid] = patched;
+      }
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'taskProgress': {
+      const sid = event.sessionId;
+      const list = next.tasksBySession[sid] ?? [];
+      next.tasksBySession[sid] = list.map((t) => {
+        if (t.id !== event.taskId) return t;
+        // Subagent streamed output (assistant.delta) concatenates into a single
+        // growing text block rather than fragmenting each delta into its own
+        // line — the detail panel renders it like a thinking block.
+        if (t.kind === 'subagent' && event.kind === 'text') {
+          return { ...t, text: (t.text ?? '') + event.outputChunk };
+        }
+        const outputLines = t.outputLines ?? [];
+        // A replace progress update (e.g. a subagent's WaitFor tick) rewrites
+        // the line it previously emitted instead of appending one per second;
+        // with no prior line it simply lands as the first.
+        if (event.replace === true) {
+          const lines =
+            outputLines.length > 0 ? [...outputLines.slice(0, -1), event.outputChunk] : [event.outputChunk];
+          return { ...t, outputLines: lines };
+        }
+        if (outputLines.at(-1) === event.outputChunk) return t;
+        const lines = [...outputLines, event.outputChunk];
+        return {
+          ...t,
+          // Keep subagent progress in full (small synthesized lines) so the
+          // panel shows the whole process; cap background bash/tool output,
+          // which can grow without bound.
+          outputLines: t.kind === 'subagent' ? lines : lines.slice(-MAX_BACKGROUND_OUTPUT_LINES),
+        };
+      });
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'taskCompleted': {
+      const sid = event.sessionId;
+      const list = next.tasksBySession[sid] ?? [];
+      next.tasksBySession[sid] = list.map((t) => {
+        // A background subagent's row is keyed by agent id while its
+        // task.terminated arrives under the background-task id — match both.
+        if (t.id !== event.taskId && t.backgroundTaskId !== event.taskId) return t;
+        // A late/replayed terminal must not downgrade the kernel terminal the
+        // row already carries: 'completed' never overwrites cancelled/failed,
+        // and a raced or replayed 'failed' never overwrites a user-cancelled
+        // row either.
+        if (
+          (event.status === 'completed' && (t.status === 'cancelled' || t.status === 'failed')) ||
+          (event.status === 'failed' && t.status === 'cancelled')
+        ) {
+          return t;
+        }
+        return {
+          ...t,
+          status: event.status,
+          // The wire event carries no completion stamp (the cancel path
+          // especially) — record when the terminal state was observed so
+          // "recently finished" sorting keeps the row.
+          completedAt: t.completedAt ?? new Date().toISOString(),
+          // The fallback stamps observation time, not real completion —
+          // mark it sort-only so durations never derive from it.
+          completedAtEstimated: t.completedAt === undefined ? true : t.completedAtEstimated,
+          // A termination projected from task.terminated deliberately carries
+          // no output fields — never let it wipe output a poll already wrote.
+          outputPreview: event.outputPreview ?? t.outputPreview,
+          outputBytes: event.outputBytes ?? t.outputBytes,
+        };
+      });
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'goalUpdated': {
+      const sid = event.sessionId;
+      // Bump on every goal event — including clears — so refreshSessionGoal's
+      // recovery read can detect any live event that landed mid-flight.
+      next.goalVersionBySession[sid] = (next.goalVersionBySession[sid] ?? 0) + 1;
+      if (event.goal === null || event.goal.status === 'complete') {
+        delete next.goalBySession[sid];
+      } else {
+        next.goalBySession[sid] = event.goal;
+      }
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'configChanged': {
+      next.config = event.config;
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    // Provider-model catalog refresh result. The daemon already persisted the
+    // new catalog; the web picks it up on the next explicit model/provider load
+    // (model picker, session switch). Advance seq silently.
+    case 'modelCatalogChanged':
+      break;
+
+    // -------------------------------------------------------------------------
+    // Agent-scoped side-channel events (e.g. BTW side chat) are consumed by the
+    // web layer, not the session reducer. Advance seq silently.
+    case 'agentDelta':
+    case 'agentTurnEnded':
+      break;
+
+    // -------------------------------------------------------------------------
+    // Prompt-level lifecycle events drive the web layer's in-flight cleanup
+    // (see useOmnicodeWebClient.processEvent), not reducer state — with two
+    // recency exceptions: the no-turn prompt paths. A prompt blocked before
+    // any turn started (promptCompleted reason 'blocked') and a queued prompt
+    // aborted before launch (promptAborted) produce no turn.ended, so without
+    // this the prompt's activity never bumps the session's recency.
+    case 'promptCompleted': {
+      if (event.reason === 'blocked' && isFreshEvent(state, meta)) {
+        bumpSessionRecency(next, event.sessionId);
+      }
+      break;
+    }
+    case 'promptAborted': {
+      // An active-turn abort arrives right after that turn's turn.ended —
+      // the turn end already bumped, so a second bump would only re-sort the
+      // list a moment later (and could slip the session ahead of one that
+      // finished in between). This case is for the queued no-turn abort only.
+      if (event.promptId === state.turnEndedPromptIdBySession[event.sessionId]) break;
+      if (isFreshEvent(state, meta)) {
+        bumpSessionRecency(next, event.sessionId);
+      }
+      break;
+    }
+
+    // -------------------------------------------------------------------------
+    case 'turnActiveChanged': {
+      // Replays after a reconnect/resync re-deliver old turn boundaries; the
+      // current liveness comes from the snapshot, so a stale frame must not
+      // move any of this state (a stale start would otherwise hide the failed
+      // card behind a phantom "working").
+      if (!isFreshEvent(state, meta)) break;
+      next.sessions = next.sessions.map((session) =>
+        session.id === event.sessionId
+          ? { ...session, mainTurnActive: event.active }
+          : session,
+      );
+      if (event.active) {
+        next.turnActiveBySession[event.sessionId] = true;
+        delete next.turnEndedPromptIdBySession[event.sessionId];
+        // A new main turn supersedes the previous turn's terminal error and
+        // any leftover retry state.
+        delete next.turnErrorBySession[event.sessionId];
+        delete next.turnRetryBySession[event.sessionId];
+        // A turn start IS new activity: under pure recency ordering the
+        // session floats now (one bump per turn — per-step churn is still
+        // excluded), not only when the turn ends.
+        bumpSessionRecency(next, event.sessionId);
+      } else {
+        delete next.turnActiveBySession[event.sessionId];
+        delete next.turnRetryBySession[event.sessionId];
+        if (event.promptId !== undefined) {
+          next.turnEndedPromptIdBySession[event.sessionId] = event.promptId;
+        }
+        // Foreground subagents cannot outlive the main turn — the tool call
+        // driving them returns before the turn ends — so a foreground row
+        // still reading running here means its settle event
+        // (subagent.completed/failed) was missed; close it from the turn's
+        // outcome instead of leaving a zombie only a refresh clears.
+        // Background rows persist past the turn by design and keep their own
+        // task.* lifecycle. Mirrors the server roster's abort rule: anything
+        // but a completed turn finalizes live members as failed.
+        const endedStatus: AppTaskStatus =
+          event.reason === undefined || event.reason === 'completed' ? 'completed' : 'failed';
+        const turnRows = next.tasksBySession[event.sessionId];
+        if (turnRows !== undefined) {
+          next.tasksBySession[event.sessionId] = turnRows.map((t) => {
+            if (t.kind !== 'subagent' || t.status !== 'running' || t.runInBackground === true) {
+              return t;
+            }
+            return {
+              ...t,
+              status: endedStatus,
+              subagentPhase: endedStatus,
+              // Same observed-stamp convention as the taskCompleted leg: keep
+              // a real stamp, otherwise record observation time as sort-only.
+              completedAt: t.completedAt ?? new Date().toISOString(),
+              completedAtEstimated: t.completedAt === undefined ? true : t.completedAtEstimated,
+              suspendedReason: undefined,
+            };
+          });
+        }
+        // The main turn's end is one of the coarse recency moments.
+        bumpSessionRecency(next, event.sessionId);
+      }
+      break;
+    }
+
+    case 'turnRetry': {
+      // The main turn's current step entered/left the retry backoff. Fresh
+      // events only: a replayed old phase frame must not resurrect an earlier
+      // turn's retry progress nor clear the current one.
+      if (!isFreshEvent(state, meta)) break;
+      if (event.retry === undefined) {
+        delete next.turnRetryBySession[event.sessionId];
+      } else {
+        next.turnRetryBySession[event.sessionId] = event.retry;
+      }
+      break;
+    }
+
+    case 'unknown': {
+      // Distinguish no-op known events (sentinel _noop) from agent errors/warnings
+      // and truly unknown events.
+      const raw = event.raw as {
+        _noop?: boolean;
+        _agentError?: boolean;
+        _agentWarning?: boolean;
+        code?: string;
+        message?: string;
+        name?: string;
+        details?: Record<string, unknown>;
+        retryable?: boolean;
+        type?: string;
+      } | null;
+      if (raw && raw._noop === true) {
+        // No-op streaming/tool event — seq already advanced, nothing else to do
+      } else if (raw && raw._agentError) {
+        // Stale replays (reconnect / snapshot rebuild) re-deliver the same
+        // terminal failure; it was surfaced when fresh, so skip both the
+        // record and the toast — otherwise an old provider message could
+        // overwrite a newer failure's details.
+        if (isFreshEvent(state, meta)) {
+          // Agent errors only ever mean "a main turn died" (the loop's terminal
+          // failure is the single publisher). Record it per session so the
+          // conversation can render a persistent failed-turn card.
+          if (meta.sessionId !== undefined) {
+            const details = raw.details ?? {};
+            next.turnErrorBySession[meta.sessionId] = {
+              code: raw.code,
+              message: raw.message,
+              name: raw.name,
+              retryable: raw.retryable,
+              statusCode: typeof details['statusCode'] === 'number' ? details['statusCode'] : undefined,
+              requestId: typeof details['requestId'] === 'string' ? details['requestId'] : undefined,
+            };
+          }
+          // The card covers the session the user is looking at, so the
+          // transient toast is only worth showing for background sessions —
+          // it is their only failure signal (sidebar marker aside).
+          if (meta.sessionId === undefined || meta.sessionId !== state.activeSessionId) {
+            // Surface the agent's real error (e.g. a 429 from the model provider)
+            // as a structured notice: semantic title + raw provider message +
+            // diagnostics (code / HTTP status / request id) for troubleshooting.
+            next.warnings = [...next.warnings, buildAgentErrorNotice(raw, ctx.t)];
+          }
+        }
+      } else if (raw && raw._agentWarning) {
+        const msg = raw.message ?? raw.code ?? ctx.t('warnings.agentWarningFallback');
+        next.warnings = [...next.warnings, `${ctx.t('warnings.noteLabel')}: ${msg}`];
+      } else {
+        // Truly unknown — push a warning
+        const wireType = raw?.type ?? '(unknown)';
+        next.warnings = [...next.warnings, ctx.t('warnings.unhandledEvent', { type: wireType })];
+      }
+      break;
+    }
+
+    // Workspace lifecycle events are handled in the composable (rawState), not
+    // here — listed explicitly to keep the switch exhaustive.
+    case 'workspaceCreated':
+    case 'workspaceUpdated':
+    case 'workspaceDeleted':
+      break;
+
+    // Same: remote-archive reconciliation (done-list fold, teardown, backfill)
+    // lives in the composable, which intercepts the event upstream.
+    case 'sessionArchived':
+      break;
+
+    // Plugin/capability shelf state is not in the client store — consumers
+    // (the desktop settings shelf) handle these upstream of the reducer.
+    case 'pluginsChanged':
+    case 'capabilityChanged':
+      break;
+
+    default: {
+      // TypeScript exhaustiveness guard — should not reach here
+      const _exhaustive: never = event;
+      void _exhaustive;
+      break;
+    }
+  }
+
+  return next;
+}

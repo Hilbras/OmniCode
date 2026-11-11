@@ -212,6 +212,9 @@ export interface CaptureOverrides {
   readonly subject?: string;
   readonly evidence?: MemoryCaptureInput['evidence'];
   readonly derivedFrom?: readonly string[];
+  readonly relations?: MemoryCaptureInput['relations'];
+  readonly sensitivity?: MemoryCaptureInput['sensitivity'];
+  readonly retention?: MemoryCaptureInput['retention'];
   readonly authority?: MemoryCaptureInput['authority'];
   readonly approval?: MemoryCaptureInput['approval'];
   readonly repoRevision?: string;
@@ -231,6 +234,9 @@ export function captureInput(content: string, overrides: CaptureOverrides = {}):
     subject: overrides.subject,
     evidence: overrides.evidence,
     derivedFrom: overrides.derivedFrom,
+    relations: overrides.relations,
+    sensitivity: overrides.sensitivity,
+    retention: overrides.retention,
     authority: overrides.authority,
     approval: overrides.approval,
     repoRevision: overrides.repoRevision,

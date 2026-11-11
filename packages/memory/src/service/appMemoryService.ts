@@ -13,6 +13,13 @@ import type {
   MemoryCaptureInput,
   MemoryCaptureResult,
   MemoryDiagnostics,
+  MemoryAuditRecord,
+  MemoryFeedbackInput,
+  MemoryFeedbackResult,
+  MemoryRecalibrationResult,
+  MemoryVersion,
+  MemoryDigestInput,
+  MemoryDigestResult,
   MemoryEvidenceRefreshOptions,
   MemoryEvidenceRefreshReport,
   MemoryListQuery,
@@ -129,6 +136,30 @@ export class AppMemoryService extends Disposable implements IMemoryService {
 
   get injectCanonical(): boolean {
     return this.canonicalInjectionEnabled() && this.delegate.enabled;
+  }
+
+  digest(input: MemoryDigestInput): Promise<MemoryDigestResult> {
+    return this.delegate.digest(input);
+  }
+
+  history(id: string): Promise<readonly MemoryVersion[]> {
+    return this.delegate.history(id);
+  }
+
+  setLegalHold(id: string, hold: boolean, reason: string): Promise<import('#/contracts/memoryContract').MemoryMutationResult> {
+    return this.delegate.setLegalHold(id, hold, reason);
+  }
+
+  recordFeedback(input: MemoryFeedbackInput): Promise<MemoryFeedbackResult> {
+    return this.delegate.recordFeedback(input);
+  }
+
+  recalibrateTrust(memoryId: string, now?: number): Promise<MemoryRecalibrationResult> {
+    return this.delegate.recalibrateTrust(memoryId, now);
+  }
+
+  auditLog(limit: number): Promise<readonly MemoryAuditRecord[]> {
+    return this.delegate.auditLog(limit);
   }
 
   capture(input: MemoryCaptureInput): Promise<MemoryCaptureResult> {

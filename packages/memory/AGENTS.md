@@ -5,7 +5,7 @@ deterministic trust promotion, lexical retrieval with honest budgets, and
 resumable task state.
 
 Consumed from source through the workspace exports map — there is no `build`
-step and no `dist`, matching `Kernel/Addons` and `Kernel/Tools`.
+step and no `dist`, matching `packages/Addons` and `packages/Tools`.
 
 ## Layout
 
@@ -15,7 +15,8 @@ step and no `dist`, matching `Kernel/Addons` and `Kernel/Tools`.
 | `src/trust/trustPolicy.ts` | pure trust + tier-admission rules; no I/O, no clock, no model |
 | `src/security/` | secret redaction (wraps core) and instruction-like-content detection |
 | `src/storage/` | the `MemoryStorePort` seam, an in-memory store, and the minidb store |
-| `src/retrieval/` | normalize → scope → lexical → gates → rank → budget → explanation |
+| `src/layers/` | deterministic extractors for preferences, phrases and explicit auto-capture requests |
+| `src/retrieval/` | normalize → scope → sensitivity ceiling → lexical → gates → rank (importance/confidence/recency/pinned) → relation expansion → dedup/superseded suppression → budget → explanation |
 | `src/service/` | the `IMemoryService` implementation, record factory, runtime wiring, maintenance scheduler, evidence watcher |
 | `src/context/` | agent-scope project identity and the reminder providers |
 | `src/tool/` | the `memory_search`, `memory_save` and `memory_forget` agent tools |
@@ -344,7 +345,7 @@ with.
 ## Wiring
 
 `src/index.ts` registers the config section, the flag and the `MemoryFeature` at
-import time; `Kernel/API/src/index.ts` re-exports this package, so importing the
+import time; `packages/API/src/index.ts` re-exports this package, so importing the
 Kernel surface is the activation point. Nothing downstream needs a side-effect
 import, and `omnicode-core` deliberately does **not** import this package —
 not even in `test/setup.ts`. Core's DI tests assert that no scope topology has
@@ -357,6 +358,12 @@ them. Nothing in core depends on memory, so there is nothing to activate there.
   `OMNICODE_EXPERIMENTAL_MEMORY=0`, `[experimental] memory = false`, and
   `[memory] enabled = false`; the flag itself is still registered as
   experimental, so `OMNICODE_EXPERIMENTAL_FLAG` and `explain` keep working.
+- Flag: `OMNICODE_EXPERIMENTAL_MEMORY_AUTO_CAPTURE`, id
+  `memory_auto_capture`, **default off**. When enabled, each new turn scans the latest
+  user prompt for explicit memory requests (`remember that ...`,
+  `keep in mind ...`, `my convention is ...`) and stores them as trusted
+  `user_statement` memories. Facts go to the repository scope; preferences go
+  to global scope. Normal conversation is not captured.
 - Config `[memory]`: `enabled`, `dir`, `maxContentChars`, `workingTtlMs`,
   `workingGraceMs`, `injectCanonical`, `reviewMaxAttempts`, `reviewBackoffMs`,
   `maxQueuedReviews`. Env: `OMNICODE_MEMORY_ENABLED`, `OMNICODE_MEMORY_DIR`,
@@ -375,13 +382,12 @@ them. Nothing in core depends on memory, so there is nothing to activate there.
 - Reminder variants `memory_canonical` (canonical tier only, minimum trust
   `trusted`, auto-inject budget) and `memory_task_restore` (once per session).
 
-## Adding a package under Kernel/
+## Adding a package under packages/
 
-Four edits, each of which fails silently when missed: `pnpm-workspace.yaml`
-(globs `Kernel/*`, already covered), `flake.nix` (`workspacePaths` **and**
-`workspaceNames`, both manual), the root `vitest.config.ts` project glob, and
-the `--filter './Kernel/*'` arguments in `build:packages` / `typecheck`. The
-memory package has all four.
+`pnpm-workspace.yaml` already globs `packages/*`. The remaining wiring that
+fails silently when missed is the root `vitest.config.ts` project list. There
+is no `flake.nix` in this tree; do not add one for a package. Run
+`pnpm check:workspace` after changing workspace or Vitest wiring.
 
 ## Tests
 
@@ -389,15 +395,19 @@ memory package has all four.
 |---|---|
 | `trust.test.ts` | the promotion rules and tier admission, plus the same through `capture`; conflict resolution and subject inference |
 | `storage.test.ts` | record integrity, corrupt records, failed writes, and the minidb backend on a real temp dir |
-| `retrieval.test.ts` | recall, scopes, gates, ranking, budgets and every retrieval status; synonym expansion, identifier splitting, query grouping and the relevance gate |
+| `retrieval.test.ts` | result dedup, superseded suppression, bounded relation expansion, ranking and scopes | recall, scopes, gates, ranking, budgets and every retrieval status; synonym expansion, identifier splitting, query grouping and the relevance gate |
 | `lifecycle.test.ts` | expiry vs invalidation vs supersession vs deletion, canonical approval |
+| `retention.test.ts` | retention modes, legal hold, held retrieval |
+| `feedback.test.ts` | guarded promotion/demotion and cooldown |
+| `sensitivity.test.ts` | sensitivity ceiling and provider egress denial |
 | `security.test.ts` | injection, cross-project isolation, redaction, authority forgery, unapproved promotion |
+| `digest.test.ts` | deterministic digest, quantity guard, scope isolation |
 | `capture.test.ts` | idempotency, the review queue, retry/backoff, failure reporting |
 | `continuity.test.ts` | task state save/restore, stale evidence, tool-output honesty, compaction-summary parsing and the upsert that replaces prior task state |
-| `injection.test.ts` | what actually reaches the model through the reminder providers |
+| `injection.test.ts` | what actually reaches the model through the reminder providers; explicit user auto-capture, deduplication and the saved-memory event |
 | `maintenance.test.ts` | the scheduler: startup drain, debounce, poll, retention, overlap |
 | `integration.test.ts` | the real DI graph: feature assembly, flag on/off, a real store on disk, queued work draining unattended |
-| `Kernel/core/test/memory/agentMemory.test.ts` | a real agent turn: the model calls `memory_search` through the actual engine loop and sees the result |
+| `packages/memory/test/injection.test.ts` | reminder injection, auto-capture and deduplication |
 | `tool.test.ts` | the `memory_search` contract, schema, approval rule and access counting; `memory_save` trust ceiling, idempotency and scopes; `memory_forget` visibility and invalidation; the user control surface (list, show, confirm, forget, export, cross-scope refusal) |
 | `concurrency.test.ts` | two openers on one store: the second reads, its writes fail loudly, the lock comes back |
 | `process.test.ts` | a real second OS process holding the lock, via `test/fixtures/hold-store.mts` |

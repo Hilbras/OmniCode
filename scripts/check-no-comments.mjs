@@ -3,7 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const PACKAGES = ['Kernel/core', 'Kernel/server', 'Kernel/transcript'];
+const PACKAGES = ['packages/core', 'packages/server', 'packages/transcript'];
 const DIRS = ['src', 'test', 'scripts'];
 
 function collectLeaves(node, leaves, jsdocNodes) {
@@ -105,6 +105,11 @@ for (const pkg of PACKAGES) {
       }
     }
   }
+}
+
+if (files.length === 0) {
+  console.error(`check-no-comments: no files found in ${PACKAGES.join(', ')}`);
+  process.exit(1);
 }
 
 let total = 0;
