@@ -124,3 +124,7 @@ Skill frontmatter may declare `allowed-tools`/`disallowed-tools`; parser normali
 ## Skill enforcement
 
 `skill/enforcement.ts` owns skill tool grants (`SkillToolEnforcer`): `visibleTools()` filters the offered tools, `enforceTool()` refuses anything outside `allowedTools`/`disallowedTools` (boundary, not a hint), `deactivate()` clears the grant, and `provenance()` + `labelSkillContent()` mark project/plugin (`project`, `extra`) content untrusted. A skill without metadata stays unrestricted. `AgentSkillService` arms it on activation, exposes `visibleToolNames()` for a narrowed tool list, deactivates on `TurnEnded`, and labels project/`extra` content before rendering. The request path narrows its tool list through a pushed grant (`IAgentLLMRequesterService.setSkillGrant`, not DI — DI would cycle through the loop), and `AgentSkillService` binds `IAgentToolExecutorService.setSkillGrant` through a lazy `IInstantiationService.invokeFunction` lookup — never a constructor dependency, which would break executor construction in tests without the skill feature. Both sites receive the same instance.
+
+## Goal verification
+
+`goal/verifier.ts` is the independent completion check: checks name required evidence ids, external checks reject `agent_claim`/model-observed records, run evidence needs an exit code and provenance, and stale evidence is refused. Verdicts are `verified | partial | rejected` — never upgrade partial. Nothing calls it from `goalService` yet.

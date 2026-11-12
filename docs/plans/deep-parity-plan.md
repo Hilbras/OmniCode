@@ -490,6 +490,12 @@ Tasks:
 4. Independent goal verifier with provenance-tagged evidence.
 5. Tests: overlay merge, risk gate, missing evidence rejection.
 
+#### 4.3 progress (goal verifier)
+
+- `features/goal/verifier.ts` verifies completion independently of the model's own claim: each `VerificationCheck` lists required evidence ids, whether it demands an external observation, and an optional `notBefore` freshness bound. `isAcceptableEvidence` rejects provenance-free records, run evidence without an exit code, `agent_claim` or model-observed records on external checks, and stale records. `verifyGoalCompletion` returns `verified` only when every check passes; any failure yields `partial` (or `rejected` when nothing passed or the goal has no checks) with a per-check reason in the summary.
+- Tests: `packages/engine/test/features/goal/verifier.test.ts` covers the acceptance rules and the four verdict paths, including "model says it is done" being rejected.
+- Still open in 4.3: speculation/overlay writes and the risk gate, wiring the verifier into `goalService`, and feeding it runtime-observed evidence automatically.
+
 ### 4.4 Workflow runtime and skill curator
 
 Files:
