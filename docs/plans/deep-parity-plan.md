@@ -263,6 +263,15 @@ Tasks:
 6. Load-time match/not-match examples.
 7. Tests: precedence, alternatives, amendments, opaque scripts.
 
+#### 2.1 progress
+
+- `agent/permissionPolicy/execPolicy/execPolicy.ts`: data-only `ExecPolicyFile` (`version: 1`, `rules`, `opaque`) with `loadExecPolicy` validating every field and every `examples` entry at load time (a rule whose own example does not match, or whose example is shadowed by a more specific rule, is a load error — never a silent non-match). `ExecPolicyLoadError` carries the failing path.
+- Matching: `matchExecPolicy(command, policy, {parser?})` resolves the argv through `canonicalizeCommand` (undoing only the canonicalizer's quoting), treats shell metacharacters, newlines, and unresolved quoting as opaque, and answers `opaque` for them — never an allow. Specificity: an exact `alternatives` argv match (`1000 + length`) beats a `prefix` match (`length`); a longer prefix beats a shorter one; on a tie a `sticky` rule wins, otherwise the first declared rule stays. Unmatched commands return `prompt-user`/`default`; `EMPTY_EXEC_POLICY` therefore prompts for everything and treats opaque scripts as `forbidden`.
+- Canonicalization: `canonicalTokenText` is NFD → lowercase → NFC on both sides. `hosts` on a rule are normalized the same way and returned on the matched rule (`api.example.com`) so a network amendment can be enforced by the caller.
+- Decisions are exactly `allow | prompt | prompt-user | forbidden`; the default for opaque commands is `forbidden` unless the file sets `opaque`.
+- Tests: `packages/engine/test/agent/permissionPolicy/execPolicy.test.ts` covers malformed files, non-matching and shadowed examples, prefix/alternative matching, alternative-beats-prefix, sticky ties, opaque metacharacters and unbalanced quotes, NFD/case folding, the `prompt-user` default, host carry, and executable-vs-prefix confusion.
+- Not wired yet: no permission policy consumes these rules, and the network/host amendment path has no caller. Wiring it into the policy chain is the next 2.1 step and must not weaken the existing sensitive-file and git-control policies that run before the classifier.
+
 ### 2.2 Reviewer lane
 
 Files:

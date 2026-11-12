@@ -140,6 +140,10 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 `permissionPolicy/commandCanonicalization.ts` canonicalizes plain commands and shell wrappers, strips only safe env prefixes, and hashes complex scripts as opaque. Bash denial/approval fingerprints use the canonical form.
 
 
+## Exec-policy rules
+
+`permissionPolicy/execPolicy/execPolicy.ts` is the data-only shell approval DSL: `loadExecPolicy` validates a `version: 1` file (rules + `opaque` decision) and rejects any `examples` entry its own rule does not match or that another rule shadows. `matchExecPolicy` canonicalizes NFD+case, treats shell metacharacters and unresolved quoting as opaque (decision from the file, `forbidden` by default), prefers alternative argv over prefix and longer over shorter, keeps a sticky rule on a tie, and returns `prompt-user` when nothing matches. Nothing in the policy chain consumes it yet.
+
 ## Read-only shell predicate
 
 `tool/read-only-shell.ts` is the one answer for "can this shell call overlap": `isReadOnlyShellCall({name,args}, parser)` / `classifyReadOnlyShell` accept only `Bash`, delegate parsing to `tool/read-only-command.ts`, fail closed without a parser or with malformed args, and memoize trimmed command text in a bounded process cache. The auto-mode classifier uses it — do not call `isReadOnlyBashCommand` directly from permission or scheduling code.
