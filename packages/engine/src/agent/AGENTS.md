@@ -162,7 +162,7 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 
 ## Cost gate
 
-`usage/costGate.ts` is the pre-call budget check: `projectedCallCost` is a lower bound (prompt tokens at the input rate plus one output token), `checkPreCallCost` refuses when spend plus projection exceeds the limit, and `assertPreCallCost` throws `usage.budget_exceeded`. Unknown pricing never refuses; it returns `reason: 'unknown-pricing'`. Nothing calls it yet.
+`usage/costGate.ts` is the pre-call budget check: `projectedCallCost` is a lower bound (prompt tokens at the input rate plus one output token), `checkPreCallCost` refuses when spend plus projection exceeds the limit, and `assertPreCallCost` throws `usage.budget_exceeded`. Unknown pricing never refuses; it returns `reason: 'unknown-pricing'`. `usage/costGateService.ts` (`AgentCostGateService`) supplies the prices from `costLimits` config (`limitUsd`, `modelPrices`) via `usage/modelPriceTable.ts`, and treats a missing or ≤ 0 limit as "no budget". `llmRequesterService` calls it before every request; never price a model by hard-coding a table here.
 
 ## Abort terminal latch
 

@@ -10,6 +10,7 @@ import {
   retryErrorFields,
   sleepForRetry,
 } from '@hilbras/omnicode-base/utils/retry';
+import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import {
@@ -31,6 +32,7 @@ import { IAgentStateService } from '#/agent/state/agentState';
 import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { IAgentToolSelectService } from '#/agent/toolSelect/toolSelect';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
+import { IAgentCostGateService } from '#/agent/usage/costGateService';
 import { IConfigService } from '#/app/config/config';
 import { IFlagService } from '#/app/flag/flag';
 import { THINKING_SECTION } from '#/app/kosongConfig/configSection';
@@ -195,6 +197,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     @IAgentScopeContext private readonly scopeContext: IAgentScopeContext,
     @IAgentStateService private readonly states: IAgentStateService,
     @IBootstrapService private readonly bootstrap: IBootstrapService,
+    @IAgentCostGateService private readonly costGateService?: IAgentCostGateService,
   ) {
     this.states.contributeState(llmRequestTraceKey);
     this.states.contributeState(llmRequesterLastConfigLogSignatureKey);
@@ -281,8 +284,10 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     };
     setTrace(undefined);
     try {
+      const prepared = this.resolveRequest(overrides);
+      this.assertCostBudget(prepared);
       return await this.runRequest(
-        this.resolveRequest(overrides),
+        prepared,
         onPart,
         signal,
         setTrace,
@@ -293,6 +298,42 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
       setTrace(this.trackApiError(error, startedAt, signal, overrides.source, trace.traceId));
       throw error;
     }
+  }
+
+  /**
+   * Refuses a request before it is issued when the configured spend limit is
+   * already reached. No limit or no price for the model means no refusal —
+   * the gate only ever tightens an operator-chosen budget.
+   */
+  private assertCostBudget(prepared: ResolvedLLMRequest): void {
+    const gate = this.costGateService;
+    if (gate === undefined || gate.limitUsd === undefined) return;
+    const agent = this.scopeContext.agentContext;
+    const spent = this.spentUsd(agent);
+    const promptTokens =
+      this.tokenCounting.get(agent).size ??
+      this.tokenCounting.requestSize({
+        systemPrompt: prepared.systemPrompt,
+        tools: prepared.tools,
+        messages: prepared.messages,
+      });
+    gate.assertCanAfford(prepared.modelAlias, promptTokens, spent);
+  }
+
+  /**
+   * Spend so far for this agent's models. Unknown prices are counted as zero
+   * here and stay visible through the gate's `unknown-pricing` verdict, so the
+   * budget never silently treats an unpriced model as free on the report side.
+   */
+  private spentUsd(agent: AgentContext): number {
+    const gate = this.costGateService;
+    const byModel = this.usage.status(agent).byModel ?? {};
+    if (gate === undefined) return 0;
+    let spent = 0;
+    for (const [modelId, usage] of Object.entries(byModel)) {
+      spent += gate.priceUsage(modelId, usage) ?? 0;
+    }
+    return spent;
   }
 
   private logRequestFailure(
