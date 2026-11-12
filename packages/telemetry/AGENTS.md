@@ -87,3 +87,12 @@ spawned child for crash behavior. No external endpoint is required.
 - Product metrics definitions: owning feature package.
 - PII filtering: this package enforces structure; callers still must not supply
   sensitive values.
+
+
+## Agent metric schema
+
+`src/agentMetrics.ts` defines redacted telemetry property builders for agent turns, tools, permissions, memory recall, sandbox, and channels. Payloads are enums/counts/safe names only; never pass paths, commands, prompts, or memory content.
+
+## OTLP export shape
+
+`src/otlp.ts` builds OTLP/HTTP JSON payloads: attribute allowlists per signal (`SPAN_ATTRIBUTE_ALLOWLIST`, `METRIC_ATTRIBUTE_ALLOWLIST`), primitives only, bounded span buffer, and a per-metric series cap that folds extra series into `overflow=true`. The exporter has no transport and no endpoint — a host posts the payload. Never add a free-form attribute path here.

@@ -59,3 +59,6 @@ export { normalizeRemote } from './remote';
 
 export type { TelemetryPrimitive, TelemetryProperties } from './types';
 export type { TelemetryClient, TelemetryContextIds } from './client';
+
+export * from './agentMetrics';
+export * from './otlp';

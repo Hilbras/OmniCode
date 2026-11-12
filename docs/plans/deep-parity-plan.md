@@ -543,6 +543,14 @@ Tasks:
 3. Token/cost/retry/compaction/recall/fallback metrics.
 4. Redaction and cardinality caps.
 
+#### 5.2 progress
+
+- `packages/telemetry/src/otlp.ts` provides the OTLP/HTTP payload shape without owning transport: `OtlpExporter.exportSpan/exportMetric` build OTLP JSON (`resourceSpans` / `resourceMetrics`, gauge data points) that a host posts. The exporter never opens a socket, so tests need none and auth/endpoint stay with the caller.
+- Redaction: only attributes on an explicit allowlist survive and only JSON primitives do — nested objects, arrays, non-finite numbers, and unknown keys (paths, commands, prompts) are dropped, not stringified. Span and metric allowlists are exported constants.
+- Cardinality: buffered spans are capped (`maxBufferedSpans`, default 1000, oldest dropped and counted) and each metric name accepts `maxMetricSeries` distinct attribute sets (default 500); beyond that, points fold into a single `overflow=true` series and are counted.
+- Tests: `packages/telemetry/test/otlp.test.ts` covers primitive/allowlist redaction, span JSON redaction (a `command` attribute never leaves), the span buffer cap, metric overflow folding, and non-finite metric rejection.
+- Still open in 5.2: no HTTP sender is wired (no endpoint, headers, or retry), no engine/CLI call sites emit these spans or metrics, and there is no span per turn/tool/LLM/approval/sandbox yet.
+
 ### 5.3 Release/product surfaces
 
 Files:
