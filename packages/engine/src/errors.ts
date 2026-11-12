@@ -210,6 +210,7 @@ export type OmnicodeErrorCode =
   | 'budget.reservation_settled'
   | 'fork_cache.key_invalid'
   | 'usage.turn_id_conflict'
+  | 'usage.budget_exceeded'
   | 'mcp.server_not_found'
   | 'mcp.server_disabled'
   | 'mcp.startup_failed'

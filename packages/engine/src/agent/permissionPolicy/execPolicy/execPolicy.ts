@@ -37,8 +37,8 @@ const DECISIONS: ReadonlySet<string> = new Set<ExecDecision>([
 ]);
 
 export interface ExecRuleSpec {
-  /** One entry per alternative; a string is a prefix, an array is an exact argv. */
-  readonly prefix: string | readonly (string | readonly string[])[];
+  /** Command prefix: a string or a list of tokens. Optional when `alternatives` is set. */
+  readonly prefix?: string | readonly (string | readonly string[])[];
   /** Alternative exact argv shapes, when the prefix alone is too loose. */
   readonly alternatives?: readonly (readonly string[])[];
   readonly decision: ExecDecision;
@@ -190,7 +190,7 @@ function compileRule(raw: unknown, path: string): CompiledExecRule {
   }
   const examples = normalizeExamples(raw['examples'], path);
   const spec: ExecRuleSpec = {
-    prefix: (raw['prefix'] as ExecRuleSpec['prefix']) ?? [],
+    ...(prefixArgv !== undefined ? { prefix: raw['prefix'] as ExecRuleSpec['prefix'] } : {}),
     decision,
     ...(alternatives.length > 0 ? { alternatives } : {}),
     ...(hosts !== undefined ? { hosts: hosts as string[] } : {}),

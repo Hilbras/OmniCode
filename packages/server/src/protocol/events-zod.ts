@@ -380,6 +380,7 @@ export const omnicodeErrorCodeSchema = z.enum([
   'task.task_id_empty',
   'task.limit_exceeded',
   'usage.turn_id_conflict',
+  'usage.budget_exceeded',
   'mcp.server_not_found',
   'mcp.server_disabled',
   'mcp.startup_failed',

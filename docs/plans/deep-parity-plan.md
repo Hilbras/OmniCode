@@ -308,6 +308,13 @@ Tasks:
 5. Ordered fallback by capabilities/ownership; no loops.
 6. Tests: cache pricing, unknown model, budget refusal, fallback compatibility.
 
+#### 2.3 progress
+
+- `agent/usage/costGate.ts` is the pre-call half of hard budgets: `projectedCallCost` prices prompt tokens at the input rate plus one output token (a floor, so an empty prompt still moves the meter), `checkPreCallCost` refuses when spend-so-far plus that projection is already over the limit, and `assertPreCallCost` throws `UsageError('usage.budget_exceeded')` naming the model, spend, limit, and projection. An unknown price never blocks a call — it returns `reason: 'unknown-pricing'` so the caller can keep the meter visibly incomplete.
+- New error code `usage.budget_exceeded` is registered in `agent/usage/errors.ts`, added to the engine error union, and mirrored in `packages/server/src/protocol/events-zod.ts`.
+- Tests: `packages/engine/test/agent/usage/costGate.test.ts` covers the output floor, fitting calls, refusal before the call, refusal at exactly the limit, unknown-model pass-through, the typed error payload, and the success verdict.
+- Not wired: `llmRequesterService` does not call the gate yet, so the check is a seam with no production caller. The model catalog → `ModelPricingTable` price plumbing and the per-turn/session/goal cost accumulator also remain; both need the llm package's pricing table plus the catalog's price fields, and wiring a budget from a table that is empty would refuse every call.
+
 ## Phase 3: Tools, MCP, skills, sandbox
 
 ### 3.1 Patch semantics upgrade

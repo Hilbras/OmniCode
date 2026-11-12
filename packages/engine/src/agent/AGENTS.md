@@ -160,6 +160,10 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 
 `loop/inputQueue.ts` + `loop/inputQueueService.ts` type mid-turn input as `steer | mail | tool_output`. Precedence at a step boundary is fixed (`steer → tool_output → mail`), FIFO inside a channel, each capped at 16 with the oldest dropped. Tool output is last-writer data: it is discarded unless its `toolCallId` is still in the running set, and passive mail only wakes a loop when its producer sets `wake`. The service is registered in the agent scope but `loopService.ts` does not drain it yet — do not add a second path for the same input.
 
+## Cost gate
+
+`usage/costGate.ts` is the pre-call budget check: `projectedCallCost` is a lower bound (prompt tokens at the input rate plus one output token), `checkPreCallCost` refuses when spend plus projection exceeds the limit, and `assertPreCallCost` throws `usage.budget_exceeded`. Unknown pricing never refuses; it returns `reason: 'unknown-pricing'`. Nothing calls it yet.
+
 ## Abort terminal latch
 
 `toolExecutor/abortContract.ts` (`AbortContract`) latches one terminal outcome per abortable unit: the first of complete/abort/fail wins, a late finish or late abort is discarded, `aborted.handled` says whether a running handler was cut short or none started, `release()` is true once for lock accounting, and `accounting()` reports `handlerMs` (0 when never started) and `drainMs` separately. It is pure; the executor still owns signal plumbing and event emission.
