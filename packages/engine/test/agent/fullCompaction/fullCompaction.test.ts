@@ -11,8 +11,17 @@ import {
 import { renderCompactionInstruction } from '#/agent/fullCompaction/compactionInstruction';
 import { DefaultCompactionStrategy } from '#/agent/fullCompaction/strategy';
 import { IAgentLoopService } from '#/agent/loop/loop';
+import {
+  IAgentTaskService,
+  type AgentTaskInfo,
+  type AgentTaskOutputSnapshot,
+  type ForegroundTaskReleaseReason,
+  type IAgentTaskEntry,
+} from '#/agent/task/task';
 import { IAgentToolSelectAnnouncementsService } from '#/agent/toolSelect/toolSelectAnnouncements';
+import type { SubagentTaskInfo } from '#/agent/tools/agent/subagent-task';
 import { MASTER_ENV } from '#/app/flag/flagService';
+import { Error2, ErrorCodes } from '#/errors';
 import type { IExternalHooksRunnerService } from '#/features/externalHooks/app/externalHooksRunner';
 import { IAgentGoalService } from '#/features/goal/goalService';
 import { IAgentTodoService } from '#/features/todo/todoService';
@@ -3898,7 +3907,282 @@ describe('FullCompaction context recovery pointer', () => {
     expect(withPointer).not.toContain('${');
     expect(withCustom).toContain('Optional user instruction:\nkeep the API facts');
   });
+
+  it('appends the agent state reminder to the recovery footer', async () => {
+    const ctx = recoveryAgent(appService(IFileSystemStorageService, locatedStorage(JOURNAL_HOME)));
+    await ctx.get(IAgentGoalService).createGoal({ objective: 'Ship the auth fix' });
+    ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+    ctx.appendExchange(2, 'recent user two', 'recent assistant two', 40);
+
+    await compactOnce(ctx, 'Compacted summary.');
+
+    const note = noteText(ctx);
+    expect(note).toContain('## State at Compaction');
+    expect(note).toContain('- Goal (active): Ship the auth fix');
+    await ctx.expectResumeMatches();
+  });
+
+  it('snapshots spawned subagents into the recovery footer', async () => {
+    const ctx = recoveryAgent(
+      agentService(
+        IAgentTaskService,
+        new StubAgentTaskService([
+          subagentInfo('agent-aa11', 'Research the auth flow', { agentId: 'sub-1', subagentType: 'explore' }),
+        ]),
+      ),
+      appService(IFileSystemStorageService, locatedStorage(JOURNAL_HOME)),
+    );
+    ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+    ctx.appendExchange(2, 'recent user two', 'recent assistant two', 40);
+
+    await compactOnce(ctx, 'Compacted summary.');
+
+    const note = noteText(ctx);
+    expect(note).toContain('## Subagents Before Compaction');
+    expect(note).toContain('- agent-aa11 "Research the auth flow" (explore) — running');
+    await ctx.expectResumeMatches();
+  });
+
+  it('lists running subagents ahead of a long settled history', async () => {
+    const settled = Array.from({ length: 8 }, (_, index) =>
+      subagentInfo(`agent-bb${String(index)}`, `settled ${String(index)}`, {
+        status: 'completed',
+        endedAt: 1,
+      }),
+    );
+    const running = subagentInfo('agent-aa11', 'the running one');
+    const ctx = recoveryAgent(
+      agentService(IAgentTaskService, new StubAgentTaskService([...settled, running])),
+      appService(IFileSystemStorageService, locatedStorage(JOURNAL_HOME)),
+    );
+    ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+
+    await compactOnce(ctx, 'Compacted summary.');
+
+    const note = noteText(ctx);
+    expect(note).toContain('"the running one" — running');
+    expect(note).toContain('1 more subagent(s) not listed');
+    expect(note.indexOf('"the running one"')).toBeLessThan(note.indexOf('"settled 0"'));
+    await ctx.expectResumeMatches();
+  });
+
+  it('completes compaction when the goal service throws and omits the state section', async () => {
+    const ctx = recoveryAgent(
+      agentService(IAgentGoalService, new ThrowingAgentGoalService()),
+      appService(IFileSystemStorageService, locatedStorage(JOURNAL_HOME)),
+    );
+    expect(() => ctx.get(IAgentGoalService).getGoal()).toThrow();
+    ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+    ctx.appendExchange(2, 'recent user two', 'recent assistant two', 40);
+
+    await compactOnce(ctx, 'Compacted summary.');
+
+    const [record] = applyCompactionRecords(ctx);
+    expect(record).toBeDefined();
+    const note = noteText(ctx);
+    expect(note).toContain('Compacted summary.');
+    expect(note).toContain('## Context Recovery');
+    expect(note).not.toContain('## State at Compaction');
+    await ctx.expectResumeMatches();
+  });
+
+  it('completes compaction when the task service throws and omits the subagent snapshot', async () => {
+    const tasks = new ThrowingAgentTaskService();
+    const ctx = recoveryAgent(
+      agentService(IAgentTaskService, tasks),
+      appService(IFileSystemStorageService, locatedStorage(JOURNAL_HOME)),
+    );
+    ctx.appendExchange(1, 'old user one', 'old assistant one', 20);
+    ctx.appendExchange(2, 'recent user two', 'recent assistant two', 40);
+    tasks.armListFailure();
+    expect(() => ctx.get(IAgentTaskService).list(false)).toThrow();
+
+    await compactOnce(ctx, 'Compacted summary.');
+
+    const [record] = applyCompactionRecords(ctx);
+    expect(record).toBeDefined();
+    const note = noteText(ctx);
+    expect(note).toContain('Compacted summary.');
+    expect(note).toContain('## Context Recovery');
+    expect(note).not.toContain('## State at Compaction');
+    expect(note).not.toContain('## Subagents Before Compaction');
+    tasks.disarmListFailure();
+    await ctx.expectResumeMatches();
+  });
+
+  function subagentInfo(
+    taskId: string,
+    description: string,
+    overrides: Partial<SubagentTaskInfo> = {},
+  ): SubagentTaskInfo {
+    return {
+      taskId,
+      kind: 'agent',
+      description,
+      status: 'running',
+      startedAt: 0,
+      endedAt: null,
+      detached: true,
+      ...overrides,
+    };
+  }
 });
+
+class StubAgentTaskService implements IAgentTaskService {
+  declare readonly _serviceBrand: undefined;
+
+  constructor(private readonly tasks: readonly AgentTaskInfo[]) {}
+
+  list(activeOnly = true): readonly AgentTaskInfo[] {
+    return activeOnly ? this.tasks.filter((task) => task.status === 'running') : this.tasks;
+  }
+
+  track(): IAgentTaskEntry {
+    throw new Error('unexpected task-service call in this test');
+  }
+
+  registerTask(): string {
+    throw new Error('unexpected task-service call in this test');
+  }
+
+  getTask(): AgentTaskInfo | undefined {
+    return undefined;
+  }
+
+  persistOutput(): void {}
+
+  getOutputSnapshot(): Promise<AgentTaskOutputSnapshot> {
+    return Promise.resolve({
+      outputSizeBytes: 0,
+      previewBytes: 0,
+      truncated: false,
+      fullOutputAvailable: false,
+      preview: '',
+    });
+  }
+
+  readOutput(): Promise<string> {
+    return Promise.resolve('');
+  }
+
+  suppressTerminalNotification(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  suppressAllTerminalNotifications(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  markTasksDeliveredViaWait(): void {}
+
+  detach(): AgentTaskInfo | undefined {
+    return undefined;
+  }
+
+  stop(): Promise<AgentTaskInfo | undefined> {
+    return Promise.resolve(undefined);
+  }
+
+  stopByUser(): Promise<AgentTaskInfo | undefined> {
+    return Promise.resolve(undefined);
+  }
+
+  stopAll(): Promise<readonly AgentTaskInfo[]> {
+    return Promise.resolve([]);
+  }
+
+  stopAllOnExit(): Promise<readonly AgentTaskInfo[]> {
+    return Promise.resolve([]);
+  }
+
+  wait(): Promise<AgentTaskInfo | undefined> {
+    return Promise.resolve(undefined);
+  }
+
+  waitForForegroundRelease(): Promise<ForegroundTaskReleaseReason | undefined> {
+    return Promise.resolve(undefined);
+  }
+}
+
+class ThrowingAgentTaskService extends StubAgentTaskService {
+  private listsThrow = false;
+
+  constructor() {
+    super([]);
+  }
+
+  armListFailure(): void {
+    this.listsThrow = true;
+  }
+
+  disarmListFailure(): void {
+    this.listsThrow = false;
+  }
+
+  override list(activeOnly = true): readonly AgentTaskInfo[] {
+    if (this.listsThrow) throw new Error('task service failed in this test');
+    return super.list(activeOnly);
+  }
+}
+
+class ThrowingAgentGoalService implements IAgentGoalService {
+  declare readonly _serviceBrand: undefined;
+
+  getGoal(): never {
+    throw new Error2(
+      ErrorCodes.GOAL_UNSUPPORTED_AGENT,
+      'Goals are only supported by the main agent',
+    );
+  }
+
+  isGoalToolTarget(): boolean {
+    return false;
+  }
+
+  createGoal(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+
+  pauseGoal(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+
+  resumeGoal(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+
+  setBudgetLimits(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+
+  cancelGoal(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+
+  markBlocked(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+
+  markComplete(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+
+  pauseOnInterrupt(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+
+  recordTokenUsage(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+
+  incrementTurn(): Promise<never> {
+    return Promise.reject(unexpectedGoalServiceCall());
+  }
+}
+
+function unexpectedGoalServiceCall(): Error {
+  return new Error('unexpected goal-service call in this test');
+}
 
 afterEach(() => {
   vi.useRealTimers();

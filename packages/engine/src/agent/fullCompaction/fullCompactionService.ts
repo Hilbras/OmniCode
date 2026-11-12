@@ -6,6 +6,7 @@ import { onUnexpectedError } from '@hilbras/omnicode-base/errors/unexpectedError
 import { Emitter, type Event } from '@hilbras/omnicode-base/event';
 import { isAbortError } from '@hilbras/omnicode-base/utils/abort';
 import { retryBackoffDelay, sleepForRetry } from '@hilbras/omnicode-base/utils/retry';
+import { IAgentTaskService, type AgentTaskInfo } from '#/agent/task/task';
 import {
   buildCompactionSummaryText,
   isRealUserInput,
@@ -40,6 +41,7 @@ import {
   toOmnicodeErrorPayload,
   unwrapErrorCause,
 } from '#/errors';
+import { IAgentGoalService } from '#/features/goal/goalService';
 import { renderTodoList } from '#/features/todo/todoItem';
 import { IAgentTodoService } from '#/features/todo/todoService';
 import { OrderedHookSlot } from '#/hooks';
@@ -85,6 +87,8 @@ import {
 import { ToolCallStarted, ToolResultEvent } from '#/agent/toolExecutor/toolExecutorEvents';
 import { renderContextRecoveryPointer } from './contextRecovery';
 import { restoreRecentlyTouchedFiles } from './fileRestoration';
+import { renderStateReminder } from './stateReminder';
+import { renderSubagentSnapshot } from './subagentSnapshot';
 import { RecentlyTouchedFilesTracker, DEFAULT_TRACKED_FILES } from './touchedFilesTracker';
 import {
   IAgentFullCompactionService,
@@ -128,6 +132,8 @@ interface CompactionAttemptResult {
   readonly usage: TokenUsage | null;
   readonly traceId?: string;
 }
+
+type AgentSubagentInfo = Extract<AgentTaskInfo, { kind: 'agent' }>;
 
 class CompactionTruncatedError extends Error {
   constructor() {
@@ -185,6 +191,8 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
     @IWireService private readonly wire: IWireService,
     @IConfigService private readonly configService: IConfigService,
     @IModelCatalog private readonly modelCatalog: IModelCatalog,
+    @IAgentGoalService private readonly goal: IAgentGoalService,
+    @IAgentTaskService private readonly tasks: IAgentTaskService,
   ) {
     super();
     this.states.contributeState(fullCompactionKey);
@@ -1061,6 +1069,10 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
     const parts: string[] = [];
     const files = await this.renderTouchedFiles();
     if (files !== undefined) parts.push(files);
+    const state = this.renderStateReminder();
+    if (state !== undefined) parts.push(state);
+    const subagents = this.renderSubagentSnapshot();
+    if (subagents !== undefined) parts.push(subagents);
     const journalPath = this.wire.journalPath();
     if (wireLines !== undefined && journalPath !== undefined) {
       const windows = [...this.states.get(fullCompactionWireRangesKey), wireLines];
@@ -1088,6 +1100,43 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
     }
   }
 
+  /**
+   * Reminds the model of the durable state it held outside the conversation.
+   * Failures are swallowed: a goal or task service hiccup must never turn a
+   * successful compaction into a failed turn.
+   */
+  private renderStateReminder(): string | undefined {
+    try {
+      const goal = this.goal.getGoal().goal;
+      return renderStateReminder({
+        goal:
+          goal === null
+            ? null
+            : { status: goal.status, objective: goal.objective, turnsUsed: goal.turnsUsed },
+        todos: this.todo.get(),
+        activeTasks: this.tasks.list(true),
+      });
+    } catch {
+      return undefined;
+    }
+  }
+
+  /**
+   * Snapshots the subagents this agent spawned, running ones first so a long
+   * settled history cannot hide an active one. Failures are swallowed for the
+   * same reason as the state reminder.
+   */
+  private renderSubagentSnapshot(): string | undefined {
+    try {
+      const subagents = this.tasks
+        .list(false)
+        .filter((task): task is AgentSubagentInfo => task.kind === 'agent');
+      return renderSubagentSnapshot({ subagents: subagentsRunningFirst(subagents) });
+    } catch {
+      return undefined;
+    }
+  }
+
   private tokenCountWithPending(): number {
     return this.tokenCounting.get(agentContextOfScope(this.agent)).size;
   }
@@ -1098,6 +1147,15 @@ function isOutputCapRejection(error: APIStatusError | undefined): boolean {
   const message = error.message;
   if (!/max_tokens/i.test(message)) return false;
   return /exceed|too (large|long|high)|limit/i.test(message);
+}
+
+function subagentsRunningFirst(subagents: readonly AgentSubagentInfo[]): readonly AgentSubagentInfo[] {
+  const running: AgentSubagentInfo[] = [];
+  const settled: AgentSubagentInfo[] = [];
+  for (const subagent of subagents) {
+    (subagent.status === 'running' ? running : settled).push(subagent);
+  }
+  return [...running, ...settled];
 }
 
 function shrinkCompactionOutputCap(current: number): number | undefined {
