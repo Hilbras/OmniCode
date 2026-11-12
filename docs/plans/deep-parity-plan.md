@@ -168,7 +168,9 @@ Tasks:
 - Fence safety: `fenceFor` picks a backtick fence longer than any run inside the file body, so a file containing its own code fence cannot close the section or plant instructions.
 - Caps: per-file (`maxCharsPerFile`, default 4000, marked `(truncated)`), files per compaction (`maxFiles`, default 5), and the whole section (`maxTotalChars`, default 16000) with a visible `N more file(s) not restored` note.
 - Tests: `packages/engine/test/agent/fullCompaction/fileRestoration.test.ts` covers selection/dedupe/write preference, fence escalation, heading and omission notes, missing files, retry counts, per-file truncation, and the section cap.
-- Not wired: nothing calls `restoreRecentlyTouchedFiles` from `fullCompactionService` yet, and the state reminder plus subagent snapshot parts of 1.2 are still open.
+- Wired: `agent/fullCompaction/touchedFilesTracker.ts` records successfully read/written paths from `ToolCallStarted` + `ToolResultEvent` (one entry per path, write survives a later read, 64-path bound), and `fullCompactionService.renderRecoveryFooter` now awaits it, restoring those files ahead of the wire-recovery pointer in the compaction summary. Read failures are swallowed so a missing file can never turn a successful compaction into a failed turn.
+- Tests: `packages/engine/test/agent/fullCompaction/touchedFilesTracker.test.ts` covers recording, failure/tool/path filtering, write-wins, Edit/NotebookEdit, bounds, and clear.
+- Still open in 1.2: the state reminder and the subagent snapshot sections; restoration currently covers files only.
 
 ### 1.3 Full loop detection
 

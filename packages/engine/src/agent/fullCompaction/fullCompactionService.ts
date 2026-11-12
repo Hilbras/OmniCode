@@ -1,3 +1,4 @@
+import { readFile } from 'node:fs/promises';
 import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { Service } from '@hilbras/omnicode-base/di/service';
@@ -81,7 +82,10 @@ import {
   FullCompactionCancel,
   FullCompactionComplete,
 } from './compactionOps';
+import { ToolCallStarted, ToolResultEvent } from '#/agent/toolExecutor/toolExecutorEvents';
 import { renderContextRecoveryPointer } from './contextRecovery';
+import { restoreRecentlyTouchedFiles } from './fileRestoration';
+import { RecentlyTouchedFilesTracker, DEFAULT_TRACKED_FILES } from './touchedFilesTracker';
 import {
   IAgentFullCompactionService,
   type FullCompactionInput,
@@ -201,6 +205,23 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
       }),
     );
     this._register(this.eventBus.subscribe(TurnStarted, () => this.resetForTurn()));
+    this._register(
+      this.eventBus.subscribe(ToolResultEvent, (event) => {
+        const call = this.pendingToolCalls.get(event.toolCallId);
+        if (call === undefined) return;
+        this.pendingToolCalls.delete(event.toolCallId);
+        this.touchedFiles.record(call.name, call.args, event.isError === true);
+      }),
+    );
+    this._register(
+      this.eventBus.subscribe(ToolCallStarted, (event) => {
+        this.pendingToolCalls.set(event.toolCallId, { name: event.name, args: event.args });
+        if (this.pendingToolCalls.size > 256) {
+          const oldest = this.pendingToolCalls.keys().next();
+          if (oldest.done !== true) this.pendingToolCalls.delete(oldest.value);
+        }
+      }),
+    );
     this._register(
       this.eventBus.subscribe(TurnEnded, () => {
         this.activeTurnId = undefined;
@@ -894,7 +915,7 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
       const summary = await this.postProcessSummary(attempt.summary);
       const wireLines = await this.captureWireLines();
       signal.throwIfAborted();
-      const recoveryFooter = this.renderRecoveryFooter(wireLines);
+      const recoveryFooter = await this.renderRecoveryFooter(wireLines);
       const summaryText = buildCompactionSummaryText(summary);
       const recentContext = buildRecentContextText(
         originalHistory,
@@ -1033,12 +1054,38 @@ export class AgentFullCompactionService extends Service implements IAgentFullCom
     return { start, end };
   }
 
-  private renderRecoveryFooter(wireLines: WireLineRange | undefined): string | undefined {
-    if (wireLines === undefined) return undefined;
+  private readonly touchedFiles = new RecentlyTouchedFilesTracker(DEFAULT_TRACKED_FILES);
+  private readonly pendingToolCalls = new Map<string, { readonly name: string; readonly args: unknown }>();
+
+  private async renderRecoveryFooter(wireLines: WireLineRange | undefined): Promise<string | undefined> {
+    const parts: string[] = [];
+    const files = await this.renderTouchedFiles();
+    if (files !== undefined) parts.push(files);
     const journalPath = this.wire.journalPath();
-    if (journalPath === undefined) return undefined;
-    const windows = [...this.states.get(fullCompactionWireRangesKey), wireLines];
-    return renderContextRecoveryPointer({ journalPath, windows });
+    if (wireLines !== undefined && journalPath !== undefined) {
+      const windows = [...this.states.get(fullCompactionWireRangesKey), wireLines];
+      parts.push(renderContextRecoveryPointer({ journalPath, windows }));
+    }
+    return parts.length === 0 ? undefined : parts.join('\n\n');
+  }
+
+  /**
+   * Restores the files the agent was working in. Failures are swallowed: a
+   * missing or unreadable file must never turn a successful compaction into a
+   * failed turn, and the tracker already dropped paths that failed before.
+   */
+  private async renderTouchedFiles(): Promise<string | undefined> {
+    const files = this.touchedFiles.list();
+    if (files.length === 0) return undefined;
+    try {
+      const result = await restoreRecentlyTouchedFiles({
+        files,
+        read: (path) => readFile(path, 'utf8'),
+      });
+      return result.text;
+    } catch {
+      return undefined;
+    }
   }
 
   private tokenCountWithPending(): number {

@@ -170,7 +170,7 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 
 ## Post-compaction file restoration
 
-`fullCompaction/fileRestoration.ts` renders the files the agent touched back into context after compaction (`## Files Touched Before Compaction`). It never discovers paths itself — it reads only what the caller hands it — retries each path at most twice, drops paths that keep failing, and re-fences bodies with a fence longer than any backtick run inside them so a file cannot escape its block. Per-file, file-count, and whole-section caps are enforced with visible omission notes. It is not called by `fullCompactionService` yet.
+`fullCompaction/fileRestoration.ts` renders the files the agent touched back into context after compaction (`## Files Touched Before Compaction`). It never discovers paths itself — it reads only what the caller hands it — retries each path at most twice, drops paths that keep failing, and re-fences bodies with a fence longer than any backtick run inside them so a file cannot escape its block. Per-file, file-count, and whole-section caps are enforced with visible omission notes. `touchedFilesTracker.ts` feeds it from successful read/write tool results (one entry per path, writes survive later reads, 64-path bound), and `fullCompactionService` restores those files into the summary before the wire-recovery pointer; read failures are swallowed.
 
 ## Symlink-safe path guards
 
