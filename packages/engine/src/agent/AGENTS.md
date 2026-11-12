@@ -168,6 +168,10 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 
 `toolExecutor/abortContract.ts` (`AbortContract`) latches one terminal outcome per abortable unit: the first of complete/abort/fail wins, a late finish or late abort is discarded, `aborted.handled` says whether a running handler was cut short or none started, `release()` is true once for lock accounting, and `accounting()` reports `handlerMs` (0 when never started) and `drainMs` separately. It is pure; the executor still owns signal plumbing and event emission.
 
+## Post-compaction file restoration
+
+`fullCompaction/fileRestoration.ts` renders the files the agent touched back into context after compaction (`## Files Touched Before Compaction`). It never discovers paths itself — it reads only what the caller hands it — retries each path at most twice, drops paths that keep failing, and re-fences bodies with a fence longer than any backtick run inside them so a file cannot escape its block. Per-file, file-count, and whole-section caps are enforced with visible omission notes. It is not called by `fullCompactionService` yet.
+
 ## Symlink-safe path guards
 
 `tool/path-access.ts` resolves physical targets with `physicalPathForGuard` (nearest existing ancestor for new paths), re-checks sensitive/workspace rules on the physical path, rejects escaping symlinks, and supports intentionally symlinked workspace roots via `physicalWorkspaceConfig`.

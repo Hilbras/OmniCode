@@ -162,6 +162,14 @@ Tasks:
 3. Failure cap and auto/warn/hard thresholds.
 4. Tests: restored files, missing files, repeated failures.
 
+#### 1.2 progress
+
+- `agent/fullCompaction/fileRestoration.ts` restores the files the agent was working in after compaction: `selectRestorableFiles` dedupes by path, prefers writes over reads, and caps the list; `restoreRecentlyTouchedFiles` reads each path with a bounded retry (`maxFailuresPerPath`, default 2) and records failures instead of failing the compaction; `renderRestoredFiles` emits a `## Files Touched Before Compaction` section under `### <path>`. Restoration has no filesystem discovery of its own — it only reads paths handed to it.
+- Fence safety: `fenceFor` picks a backtick fence longer than any run inside the file body, so a file containing its own code fence cannot close the section or plant instructions.
+- Caps: per-file (`maxCharsPerFile`, default 4000, marked `(truncated)`), files per compaction (`maxFiles`, default 5), and the whole section (`maxTotalChars`, default 16000) with a visible `N more file(s) not restored` note.
+- Tests: `packages/engine/test/agent/fullCompaction/fileRestoration.test.ts` covers selection/dedupe/write preference, fence escalation, heading and omission notes, missing files, retry counts, per-file truncation, and the section cap.
+- Not wired: nothing calls `restoreRecentlyTouchedFiles` from `fullCompactionService` yet, and the state reminder plus subagent snapshot parts of 1.2 are still open.
+
 ### 1.3 Full loop detection
 
 Files:
