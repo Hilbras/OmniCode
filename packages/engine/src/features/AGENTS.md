@@ -106,3 +106,17 @@ pnpm --filter @hilbras/omnicode-engine test
 
 Do not add tool implementations, app bootstrap/session lifecycle code, MCP
 transports, UI code, or a second discovery mechanism for feature modules.
+
+
+## Skill tool capabilities
+
+Skill frontmatter may declare `allowed-tools`/`disallowed-tools`; parser normalizes both and `skillAllowsTool` applies wildcard matching with deny-over-allow precedence. Activation-time enforcement remains a separate step.
+
+
+## Local session search
+
+`sessionSearch/localSessionSearch.ts` provides a host-agnostic local search implementation with term/literal modes, role/session filters, pagination, snippets, and candidate-cap degradation. Runtime composition remains separate.
+
+## Bounded diff rendering
+
+`sessionSearch/diffRender.ts` renders `/diff` output: unified format, hunks with 3 context lines, line-level LCS bounded by `lcsCellBudget` (falls back to whole-region replacement), and three caps (per-hunk lines, total lines, line chars) that each set `truncated`. Never render a diff without these caps — generated files are the normal case, not the exception.

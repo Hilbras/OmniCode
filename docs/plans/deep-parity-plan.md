@@ -439,6 +439,13 @@ Tasks:
 5. Bound large diff rendering.
 6. Tests: search index, pagination, empty/large diff, review payload.
 
+#### 4.1 progress
+
+- Bounded diff rendering: `features/sessionSearch/diffRender.ts` renders unified diffs with a `Diff: N file(s) changed, +A -R` header, `--- a/… / +++ b/…` per file, hunk grouping with `contextLines` (default 3), and a line-level LCS that degrades to whole-region replacement above `lcsCellBudget` instead of going quadratic. Caps: `maxLinesPerHunk` (200, elided with `… N more line(s) in this hunk`), `maxLines` (600, `(diff truncated at N lines)`), `maxLineChars` (400, `… (+N chars)`). Every cap sets `truncated` so the UI can say the view is partial.
+- Tests: `packages/engine/test/features/sessionSearch/diffRender.test.ts` covers the edit script and cell-budget fallback, no-change output, the unified format, per-hunk elision, the global cap, and long-line clipping.
+- Still open in 4.1: `/diff` command wiring in the CLI, `/review`, pagination tests for the search index (the index service exists), and `SearchSessions` profile admission.
+
+
 ### 4.2 Tool card actions and TUI stats
 
 Files:
