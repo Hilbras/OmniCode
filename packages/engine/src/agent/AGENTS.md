@@ -140,6 +140,10 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 `permissionPolicy/commandCanonicalization.ts` canonicalizes plain commands and shell wrappers, strips only safe env prefixes, and hashes complex scripts as opaque. Bash denial/approval fingerprints use the canonical form.
 
 
+## Read-only shell predicate
+
+`tool/read-only-shell.ts` is the one answer for "can this shell call overlap": `isReadOnlyShellCall({name,args}, parser)` / `classifyReadOnlyShell` accept only `Bash`, delegate parsing to `tool/read-only-command.ts`, fail closed without a parser or with malformed args, and memoize trimmed command text in a bounded process cache. The auto-mode classifier uses it — do not call `isReadOnlyBashCommand` directly from permission or scheduling code.
+
 ## Tool scheduling
 
 `toolExecutor/toolScheduler.ts` runs the tool calls of one batch, blocking only on conflicting accesses — non-conflicting calls start together. `OMNICODE_TOOL_CONCURRENCY` (positive integer, resolved when the batch scheduler is created) caps how many run at once and queued calls start as slots free; unset or invalid means unlimited. Conflict blocking is unchanged by the cap.
