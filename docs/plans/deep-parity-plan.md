@@ -161,7 +161,7 @@ Tasks:
 - Request injection: `llmRequesterService` pulls `worldStateProvider.nextSection()` once per request and, when defined, appends it as a trailing `system` message. Because the provider returns `undefined` on an unchanged turn, a steady-state session adds no tokens.
 - Compaction reset: the provider subscribes to `CompactionCompleted` and resets the assembler, so the first section after compaction is full. It binds itself into the requester through a lazy `IInstantiationService.invokeFunction` (injecting the requester would cycle, as with the skill grant).
 - Tests: `worldStateProvider.test.ts` covers a `CompactionCompleted` reset; requester tests pass apart from a pre-existing 30s timeout test that fails identically on HEAD.
-- Still open in 1.1: the baseline is in memory only (a process restart begins with a full render, which is safe but costs one section), and no test asserts the requester's appended system message directly.
+- Remaining in 1.1: the baseline is in memory only — a process restart begins with a full render, which is safe but costs one extra section.
 
 ### 1.2 Post-compaction restoration
 
