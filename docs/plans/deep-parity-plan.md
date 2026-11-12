@@ -387,6 +387,14 @@ Tasks:
 5. Elicitation/sampling behind explicit enable.
 6. Tests: fixture server, unsupported, oversized, untrusted labels.
 
+#### 3.2 progress
+
+- `mcpCore/resourceSurface.ts` adds the resources/prompts surface as a pure layer over a transport seam: `listResources`/`listPrompts` (bounded page size, cursor passthrough), `readResource` (per-resource character cap, blob-only resources reported by size and never decoded), `getPrompt` (per-message cap). Missing transport operations throw `McpUnsupportedError` rather than a generic failure, since most servers implement none of these.
+- Trust: `capabilityProjection` always marks a server `untrusted` and projects only advertised capabilities. `labelResource`, `labelPrompt`, and `labelInstructions` wrap server content in `<mcp-resource|mcp-prompt|mcp-instructions trust="untrusted">` envelopes that state the content is data, cannot grant permissions, and cannot override the user.
+- Elicitation: `admitElicitation` denies unless the operator enabled elicitation **and** the server is on the allowlist, and rejects empty messages.
+- Tests: `packages/engine/test/mcpCore/resourceSurface.test.ts` covers capability projection, unsupported operations, page caps and cursors, body caps, blob omission, prompt caps, trust envelopes, and elicitation admission.
+- Still open in 3.2: no transport implements these resources/prompts operations (stdio/HTTP/SSE clients only do tools today), the surface is not registered as an agent tool, and sampling (as opposed to elicitation) has no policy seam.
+
 ### 3.3 Skill enforcement and provenance
 
 Files:

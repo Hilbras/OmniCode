@@ -104,3 +104,15 @@ pnpm --filter @hilbras/omnicode-engine test
 
 Do not add scoped services, agent tools, session merging, app config file I/O,
 management commands, permission policy, prompt text, or UI behavior.
+
+
+## Stdio command trust
+
+`command-policy.ts` resolves stdio commands to absolute trusted PATH executables, rejects relative PATH entries and workspace-resident commands unless `allowWorkspaceCommand` is set, and preserves the existing `inheritEnv` allowlist. Sandboxing MCP children remains a host-layer deferral.
+
+
+MCP stdio `inheritEnv` defaults to false: children receive the platform-safe env allowlist plus explicit `env`; full host env requires `inheritEnv: true`.
+
+## Resources, prompts, elicitation
+
+`resourceSurface.ts` is the pure resources/prompts layer: bounded pages and bodies, blobs reported by size (never decoded), `McpUnsupportedError` for capabilities a server lacks, and every server-supplied payload wrapped in an explicitly `untrusted` envelope (`labelResource`, `labelPrompt`, `labelInstructions`). `admitElicitation` denies unless elicitation is enabled and the server is allowlisted. No client transport implements these operations yet.
