@@ -211,6 +211,12 @@ Tasks:
 5. Release locks and attribute zero handler time.
 6. Tests: abort pre-admission, mid-handler, late finish, steer during tool.
 
+#### 1.4 progress
+
+- `agent/toolExecutor/abortContract.ts` implements the terminal latch: `AbortContract` accepts one outcome per unit (completed or aborted), discards a late finish and a late abort with no state change, records whether the abort `handled` a running handler or never started it, and separates lock-release (`release()` wins once) from time attribution (`accounting()` → `handlerMs` 0 when the handler never ran, `drainMs` from abort to latch). Pure and synchronous; the executor still owns its own signal plumbing.
+- Tests: `packages/engine/test/agent/toolExecutor/abortContract.test.ts` covers completion, abort-before-start, abort mid-handler with a late finish discarded, late abort after completion, repeated abort paths (one outcome, one release), error completion, drain accounting, and reset.
+- Deferred in 1.4: typed `steer | mail | tool_output` input queue, mailbox/steer precedence, per-tool `finishesOnAbort`, and the executor adopting the latch. The executor today races the handler against a 2s abort grace and then lets the handler settle again, so adopting the latch changes emit ordering and needs its own executor-level test pass first.
+
 ### 1.5 Scheduler hardening
 
 Files:
