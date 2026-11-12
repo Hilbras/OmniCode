@@ -3,6 +3,8 @@ import type { Message } from '#/llm-adapter/contract/message';
 
 import type { ContextMessage } from '#/agent/contextMemory/types';
 
+import type { WorldStateRender } from './worldState';
+
 declare const mediaStripSnapshotBrand: unique symbol;
 
 export interface MediaStripSnapshot {
@@ -23,6 +25,14 @@ export interface IAgentContextProjectorService {
     mediaPaths?: ReadonlyMap<string, string>,
   ): readonly Message[];
   captureMediaStripSnapshot(messages: readonly ContextMessage[]): MediaStripSnapshot;
+
+  /** Transition-only world-state section; caller supplies the current state. */
+  renderWorldState(state: unknown): WorldStateRender;
+
+  /** Full world-state re-render scheduled for the next call (post-compaction). */
+  resetWorldStateBaseline(): void;
+
+  worldStateText(state: unknown): string;
 }
 
 export const IAgentContextProjectorService = createDecorator<IAgentContextProjectorService>(

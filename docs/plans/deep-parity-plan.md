@@ -153,7 +153,9 @@ Tasks:
 - `WorldStateTracker` owns the render baseline: full render first, deltas after, a forced full render every `maxDeltasBeforeFull` (default 8) so drift cannot silently accumulate, and `resetBaseline()` for compaction, after which the next render is full again.
 - Undiffable fallback: `asWorldState` returns `undefined` for non-objects/nested/non-finite values and `renderUndiffableFallback` degrades to a full render labelled `unrenderable` instead of guessing a delta.
 - Tests: `packages/engine/test/agent/contextProjector/worldState.test.ts` (10) covers type acceptance, add/change/remove deltas, round-trip equality, empty delta, full→delta→reset, periodic full render, baseline version stability, section deletion rendering, and the fallback.
-- Still open in 1.1: nothing emits world-state sections from `contextProjector`, the baseline is not persisted per session, and compaction does not call `resetBaseline()` yet.
+- Wired into `contextProjectorService`: `renderWorldState(state)` seeds a full render on first call, returns deltas afterwards, and degrades to a labelled full render for undiffable input; `resetWorldStateBaseline()` forces the next render to be full again. `worldStateText()` renders the section. `WorldStateTracker.seed()` marks a state as already rendered without emitting.
+- Tests: an integration case in `worldState.test.ts` drives the real `AgentContextProjectorService` through full → delta → reset (65 contextProjector tests pass).
+- Still open in 1.1: the state source is the caller's (no goal/todo/session aggregation), nothing yet injects the rendered section into the request context, the baseline is not persisted per session (a resume starts with a full render), and compaction does not call `resetWorldStateBaseline()` — the method exists but has no caller.
 
 ### 1.2 Post-compaction restoration
 

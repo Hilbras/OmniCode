@@ -126,6 +126,12 @@ export class WorldStateTracker {
     return { kind: 'delta', delta };
   }
 
+  /** Marks the current state as already rendered (no output) without diffing. */
+  seed(state: WorldState): void {
+    this.baseline = { value: state, version: (this.baseline?.version ?? 0) + 1 };
+    this.deltasSinceFull = 0;
+  }
+
   /** Drops the baseline so the next render is full. Call after compaction. */
   resetBaseline(): void {
     this.baseline = undefined;

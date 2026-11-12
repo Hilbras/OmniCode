@@ -18,13 +18,19 @@ import {
   degradeOlderMediaParts,
   stripMediaPartsBySnapshot,
 } from './mediaProjection';
-import {
-  project,
-  projectStrict,
+import { project, projectStrict,
   summarizeProjectionRepairs,
   type OnAnomaly,
   type ProjectionAnomaly,
 } from './projection';
+import {
+  WorldStateTracker,
+  asWorldState,
+  renderUndiffableFallback,
+  renderWorldState,
+  type WorldState,
+  type WorldStateRender,
+} from './worldState';
 
 export const contextProjectorLastRepairSignatureKey = defineState<string | null>(
   'contextProjector.lastRepairSignature',
@@ -33,6 +39,9 @@ export const contextProjectorLastRepairSignatureKey = defineState<string | null>
 
 export class AgentContextProjectorService implements IAgentContextProjectorService {
   declare readonly _serviceBrand: undefined;
+
+  private readonly worldState = new WorldStateTracker();
+  private worldStateInitialized = false;
 
   constructor(
     @ILogService private readonly log: ILogService,
@@ -64,6 +73,33 @@ export class AgentContextProjectorService implements IAgentContextProjectorServi
     if (media === 'degraded')
       return degradeOlderMediaParts(projected, MEDIA_DEGRADE_KEEP_RECENT, undefined, mediaPaths);
     return stripMediaPartsBySnapshot(projected, media.strip, mediaPaths);
+  }
+
+  /**
+   * Renders today's world state as transition-only text: a full section the
+   * first time, a delta per later turn, and a full section again after
+   * compaction. State comes from the caller because this service does not own
+   * goals, tasks, or session metadata.
+   */
+  renderWorldState(state: unknown): WorldStateRender {
+    const normalized = asWorldState(state);
+    if (normalized === undefined) return renderUndiffableFallback(state);
+    if (!this.worldStateInitialized) {
+      this.worldStateInitialized = true;
+      this.worldState.seed(normalized);
+      return renderUndiffableFallback(normalized);
+    }
+    return this.worldState.next(normalized);
+  }
+
+  /** Called after compaction: the next world-state render is full again. */
+  resetWorldStateBaseline(): void {
+    this.worldState.resetBaseline();
+    this.worldStateInitialized = false;
+  }
+
+  worldStateText(state: WorldState | unknown): string {
+    return renderWorldState(this.renderWorldState(state));
   }
 
   captureMediaStripSnapshot(messages: readonly ContextMessage[]): MediaStripSnapshot {

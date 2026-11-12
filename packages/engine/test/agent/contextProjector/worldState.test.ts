@@ -95,3 +95,24 @@ describe('rendering', () => {
     expect(renderUndiffableFallback(42)).toEqual({ kind: 'full', state: { unrenderable: 'number' } });
   });
 });
+
+describe('projector world-state integration', () => {
+  it('seeds a full render, emits deltas, and resets after compaction', async () => {
+    const { AgentContextProjectorService } = await import('#/agent/contextProjector/contextProjectorService');
+    const service = new AgentContextProjectorService(
+      { warn: () => {} } as never,
+      { track2: () => {} } as never,
+      { contributeState: () => {}, get: () => null, set: () => {} } as never,
+    );
+    expect(service.renderWorldState({ goal: 'ship' })).toEqual({
+      kind: 'full',
+      state: { goal: 'ship' },
+    });
+    expect(service.renderWorldState({ goal: 'ship', todo: 'x' })).toEqual({
+      kind: 'delta',
+      delta: { todo: 'x' },
+    });
+    service.resetWorldStateBaseline();
+    expect(service.worldStateText({ goal: 'ship', todo: 'x' })).toContain('- goal: ship');
+  });
+});
