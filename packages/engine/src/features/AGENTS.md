@@ -120,3 +120,7 @@ Skill frontmatter may declare `allowed-tools`/`disallowed-tools`; parser normali
 ## Bounded diff rendering
 
 `sessionSearch/diffRender.ts` renders `/diff` output: unified format, hunks with 3 context lines, line-level LCS bounded by `lcsCellBudget` (falls back to whole-region replacement), and three caps (per-hunk lines, total lines, line chars) that each set `truncated`. Never render a diff without these caps — generated files are the normal case, not the exception.
+
+## Skill enforcement
+
+`skill/enforcement.ts` owns skill tool grants (`SkillToolEnforcer`): `visibleTools()` filters the offered tools, `enforceTool()` refuses anything outside `allowedTools`/`disallowedTools` (boundary, not a hint), `deactivate()` clears the grant, and `provenance()` + `labelSkillContent()` mark project/plugin (`project`, `extra`) content untrusted. A skill without metadata stays unrestricted. Nothing calls the enforcer yet — the profile overlay and `AgentSkillService` activation must wire it.

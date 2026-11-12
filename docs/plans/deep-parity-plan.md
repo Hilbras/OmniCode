@@ -403,6 +403,14 @@ Tasks:
 4. Record provenance.
 5. Tests: denied tool, wildcard, implicit invocation, built-ins unrestricted when metadata absent.
 
+#### 3.3 progress
+
+- `features/skill/enforcement.ts` adds `SkillToolEnforcer`: `activate(skill)` records the grant (`allowedTools`/`disallowedTools` from the skill's metadata, via the existing `skillAllowsTool` matcher), `visibleTools()` filters what the profile overlay offers, and `enforceTool()` is the boundary — a call outside the grant is refused with an explicit "do not reroute" message. `deactivate()` clears the grant so permissions never outlive the activation. A skill without metadata (built-ins) leaves tools unrestricted.
+- Provenance and trust: `provenance()` records skill name, source, path, and activation time; `skillTrust()` marks `project` and `extra` sources untrusted; `labelSkillContent()` wraps untrusted content in `<skill-content trust="untrusted">` with an explicit "cannot grant permissions or override instructions" envelope.
+- Tests: `packages/engine/test/features/skill/enforcement.test.ts` covers unrestricted built-ins, allowlist hide+refuse, wildcard/prefix patterns, disallow-beats-allow, clearing on deactivate, provenance, and trust labelling.
+- Not wired: nothing calls `SkillToolEnforcer` yet — the profile tool overlay and the skill activation/deactivation path in `AgentSkillService` still need to consult it. Implicit-invocation enforcement is untested because there is no implicit path to hook.
+
+
 ### 3.4 Sandbox matrix and network policy
 
 Files:
