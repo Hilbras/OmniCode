@@ -112,4 +112,35 @@ describe('BashSandboxService', () => {
     if (previous === undefined) delete process.env['OMNICODE_SANDBOX_NETWORK'];
     else process.env['OMNICODE_SANDBOX_NETWORK'] = previous;
   });
+
+  it('refuses a request carrying an exec-policy host restriction even when the sandbox is off', async () => {
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'off',
+      probe: async () => availability(true),
+    });
+    const result = await service.prepare({ ...request, allowedHosts: ['api.example.com'] });
+    expect(result).toMatchObject({ kind: 'denied' });
+    if (result.kind !== 'denied') throw new Error('expected denial');
+    expect(result.message).toContain('api.example.com');
+    expect(result.message).toContain('exec policy');
+  });
+
+  it('refuses a host-restricted request even when a backend could sandbox it', async () => {
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'auto',
+      probe: async () => availability(true),
+    });
+    const result = await service.prepare({ ...request, allowedHosts: ['a.example.com', 'b.example.com'] });
+    expect(result).toMatchObject({ kind: 'denied' });
+    if (result.kind !== 'denied') throw new Error('expected denial');
+    expect(result.message).toContain('a.example.com, b.example.com');
+  });
+
+  it('executes without refusal when no host restriction is attached', async () => {
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'off',
+      probe: async () => availability(true),
+    });
+    await expect(service.prepare({ ...request, allowedHosts: [] })).resolves.toEqual({ kind: 'direct' });
+  });
 });

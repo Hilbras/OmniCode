@@ -8,7 +8,7 @@
 # commented "# field: type" lines describe the remaining schema fields.
 # Values resolve as: default -> config.toml -> env overlay -> memory.
 
-# Index (32 sections · 2 overlay(s))
+# Index (33 sections · 2 overlay(s))
 #   background               src/agent/task/configSection.ts
 #   builtinProductSkills     src/features/skill/catalog/configSection.ts
 #   compaction               src/agent/fullCompaction/configSection.ts
@@ -17,6 +17,7 @@
 #   defaultPermissionMode    src/agent/permissionMode/configSection.ts
 #   defaultPlanMode          src/features/plan/configSection.ts
 #   disabledSkills           src/features/skill/catalog/configSection.ts
+#   execPolicy               src/agent/permissionPolicy/execPolicy/configSection.ts
 #   experimental             src/app/flag/flag.ts
 #   extraAgentDirs           src/workspace/workspaceAgentProfileLoader/configSection.ts
 #   extraSkillDirs           src/features/skill/catalog/configSection.ts
@@ -165,6 +166,15 @@ default_plan_mode = false
 disabled_skills = []
 
 # ##########################################################################
+# execPolicy (config.toml: exec_policy)
+#   owner: src/agent/permissionPolicy/execPolicy/configSection.ts
+#   scope: core
+# ##########################################################################
+
+[exec_policy]
+# path: string
+
+# ##########################################################################
 # experimental
 #   owner: src/app/flag/flag.ts
 #   scope: core
@@ -218,6 +228,8 @@ extra_skill_dirs = []
   # command: string
   # timeout: integer
   # cwd: string
+  # shell: boolean
+  # inherit_env: boolean
   # env: record<string, string>
 
 # ##########################################################################
@@ -475,10 +487,16 @@ timeout_ms = 7200000
 #   hooks: stripEnv
 #   env:
 #     timeout_ms <- OMNICODE_SWARM_TIMEOUT_MS (custom parse)
+#     max_turns_per_swarm <- OMNICODE_SWARM_MAX_TURNS (custom parse)
+#     max_tokens_per_swarm <- OMNICODE_SWARM_MAX_TOKENS (custom parse)
+#     max_time_ms_per_swarm <- OMNICODE_SWARM_MAX_TIME_MS (custom parse)
 # ##########################################################################
 
 [swarm]
 timeout_ms = 7200000
+# max_turns_per_swarm: integer
+# max_tokens_per_swarm: integer
+# max_time_ms_per_swarm: integer
 
 # ##########################################################################
 # task

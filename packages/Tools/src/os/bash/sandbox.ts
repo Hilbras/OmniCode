@@ -20,6 +20,25 @@ export interface BashSandboxRequest {
   readonly shellPath: string;
   readonly env: Readonly<Record<string, string>>;
   readonly writeAllowlist?: readonly string[];
+  /**
+   * Hosts an exec-policy rule restricted this command to. No sandbox backend
+   * can confine a process's network to specific hosts yet, so a request
+   * carrying hosts is refused instead of running with unrestricted network.
+   */
+  readonly allowedHosts?: readonly string[];
+}
+
+/**
+ * The refusal text for a command whose exec policy restricted it to specific
+ * hosts: fail closed with the restriction named, never run it unconfined.
+ */
+export function hostRestrictionDenialMessage(allowedHosts: readonly string[]): string {
+  return (
+    'Command not run: the exec policy restricts this command to network host(s) ' +
+    `${allowedHosts.join(', ')}, and the runtime cannot yet confine a process's network ` +
+    'to specific hosts. Run the command yourself, or remove the `hosts` field from the ' +
+    'exec-policy rule if unrestricted network access is acceptable.'
+  );
 }
 
 export type BashSandboxPreparation =
@@ -68,6 +87,9 @@ export class BashSandboxService implements IBashSandboxService {
   ) {}
 
   async prepare(request: BashSandboxRequest): Promise<BashSandboxPreparation> {
+    if (request.allowedHosts !== undefined && request.allowedHosts.length > 0) {
+      return { kind: 'denied', message: hostRestrictionDenialMessage(request.allowedHosts) };
+    }
     const mode = this.options.mode?.() ?? resolveBashSandboxMode();
     if (mode === 'off') return { kind: 'direct' };
     const permissionMode = this.options.permissionMode?.() ?? this.modeService.mode;

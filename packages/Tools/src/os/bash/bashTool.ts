@@ -1,5 +1,6 @@
 import { IAgentTaskService } from '@hilbras/omnicode-engine/agent/task/task';
 import { resolveAgentTaskConfig } from '@hilbras/omnicode-engine/agent/task/configSection';
+import { execPolicyAllowedHostsFromMetadata } from '@hilbras/omnicode-engine/agent/permissionPolicy/execPolicy/execPolicy';
 import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
 import type { HostEnvironmentInfo } from '@hilbras/omnicode-engine/os/interface/hostEnvironment';
 import type { IHostProcess, IHostProcessService } from '@hilbras/omnicode-engine/os/interface/hostProcess';
@@ -26,7 +27,7 @@ import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
 import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import bashDescriptionTemplate from './bash.md?raw';
 import { ProcessTask } from './process-task';
-import { IBashSandboxService, sandboxWriteAllowlist } from './sandbox';
+import { IBashSandboxService, hostRestrictionDenialMessage, sandboxWriteAllowlist } from './sandbox';
 import {
   type BashInput,
   BashInputSchema,
@@ -151,8 +152,15 @@ export class BashTool implements IBashTool {
       },
       approvalRule: literalRulePattern(this.name, args.command),
       matchesRule: (ruleArgs) => matchesGlobRuleSubject(ruleArgs, args.command),
-      execute: ({ signal, onUpdate, onForegroundTaskStart, toolCallId }) =>
-        this.execution(args, signal, toolCallId, onUpdate, onForegroundTaskStart),
+      execute: ({ signal, onUpdate, onForegroundTaskStart, toolCallId, metadata }) =>
+        this.execution(
+          args,
+          signal,
+          toolCallId,
+          onUpdate,
+          onForegroundTaskStart,
+          execPolicyAllowedHostsFromMetadata(metadata),
+        ),
     };
   }
 
@@ -161,6 +169,7 @@ export class BashTool implements IBashTool {
     env: HostEnvironmentInfo,
     effectiveCwd: string,
     command: string,
+    allowedHosts?: readonly string[],
   ): Promise<IHostProcess> {
     const shellCwd = getShellPathBridge(env).toShellPath(effectiveCwd);
     const shellCommand = `cd ${shellQuote(shellCwd)} && ${command}`;
@@ -171,13 +180,15 @@ export class BashTool implements IBashTool {
       SHELL: env.shellPath,
     };
 
+    const writeAllowlist = sandboxWriteAllowlist();
     const prepared = await this.sandbox?.prepare({
       command,
       cwd: effectiveCwd,
       workspace: this.workspaceCtx.workDir,
       shellPath: env.shellPath,
       env: noninteractiveEnv,
-      ...(sandboxWriteAllowlist() === undefined ? {} : { writeAllowlist: sandboxWriteAllowlist() }),
+      ...(writeAllowlist === undefined ? {} : { writeAllowlist }),
+      ...(allowedHosts === undefined ? {} : { allowedHosts }),
     });
     if (prepared?.kind === 'denied') throw new Error(prepared.message);
     if (prepared?.kind === 'sandbox') {
@@ -195,9 +206,16 @@ export class BashTool implements IBashTool {
     toolCallId: string,
     onUpdate?: (update: ToolUpdate) => void,
     onForegroundTaskStart?: (taskId: string) => void,
+    allowedHosts?: readonly string[],
   ): Promise<ExecutableToolResult> {
     const validationError = this.validateRunRequest(args, signal);
     if (validationError !== undefined) return validationError;
+
+    // Without the sandbox seam nothing could confine this command's network to
+    // the policy's hosts, so the amendment is enforced by refusing here.
+    if (allowedHosts !== undefined && this.sandbox === undefined) {
+      return { isError: true, output: hostRestrictionDenialMessage(allowedHosts) };
+    }
 
     const startsInBackground = args.run_in_background === true;
     const foregroundTimeoutMs = normalizeTimeoutMs(args.timeout, false);
@@ -216,7 +234,9 @@ export class BashTool implements IBashTool {
     const builder = new ToolOutputAccumulator();
     let proc: IHostProcess;
     try {
-      proc = lease.track(await this.spawn(lease.runtime.process!, env, effectiveCwd, command));
+      proc = lease.track(
+        await this.spawn(lease.runtime.process!, env, effectiveCwd, command, allowedHosts),
+      );
     } catch (error) {
       lease.dispose();
       return {

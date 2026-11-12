@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, rm } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, dirname, join } from 'node:path';
 
@@ -14,6 +14,7 @@ import {
   type PermissionPolicyEvaluation,
 } from '#/agent/permissionPolicy/permissionPolicy';
 import { AgentPermissionPolicyService } from '#/agent/permissionPolicy/permissionPolicyService';
+import { EXEC_POLICY_SECTION } from '#/agent/permissionPolicy/execPolicy/configSection';
 import type { PermissionMode } from '#/agent/permissionPolicy/types';
 import { PERMISSION_SECTION } from '#/agent/permissionRules/configSection';
 import {
@@ -63,6 +64,8 @@ describe('AgentPermissionPolicyService chain', () => {
   let hostArgs: HostArgs;
   let dangerousCommandGuardEnabled: boolean;
   let contextMessages: ContextMessage[];
+  let execPolicyConfig: unknown;
+  let execPolicyDir: string | undefined;
 
   beforeEach(() => {
     disposables = new DisposableStore();
@@ -73,6 +76,8 @@ describe('AgentPermissionPolicyService chain', () => {
     hostArgs = { requestHeaders: {}, nonInteractive: false };
     dangerousCommandGuardEnabled = true;
     contextMessages = [];
+    execPolicyConfig = undefined;
+    execPolicyDir = undefined;
     ix = createServices(disposables, {
       additionalServices: (reg) => {
         reg.defineInstance(IAgentContextMemoryService, {
@@ -102,9 +107,11 @@ describe('AgentPermissionPolicyService chain', () => {
         });
         reg.definePartialInstance(IConfigService, {
           get: ((section: string) =>
-            section === PERMISSION_SECTION && !dangerousCommandGuardEnabled
-              ? { dangerousCommandGuard: false }
-              : undefined) as IConfigService['get'],
+            section === EXEC_POLICY_SECTION
+              ? execPolicyConfig
+              : section === PERMISSION_SECTION && !dangerousCommandGuardEnabled
+                ? { dangerousCommandGuard: false }
+                : undefined) as IConfigService['get'],
           onDidSectionChange: (() => ({
             dispose: () => {},
           })) as IConfigService['onDidSectionChange'],
@@ -162,8 +169,9 @@ describe('AgentPermissionPolicyService chain', () => {
     });
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     disposables.dispose();
+    if (execPolicyDir !== undefined) await rm(execPolicyDir, { recursive: true, force: true });
   });
 
   function service(): IAgentPermissionPolicyService {
@@ -496,6 +504,76 @@ describe('AgentPermissionPolicyService chain', () => {
       policyName: 'yolo-mode-approve',
       result: { kind: 'approve' },
     });
+  });
+
+  it('composes the exec policy from the configured policy file', async () => {
+    execPolicyDir = await mkdtemp(join(tmpdir(), 'exec-policy-chain-'));
+    await writeFile(
+      join(execPolicyDir, 'policy.json'),
+      JSON.stringify({
+        version: 1,
+        rules: [
+          { decision: 'allow', prefix: 'git status' },
+          { decision: 'forbidden', prefix: 'terraform destroy', sticky: true },
+        ],
+      }),
+    );
+    execPolicyConfig = { path: join(execPolicyDir, 'policy.json') };
+
+    await expect(
+      evaluate({ toolName: 'Bash', args: { command: 'git status', timeout: 60 } }),
+    ).resolves.toMatchObject({
+      policyName: 'exec-policy',
+      result: { kind: 'approve', reason: { exec_policy: 'rule' } },
+    });
+    await expect(
+      evaluate({
+        toolName: 'Bash',
+        args: { command: 'terraform destroy -auto-approve', timeout: 60 },
+      }),
+    ).resolves.toMatchObject({
+      policyName: 'exec-policy',
+      result: { kind: 'deny' },
+    });
+  });
+
+  it('fails the policy service when the configured exec policy is broken', async () => {
+    execPolicyDir = await mkdtemp(join(tmpdir(), 'exec-policy-chain-'));
+    await writeFile(
+      join(execPolicyDir, 'broken.json'),
+      JSON.stringify({ version: 1, rules: [{ decision: 'refuse' }] }),
+    );
+    execPolicyConfig = { path: join(execPolicyDir, 'broken.json') };
+
+    await expect(
+      evaluate({ toolName: 'Bash', args: { command: 'git status', timeout: 60 } }),
+    ).rejects.toThrow(/decision must be one of/);
+    await expect(
+      evaluate({ toolName: 'Bash', args: { command: 'git status', timeout: 60 } }),
+    ).rejects.toThrow(/broken\.json/);
+  });
+
+  it('carries the exec-policy host amendment through the chain', async () => {
+    execPolicyDir = await mkdtemp(join(tmpdir(), 'exec-policy-chain-'));
+    await writeFile(
+      join(execPolicyDir, 'hosts.json'),
+      JSON.stringify({
+        version: 1,
+        rules: [{ decision: 'allow', prefix: 'curl', hosts: ['API.Example.COM'] }],
+      }),
+    );
+    execPolicyConfig = { path: join(execPolicyDir, 'hosts.json') };
+
+    const evaluation = await evaluate({
+      toolName: 'Bash',
+      args: { command: 'curl api.example.com/data', timeout: 60 },
+    });
+    expect(evaluation).toMatchObject({ policyName: 'exec-policy', result: { kind: 'approve' } });
+    expect(
+      evaluation !== undefined && 'executionMetadata' in evaluation.result
+        ? evaluation.result.executionMetadata
+        : undefined,
+    ).toEqual({ execPolicyAllowedHosts: ['api.example.com'] });
   });
 
   it('does not let session approval history exempt dangerous commands', async () => {

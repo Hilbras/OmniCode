@@ -3,7 +3,10 @@ import { describe, expect, it } from 'vitest';
 import type { IBashParserService } from '#/app/bashParser/bashParser';
 import type { PermissionPolicyContext } from '#/agent/permissionPolicy/types';
 import { ExecPolicyPermissionPolicyService } from '#/agent/permissionPolicy/policies/exec-policy-rule';
-import { loadExecPolicy } from '#/agent/permissionPolicy/execPolicy/execPolicy';
+import {
+  EXEC_POLICY_ALLOWED_HOSTS_KEY,
+  loadExecPolicy,
+} from '#/agent/permissionPolicy/execPolicy/execPolicy';
 
 const parser = {
   parse: () => ({ ok: true, hasError: false, root: { type: 'program', children: [] } }),
@@ -86,5 +89,27 @@ describe('ExecPolicyPermissionPolicyService', () => {
     service.setPolicy(policy);
     expect(service.evaluate(context('Bash', { command: '   ' }))).toBeUndefined();
     expect(service.evaluate(context('Bash', {}))).toBeUndefined();
+  });
+
+  it('carries the hosts amendment on an approved rule', () => {
+    const service = new ExecPolicyPermissionPolicyService(parser);
+    const hostPolicy = loadExecPolicy({
+      version: 1,
+      rules: [{ decision: 'allow', prefix: 'curl', hosts: ['API.Example.COM'] }],
+    });
+    service.setPolicy(hostPolicy);
+    const result = service.evaluate(context('Bash', { command: 'curl api.example.com/data' }));
+    expect(result).toMatchObject({ kind: 'approve' });
+    expect(result && 'executionMetadata' in result ? result.executionMetadata : undefined).toEqual({
+      [EXEC_POLICY_ALLOWED_HOSTS_KEY]: ['api.example.com'],
+    });
+  });
+
+  it('attaches no amendment when the approved rule carries no hosts', () => {
+    const service = new ExecPolicyPermissionPolicyService(parser);
+    service.setPolicy(policy);
+    const result = service.evaluate(context('Bash', { command: 'git status' }));
+    expect(result).toMatchObject({ kind: 'approve' });
+    expect(result && 'executionMetadata' in result ? result.executionMetadata : undefined).toBeUndefined();
   });
 });

@@ -4,6 +4,7 @@ import type {
   PermissionPolicyResult,
 } from '#/agent/permissionPolicy/types';
 import {
+  EXEC_POLICY_ALLOWED_HOSTS_KEY,
   matchExecPolicy,
   type ExecDecision,
   type ExecPolicy,
@@ -20,8 +21,15 @@ import { IBashParserService } from '#/app/bashParser/bashParser';
  * classifier, so an explicit `forbidden` is not something the classifier's
  * "safe tool" fast path can bypass.
  *
- * Without a policy the service is inert (`undefined` result), which keeps the
- * existing chain byte-for-byte the same until a policy file is configured.
+ * The policy itself is composed by `AgentPermissionPolicyService` from the
+ * `execPolicy` config section; this class only holds the loaded policy. Without
+ * a policy the service is inert (`undefined` result), which keeps the existing
+ * chain byte-for-byte the same.
+ *
+ * A rule that carries `hosts` amends its `allow` with the hosts the command is
+ * approved for. The amendment rides on the approval's execution metadata; the
+ * executing tool must refuse to run when it cannot confine the command's
+ * network use to those hosts.
  */
 export class ExecPolicyPermissionPolicyService implements PermissionPolicy {
   readonly name = 'exec-policy';
@@ -48,7 +56,7 @@ export class ExecPolicyPermissionPolicyService implements PermissionPolicy {
     if (command === undefined) return undefined;
 
     const match = matchExecPolicy(command, policy, { parser: this.bashParser });
-    return decisionResult(match.decision, match.reason, command);
+    return decisionResult(match.decision, match.reason, command, match.rule?.hosts);
   }
 }
 
@@ -56,10 +64,17 @@ function decisionResult(
   decision: ExecDecision,
   reason: string,
   command: string,
+  hosts: readonly string[] | undefined,
 ): PermissionPolicyResult | undefined {
   switch (decision) {
     case 'allow':
-      return { kind: 'approve', reason: { exec_policy: reason, command } };
+      return hosts === undefined || hosts.length === 0
+        ? { kind: 'approve', reason: { exec_policy: reason, command } }
+        : {
+            kind: 'approve',
+            reason: { exec_policy: reason, command },
+            executionMetadata: { [EXEC_POLICY_ALLOWED_HOSTS_KEY]: hosts },
+          };
     case 'forbidden':
       return {
         kind: 'deny',

@@ -20,8 +20,9 @@
  *   first declared rule, so `forbidden` written first stays sticky.
  *
  * Loading rejects ambiguity rather than guessing: malformed entries and
- * `examples` that contradict their own rule are load errors, so a policy that
- * would silently not match fails before it is used.
+ * `examples` that contradict their own rule are load errors, and a `hosts`
+ * amendment must be a non-empty list on an `allow` rule — anything the
+ * executing tool would silently drop fails before it is used.
  */
 
 import type { IBashParserService } from '#/app/bashParser/bashParser';
@@ -42,7 +43,12 @@ export interface ExecRuleSpec {
   /** Alternative exact argv shapes, when the prefix alone is too loose. */
   readonly alternatives?: readonly (readonly string[])[];
   readonly decision: ExecDecision;
-  /** Optional network/host restriction carried with an allow. */
+  /**
+   * Network/host amendment carried with an `allow` rule. Load rejects `hosts`
+   * on any other decision and any list that is empty or holds a blank host,
+   * because the executing tool would otherwise drop the amendment and run
+   * unrestricted.
+   */
   readonly hosts?: readonly string[];
   /** True when a broader rule must not narrow this one (e.g. deny of `sudo`). */
   readonly sticky?: boolean;
@@ -53,6 +59,26 @@ export interface ExecRuleSpec {
 export interface ExecRuleExample {
   readonly command: string;
   readonly matches: boolean;
+}
+
+/** Metadata key under which an exec-policy `allow` carries its `hosts` amendment. */
+export const EXEC_POLICY_ALLOWED_HOSTS_KEY = 'execPolicyAllowedHosts';
+
+/**
+ * Reads the host amendment an exec policy attached to an approved command.
+ *
+ * The amendment is a restriction, not a grant: a caller that cannot confine
+ * the command's network use to the listed hosts must refuse to run it rather
+ * than proceed with unrestricted network access.
+ */
+export function execPolicyAllowedHostsFromMetadata(
+  metadata: unknown,
+): readonly string[] | undefined {
+  if (typeof metadata !== 'object' || metadata === null || Array.isArray(metadata)) return undefined;
+  const hosts = (metadata as Record<string, unknown>)[EXEC_POLICY_ALLOWED_HOSTS_KEY];
+  if (!Array.isArray(hosts) || hosts.length === 0) return undefined;
+  if (hosts.some((host) => typeof host !== 'string' || host.length === 0)) return undefined;
+  return hosts as readonly string[];
 }
 
 export interface ExecPolicyFile {
@@ -185,8 +211,22 @@ function compileRule(raw: unknown, path: string): CompiledExecRule {
     }
   }
   const hosts = raw['hosts'];
-  if (hosts !== undefined && (!Array.isArray(hosts) || hosts.some((host) => typeof host !== 'string'))) {
-    throw new ExecPolicyLoadError(path, 'hosts must be strings');
+  if (hosts !== undefined) {
+    if (
+      !Array.isArray(hosts) ||
+      hosts.length === 0 ||
+      hosts.some((host) => typeof host !== 'string' || host.trim().length === 0)
+    ) {
+      throw new ExecPolicyLoadError(
+        path,
+        'hosts must be a non-empty array of non-empty strings',
+      );
+    }
+    // An amendment attached to a decision that cannot carry it (deny is final,
+    // a prompt is the human's call) would run with no restriction at all.
+    if (decision !== 'allow') {
+      throw new ExecPolicyLoadError(path, `hosts requires an allow decision, not ${decision}`);
+    }
   }
   const examples = normalizeExamples(raw['examples'], path);
   const spec: ExecRuleSpec = {

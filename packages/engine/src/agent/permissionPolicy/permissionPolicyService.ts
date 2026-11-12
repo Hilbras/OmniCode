@@ -1,6 +1,9 @@
 import { IInstantiationService } from "@hilbras/omnicode-base/di/instantiation";
 import { Service } from "@hilbras/omnicode-base/di/service";
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
+import { IConfigService } from '#/app/config/config';
+import { EXEC_POLICY_SECTION, type ExecPolicyConfig } from '#/agent/permissionPolicy/execPolicy/configSection';
+import { loadExecPolicyFromConfig } from '#/agent/permissionPolicy/execPolicy/execPolicyLoader';
 import type { ResolvedToolExecutionHookContext } from '#/agent/toolExecutor/toolHooks';
 import { AutoModeAskUserQuestionDenyPermissionPolicyService } from '#/agent/permissionPolicy/policies/auto-mode-ask-user-question-deny';
 import { AutoModeClassifierPermissionPolicyService } from '#/agent/permissionPolicy/policies/auto-mode-classifier';
@@ -37,6 +40,7 @@ export class AgentPermissionPolicyService
   constructor(
     @IInstantiationService private readonly instantiation: IInstantiationService,
     @IBootstrapService bootstrap: IBootstrapService,
+    @IConfigService config: IConfigService,
   ) {
     super();
     this.execPolicy = this.instantiation.createInstance(ExecPolicyPermissionPolicyService);
@@ -58,6 +62,20 @@ export class AgentPermissionPolicyService
       this.instantiation.createInstance(GitCwdWriteApprovePermissionPolicyService),
       this.instantiation.createInstance(FallbackAskPermissionPolicyService),
     ];
+    this.composeExecPolicy(bootstrap, config);
+  }
+
+  /**
+   * Composition of the exec-policy pass: the `execPolicy` config section names
+   * the policy file, and the file is loaded here so a load failure (including a
+   * failing or shadowed example) fails agent creation as a `config.invalid`
+   * error instead of silently running with no exec policy.
+   */
+  private composeExecPolicy(bootstrap: IBootstrapService, config: IConfigService): void {
+    const configured = config.get<ExecPolicyConfig | undefined>(EXEC_POLICY_SECTION);
+    const configuredPath = typeof configured?.path === 'string' ? configured.path : undefined;
+    if (configuredPath === undefined) return;
+    this.setExecPolicy(loadExecPolicyFromConfig(configuredPath, bootstrap.homeDir, bootstrap.osHomeDir));
   }
 
   /** Installs or clears the exec policy used by the rule pass in the chain. */

@@ -705,6 +705,7 @@ export * from '#/agent/permissionMode/permissionModeService';
 export * from '#/agent/permissionPolicy/permissionPolicy';
 export * from '#/agent/permissionPolicy/permissionPolicyService';
 export * from '#/agent/permissionPolicy/types';
+import '#/agent/permissionPolicy/execPolicy/configSection';
 import '#/agent/permissionRules/configSection';
 export * from '#/agent/permissionRules/permissionRules';
 export * from '#/agent/permissionRules/matchesRule';

@@ -134,6 +134,8 @@ transports, agent loop logic, UI code, or tests that only read source text.
 
 `src/os/bash/sandbox.ts` selects a Kaos sandbox backend for Bash. `OMNICODE_SANDBOX_MODE=off|auto|required` controls it; default is `off`. `auto` falls back to direct execution with an explicit reason, while `required` fails closed. `OMNICODE_SANDBOX_NETWORK=shared` keeps the network namespace shared; default is denied. Permission mode still gates execution first.
 
+A `BashSandboxRequest` may carry `allowedHosts` — the exec-policy host amendment attached to an approved command. No backend can confine a process's network to specific hosts yet, so `prepare` refuses such a request (`kind: 'denied'` with `hostRestrictionDenialMessage`), and `BashTool` refuses on its own when the sandbox seam is absent. Never let a host-restricted command run with unrestricted network; when host-level enforcement exists, thread the amendment into the backend policy instead of removing the refusal.
+
 
 ## Multi-file patch
 
