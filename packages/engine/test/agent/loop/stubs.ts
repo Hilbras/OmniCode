@@ -343,6 +343,7 @@ export function stubToolExecutor(): IAgentToolExecutorService {
     recordDupType: () => {},
     registerToolCallGuard: () => ({ dispose() {} }),
     registerUnavailableToolDescriber: () => ({ dispose() {} }),
+    setSkillGrant: () => undefined,
     registerMissingToolDescriber: () => ({ dispose() {} }),
   };
 }

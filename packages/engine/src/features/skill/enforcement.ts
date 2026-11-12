@@ -17,6 +17,7 @@
  * deactivates — grants never outlive their activation.
  */
 
+import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import type { SkillDefinition, SkillSource } from './catalog/types';
 import { skillAllowsTool } from './catalog/types';
 
@@ -137,3 +138,16 @@ export function labelSkillContent(provenance: SkillProvenance, content: string):
     '</skill-content>',
   ].join('\n');
 }
+
+/**
+ * Read-only view of the *active* skill grant, for the request path. Kept as
+ * its own interface so `llmRequester` can narrow its tool list without
+ * depending on the skill service or its catalog.
+ */
+export interface IActiveSkillGrant {
+  readonly _serviceBrand: undefined;
+  /** Tools the active skill permits, or `undefined` when nothing is active. */
+  allowedToolNames(): readonly string[] | undefined;
+}
+
+export const IActiveSkillGrant = createDecorator<IActiveSkillGrant>('activeSkillGrant');

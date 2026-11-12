@@ -410,7 +410,10 @@ Tasks:
 - Tests: `packages/engine/test/features/skill/enforcement.test.ts` covers unrestricted built-ins, allowlist hide+refuse, wildcard/prefix patterns, disallow-beats-allow, clearing on deactivate, provenance, and trust labelling.
 - Wired into `AgentSkillService`: `activate()` arms the enforcer with the skill's grant, `visibleToolNames()` narrows `IAgentToolRegistryService.list()` to the grant, and the service deactivates on `TurnEnded` so a grant never outlives its turn. Project/`extra` skill content is wrapped by `labelSkillContent` before it is rendered into the prompt.
 - Tests: the skill/plan/goal suites (405 tests) pass with the wiring in place; the enforcer's own behaviour is covered in `test/features/skill/enforcement.test.ts`.
-- Still open in 3.3: the LLM request path does not yet build its tool list from `visibleToolNames()` (the registry profile overlay is unchanged), `enforceTool` has no executor call site, and there is no implicit-invocation path to enforce.
+- Request path: `AgentSkillService` pushes itself into the requester (`IAgentLLMRequesterService.setSkillGrant`) and `defaultTools()` filters the shaped tool list to the grant. It is a push, not a DI dependency, because resolving it would cycle requester → grant → loop → requester (caught as `CyclicDependencyError` during the skill tests).
+- Executor boundary: `IAgentToolExecutorService.setSkillGrant` composes a skill guard with the existing tool-call guard, so a call for a tool the active skill hid is rejected even if the model still knows its name. Binding it from the feature assembly is still open.
+- Tests: `test/agent/toolExecutor` and `test/features/skill` pass (227 tests) with the wiring.
+- Still open in 3.3: nothing calls `setSkillGrant` on the executor yet (the requester path is live, the executor path is not), and there is no implicit-invocation path to enforce.
 
 
 ### 3.4 Sandbox matrix and network policy

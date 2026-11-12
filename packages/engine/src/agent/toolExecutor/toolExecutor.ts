@@ -9,6 +9,7 @@ import type {
 import type { OrderedHookSlot } from '#/hooks';
 import type { LLMRequestTrace } from '#/llm-adapter/contract/request-trace';
 import type { ToolResult } from '#/tool/toolContract';
+import type { IActiveSkillGrant } from '#/features/skill/enforcement';
 import type { ToolSource } from '#/tool/toolContract';
 import type { ToolInputDisplay } from '#/tool/toolInputDisplay';
 import type { ToolCall } from '#human/llm/message';
@@ -63,6 +64,9 @@ export interface IAgentToolExecutorService {
   recordDupType(toolCallId: string, dupType: ToolCallDupType): void;
 
   registerToolCallGuard(guard: ToolCallGuard): IDisposable;
+
+  /** Binds (or clears) the active skill grant that refuses non-permitted tools. */
+  setSkillGrant(grant: IActiveSkillGrant | undefined): void;
   registerUnavailableToolDescriber(describer: UnavailableToolDescriber): IDisposable;
   registerMissingToolDescriber(describer: MissingToolDescriber): IDisposable;
 }

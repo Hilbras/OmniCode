@@ -34,6 +34,7 @@ export function stubToolExecutorEvents(): ToolExecutorEventStubs {
     recordDupType: () => {},
     registerToolCallGuard: () => ({ dispose() {} }),
     registerUnavailableToolDescriber: () => ({ dispose() {} }),
+    setSkillGrant: () => undefined,
     registerMissingToolDescriber: () => ({ dispose() {} }),
   };
   return {

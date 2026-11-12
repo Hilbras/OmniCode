@@ -23,6 +23,7 @@ import { ISessionContext } from '#/session/sessionContext/sessionContext';
 import { ISessionMetadata } from '#/session/sessionMetadata/sessionMetadata';
 import { applyPromptMetadataUpdate } from '#/session/sessionMetadata/promptMetadata';
 import { IEventDispatcher } from '#/state/eventDispatcher';
+import { IAgentLLMRequesterService } from '#/agent/llmRequester/llmRequester';
 
 import { isUserActivatableSkillType, type SkillDefinition } from './catalog/types';
 import { promptMetadataTextFromSkill, renderUserSlashSkillPrompt } from './prompt';
@@ -34,7 +35,11 @@ import type {
   SkillActivationInput,
 } from './skill';
 import { SkillActivated } from './skillOps';
-import { SkillToolEnforcer, labelSkillContent } from './enforcement';
+import {
+  SkillToolEnforcer,
+  labelSkillContent,
+  type IActiveSkillGrant,
+} from './enforcement';
 
 export interface IAgentSkillService {
   readonly _serviceBrand: undefined;
@@ -45,7 +50,7 @@ export interface IAgentSkillService {
 
 export const IAgentSkillService = createDecorator<IAgentSkillService>('agentSkillService');
 
-export class AgentSkillService implements IAgentSkillService {
+export class AgentSkillService implements IAgentSkillService, IActiveSkillGrant {
   declare readonly _serviceBrand: undefined;
 
   constructor(
@@ -59,7 +64,11 @@ export class AgentSkillService implements IAgentSkillService {
     @IAgentScopeContext private readonly scopeContext: IAgentScopeContext,
     @IEventBus eventBus?: IEventBus,
     @IAgentToolRegistryService private readonly toolRegistry?: IAgentToolRegistryService,
+    @IAgentLLMRequesterService requester?: IAgentLLMRequesterService,
   ) {
+    // Push the grant into the requester so it can narrow the offered tool list
+    // without a DI dependency on this service (which would cycle through the loop).
+    requester?.setSkillGrant?.(this);
     // A skill's tool grant lasts exactly one turn; it never leaks into the next.
     this.turnEndSubscription = eventBus?.subscribe(TurnEnded, () => this.enforcer.deactivate());
   }
@@ -80,6 +89,15 @@ export class AgentSkillService implements IAgentSkillService {
     return labelSkillContent(
       { skillName: skill.name, source: skill.source, path: skill.path, trust, activatedAt: Date.now() },
       content,
+    );
+  }
+
+  allowedToolNames(): readonly string[] | undefined {
+    const grant = this.enforcer.activeGrant();
+    if (grant === undefined) return undefined;
+    if (grant.allowedTools === undefined && grant.disallowedTools === undefined) return undefined;
+    return this.enforcer.visibleTools(
+      (this.toolRegistry?.list() ?? []).map((tool) => tool.name),
     );
   }
 

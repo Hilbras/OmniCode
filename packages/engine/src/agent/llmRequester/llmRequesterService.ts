@@ -33,6 +33,7 @@ import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { IAgentToolSelectService } from '#/agent/toolSelect/toolSelect';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IAgentCostGateService } from '#/agent/usage/costGateService';
+import type { IActiveSkillGrant } from '#/features/skill/enforcement';
 import { IConfigService } from '#/app/config/config';
 import { IFlagService } from '#/app/flag/flag';
 import { THINKING_SECTION } from '#/app/kosongConfig/configSection';
@@ -198,6 +199,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     @IAgentStateService private readonly states: IAgentStateService,
     @IBootstrapService private readonly bootstrap: IBootstrapService,
     @IAgentCostGateService private readonly costGateService?: IAgentCostGateService,
+
   ) {
     this.states.contributeState(llmRequestTraceKey);
     this.states.contributeState(llmRequesterLastConfigLogSignatureKey);
@@ -949,8 +951,26 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     this.log.info('llm response', payload);
   }
 
+  /**
+   * Installed by the skill service rather than injected: resolving it from DI
+   * would cycle (requester → grant → loop → requester).
+   */
+  private activeSkillGrant: IActiveSkillGrant | undefined;
+
+  /** Binds the live skill grant used to narrow the offered tool list. */
+  setSkillGrant(grant: IActiveSkillGrant | undefined): void {
+    this.activeSkillGrant = grant;
+  }
+
   private defaultTools(): readonly Tool[] {
-    return this.toolSelect.shapeTools(this.tools.list()).map((tool) => ({
+    // The active skill's grant narrows what the model is offered. The grant is
+    // also enforced at call time, so this is a hint removal, not the boundary.
+    const grant = this.activeSkillGrant?.allowedToolNames();
+    const listed =
+      grant === undefined
+        ? this.tools.list()
+        : this.tools.list().filter((tool) => grant.includes(tool.name));
+    return this.toolSelect.shapeTools(listed).map((tool) => ({
       name: tool.name,
       description: tool.description,
       parameters: tool.parameters ?? EMPTY_TOOL_PARAMETERS,

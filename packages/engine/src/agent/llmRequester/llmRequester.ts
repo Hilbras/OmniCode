@@ -5,6 +5,7 @@ import type { ThinkingEffort } from '#human/llm/thinking';
 import type { Message } from '#/llm-adapter/contract/message';
 import type { StreamedMessagePart, ToolDescription as Tool } from '#human/llm/message';
 import type { TokenUsage } from '#human/llm/usage';
+import type { IActiveSkillGrant } from '#/features/skill/enforcement';
 import type { LLMRequestTrace } from '#/llm-adapter/contract/request-trace';
 import type { ModelRequestTiming } from '#/llm-adapter/model/model-requester';
 import type { LogContext } from '@hilbras/omnicode-base/log/log';
@@ -77,6 +78,9 @@ export interface IAgentLLMRequesterService {
     onPart?: AgentLLMRequestPartHandler,
     signal?: AbortSignal,
   ): AgentLLMRequestTask;
+
+  /** Binds the live skill grant used to narrow the offered tool list. */
+  setSkillGrant?(grant: IActiveSkillGrant | undefined): void;
 }
 
 export const IAgentLLMRequesterService = createDecorator<IAgentLLMRequesterService>(

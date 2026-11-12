@@ -3,6 +3,7 @@ import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/d
 import { AsyncEmitter, type Event } from '@hilbras/omnicode-base/event';
 import { ILogService } from '@hilbras/omnicode-base/log/log';
 import { isAbortError, isUserCancellation } from '@hilbras/omnicode-base/utils/abort';
+import type { IActiveSkillGrant } from '#/features/skill/enforcement';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentStateService } from '#/agent/state/agentState';
 import type {
@@ -52,7 +53,7 @@ import {
   type UnavailableToolDescriber,
 } from './toolExecutor';
 import { ToolCallStarted, ToolProgress, ToolResultEvent } from './toolExecutorEvents';
-import { ToolScheduler } from './toolScheduler';
+import { ToolScheduler, resolveToolConcurrencyCap } from './toolScheduler';
 
 const ABORT_GRACE_MS = 2_000;
 const TOOL_OUTPUT_EMPTY = 'Tool output is empty.';
@@ -120,12 +121,19 @@ export class AgentToolExecutorService implements IAgentToolExecutorService {
     onDidExecuteTool: new OrderedHookSlot<ToolDidExecuteContext>(),
   };
 
+  /** Installed by the skill feature; undefined means no skill grant to enforce. */
+  private skillGrant: IActiveSkillGrant | undefined;
   private missingToolDescriber: MissingToolDescriber | undefined;
   private unavailableToolDescriber: UnavailableToolDescriber | undefined;
   private toolCallGuard: ToolCallGuard | undefined;
 
   recordDupType(toolCallId: string, dupType: ToolCallDupType): void {
     this.toolCallDupTypes.set(toolCallId, dupType);
+  }
+
+  /** Binds the active skill grant used to refuse tools the skill hid. */
+  setSkillGrant(grant: IActiveSkillGrant | undefined): void {
+    this.skillGrant = grant;
   }
 
   registerToolCallGuard(guard: ToolCallGuard) {
@@ -185,11 +193,14 @@ export class AgentToolExecutorService implements IAgentToolExecutorService {
       this.toolCallDupTypes.clear();
     }
 
+    // The active skill's grant is a boundary, not a hint: a call the model
+    // makes for a tool the skill hid is refused here even though it was listed.
+    const skillBlocked = this.skillGrant?.allowedToolNames();
     const preflighted = calls.map((call) =>
       preflightToolCall(
         this.toolRegistry,
         call,
-        this.toolCallGuard,
+        combineGuards(this.toolCallGuard, skillBlocked === undefined ? undefined : skillGuard(skillBlocked)),
         this.unavailableToolDescriber,
         this.missingToolDescriber,
         this.log,
@@ -459,7 +470,7 @@ export class AgentToolExecutorService implements IAgentToolExecutorService {
     tasks: ToolExecutionTask[],
     signal: AbortSignal,
   ): AsyncIterable<TimedToolResult> {
-    const scheduler = new ToolScheduler<TimedToolResult>();
+    const scheduler = new ToolScheduler<TimedToolResult>({ maxConcurrency: resolveToolConcurrencyCap() });
     const allResults: Array<Promise<TimedToolResult>> = [];
     const pendingResults = new Map<number, Promise<SettledTimedToolResult>>();
 
@@ -979,6 +990,23 @@ async function raceWithAbortGrace<Result>(
       } catch {}
     }
   }
+}
+
+function combineGuards(
+  first: ToolCallGuard | undefined,
+  second: ToolCallGuard | undefined,
+): ToolCallGuard | undefined {
+  if (second === undefined) return first;
+  if (first === undefined) return second;
+  return (tool) => first(tool) ?? second(tool);
+}
+
+function skillGuard(allowed: readonly string[]): ToolCallGuard {
+  const permit = new Set(allowed);
+  return ({ name }) =>
+    permit.has(name)
+      ? undefined
+      : `Tool "${name}" is not permitted by the active skill. Finish the skill using only the tools it allows, or tell the user what is blocked.`;
 }
 
 function errorMessage(error: unknown): string {
