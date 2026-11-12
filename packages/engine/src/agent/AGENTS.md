@@ -103,3 +103,51 @@ pnpm --filter @hilbras/omnicode-engine test
 
 Do not add session-scope services, app bootstrap/config, MCP transports, tool
 implementations, UI code, a second agent loop, or direct provider SDK calls.
+
+
+## Auto-mode context
+
+`permissionPolicy/autoModeContext.ts` extracts the latest genuine user request and recent tool names for auto mode. Workspace writes require explicit edit intent; injected/non-user messages do not count. Sensitive-file and git-control policies run before the auto classifier.
+
+
+## Microcompaction
+
+`contextMemory/microcompaction.ts` evicts old tool results and media before full compaction. It preserves system messages, recent user messages, recent turns, and assistant/tool pairing. `loop/machine/history.ts` applies it before converting context to loop history.
+
+
+## Tool output budgets
+
+`toolResultTruncation/toolResultTruncationService.ts` resolves per-tool output budgets via `resolveToolResultMaxChars`. Full output is spilled to disk with head/tail preview; flagged-truncated results spill even when below the current per-tool cap.
+
+
+## Notification admission
+
+`team/taskNotificationQueue.ts` caps pending notifications, coalesces by task id, evicts the oldest interim update before terminal results, and rejects a new update when every pending result is terminal. `TaskService` owns durable scheduled/delivered keys; the queue is the admission policy seam and is not yet composed into that direct scheduler.
+
+
+## Team persistence
+
+`team/teamPersistence.ts` provides atomic JSON persistence for teams, members, and shared tasks. `TeamService` supports `load`, `flush`, `exportState`, and `restoreState`; mutations queue saves. Production Arena runners and the worktree fleet remain explicit deferrals.
+
+
+## Trajectory evals
+
+`agent/evals/trajectory.ts` scores required/forbidden tools, turn/cost/token budgets, and final-text assertions. Use it for trajectory tests instead of brittle full-prose snapshots.
+
+
+## Command canonicalization
+
+`permissionPolicy/commandCanonicalization.ts` canonicalizes plain commands and shell wrappers, strips only safe env prefixes, and hashes complex scripts as opaque. Bash denial/approval fingerprints use the canonical form.
+
+
+## Tool scheduling
+
+`toolExecutor/toolScheduler.ts` runs the tool calls of one batch, blocking only on conflicting accesses — non-conflicting calls start together. `OMNICODE_TOOL_CONCURRENCY` (positive integer, resolved when the batch scheduler is created) caps how many run at once and queued calls start as slots free; unset or invalid means unlimited. Conflict blocking is unchanged by the cap.
+
+## Loop detection
+
+`loop/textLoopDetector.ts` is the streaming text-loop detector: feed it assistant text or thinking deltas and it reports repeated phrases, alternating blocks, or a periodic tail, with fenced code excluded so generated code cannot trip it. It is pure — the caller owns the reaction. `loop/resultStagnationDetector.ts` is the tool-result detector: identify each call by name+args and each result by its output, mark reads with the shared `isReadOnlyToolName` predicate, and it reports `repeated-result`, `stateful-polling`, or `read-churn` (churn needs a non-read tool to arm first). `loop/textLoopWatchService.ts` is the caller in the agent scope for both: it watches the delta events plus `ToolCallStarted`/`ToolResultEvent` (correlated by `toolCallId`, synthetic results skipped, late results from an ended turn ignored), keeps one pending signal per channel per turn, and turns each into a `text_loop` or `result_stagnation` context-injection reminder at the next step boundary. A shared per-turn cap `OMNICODE_LOOP_REMINDER_CAP` (default 3) bounds both channels, and `OMNICODE_TEXT_LOOP_BREAKER=0` / `OMNICODE_RESULT_STAGNATION_BREAKER=0` disable one channel each. It never mutates history mid-stream and never stops a turn. Register a new channel by adding a variant constant in `loop/textLoopWatch.ts` and a pending slot in the watch service — do not mutate history or throw from the handlers.
+
+## Symlink-safe path guards
+
+`tool/path-access.ts` resolves physical targets with `physicalPathForGuard` (nearest existing ancestor for new paths), re-checks sensitive/workspace rules on the physical path, rejects escaping symlinks, and supports intentionally symlinked workspace roots via `physicalWorkspaceConfig`.
