@@ -133,3 +133,8 @@ transports, agent loop logic, UI code, or tests that only read source text.
 ## Bash sandbox
 
 `src/os/bash/sandbox.ts` selects a Kaos sandbox backend for Bash. `OMNICODE_SANDBOX_MODE=off|auto|required` controls it; default is `off`. `auto` falls back to direct execution with an explicit reason, while `required` fails closed. `OMNICODE_SANDBOX_NETWORK=shared` keeps the network namespace shared; default is denied. Permission mode still gates execution first.
+
+
+## Multi-file patch
+
+`src/patch/applyPatch.ts` parses Codex-style multi-file patches and applies add/update/delete operations with exact hunk matching and rollback on failure. `src/patch/patchJournal.ts` records each file's pre-write content under `<root>/.omnicode/patch-journal/` before the first mutation and removes it on success, so `recoverPatchJournals(root)` can restore a tree left half-written by a crash. `applyPatch` verifies the whole patch against the pre-patch tree before writing anything (every touched path, move destinations included), rejects patches that target the same path twice, supports `*** Move to:` on an update, and throws `PatchApplyError { code, committedFiles }` so the tool can report the committed delta. Use `patchOperationPaths(operation)` for every path an operation touches — it is the single source for resolution, approval rules, and backups. The `ApplyPatch` tool registers this engine with runtime FS, dry-run, profile admission, and path accesses, and runs non-dry-run patches under the engine workspace write lock, healing any journal a crashed run left behind. `Write` and `Edit` take the same lock around their writes.

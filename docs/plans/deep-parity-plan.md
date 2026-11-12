@@ -360,6 +360,16 @@ Tasks:
 6. Path abstraction for remote execution.
 7. Turn diff tracker; `/diff` consumes it.
 
+#### 3.1 progress
+
+- Verify-before-apply: `applyPatch` now plans every operation against the pre-patch tree (reads of every touched path, including move destinations) and only writes after all hunks matched and all targets exist/are absent as required. A patch that cannot land in full leaves the tree untouched, including its add operations.
+- Duplicate-target rejection: `parsePatch` rejects any patch that names the same final path twice (`duplicate-target`, including `A → B` when `B` is already a target), and merge targets are checked in the plan phase.
+- Moves: `*** Move to:` inside an update body becomes a single `update` operation carrying `move`; commit writes the destination with the new content and deletes the source only after the plan verified it. `patchOperationPaths` is the one source of touched paths for resolution, approval rules, and backups.
+- Failure delta: every failure is a `PatchApplyError { code, committedFiles }` (`parse | duplicate-target | target-exists | target-missing | hunk-mismatch | verify-failed`); the tool prints the code plus the files touched before the rollback, and rollback still happens (journal or backup).
+- Tests: `packages/Tools/test/patch/patchSemantics.test.ts` covers "writes nothing when a later hunk fails", duplicate targets, move onto an existing file, plain move, update+move, committed-delta on a mid-patch write failure, and virtual dry-run isolation. Existing `applyPatch.test.ts` and `patchJournal.test.ts` still pass (15 total in `test/patch`).
+- Still open in 3.1: streaming parser, path abstraction for remote execution, and the turn diff tracker with `/diff`; patch application is still a full-string parse.
+
+
 ### 3.2 MCP resources/prompts/elicitation
 
 Files:
