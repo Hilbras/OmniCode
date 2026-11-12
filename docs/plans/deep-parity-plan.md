@@ -270,8 +270,9 @@ Tasks:
 - Canonicalization: `canonicalTokenText` is NFD → lowercase → NFC on both sides. `hosts` on a rule are normalized the same way and returned on the matched rule (`api.example.com`) so a network amendment can be enforced by the caller.
 - Decisions are exactly `allow | prompt | prompt-user | forbidden`; the default for opaque commands is `forbidden` unless the file sets `opaque`.
 - Tests: `packages/engine/test/agent/permissionPolicy/execPolicy.test.ts` covers malformed files, non-matching and shadowed examples, prefix/alternative matching, alternative-beats-prefix, sticky ties, opaque metacharacters and unbalanced quotes, NFD/case folding, the `prompt-user` default, host carry, and executable-vs-prefix confusion.
-- Not wired yet: no permission policy consumes these rules, and the network/host amendment path has no caller. Wiring it into the policy chain is the next 2.1 step and must not weaken the existing sensitive-file and git-control policies that run before the classifier.
-
+- Wired into the chain as `agent/permissionPolicy/policies/exec-policy-rule.ts` (`ExecPolicyPermissionPolicyService`), placed after the sensitive-file and git-control policies and before the auto-mode classifier, so a rule can only narrow what path protection already allows and `forbidden` cannot be re-opened by the classifier's safe-tool fast path. `AgentPermissionPolicyService.setExecPolicy(policy)` installs or clears it; with no policy the pass returns nothing and the chain is unchanged. `allow` approves, `forbidden` denies with a do-not-retry message, `prompt` asks, `prompt-user` asks with `requires_human: true`, and opaque commands take the file's `opaque` decision.
+- Tests: `packages/engine/test/agent/permissionPolicy/execPolicyRule.test.ts` covers inert-without-policy, non-shell tools, allow/ask/deny, human-required prompts, opaque denial, clearing, and malformed args.
+- Still open in 2.1: nothing loads an `exec-policy.json` from disk into `setExecPolicy`, and the network/host amendment path has no caller — `hosts` is carried on the matched rule only.
 ### 2.2 Reviewer lane
 
 Files:

@@ -142,7 +142,7 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 
 ## Exec-policy rules
 
-`permissionPolicy/execPolicy/execPolicy.ts` is the data-only shell approval DSL: `loadExecPolicy` validates a `version: 1` file (rules + `opaque` decision) and rejects any `examples` entry its own rule does not match or that another rule shadows. `matchExecPolicy` canonicalizes NFD+case, treats shell metacharacters and unresolved quoting as opaque (decision from the file, `forbidden` by default), prefers alternative argv over prefix and longer over shorter, keeps a sticky rule on a tie, and returns `prompt-user` when nothing matches. Nothing in the policy chain consumes it yet.
+`permissionPolicy/execPolicy/execPolicy.ts` is the data-only shell approval DSL: `loadExecPolicy` validates a `version: 1` file (rules + `opaque` decision) and rejects any `examples` entry its own rule does not match or that another rule shadows. `matchExecPolicy` canonicalizes NFD+case, treats shell metacharacters and unresolved quoting as opaque (decision from the file, `forbidden` by default), prefers alternative argv over prefix and longer over shorter, keeps a sticky rule on a tie, and returns `prompt-user` when nothing matches. `policies/exec-policy-rule.ts` applies it in the chain after the sensitive-file and git-control policies and before the auto-mode classifier; it saves nothing on disk itself and `AgentPermissionPolicyService.setExecPolicy()` installs the policy.
 
 ## Read-only shell predicate
 

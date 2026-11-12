@@ -6,6 +6,7 @@ import { AutoModeAskUserQuestionDenyPermissionPolicyService } from '#/agent/perm
 import { AutoModeClassifierPermissionPolicyService } from '#/agent/permissionPolicy/policies/auto-mode-classifier';
 import { DangerousCommandAskPermissionPolicyService } from '#/agent/permissionPolicy/policies/dangerous-command-ask';
 import { DefaultToolApprovePermissionPolicyService } from '#/agent/permissionPolicy/policies/default-tool-approve';
+import { ExecPolicyPermissionPolicyService } from '#/agent/permissionPolicy/policies/exec-policy-rule';
 import { FallbackAskPermissionPolicyService } from '#/agent/permissionPolicy/policies/fallback-ask';
 import { GitControlPathAccessAskPermissionPolicyService } from '#/agent/permissionPolicy/policies/git-control-path-access-ask';
 import { GitCwdWriteApprovePermissionPolicyService } from '#/agent/permissionPolicy/policies/git-cwd-write-approve';
@@ -20,6 +21,7 @@ import {
   type PermissionPolicyEvaluation,
 } from './permissionPolicy';
 import type { PermissionPolicy } from "./types";
+import type { ExecPolicy } from '#/agent/permissionPolicy/execPolicy/execPolicy';
 import { LifecycleScope } from '#/app/scopes';
 import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 
@@ -30,29 +32,37 @@ export class AgentPermissionPolicyService
   declare readonly _serviceBrand: undefined;
 
   private readonly policies: readonly PermissionPolicy[];
+  private readonly execPolicy: ExecPolicyPermissionPolicyService;
 
   constructor(
     @IInstantiationService private readonly instantiation: IInstantiationService,
     @IBootstrapService bootstrap: IBootstrapService,
   ) {
     super();
+    this.execPolicy = this.instantiation.createInstance(ExecPolicyPermissionPolicyService);
     this.policies = [
       this.instantiation.createInstance(AutoModeAskUserQuestionDenyPermissionPolicyService),
       this.instantiation.createInstance(UserConfiguredDenyPermissionPolicyService),
       ...(bootstrap.args.nonInteractive
         ? []
         : [this.instantiation.createInstance(DangerousCommandAskPermissionPolicyService)]),
+      this.instantiation.createInstance(SensitiveFileAccessAskPermissionPolicyService),
+      this.instantiation.createInstance(GitControlPathAccessAskPermissionPolicyService),
+      this.execPolicy,
       this.instantiation.createInstance(AutoModeClassifierPermissionPolicyService),
       this.instantiation.createInstance(SessionApprovalHistoryPermissionPolicyService),
       this.instantiation.createInstance(UserConfiguredAskPermissionPolicyService),
       this.instantiation.createInstance(UserConfiguredAllowPermissionPolicyService),
-      this.instantiation.createInstance(SensitiveFileAccessAskPermissionPolicyService),
-      this.instantiation.createInstance(GitControlPathAccessAskPermissionPolicyService),
       this.instantiation.createInstance(YoloModeApprovePermissionPolicyService),
       this.instantiation.createInstance(DefaultToolApprovePermissionPolicyService),
       this.instantiation.createInstance(GitCwdWriteApprovePermissionPolicyService),
       this.instantiation.createInstance(FallbackAskPermissionPolicyService),
     ];
+  }
+
+  /** Installs or clears the exec policy used by the rule pass in the chain. */
+  setExecPolicy(policy: ExecPolicy | undefined): void {
+    this.execPolicy.setPolicy(policy);
   }
 
   async evaluate(
