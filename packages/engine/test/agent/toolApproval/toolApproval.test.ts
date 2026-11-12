@@ -640,3 +640,127 @@ describe('AgentToolApprovalService', () => {
     });
   });
 });
+
+describe('AgentToolApprovalService reviewer lane', () => {
+  let disposables: DisposableStore;
+  let ix: TestInstantiationService;
+  let records: TelemetryRecord[];
+  let eventBus: IEventBus;
+
+  beforeEach(() => {
+    disposables = new DisposableStore();
+    eventBus = disposables.add(new EventBusService());
+    records = [];
+    ix = createServices(disposables, {
+      additionalServices: (reg) => {
+        reg.defineInstance(
+          IAgentScopeContext,
+          makeAgentScopeContext({ agentId: 'main', agentScope: 'main' }),
+        );
+        reg.defineInstance(IAgentPermissionModeService, stubPermissionModeService(() => 'manual'));
+        reg.defineInstance(IAgentPermissionRulesService, {
+          _serviceBrand: undefined,
+          rules: [],
+          sessionApprovalRulePatterns: [],
+          addRules: () => {},
+          recordApprovalResult: () => {},
+        });
+        reg.defineInstance(
+          ISessionContext,
+          makeSessionContext({
+            sessionId: 'reviewer-session',
+            workspaceId: 'test-workspace',
+            sessionDir: '/tmp/reviewer-session',
+            sessionScope: 'sessions/test-workspace/reviewer-session',
+            metaScope: 'sessions/test-workspace/reviewer-session/session-meta',
+            cwd: '/tmp/reviewer-session',
+          }),
+        );
+        reg.defineInstance(ITelemetryService, recordingTelemetry(records));
+        reg.defineInstance(IEventBus, eventBus);
+        const dispatcher: IEventDispatcher = {
+          _serviceBrand: undefined,
+          hooks: { onDidRestore: new OrderedHookSlot() },
+          dispatch: async (event: Event2) => {
+            eventBus.publish(event, ix.get(IAgentScopeContext).agentContext);
+          },
+        } as unknown as IEventDispatcher;
+        reg.defineInstance(IEventDispatcher, dispatcher);
+        reg.define(IAgentToolApprovalService, AgentToolApprovalService);
+      },
+      strict: true,
+    });
+    (eventBus as EventBusService).activateAgent(ix.get(IAgentScopeContext).agentContext);
+  });
+
+  afterEach(() => {
+    disposables.dispose();
+    interactions.purgeSession('reviewer-session');
+  });
+
+  function approveWithReviewer(): { readonly requested: ReturnType<typeof vi.fn> } {
+    const requested = vi.fn();
+    disposables.add(eventBus.subscribe(PermissionApprovalRequested, requested));
+    return { requested };
+  }
+
+  it('skips the user prompt when the reviewer approves', async () => {
+    const svc = ix.get(IAgentToolApprovalService);
+    const { requested } = approveWithReviewer();
+    svc.setReviewerLane({ review: async () => ({ kind: 'approve', note: 'safe' }) });
+
+    await expect(
+      svc.requestToolApproval(makeContext('Bash'), ask(), 'fallback-ask'),
+    ).resolves.toBeUndefined();
+    expect(requested).not.toHaveBeenCalled();
+    expect(records.some((record) => record.event === 'permission_reviewer_result')).toBe(true);
+  });
+
+  it('never offers a human-required ask to the reviewer', async () => {
+    const svc = ix.get(IAgentToolApprovalService);
+    const review = vi.fn(async () => ({ kind: 'approve' as const }));
+    svc.setReviewerLane({ review });
+    const { requested } = approveWithReviewer();
+    const broker = useBrokerStub(disposables);
+
+    await svc.requestToolApproval(
+      makeContext('Bash'),
+      ask({ reason: { exec_policy: 'rule', requires_human: true } }),
+      'exec-policy',
+    );
+    expect(review).not.toHaveBeenCalled();
+    expect(requested).toHaveBeenCalled();
+    expect(broker).toBeDefined();
+  });
+
+  it('falls back to the user when the reviewer defers', async () => {
+    const svc = ix.get(IAgentToolApprovalService);
+    svc.setReviewerLane({ review: async () => ({ kind: 'unclear' }) });
+    const { requested } = approveWithReviewer();
+    useBrokerStub(disposables);
+
+    await svc.requestToolApproval(makeContext('Bash'), ask(), 'fallback-ask');
+    expect(requested).toHaveBeenCalled();
+  });
+});
+
+function useBrokerStub(disposables: DisposableStore): ReturnType<typeof vi.fn> {
+  const requestSpy = vi.fn(async () => ({ decision: 'approved' as const }));
+  const seen = new Set<string>();
+  disposables.add(
+    toDisposable(
+      interactions.onDidChangePending(() => {
+        for (const pending of interactions.findAll({
+          kind: 'approval',
+          resolved: false,
+          tags: { [INTERACTION_TAG_SESSION_ID]: 'reviewer-session' },
+        })) {
+          if (seen.has(pending.id)) continue;
+          seen.add(pending.id);
+          void requestSpy().then((response) => interactions.respond(pending.id, response));
+        }
+      }),
+    ),
+  );
+  return requestSpy;
+}

@@ -31,6 +31,7 @@ import { interactions } from '#/human/interaction/facade';
 import { ISessionContext } from '#/session/sessionContext/sessionContext';
 import { IEventDispatcher } from '#/state/eventDispatcher';
 import type { ToolInputDisplay } from '#/tool/toolInputDisplay';
+import { admitReviewer, requiresHumanDecision, type ReviewerLane } from '#/agent/interaction/reviewer/reviewerLane';
 
 import { IAgentToolApprovalService } from './toolApproval';
 
@@ -69,6 +70,10 @@ export interface PermissionApprovalResolved extends PermissionApprovalResolvedPa
 export class AgentToolApprovalService extends Service implements IAgentToolApprovalService {
   declare readonly _serviceBrand: undefined;
 
+  private reviewerLane: ReviewerLane | undefined;
+  /** Set when the reviewer approved the call currently being resolved. */
+  private reviewerState: { approved: boolean } | undefined;
+
   constructor(
     @IAgentScopeContext private readonly scopeContext: IAgentScopeContext,
     @IAgentPermissionModeService private readonly modeService: IAgentPermissionModeService,
@@ -78,6 +83,54 @@ export class AgentToolApprovalService extends Service implements IAgentToolAppro
     @IEventDispatcher private readonly dispatcher: IEventDispatcher,
   ) {
     super();
+  }
+
+  setReviewerLane(lane: ReviewerLane | undefined): void {
+    this.reviewerLane = lane;
+  }
+
+  /**
+   * Consults the reviewer before prompting the user. An approval from the
+   * reviewer is applied through the same resolution path as a user approval
+   * (so `resolveApproval` hooks and session rules still run); anything else
+   * falls through to the unchanged human prompt.
+   */
+  private async consultReviewer(
+    context: ResolvedToolExecutionHookContext,
+    result: Extract<PermissionPolicyResult, { kind: 'ask' }>,
+    origin: string,
+  ): Promise<BeforeExecuteDecision | undefined> {
+    this.reviewerState = { approved: false };
+    if (this.reviewerLane === undefined || requiresHumanDecision(result.reason)) return undefined;
+    const outcome = await admitReviewer({
+      decision: 'ask',
+      reason: result.reason,
+      policyName: origin,
+      lane: this.reviewerLane,
+      timeoutMs: undefined,
+      request: {
+        toolCallId: context.toolCall.id,
+        toolName: context.toolCall.name,
+        fingerprint: context.execution.approvalRule,
+        approvalRule: context.execution.approvalRule,
+        display: context.execution.display,
+      },
+    });
+    this.telemetry.track2('permission_reviewer_result', {
+      turn_id: context.turnId,
+      tool_call_id: context.toolCall.id,
+      policy_name: origin,
+      tool_name: context.toolCall.name,
+      permission_mode: this.modeService.mode,
+      result: outcome.kind === 'approve' ? 'approved' : 'deferred',
+      ...(outcome.kind === 'defer' ? { why: outcome.why } : {}),
+    });
+    if (outcome.kind !== 'approve') return undefined;
+    this.reviewerState = { approved: true };
+    const resolved = result.resolveApproval?.({ decision: 'approved', feedback: outcome.note });
+    return resolved === undefined
+      ? undefined
+      : this.resolvePermissionResolution(resolved, context, origin);
   }
 
   async resolvePermissionResolution(
@@ -110,6 +163,8 @@ export class AgentToolApprovalService extends Service implements IAgentToolAppro
     result: Extract<PermissionPolicyResult, { kind: 'ask' }>,
     origin: string,
   ): Promise<BeforeExecuteDecision | undefined> {
+    const reviewed = await this.consultReviewer(context, result, origin);
+    if (reviewed !== undefined || this.reviewerState?.approved === true) return reviewed;
     const name = context.toolCall.name;
     const action = context.execution.description ?? `Approve ${name}`;
     const display =

@@ -80,6 +80,7 @@ describe('AgentPermissionGate', () => {
       _serviceBrand: undefined,
       resolvePermissionResolution,
       requestToolApproval,
+      setReviewerLane: () => undefined,
       formatDenyMessage: (message) => message,
       formatApprovalRejectionMessage: () => '',
     };

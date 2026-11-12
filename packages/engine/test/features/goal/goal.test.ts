@@ -755,6 +755,7 @@ describe('AgentGoalService goal-start review', () => {
         approvalCalls.push({ result, origin });
         return undefined;
       },
+      setReviewerLane: () => undefined,
       formatDenyMessage: (message) => message,
       formatApprovalRejectionMessage: () => 'rejected',
     };

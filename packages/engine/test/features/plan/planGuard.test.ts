@@ -154,6 +154,7 @@ describe('AgentPlanService plan-guard listener', () => {
         requests.push({ ask, origin });
         return mapResolution(ask.resolveApproval?.(approvalResponse));
       },
+      setReviewerLane: () => undefined,
       formatDenyMessage: (message: string) => formatDenyMessage(message),
       formatApprovalRejectionMessage: (toolName, result) =>
         `Tool "${toolName}" was not run (${result.decision}).`,

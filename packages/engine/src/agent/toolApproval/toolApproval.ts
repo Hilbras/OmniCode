@@ -4,6 +4,7 @@ import type {
   PermissionPolicyResolution,
   PermissionPolicyResult,
 } from '#/agent/permissionPolicy/types';
+import type { ReviewerLane } from '#/agent/interaction/reviewer/reviewerLane';
 import type {
   BeforeExecuteDecision,
   ResolvedToolExecutionHookContext,
@@ -23,6 +24,12 @@ export interface IAgentToolApprovalService {
     result: Extract<PermissionPolicyResult, { kind: 'ask' }>,
     origin: string,
   ): Promise<BeforeExecuteDecision | undefined>;
+
+  /**
+   * Installs the automated reviewer consulted before a user approval prompt.
+   * `undefined` restores the previous "always ask the user" behaviour.
+   */
+  setReviewerLane(lane: ReviewerLane | undefined): void;
 
   formatDenyMessage(message: string): string;
 

@@ -169,7 +169,17 @@ export interface PermissionPolicyDecisionEvent {
   [key: string]: TelemetryPrimitive;
 }
 
-export interface PermissionApprovalResultEvent {
+export interface PermissionReviewerResultEvent {
+  turn_id: number;
+  tool_call_id: string;
+  policy_name: string | null;
+  tool_name: string;
+  permission_mode: TelemetryPermissionMode;
+  result: 'approved' | 'deferred';
+  why?: TelemetryPrimitive;
+}
+
+interface PermissionApprovalResultEvent {
   turn_id: number;
   tool_call_id: string;
   policy_name: string | null;
@@ -783,6 +793,20 @@ export const telemetryEventDefinitions = {
       tool_name: 'Tool being gated',
       permission_mode: 'Active permission mode',
       decision: 'Policy decision',
+    },
+  }),
+  permission_reviewer_result: defineAgentTelemetryEvent<PermissionReviewerResultEvent>({
+    owner: 'omnicode',
+    comment: 'An automated reviewer decides whether an approval ask can skip the user.',
+    properties: {
+      turn_id:
+        'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session',
+      tool_call_id: 'Provider-assigned tool call id',
+      policy_name: 'Name of the asking policy, null when unknown',
+      tool_name: 'Tool being approved',
+      permission_mode: 'Active permission mode',
+      result: 'approve when the reviewer resolved it, defer otherwise',
+      why: 'Why the reviewer deferred',
     },
   }),
   permission_approval_result: defineAgentTelemetryEvent<PermissionApprovalResultEvent>({
