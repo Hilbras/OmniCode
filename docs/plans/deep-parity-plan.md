@@ -543,6 +543,13 @@ Tasks:
 3. First-output benchmark with AB/BA ordering and bootstrap.
 4. Trajectory eval suite and CI gate.
 
+#### 5.1 progress
+
+- Fake OpenAI-style provider + SSE server already exists in `packages/llm/test/e2e/fake-provider-harness.ts` (streaming, errors, abort) and is used by the provider e2e suites — no duplicate harness added here.
+- Suite runner and gate: `agent/evals/suite.ts` (`runEvalSuite`) runs each `EvalCase` (async factory + `scoreTrajectory` expectation), treats a throwing case as a failure rather than a skip, treats an **empty suite as a failure**, and lets a case be marked optional (reported but not gating). `evalGateExitCode(report)` gives CI its 0/1 decision.
+- Tests: `packages/engine/test/agent/evals/suite.test.ts` covers all-pass, required failure, optional failure, throwing case, empty suite, and async factories. Existing `test/evals/agentBehavior.test.ts` still passes (13 tests across both).
+- Still open in 5.1: no CI job invokes the suite, there are no provider cassettes or rendered-context goldens, and the first-output AB/BA benchmark with bootstrap is not implemented.
+
 ### 5.2 OTLP and metric wiring
 
 Files:

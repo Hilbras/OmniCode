@@ -132,7 +132,7 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 
 ## Trajectory evals
 
-`agent/evals/trajectory.ts` scores required/forbidden tools, turn/cost/token budgets, and final-text assertions. Use it for trajectory tests instead of brittle full-prose snapshots.
+`agent/evals/trajectory.ts` scores required/forbidden tools, turn/cost/token budgets, and final-text assertions. Use it for trajectory tests instead of brittle full-prose snapshots. `agent/evals/suite.ts` runs a whole suite: a throwing case fails (never skips), an empty suite fails, optional cases report without gating, and `evalGateExitCode` is the CI decision. No CI job calls it yet.
 
 
 ## Command canonicalization
