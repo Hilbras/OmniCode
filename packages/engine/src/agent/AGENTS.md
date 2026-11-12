@@ -158,7 +158,7 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 
 ## Typed world-state diffs
 
-`contextProjector/worldState.ts` renders world state as structured sections instead of free prose: flat typed values only, RFC 7396 merge-patch deltas (`null` deletes), a baseline tracked by `WorldStateTracker` (full first, then deltas, periodic full re-render), `resetBaseline()` after compaction, and a labelled full-render fallback for undiffable input. `contextProjectorService.renderWorldState()` wraps it (full first, deltas after, `resetWorldStateBaseline()` after compaction) but nothing injects the rendered section into the request yet and compaction does not call the reset.
+`contextProjector/worldState.ts` renders world state as structured sections instead of free prose: flat typed values only, RFC 7396 merge-patch deltas (`null` deletes), a baseline tracked by `WorldStateTracker` (full first, then deltas, periodic full re-render), `resetBaseline()` after compaction, and a labelled full-render fallback for undiffable input. `worldStateAssembler.ts` builds the state from goal + todos (`goal.*`, `todos.*`, quiet turns emit nothing), and `worldStateProvider.ts` (`IAgentWorldStateProvider`) supplies it live from `IAgentGoalService`/`IAgentTodoService`. Nothing injects the section into the request yet and no compaction subscriber resets it.
 
 ## Loop detection
 
