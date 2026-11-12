@@ -6,6 +6,7 @@ import type { SandboxAvailability } from '@hilbras/omnicode-kaos/sandbox';
 import {
   BashSandboxService,
   sandboxNetworkShared,
+  sandboxWriteAllowlist,
   type BashSandboxRequest,
 } from '#/os/bash/sandbox';
 
@@ -83,6 +84,25 @@ describe('BashSandboxService', () => {
     expect(result.plan.args).toEqual(expect.arrayContaining(['--bind', '/workspace', '/workspace']));
     expect(result.plan.args).toEqual(expect.arrayContaining(['--chdir', '/workspace', '--', '/bin/bash', '-c', request.command]));
     expect(result.plan.args).toContain('--unshare-net');
+  });
+
+  it('passes a configured write allowlist into the sandbox plan', async () => {
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'auto',
+      probe: async () => availability(true),
+    });
+    const result = await service.prepare({ ...request, writeAllowlist: ['/workspace/src'] });
+    if (result.kind !== 'sandbox') throw new Error('expected sandbox plan');
+    expect(result.plan.args).toEqual(expect.arrayContaining(['--ro-bind', '/workspace', '/workspace']));
+    expect(result.plan.args).toEqual(expect.arrayContaining(['--bind-try', '/workspace/src', '/workspace/src']));
+  });
+
+  it('parses write roots only from absolute env entries', () => {
+    const previous = process.env['OMNICODE_SANDBOX_WRITE_ROOTS'];
+    process.env['OMNICODE_SANDBOX_WRITE_ROOTS'] = '/workspace/src, relative, /workspace/test';
+    expect(sandboxWriteAllowlist()).toEqual(['/workspace/src', '/workspace/test']);
+    if (previous === undefined) delete process.env['OMNICODE_SANDBOX_WRITE_ROOTS'];
+    else process.env['OMNICODE_SANDBOX_WRITE_ROOTS'] = previous;
   });
 
   it('can share the network only through an explicit env switch', () => {

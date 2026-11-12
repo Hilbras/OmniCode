@@ -7,3 +7,4 @@ export * from './teamService';
 export * from './teamTools';
 export * from './types';
 export * from './workflowBudget';
+export * from './teamPersistence';

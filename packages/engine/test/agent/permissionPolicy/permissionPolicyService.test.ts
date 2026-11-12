@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
 import { createServices, type TestInstantiationService } from '@hilbras/omnicode-base/di/test';
+import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
+import type { ContextMessage } from '#/agent/contextMemory/types';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import {
   IAgentPermissionPolicyService,
@@ -60,6 +62,7 @@ describe('AgentPermissionPolicyService chain', () => {
   let workspace: ReturnType<typeof workspaceStub>;
   let hostArgs: HostArgs;
   let dangerousCommandGuardEnabled: boolean;
+  let contextMessages: ContextMessage[];
 
   beforeEach(() => {
     disposables = new DisposableStore();
@@ -69,8 +72,25 @@ describe('AgentPermissionPolicyService chain', () => {
     workspace = workspaceStub('/workspace');
     hostArgs = { requestHeaders: {}, nonInteractive: false };
     dangerousCommandGuardEnabled = true;
+    contextMessages = [];
     ix = createServices(disposables, {
       additionalServices: (reg) => {
+        reg.defineInstance(IAgentContextMemoryService, {
+          _serviceBrand: undefined,
+          get: () => contextMessages,
+          append: (...messages) => { contextMessages.push(...messages); },
+          appendLoopEvent: () => {},
+          publishTrailingRemoval: () => false,
+          clear: () => { contextMessages = []; },
+          applyCompaction: () => ({
+            summary: '',
+            contextSummary: '',
+            compactedCount: 0,
+            tokensBefore: 0,
+            tokensAfter: 0,
+            keptUserMessageCount: 0,
+          }),
+        } as IAgentContextMemoryService);
         reg.defineInstance(
           IAgentPermissionModeService,
           stubPermissionModeService(() => mode),
@@ -148,6 +168,10 @@ describe('AgentPermissionPolicyService chain', () => {
 
   function service(): IAgentPermissionPolicyService {
     return ix.get(IAgentPermissionPolicyService);
+  }
+
+  function setUserRequest(text: string): void {
+    contextMessages.push({ role: 'user', content: [{ type: 'text', text }], toolCalls: [] });
   }
 
   async function evaluate(
@@ -506,7 +530,17 @@ describe('AgentPermissionPolicyService chain', () => {
     });
   });
 
-  it.each(['AgentSwarm', 'EnterPlanMode', 'ExitPlanMode', 'CreateGoal'] as const)(
+  it.each(['AgentSwarm', 'FetchURL', 'WebSearch', 'memory_forget', 'memory_manage', 'Arena'] as const)(
+    'asks for %s in manual mode instead of blanket approval',
+    async (toolName) => {
+      await expect(evaluate({ toolName, args: {} })).resolves.toMatchObject({
+        policyName: 'fallback-ask',
+        result: { kind: 'ask' },
+      });
+    },
+  );
+
+  it.each(['EnterPlanMode', 'ExitPlanMode', 'CreateGoal', 'TeamCreate', 'Lsp', 'ArtifactRecord'] as const)(
     'approves %s through the default tool allowlist in manual mode',
     async (toolName) => {
       await expect(evaluate({ toolName, args: {} })).resolves.toMatchObject({
@@ -524,16 +558,34 @@ describe('AgentPermissionPolicyService git cwd write approval', () => {
   let workspace: ReturnType<typeof workspaceStub>;
   let workspaceDir: string;
   let cleanupDirs: string[];
+  let contextMessages: ContextMessage[];
 
   beforeEach(async () => {
     disposables = new DisposableStore();
     mode = 'manual';
     workspaceDir = await mkdtemp(join(tmpdir(), 'omnicode-permission-git-'));
     cleanupDirs = [workspaceDir];
+    contextMessages = [];
     await mkdir(join(workspaceDir, '.git'), { recursive: true });
     workspace = workspaceStub(workspaceDir);
     ix = createServices(disposables, {
       additionalServices: (reg) => {
+        reg.defineInstance(IAgentContextMemoryService, {
+          _serviceBrand: undefined,
+          get: () => contextMessages,
+          append: (...messages) => { contextMessages.push(...messages); },
+          appendLoopEvent: () => {},
+          publishTrailingRemoval: () => false,
+          clear: () => { contextMessages = []; },
+          applyCompaction: () => ({
+            summary: '',
+            contextSummary: '',
+            compactedCount: 0,
+            tokensBefore: 0,
+            tokensAfter: 0,
+            keptUserMessageCount: 0,
+          }),
+        } as IAgentContextMemoryService);
         reg.defineInstance(
           IAgentPermissionModeService,
           stubPermissionModeService(() => mode),
@@ -606,6 +658,10 @@ describe('AgentPermissionPolicyService git cwd write approval', () => {
   ): Promise<PermissionPolicyEvaluation | undefined> {
     const svc = ix.get(IAgentPermissionPolicyService);
     return svc.evaluate(policyContext(input));
+  }
+
+  function setUserRequest(text: string): void {
+    contextMessages.push({ role: 'user', content: [{ type: 'text', text }], toolCalls: [] });
   }
 
   it('still asks for Bash inside a git cwd in manual mode', async () => {
@@ -692,8 +748,39 @@ describe('AgentPermissionPolicyService git cwd write approval', () => {
     });
   });
 
+  it('asks for workspace writes in auto mode when the user did not ask for an edit', async () => {
+    mode = 'auto';
+    setUserRequest('what does this repository do?');
+    await expect(
+      evaluate({
+        toolName: 'Write',
+        args: { path: 'src/a.ts', content: 'x' },
+        accesses: ToolAccesses.writeFile(join(workspaceDir, 'src/a.ts')),
+      }),
+    ).resolves.toMatchObject({
+      policyName: 'auto-mode-classifier',
+      result: { kind: 'ask', reason: { auto_mode_classifier: 'context_missing_edit_intent' } },
+    });
+  });
+
+  it('approves workspace writes in auto mode when the user asked for an edit', async () => {
+    mode = 'auto';
+    setUserRequest('refactor src/a.ts to use the new parser');
+    await expect(
+      evaluate({
+        toolName: 'Write',
+        args: { path: 'src/a.ts', content: 'x' },
+        accesses: ToolAccesses.writeFile(join(workspaceDir, 'src/a.ts')),
+      }),
+    ).resolves.toMatchObject({
+      policyName: 'auto-mode-classifier',
+      result: { kind: 'approve' },
+    });
+  });
+
   it('does not use git-cwd approval in auto mode', async () => {
     mode = 'auto';
+    setUserRequest('fix src/a.ts');
     await expect(
       evaluate({
         toolName: 'Write',

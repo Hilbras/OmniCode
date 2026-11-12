@@ -35,6 +35,18 @@ describe('resolveInstallSource', () => {
     });
   });
 
+  it('allows plaintext http only for loopback development sources', () => {
+    expect(resolveInstallSource('http://127.0.0.1:9000/plugin.zip')).toEqual({
+      kind: 'zip-url',
+      path: 'http://127.0.0.1:9000/plugin.zip',
+    });
+    expect(resolveInstallSource('http://localhost:9000/plugin.zip')).toEqual({
+      kind: 'zip-url',
+      path: 'http://localhost:9000/plugin.zip',
+    });
+    expect(() => resolveInstallSource('http://example.com/plugin.zip')).toThrow('must use https');
+  });
+
   it('rejects relative paths', () => {
     expect(() => resolveInstallSource('./plugin')).toThrow('absolute path');
   });

@@ -1,9 +1,14 @@
+import { mkdtemp, rm } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+
 import { describe, expect, it, vi } from 'vitest';
 
 import type { ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
 import { Emitter, Event } from '@hilbras/omnicode-base/event';
 import type { ISessionIndex } from '#/app/sessionIndex/sessionIndex';
 import { SessionManager } from '#/app/sessionManager/sessionManagerService';
+import { SessionLeaseService } from '#/app/sessionManager/sessionLease';
 import { Program } from '#/program/program';
 import type { ProgramSessionControllerInput } from '#/program/programDependencies';
 import { FakeRuntime } from '#/runtime/fakeRuntime';
@@ -740,5 +745,45 @@ describe('SessionManager controller retirement', () => {
     expect(controllers[1]!.dispose).toHaveBeenCalledTimes(1);
     program.dispose();
     await registry.dispose();
+  });
+
+  it('refuses a second live process for the same session and releases on close', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'omnicode-session-manager-lease-'));
+    try {
+      const { service } = controller('session-lease');
+      const workspace = {
+        id: 'workspace-1',
+        program: {
+          sessionControllerGeneration: 'generation-1',
+          createSessionController: () => service,
+        },
+      } as unknown as WorkspaceInstance;
+      const workspaces = {
+        getOrCreate: async () => workspace,
+        get: () => workspace,
+      } as unknown as IWorkspaceInstanceManager;
+      const index = {
+        get: async () => ({ workspaceId: 'workspace-1', cwd: '/workspace' }),
+      } as unknown as ISessionIndex;
+      const first = new SessionManager(
+        workspaces,
+        index,
+        new SessionLeaseService({ directory: dir, ownerId: 'owner-a', ttlMs: 60_000 }),
+      );
+      const second = new SessionManager(
+        workspaces,
+        index,
+        new SessionLeaseService({ directory: dir, ownerId: 'owner-b', ttlMs: 60_000 }),
+      );
+
+      await expect(first.resume('session-lease')).resolves.toBeDefined();
+      await expect(second.resume('session-lease')).rejects.toMatchObject({ code: 'session.busy' });
+      await first.close('session-lease');
+      await expect(second.resume('session-lease')).resolves.toBeDefined();
+      first.dispose();
+      second.dispose();
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
   });
 });

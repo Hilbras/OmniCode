@@ -72,6 +72,8 @@ export async function runMatchedHooks(
         timeout: hook.timeout ?? DEFAULT_HOOK_TIMEOUT_SECONDS,
         cwd: hook.cwd ?? (cwd === '' ? undefined : cwd),
         env: hook.env,
+        shell: hook.shell === true,
+        inheritEnv: hook.inheritEnv === true,
         signal: args.signal,
       }),
     ),

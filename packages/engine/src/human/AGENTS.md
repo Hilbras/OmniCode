@@ -104,3 +104,8 @@ The engine setup keeps only the cassette env key and clears the rest.
 Do not add DI services, app config, feature/profile registration, MCP
 transports, tool implementations, UI code, v2 event classes, or imports from
 `llm-adapter/` or other v2 domains.
+
+
+## Durable interactions
+
+`interaction/persistence.ts` stores pending approval/question records atomically with mode 0600. `InteractionFacade` supports `configurePersistence`, `load`, and `flush`; resolved records are not persisted. Host startup/resume wiring remains a separate session-lifecycle concern.

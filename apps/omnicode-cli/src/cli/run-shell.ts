@@ -18,6 +18,7 @@ import {
 } from '@hilbras/omnicode-telemetry';
 
 import { CLI_SHUTDOWN_TIMEOUT_MS, CLI_UI_MODE, TUI_HOST_UI_CAPABILITIES } from '#/constant/app';
+import { startConfiguredChannelRuntime } from './channels';
 import { detectPendingMigration, resolveLegacySourceHome, sameLegacyPath } from '#/migration/index';
 import type { TuiConfig } from '#/tui/config';
 import { loadTuiConfig, TuiConfigParseError } from '#/tui/config';
@@ -84,6 +85,7 @@ export async function runShell(
   };
   const harness = createOmnicodeHarness(harnessOptions);
   startupTrace('harness:created');
+  const channelRuntime = await startConfiguredChannelRuntime(harness);
   log.info('omnicode starting', {
     version,
     uiMode: CLI_UI_MODE,
@@ -234,6 +236,7 @@ export async function runShell(
   };
 
   tui.onExit = async (exitCode = 0) => {
+    await channelRuntime?.stop();
     const sessionId = tui.getCurrentSessionId();
     const hasContent = tui.hasSessionContent();
     setCrashPhase('shutdown');

@@ -1,3 +1,5 @@
+import { canonicalizeCommand } from './commandCanonicalization';
+
 /**
  * AUTO-mode denial tracking state machine.
  *
@@ -180,6 +182,9 @@ export function resetDenialState(): AutoModeDenialState {
 }
 
 export function actionFingerprint(toolName: string, args: unknown): string {
+  if (toolName === 'Bash' && typeof args === 'object' && args !== null && typeof (args as { command?: unknown }).command === 'string') {
+    return `${toolName}:${canonicalizeCommand((args as { command: string }).command).canonical}`;
+  }
   try {
     return `${toolName}:${JSON.stringify(args ?? {})}`;
   } catch {

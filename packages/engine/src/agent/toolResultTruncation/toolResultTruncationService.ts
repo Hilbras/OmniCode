@@ -9,7 +9,6 @@ import { IFlagService } from '#/app/flag/flag';
 import { LifecycleScope } from '#/app/scopes';
 import { IFileSystemStorageService } from '#/persistence/interface/storage';
 import {
-  DEFAULT_TOOL_RESULT_MAX_CHARS,
   DEFAULT_TOOL_RESULT_MAX_RETAINED_CHARS,
   type ExecutableToolResult,
 } from '#/tool/toolContract';
@@ -27,6 +26,23 @@ const TOOL_RESULT_PREVIEW_HEAD_CHARS = 4_096;
 const TOOL_RESULT_PREVIEW_TAIL_CHARS = 1_024;
 const TOOL_RESULT_MAX_LINE_CHARS = 2_000;
 const TRUNCATION_MARKER = '[...truncated]';
+
+const TOOL_RESULT_MAX_CHARS: Readonly<Record<string, number>> = Object.freeze({
+  Read: 100_000,
+  Bash: 50_000,
+  Grep: 40_000,
+  Glob: 20_000,
+  Lsp: 40_000,
+  WebSearch: 30_000,
+  FetchURL: 50_000,
+});
+const DEFAULT_TOOL_RESULT_MAX_CHARS = 50_000;
+const MCP_TOOL_RESULT_MAX_CHARS = 40_000;
+
+export function resolveToolResultMaxChars(toolName: string): number {
+  if (toolName.startsWith('mcp__')) return MCP_TOOL_RESULT_MAX_CHARS;
+  return TOOL_RESULT_MAX_CHARS[toolName] ?? DEFAULT_TOOL_RESULT_MAX_CHARS;
+}
 
 const encoder = new TextEncoder();
 
@@ -55,9 +71,10 @@ export class ToolResultTruncationService implements IAgentToolResultTruncationSe
   ): Promise<T> {
     const { result } = input;
     if (result.spillExempt === true) return result;
+    const maxChars = resolveToolResultMaxChars(input.toolName);
 
     const rawText = persistableToolResultText(result.output);
-    if (rawText.length <= DEFAULT_TOOL_RESULT_MAX_CHARS) return result;
+    if (rawText.length <= maxChars && result.truncated !== true) return result;
 
     const compacted = this.flags.enabled(TOOL_RESULT_COMPRESSION_FLAG_ID)
       ? compactStructuredText(rawText)
@@ -65,7 +82,7 @@ export class ToolResultTruncationService implements IAgentToolResultTruncationSe
     const compressed =
       compacted !== undefined &&
       compacted.text.length < rawText.length &&
-      compacted.text.length <= DEFAULT_TOOL_RESULT_MAX_CHARS
+      compacted.text.length <= maxChars
         ? compacted
         : undefined;
 
@@ -88,13 +105,13 @@ export class ToolResultTruncationService implements IAgentToolResultTruncationSe
         input.toolCallId,
         retainedText,
         totalChars,
-        DEFAULT_TOOL_RESULT_MAX_CHARS,
+        maxChars,
         suffix,
       );
       return { ...rest, output: mergeSpillPointer(shaped.output, fallback), truncated: true } as T;
     }
 
-    if (shaped.textChars <= DEFAULT_TOOL_RESULT_MAX_CHARS) {
+    if (shaped.textChars <= maxChars) {
       const inlineSuffix = dropInlineSuffixLines(suffix, persistableToolResultText(shaped.output));
       return {
         ...rest,
@@ -118,7 +135,7 @@ export class ToolResultTruncationService implements IAgentToolResultTruncationSe
       saved.outputPath,
       saved.preservedChars,
       totalChars,
-      DEFAULT_TOOL_RESULT_MAX_CHARS,
+      maxChars,
       suffix,
       shaped.hasMedia,
       compressed !== undefined,

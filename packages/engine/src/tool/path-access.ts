@@ -1,3 +1,5 @@
+import { existsSync, realpathSync } from 'node:fs';
+
 import * as pathe from 'pathe';
 
 import {
@@ -14,15 +16,29 @@ export interface WorkspaceConfig {
 
 const SENSITIVE_BASENAMES = new Set<string>([
   '.env',
-  'id_rsa',
-  'id_ed25519',
-  'id_ecdsa',
+  '.git-credentials',
+  '.netrc',
+  '.npmrc',
+  '.pypirc',
+  'application_default_credentials.json',
   'credentials',
+  'id_ecdsa',
+  'id_ed25519',
+  'id_rsa',
+  'kubeconfig',
+  'service-account.json',
 ]);
 
 const SENSITIVE_PATH_SUFFIXES = [
   ['.aws', 'credentials'],
   ['.gcp', 'credentials'],
+  ['.kube', 'config'],
+  ['.docker', 'config.json'],
+  ['.config', 'gcloud', 'application_default_credentials.json'],
+  ['.azure', 'accessTokens.json'],
+  ['.azure', 'msal_token_cache.json'],
+  ['.config', 'gh', 'hosts.yml'],
+  ['.ssh', 'config'],
 ];
 
 const ENV_PREFIX = '.env.';
@@ -72,6 +88,7 @@ export function isSensitiveFile(path: string): boolean {
     const suffix = suffixParts.join('/');
     const comparableSuffix = comparable(suffix);
     if (
+      comparablePath === comparableSuffix ||
       comparablePath.endsWith(`/${comparableSuffix}`) ||
       comparablePath.includes(`/${comparableSuffix}/`)
     ) {
@@ -211,6 +228,36 @@ export interface AssertPathOptions {
   readonly pathClass?: PathClass | undefined;
 }
 
+export function physicalPathForGuard(path: string): string {
+  const absolute = pathe.normalize(path);
+  try {
+    return pathe.normalize(realpathSync.native(absolute));
+  } catch {}
+
+  const suffix: string[] = [];
+  let current = absolute;
+  while (true) {
+    if (existsSync(current)) {
+      try {
+        return pathe.normalize(pathe.join(realpathSync.native(current), ...suffix));
+      } catch {
+        return absolute;
+      }
+    }
+    const parent = pathe.dirname(current);
+    if (parent === current) return absolute;
+    suffix.unshift(pathe.basename(current));
+    current = parent;
+  }
+}
+
+export function physicalWorkspaceConfig(config: WorkspaceConfig): WorkspaceConfig {
+  return {
+    workspaceDir: physicalPathForGuard(config.workspaceDir),
+    additionalDirs: config.additionalDirs.map((dir) => physicalPathForGuard(dir)),
+  };
+}
+
 export interface ResolvePathAccessOptions {
   readonly operation: PathAccessOperation;
   readonly policy?: WorkspaceAccessPolicy | undefined;
@@ -285,7 +332,48 @@ export function resolvePathAccess(
     }
   }
 
-  return { path: canonical, outsideWorkspace };
+  const physical = physicalPathForGuard(canonical);
+  const physicalWorkspace = physicalWorkspaceConfig(config);
+  const physicalOutside =
+    !isWithinWorkspace(physical, config, pathClass) &&
+    !isWithinWorkspace(physical, physicalWorkspace, pathClass);
+
+  if (policy.checkSensitive && physical !== canonical && isSensitiveFile(physical)) {
+    throw new PathSecurityError(
+      'PATH_SENSITIVE',
+      path,
+      physical,
+      `"${path}" resolves through a symlink to a sensitive file. Access is blocked to protect secrets.`,
+    );
+  }
+
+  if (!outsideWorkspace && physicalOutside) {
+    throw new PathSecurityError(
+      'PATH_OUTSIDE_WORKSPACE',
+      path,
+      physical,
+      `"${path}" resolves through a symlink outside the workspace. Access is blocked.`,
+    );
+  }
+
+  if (outsideWorkspace && physicalOutside) {
+    switch (policy.guardMode) {
+      case 'absolute-outside-allowed':
+        if (!rawIsAbsolute) {
+          throw new PathSecurityError(
+            'PATH_OUTSIDE_WORKSPACE',
+            path,
+            physical,
+            relativeOutsideMessage(path, options.operation),
+          );
+        }
+        break;
+      case 'disabled':
+        break;
+    }
+  }
+
+  return { path: physical, outsideWorkspace: physicalOutside };
 }
 
 export function resolvePathAccessPath(

@@ -19,6 +19,7 @@ export interface BashSandboxRequest {
   readonly workspace: string;
   readonly shellPath: string;
   readonly env: Readonly<Record<string, string>>;
+  readonly writeAllowlist?: readonly string[];
 }
 
 export type BashSandboxPreparation =
@@ -42,6 +43,13 @@ export const IBashSandboxService = createDecorator<IBashSandboxService>('bashSan
 export function resolveBashSandboxMode(env: NodeJS.ProcessEnv = process.env): BashSandboxMode {
   const raw = (env['OMNICODE_SANDBOX_MODE'] ?? 'off').trim().toLowerCase();
   return raw === 'auto' || raw === 'required' ? raw : 'off';
+}
+
+export function sandboxWriteAllowlist(env: NodeJS.ProcessEnv = process.env): readonly string[] | undefined {
+  const raw = env['OMNICODE_SANDBOX_WRITE_ROOTS']?.trim();
+  if (raw === undefined || raw.length === 0) return undefined;
+  const roots = raw.split(',').map((value) => value.trim()).filter((value) => value.startsWith('/'));
+  return roots.length === 0 ? undefined : roots;
 }
 
 export function sandboxNetworkShared(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -80,6 +88,7 @@ export class BashSandboxService implements IBashSandboxService {
         shareNetwork: sandboxNetworkShared(),
         sharePid: false,
         shareIpc: false,
+        ...(request.writeAllowlist === undefined ? {} : { writeAllowlist: request.writeAllowlist }),
       },
       request: { command: request.command, mode: 'shell' },
       shellPolicy: {

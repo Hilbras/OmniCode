@@ -76,3 +76,4 @@ registerScopedService(
   ScopeActivation.OnDemand,
   'sessionSearch',
 );
+export * from './localSessionSearch';

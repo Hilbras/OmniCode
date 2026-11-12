@@ -1,4 +1,7 @@
 
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+
 import { DisposableStore } from '@hilbras/omnicode-base/di/lifecycle';
 import { Emitter, type Event, type IWaitUntil } from '@hilbras/omnicode-base/event';
 import { ScopeActivation, registerScopedService, type ISessionScopeHandle } from '@hilbras/omnicode-base/di/scope';
@@ -25,6 +28,7 @@ import {
   type CreateManagedSessionOptions,
   type UnguardedSessionLifecycle,
 } from './sessionManager';
+import { SessionLeaseService } from './sessionLease';
 
 interface SessionControllerEntry {
   readonly generation: string;
@@ -56,11 +60,22 @@ export class SessionManager implements ISessionManager {
   readonly onDidArchiveSession = this.didArchiveEmitter.event;
   private readonly didForkEmitter = new Emitter<SessionForkedEvent>();
   readonly onDidForkSession = this.didForkEmitter.event;
+  private readonly leases: SessionLeaseService | undefined;
+  private readonly leaseTimers = new Map<string, ReturnType<typeof setInterval>>();
 
   constructor(
     @IWorkspaceInstanceManager private readonly workspaces: IWorkspaceInstanceManager,
     @ISessionIndex private readonly index: ISessionIndex,
-  ) {}
+    leases?: SessionLeaseService,
+  ) {
+    this.leases =
+      leases ??
+      (process.env['VITEST'] === undefined
+        ? new SessionLeaseService({
+            directory: join(process.env['OMNICODE_SESSION_LEASE_DIR'] ?? process.env['OMNICODE_HOME'] ?? join(homedir(), '.omnicode'), 'session-leases'),
+          })
+        : undefined);
+  }
 
   async create(options: CreateManagedSessionOptions): Promise<ISessionScopeHandle> {
     const workspace = await this.workspaces.getOrCreate(
@@ -68,7 +83,18 @@ export class SessionManager implements ISessionManager {
         ? { root: options.workDir }
         : { workspaceId: options.workspaceId, root: options.workDir },
     );
-    const create = () => this.controllerForWorkspace(workspace.id).create(options);
+    const create = async () => {
+      if (options.sessionId !== undefined) await this.acquireLease(options.sessionId);
+      try {
+        const handle = await this.controllerForWorkspace(workspace.id).create(options);
+        if (options.sessionId === undefined) await this.acquireLease(handle.id);
+        else this.startLeaseHeartbeat(handle.id);
+        return handle;
+      } catch (error) {
+        if (options.sessionId !== undefined) await this.releaseLease(options.sessionId);
+        throw error;
+      }
+    };
     if (options.sessionId === undefined) return create();
     return this.serializeLifecycle(options.sessionId, create);
   }
@@ -77,9 +103,18 @@ export class SessionManager implements ISessionManager {
     const inflight = this.pendingResumes.get(sessionId);
     if (inflight !== undefined) return inflight;
     this.resumeFailures.delete(sessionId);
-    const promise = this.serializeLifecycle(sessionId, async () =>
-      (await this.controllerForSession(sessionId))?.resume(sessionId, options),
-    ).finally(() => this.pendingResumes.delete(sessionId));
+    const promise = this.serializeLifecycle(sessionId, async () => {
+      await this.acquireLease(sessionId);
+      try {
+        const handle = await (await this.controllerForSession(sessionId))?.resume(sessionId, options);
+        if (handle !== undefined) this.startLeaseHeartbeat(sessionId);
+        else await this.releaseLease(sessionId);
+        return handle;
+      } catch (error) {
+        await this.releaseLease(sessionId);
+        throw error;
+      }
+    }).finally(() => this.pendingResumes.delete(sessionId));
     this.pendingResumes.set(sessionId, promise);
     void promise.catch((error: unknown) => {
       this.resumeFailures.set(sessionId, error instanceof Error ? error : new Error('session resume failed'));
@@ -143,7 +178,13 @@ export class SessionManager implements ISessionManager {
   }
 
   async close(sessionId: string): Promise<void> {
-    await this.serializeLifecycle(sessionId, async () => this.owners.get(sessionId)?.close(sessionId));
+    await this.serializeLifecycle(sessionId, async () => {
+      try {
+        await this.owners.get(sessionId)?.close(sessionId);
+      } finally {
+        await this.releaseLease(sessionId);
+      }
+    });
   }
 
   private async archiveInner(sessionId: string): Promise<void> {
@@ -186,6 +227,7 @@ export class SessionManager implements ISessionManager {
       const failed = settled.find((result) => result.status === 'rejected');
       if (failed?.status === 'rejected') throw failed.reason;
       await controller.delete(sessionId);
+      await this.releaseLease(sessionId);
     });
   }
 
@@ -222,6 +264,7 @@ export class SessionManager implements ISessionManager {
   }
 
   dispose(): void {
+    for (const sessionId of this.leaseTimers.keys()) void this.releaseLease(sessionId);
     for (const { controller, subscriptions } of [...this.controllerEntries].toReversed()) {
       subscriptions.dispose();
       controller.dispose();
@@ -237,6 +280,38 @@ export class SessionManager implements ISessionManager {
     this.willDeleteEmitter.dispose();
     this.didArchiveEmitter.dispose();
     this.didForkEmitter.dispose();
+  }
+
+  private async acquireLease(sessionId: string): Promise<void> {
+    const leases = this.leases;
+    if (leases === undefined) return;
+    const result = await leases.acquire(sessionId);
+    if (result.ok) {
+      this.startLeaseHeartbeat(sessionId);
+      if (result.reclaimed !== undefined) {
+        this.index.get(sessionId).catch(() => undefined);
+      }
+      return;
+    }
+    throw new Error2(ErrorCodes.SESSION_BUSY, `Session "${sessionId}" is already active in another process (pid ${result.lease.pid}).`, {
+      details: { sessionId, pid: result.lease.pid, ownerId: result.lease.ownerId },
+    });
+  }
+
+  private startLeaseHeartbeat(sessionId: string): void {
+    if (this.leases === undefined || this.leaseTimers.has(sessionId)) return;
+    const timer = setInterval(() => {
+      void this.leases?.heartbeat(sessionId);
+    }, 20_000);
+    timer.unref?.();
+    this.leaseTimers.set(sessionId, timer);
+  }
+
+  private async releaseLease(sessionId: string): Promise<void> {
+    const timer = this.leaseTimers.get(sessionId);
+    if (timer !== undefined) clearInterval(timer);
+    this.leaseTimers.delete(sessionId);
+    await this.leases?.release(sessionId);
   }
 
   private controllerForWorkspace(workspaceId: string): SessionLifecycleService {

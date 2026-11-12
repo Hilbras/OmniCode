@@ -17,6 +17,7 @@ import type {
   TeamTaskFilter,
   TeamTaskPriority,
   TeamTaskStatus,
+  TeamState,
   UpdateTeamTaskInput,
 } from './types';
 
@@ -78,15 +79,54 @@ export class TeamService implements ITeamService {
   private readonly teams = new Map<string, Team>();
   private readonly members = new Map<string, Map<string, TeamMember>>();
   private readonly tasks = new Map<string, Map<string, TeamTask>>();
+  private readonly persistence: TeamServiceOptions['persistence'];
+  private saveQueue: Promise<void> = Promise.resolve();
 
   constructor(options: TeamServiceOptions = {}) {
     this.now = options.now ?? (() => Date.now());
+    this.persistence = options.persistence;
     this.idFactory =
       options.idFactory ??
       ((kind) => {
         this.sequence += 1;
         return `${kind}-${String(this.sequence)}`;
       });
+  }
+
+  async load(): Promise<void> {
+    if (this.persistence === undefined) return;
+    this.restoreState(await this.persistence.load());
+  }
+
+  async flush(): Promise<void> {
+    await this.saveQueue;
+  }
+
+  exportState(): TeamState {
+    return {
+      teams: this.listTeams(),
+      members: [...this.members.values()].flatMap((members) => [...members.values()]),
+      tasks: [...this.tasks.values()].flatMap((tasks) => [...tasks.values()]),
+    };
+  }
+
+  restoreState(state: TeamState): void {
+    this.teams.clear();
+    this.members.clear();
+    this.tasks.clear();
+    for (const team of state.teams) {
+      this.teams.set(team.id, team);
+      this.members.set(team.id, new Map());
+      this.tasks.set(team.id, new Map());
+    }
+    for (const member of state.members) this.members.get(member.teamId)?.set(member.agentId, member);
+    for (const task of state.tasks) this.tasks.get(task.teamId)?.set(task.id, task);
+  }
+
+  private queueSave(): void {
+    if (this.persistence === undefined) return;
+    const state = this.exportState();
+    this.saveQueue = this.saveQueue.then(() => this.persistence?.save(state)).catch(() => undefined);
   }
 
   createTeam(input: CreateTeamInput = {}): Team {
@@ -115,6 +155,7 @@ export class TeamService implements ITeamService {
     this.teams.set(id, team);
     this.members.set(id, new Map());
     this.tasks.set(id, new Map());
+    this.queueSave();
     return team;
   }
 
@@ -453,6 +494,7 @@ export class TeamService implements ITeamService {
   private touchTeam(teamId: string): void {
     const team = this.requireTeam(teamId);
     this.teams.set(teamId, { ...team, updatedAt: this.now() });
+    this.queueSave();
   }
 }
 

@@ -14,6 +14,7 @@ Main directories:
 
 - `src/constant/`: non-copy constants shared by CLI/TUI — product, protocol, paths, terminal control, updates, and so on.
 - `src/cli/`: command-line arguments, subcommands, and CLI startup.
+- `src/cli/channels.ts`: composes the channel runtime for a CLI host — reads `<home>/channels.json`, loads durable session bindings, bridges bound conversations to harness sessions, and forwards buffered assistant output back to the channel. Started from `run-shell` and stopped on TUI exit; no-op when no channel config exists.
 - `src/tui/`: the interactive terminal UI.
 - `src/tui/omnicode-tui.ts`: the `OmnicodeTUI` coordinator — wires state, layout, editor, session, SDK events, and dialogs together, and dispatches slash-command handlers. Heavy logic is delegated to `controllers/`, not accumulated here.
 - `src/tui/tui-state.ts`: `TUIState`, `createTUIState`, `createInitialAppState` — the single global UI-state shape.

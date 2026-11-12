@@ -11,6 +11,7 @@ import type {
 } from './interaction';
 import { INTERACTION_TAG_AGENT_ID, INTERACTION_TAG_SESSION_ID } from './interaction';
 import type { InteractionEmitted, InteractionRecord } from './machine';
+import type { InteractionPersistence } from './persistence';
 import { createInteractionMachine } from './machine';
 
 export type InteractionActor = ActorRefFrom<ReturnType<typeof createInteractionMachine>>;
@@ -35,6 +36,9 @@ export interface InteractionFacade {
   wait<TResponse>(id: string, opts?: { timeoutMs?: number }): Promise<TResponse>;
   onDidChangePending(listener: (event: InteractionPendingChangedEvent) => void): () => void;
   onDidResolve(listener: (event: InteractionResolution) => void): () => void;
+  configurePersistence(persistence: InteractionPersistence): void;
+  load(): Promise<void>;
+  flush(): Promise<void>;
   attachAgent(agentId: string, sessionId: string, dispatch: InteractionAgentDispatch): void;
   detachAgent(agentId: string, sessionId: string): void;
   purgeSession(sessionId: string): void;
@@ -64,6 +68,8 @@ export function createInteractionFacade(
   const resolveListeners = new Set<(event: InteractionResolution) => void>();
   const agentDispatchers = new Map<string, InteractionAgentDispatch>();
   let nextId = 0;
+  let persistence: InteractionPersistence | undefined;
+  let saveQueue: Promise<void> = Promise.resolve();
 
   const records = (): Map<string, InteractionRecord> => actor.getSnapshot().context.records;
 
@@ -73,6 +79,12 @@ export function createInteractionFacade(
   const firePendingChanged = (): void => {
     const event: InteractionPendingChangedEvent = { pending: pendingIds() };
     for (const listener of changeListeners) listener(event);
+  };
+
+  const queueSave = (): void => {
+    if (persistence === undefined) return;
+    const snapshot = [...records().values()];
+    saveQueue = saveQueue.then(() => persistence?.save(snapshot)).catch(() => undefined);
   };
 
   const settleWaiters = (id: string, response: unknown): void => {
@@ -144,6 +156,7 @@ export function createInteractionFacade(
       };
       actor.send({ type: 'interaction.request', record: { ...interaction, resolved: false } });
       firePendingChanged();
+      queueSave();
       return interaction;
     },
 
@@ -152,6 +165,7 @@ export function createInteractionFacade(
       if (record === undefined || record.resolved) return false;
       actor.send({ type: 'interaction.resolve', id, response });
       firePendingChanged();
+      queueSave();
       return true;
     },
 
@@ -204,6 +218,23 @@ export function createInteractionFacade(
       return () => {
         resolveListeners.delete(listener);
       };
+    },
+
+    configurePersistence(next: InteractionPersistence): void {
+      persistence = next;
+    },
+
+    async load(): Promise<void> {
+      if (persistence === undefined) return;
+      for (const record of await persistence.load()) {
+        if (records().get(record.id)?.resolved === false) continue;
+        actor.send({ type: 'interaction.request', record });
+      }
+      firePendingChanged();
+    },
+
+    async flush(): Promise<void> {
+      await saveQueue;
     },
 
     attachAgent(agentId: string, sessionId: string, dispatch: InteractionAgentDispatch): void {

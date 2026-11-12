@@ -23,6 +23,7 @@ import {
   WeChatChannelAdapter,
 } from './adapters/webhooks';
 import type { ChannelHttpTransport } from './adapters/base';
+import { ChannelRateLimiter, ChannelReplayGuard, verifyProviderWebhook, verifyWebhookSignature } from './security';
 
 export const DEFAULT_CHANNEL_CONFIG_FILE = 'channels.json';
 
@@ -41,6 +42,23 @@ export interface ChannelRuntimeFile {
   readonly channels?: readonly ChannelRuntimeAdapterConfig[];
 }
 
+export interface ChannelRuntimeSecurity {
+  readonly secrets?: Partial<Record<ChannelKind, string>>;
+  readonly providerSecrets?: Partial<Record<ChannelKind, string>>;
+  readonly requireSignature?: boolean;
+  readonly maxSkewMs?: number;
+  readonly replayGuard?: ChannelReplayGuard;
+  readonly rateLimiter?: ChannelRateLimiter;
+  readonly now?: () => number;
+}
+
+export interface ChannelInboundProof {
+  readonly signature?: string;
+  readonly timestamp?: string;
+  readonly rawBody?: string;
+  readonly headers?: Readonly<Record<string, string | undefined>>;
+}
+
 export interface ChannelRuntimeOptions {
   readonly configs?: readonly ChannelRuntimeAdapterConfig[];
   readonly configPath?: string;
@@ -54,6 +72,7 @@ export interface ChannelRuntimeOptions {
   readonly createSession?: ChannelCommandContext['createSession'];
   readonly stopSession?: ChannelCommandContext['stopSession'];
   readonly listSessions?: ChannelCommandContext['listSessions'];
+  readonly security?: ChannelRuntimeSecurity;
 }
 
 export interface ChannelRuntimeStatus {
@@ -74,6 +93,9 @@ export class ChannelRuntimeService {
   private readonly createSession: ChannelCommandContext['createSession'];
   private readonly stopSession: ChannelCommandContext['stopSession'];
   private readonly listSessions: ChannelCommandContext['listSessions'];
+  private readonly security: ChannelRuntimeSecurity | undefined;
+  private readonly replayGuard: ChannelReplayGuard;
+  private readonly rateLimiter: ChannelRateLimiter;
   private readonly errors: string[] = [];
   private started = false;
 
@@ -89,6 +111,9 @@ export class ChannelRuntimeService {
     this.createSession = options.createSession;
     this.stopSession = options.stopSession;
     this.listSessions = options.listSessions;
+    this.security = options.security;
+    this.replayGuard = options.security?.replayGuard ?? new ChannelReplayGuard();
+    this.rateLimiter = options.security?.rateLimiter ?? new ChannelRateLimiter();
   }
 
   static async fromFile(path: string, options: Omit<ChannelRuntimeOptions, 'configs' | 'configPath'> = {}): Promise<ChannelRuntimeService> {
@@ -150,9 +175,44 @@ export class ChannelRuntimeService {
     return this.registry.send(kind, message);
   }
 
-  async handleInbound(message: InboundChannelMessage): Promise<{ readonly handled: boolean; readonly command?: ChannelCommandResult }> {
+  async handleInbound(
+    message: InboundChannelMessage,
+    proof?: ChannelInboundProof,
+  ): Promise<{
+    readonly handled: boolean;
+    readonly command?: ChannelCommandResult;
+    readonly reason?: 'not_allowed' | 'rate_limited' | 'replay' | 'signature';
+  }> {
+    if (!this.rateLimiter.take(`${message.channel}:${message.conversationId}`)) {
+      return { handled: false, reason: 'rate_limited' };
+    }
+    if (this.security?.requireSignature === true) {
+      const providerSecret = this.security.providerSecrets?.[message.channel];
+      const verification =
+        providerSecret === undefined
+          ? verifyWebhookSignature({
+              secret: this.security.secrets?.[message.channel] ?? '',
+              rawBody: proof?.rawBody ?? '',
+              signature: proof?.signature,
+              timestamp: proof?.timestamp,
+              maxSkewMs: this.security.maxSkewMs,
+              now: this.security.now?.(),
+            })
+          : verifyProviderWebhook({
+              kind: message.channel,
+              secret: providerSecret,
+              rawBody: proof?.rawBody ?? '',
+              headers: proof?.headers ?? {},
+              maxSkewMs: this.security.maxSkewMs,
+              now: this.security.now?.(),
+            });
+      if (!verification.ok) return { handled: false, reason: 'signature' };
+    }
+    if (!this.replayGuard.accept(`${message.channel}:${message.id}`)) {
+      return { handled: false, reason: 'replay' };
+    }
     if (!this.configStore.allows(message.channel, message.conversationId)) {
-      return { handled: false };
+      return { handled: false, reason: 'not_allowed' };
     }
     const command = await executeChannelCommand(message.text ?? '', {
       channel: message.channel,

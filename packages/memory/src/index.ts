@@ -231,3 +231,5 @@ export type {
 } from '#/control/memoryControl';
 
 export * from './retrieval/relevanceSelector';
+
+export * from './retrieval/reranker';

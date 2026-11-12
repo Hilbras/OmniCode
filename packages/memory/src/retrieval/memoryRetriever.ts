@@ -24,6 +24,7 @@ import type { MemoryStorePort } from '#/storage/memoryStore';
 import { applyBudget, CONTEXT_HEADER, resolveBudget } from './budget';
 import { normalizeQuery } from './normalize';
 import { composeScore, normalizeLexical } from './ranking';
+import type { MemoryReranker } from './reranker';
 import { searchTextFor, termsOfStoredText, type QueryGroup } from './stem';
 
 /**
@@ -50,6 +51,7 @@ const STOPWORDS: ReadonlySet<string> = new Set([
 export interface MemoryRetrieverOptions {
   readonly store: MemoryStorePort;
   readonly now: () => number;
+  readonly reranker?: MemoryReranker;
 }
 
 export class MemoryRetriever {
@@ -135,7 +137,11 @@ export class MemoryRetriever {
         return a.record.id.localeCompare(b.record.id);
       });
 
-      const expanded = await this.expandRelations(ranked, prefixes, query, significantGroups, diagnostics);
+      const reranked =
+        this.options.reranker === undefined
+          ? ranked
+          : await this.options.reranker.rerank({ query: normalized.text, memories: ranked });
+      const expanded = await this.expandRelations(reranked, prefixes, query, significantGroups, diagnostics);
       const deduped = this.dedupeResults(expanded, diagnostics);
       const rankedForBudget = this.suppressSuperseded(deduped, diagnostics);
 

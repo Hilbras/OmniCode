@@ -17,6 +17,8 @@ export const HookDefSchema = z
     command: z.string().min(1),
     timeout: z.number().int().min(1).max(600).optional(),
     cwd: z.string().optional(),
+    shell: z.boolean().optional(),
+    inheritEnv: z.boolean().optional(),
     env: z
       .record(
         z.string().regex(HOOK_ENV_KEY_PATTERN, {

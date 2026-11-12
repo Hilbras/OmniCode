@@ -104,6 +104,29 @@ describe('buildBwrapArgv', () => {
     expect(argv[chdir + 1]).toBe('/workspace');
   });
 
+  it('uses a per-path write allowlist instead of a writable workspace', () => {
+    const argv = requireArgs(
+      buildBwrapArgv(
+        { command: ['true'] },
+        { workspace: '/workspace', writeAllowlist: ['/workspace/src', '/workspace/package.json'] },
+      ),
+    );
+    expect(argv).toContain('--ro-bind');
+    expect(argv).toContain('--bind-try');
+    expect(argv).not.toContain('--bind');
+    expect(argv).toContain('/workspace/src');
+    expect(argv).toContain('/workspace/package.json');
+  });
+
+  it('rejects write allowlist paths outside the workspace', () => {
+    const result = buildBwrapArgv(
+      { command: ['true'] },
+      { workspace: '/workspace', writeAllowlist: ['/etc'] },
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.code).toBe('path-escape');
+  });
+
   it('resolves a relative cwd inside the workspace', () => {
     const argv = requireArgs(
       buildBwrapArgv({ command: ['true'] }, { workspace: '/workspace', cwd: 'sub' }),

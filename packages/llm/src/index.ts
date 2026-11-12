@@ -95,3 +95,9 @@ export {
  * `@hilbras/omnicode-llm/providers/omnicode`,
  * `@hilbras/omnicode-llm/providers/openai-legacy`, etc.
  */
+
+export * from './pricing';
+
+export * from './descriptor';
+
+export * from './fallback';

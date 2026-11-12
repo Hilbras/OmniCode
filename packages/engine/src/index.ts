@@ -49,6 +49,7 @@ export * from '#/agent/runtimeBinding/runtimeBinding';
 export * from '#/agent/runtimeBinding/runtimeBindingService';
 export * from '#/agent/runtimeBinding/agentRuntime';
 export * from '#/app/sessionManager/sessionManager';
+export * from '#/app/sessionManager/sessionLease';
 export * from '#/app/sessionManager/sessionManagerService';
 
 export * from '@hilbras/omnicode-base/log/log';
@@ -446,6 +447,7 @@ export * from '#/agent/team/errors';
 export * from '#/agent/team/forkedAgentContextCache';
 export * from '#/agent/team/taskNotificationQueue';
 export * from '#/agent/team/teamService';
+export * from '#/agent/team/teamPersistence';
 export * from '#/agent/team/teamTools';
 export * from '#/agent/team/types';
 export * from '#/agent/team/workflowBudget';
@@ -519,6 +521,7 @@ export * from '#/app/sessionLegacy/sessionLegacy';
 export * from '#/app/sessionLegacy/sessionLegacyService';
 export * from '#/human/interaction/interaction';
 export * from '#/human/interaction/facade';
+export * from '#/human/interaction/persistence';
 export * from '#/agent/interaction/interactionOps';
 export * from '#/session/sessionContext/sessionContext';
 
@@ -630,6 +633,7 @@ export * from '#/agent/contextMemory/conversationUndoParticipants';
 export * from '#/agent/contextMemory/conversationTime';
 export * from '#/agent/contextMemory/loopEventFold';
 export * from '#/agent/contextMemory/messageId';
+export * from '#/agent/contextMemory/microcompaction';
 export * from '#/agent/contextMemory/contextTranscript';
 export * from '#/agent/contextMemory/types';
 export * from '#/features/reminder/reminderService';
@@ -665,6 +669,8 @@ import '#/agent/loop/configSection';
 export * from '#/agent/loop/loop';
 export * from '#/agent/loop/loopService';
 export * from '#/agent/loop/promptChannel';
+export * from '#/agent/loop/textLoopWatch';
+export * from '#/agent/loop/textLoopWatchService';
 export * from '#/agent/interruptionReminder/interruptionReminder';
 export * from '#/agent/interruptionReminder/interruptionReminderService';
 export * from '#/agent/interruptionReminder/interruptionReminderOps';
@@ -672,6 +678,7 @@ export * from '#/agent/mcp/mcp';
 export * from '#/agent/mcp/mcpService';
 export * from '#/agent/mcp/mcpDiscoveryOps';
 export * from '#/mcpCore/config-schema';
+export * from '#/mcpCore/command-policy';
 export * from '#/agent/media/mediaTools';
 export * from '#/agent/media/mediaToolsRegistrar';
 export * from '#/agent/media/registerMediaTools';
@@ -770,3 +777,7 @@ export type { AgentToolContributionOptions } from '#/agent/toolRegistry/toolCont
 export * from '#/agent/userTool/userTool';
 export * from '#/agent/userTool/userToolOps';
 export * from '#/agent/userTool/userToolService';
+
+export * from '#/agent/evals/trajectory';
+
+export * from '#/agent/contextProjector/sections';

@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { ToolAccesses } from '#/tool/toolContract';
-import { ToolScheduler, type ToolCallTask } from '#/agent/toolExecutor/toolScheduler';
+import {
+  ToolScheduler,
+  parseToolConcurrencyCap,
+  resolveToolConcurrencyCap,
+  type ToolCallTask,
+  type ToolSchedulerOptions,
+} from '#/agent/toolExecutor/toolScheduler';
 
 describe('ToolScheduler', () => {
   it('starts read accesses on the same path concurrently', async () => {
@@ -231,6 +237,87 @@ describe('ToolScheduler', () => {
 
     expect(drained).toEqual(['first', 'second']);
   });
+
+  it('runs at most maxConcurrency non-conflicting tasks at once', async () => {
+    const started: string[] = [];
+    const drained: string[] = [];
+    const scheduler = makeScheduler(drained, { maxConcurrency: 1 });
+    const first = makeControlledTask('first', ToolAccesses.none(), started);
+    const second = makeControlledTask('second', ToolAccesses.none(), started);
+
+    scheduler.add(first.task);
+    scheduler.add(second.task);
+    expect(started).toEqual(['first']);
+
+    await waitOneMacrotask();
+    expect(started).toEqual(['first']);
+
+    first.resolve();
+    await waitOneMacrotask();
+    expect(started).toEqual(['first', 'second']);
+
+    second.resolve();
+    await scheduler.collectResults();
+    expect(drained).toEqual(['first', 'second']);
+  });
+
+  it('starts queued work as cap slots free, in submission order', async () => {
+    const started: string[] = [];
+    const drained: string[] = [];
+    const scheduler = makeScheduler(drained, { maxConcurrency: 2 });
+    const first = makeControlledTask('first', ToolAccesses.none(), started);
+    const second = makeControlledTask('second', ToolAccesses.none(), started);
+    const third = makeControlledTask('third', ToolAccesses.none(), started);
+
+    scheduler.add(first.task);
+    scheduler.add(second.task);
+    scheduler.add(third.task);
+    expect(started).toEqual(['first', 'second']);
+
+    second.resolve();
+    await waitOneMacrotask();
+    expect(started).toEqual(['first', 'second', 'third']);
+
+    first.resolve();
+    third.resolve();
+    await scheduler.collectResults();
+    expect(drained).toEqual(['first', 'second', 'third']);
+  });
+
+  it('treats a non-positive or fractional cap as unlimited', async () => {
+    const started: string[] = [];
+    const drained: string[] = [];
+    const scheduler = makeScheduler(drained, { maxConcurrency: 0 });
+    const first = makeControlledTask('first', ToolAccesses.none(), started);
+    const second = makeControlledTask('second', ToolAccesses.none(), started);
+
+    scheduler.add(first.task);
+    scheduler.add(second.task);
+    expect(started).toEqual(['first', 'second']);
+
+    first.resolve();
+    second.resolve();
+    await scheduler.collectResults();
+  });
+});
+
+describe('parseToolConcurrencyCap', () => {
+  it('reads the cap from the environment, unlimited when unset', () => {
+    expect(resolveToolConcurrencyCap({ OMNICODE_TOOL_CONCURRENCY: '2' })).toBe(2);
+    expect(resolveToolConcurrencyCap({})).toBeUndefined();
+    expect(resolveToolConcurrencyCap({ OMNICODE_TOOL_CONCURRENCY: 'nope' })).toBeUndefined();
+  });
+
+  it('accepts positive integers and rejects everything else', () => {
+    expect(parseToolConcurrencyCap('3')).toBe(3);
+    expect(parseToolConcurrencyCap(' 4 ')).toBe(4);
+    expect(parseToolConcurrencyCap(undefined)).toBeUndefined();
+    expect(parseToolConcurrencyCap('')).toBeUndefined();
+    expect(parseToolConcurrencyCap('0')).toBeUndefined();
+    expect(parseToolConcurrencyCap('-2')).toBeUndefined();
+    expect(parseToolConcurrencyCap('1.5')).toBeUndefined();
+    expect(parseToolConcurrencyCap('lots')).toBeUndefined();
+  });
 });
 
 interface ControlledTask {
@@ -239,12 +326,15 @@ interface ControlledTask {
   readonly reject: (error: unknown) => void;
 }
 
-function makeScheduler(drained: string[]): {
+function makeScheduler(
+  drained: string[],
+  options: ToolSchedulerOptions = {},
+): {
   readonly add: (task: ToolCallTask<string>) => void;
   readonly collectResults: () => Promise<void>;
   readonly allSettled: () => Promise<void>;
 } {
-  const scheduler = new ToolScheduler<string>();
+  const scheduler = new ToolScheduler<string>(options);
   const results: Array<Promise<string>> = [];
   return {
     add: (task) => {

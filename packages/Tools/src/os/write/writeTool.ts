@@ -18,6 +18,7 @@ import {
 } from '@hilbras/omnicode-engine/tool/path-access';
 import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
 import { literalRulePattern, matchesPathRuleSubject } from '@hilbras/omnicode-engine/tool/rule-match';
+import { withWorkspaceWriteLock } from '@hilbras/omnicode-engine/workspace/writeLock';
 import { IWriteTool, WriteInputSchema, type WriteInput } from './write';
 import WRITE_DESCRIPTION from './write.md?raw';
 
@@ -70,7 +71,9 @@ export class WriteTool implements IWriteTool {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {
             return { isError: true, output: 'Runtime changed before execution. Retry the tool call.' };
           }
-          return await this.execution(lease.runtime.fs!, args, path);
+          return await withWorkspaceWriteLock(workspace.workspaceDir, () =>
+            this.execution(lease.runtime.fs!, args, path),
+          );
         } finally {
           lease.dispose();
         }

@@ -47,6 +47,7 @@
     "@hilbras/omnicode-channels": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-engine": "workspace:^",
+    "@hilbras/omnicode-llm": "workspace:^",
     "@hilbras/omnicode-memory": "workspace:^",
     "@hilbras/omnicode-rpc": "workspace:^",
     "@hilbras/omnicode-sdk": "workspace:^",

@@ -50,17 +50,6 @@ describe('DefaultToolApprovePermissionPolicyService', () => {
     ['TaskList', {}],
     ['TaskOutput', { task_id: 'task_1' }],
     ['CronList', {}],
-    ['WebSearch', { query: 'omnicode code' }],
-    ['FetchURL', { url: 'https://example.com' }],
-    ['Agent', { prompt: 'review this' }],
-    [
-      'AgentSwarm',
-      {
-        description: 'Check files',
-        prompt_template: 'Check {{item}}',
-        items: ['a.ts', 'b.ts'],
-      },
-    ],
     ['AskUserQuestion', { questions: [] }],
     ['Skill', { name: 'test-skill' }],
     ['EnterPlanMode', {}],
@@ -71,7 +60,6 @@ describe('DefaultToolApprovePermissionPolicyService', () => {
     ['UpdateGoal', { status: 'complete' }],
     ['memory_search', { query: 'deploy target' }],
     ['memory_save', { content: 'the deploy target is staging', category: 'fact' }],
-    ['memory_forget', { id: 'mem_1', reason: 'outdated' }],
   ] as const)('approves %s', (toolName, args) => {
     expect(policy.evaluate(policyContext(toolName, args))).toEqual({ kind: 'approve' });
   });
@@ -83,6 +71,13 @@ describe('DefaultToolApprovePermissionPolicyService', () => {
     ['Custom', { value: 1 }],
     ['CronCreate', { cron: '*/5 * * * *', prompt: 'ping' }],
     ['CronDelete', { id: 'job_1' }],
+    ['WebSearch', { query: 'omnicode code' }],
+    ['FetchURL', { url: 'https://example.com' }],
+    ['Agent', { prompt: 'review this' }],
+    ['AgentSwarm', { description: 'Check files', prompt_template: 'Check {{item}}', items: ['a.ts'] }],
+    ['memory_forget', { id: 'mem_1', reason: 'outdated' }],
+    ['memory_manage', { action: 'dream' }],
+    ['Arena', { prompt: 'compare', contenders: [] }],
   ] as const)('does not approve %s', (toolName, args) => {
     expect(
       policy.evaluate(policyContext(toolName, args)),

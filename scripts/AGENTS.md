@@ -29,8 +29,10 @@ Non-goals:
 - `check-agents-docs.mjs` — verifies the canonical root `AGENTS.md`, its
   compatibility pointers, all referenced paths, and rejects stale `Kernel`
   directory references in every `AGENTS.md`. Run `pnpm check:agent-docs`.
-- `pnpm check:guards` runs workspace + architecture + agent-docs together. This
-  is the default pre-handoff guard command.
+- `check-docs-claims.mjs` — rejects stale CI, flake, and E2E coverage claims when
+  the corresponding files or tests are absent. Run `pnpm check:docs-claims`.
+- `pnpm check:guards` runs workspace + architecture + docs-claims + agent-docs
+  together. This is the default pre-handoff guard command.
 - `preflight.mjs` — local delivery gate. Runs the workspace check, guards,
   typechecks for engine, memory, channels, Tools, Kaos, API, and the CLI, then targeted
   permission-policy, memory-lifecycle, channels, API-connectivity, Tools, engine-team, and Kaos-sandbox tests. `--dry-run` prints the steps, `--skip-typecheck`
@@ -77,6 +79,7 @@ with a test or a documented reason, and call out the behavior change.
 ```bash
 pnpm check:workspace
 pnpm check:architecture
+pnpm check:docs-claims
 pnpm check:agent-docs
 pnpm check:guards
 node scripts/preflight.mjs --dry-run

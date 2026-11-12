@@ -13,7 +13,7 @@ import {
   isDenseIdentifier,
   normalizedEntropy,
 } from '#/agent/toolResultTruncation/structuredText';
-import { ToolResultTruncationService } from '#/agent/toolResultTruncation/toolResultTruncationService';
+import { ToolResultTruncationService, resolveToolResultMaxChars } from '#/agent/toolResultTruncation/toolResultTruncationService';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IFlagService } from '#/app/flag/flag';
 import type { ContentPart } from '#human/llm/message';
@@ -58,6 +58,26 @@ describe('ToolResultTruncationService', () => {
 
   const spillDir = () =>
     join(homeDir, 'sessions/workspace/session/agents/main/tool-results');
+
+  it('resolves per-tool output budgets', () => {
+    expect(resolveToolResultMaxChars('Read')).toBe(100_000);
+    expect(resolveToolResultMaxChars('Grep')).toBe(40_000);
+    expect(resolveToolResultMaxChars('Glob')).toBe(20_000);
+    expect(resolveToolResultMaxChars('mcp__github__search')).toBe(40_000);
+    expect(resolveToolResultMaxChars('UnknownTool')).toBe(50_000);
+  });
+
+  it('applies the per-tool budget before spilling', async () => {
+    const output = 'x\n'.repeat(25_000);
+    const result = await truncation.truncateForModel<ExecutableToolResult>({
+      toolName: 'Grep',
+      toolCallId: 'call_grep',
+      result: { output },
+    });
+
+    expect(result.truncated).toBe(true);
+    expect(result.output).toContain('Tool output exceeded 40000 characters');
+  });
 
   it('recognizes agent event logs under the sessions directory', () => {
     expect(
@@ -216,7 +236,7 @@ describe('ToolResultTruncationService', () => {
     if (!Array.isArray(result.output)) throw new Error('expected content parts output');
     const [pointer, ...media] = result.output;
     if (pointer?.type !== 'text') throw new Error('expected pointer text first');
-    expect(pointer.text).toContain('Tool output exceeded 50000 characters');
+    expect(pointer.text).toContain('Tool output exceeded 40000 characters');
     expect(pointer.text).toContain('the full text output was saved to a file');
     expect(media).toEqual([image]);
     await expect(readFile(renderedOutputPath(pointer.text), 'utf8')).resolves.toBe(
@@ -317,7 +337,7 @@ describe('ToolResultTruncationService', () => {
     const rendered = result.output;
     expect(typeof rendered).toBe('string');
     if (typeof rendered !== 'string') throw new Error('expected string output');
-    expect(rendered).toContain('Tool output exceeded 50000 characters');
+    expect(rendered).toContain('Tool output exceeded 40000 characters');
     expect(rendered).not.toContain('Per-line truncation occurred');
     await expect(readFile(renderedOutputPath(rendered), 'utf8')).resolves.toBe(full);
   });
@@ -395,7 +415,7 @@ describe('ToolResultTruncationService', () => {
     const rendered = result.output;
     expect(typeof rendered).toBe('string');
     if (typeof rendered !== 'string') throw new Error('expected string output');
-    expect(rendered).toContain('Tool output exceeded 50000 characters');
+    expect(rendered).toContain('output_path:');
     await expect(readFile(renderedOutputPath(rendered), 'utf8')).resolves.toBe(full);
   });
 

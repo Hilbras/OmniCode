@@ -11,19 +11,23 @@ export interface RunHookOptions {
   readonly cwd?: string;
   readonly env?: Record<string, string>;
   readonly signal?: AbortSignal;
+  readonly shell?: boolean;
+  readonly inheritEnv?: boolean;
 }
 
 export function buildHookSpawnOptions(options: {
   cwd?: string;
   env?: Record<string, string>;
+  shell?: boolean;
+  inheritEnv?: boolean;
 }): SpawnOptionsWithoutStdio {
   return {
-    shell: true,
+    shell: options.shell === true,
     cwd: options.cwd,
     stdio: 'pipe',
     detached: process.platform !== 'win32',
     windowsHide: true,
-    env: options.env === undefined ? undefined : { ...process.env, ...options.env },
+    env: buildHookEnv(options.env, options.inheritEnv === true),
   };
 }
 
@@ -61,15 +65,20 @@ export async function runHook(
   input: Record<string, unknown>,
   options: RunHookOptions,
 ): Promise<HookResult> {
+  const parsed = options.shell === true ? { command, args: [] as string[] } : parseHookCommand(command);
+  if ('error' in parsed) {
+    return { action: 'block', message: parsed.error, reason: parsed.error, errored: true };
+  }
   let proc: IHostProcess;
   try {
-    proc = await hostProcess.spawn(command, [], {
-      shell: true,
+    proc = await hostProcess.spawn(parsed.command, parsed.args, {
+      shell: options.shell === true,
       cwd: options.cwd,
-      env: options.env,
+      env: buildHookEnv(options.env, options.inheritEnv === true),
+      inheritEnv: false,
     });
   } catch (error) {
-    return allowResult({ stderr: errorMessage(error), errored: true });
+    return { action: 'block', message: errorMessage(error), reason: errorMessage(error), errored: true };
   }
 
   return new Promise<HookResult>((resolve) => {
@@ -131,6 +140,61 @@ export async function runHook(
     proc.stdin.on('error', () => {});
     proc.stdin.end(JSON.stringify(input));
   });
+}
+
+function buildHookEnv(extra: Record<string, string> | undefined, inheritEnv: boolean): Record<string, string> {
+  const keys = inheritEnv
+    ? Object.keys(process.env)
+    : ['PATH', 'Path', 'HOME', 'USER', 'USERPROFILE', 'TMPDIR', 'TMP', 'TEMP', 'SystemRoot', 'ComSpec', 'PATHEXT', 'SHELL', 'LANG', 'LC_ALL'];
+  const base = Object.fromEntries(
+    keys
+      .map((key) => [key, process.env[key]] as const)
+      .filter((entry): entry is readonly [string, string] => entry[1] !== undefined),
+  );
+  return { ...base, ...extra };
+}
+
+function parseHookCommand(command: string): { readonly command: string; readonly args: string[] } | { readonly error: string } {
+  const tokens: string[] = [];
+  let current = '';
+  let quote: '"' | "'" | undefined;
+  let escaping = false;
+  for (const char of command.trim()) {
+    if (escaping) {
+      current += char;
+      escaping = false;
+      continue;
+    }
+    if (char === '\\' && quote !== "'") {
+      escaping = true;
+      continue;
+    }
+    if (quote !== undefined) {
+      if (char === quote) quote = undefined;
+      else current += char;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (/\s/u.test(char)) {
+      if (current.length > 0) {
+        tokens.push(current);
+        current = '';
+      }
+      continue;
+    }
+    if (/[|&;<>()`$]/u.test(char)) {
+      return { error: `hook command uses shell syntax but shell mode is disabled: ${char}` };
+    }
+    current += char;
+  }
+  if (escaping || quote !== undefined) return { error: 'hook command has an unterminated quote or escape' };
+  if (current.length > 0) tokens.push(current);
+  if (tokens.length === 0) return { error: 'hook command is empty' };
+  const [executable, ...args] = tokens;
+  return { command: executable!, args };
 }
 
 function timeoutSeconds(timeout: number): number {

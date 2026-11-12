@@ -88,3 +88,18 @@ do not fold it into the runtime suite.
 - Agent loop, tool dispatch, retries, permissions, prompts: `engine`.
 - Credential storage/refresh: `auth`.
 - Provider-SDK HTTP/SSE: `llm`; generic transport: `rpc`; tools: `Tools`.
+
+
+## Cost accounting
+
+`src/pricing.ts` owns model pricing, token-to-USD breakdowns, cache rates, unknown-model sentinel, and `CostBudget`. Unknown pricing must remain visible; never report an unknown model as zero cost. Engine usage/budget wiring is a separate composition step.
+
+
+## Provider descriptors
+
+`src/descriptor.ts` declares provider identity, model ownership matchers, key validators, base URLs, and discovery support. `ProviderDescriptorRegistry` resolves one owner per model and rejects multi-provider claims. No provider may silently claim another provider's model.
+
+
+## Provider fallback
+
+`src/fallback.ts` selects an untried, available, model-owning candidate only for retryable status/quota failures and only when its capability covers the request. It is a pure selection seam; caller-side retry/cancellation composition remains.

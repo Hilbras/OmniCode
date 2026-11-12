@@ -17,6 +17,7 @@ import {
   type ToolExecution,
 } from '@hilbras/omnicode-engine/tool/toolContract';
 import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
+import { withWorkspaceWriteLock } from '@hilbras/omnicode-engine/workspace/writeLock';
 
 import { EditInputSchema, IEditTool, type EditInput } from './edit';
 import editDescriptionTemplate from './edit.md?raw';
@@ -77,7 +78,9 @@ export class EditTool implements IEditTool {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {
             return { isError: true, output: 'Runtime changed before execution. Retry the tool call.' };
           }
-          return await this.execution(args, path, lease.runtime.fs!);
+          return await withWorkspaceWriteLock(workspace.workspaceDir, () =>
+            this.execution(args, path, lease.runtime.fs!),
+          );
         } finally {
           lease.dispose();
         }

@@ -32,6 +32,8 @@ export interface HookDef {
   readonly timeout?: number;
   readonly cwd?: string;
   readonly env?: Record<string, string>;
+  readonly shell?: boolean;
+  readonly inheritEnv?: boolean;
 }
 
 export type HookAction = 'allow' | 'block' | 'approve';

@@ -458,3 +458,7 @@ is no `flake.nix` in this tree; do not add one for a package. Run
   include a tier whose identifying id the caller did not pass.
 - Secret redaction is pattern-based. It is not a DLP product; assume it misses
   things it was never shown.
+
+## Reranking
+
+`retrieval/reranker.ts` defines the `MemoryReranker` seam. `LexicalMemoryReranker` adds a bounded term-overlap score after the existing trust/sensitivity/legal-hold gates and base ranking. `AppMemoryService` wires it at weight 0.2. Embedding rerankers can implement the same interface without changing retrieval gates.

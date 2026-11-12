@@ -1,4 +1,25 @@
+import { parseNumberEnv } from '@hilbras/omnicode-base/utils/env';
+
 import { ToolAccesses } from '#/tool/toolContract';
+
+export const TOOL_CONCURRENCY_ENV = 'OMNICODE_TOOL_CONCURRENCY';
+
+/** Positive integer cap from env; anything else (missing, 0, negative, junk) means unlimited. */
+export function parseToolConcurrencyCap(value: string | undefined): number | undefined {
+  const parsed = parseNumberEnv(value);
+  if (parsed === undefined || !Number.isInteger(parsed) || parsed < 1) return undefined;
+  return parsed;
+}
+
+/** Read the batch concurrency cap from the environment; undefined means unlimited. */
+export function resolveToolConcurrencyCap(env: NodeJS.ProcessEnv = process.env): number | undefined {
+  return parseToolConcurrencyCap(env[TOOL_CONCURRENCY_ENV]);
+}
+
+export interface ToolSchedulerOptions {
+  /** Maximum tasks running at once; unlimited when omitted or not a positive integer. */
+  readonly maxConcurrency?: number;
+}
 
 export interface ToolCallTask<Result> {
   readonly accesses: ToolAccesses;
@@ -17,19 +38,30 @@ type ControlledPromise<Result> = Promise<Result> & {
 export class ToolScheduler<Result> {
   private readonly activeTasks: Array<ScheduledToolCallTask<Result>> = [];
   private queuedTasks: Array<ScheduledToolCallTask<Result>> = [];
+  private readonly maxConcurrency: number;
+
+  constructor(options: ToolSchedulerOptions = {}) {
+    const cap = options.maxConcurrency;
+    this.maxConcurrency =
+      cap !== undefined && Number.isInteger(cap) && cap >= 1 ? cap : Number.POSITIVE_INFINITY;
+  }
 
   add(task: ToolCallTask<Result>): Promise<Result> {
     const result = createControlledPromise<Result>();
     void result.catch(() => undefined);
 
     const scheduledTask: ScheduledToolCallTask<Result> = { ...task, result };
-    if (this.isBlocked(task, this.queuedTasks)) {
+    if (!this.hasCapacity() || this.isBlocked(task, this.queuedTasks)) {
       this.queuedTasks.push(scheduledTask);
     } else {
       this.start(scheduledTask);
     }
 
     return result;
+  }
+
+  private hasCapacity(): boolean {
+    return this.activeTasks.length < this.maxConcurrency;
   }
 
   private isBlocked(
@@ -78,7 +110,7 @@ export class ToolScheduler<Result> {
   private startQueuedTasks(): void {
     const stillQueued: Array<ScheduledToolCallTask<Result>> = [];
     for (const task of this.queuedTasks) {
-      if (this.isBlocked(task, stillQueued)) {
+      if (!this.hasCapacity() || this.isBlocked(task, stillQueued)) {
         stillQueued.push(task);
       } else {
         this.start(task);

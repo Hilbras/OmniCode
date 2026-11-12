@@ -10,6 +10,8 @@ export interface SkillMetadata {
   readonly disableModelInvocation?: boolean | undefined;
   readonly isSubSkill?: boolean | undefined;
   readonly safe?: boolean | undefined;
+  readonly allowedTools?: readonly string[] | undefined;
+  readonly disallowedTools?: readonly string[] | undefined;
   readonly arguments?: readonly unknown[] | string | undefined;
   readonly [key: string]: unknown;
 }
@@ -101,4 +103,31 @@ export function summarizeSkill(skill: SkillDefinition): SkillSummary {
     isSubSkill: skill.metadata.isSubSkill,
     scopes: skill.scopes,
   };
+}
+
+
+export function normalizeToolList(value: unknown): readonly string[] | undefined {
+  const raw = Array.isArray(value)
+    ? value
+    : typeof value === 'string'
+      ? value.split(',')
+      : [];
+  const tools = raw
+    .filter((entry): entry is string => typeof entry === 'string')
+    .map((entry) => entry.trim())
+    .filter((entry) => entry.length > 0);
+  return tools.length === 0 ? undefined : [...new Set(tools)];
+}
+
+export function skillAllowsTool(skill: Pick<SkillDefinition, 'metadata'>, toolName: string): boolean {
+  const denied = skill.metadata.disallowedTools;
+  if (denied !== undefined && denied.some((pattern) => matchesTool(pattern, toolName))) return false;
+  const allowed = skill.metadata.allowedTools;
+  return allowed === undefined || allowed.some((pattern) => matchesTool(pattern, toolName));
+}
+
+function matchesTool(pattern: string, toolName: string): boolean {
+  if (pattern === '*') return true;
+  if (pattern.endsWith('*')) return toolName.startsWith(pattern.slice(0, -1));
+  return pattern === toolName;
 }

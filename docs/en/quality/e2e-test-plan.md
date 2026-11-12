@@ -35,7 +35,7 @@ Do not use sleeps or timeouts to synchronize a case. Wait for an explicit signal
 | Area | Test layer available | Cases in this plan |
 |---|---|---|
 | Permission auto mode | Automated policy tests; manual CLI checks | Ready |
-| Memory dream consolidation | Automated memory tests; manual `memory_manage` check | Ready |
+| Memory dream consolidation | Automated memory tests including `memory_manage` | Ready |
 | Channels | `packages/channels/test/` | Targeted tests pass; automated E2E deferred |
 | Tooling | `packages/Tools/test/` | Targeted tests pass; automated E2E deferred |
 | Teams, arena, budgets | `packages/engine/test/agent/team/` | Targeted tests pass; automated E2E deferred |

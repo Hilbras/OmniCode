@@ -20,7 +20,7 @@ function buildSpawnOptions(options: HostProcessOptions): SpawnOptions {
   const detached = options.detached ?? !isWindows;
   const spawnOptions: SpawnOptions = {
     cwd: options.cwd,
-    env: buildEnv(options.env),
+    env: buildEnv(options.env, options.inheritEnv !== false),
     stdio: options.mergeStderr ? ['pipe', 'pipe', 'pipe'] : ['pipe', 'pipe', 'pipe'],
     detached,
     windowsHide: options.windowsHide ?? true,
@@ -33,11 +33,14 @@ function buildSpawnOptions(options: HostProcessOptions): SpawnOptions {
   return spawnOptions;
 }
 
-function buildEnv(overrides: Record<string, string> | undefined): Record<string, string> | undefined {
-  if (overrides === undefined) {
-    return undefined;
+function buildEnv(
+  overrides: Record<string, string> | undefined,
+  inheritEnv: boolean,
+): Record<string, string> | undefined {
+  if (inheritEnv) {
+    return { ...(process.env as Record<string, string>), ...overrides };
   }
-  return { ...(process.env as Record<string, string>), ...overrides };
+  return overrides ?? {};
 }
 
 function waitForSpawn(child: ChildProcess): Promise<void> {

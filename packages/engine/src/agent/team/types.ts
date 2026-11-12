@@ -70,7 +70,19 @@ export interface LeaveTeamResult {
   readonly releasedTaskIds: readonly string[];
 }
 
+export interface TeamState {
+  readonly teams: readonly Team[];
+  readonly members: readonly TeamMember[];
+  readonly tasks: readonly TeamTask[];
+}
+
+export interface TeamPersistence {
+  load(): Promise<TeamState>;
+  save(state: TeamState): Promise<void>;
+}
+
 export interface TeamServiceOptions {
   readonly now?: () => number;
   readonly idFactory?: (kind: 'team' | 'task') => string;
+  readonly persistence?: TeamPersistence;
 }

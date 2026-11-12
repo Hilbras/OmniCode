@@ -5,6 +5,8 @@ import {
   isSupportedSkillType,
   isUserActivatableSkillType,
   normalizeSkillName,
+  normalizeToolList,
+  skillAllowsTool,
   summarizeSkill,
 } from '#/features/skill/catalog/types';
 import type { SkillDefinition } from '#/features/skill/catalog/types';
@@ -38,7 +40,7 @@ describe('skill/types', () => {
       path: '/skills/commit',
       source: 'user',
       metadata: { type: 'prompt', disableModelInvocation: false, isSubSkill: false },
-    } as SkillDefinition;
+    } as unknown as SkillDefinition;
     expect(summarizeSkill(skill)).toEqual({
       name: 'commit',
       description: 'Commit helper',
@@ -48,5 +50,17 @@ describe('skill/types', () => {
       disableModelInvocation: false,
       isSubSkill: false,
     });
+  });
+
+  it('normalizes allowed/disallowed tool lists and matches wildcards', () => {
+    expect(normalizeToolList('Read, Edit, Read')).toEqual(['Read', 'Edit']);
+    expect(normalizeToolList(['Bash*', 'Lsp'])).toEqual(['Bash*', 'Lsp']);
+    const skill = {
+      metadata: { allowedTools: ['Read', 'mcp__*'], disallowedTools: ['mcp__unsafe'] },
+    } as unknown as SkillDefinition;
+    expect(skillAllowsTool(skill, 'Read')).toBe(true);
+    expect(skillAllowsTool(skill, 'mcp__github__list')).toBe(true);
+    expect(skillAllowsTool(skill, 'mcp__unsafe')).toBe(false);
+    expect(skillAllowsTool(skill, 'Bash')).toBe(false);
   });
 });

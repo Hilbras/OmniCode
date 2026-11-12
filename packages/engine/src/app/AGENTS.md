@@ -107,3 +107,13 @@ pnpm --filter @hilbras/omnicode-engine test
 Do not add agent loop/state, tool execution, permission policy, session runtime,
 MCP transports, tool implementations, UI components, or hand-edited generated
 manifests.
+
+
+## Plugin and hook trust
+
+Hooks default to argv mode with `shell: false`, reject shell metacharacters outside quotes, and receive only a platform-safe env allowlist unless `inheritEnv` is explicitly enabled. Hook parse/spawn failures fail closed. New plugin installs default to disabled; `defaultEnabledOnInstall` exists only for explicit test/composition fixtures. Remote plugin sources must use https except loopback development.
+
+
+## Session ownership lease
+
+`sessionManager/sessionLease.ts` provides atomic lease files, owner/pid/boot identity, TTL, heartbeat, release, and stale-owner reclaim. It is not yet wired into `SessionManager`; host composition must choose the session directory and expose read-only/takeover behavior.

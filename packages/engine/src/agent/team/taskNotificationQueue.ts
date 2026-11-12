@@ -16,12 +16,13 @@ export interface QueuedTaskNotification<T = unknown> extends TaskNotification<T>
   readonly coalescedCount: number;
 }
 
-export type TaskNotificationEnqueueStatus = 'queued' | 'coalesced' | 'duplicate';
+export type TaskNotificationEnqueueStatus = 'queued' | 'coalesced' | 'duplicate' | 'rejected';
 
 export interface TaskNotificationEnqueueResult<T = unknown> {
   readonly status: TaskNotificationEnqueueStatus;
   readonly notification?: QueuedTaskNotification<T>;
   readonly pendingCount: number;
+  readonly evictedTaskId?: string;
 }
 
 export type TaskNotificationDequeueResult<T = unknown> =
@@ -35,22 +36,28 @@ export type TaskNotificationDequeueResult<T = unknown> =
       readonly remaining: 0;
     };
 
-export interface TaskNotificationQueueOptions {
+export interface TaskNotificationQueueOptions<T = unknown> {
   readonly now?: () => number;
   readonly dedupeDelivered?: boolean;
   readonly maxDelivered?: number;
+  readonly maxPending?: number;
+  readonly isTerminal?: (notification: TaskNotification<T>) => boolean;
 }
+
+const TERMINAL_STATUSES = new Set(['completed', 'failed', 'stopped', 'cancelled', 'canceled', 'error', 'done']);
 
 export class TaskNotificationQueue<T = unknown> {
   private readonly now: () => number;
   private readonly dedupeDelivered: boolean;
   private readonly maxDelivered: number;
+  private readonly maxPending: number;
+  private readonly isTerminal: (notification: TaskNotification<T>) => boolean;
   private readonly pending = new Map<string, QueuedTaskNotification<T>>();
   private readonly delivered: string[] = [];
   private readonly deliveredSet = new Set<string>();
   private sequence = 0;
 
-  constructor(options: TaskNotificationQueueOptions = {}) {
+  constructor(options: TaskNotificationQueueOptions<T> = {}) {
     this.now = options.now ?? (() => Date.now());
     this.dedupeDelivered = options.dedupeDelivered ?? true;
     const maxDelivered = options.maxDelivered ?? 1024;
@@ -62,6 +69,16 @@ export class TaskNotificationQueue<T = unknown> {
       );
     }
     this.maxDelivered = maxDelivered;
+    const maxPending = options.maxPending ?? 20;
+    if (!Number.isInteger(maxPending) || maxPending < 1) {
+      throw new Error2(
+        ErrorCodes.VALIDATION_FAILED,
+        `Notification maxPending must be a positive integer, got ${String(maxPending)}.`,
+        { details: { maxPending } },
+      );
+    }
+    this.maxPending = maxPending;
+    this.isTerminal = options.isTerminal ?? ((notification) => TERMINAL_STATUSES.has(notification.status ?? ''));
   }
 
   get size(): number {
@@ -96,6 +113,15 @@ export class TaskNotificationQueue<T = unknown> {
     if (this.dedupeDelivered && this.deliveredSet.has(taskId)) {
       return { status: 'duplicate', pendingCount: this.pending.size };
     }
+    let evictedTaskId: string | undefined;
+    if (this.pending.size >= this.maxPending) {
+      const interim = [...this.pending.values()].find((item) => !this.isTerminal(item));
+      if (interim === undefined) {
+        return { status: 'rejected', pendingCount: this.pending.size };
+      }
+      this.pending.delete(interim.taskId);
+      evictedTaskId = interim.taskId;
+    }
     this.sequence += 1;
     const queued: QueuedTaskNotification<T> = {
       ...notification,
@@ -107,7 +133,12 @@ export class TaskNotificationQueue<T = unknown> {
       createdAt: notification.createdAt ?? timestamp,
     };
     this.pending.set(taskId, queued);
-    return { status: 'queued', notification: queued, pendingCount: this.pending.size };
+    return {
+      status: 'queued',
+      notification: queued,
+      pendingCount: this.pending.size,
+      ...(evictedTaskId === undefined ? {} : { evictedTaskId }),
+    };
   }
 
   dequeue(): TaskNotificationDequeueResult<T> {

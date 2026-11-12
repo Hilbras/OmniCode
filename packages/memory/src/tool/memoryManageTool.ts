@@ -20,7 +20,7 @@ export const MEMORY_MANAGE_DESCRIPTION = [
   '',
   'Dream consolidation merges related working memories into one distilled memory and supersedes the sources. It never raises trust beyond what the evidence supports and never mutates memories on legal hold.',
   'Use this after repeated sessions to reduce duplicate or fragmented memories while preserving provenance.',
-].join('\\n');
+].join('\n');
 
 export interface MemoryManageInput {
   readonly action?: (typeof MEMORY_MANAGE_ACTIONS)[number];
@@ -97,7 +97,7 @@ export class MemoryManageTool implements IMemoryManageTool {
             lines.push(`- ${record.id} [${record.tier}/${record.category}/${record.trust}]${subject}`);
           }
           if (visible.length !== records.length) lines.push(`redacted=${records.length - visible.length}`);
-          return { isError: false, output: lines.join('\\n') };
+          return { isError: false, output: lines.join('\n') };
         }
 
         const result = await this.service.dreamConsolidate({
@@ -118,7 +118,7 @@ export class MemoryManageTool implements IMemoryManageTool {
         ];
         if (result.ids.length > 0) lines.push(`ids=${result.ids.join(',')}`);
         if (result.reason !== undefined) lines.push(result.reason);
-        return { isError: result.status === 'failed', output: lines.join('\\n') };
+        return { isError: result.status === 'failed', output: lines.join('\n') };
       },
     };
   }

@@ -95,6 +95,40 @@ describe('runHook process runner', () => {
     ]);
   });
 
+  it('rejects shell syntax when shell mode is disabled', async () => {
+    const result = await runHook(
+      hostProcess,
+      `${nodeCommand('process.stdout.write("ok")')} && echo bad`,
+      {},
+      { timeout: 5 },
+    );
+    expect(result.action).toBe('block');
+    expect(result.reason).toContain('shell syntax');
+  });
+
+  it('does not inherit ambient secrets by default', async () => {
+    process.env['OMNICODE_HOOK_TEST_SECRET'] = 'leaked';
+    try {
+      const result = await runHook(
+        hostProcess,
+        nodeCommand('process.stdout.write(process.env.OMNICODE_HOOK_TEST_SECRET ?? "unset");'),
+        {},
+        { timeout: 5 },
+      );
+      expect(result.stdout?.trim()).toBe('unset');
+
+      const inherited = await runHook(
+        hostProcess,
+        nodeCommand('process.stdout.write(process.env.OMNICODE_HOOK_TEST_SECRET ?? "unset");'),
+        {},
+        { timeout: 5, inheritEnv: true },
+      );
+      expect(inherited.stdout?.trim()).toBe('leaked');
+    } finally {
+      delete process.env['OMNICODE_HOOK_TEST_SECRET'];
+    }
+  });
+
   it('returns block when the hook exits 2 and captures stderr as the reason', async () => {
     const result = await runHook(
       hostProcess,
@@ -168,10 +202,10 @@ describe('buildHookSpawnOptions (Windows console-window regression)', () => {
     expect(buildHookSpawnOptions({}).windowsHide).toBe(true);
   });
 
-  it('runs through the shell with stdio piped', () => {
-    const options = buildHookSpawnOptions({});
-    expect(options.shell).toBe(true);
-    expect(options.stdio).toBe('pipe');
+  it('runs without a shell by default and with a shell only on opt-in', () => {
+    expect(buildHookSpawnOptions({}).shell).toBe(false);
+    expect(buildHookSpawnOptions({ shell: true }).shell).toBe(true);
+    expect(buildHookSpawnOptions({}).stdio).toBe('pipe');
   });
 
   it('merges hook env onto process.env and forwards cwd', () => {

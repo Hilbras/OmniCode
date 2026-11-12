@@ -1,13 +1,38 @@
-import { describe, expect, it } from 'vitest';
+import { mkdtemp, mkdir, rm, symlink, writeFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { tmpdir } from 'node:os';
+
+import { afterEach, describe, expect, it } from 'vitest';
 
 import type { ShellPathBridge } from '@hilbras/omnicode-base/execEnv/shellPathBridge';
 import {
   DEFAULT_WORKSPACE_ACCESS_POLICY,
+  PathSecurityError,
   extendWorkspaceWithSkillRoots,
   isSensitiveFile,
   resolvePathAccess,
   resolvePathAccessPath,
 } from '#/tool/path-access';
+
+const symlinkTestDirs: string[] = [];
+
+async function symlinkTempDir(): Promise<string> {
+  const dir = await mkdtemp(join(tmpdir(), 'omnicode-path-symlink-'));
+  symlinkTestDirs.push(dir);
+  return dir;
+}
+
+afterEach(async () => {
+  await Promise.all(symlinkTestDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
+});
+
+const POSIX_ENV = {
+  pathClass: 'posix' as const,
+  homeDir: '/home/test',
+  osKind: 'Linux',
+  shellName: 'bash' as const,
+  shellPath: '/bin/bash',
+};
 
 describe('isSensitiveFile', () => {
   it('flags base .env files in any directory', () => {
@@ -29,6 +54,26 @@ describe('isSensitiveFile', () => {
       '.aws/credentials',
       '.gcp/credentials',
       'credentials',
+    ]) {
+      expect(isSensitiveFile(path), path).toBe(true);
+    }
+  });
+
+  it('flags package, cloud, kube, docker, gh, and netrc credentials', () => {
+    for (const path of [
+      '.npmrc',
+      '.pypirc',
+      '.netrc',
+      '.git-credentials',
+      'kubeconfig',
+      '.kube/config',
+      '.docker/config.json',
+      '.config/gcloud/application_default_credentials.json',
+      '.azure/accessTokens.json',
+      '.azure/msal_token_cache.json',
+      '.config/gh/hosts.yml',
+      '.ssh/config',
+      'service-account.json',
     ]) {
       expect(isSensitiveFile(path), path).toBe(true);
     }
@@ -155,4 +200,85 @@ describe('resolvePathAccess shell path bridge', () => {
     );
     expect(result).toEqual({ path: 'C:/Temp/notes.txt', outsideWorkspace: true });
   });
+
+describe.skipIf(process.platform === 'win32')('symlink-safe path guards', () => {
+  it('rejects a workspace symlink that points outside the workspace', async () => {
+    const workspace = await symlinkTempDir();
+    const outside = await symlinkTempDir();
+    const target = join(outside, 'secret.txt');
+    await writeFile(target, 'secret', 'utf8');
+    const link = join(workspace, 'notes.txt');
+    await symlink(target, link);
+
+    expect(() =>
+      resolvePathAccessPath(link, {
+        env: POSIX_ENV,
+        workspace: { workspaceDir: workspace, additionalDirs: [] },
+        operation: 'write',
+      }),
+    ).toThrow(expect.objectContaining({ code: 'PATH_OUTSIDE_WORKSPACE' }));
+  });
+
+  it('rejects a symlink to a sensitive file even inside the workspace', async () => {
+    const workspace = await symlinkTempDir();
+    const target = join(workspace, '.npmrc');
+    await writeFile(target, 'token=secret', 'utf8');
+    const link = join(workspace, 'notes.txt');
+    await symlink(target, link);
+
+    expect(() =>
+      resolvePathAccessPath(link, {
+        env: POSIX_ENV,
+        workspace: { workspaceDir: workspace, additionalDirs: [] },
+        operation: 'read',
+      }),
+    ).toThrow(expect.objectContaining({ code: 'PATH_SENSITIVE' }));
+  });
+
+  it('rejects a nonexistent child under a symlinked outside directory', async () => {
+    const workspace = await symlinkTempDir();
+    const outside = await symlinkTempDir();
+    const linkDir = join(workspace, 'linked');
+    await symlink(outside, linkDir);
+
+    expect(() =>
+      resolvePathAccessPath(join(linkDir, 'new.txt'), {
+        env: POSIX_ENV,
+        workspace: { workspaceDir: workspace, additionalDirs: [] },
+        operation: 'write',
+      }),
+    ).toThrow(expect.objectContaining({ code: 'PATH_OUTSIDE_WORKSPACE' }));
+  });
+
+  it('returns the physical path for a symlink that remains inside the workspace', async () => {
+    const workspace = await symlinkTempDir();
+    const target = join(workspace, 'real.txt');
+    await writeFile(target, 'ok', 'utf8');
+    const link = join(workspace, 'alias.txt');
+    await symlink(target, link);
+
+    const result = resolvePathAccessPath(link, {
+      env: POSIX_ENV,
+      workspace: { workspaceDir: workspace, additionalDirs: [] },
+      operation: 'read',
+    });
+    expect(result).toBe(target);
+  });
+
+  it('supports an intentionally symlinked workspace root', async () => {
+    const realWorkspace = await symlinkTempDir();
+    const parent = await symlinkTempDir();
+    const linkedWorkspace = join(parent, 'workspace');
+    await symlink(realWorkspace, linkedWorkspace);
+    const file = join(realWorkspace, 'file.txt');
+    await writeFile(file, 'ok', 'utf8');
+
+    const result = resolvePathAccessPath(join(linkedWorkspace, 'file.txt'), {
+      env: POSIX_ENV,
+      workspace: { workspaceDir: linkedWorkspace, additionalDirs: [] },
+      operation: 'read',
+    });
+    expect(result).toBe(file);
+  });
+});
 });

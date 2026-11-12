@@ -19,7 +19,7 @@ reach these through `packages/API` rather than importing each other directly.
 | | |
 |---|---|
 | pnpm workspace | yes — `pnpm-workspace.yaml` globs `packages/*` |
-| Nix build | `flake.nix`'s `workspacePaths` and `workspaceNames` list every package here |
+| Nix build | no `flake.nix` in this tree; do not claim Nix workspace coverage |
 | vitest | the root `vitest.config.ts` project glob covers `packages/*/vitest.config.ts` |
 
 ## What Addons can and cannot hold
@@ -48,10 +48,10 @@ from `reminder`, so moving `reminder` out strands it.
 ## Wiring to remember
 
 Adding a package under `packages/` needs four manual edits, all of which fail
-silently when missed: the pnpm workspace globs, `flake.nix` (an explicit fileset,
-not globs), the root `vitest.config.ts` project glob (an unmatched project root
-stops its tests from running while the suite still reports green), and the
-package filters in the root build and typecheck scripts.
+silently when missed: the pnpm workspace globs, the root `vitest.config.ts` project
+glob (an unmatched project root stops its tests from running while the suite still
+reports green), the root `tsconfig.json` include, and the package filters in the
+root build and typecheck scripts.
 
 Features register through a module-level array populated by `registerFeature()`
 at import time, so anything that moves out of core also needs an explicit

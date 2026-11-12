@@ -20,6 +20,7 @@ export * from '@hilbras/omnicode-addons';
 export * from '@hilbras/omnicode-tools';
 export * from '@hilbras/omnicode-memory';
 export * from '@hilbras/omnicode-channels';
+export * from './runtime-primitives.js';
 
 export async function loadAcpServer(): Promise<typeof import('@hilbras/omnicode-acp')> {
   return import('@hilbras/omnicode-acp');
@@ -180,6 +181,7 @@ export type { ContentPart } from '@hilbras/omnicode-engine/human/llm/message';
 export type { PermissionMode } from '@hilbras/omnicode-engine/agent/permissionPolicy/types';
 
 export {
+  configureInteractionPersistenceForHome,
   createOmnicodeHarness,
   SDKRpcClientV2,
   type SDKRpcClientV2Options,

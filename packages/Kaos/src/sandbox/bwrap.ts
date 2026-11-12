@@ -128,7 +128,22 @@ export function buildBwrapArgv(
     args.push('--ro-bind-try', systemPath, systemPath);
   }
 
-  args.push('--bind', workspace, workspace);
+  if (policy.writeAllowlist === undefined) {
+    args.push('--bind', workspace, workspace);
+  } else {
+    args.push('--ro-bind', workspace, workspace);
+    const seenWrite = new Set<string>();
+    for (const value of policy.writeAllowlist) {
+      const normalized = normalizeMountPath(value, 'write allowlist path');
+      if (!normalized.ok) return normalized;
+      if (!isSandboxPathContained(workspace, normalized.value)) {
+        return sandboxFailure('path-escape', `write allowlist path escapes workspace: ${normalized.value}`);
+      }
+      if (seenWrite.has(normalized.value)) continue;
+      seenWrite.add(normalized.value);
+      args.push('--bind-try', normalized.value, normalized.value);
+    }
+  }
 
   for (const tmpfsPath of tmpfsPaths.value) {
     args.push('--tmpfs', tmpfsPath);

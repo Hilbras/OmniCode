@@ -98,3 +98,13 @@ report those scripts as passing.
 - ACP implementation code; only the lazy loader belongs here.
 - Imports of `@hilbras/omnicode-server`.
 - New app UI or CLI/TUI behavior.
+
+
+## Hardened runtime primitives
+
+`src/runtime-primitives.ts` exposes engine/LLM primitives that hosts need before they are composed into a running service: local session search, session leases, interaction/team persistence, context projection, trajectory scoring, pricing/cost budgets, provider descriptors, and fallback selection. These are API exports, not proof of runtime composition.
+
+
+## Durable interactions
+
+`createOmnicodeHarness` configures the global interaction facade with `FileInteractionPersistence` under `<home>/interactions.json` and loads pending records at startup. `configureInteractionPersistenceForHome` is exported for hosts. Stale-turn binding and interrupted-tool re-drive remain separate session-resume work.

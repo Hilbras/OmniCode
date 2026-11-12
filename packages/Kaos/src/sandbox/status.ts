@@ -31,6 +31,8 @@ export function summarizeSandboxPolicy(policy: SandboxPolicy): SandboxPolicySumm
     ipcNamespace: policy.shareIpc === true ? 'shared' : 'isolated',
     systemPaths: uniqueNormalized(policy.systemPaths ?? DEFAULT_SANDBOX_SYSTEM_PATHS),
     tmpfsPaths: uniqueNormalized(policy.tmpfsPaths ?? DEFAULT_SANDBOX_TMPFS_PATHS),
+    writeAllowlist:
+      policy.writeAllowlist === undefined ? null : uniqueNormalized(policy.writeAllowlist),
   };
 }
 

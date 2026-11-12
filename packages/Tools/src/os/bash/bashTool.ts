@@ -26,7 +26,7 @@ import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
 import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import bashDescriptionTemplate from './bash.md?raw';
 import { ProcessTask } from './process-task';
-import { IBashSandboxService } from './sandbox';
+import { IBashSandboxService, sandboxWriteAllowlist } from './sandbox';
 import {
   type BashInput,
   BashInputSchema,
@@ -177,6 +177,7 @@ export class BashTool implements IBashTool {
       workspace: this.workspaceCtx.workDir,
       shellPath: env.shellPath,
       env: noninteractiveEnv,
+      ...(sandboxWriteAllowlist() === undefined ? {} : { writeAllowlist: sandboxWriteAllowlist() }),
     });
     if (prepared?.kind === 'denied') throw new Error(prepared.message);
     if (prepared?.kind === 'sandbox') {

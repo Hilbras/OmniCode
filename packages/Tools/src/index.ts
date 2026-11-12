@@ -65,3 +65,7 @@ import '#/features/cron/tools/cron-delete/cronDeleteTool';
 import '#/features/cron/tools/cron-list/cronListTool';
 import '#/features/notify/tools/notify-user/notifyUserTool';
 import '#/features/skill/tools/skillTool';
+
+export * from './patch/applyPatch';
+
+export * from './patch/patchTool';

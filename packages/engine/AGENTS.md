@@ -107,6 +107,10 @@ or host-specific code, a second DI facade, direct provider SDK calls outside
 `human/llm`, or handwritten edits to generated manifests.
 
 
+## Workspace write lock
+
+`src/workspace/writeLock.ts` owns the per-workspace write lock: `acquireWorkspaceWriteLock` / `withWorkspaceWriteLock` queue by canonical root inside the process and hold a lock file under `<OMNICODE_HOME|~/.omnicode>/locks` (override `OMNICODE_WRITE_LOCK_DIR`). Waiters time out with `WorkspaceLockTimeoutError` (owner pid and lock path in the message); only a lock whose owner pid is gone is reclaimed, via atomic bid rename. Tool writes into the workspace go through it; do not add a second lock implementation.
+
 ## Permission policy
 
 Auto mode now uses `AutoModeClassifierPermissionPolicyService` (`auto-mode-classifier`) instead of blanket auto-approval. Denial tracking state resets on mode change. Dangerous-command and ask-user-question-deny policies remain ahead of the classifier.

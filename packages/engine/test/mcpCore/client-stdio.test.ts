@@ -55,6 +55,26 @@ function isPostCloseTransportError(error: unknown): boolean {
   );
 }
 
+describe('mergeStdioEnv', () => {
+  it('does not inherit ambient secrets by default', () => {
+    const env = mergeStdioEnv({}, { PATH: '/bin', SECRET_TOKEN: 'leak', HOME: '/home/user' });
+    expect(env['PATH']).toBe('/bin');
+    expect(env['HOME']).toBe('/home/user');
+    expect(env['SECRET_TOKEN']).toBeUndefined();
+  });
+
+  it('allows explicit config env without full inheritance', () => {
+    const env = mergeStdioEnv({ API_KEY: 'configured' }, { PATH: '/bin', SECRET_TOKEN: 'leak' });
+    expect(env['API_KEY']).toBe('configured');
+    expect(env['SECRET_TOKEN']).toBeUndefined();
+  });
+
+  it('inherits the full env only when explicitly requested', () => {
+    const env = mergeStdioEnv({}, { PATH: '/bin', SECRET_TOKEN: 'allowed' }, true);
+    expect(env['SECRET_TOKEN']).toBe('allowed');
+  });
+});
+
 describe('StdioMcpClient', () => {
   it('rejects an unsupported executor when the config is validated', () => {
     const parsed = McpServerConfigSchema.safeParse({
@@ -371,10 +391,13 @@ describe('StdioMcpClient', () => {
 });
 
 describe('mergeStdioEnv with a restricted environment', () => {
-  it('passes the whole parent environment through by default', () => {
+  it('does not pass the whole parent environment by default', () => {
     const merged = mergeStdioEnv(undefined, { PATH: '/usr/bin', SECRET_TOKEN: 'shh' });
     expect(merged['PATH']).toBe('/usr/bin');
-    expect(merged['SECRET_TOKEN']).toBe('shh');
+    expect(merged['SECRET_TOKEN']).toBeUndefined();
+
+    const explicit = mergeStdioEnv(undefined, { PATH: '/usr/bin', SECRET_TOKEN: 'shh' }, true);
+    expect(explicit['SECRET_TOKEN']).toBe('shh');
   });
 
   it('keeps only the variables a child needs when inheritance is off', () => {

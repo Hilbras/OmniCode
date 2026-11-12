@@ -1,3 +1,4 @@
+import { microcompactContext, type MicrocompactionOptions } from '#/agent/contextMemory/microcompaction';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import { toLlmMessage } from '#/llm-adapter/contract/message';
 import type { HistoryMessage } from '#human/agent/turn';
@@ -20,6 +21,9 @@ export function historyEntryFromContext(message: ContextMessage): HistoryMessage
   }
 }
 
-export function historyFromContext(messages: readonly ContextMessage[]): HistoryMessage[] {
-  return messages.map(historyEntryFromContext);
+export function historyFromContext(
+  messages: readonly ContextMessage[],
+  microcompaction?: MicrocompactionOptions,
+): HistoryMessage[] {
+  return microcompactContext(messages, microcompaction).messages.map(historyEntryFromContext);
 }

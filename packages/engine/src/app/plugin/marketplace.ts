@@ -73,6 +73,7 @@ export function resolveMarketplaceLocation(source: string, workDir: string): Mar
     throw new Error(`${OMNICODE_PLUGIN_MARKETPLACE_URL_ENV} cannot be empty.`);
   }
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    assertSecureMarketplaceUrl(trimmed);
     return { raw: trimmed, kind: 'remote', resolved: trimmed };
   }
   if (trimmed.startsWith('file://')) {
@@ -362,4 +363,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function formatParseError(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+function assertSecureMarketplaceUrl(raw: string): void {
+  const url = new URL(raw);
+  if (url.protocol === 'https:') return;
+  const host = url.hostname;
+  if (url.protocol === 'http:' && (host === '127.0.0.1' || host === 'localhost' || host === '::1' || host === '[::1]')) return;
+  throw new Error(`Plugin marketplace must use https (got ${url.protocol}//${url.hostname}).`);
 }

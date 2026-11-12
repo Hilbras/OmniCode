@@ -131,6 +131,9 @@
 import { readdir } from 'node:fs/promises';
 import { join } from 'node:path';
 
+import { interactions } from '@hilbras/omnicode-engine/human/interaction/facade';
+import { FileInteractionPersistence } from '@hilbras/omnicode-engine/human/interaction/persistence';
+
 import { assertOmnicodeHostIdentity, createOmnicodeDefaultHeaders } from '@hilbras/omnicode-auth';
 import {
   bootstrap,
@@ -3028,7 +3031,19 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
   }
 }
 
+let configuredInteractionPersistenceHome: string | undefined;
+
+export function configureInteractionPersistenceForHome(homeDir: string): void {
+  if (configuredInteractionPersistenceHome === homeDir) return;
+  configuredInteractionPersistenceHome = homeDir;
+  interactions.configurePersistence(
+    new FileInteractionPersistence(join(homeDir, 'interactions.json')),
+  );
+  void interactions.load().catch(() => undefined);
+}
+
 export function createOmnicodeHarness(options: OmnicodeHarnessOptions): OmnicodeHarness {
+  configureInteractionPersistenceForHome(options.homeDir ?? process.env['OMNICODE_HOME'] ?? join(process.env['HOME'] ?? process.cwd(), '.omnicode'));
   const rpc = new SDKRpcClientV2(options);
   rpc.suppressEngineSessionStarted();
   return new OmnicodeHarness(rpc, {

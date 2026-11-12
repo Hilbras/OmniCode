@@ -23,6 +23,7 @@ export function resolveInstallSource(source: string): ResolvedSource {
   if (github !== undefined) return github;
 
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
+    assertSecurePluginUrl(trimmed);
     return { kind: 'zip-url', path: trimmed };
   }
   if (!path.isAbsolute(trimmed)) {
@@ -89,4 +90,12 @@ function decodeRefSegments(segments: readonly string[]): string {
       }
     })
     .join('/');
+}
+
+function assertSecurePluginUrl(raw: string): void {
+  const url = new URL(raw);
+  if (url.protocol === 'https:') return;
+  const host = url.hostname;
+  if (url.protocol === 'http:' && (host === '127.0.0.1' || host === 'localhost' || host === '::1' || host === '[::1]')) return;
+  throw new Error2(ErrorCodes.VALIDATION_FAILED, `Plugin source must use https (got ${url.protocol}//${url.hostname})`, { details: { source: raw } });
 }

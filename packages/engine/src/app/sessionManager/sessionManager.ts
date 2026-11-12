@@ -53,3 +53,5 @@ export interface ISessionManager {
 }
 
 export const ISessionManager: ServiceIdentifier<ISessionManager> = createDecorator<ISessionManager>('sessionManager');
+
+export * from './sessionLease';

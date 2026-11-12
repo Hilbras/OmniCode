@@ -121,7 +121,7 @@ describe('auto-mode denial tracking', () => {
   it('formats and fingerprints', () => {
     const state = recordBlock(createDenialState(), 'Bash(rm)');
     expect(formatDenialStateLog(state)).toContain('consecutiveBlock=1');
-    expect(actionFingerprint('Bash', { command: 'rm' })).toBe('Bash:{"command":"rm"}');
+    expect(actionFingerprint('Bash', { command: 'rm' })).toBe('Bash:rm');
     expect(isDenialFallbackReason('total_denial')).toBe(true);
     expect(isDenialFallbackReason('nope')).toBe(false);
   });

@@ -20,6 +20,7 @@ export const McpServerStdioConfigSchema = z.object({
   args: z.array(z.string()).optional(),
   env: StringRecordSchema.optional(),
   inheritEnv: z.boolean().optional(),
+  allowWorkspaceCommand: z.boolean().optional(),
   cwd: z.string().optional(),
   executor: z.literal('local').optional(),
   runtime_id: z.string().min(1).optional(),

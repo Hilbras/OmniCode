@@ -16,8 +16,9 @@
     "check:workspace": "node scripts/check-workspace-globs.mjs",
     "check:architecture": "node scripts/check-kernel-layering.mjs && node scripts/check-no-comments.mjs",
     "check:agent-docs": "node scripts/check-agents-docs.mjs",
-    "check:guards": "pnpm check:workspace && pnpm check:architecture && pnpm check:agent-docs",
-    "preflight": "node scripts/preflight.mjs"
+    "check:guards": "pnpm check:workspace && pnpm check:architecture && pnpm check:docs-claims && pnpm check:agent-docs",
+    "preflight": "node scripts/preflight.mjs",
+    "check:docs-claims": "node scripts/check-docs-claims.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.20.5",

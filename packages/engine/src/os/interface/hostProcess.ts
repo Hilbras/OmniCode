@@ -11,6 +11,7 @@ export interface HostProcessOptions {
   readonly detached?: boolean;
   readonly windowsHide?: boolean;
   readonly mergeStderr?: boolean;
+  readonly inheritEnv?: boolean;
   readonly timeout?: number;
 }
 

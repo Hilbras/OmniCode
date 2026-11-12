@@ -8,6 +8,7 @@ import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
 import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
 
 import { IMemoryService } from '#/contracts/memoryContract';
+import { LexicalMemoryReranker } from '#/retrieval/reranker';
 import type {
   MemoryApprovalRequest,
   MemoryCaptureInput,

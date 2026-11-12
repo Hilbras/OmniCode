@@ -92,6 +92,44 @@ describe('DefaultCompactionStrategy', () => {
     expect(strategy.computeCompactCount(messages, 'auto')).toBe(2);
   });
 
+  it('keeps manual compaction out of a tool exchange', () => {
+    const strategy = testCompactionStrategy();
+    const messages: Message[] = [
+      textMessage('user', 'old user'),
+      textMessage('assistant', 'old assistant'),
+      textMessage('user', 'run a tool'),
+      {
+        role: 'assistant',
+        content: [],
+        toolCalls: [
+          { type: 'function', id: 'call_a', name: 'Lookup', arguments: '{}' },
+          { type: 'function', id: 'call_b', name: 'Lookup', arguments: '{}' },
+        ],
+      },
+      { role: 'tool', content: [{ type: 'text', text: 'a' }], toolCalls: [], toolCallId: 'call_a' },
+      { role: 'tool', content: [{ type: 'text', text: 'b' }], toolCalls: [], toolCallId: 'call_b' },
+      textMessage('user', 'next prompt'),
+    ];
+
+    expect(strategy.computeCompactCount(messages, 'manual')).toBe(6);
+  });
+
+  it('does not split an overflow compaction inside a tool exchange', () => {
+    const strategy = overflowOnlyCompactionStrategy(1);
+    const messages: Message[] = [
+      textMessage('user', 'old user'),
+      {
+        role: 'assistant',
+        content: [],
+        toolCalls: [{ type: 'function', id: 'call_a', name: 'Lookup', arguments: '{}' }],
+      },
+      { role: 'tool', content: [{ type: 'text', text: 'a' }], toolCalls: [], toolCallId: 'call_a' },
+      textMessage('user', 'next prompt'),
+    ];
+
+    expect(strategy.reduceCompactOnOverflow(messages)).toBe(3);
+  });
+
   it('shrinks auto compaction input to fit the model window', () => {
     const maxSize = 1_000;
     const strategy = testCompactionStrategy(maxSize);

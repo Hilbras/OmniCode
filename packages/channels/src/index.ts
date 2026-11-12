@@ -16,3 +16,5 @@ export {
   SlackChannelAdapter as SlackAdapter,
 } from './adapters/webhooks';
 export * from './runtime';
+export * from './security';
+export * from './bindingStore';

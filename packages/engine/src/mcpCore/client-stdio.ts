@@ -19,6 +19,7 @@ import {
   type UnexpectedCloseListener,
   type UnexpectedCloseReason,
 } from './client-shared';
+import { resolveMcpCommand } from './command-policy';
 import type { McpServerStdioConfig } from './config-schema';
 import type { MCPClient, MCPToolDefinition, MCPToolResult } from './types';
 
@@ -200,15 +201,21 @@ class RuntimeStdioTransport implements Transport {
       );
       const cwd =
         this.config.cwd === undefined ? base : lease.runtime.path.resolve(base, this.config.cwd);
+      const env = mergeStdioEnv(
+        this.config.env,
+        globalThis.process.env,
+        this.config.inheritEnv === true,
+      );
+      const command = await resolveMcpCommand(this.config.command, {
+        cwd,
+        env,
+        workspaceRoot: cwd,
+        ...(this.config.allowWorkspaceCommand === undefined
+          ? {}
+          : { allowWorkspaceCommand: this.config.allowWorkspaceCommand }),
+      });
       const process = lease.track(
-        await lease.runtime.process!.spawn(this.config.command, this.config.args, {
-          cwd,
-          env: mergeStdioEnv(
-            this.config.env,
-            globalThis.process.env,
-            this.config.inheritEnv !== false,
-          ),
-        }),
+        await lease.runtime.process!.spawn(command, this.config.args, { cwd, env }),
       );
       this.process = process;
       lease.track(this);
@@ -343,7 +350,7 @@ const INHERITED_ENV_ALLOWLIST: ReadonlySet<string> = new Set([
 export function mergeStdioEnv(
   configEnv?: Record<string, string>,
   parentEnv: Readonly<Record<string, string | undefined>> = process.env,
-  inheritEnv: boolean = true,
+  inheritEnv: boolean = false,
 ): Record<string, string> {
   const merged: Record<string, string> = {};
   for (const [key, value] of Object.entries(parentEnv)) {

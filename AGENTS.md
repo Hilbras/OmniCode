@@ -51,7 +51,7 @@ visualisation app are surfaces over the SDK.
 - Validation: zod `4.3.6`
 - Workspace: `pnpm-workspace.yaml`
 
-There is no root CI workflow in this tree. Do not claim CI passed.
+The root CI workflow is `.github/workflows/ci.yml`. It is a targeted gate, not full build/full-test validation. Do not claim a GitHub Actions run passed unless it actually ran.
 
 ## Hard laws
 

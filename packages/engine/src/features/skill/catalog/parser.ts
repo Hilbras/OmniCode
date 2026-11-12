@@ -5,7 +5,7 @@ import { FrontmatterError, parseFrontmatter } from '@hilbras/omnicode-base/text/
 
 import { SkillErrors } from './errors';
 import type { SkillDefinition, SkillMetadata, SkillSource } from './types';
-import { isSupportedSkillType } from './types';
+import { isSupportedSkillType, normalizeToolList } from './types';
 
 export class SkillParseError extends Error2 {
   readonly reason?: unknown;
@@ -47,6 +47,10 @@ const METADATA_ALIASES: Readonly<Record<string, string>> = {
   when_to_use: 'whenToUse',
   'disable-model-invocation': 'disableModelInvocation',
   disable_model_invocation: 'disableModelInvocation',
+  'allowed-tools': 'allowedTools',
+  allowed_tools: 'allowedTools',
+  'disallowed-tools': 'disallowedTools',
+  disallowed_tools: 'disallowedTools',
 };
 
 export function parseSkillText(options: ParseSkillTextOptions): SkillDefinition {
@@ -136,6 +140,12 @@ function normalizeMetadata(raw: Record<string, unknown>): SkillMetadata {
 
   const description = nonEmptyString(out['description']);
   if (description !== undefined) out['description'] = description;
+
+  const allowedTools = normalizeToolList(out['allowedTools']);
+  if (allowedTools !== undefined) out['allowedTools'] = allowedTools;
+
+  const disallowedTools = normalizeToolList(out['disallowedTools']);
+  if (disallowedTools !== undefined) out['disallowedTools'] = disallowedTools;
 
   return out as SkillMetadata;
 }

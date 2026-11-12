@@ -290,9 +290,9 @@ Deferred:
 
 Validation run for this workstream:
 
-- `node scripts/preflight.mjs --dry-run` — OK, 17 steps listed.
+- `node scripts/preflight.mjs --dry-run` — OK, 21 steps listed.
 - `node scripts/preflight.mjs --skip-typecheck --skip-tests` — OK; guards passed (workspace 4 patterns, 4 Vitest projects, 2552 source files; layering 22 packages, no cycles; comments 283 files; agent docs 56 referenced paths).
-- `node scripts/preflight.mjs` — OK, all 17 steps passed. Guards reported 2559 source files; engine, memory, channels, Tools, Kaos, API, and CLI typechecks passed; permission-policy tests passed 136/136, memory-lifecycle 19/19, channels 8/8, API-connectivity 3/3, Tools 66/66, engine-team 29/29, and Kaos sandbox 59/59.
+- `node scripts/preflight.mjs` — OK, all 21 steps passed. Guards reported 2559 source files; engine, memory, channels, Tools, Kaos, API, and CLI typechecks passed; permission-policy tests passed 136/136, memory-lifecycle 21/21, channels 8/8, API-connectivity 3/3, Tools 66/66, engine-team 29/29, and Kaos sandbox 59/59.
 - `pnpm --filter @hilbras/omnicode-engine exec vitest run test/agent/permissionPolicy` — 3 files, 136 tests passed.
 - `pnpm --filter @hilbras/omnicode-memory exec vitest run test/evaluation.test.ts test/dreamConsolidation.test.ts test/relevanceSelector.test.ts` — 3 files, 19 tests passed.
 - `pnpm --filter @hilbras/omnicode-memory typecheck` — passed.

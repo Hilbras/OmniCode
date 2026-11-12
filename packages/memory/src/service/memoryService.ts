@@ -41,6 +41,7 @@ import { SENSITIVITY_RANK } from '#/contracts/memoryTypes';
 import { MEMORY_LIFECYCLES, MEMORY_TIERS, parseMemoryRecord, TRUST_RANK } from '#/contracts/memoryTypes';
 import type { RetrievalResult } from '#/contracts/retrieval';
 import { MemoryRetriever, unavailableResult } from '#/retrieval/memoryRetriever';
+import type { MemoryReranker } from '#/retrieval/reranker';
 import {
   ALL_SCOPE_PREFIXES,
   AUDIT_PREFIX,
@@ -83,6 +84,7 @@ export interface MemoryServiceDeps {
   readonly available?: () => boolean;
   readonly ownsStore?: boolean;
   readonly readEvidence?: (ref: string) => Promise<string | undefined>;
+  readonly reranker?: MemoryReranker;
 }
 
 export const TASK_STATE_SUBJECT_PREFIX = 'task-state:';
@@ -120,7 +122,7 @@ export class MemoryService extends Disposable implements IMemoryService {
     this.now = deps.now ?? (() => Date.now());
     this.newId = deps.newId ?? defaultId;
     this.available = deps.available ?? (() => true);
-    this.retriever = new MemoryRetriever({ store: this.store, now: this.now });
+    this.retriever = new MemoryRetriever({ store: this.store, now: this.now, reranker: deps.reranker });
     this.readEvidence = deps.readEvidence;
     this._register(toDisposable(() => {
       this.closed = true;

@@ -86,7 +86,19 @@ jobs:
         run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/agent/permissionPolicy
 
       - name: Test memory lifecycle
-        run: pnpm --filter @hilbras/omnicode-memory exec vitest run test/evaluation.test.ts test/dreamConsolidation.test.ts test/relevanceSelector.test.ts test/maintenance.test.ts test/injection.test.ts
+        run: pnpm --filter @hilbras/omnicode-memory exec vitest run test/evaluation.test.ts test/dreamConsolidation.test.ts test/relevanceSelector.test.ts test/maintenance.test.ts test/injection.test.ts test/memoryManage.test.ts test/reranker.test.ts
+
+      - name: Test engine resilience
+        run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/agent/contextMemory/microcompaction.test.ts test/agent/fullCompaction/strategy.test.ts test/human/llm/requester/retry.test.ts test/agent/toolResultTruncation/toolResultTruncation.test.ts test/agent/team/taskNotificationQueue.test.ts test/agent/team/teamPersistence.test.ts test/agent/evals/trajectory.test.ts test/evals/agentBehavior.test.ts test/features/sessionSearch/localSessionSearch.test.ts
+
+      - name: Test telemetry
+        run: pnpm --filter @hilbras/omnicode-telemetry test
+
+      - name: Test LLM
+        run: pnpm --filter @hilbras/omnicode-llm test
+
+      - name: Test security hardening
+        run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/features/externalHooks/runner.test.ts test/app/plugin/manager.test.ts test/app/plugin/source.test.ts test/mcpCore/command-policy.test.ts test/mcpCore/client-stdio.test.ts test/app/sessionManager/sessionLease.test.ts src/human/test/interaction/persistence.test.ts
 
       - name: Test Bash sandbox
         run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/os/backends/node-local/tools/bash.test.ts
