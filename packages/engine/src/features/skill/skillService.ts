@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type {
   BundledSkillActivation,
   PromptOrigin,
@@ -10,7 +11,10 @@ import { IAgentLoopService, type PromptLaunchResult, type Turn } from '#/agent/l
 import { promptMetadataTextFromContentParts } from '#/agent/prompt/promptMetadataText';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IEventService } from '#/app/event/event';
+import { IEventBus } from '#/app/event/eventBus';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
+import { TurnEnded } from '#/agent/loop/turnOps';
+import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { ErrorCodes, Error2 } from '#/errors';
 import type { ContentPart } from '#human/llm/message';
 import { skillActivationPart } from '#human/agent/origin';
@@ -30,6 +34,7 @@ import type {
   SkillActivationInput,
 } from './skill';
 import { SkillActivated } from './skillOps';
+import { SkillToolEnforcer, labelSkillContent } from './enforcement';
 
 export interface IAgentSkillService {
   readonly _serviceBrand: undefined;
@@ -52,7 +57,37 @@ export class AgentSkillService implements IAgentSkillService {
     @ITelemetryService private readonly telemetry: ITelemetryService,
     @IEventDispatcher private readonly dispatcher: IEventDispatcher,
     @IAgentScopeContext private readonly scopeContext: IAgentScopeContext,
-  ) {}
+    @IEventBus eventBus?: IEventBus,
+    @IAgentToolRegistryService private readonly toolRegistry?: IAgentToolRegistryService,
+  ) {
+    // A skill's tool grant lasts exactly one turn; it never leaks into the next.
+    this.turnEndSubscription = eventBus?.subscribe(TurnEnded, () => this.enforcer.deactivate());
+  }
+
+  private readonly turnEndSubscription: IDisposable | undefined;
+
+  /** Tool-grant boundary and provenance for the active skill turn. */
+  readonly enforcer = new SkillToolEnforcer();
+
+  /**
+   * Tools the profile would offer, narrowed by the active skill's grant. The
+   * request path calls this; `enforcer.enforceTool` still refuses a call the
+   * model makes for a hidden tool.
+   */
+  /** Wraps project/plugin skill text in an untrusted envelope before it reaches the model. */
+  private labelContent(skill: Pick<SkillDefinition, 'name' | 'source' | 'path' | 'metadata'>, content: string): string {
+    const trust = skill.source === 'project' || skill.source === 'extra' ? 'untrusted' as const : 'trusted' as const;
+    return labelSkillContent(
+      { skillName: skill.name, source: skill.source, path: skill.path, trust, activatedAt: Date.now() },
+      content,
+    );
+  }
+
+  visibleToolNames(): readonly string[] {
+    const registry = this.toolRegistry;
+    if (registry === undefined) return [];
+    return this.enforcer.visibleTools(registry.list().map((tool) => tool.name));
+  }
 
   async activate(input: SkillActivationInput): Promise<PromptLaunchResult> {
     const catalog = this.catalog;
@@ -68,6 +103,7 @@ export class AgentSkillService implements IAgentSkillService {
       );
     }
 
+    this.enforcer.activate(skill);
     const skillArgs = input.args ?? '';
     const skillContent = this.renderSkillPrompt(skill, skillArgs);
     const content: ContentPart[] = [
@@ -76,7 +112,7 @@ export class AgentSkillService implements IAgentSkillService {
         text: renderUserSlashSkillPrompt({
           skillName: skill.name,
           skillArgs,
-          skillContent,
+          skillContent: this.labelContent(skill, skillContent),
           skillSource: skill.source,
           skillDir: skill.dir,
         }),
@@ -203,6 +239,7 @@ export class AgentSkillService implements IAgentSkillService {
       );
     }
 
+    this.enforcer.activate(skill);
     const skillArgs = input.args ?? '';
     const skillContent = this.renderSkillPrompt(skill, skillArgs);
     const activationId = randomUUID();
@@ -222,7 +259,7 @@ export class AgentSkillService implements IAgentSkillService {
         renderUserSlashSkillPrompt({
           skillName: skill.name,
           skillArgs,
-          skillContent,
+          skillContent: this.labelContent(skill, skillContent),
           skillSource: skill.source,
           skillDir: skill.dir,
         }),
