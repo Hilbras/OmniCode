@@ -300,6 +300,13 @@ Tasks:
 5. Never satisfy human-required approval.
 6. Tests: timeout, bypass attempts, MCP elicitation, fail-closed.
 
+#### 2.2 progress
+
+- `agent/interaction/reviewer/reviewerLane.ts` implements the reviewer *admission seam*: `admitReviewer` only ever sees an `ask`. Policy `approve`/`deny` are final and never offered for review, so a reviewer cannot un-deny a sensitive-file rule or bypass a `forbidden` exec rule. An ask carrying `requires_human: true` (exec-policy `prompt-user`) is deferred to the user, never reviewed.
+- Fail-closed: no lane, a reviewer exception, an `unclear` or `reject` answer, and a timeout all produce `defer` — the original ask goes to the user. Timeout (`DEFAULT_REVIEWER_TIMEOUT_MS` 20s, overridable, junk values ignored) aborts the lane and races the answer, so a lane that ignores its `AbortSignal` cannot hang the approval path (fixed after a test caught the hang).
+- Tests: `packages/engine/test/agent/interaction/reviewerLane.test.ts` covers policy-decision bypass attempts, human-required asks, approval, reject/unclear, no-lane, exception, timeout-with-abort, and junk timeout.
+- Still open in 2.2: there is no `ReviewerLane` implementation (isolated reviewer profile/model, scope classifier, request budget, resampling, circuit breaker, routing affinity) and `permissionGateService` does not call `admitReviewer` yet; MCP elicitation has no reviewer path.
+
 ### 2.3 Pricing and fallback composition
 
 Files:

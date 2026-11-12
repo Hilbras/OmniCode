@@ -140,6 +140,10 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 `permissionPolicy/commandCanonicalization.ts` canonicalizes plain commands and shell wrappers, strips only safe env prefixes, and hashes complex scripts as opaque. Bash denial/approval fingerprints use the canonical form.
 
 
+## Reviewer lane admission
+
+`interaction/reviewer/reviewerLane.ts` (`admitReviewer`) decides whether an approval `ask` may be resolved by an automated reviewer. It only ever receives `ask` — `approve`/`deny` are final and never reviewed — and never a `requires_human: true` ask. No lane, exception, reject, unclear answer, or timeout all `defer` to the user; a timeout aborts the lane and races its promise so a lane ignoring its signal cannot hang the gate. No lane implementation or permission-gate call site exists yet.
+
 ## Exec-policy rules
 
 `permissionPolicy/execPolicy/execPolicy.ts` is the data-only shell approval DSL: `loadExecPolicy` validates a `version: 1` file (rules + `opaque` decision) and rejects any `examples` entry its own rule does not match or that another rule shadows. `matchExecPolicy` canonicalizes NFD+case, treats shell metacharacters and unresolved quoting as opaque (decision from the file, `forbidden` by default), prefers alternative argv over prefix and longer over shorter, keeps a sticky rule on a tie, and returns `prompt-user` when nothing matches. `policies/exec-policy-rule.ts` applies it in the chain after the sensitive-file and git-control policies and before the auto-mode classifier; it saves nothing on disk itself and `AgentPermissionPolicyService.setExecPolicy()` installs the policy.
