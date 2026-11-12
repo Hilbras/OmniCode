@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 
-import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { createDecorator, IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
 import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import type {
   BundledSkillActivation,
@@ -24,6 +24,7 @@ import { ISessionMetadata } from '#/session/sessionMetadata/sessionMetadata';
 import { applyPromptMetadataUpdate } from '#/session/sessionMetadata/promptMetadata';
 import { IEventDispatcher } from '#/state/eventDispatcher';
 import { IAgentLLMRequesterService } from '#/agent/llmRequester/llmRequester';
+import { IAgentToolExecutorService } from '#/agent/toolExecutor/toolExecutor';
 
 import { isUserActivatableSkillType, type SkillDefinition } from './catalog/types';
 import { promptMetadataTextFromSkill, renderUserSlashSkillPrompt } from './prompt';
@@ -65,7 +66,9 @@ export class AgentSkillService implements IAgentSkillService, IActiveSkillGrant 
     @IEventBus eventBus?: IEventBus,
     @IAgentToolRegistryService private readonly toolRegistry?: IAgentToolRegistryService,
     @IAgentLLMRequesterService requester?: IAgentLLMRequesterService,
+    @IInstantiationService private readonly instantiation?: IInstantiationService,
   ) {
+    this.bindExecutorGrant();
     // Push the grant into the requester so it can narrow the offered tool list
     // without a DI dependency on this service (which would cycle through the loop).
     requester?.setSkillGrant?.(this);
@@ -77,6 +80,23 @@ export class AgentSkillService implements IAgentSkillService, IActiveSkillGrant 
 
   /** Tool-grant boundary and provenance for the active skill turn. */
   readonly enforcer = new SkillToolEnforcer();
+
+  /**
+   * Binds the executor's skill guard. The executor is resolved lazily inside
+   * this agent scope: injecting it would register an eager edge that the
+   * tool-executor tests (which have no skill feature) cannot satisfy.
+   */
+  private bindExecutorGrant(): void {
+    const instantiation = this.instantiation;
+    if (instantiation === undefined) return;
+    try {
+      instantiation.invokeFunction((accessor) =>
+        accessor.get(IAgentToolExecutorService).setSkillGrant?.(this),
+      );
+    } catch {
+      // Executor not available in this scope; the request-path filter still applies.
+    }
+  }
 
   /**
    * Tools the profile would offer, narrowed by the active skill's grant. The

@@ -413,7 +413,9 @@ Tasks:
 - Request path: `AgentSkillService` pushes itself into the requester (`IAgentLLMRequesterService.setSkillGrant`) and `defaultTools()` filters the shaped tool list to the grant. It is a push, not a DI dependency, because resolving it would cycle requester → grant → loop → requester (caught as `CyclicDependencyError` during the skill tests).
 - Executor boundary: `IAgentToolExecutorService.setSkillGrant` composes a skill guard with the existing tool-call guard, so a call for a tool the active skill hid is rejected even if the model still knows its name. Binding it from the feature assembly is still open.
 - Tests: `test/agent/toolExecutor` and `test/features/skill` pass (227 tests) with the wiring.
-- Still open in 3.3: nothing calls `setSkillGrant` on the executor yet (the requester path is live, the executor path is not), and there is no implicit-invocation path to enforce.
+- Executor bound: `AgentSkillService` resolves `IAgentToolExecutorService` lazily through `IInstantiationService.invokeFunction` in the same agent scope and calls `setSkillGrant(this)`. It is a lazy lookup, not a constructor dependency, because an eager edge would make the tool-executor tests (which have no skill feature) fail to construct the executor. Both push sites now receive the grant (verified directly).
+- Tests: skill, toolExecutor, and loop suites pass (293 tests) with the binding in place.
+- Still open in 3.3: no implicit-invocation path exists to enforce; there is no end-to-end test that activates a real skill and observes the executor rejecting a hidden tool.
 
 
 ### 3.4 Sandbox matrix and network policy
