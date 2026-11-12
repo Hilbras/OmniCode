@@ -549,7 +549,9 @@ Tasks:
 - Redaction: only attributes on an explicit allowlist survive and only JSON primitives do — nested objects, arrays, non-finite numbers, and unknown keys (paths, commands, prompts) are dropped, not stringified. Span and metric allowlists are exported constants.
 - Cardinality: buffered spans are capped (`maxBufferedSpans`, default 1000, oldest dropped and counted) and each metric name accepts `maxMetricSeries` distinct attribute sets (default 500); beyond that, points fold into a single `overflow=true` series and are counted.
 - Tests: `packages/telemetry/test/otlp.test.ts` covers primitive/allowlist redaction, span JSON redaction (a `command` attribute never leaves), the span buffer cap, metric overflow folding, and non-finite metric rejection.
-- Still open in 5.2: no HTTP sender is wired (no endpoint, headers, or retry), no engine/CLI call sites emit these spans or metrics, and there is no span per turn/tool/LLM/approval/sandbox yet.
+- `packages/telemetry/src/otlpSender.ts` adds the HTTP sender: posts to `<endpoint>/v1/traces` and `/v1/metrics`, resolves the endpoint and bearer token per send (a login/logout takes effect without rebuilding), retries 5xx with bounded backoff (250ms/1s/4s) but never retries 4xx, honours a request timeout, and swallows every failure (`flush` never throws) so observability cannot fail a turn or shutdown. No endpoint means "not configured" — it never falls back to a default collector.
+- Tests: `packages/telemetry/test/otlpSender.test.ts` covers signal paths, no-endpoint no-op, per-send endpoint/token resolution, 5xx retry vs 4xx no-retry, and network-failure containment.
+- Still open in 5.2: no engine/CLI call sites emit spans or metrics, so no turn/tool/LLM/approval/sandbox spans or token/cost/retry metrics are recorded yet; nothing constructs `OtlpHttpSender` from host config.
 
 ### 5.3 Release/product surfaces
 

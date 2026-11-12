@@ -95,4 +95,4 @@ spawned child for crash behavior. No external endpoint is required.
 
 ## OTLP export shape
 
-`src/otlp.ts` builds OTLP/HTTP JSON payloads: attribute allowlists per signal (`SPAN_ATTRIBUTE_ALLOWLIST`, `METRIC_ATTRIBUTE_ALLOWLIST`), primitives only, bounded span buffer, and a per-metric series cap that folds extra series into `overflow=true`. The exporter has no transport and no endpoint — a host posts the payload. Never add a free-form attribute path here.
+`src/otlp.ts` builds OTLP/HTTP JSON payloads: attribute allowlists per signal (`SPAN_ATTRIBUTE_ALLOWLIST`, `METRIC_ATTRIBUTE_ALLOWLIST`), primitives only, bounded span buffer, and a per-metric series cap that folds extra series into `overflow=true`. `src/otlpSender.ts` (`OtlpHttpSender`) is the transport: per-send endpoint and bearer token resolution, bounded 5xx retry, no 4xx retry, timeout, and never throws. No endpoint means no send. Never add a free-form attribute path here.
