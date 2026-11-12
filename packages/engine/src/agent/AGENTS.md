@@ -142,7 +142,7 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 
 ## Reviewer lane admission
 
-`interaction/reviewer/reviewerLane.ts` (`admitReviewer`) decides whether an approval `ask` may be resolved by an automated reviewer. It only ever receives `ask` — `approve`/`deny` are final and never reviewed — and never a `requires_human: true` ask. No lane, exception, reject, unclear answer, or timeout all `defer` to the user; a timeout aborts the lane and races its promise so a lane ignoring its signal cannot hang the gate. `AgentToolApprovalService.setReviewerLane()` installs one; it is consulted before `PermissionApprovalRequested` is dispatched, approves through the normal resolution path when the reviewer agrees, and otherwise prompts the user unchanged. No lane implementation exists yet and the timeout is fixed.
+`interaction/reviewer/reviewerLane.ts` (`admitReviewer`) decides whether an approval `ask` may be resolved by an automated reviewer. It only ever receives `ask` — `approve`/`deny` are final and never reviewed — and never a `requires_human: true` ask. No lane, exception, reject, unclear answer, or timeout all `defer` to the user; a timeout aborts the lane and races its promise so a lane ignoring its signal cannot hang the gate. `AgentToolApprovalService.setReviewerLane()` installs one; it is consulted before `PermissionApprovalRequested` is dispatched, approves through the normal resolution path when the reviewer agrees, and otherwise prompts the user unchanged. `ReviewerGuard` caps reviews per session and opens a circuit after consecutive non-decisive answers; an approval applies only when the reviewed ask still matches the call's identity. No lane implementation exists yet and the timeout is fixed.
 
 ## Exec-policy rules
 

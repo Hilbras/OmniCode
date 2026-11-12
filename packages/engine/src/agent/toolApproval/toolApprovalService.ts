@@ -31,7 +31,12 @@ import { interactions } from '#/human/interaction/facade';
 import { ISessionContext } from '#/session/sessionContext/sessionContext';
 import { IEventDispatcher } from '#/state/eventDispatcher';
 import type { ToolInputDisplay } from '#/tool/toolInputDisplay';
-import { admitReviewer, requiresHumanDecision, type ReviewerLane } from '#/agent/interaction/reviewer/reviewerLane';
+import {
+  ReviewerGuard,
+  admitReviewer,
+  requiresHumanDecision,
+  type ReviewerLane,
+} from '#/agent/interaction/reviewer/reviewerLane';
 
 import { IAgentToolApprovalService } from './toolApproval';
 
@@ -71,6 +76,9 @@ export class AgentToolApprovalService extends Service implements IAgentToolAppro
   declare readonly _serviceBrand: undefined;
 
   private reviewerLane: ReviewerLane | undefined;
+  private readonly reviewerGuard = new ReviewerGuard();
+  /** Last approved call identity; an answer is only applied to that exact call. */
+  private reviewerAffinity: string | undefined;
   /** Set when the reviewer approved the call currently being resolved. */
   private reviewerState: { approved: boolean } | undefined;
 
@@ -102,12 +110,15 @@ export class AgentToolApprovalService extends Service implements IAgentToolAppro
   ): Promise<BeforeExecuteDecision | undefined> {
     this.reviewerState = { approved: false };
     if (this.reviewerLane === undefined || requiresHumanDecision(result.reason)) return undefined;
+    const key = reviewerKey(context, result);
+    this.reviewerAffinity = key;
     const outcome = await admitReviewer({
       decision: 'ask',
       reason: result.reason,
       policyName: origin,
       lane: this.reviewerLane,
       timeoutMs: undefined,
+      guard: this.reviewerGuard,
       request: {
         toolCallId: context.toolCall.id,
         toolName: context.toolCall.name,
@@ -126,6 +137,7 @@ export class AgentToolApprovalService extends Service implements IAgentToolAppro
       ...(outcome.kind === 'defer' ? { why: outcome.why } : {}),
     });
     if (outcome.kind !== 'approve') return undefined;
+    if (this.reviewerAffinity !== reviewerKey(context, result)) return undefined;
     this.reviewerState = { approved: true };
     const resolved = result.resolveApproval?.({ decision: 'approved', feedback: outcome.note });
     return resolved === undefined
@@ -321,3 +333,11 @@ registerScopedService(
   ScopeActivation.OnScopeCreated,
   'toolApproval',
 );
+
+/** Identity of one approval ask: the call plus the exact rule it was raised for. */
+function reviewerKey(
+  context: ResolvedToolExecutionHookContext,
+  result: Extract<PermissionPolicyResult, { kind: 'ask' }>,
+): string {
+  return `${context.toolCall.id}|${context.execution.approvalRule}|${JSON.stringify(result.reason ?? null)}`;
+}

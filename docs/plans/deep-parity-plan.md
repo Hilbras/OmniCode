@@ -307,7 +307,10 @@ Tasks:
 - Tests: `packages/engine/test/agent/interaction/reviewerLane.test.ts` covers policy-decision bypass attempts, human-required asks, approval, reject/unclear, no-lane, exception, timeout-with-abort, and junk timeout.
 - Wired ahead of the human prompt: `AgentToolApprovalService.consultReviewer` runs before `requestToolApproval` dispatches `PermissionApprovalRequested`. A reviewer `approve` is applied through `resolveApproval` plus the normal resolution path (so hooks still run) and the user prompt never appears; a human-required ask is skipped without consulting the lane at all; every other outcome falls through to the unchanged prompt. `setReviewerLane(lane)` installs or clears it; telemetry event `permission_reviewer_result` records `approved`/`deferred` with the reason.
 - Tests: `packages/engine/test/agent/toolApproval/toolApproval.test.ts` (reviewer lane block) covers reviewer-approved skip, human-required never offered, and defer falling back to the user prompt.
-- Still open in 2.2: there is no `ReviewerLane` implementation (isolated reviewer profile/model, scope classifier, request budget, resampling, circuit breaker, routing affinity), the reviewer timeout is not configurable, and MCP elicitation has no reviewer path.
+- Budget and breaker: `ReviewerGuard` (in `reviewerLane.ts`) caps reviews per session (`maxReviews`, default 20) and opens a circuit after a run of consecutive non-decisive answers (`failureThreshold`, default 3; timeouts, errors, and `unclear` count, a real approve/reject resets it). Exhausted budget and an open circuit both `defer` to the user. The approval service owns one guard per agent scope.
+- Routing affinity: an approval is applied only if the reviewed ask still matches the identity of the call being resolved (`toolCallId` + approval rule + policy reason). A stale answer for a different call cannot approve it.
+- Tests: reviewer guard behaviour is covered in `test/agent/interaction/reviewerLane.test.ts` (budget exhaustion, circuit open/reset, unclear counts as failure).
+- Still open in 2.2: there is no `ReviewerLane` implementation (isolated reviewer profile/model, scope classifier, resampling, checkpoints), the reviewer timeout is not configurable, and MCP elicitation has no reviewer path.
 
 ### 2.3 Pricing and fallback composition
 
