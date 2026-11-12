@@ -2,6 +2,7 @@ export * from './types';
 export * from './paths';
 export * from './availability';
 export * from './bwrap';
+export * from './seatbelt';
 export * from './backends';
 export * from './shell-policy';
 export * from './execution';

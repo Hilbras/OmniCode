@@ -435,6 +435,13 @@ Tasks:
 5. Network proxy + credential broker + secret substitution after destination authorization.
 6. No silent downgrade; explicit fallback status.
 
+#### 3.4 progress
+
+- macOS Seatbelt backend: `packages/Kaos/src/sandbox/seatbelt.ts` builds a deny-by-default `sandbox-exec` profile (`(deny default)`, no `(allow default)`), grants `file-write*` only under the workspace or a contained write allowlist, keeps system paths read-only, and adds `(allow network*)` only when the policy shares the network. Paths are escaped for the Seatbelt string syntax and a quote in a workspace path cannot inject a rule (covered by test). `SeatbeltSandboxBackend.buildArgv` emits `sandbox-exec -p <profile> -- <argv>`; newline/NUL in argv is rejected.
+- Availability is honest: `probeSeatbelt` is unavailable off darwin, unavailable without an injected probe, and reports the real probe outcome otherwise. Added `'seatbelt'` to `SandboxBackendKind`, `createSandboxBackend`, and `SANDBOX_BACKEND_PREFERENCE` (`bwrap`, `seatbelt`, `landlock`).
+- Tests: `packages/Kaos/test/sandbox/seatbelt.test.ts` (11 tests) covers profile shape, network gating, write-allowlist containment, path escaping/injection, probe states, argv shape, and argv injection. Full `test/sandbox` suite passes (73).
+- Still open in 3.4: Windows AppContainer/Job Object backend, whole-agent sandboxing (Write/Edit/LSP/MCP children/hooks/worktrees), per-path grants with deny-read globs and merge/intersect, and the network proxy/credential broker. Seatbelt is not selected by any host config yet.
+
 ## Phase 4: TUI and product
 
 ### 4.1 Session search/diff/review

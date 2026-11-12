@@ -5,7 +5,12 @@ import type {
   SandboxSelection,
 } from './types';
 
-export const SANDBOX_BACKEND_PREFERENCE: readonly SandboxBackendKind[] = ['bwrap', 'landlock'];
+/** Ordered by platform coverage: bwrap (Linux), seatbelt (macOS), landlock (reserved). */
+export const SANDBOX_BACKEND_PREFERENCE: readonly SandboxBackendKind[] = [
+  'bwrap',
+  'seatbelt',
+  'landlock',
+];
 
 export interface SandboxSelectionInput {
   readonly permissionMode: SandboxPermissionMode;

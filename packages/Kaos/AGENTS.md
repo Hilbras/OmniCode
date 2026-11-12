@@ -137,3 +137,12 @@ sandboxing tools.
 
 
 The `@hilbras/omnicode-kaos/sandbox` surface is consumed by the Bash tool through `OMNICODE_SANDBOX_MODE` (`off`, `auto`, `required`). It never grants approval; it only executes an already-approved command under bwrap when available.
+
+
+## Write allowlists
+
+`SandboxPolicy.writeAllowlist` binds the workspace read-only and exposes only listed contained paths RW via `--bind-try`. Undefined preserves whole-workspace RW. Bash reads optional absolute roots from `OMNICODE_SANDBOX_WRITE_ROOTS`.
+
+## Seatbelt backend
+
+`src/sandbox/seatbelt.ts` builds a deny-by-default `sandbox-exec` profile for macOS: writes only under the workspace (or a contained `writeAllowlist`), system paths read-only, network only when `shareNetwork`. Literals only — paths are escaped, never interpolated as rules. `probeSeatbelt` is honest (non-darwin, missing probe, and real probe result) and never claims enforcement without a probe.

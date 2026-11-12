@@ -1,4 +1,4 @@
-export type SandboxBackendKind = 'bwrap' | 'landlock';
+export type SandboxBackendKind = 'bwrap' | 'landlock' | 'seatbelt';
 
 export type SandboxPermissionMode = 'manual' | 'auto' | 'yolo';
 
@@ -50,6 +50,7 @@ export interface SandboxPolicy {
   readonly systemPaths?: readonly string[];
   readonly tmpfsPaths?: readonly string[];
   readonly env?: Readonly<Record<string, string>>;
+  readonly writeAllowlist?: readonly string[];
 }
 
 export interface SandboxCommand {
@@ -125,6 +126,7 @@ export interface SandboxPolicySummary {
   readonly ipcNamespace: 'isolated' | 'shared';
   readonly systemPaths: readonly string[];
   readonly tmpfsPaths: readonly string[];
+  readonly writeAllowlist: readonly string[] | null;
 }
 
 export interface SandboxStatus {

@@ -1,5 +1,6 @@
 import { buildBwrapArgv } from './bwrap';
 import { probeBwrap, probeLandlock, type BwrapProbeDeps, type LandlockProbeDeps } from './availability';
+import { SeatbeltSandboxBackend, type SeatbeltProbeDeps } from './seatbelt';
 import {
   sandboxFailure,
   type SandboxAvailability,
@@ -51,6 +52,7 @@ export class LandlockSandboxBackend implements SandboxBackend {
 export interface SandboxBackendDeps {
   readonly bwrap?: BwrapProbeDeps;
   readonly landlock?: LandlockProbeDeps;
+  readonly seatbelt?: SeatbeltProbeDeps;
 }
 
 export function createSandboxBackend(
@@ -58,5 +60,6 @@ export function createSandboxBackend(
   deps: SandboxBackendDeps = {},
 ): SandboxBackend {
   if (kind === 'bwrap') return new BwrapSandboxBackend(deps.bwrap);
+  if (kind === 'seatbelt') return new SeatbeltSandboxBackend(deps.seatbelt);
   return new LandlockSandboxBackend(deps.landlock);
 }
