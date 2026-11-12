@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { CompactionCompleted } from '#/agent/fullCompaction/compactionOps';
 import { AgentWorldStateProvider } from '#/agent/contextProjector/worldStateProvider';
 import type { IAgentGoalService } from '#/features/goal/goalService';
 import type { IAgentTodoService } from '#/features/todo/todoService';
@@ -19,7 +20,12 @@ function provider(goalStatus: () => string, todos: () => { title: string; status
     }),
   } as unknown as IAgentGoalService;
   const todoService = { get: todos } as unknown as IAgentTodoService;
-  return new AgentWorldStateProvider(goals, todoService);
+  return new AgentWorldStateProvider(
+    goals,
+    todoService,
+    { subscribe: () => ({ dispose() {} }) } as never,
+    { invokeFunction: () => undefined } as never,
+  );
 }
 
 describe('AgentWorldStateProvider', () => {
@@ -47,6 +53,24 @@ describe('AgentWorldStateProvider', () => {
     const p = provider(() => 'active', () => []);
     p.nextSection();
     p.resetAfterCompaction();
+    expect(p.nextSection()).toContain('## World State\n');
+  });
+
+  it('resets on CompactionCompleted', () => {
+    const handlers: (() => void)[] = [];
+    const goals = { getGoal: () => ({ goal: null }) } as unknown as IAgentGoalService;
+    const todoService = { get: () => [] } as unknown as IAgentTodoService;
+    const bus = {
+      subscribe: (cls: unknown, handler: () => void) => {
+        if (cls === CompactionCompleted) handlers.push(handler);
+        return { dispose() {} };
+      },
+    } as never;
+    const p = new AgentWorldStateProvider(goals, todoService, bus, {
+      invokeFunction: () => undefined,
+    } as never);
+    p.nextSection();
+    handlers.forEach((handler) => handler());
     expect(p.nextSection()).toContain('## World State\n');
   });
 });

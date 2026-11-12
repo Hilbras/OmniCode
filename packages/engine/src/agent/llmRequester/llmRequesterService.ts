@@ -34,6 +34,7 @@ import { IAgentToolSelectService } from '#/agent/toolSelect/toolSelect';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IAgentCostGateService } from '#/agent/usage/costGateService';
 import type { IActiveSkillGrant } from '#/features/skill/enforcement';
+import type { IAgentWorldStateProvider } from '#/agent/contextProjector/worldStateProvider';
 import { IConfigService } from '#/app/config/config';
 import { IFlagService } from '#/app/flag/flag';
 import { THINKING_SECTION } from '#/app/kosongConfig/configSection';
@@ -797,6 +798,13 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     const systemPrompt =
       overrides.systemPrompt ?? turnConfig?.systemPrompt ?? this.profile.getSystemPrompt();
     const tools = [...(overrides.tools ?? this.defaultTools())];
+    // World-state section is pulled once per request; undefined means the state
+    // did not change since the last ask, so nothing is added.
+    const worldStateSection = this.worldStateProvider?.nextSection();
+    const messagesWithWorldState =
+      worldStateSection === undefined
+        ? messages
+        : [...messages, { role: 'system' as const, content: [{ type: 'text' as const, text: worldStateSection }], toolCalls: [] }];
     const usedContextTokens =
       overrides.messages === undefined
         ? this.tokenCounting.get(this.scopeContext.agentContext).size
@@ -827,7 +835,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
       thinkingEffort: resolved.thinkingLevel,
       systemPrompt,
       tools,
-      messages: [...messages],
+      messages: [...messagesWithWorldState],
       source: overrides.source,
       logFields: logFieldsForSource(overrides.source),
     };
@@ -961,6 +969,13 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
   setSkillGrant(grant: IActiveSkillGrant | undefined): void {
     this.activeSkillGrant = grant;
   }
+
+  /** Binds the world-state provider; `undefined` disables the section. */
+  setWorldStateProvider(provider: IAgentWorldStateProvider | undefined): void {
+    this.worldStateProvider = provider;
+  }
+
+  private worldStateProvider: IAgentWorldStateProvider | undefined;
 
   private defaultTools(): readonly Tool[] {
     // The active skill's grant narrows what the model is offered. The grant is

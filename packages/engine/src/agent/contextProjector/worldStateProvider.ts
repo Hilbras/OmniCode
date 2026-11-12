@@ -1,9 +1,12 @@
 import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
-import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
+import { createDecorator, IInstantiationService } from '@hilbras/omnicode-base/di/instantiation';
 import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
+import { IEventBus } from '#/app/event/eventBus';
+import { CompactionCompleted } from '#/agent/fullCompaction/compactionOps';
 import { IAgentGoalService } from '#/features/goal/goalService';
 import { IAgentTodoService } from '#/features/todo/todoService';
+import { IAgentLLMRequesterService } from '#/agent/llmRequester/llmRequester';
 
 import { WorldStateAssembler } from './worldStateAssembler';
 
@@ -40,8 +43,20 @@ export class AgentWorldStateProvider
   constructor(
     @IAgentGoalService private readonly goals: IAgentGoalService,
     @IAgentTodoService private readonly todos: IAgentTodoService,
+    @IEventBus eventBus: IEventBus,
+    @IInstantiationService instantiation: IInstantiationService,
   ) {
     super();
+    // Compaction breaks the rendering lineage: every section after it is full.
+    this._register(eventBus.subscribe(CompactionCompleted, () => this.assembler.reset()));
+    // Push into the requester lazily: injecting the requester here would cycle.
+    try {
+      instantiation.invokeFunction((accessor) =>
+        accessor.get(IAgentLLMRequesterService).setWorldStateProvider?.(this),
+      );
+    } catch {
+      // No requester in this scope; the section simply stays unbound.
+    }
   }
 
   nextSection(): string | undefined {

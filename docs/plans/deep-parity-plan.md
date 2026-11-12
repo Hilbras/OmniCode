@@ -158,7 +158,10 @@ Tasks:
 - State source: `contextProjector/worldStateAssembler.ts` builds the section from the agent's goal (`goal.status/objective/turns_used/tokens_used`) and todo list (pending/in-progress/done counts plus up to ten open titles), clipping long objectives (160 chars). `WorldStateAssembler.next()` returns `undefined` when nothing changed, so a quiet turn costs zero tokens.
 - Live provider: `contextProjector/worldStateProvider.ts` (`IAgentWorldStateProvider`, agent scope) reads `IAgentGoalService.getGoal()` and `IAgentTodoService.get()` and exposes `nextSection()` / `resetAfterCompaction()`. The baseline survives turns on purpose (a delta is only meaningful inside one rendering lineage) and resets on compaction.
 - Tests: `worldStateAssembler.test.ts` and `worldStateProvider.test.ts` cover flattening, goal removal, clipping/caps, quiet turns, delta-only change, and full re-render after compaction (74 contextProjector tests pass).
-- Still open in 1.1: nothing calls `IAgentWorldStateProvider.nextSection()` from the request path yet (the section is not injected into the request), there is no compaction subscriber calling `resetAfterCompaction()`, and the baseline is not persisted across process restarts.
+- Request injection: `llmRequesterService` pulls `worldStateProvider.nextSection()` once per request and, when defined, appends it as a trailing `system` message. Because the provider returns `undefined` on an unchanged turn, a steady-state session adds no tokens.
+- Compaction reset: the provider subscribes to `CompactionCompleted` and resets the assembler, so the first section after compaction is full. It binds itself into the requester through a lazy `IInstantiationService.invokeFunction` (injecting the requester would cycle, as with the skill grant).
+- Tests: `worldStateProvider.test.ts` covers a `CompactionCompleted` reset; requester tests pass apart from a pre-existing 30s timeout test that fails identically on HEAD.
+- Still open in 1.1: the baseline is in memory only (a process restart begins with a full render, which is safe but costs one section), and no test asserts the requester's appended system message directly.
 
 ### 1.2 Post-compaction restoration
 
