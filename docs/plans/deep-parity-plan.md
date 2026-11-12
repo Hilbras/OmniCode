@@ -147,6 +147,14 @@ Tasks:
 5. Undiffable fallback.
 6. Tests: replay equals full render, section deletion, compaction reset.
 
+#### 1.1 progress
+
+- `agent/contextProjector/worldState.ts` implements typed world-state snapshots over a flat map (string/number/boolean/null and string lists only — nested values are rejected, not coerced), RFC 7396 merge-patch deltas (`null` deletes), and `applyWorldStateDelta` with a tested round-trip (baseline + delta === next).
+- `WorldStateTracker` owns the render baseline: full render first, deltas after, a forced full render every `maxDeltasBeforeFull` (default 8) so drift cannot silently accumulate, and `resetBaseline()` for compaction, after which the next render is full again.
+- Undiffable fallback: `asWorldState` returns `undefined` for non-objects/nested/non-finite values and `renderUndiffableFallback` degrades to a full render labelled `unrenderable` instead of guessing a delta.
+- Tests: `packages/engine/test/agent/contextProjector/worldState.test.ts` (10) covers type acceptance, add/change/remove deltas, round-trip equality, empty delta, full→delta→reset, periodic full render, baseline version stability, section deletion rendering, and the fallback.
+- Still open in 1.1: nothing emits world-state sections from `contextProjector`, the baseline is not persisted per session, and compaction does not call `resetBaseline()` yet.
+
 ### 1.2 Post-compaction restoration
 
 Files:
