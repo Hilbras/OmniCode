@@ -600,6 +600,95 @@ describe('Model assembly (pure data)', () => {
   });
 });
 
+describe('provider key validation', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('rejects a mis-pasted first-party key when the client is composed', () => {
+    const { host, catalog } = createHost({
+      providers: { openai: { type: 'openai', apiKey: 'sk-ant-misplaced' } },
+      models: { gpt: { provider: 'openai', model: 'gpt-5' } },
+    });
+    try {
+      expect(() => catalog.get('gpt')).toThrowError(/providers\.openai\.api_key .*Anthropic/);
+      try {
+        catalog.get('gpt');
+      } catch (error) {
+        expect(isError2(error)).toBe(true);
+        expect(isError2(error) && error.code).toBe(ConfigErrors.codes.CONFIG_INVALID);
+      }
+    } finally {
+      host.dispose();
+    }
+  });
+
+  it('validates an env-sourced key when it is resolved', async () => {
+    vi.stubEnv('OMNICODE_TEST_MISPASTED_KEY', 'AIzaMisplaced');
+    const { host, catalog } = createHost({
+      providers: { claude: { type: 'anthropic', apiKeyEnv: 'OMNICODE_TEST_MISPASTED_KEY' } },
+      models: { sonnet: { provider: 'claude', model: 'claude-sonnet-4-5' } },
+    });
+    try {
+      const model = catalog.get('sonnet');
+      await expect(Promise.resolve().then(() => model.credentialProvider?.resolve())).rejects.toMatchObject({
+        code: ConfigErrors.codes.CONFIG_INVALID,
+      });
+    } finally {
+      host.dispose();
+    }
+  });
+
+  it('reports a model-level key against the model entry, not the provider', () => {
+    const { host, catalog } = createHost({
+      providers: { openai: { type: 'openai', apiKey: 'sk-provider-key' } },
+      models: {
+        gpt: { provider: 'openai', model: 'gpt-5', apiKey: 'sk-ant-model-entry' },
+      },
+    });
+    try {
+      expect(() => catalog.get('gpt')).toThrowError(/models\.gpt\.api_key .*Anthropic/);
+    } finally {
+      host.dispose();
+    }
+  });
+
+  it('refuses raw whitespace instead of trimming it away', async () => {
+    vi.stubEnv('OMNICODE_TEST_WHITESPACE_KEY', 'sk-gateway-key\n');
+    const { host, catalog } = createHost({
+      providers: { claude: { type: 'anthropic', apiKeyEnv: 'OMNICODE_TEST_WHITESPACE_KEY' } },
+      models: { sonnet: { provider: 'claude', model: 'claude-sonnet-4-5' } },
+    });
+    try {
+      const model = catalog.get('sonnet');
+      await expect(
+        Promise.resolve().then(() => model.credentialProvider?.resolve()),
+      ).rejects.toMatchObject({
+        code: ConfigErrors.codes.CONFIG_INVALID,
+        message: expect.stringContaining('whitespace'),
+      });
+    } finally {
+      host.dispose();
+    }
+  });
+
+  it('accepts a header-safe env key', async () => {
+    vi.stubEnv('OMNICODE_TEST_VALID_KEY', 'sk-gateway-key');
+    const { host, catalog } = createHost({
+      providers: { claude: { type: 'anthropic', apiKeyEnv: 'OMNICODE_TEST_VALID_KEY' } },
+      models: { sonnet: { provider: 'claude', model: 'claude-sonnet-4-5' } },
+    });
+    try {
+      const model = catalog.get('sonnet');
+      await expect(
+        Promise.resolve().then(() => model.credentialProvider?.resolve()),
+      ).resolves.toEqual({ apiKey: 'sk-gateway-key' });
+    } finally {
+      host.dispose();
+    }
+  });
+});
+
 describe('base_url validation', () => {
   it('rejects a plain-http non-local provider base_url as config.invalid', () => {
     const { host, catalog } = createHost({

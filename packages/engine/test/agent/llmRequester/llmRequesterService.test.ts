@@ -30,6 +30,8 @@ import { IAgentStateService } from '#/agent/state/agentState';
 import { AgentStateService } from '#/agent/state/agentStateService';
 import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { IAgentToolSelectService } from '#/agent/toolSelect/toolSelect';
+import { IAgentCostGateService } from '#/agent/usage/costGateService';
+import { UsageError } from '#/agent/usage/usage';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IConfigService } from '#/app/config/config';
 import type { Event2 } from '#/app/event/event2';
@@ -49,7 +51,8 @@ import {
 } from '#/llm-adapter/contract/errors';
 import { type Message } from '#/llm-adapter/contract/message';
 import { IModelCatalog, type Model } from '#/llm-adapter/model/catalog';
-import { IModelService } from '#/llm-adapter/model/model';
+import { IModelService, type ModelRecord } from '#/llm-adapter/model/model';
+import { IProviderService } from '#/llm-adapter/provider/provider';
 import {
   type ModelRequestEvent,
   type ModelRequestInput,
@@ -225,6 +228,10 @@ function createService(
     readonly env?: Record<string, string>;
     readonly compaction?: CompactionSectionConfig;
     readonly flags?: boolean;
+    readonly models?: Readonly<Record<string, ModelRequester>>;
+    readonly modelRecords?: Readonly<Record<string, ModelRecord>>;
+    readonly providerService?: Partial<IProviderService>;
+    readonly costGate?: Partial<IAgentCostGateService>;
   } = {},
 ) {
   const ix = disposables.add(new TestInstantiationService());
@@ -275,7 +282,13 @@ function createService(
     get: ((section: string) =>
       section === COMPACTION_SECTION ? options.compaction : undefined) as IConfigService['get'],
   };
-  const log = { info: () => undefined, warn: () => undefined };
+  const logRecords: { readonly level: string; readonly message: string }[] = [];
+  const log = {
+    info: () => undefined,
+    warn: (message: string) => {
+      logRecords.push({ level: 'warn', message });
+    },
+  };
   const telemetryRecords: TelemetryRecord[] = [];
   const telemetry = recordingTelemetry(telemetryRecords);
   const toolSelect: Partial<IAgentToolSelectService> = {
@@ -315,15 +328,36 @@ function createService(
   ix.stub(IConfigService, config);
   ix.stub(ILogService, log);
   ix.stub(ITelemetryService, telemetry);
+  const modelPool: Readonly<Record<string, ModelRequester>> = options.models ?? { m: requester };
+  const modelRecords: Readonly<Record<string, ModelRecord>> = Object.fromEntries(
+    Object.keys(modelPool).map((alias) => [
+      alias,
+      options.modelRecords?.[alias] ?? { providerId: `provider-${alias}` },
+    ]),
+  );
+  const resolveModel = (alias: string): ModelRequester => {
+    const found = modelPool[alias];
+    if (found === undefined) throw new Error(`model ${alias} is not configured`);
+    return found;
+  };
   ix.stub(IModelCatalog, {
     _serviceBrand: undefined,
-    get: () => requester.model,
-    getRequester: () => requester,
+    get: (alias: string) => resolveModel(alias).model,
+    getRequester: (alias: string) => resolveModel(alias),
     findByName: () => [],
   });
   ix.stub(IModelService, {
-    get: () => undefined,
+    get: (alias: string) => modelRecords[alias],
+    list: () => modelRecords,
   });
+  ix.stub(IProviderService, {
+    get: () => undefined,
+    ...options.providerService,
+  });
+  ix.stub(IAgentCostGateService, {
+    limitUsd: undefined,
+    ...options.costGate,
+  } as IAgentCostGateService);
   const records: WireRecord[] = [];
   registerTestAgentWire(ix, 'wire/llm-requester', {
     log: recordingWireLog(records),
@@ -341,6 +375,7 @@ function createService(
     telemetry,
     telemetryRecords,
     measuredCalls,
+    logRecords,
   };
 }
 
@@ -509,6 +544,269 @@ describe('AgentLLMRequesterService Anthropic effort diagnostics', () => {
           'Thinking effort "high" is not listed for model "wire-model" (known: max). The configured value will be sent unchanged to the Anthropic-compatible backend.',
       }),
     ]);
+  });
+});
+
+describe('AgentLLMRequesterService model fallback', () => {
+  function aliasedRequester(
+    alias: string,
+    outcomes: readonly (Error | undefined)[],
+    capabilityOverride: ModelCapability = capabilities,
+    providerName = `provider-${alias}`,
+  ): ModelRequester {
+    let call = 0;
+    const model: Model = {
+      id: alias,
+      name: `wire-${alias}`,
+      aliases: [],
+      protocol: 'anthropic',
+      baseUrl: 'https://example.test',
+      headers: {},
+      capabilities: capabilityOverride,
+      maxContextSize: 1000,
+      alwaysThinking: false,
+      providerName,
+    };
+    return {
+      model,
+      request: async function* () {
+        const outcome = outcomes[Math.min(call, outcomes.length - 1)];
+        call += 1;
+        if (outcome !== undefined) throw outcome;
+        yield {
+          type: 'finish',
+          message: { role: 'assistant', content: [{ type: 'text', text: `ok-${alias}` }], toolCalls: [] },
+          providerFinishReason: 'completed',
+          rawFinishReason: 'stop',
+          id: `resp-${alias}`,
+        };
+      },
+    };
+  }
+
+  const quota = (): APIProviderQuotaExhaustedError =>
+    new APIProviderQuotaExhaustedError('quota exhausted');
+
+  it('falls back to an eligible configured model and reports the switch', async () => {
+    const primary = aliasedRequester('m', [quota()]);
+    const models = { m: primary, m2: aliasedRequester('m2', [undefined]) };
+    const { service, events } = createService(primary, undefined, {
+      models,
+      env: { OMNICODE_MODEL_FALLBACK: '1' },
+    });
+
+    const result = await service.request();
+
+    expect(result.model).toBe('m2');
+    expect(result.message.content).toEqual([{ type: 'text', text: 'ok-m2' }]);
+    const warnings = events.filter((event) => event.type === 'warning');
+    expect(warnings).toEqual([
+      expect.objectContaining({
+        code: 'model-fallback',
+        message: expect.stringContaining('"m2"'),
+      }),
+    ]);
+    expect(warnings[0]).toMatchObject({
+      message: expect.stringContaining('quota_exhausted'),
+    });
+  });
+
+  it('does not fall back unless OMNICODE_MODEL_FALLBACK opts in', async () => {
+    const calls = { value: 0 };
+    const secondary = aliasedRequester('m2', [undefined]);
+    const base = secondary.request.bind(secondary);
+    secondary.request = async function* (input, signal, options) {
+      calls.value += 1;
+      yield* base(input, signal, options);
+    };
+    const primary = aliasedRequester('m', [quota()]);
+    const models = { m: primary, m2: secondary };
+    const { service } = createService(primary, undefined, { models });
+
+    await expect(service.request()).rejects.toBeInstanceOf(APIProviderQuotaExhaustedError);
+    expect(calls.value).toBe(0);
+  });
+
+  it('does not reroute a caller-pinned model', async () => {
+    const primary = aliasedRequester('m', [quota()]);
+    const models = { m: primary, m2: aliasedRequester('m2', [undefined]) };
+    const { service, events } = createService(primary, undefined, {
+      models,
+      env: { OMNICODE_MODEL_FALLBACK: '1' },
+    });
+
+    await expect(service.request({ modelAlias: 'm' })).rejects.toBeInstanceOf(
+      APIProviderQuotaExhaustedError,
+    );
+    expect(events.filter((event) => event.type === 'warning')).toEqual([]);
+  });
+
+  it('refuses a candidate that cannot cover the primary capabilities', async () => {
+    const toolCapability: ModelCapability = { ...capabilities, tool_use: true };
+    const primary = aliasedRequester('m', [quota()], toolCapability);
+    const models = { m: primary, plain: aliasedRequester('plain', [undefined]) };
+    const { service, events } = createService(primary, undefined, {
+      models,
+      env: { OMNICODE_MODEL_FALLBACK: '1' },
+    });
+
+    await expect(service.request()).rejects.toBeInstanceOf(APIProviderQuotaExhaustedError);
+    expect(events.filter((event) => event.type === 'warning')).toEqual([]);
+  });
+
+  it('tries each configured model at most once in a chain', async () => {
+    const primary = aliasedRequester('m', [quota()]);
+    const models = {
+      m: primary,
+      m2: aliasedRequester('m2', [quota()]),
+      m3: aliasedRequester('m3', [undefined]),
+      m4: aliasedRequester('m4', [undefined]),
+    };
+    const { service, events } = createService(primary, undefined, {
+      models,
+      env: { OMNICODE_MODEL_FALLBACK: '1' },
+    });
+
+    const result = await service.request();
+
+    expect(result.model).toBe('m3');
+    expect(events.filter((event) => event.type === 'warning')).toHaveLength(2);
+  });
+
+  it('opens the quota circuit on repeated provider quota errors and reports its state', async () => {
+    const primary = aliasedRequester('m', [quota(), quota(), quota(), undefined]);
+    const models = { m: primary };
+    const { service } = createService(primary, undefined, { models });
+
+    await expect(service.request()).rejects.toBeInstanceOf(APIProviderQuotaExhaustedError);
+    await expect(service.request()).rejects.toBeInstanceOf(APIProviderQuotaExhaustedError);
+    await expect(service.request()).rejects.toBeInstanceOf(APIProviderQuotaExhaustedError);
+
+    expect(service.providerQuotaStates?.()).toEqual([
+      expect.objectContaining({
+        scope: 'provider-m',
+        state: 'open',
+        consecutiveFailures: 3,
+        lastFailureKind: 'quota',
+      }),
+    ]);
+
+    const recovered = await service.request();
+
+    expect(recovered.model).toBe('m');
+    expect(service.providerQuotaStates?.()).toEqual([]);
+  });
+
+  it('notifies the loop before resending on the fallback model', async () => {
+    const primary = aliasedRequester('m', [quota()]);
+    const models = { m: primary, m2: aliasedRequester('m2', [undefined]) };
+    const { service } = createService(primary, undefined, {
+      models,
+      env: { OMNICODE_MODEL_FALLBACK: '1' },
+    });
+    const onAttemptRetry = vi.fn();
+
+    await service.request({ onAttemptRetry });
+
+    expect(onAttemptRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not claim a switch when the cost gate refuses the candidate', async () => {
+    const primary = aliasedRequester('m', [quota()]);
+    const candidate = aliasedRequester('m2', [undefined]);
+    let candidateCalls = 0;
+    const base = candidate.request.bind(candidate);
+    candidate.request = async function* (input, signal, options) {
+      candidateCalls += 1;
+      yield* base(input, signal, options);
+    };
+    const models = { m: primary, m2: candidate };
+    const costGate: Partial<IAgentCostGateService> = {
+      limitUsd: 1,
+      assertCanAfford: (modelId) => {
+        if (modelId === 'm2') {
+          throw new UsageError('usage.budget_exceeded', 'over budget for m2');
+        }
+        return { allowed: true, projectedUsd: 0, remainingUsd: 1 };
+      },
+      priceUsage: () => 0,
+    };
+    const { service, events, logRecords } = createService(primary, undefined, {
+      models,
+      env: { OMNICODE_MODEL_FALLBACK: '1' },
+      costGate,
+    });
+
+    await expect(
+      service.request({ onAttemptRetry: () => undefined }),
+    ).rejects.toMatchObject({ code: 'usage.budget_exceeded' });
+
+    expect(candidateCalls).toBe(0);
+    expect(events.filter((event) => event.type === 'warning')).toEqual([]);
+    expect(
+      logRecords.some((record) => record.message.includes('falling back')),
+    ).toBe(false);
+  });
+
+  it('keeps the failed model for an error that is not provider-side', async () => {
+    const overflow = new APIContextOverflowError(400, 'prompt is too long');
+    const primary = aliasedRequester('m', [overflow]);
+    const candidate = aliasedRequester('m2', [undefined]);
+    let candidateCalls = 0;
+    const base = candidate.request.bind(candidate);
+    candidate.request = async function* (input, signal, options) {
+      candidateCalls += 1;
+      yield* base(input, signal, options);
+    };
+    const models = { m: primary, m2: candidate };
+    const { service, events } = createService(primary, undefined, {
+      models,
+      env: { OMNICODE_MODEL_FALLBACK: '1' },
+    });
+
+    await expect(service.request()).rejects.toBeInstanceOf(APIContextOverflowError);
+
+    expect(candidateCalls).toBe(0);
+    expect(events.filter((event) => event.type === 'warning')).toEqual([]);
+  });
+
+  it('treats a model bound through the configured default provider as owned', async () => {
+    const primary = aliasedRequester('m', [quota()]);
+    const implicit = aliasedRequester('implicit', [undefined], capabilities, 'shared');
+    const models = { m: primary, implicit };
+    const { service } = createService(primary, undefined, {
+      models,
+      env: { OMNICODE_MODEL_FALLBACK: '1' },
+      modelRecords: { implicit: {} },
+      providerService: {
+        getDefaultProvider: () => 'shared',
+        get: (id) => (id === 'shared' ? {} : undefined),
+      },
+    });
+
+    const result = await service.request();
+
+    expect(result.model).toBe('implicit');
+  });
+
+  it('logs every rejection when no fallback model is eligible', async () => {
+    const toolCapability: ModelCapability = { ...capabilities, tool_use: true };
+    const primary = aliasedRequester('m', [quota()], toolCapability);
+    const models = { m: primary, plain: aliasedRequester('plain', [undefined]) };
+    const { service, logRecords } = createService(primary, undefined, {
+      models,
+      env: { OMNICODE_MODEL_FALLBACK: '1' },
+    });
+
+    await expect(service.request()).rejects.toBeInstanceOf(APIProviderQuotaExhaustedError);
+
+    expect(
+      logRecords.some(
+        (record) =>
+          record.message.includes('no fallback model is eligible') ||
+          record.message.includes('no eligible'),
+      ),
+    ).toBe(true);
   });
 });
 

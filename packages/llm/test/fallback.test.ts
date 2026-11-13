@@ -57,4 +57,32 @@ describe('provider fallback selection', () => {
       }),
     ).toBeUndefined();
   });
+
+  it('skips every model already tried in the chain and takes the next one', () => {
+    const selected = selectFallbackCandidate({
+      primaryId: 'a',
+      candidates: [
+        { id: 'a', modelId: 'm-a', providerId: 'p-a', capability: toolCapability },
+        { id: 'b', modelId: 'm-b', providerId: 'p-b', capability: toolCapability },
+        { id: 'c', modelId: 'm-c', providerId: 'p-c', capability: toolCapability },
+      ],
+      error: { statusCode: 429 },
+      triedIds: ['a', 'b'],
+    });
+    expect(selected?.id).toBe('c');
+  });
+
+  it('returns undefined once the chain has tried every candidate', () => {
+    expect(
+      selectFallbackCandidate({
+        primaryId: 'a',
+        candidates: [
+          { id: 'b', modelId: 'm-b', providerId: 'p-b', capability: toolCapability },
+          { id: 'c', modelId: 'm-c', providerId: 'p-c', capability: toolCapability },
+        ],
+        error: { statusCode: 503 },
+        triedIds: ['a', 'b', 'c'],
+      }),
+    ).toBeUndefined();
+  });
 });

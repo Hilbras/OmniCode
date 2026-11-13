@@ -31,6 +31,13 @@ import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { IAgentStateService } from '#/agent/state/agentState';
 import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { IAgentToolSelectService } from '#/agent/toolSelect/toolSelect';
+import {
+  declaresProviderOwnership,
+  selectOrderedFallback,
+  type FallbackCandidate,
+  type FallbackSelection,
+} from '#/agent/usage/fallbackChain';
+import { QuotaCircuit, type QuotaCircuitSnapshot } from '#/agent/usage/quotaCircuit';
 import { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import { IAgentCostGateService } from '#/agent/usage/costGateService';
 import type { IActiveSkillGrant } from '#/features/skill/enforcement';
@@ -50,6 +57,7 @@ import {
   isImageFormatError,
   isRecoverableRequestStructureError,
   isRetryableGenerateError,
+  type ApiErrorKind,
 } from '#/llm-adapter/contract/errors';
 import type { Message } from '#/llm-adapter/contract/message';
 import type { LLMRequestTrace } from '#/llm-adapter/contract/request-trace';
@@ -58,7 +66,8 @@ import {
   completionBudgetParams,
   resolveCompletionBudget,
 } from '#/llm-adapter/model/completion-budget';
-import { IModelService } from '#/llm-adapter/model/model';
+import { IModelService, type ModelRecord } from '#/llm-adapter/model/model';
+import { IProviderService } from '#/llm-adapter/provider/provider';
 import {
   effectiveMaxCompletionTokens,
   type ModelRequestEvent,
@@ -120,6 +129,26 @@ const OPERATION_CONTEXT_ESTIMATE_ERROR = 0.15;
 const noopOnPart: AgentLLMRequestPartHandler = () => {};
 
 export const OMNICODE_INFINITE_RETRY_ENV = 'OMNICODE_INFINITE_RETRY';
+export const OMNICODE_MODEL_FALLBACK_ENV = 'OMNICODE_MODEL_FALLBACK';
+
+const MODEL_FALLBACK_WARNING_CODE = 'model-fallback';
+
+/**
+ * Errors that mean "this provider is not serving this request right now" and
+ * therefore make another model worth one attempt. Content-shape failures
+ * (context overflow, request too large, a filtered empty response) are
+ * deliberately absent: another model would fail the same way or, worse, answer
+ * a request the first model refused.
+ */
+const FALLBACK_ERROR_KINDS: ReadonlySet<ApiErrorKind> = new Set<ApiErrorKind>([
+  'quota_exhausted',
+  'rate_limit',
+  'overloaded',
+  'auth',
+  '5xx_server',
+  'network',
+  'timeout',
+]);
 
 interface ResolvedLLMRequest {
   readonly requester: ModelRequester;
@@ -179,6 +208,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
 
   private readonly toolCallIdNormalizer = new ToolCallIdNormalizer();
   private readonly toolResultClearer = new ToolResultClearer();
+  private readonly quotaCircuit = new QuotaCircuit();
 
   constructor(
     @IAgentContextMemoryService private readonly context: IAgentContextMemoryService,
@@ -200,6 +230,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     @IAgentStateService private readonly states: IAgentStateService,
     @IBootstrapService private readonly bootstrap: IBootstrapService,
     @IAgentCostGateService private readonly costGateService?: IAgentCostGateService,
+    @IProviderService private readonly providerService?: IProviderService,
 
   ) {
     this.states.contributeState(llmRequestTraceKey);
@@ -289,18 +320,149 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     try {
       const prepared = this.resolveRequest(overrides);
       this.assertCostBudget(prepared);
-      return await this.runRequest(
-        prepared,
-        onPart,
-        signal,
-        setTrace,
-        overrides.onAttemptRetry,
-      );
+      return await this.runWithModelFallback(prepared, overrides, onPart, signal, setTrace);
     } catch (error) {
       this.logRequestFailure(error, overrides, signal);
       setTrace(this.trackApiError(error, startedAt, signal, overrides.source, trace.traceId));
       throw error;
     }
+  }
+
+  /**
+   * Runs the request, switching to the next eligible configured model when the
+   * current one reports a provider-side failure. Fallback is opt-in
+   * (`OMNICODE_MODEL_FALLBACK`) and only applies when the caller did not pin a
+   * model alias: a caller that named a model gets that model or an error.
+   *
+   * Each model is tried at most once per request, because the tried list is the
+   * selection input; the ordered selector rejects anything already in it, so a
+   * fallback cycle cannot loop. A budget refusal for the candidate is final:
+   * the point of the gate is to stop spend, not to route around it.
+   */
+  private async runWithModelFallback(
+    initial: ResolvedLLMRequest,
+    overrides: AgentLLMRequestOverrides,
+    onPart: AgentLLMRequestPartHandler,
+    signal: AbortSignal | undefined,
+    setTrace: (traceId: string | undefined) => void,
+  ): Promise<AgentLLMRequestFinish> {
+    const fallbackEnabled = this.modelFallbackEnabled && overrides.modelAlias === undefined;
+    const tried: string[] = [];
+    let request = initial;
+    for (;;) {
+      try {
+        const finish = await this.runRequest(
+          request,
+          onPart,
+          signal,
+          setTrace,
+          overrides.onAttemptRetry,
+        );
+        this.quotaCircuit.recordSuccess(request.model.providerName);
+        return finish;
+      } catch (error) {
+        this.quotaCircuit.recordError(request.model.providerName, error);
+        if (!fallbackEnabled || signal?.aborted === true || !isFallbackEligibleRequestError(error)) {
+          throw error;
+        }
+        tried.push(request.modelAlias);
+        const selection = this.selectFallbackModel(request, tried);
+        const selected = selection.selected;
+        if (selected === undefined) {
+          this.log.warn('llm request failed; no fallback model is eligible', {
+            model: request.model.name,
+            modelAlias: request.modelAlias,
+            errorKind: classifyApiError(unwrapErrorCause(error)).kind,
+            rejections: describeFallbackRejections(selection),
+            ...request.logFields,
+          });
+          throw error;
+        }
+        overrides.onAttemptRetry?.();
+        const failed = request;
+        request = this.resolveRequest({ ...overrides, modelAlias: selected });
+        this.assertCostBudget(request);
+        this.reportModelFallback(failed, selection, selected, error);
+      }
+    }
+  }
+
+  /**
+   * Builds the candidate pool from the configured models and delegates ranking
+   * to the pure selector. Models that do not resolve are skipped rather than
+   * ranked: a broken entry has no capability or provider to reason about, and
+   * it will fail on its own when selected directly.
+   */
+  private selectFallbackModel(
+    request: ResolvedLLMRequest,
+    tried: readonly string[],
+  ): FallbackSelection {
+    const candidates: FallbackCandidate[] = [];
+    for (const alias of Object.keys(this.modelService.list())) {
+      const record = this.modelService.get(alias);
+      if (record === undefined) continue;
+      let model: Model;
+      try {
+        model = this.modelCatalog.get(alias);
+      } catch {
+        continue;
+      }
+      candidates.push({
+        alias,
+        providerName: model.providerName,
+        capability: model.capabilities,
+        owned: this.ownsModelRecord(record, model),
+        circuitOpen: !this.quotaCircuit.allows(model.providerName),
+      });
+    }
+    return selectOrderedFallback({
+      primaryAlias: request.modelAlias,
+      requiredCapability: request.model.capabilities,
+      candidates,
+      triedAliases: tried,
+    });
+  }
+
+  /**
+   * A model is owned when its record names a provider or endpoint, or when the
+   * engine resolves it to a configured provider. The second branch is the
+   * supported `defaultProvider` binding: the model has no explicit owner in
+   * config, but the catalog routes it to that provider, so treating it as
+   * unowned would permanently exclude a fully configured model from fallback.
+   */
+  private ownsModelRecord(record: ModelRecord, model: Model): boolean {
+    if (declaresProviderOwnership(record)) return true;
+    return this.providerService?.get(model.providerName) !== undefined;
+  }
+
+  private reportModelFallback(
+    failed: ResolvedLLMRequest,
+    selection: FallbackSelection,
+    selected: string,
+    error: unknown,
+  ): void {
+    const errorKind = classifyApiError(unwrapErrorCause(error)).kind;
+    const rejected = selection.verdicts.filter((verdict) => !verdict.eligible).length;
+    this.log.warn('llm request failed; falling back to another configured model', {
+      model: failed.model.name,
+      modelAlias: failed.modelAlias,
+      fallbackModelAlias: selected,
+      errorKind,
+      rejectedCandidates: rejected,
+      ...failed.logFields,
+    });
+    try {
+      void this.dispatcher.dispatch(
+        new WarningIssued({
+          agentId: this.scopeContext.agentId,
+          code: MODEL_FALLBACK_WARNING_CODE,
+          message:
+            `Model "${failed.modelAlias}" failed with ${errorKind}; this request continues on ` +
+            `"${selected}". ${String(rejected)} other configured model(s) were not eligible. ` +
+            `Fallback is enabled by ${OMNICODE_MODEL_FALLBACK_ENV}.`,
+        }),
+      );
+    } catch {}
   }
 
   /**
@@ -634,6 +796,14 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
 
   private get infiniteRetryEnabled(): boolean {
     return parseBooleanEnv(this.bootstrap.getEnv(OMNICODE_INFINITE_RETRY_ENV)) === true;
+  }
+
+  private get modelFallbackEnabled(): boolean {
+    return parseBooleanEnv(this.bootstrap.getEnv(OMNICODE_MODEL_FALLBACK_ENV)) === true;
+  }
+
+  providerQuotaStates(): readonly QuotaCircuitSnapshot[] {
+    return this.quotaCircuit.snapshots();
   }
 
   private nextProjectionPolicyForError(
@@ -1094,6 +1264,19 @@ function projectionField(fields: AgentLLMRequestLogFields): LlmRequestProjection
 
 function fingerprint(content: string): string {
   return createHash('sha256').update(content).digest('hex');
+}
+
+function isFallbackEligibleRequestError(error: unknown): boolean {
+  if (isAbortError(error)) return false;
+  return FALLBACK_ERROR_KINDS.has(classifyApiError(unwrapErrorCause(error)).kind);
+}
+
+function describeFallbackRejections(selection: FallbackSelection): string {
+  const rejected = selection.verdicts.filter((verdict) => !verdict.eligible);
+  if (rejected.length === 0) return 'no configured models';
+  return rejected
+    .map((verdict) => `${verdict.alias} (${verdict.rejections.join(', ')})`)
+    .join('; ');
 }
 
 function apiStatusCode(error: unknown): number | undefined {

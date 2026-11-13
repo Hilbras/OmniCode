@@ -26,6 +26,7 @@ import {
   type ProtocolProviderOptions,
 } from '../protocol/protocol';
 import { assertProviderBaseUrl } from '../provider/base-url';
+import { assertProviderApiKey } from '../provider/provider-key';
 import { IProviderService, type ProviderConfig } from '../provider/provider';
 import { getProviderDefinition, resolveProviderEndpoint } from '../provider/provider-definition';
 import {
@@ -332,15 +333,34 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
     );
     const wireName = model.name ?? model.model;
 
+    const providerType = providerConfig?.type ?? protocol;
+    const rawModelKey = typeof model.apiKey === 'string' ? model.apiKey : undefined;
+    const modelKeyInUse = rawModelKey !== undefined && rawModelKey.trim().length > 0;
+    const keyField =
+      modelKeyInUse || providerConfig === undefined
+        ? `models.${id}.api_key`
+        : `providers.${providerName}.api_key`;
     const auth = resolveModelAuthMaterial({
       modelId: id,
       model,
       provider: providerConfig,
       providerName,
     });
-    const credentialProvider = this.buildCredentialProvider(providerName, auth);
-
-    const providerType = providerConfig?.type ?? protocol;
+    const credentialProvider = this.buildCredentialProvider(
+      providerName,
+      auth,
+      providerType,
+      keyField,
+    );
+    if (modelKeyInUse) assertProviderApiKey(providerType, rawModelKey, `models.${id}.api_key`);
+    const rawProviderKey = providerConfig?.apiKey;
+    if (
+      !modelKeyInUse &&
+      typeof rawProviderKey === 'string' &&
+      rawProviderKey.trim().length > 0
+    ) {
+      assertProviderApiKey(providerType, rawProviderKey, `providers.${providerName}.api_key`);
+    }
     const resolvedBaseUrl =
       protocol === 'anthropic' && rawBaseUrl !== undefined
         ? stripTrailingV1(rawBaseUrl)
@@ -460,22 +480,33 @@ export class ModelCatalog extends Disposable implements IModelCatalog {
   private buildCredentialProvider(
     providerName: string,
     auth: ResolvedModelAuthMaterial,
+    providerType: string | undefined,
+    keyField: string,
   ): LlmCredentialProvider {
     if (auth.apiKey !== undefined) {
-      return createStaticCredentialProvider(auth.apiKey);
+      return createStaticCredentialProvider(
+        assertProviderApiKey(providerType, auth.apiKey, keyField),
+      );
     }
     if (auth.apiKeyEnv !== undefined) {
       const envName = auth.apiKeyEnv;
       return {
         resolve: () => {
-          const apiKey = nonEmpty(process.env[envName]);
+          const raw = process.env[envName];
+          const apiKey = nonEmpty(raw);
           if (apiKey === undefined) {
             throw new Error2(
               CONFIG_INVALID_ERROR_CODE,
               apiKeyEnvMissingMessage(providerName, envName),
             );
           }
-          return { apiKey };
+          return {
+            apiKey: assertProviderApiKey(
+              providerType,
+              raw === undefined ? apiKey : raw,
+              `${keyField} (${envName})`,
+            ),
+          };
         },
       };
     }

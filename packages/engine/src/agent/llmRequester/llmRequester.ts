@@ -9,6 +9,7 @@ import type { IActiveSkillGrant } from '#/features/skill/enforcement';
 import type { IAgentWorldStateProvider } from '#/agent/contextProjector/worldStateProvider';
 import type { LLMRequestTrace } from '#/llm-adapter/contract/request-trace';
 import type { ModelRequestTiming } from '#/llm-adapter/model/model-requester';
+import type { QuotaCircuitSnapshot } from '#/agent/usage/quotaCircuit';
 import type { LogContext } from '@hilbras/omnicode-base/log/log';
 
 export type AgentLLMRequestLogFields = Readonly<LogContext>;
@@ -85,6 +86,9 @@ export interface IAgentLLMRequesterService {
 
   /** Binds the world-state provider that contributes the per-turn section. */
   setWorldStateProvider?(provider: IAgentWorldStateProvider | undefined): void;
+
+  /** Provider quota-circuit snapshots for honest status surfaces. */
+  providerQuotaStates?(): readonly QuotaCircuitSnapshot[];
 }
 
 export const IAgentLLMRequesterService = createDecorator<IAgentLLMRequesterService>(
