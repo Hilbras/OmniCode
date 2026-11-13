@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 
 import { applyPatch, type PatchFileAdapter } from '#/patch/applyPatch';
 import { PatchJournal, recoverPatchJournals } from '#/patch/patchJournal';
+import { rootedPatchPathMapper } from '#/patch/patchPath';
 
 const tempDirs: string[] = [];
 
@@ -125,5 +126,40 @@ describe('patch journal', () => {
     ].join('\n');
     await expect(applyPatch(patch, adapter)).rejects.toThrow(/missing\.txt/);
     await expect(recoverPatchJournals(root)).resolves.toEqual([]);
+  });
+
+  it('journals backend-resolved paths under a non-identity mapper so restore lands on the real files', async () => {
+    const root = await makeRoot();
+    const kept = join(root, 'journal-seam-a.txt');
+    const added = join(root, 'journal-seam-b.txt');
+    await writeFile(kept, 'one\n', 'utf8');
+
+    const adapter = nodeAdapter();
+    const failingDelete: PatchFileAdapter = {
+      ...adapter,
+      async deleteFile(path) {
+        if (path === kept) throw new Error('disk full');
+        await adapter.deleteFile(path);
+      },
+    };
+    const journal = await PatchJournal.open(root, 'mapper-1');
+    const patch = [
+      '*** Begin Patch',
+      '*** Add File: journal-seam-b.txt',
+      '+hello',
+      '*** Delete File: journal-seam-a.txt',
+      '*** End Patch',
+    ].join('\n');
+
+    await expect(
+      applyPatch(patch, failingDelete, { journal, paths: rootedPatchPathMapper(root) }),
+    ).rejects.toMatchObject({ code: 'verify-failed' });
+
+    expect(await readFile(kept, 'utf8')).toBe('one\n');
+    expect(await exists(added)).toBe(false);
+    expect(await exists(journal.dir)).toBe(false);
+    await expect(recoverPatchJournals(root)).resolves.toEqual([]);
+    expect(await exists(join(process.cwd(), 'journal-seam-a.txt'))).toBe(false);
+    expect(await exists(join(process.cwd(), 'journal-seam-b.txt'))).toBe(false);
   });
 });

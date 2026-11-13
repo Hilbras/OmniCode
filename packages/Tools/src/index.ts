@@ -67,5 +67,8 @@ import '#/features/notify/tools/notify-user/notifyUserTool';
 import '#/features/skill/tools/skillTool';
 
 export * from './patch/applyPatch';
+export * from './patch/patchOperations';
+export * from './patch/patchPath';
+export * from './patch/patchStream';
 
 export * from './patch/patchTool';

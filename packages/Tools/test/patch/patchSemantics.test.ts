@@ -7,6 +7,7 @@ import {
   patchOperationPaths,
   type PatchFileAdapter,
 } from '#/patch/applyPatch';
+import { rootedPatchPathMapper } from '#/patch/patchPath';
 
 class MemoryFs implements PatchFileAdapter {
   readonly files = new Map<string, string>();
@@ -134,5 +135,36 @@ describe('patchOperationPaths', () => {
       ),
     );
     expect(operations.flatMap(patchOperationPaths)).toEqual(['a.txt', 'b.txt']);
+  });
+});
+
+describe('patch path seam', () => {
+  it('applies patch paths through a remote root while reporting patch paths', async () => {
+    const fs = new MemoryFs();
+    fs.files.set('/remote/ws/a.txt', 'one\n');
+    const result = await applyPatch(begin('*** Update File: a.txt', '@@', '-one', '+1'), fs, {
+      paths: rootedPatchPathMapper('/remote/ws'),
+    });
+    expect(result.changedFiles).toEqual(['a.txt']);
+    expect(fs.files.get('/remote/ws/a.txt')).toBe('1\n');
+    expect(fs.files.has('a.txt')).toBe(false);
+  });
+
+  it('resolves move destinations through the same mapper', async () => {
+    const fs = new MemoryFs();
+    fs.files.set('/remote/ws/a.txt', 'a\n');
+    const result = await applyPatch(begin('*** Update File: a.txt', '*** Move to: d/b.txt'), fs, {
+      paths: rootedPatchPathMapper('/remote/ws'),
+    });
+    expect(result.changedFiles).toEqual(['a.txt', 'd/b.txt']);
+    expect(fs.files.get('/remote/ws/d/b.txt')).toBe('a\n');
+    expect(fs.files.has('/remote/ws/a.txt')).toBe(false);
+  });
+
+  it('refuses absolute paths and traversal out of the root', () => {
+    const mapper = rootedPatchPathMapper('/remote/ws');
+    expect(() => mapper.toBackend('/etc/passwd')).toThrow('relative to the patch root');
+    expect(() => mapper.toBackend('../outside.txt')).toThrow('escapes the patch root');
+    expect(mapper.toBackend('nested/file.txt')).toBe('/remote/ws/nested/file.txt');
   });
 });

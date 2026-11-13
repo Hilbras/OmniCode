@@ -1,0 +1,43 @@
+import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
+
+export type TurnDiffStatus = 'added' | 'modified' | 'deleted';
+
+export interface TurnDiffFile {
+  readonly path: string;
+  readonly status: TurnDiffStatus;
+  readonly additions: number;
+  readonly deletions: number;
+  readonly binary?: boolean;
+  readonly oversize?: boolean;
+}
+
+export interface TurnDiffSnapshot {
+  readonly turnId: number;
+  readonly state: 'open' | 'closed';
+  readonly files: readonly TurnDiffFile[];
+  readonly additions: number;
+  readonly deletions: number;
+}
+
+/**
+ * Per-turn file deltas, accumulated from the tool accesses that actually
+ * wrote files and settled when the turn ends. The CLI `/diff` command is the
+ * intended consumer: it reads a snapshot rather than re-deriving diffs.
+ */
+export interface IAgentTurnDiffService {
+  readonly _serviceBrand: undefined;
+
+  /** Turn currently accumulating deltas, if any. */
+  activeTurn(): number | undefined;
+  /** Resolves once queued filesystem work for started events has drained. */
+  settled(): Promise<void>;
+  /** Deltas for one observed turn; undefined when the turn was never tracked. */
+  snapshot(turnId: number): Promise<TurnDiffSnapshot | undefined>;
+  /** Deltas for the most recently started turn. */
+  latest(): Promise<TurnDiffSnapshot | undefined>;
+  /** Closed turns, oldest first, bounded. */
+  turns(): Promise<readonly TurnDiffSnapshot[]>;
+}
+
+export const IAgentTurnDiffService: ServiceIdentifier<IAgentTurnDiffService> =
+  createDecorator<IAgentTurnDiffService>('agentTurnDiffService');

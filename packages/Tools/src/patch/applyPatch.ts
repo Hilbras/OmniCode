@@ -1,4 +1,15 @@
 import type { PatchJournal } from './patchJournal';
+import {
+  DuplicateTargetError,
+  patchOperationPaths,
+  type PatchHunk,
+  type PatchOperation,
+} from './patchOperations';
+import { PatchStreamParser } from './patchStream';
+import { identityPatchPathMapper, type PatchPathMapper } from './patchPath';
+
+export type { PatchHunk, PatchOperation } from './patchOperations';
+export { patchOperationPaths };
 
 export interface PatchFileAdapter {
   readFile(path: string): Promise<string | undefined>;
@@ -6,23 +17,6 @@ export interface PatchFileAdapter {
   deleteFile(path: string): Promise<void>;
   /** Optional: a copy primitive lets a move keep the source until verify passes. */
   moveFile?(from: string, to: string): Promise<void>;
-}
-
-export type PatchOperation =
-  | { readonly kind: 'add'; readonly path: string; readonly content: string }
-  | { readonly kind: 'delete'; readonly path: string }
-  | {
-      readonly kind: 'update';
-      readonly path: string;
-      readonly hunks: readonly PatchHunk[];
-      /** Destination when the update also moves the file. */
-      readonly move?: string;
-    }
-  | { readonly kind: 'move'; readonly from: string; readonly to: string };
-
-export interface PatchHunk {
-  readonly oldLines: readonly string[];
-  readonly newLines: readonly string[];
 }
 
 export interface PatchApplyResult {
@@ -58,102 +52,26 @@ export class PatchApplyError extends Error {
   }
 }
 
-/** Every path an operation reads or writes; used for resolution and approval rules. */
-export function patchOperationPaths(operation: PatchOperation): readonly string[] {
-  switch (operation.kind) {
-    case 'move':
-      return [operation.from, operation.to];
-    case 'update':
-      return operation.move === undefined ? [operation.path] : [operation.path, operation.move];
-    default:
-      return [operation.path];
-  }
+export function parsePatch(patch: string): readonly PatchOperation[] {
+  const parser = new PatchStreamParser();
+  parser.push(patch);
+  return parser.finish();
 }
 
-export function parsePatch(patch: string): readonly PatchOperation[] {
-  const lines = patch.replace(/\r\n/g, '\n').split('\n');
-  const operations: PatchOperation[] = [];
-  let index = 0;
-  if (lines[index]?.trim() !== '*** Begin Patch') throw new Error('patch must start with *** Begin Patch');
-  index += 1;
-  while (index < lines.length) {
-    const line = lines[index]!;
-    if (line.trim() === '*** End Patch') return assertUniqueTargets(operations);
-    if (line.startsWith('*** Add File: ')) {
-      const path = line.slice('*** Add File: '.length).trim();
-      const content: string[] = [];
-      index += 1;
-      while (index < lines.length && !lines[index]!.startsWith('***')) {
-        const next = lines[index]!;
-        if (!next.startsWith('+')) throw new Error(`add-file line must start with +: ${next}`);
-        content.push(next.slice(1));
-        index += 1;
-      }
-      operations.push({ kind: 'add', path, content: content.join('\n') + (content.length > 0 ? '\n' : '') });
-      continue;
-    }
-    if (line.startsWith('*** Move to: ')) {
-      // A `*** Move to:` line follows the update it belongs to; the parser sees
-      // it after the update body closed, so it is attached to the last update.
-      const previous = operations[operations.length - 1];
-      if (previous === undefined || previous.kind !== 'update') {
-        throw new Error('*** Move to must follow an update');
-      }
-      if (previous.move !== undefined) throw new Error(`duplicate *** Move to for ${previous.path}`);
-      const to = line.slice('*** Move to: '.length).trim();
-      if (to.length === 0) throw new Error('*** Move to needs a destination');
-      operations[operations.length - 1] = { ...previous, move: to };
-      index += 1;
-      continue;
-    }
-    if (line.startsWith('*** Delete File: ')) {
-      operations.push({ kind: 'delete', path: line.slice('*** Delete File: '.length).trim() });
-      index += 1;
-      continue;
-    }
-    if (line.startsWith('*** Update File: ')) {
-      const path = line.slice('*** Update File: '.length).trim();
-      const hunks: PatchHunk[] = [];
-      index += 1;
-      while (index < lines.length && !lines[index]!.startsWith('***')) {
-        if (lines[index]!.startsWith('@@')) {
-          index += 1;
-          const oldLines: string[] = [];
-          const newLines: string[] = [];
-          while (index < lines.length && !lines[index]!.startsWith('@@') && !lines[index]!.startsWith('***')) {
-            const hunkLine = lines[index]!;
-            if (hunkLine.startsWith(' ')) {
-              oldLines.push(hunkLine.slice(1));
-              newLines.push(hunkLine.slice(1));
-            } else if (hunkLine.startsWith('-')) {
-              oldLines.push(hunkLine.slice(1));
-            } else if (hunkLine.startsWith('+')) {
-              newLines.push(hunkLine.slice(1));
-            } else if (hunkLine.length === 0) {
-              oldLines.push('');
-              newLines.push('');
-            } else {
-              throw new Error(`invalid hunk line: ${hunkLine}`);
-            }
-            index += 1;
-          }
-          hunks.push({ oldLines, newLines });
-          continue;
-        }
-        index += 1;
-      }
-      operations.push({ kind: 'update', path, hunks });
-      continue;
-    }
-    index += 1;
-  }
-  throw new Error('patch is missing *** End Patch');
+export interface PatchApplyOptions {
+  readonly journal?: PatchJournal;
+  /**
+   * Path resolution seam. Without one, patch paths are used verbatim as
+   * backend paths (the in-memory and local adapters rely on that). A remote
+   * host supplies a mapper so the same patch text applies to its own tree.
+   */
+  readonly paths?: PatchPathMapper;
 }
 
 export async function applyPatch(
   patch: string,
   fs: PatchFileAdapter,
-  options: { readonly journal?: PatchJournal } = {},
+  options: PatchApplyOptions = {},
 ): Promise<PatchApplyResult> {
   let operations: readonly PatchOperation[];
   try {
@@ -167,6 +85,8 @@ export async function applyPatch(
     );
   }
 
+  const mapper = options.paths ?? identityPatchPathMapper;
+  const backend = (path: string): string => mapper.toBackend(path);
   const actions = planActions(operations);
   const backups = new Map<string, string | undefined>();
   const changed: string[] = [];
@@ -191,7 +111,7 @@ export async function applyPatch(
     const originals = new Map<string, string | undefined>();
     for (const action of actions) {
       for (const path of action.reads) {
-        if (!originals.has(path)) originals.set(path, await fs.readFile(path));
+        if (!originals.has(path)) originals.set(path, await fs.readFile(backend(path)));
       }
     }
     const planned = new Map<string, string>();
@@ -246,33 +166,34 @@ export async function applyPatch(
       for (const op of action.operations) {
         const touches = patchOperationPaths(op);
         for (const path of touches) {
-          if (!backups.has(path)) backups.set(path, await fs.readFile(path));
-          await options.journal?.record(path, backups.get(path));
+          const target = backend(path);
+          if (!backups.has(target)) backups.set(target, await fs.readFile(target));
+          await options.journal?.record(target, backups.get(target));
         }
         if (op.kind === 'add') {
-          await fs.writeFile(op.path, op.content);
+          await fs.writeFile(backend(op.path), op.content);
           added += 1;
           changed.push(op.path);
         } else if (op.kind === 'delete') {
-          await fs.deleteFile(op.path);
+          await fs.deleteFile(backend(op.path));
           deleted += 1;
           changed.push(op.path);
         } else if (op.kind === 'update') {
           const content = planned.get(op.path)!;
           if (op.move !== undefined) {
-            await fs.writeFile(op.move, content);
-            await fs.deleteFile(op.path);
+            await fs.writeFile(backend(op.move), content);
+            await fs.deleteFile(backend(op.path));
             moved += 1;
             changed.push(op.path, op.move);
           } else {
-            await fs.writeFile(op.path, content);
+            await fs.writeFile(backend(op.path), content);
             changed.push(op.path);
           }
           updated += 1;
         } else if (op.kind === 'move') {
           const content = planned.get(op.from) ?? originals.get(op.from)!;
-          await fs.writeFile(op.to, content);
-          await fs.deleteFile(op.from);
+          await fs.writeFile(backend(op.to), content);
+          await fs.deleteFile(backend(op.from));
           moved += 1;
           changed.push(op.from, op.to);
         }
@@ -285,7 +206,7 @@ export async function applyPatch(
         if (op.kind === 'add' || op.kind === 'update') {
           const expected = planned.get(op.path)!;
           const target = op.kind === 'update' && op.move !== undefined ? op.move : op.path;
-          const actual = await fs.readFile(target);
+          const actual = await fs.readFile(backend(target));
           if (actual !== expected) {
             throw new PatchApplyError('verify-failed', `verify failed after write: ${target}`, changed);
           }
@@ -328,25 +249,6 @@ function planActions(operations: readonly PatchOperation[]): readonly PlannedAct
 
 function splitLines(text: string): string[] {
   return text.replace(/\r\n/g, '\n').split('\n');
-}
-
-class DuplicateTargetError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'DuplicateTargetError';
-  }
-}
-
-/** One operation per final path: two operations on the same file is ambiguous. */
-function assertUniqueTargets(operations: readonly PatchOperation[]): readonly PatchOperation[] {
-  const seen = new Set<string>();
-  for (const operation of operations) {
-    for (const target of patchOperationPaths(operation)) {
-      if (seen.has(target)) throw new DuplicateTargetError(`patch targets ${target} more than once`);
-      seen.add(target);
-    }
-  }
-  return operations;
 }
 
 function applyHunk(lines: readonly string[], hunk: PatchHunk, path: string): string[] {

@@ -22,6 +22,7 @@ import {
   type PatchOperation,
 } from './applyPatch';
 import { PatchJournal, recoverPatchJournals } from './patchJournal';
+import { createPatchPathMapper } from './patchPath';
 
 export const APPLY_PATCH_DESCRIPTION = 'Apply an atomic multi-file patch. Supports Add File, Update File, and Delete File with exact hunks. All files roll back if any operation fails.';
 
@@ -89,9 +90,14 @@ export class ApplyPatchTool implements IApplyPatchTool {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {
             return { isError: true, output: 'Runtime changed before execution. Retry the tool call.' };
           }
-          const adapter = createAdapter(lease.runtime.fs!, safePaths, args.dryRun === true);
+          const adapter = createAdapter(lease.runtime.fs!, args.dryRun === true);
+          const paths = createPatchPathMapper((path) => {
+            const safe = safePaths.get(path);
+            if (safe === undefined) throw new Error(`patch path was not resolved: ${path}`);
+            return safe;
+          });
           if (args.dryRun === true) {
-            const validated = await applyPatch(args.patch, adapter);
+            const validated = await applyPatch(args.patch, adapter, { paths });
             return {
               isError: false,
               output: `Validated patch: ${validated.changedFiles.join(', ')} (added ${String(validated.added)}, updated ${String(validated.updated)}, deleted ${String(validated.deleted)})`,
@@ -100,7 +106,7 @@ export class ApplyPatchTool implements IApplyPatchTool {
           return await withWorkspaceWriteLock(view.workDir, async () => {
             const recovered = await recoverPatchJournals(view.workDir);
             const journal = await PatchJournal.open(view.workDir);
-            const result = await applyPatch(args.patch, adapter, { journal });
+            const result = await applyPatch(args.patch, adapter, { journal, paths });
             const recovery =
               recovered.length === 0
                 ? ''
@@ -130,15 +136,13 @@ export class ApplyPatchTool implements IApplyPatchTool {
   }
 }
 
-function createAdapter(fs: IHostFileSystem, safePaths: ReadonlyMap<string, string>, dryRun: boolean): PatchFileAdapter {
+function createAdapter(fs: IHostFileSystem, dryRun: boolean): PatchFileAdapter {
   const virtual = new Map<string, string | undefined>();
   return {
     async readFile(path) {
-      const safe = safePaths.get(path);
-      if (safe === undefined) throw new Error(`patch path was not resolved: ${path}`);
-      if (virtual.has(safe)) return virtual.get(safe);
+      if (virtual.has(path)) return virtual.get(path);
       try {
-        return await fs.readText(safe);
+        return await fs.readText(path);
       } catch (error) {
         const code = (error as { code?: unknown }).code;
         if (code === 'ENOENT') return undefined;
@@ -146,23 +150,19 @@ function createAdapter(fs: IHostFileSystem, safePaths: ReadonlyMap<string, strin
       }
     },
     async writeFile(path, content) {
-      const safe = safePaths.get(path);
-      if (safe === undefined) throw new Error(`patch path was not resolved: ${path}`);
       if (dryRun) {
-        virtual.set(safe, content);
+        virtual.set(path, content);
         return;
       }
-      await fs.mkdir(dirname(safe), { recursive: true });
-      await fs.writeText(safe, content);
+      await fs.mkdir(dirname(path), { recursive: true });
+      await fs.writeText(path, content);
     },
     async deleteFile(path) {
-      const safe = safePaths.get(path);
-      if (safe === undefined) throw new Error(`patch path was not resolved: ${path}`);
       if (dryRun) {
-        virtual.set(safe, undefined);
+        virtual.set(path, undefined);
         return;
       }
-      await fs.remove(safe);
+      await fs.remove(path);
     },
   };
 }
