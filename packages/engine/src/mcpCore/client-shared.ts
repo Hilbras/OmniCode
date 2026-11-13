@@ -8,6 +8,7 @@ import {
 import { getCoreVersion } from '@hilbras/omnicode-base/version';
 
 import type { MCPClient, MCPToolDefinition, MCPToolResult } from './types';
+import { McpUnsupportedError } from './resourceSurface';
 
 export const OMNICODE_MCP_CLIENT_NAME = 'omnicode';
 export const OMNICODE_MCP_CLIENT_VERSION = getCoreVersion();
@@ -91,6 +92,28 @@ export function toMcpToolDefinition(tool: SdkListedTool): MCPToolDefinition {
     inputSchema: tool.inputSchema,
     ...(tool.annotations === undefined ? {} : { annotations: tool.annotations }),
   };
+}
+
+const MCP_SDK_CAPABILITY_ERROR_PREFIX = 'Server does not support ';
+
+/**
+ * Servers that lack a resources/prompts capability answer the request with
+ * JSON-RPC "Method not found", and the SDK also refuses such calls locally
+ * with a plain Error under strict capability enforcement. Map both to the
+ * typed McpUnsupportedError so callers get one unsupported shape for "this
+ * server cannot answer this operation", not a generic failure.
+ */
+export function toMcpUnsupportedError(
+  error: unknown,
+  operation: McpUnsupportedError['operation'],
+): unknown {
+  if (error instanceof McpError && error.code === ErrorCode.MethodNotFound) {
+    return new McpUnsupportedError(operation);
+  }
+  if (error instanceof Error && error.message.startsWith(MCP_SDK_CAPABILITY_ERROR_PREFIX)) {
+    return new McpUnsupportedError(operation);
+  }
+  return error;
 }
 
 export function toMcpToolResult(result: unknown): MCPToolResult {

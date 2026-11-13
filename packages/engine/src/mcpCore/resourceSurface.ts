@@ -228,3 +228,32 @@ export function admitElicitation(
   }
   return { admitted: true };
 }
+
+export type SamplingRequest = {
+  readonly messages: readonly { readonly role: 'user' | 'assistant'; readonly text: string }[];
+  readonly systemPrompt?: string;
+  readonly maxTokens?: number;
+};
+
+export interface SamplingPolicy {
+  /** Off unless the operator opts in; it lets a server spend model quota. */
+  readonly enabled: boolean;
+  /** Only these servers may request sampling. Empty means none. */
+  readonly allowedServers: readonly string[];
+}
+
+/** Server-initiated sampling is denied unless explicitly enabled and allowlisted. */
+export function admitSampling(
+  policy: SamplingPolicy,
+  serverName: string,
+  request: SamplingRequest,
+): { readonly admitted: true } | { readonly admitted: false; readonly reason: string } {
+  if (!policy.enabled) return { admitted: false, reason: 'sampling disabled' };
+  if (!policy.allowedServers.includes(serverName)) {
+    return { admitted: false, reason: `server ${serverName} is not allowed to sample` };
+  }
+  if (request.messages.length === 0) {
+    return { admitted: false, reason: 'sampling request has no messages' };
+  }
+  return { admitted: true };
+}

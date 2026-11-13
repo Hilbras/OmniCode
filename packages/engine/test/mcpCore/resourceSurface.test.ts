@@ -4,6 +4,7 @@ import {
   McpResourceSurface,
   McpUnsupportedError,
   admitElicitation,
+  admitSampling,
   capabilityProjection,
   type McpResourceTransport,
 } from '#/mcpCore/resourceSurface';
@@ -103,6 +104,30 @@ describe('admitElicitation', () => {
   it('rejects an empty message', () => {
     expect(
       admitElicitation({ enabled: true, allowedServers: ['s'] }, 's', { message: '', schema: {} }),
+    ).toMatchObject({ admitted: false });
+  });
+});
+
+describe('admitSampling', () => {
+  const request = { messages: [{ role: 'user' as const, text: 'summarize this' }] };
+
+  it('denies unless enabled and allowlisted', () => {
+    expect(admitSampling({ enabled: false, allowedServers: ['s'] }, 's', request)).toEqual({
+      admitted: false,
+      reason: 'sampling disabled',
+    });
+    expect(admitSampling({ enabled: true, allowedServers: [] }, 's', request)).toEqual({
+      admitted: false,
+      reason: 'server s is not allowed to sample',
+    });
+    expect(admitSampling({ enabled: true, allowedServers: ['s'] }, 's', request)).toEqual({
+      admitted: true,
+    });
+  });
+
+  it('rejects a request with no messages', () => {
+    expect(
+      admitSampling({ enabled: true, allowedServers: ['s'] }, 's', { messages: [] }),
     ).toMatchObject({ admitted: false });
   });
 });

@@ -7,6 +7,7 @@ import { abortable } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentLoopService } from '#/agent/loop/loop';
 import { createMcpAuthTool } from '#/agent/mcp/tools/auth';
 import { createMcpTool } from '#/agent/mcp/tools/mcp';
+import { createMcpPromptsTool, createMcpResourcesTool } from '#/agent/mcp/tools/surface';
 import { ISessionMediaStore } from '#/agent/media/sessionMediaStore';
 import { IAgentProfileService } from '#/agent/profile/profile';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
@@ -17,11 +18,13 @@ import { LifecycleScope } from '#/app/scopes';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { ErrorCodes, makeErrorPayload } from '#/errors';
 import type { McpServerEntry } from '#/mcpCore/connection-manager';
+import { capabilityProjection } from '#/mcpCore/resourceSurface';
 import { qualifyMcpToolName } from '#/mcpCore/tool-naming';
 import type { MCPClient, MCPToolDefinition } from '#/mcpCore/types';
 import { ISessionMcpHandle } from '#/session/mcp/sessionMcpHandle';
 import { IEventDispatcher } from '#/state/eventDispatcher';
 import { defineState } from '#/state/state';
+import type { ExecutableTool } from '#/tool/toolContract';
 import type { ToolDescription as KosongTool } from '#human/llm/message';
 
 import { IAgentMcpService } from './mcp';
@@ -316,8 +319,58 @@ export class AgentMcpService extends Service implements IAgentMcpService {
       this.mcpTools.set(qualified, { disposable, serverName });
       qualifiedNames.push(qualified);
     }
+    this.registerMcpSurfaceTools(serverName, client, deferred, qualifiedNames);
     this.mcpToolsByServer.set(serverName, qualifiedNames);
     return { registered: qualifiedNames, collisions };
+  }
+
+  /**
+   * Exposes a server's resources/prompts capabilities as synthetic tools next
+   * to its own tools. Registered only for advertised capabilities, and a
+   * server-authored tool with the same qualified name wins over the synthetic
+   * one.
+   */
+  private registerMcpSurfaceTools(
+    serverName: string,
+    client: MCPClient,
+    deferred: boolean,
+    qualifiedNames: string[],
+  ): void {
+    const projection = capabilityProjection(serverName, client.advertisedCapabilities?.() ?? []);
+    const surfaceClient = (): MCPClient | undefined => this.resolved(serverName)?.client;
+    if (projection.capabilities.includes('resources')) {
+      this.registerSurfaceTool(
+        createMcpResourcesTool({ serverName, client: surfaceClient }),
+        serverName,
+        deferred,
+        qualifiedNames,
+      );
+    }
+    if (projection.capabilities.includes('prompts')) {
+      this.registerSurfaceTool(
+        createMcpPromptsTool({ serverName, client: surfaceClient }),
+        serverName,
+        deferred,
+        qualifiedNames,
+      );
+    }
+  }
+
+  private registerSurfaceTool(
+    tool: ExecutableTool,
+    serverName: string,
+    deferred: boolean,
+    qualifiedNames: string[],
+  ): void {
+    if (this.mcpTools.has(tool.name)) return;
+    const disposable = this._register(
+      this.registry.register(tool, {
+        source: 'mcp',
+        disclosure: deferred ? 'deferred' : 'inline',
+      }),
+    );
+    this.mcpTools.set(tool.name, { disposable, serverName });
+    qualifiedNames.push(tool.name);
   }
 
   private unregisterMcpServer(serverName: string): boolean {

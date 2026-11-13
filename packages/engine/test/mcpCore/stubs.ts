@@ -43,6 +43,10 @@ export const toolListChangedFixture = new URL(
   './fixtures/tool-list-changed-stdio-server.mjs',
   import.meta.url,
 ).pathname;
+export const surfaceStdioFixture = new URL(
+  './fixtures/surface-stdio-server.mjs',
+  import.meta.url,
+).pathname;
 
 export function createMemoryMcpOAuthStore(): McpOAuthStore {
   const data = new Map<string, unknown>();

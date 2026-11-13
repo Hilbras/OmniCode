@@ -355,6 +355,93 @@ describe('AgentMcpService', () => {
     );
   });
 
+  it('registers resources/prompts surface tools for servers that advertise the capabilities', async () => {
+    const manager = new FakeMcpManager();
+    const client: MCPClient = {
+      async listTools() {
+        return [];
+      },
+      async callTool() {
+        return { content: [], isError: false };
+      },
+      async ping() {},
+      advertisedCapabilities: () => ['tools', 'resources', 'prompts'],
+      async listResources() {
+        return { items: [{ uri: 'fixture://a', name: 'a' }] };
+      },
+      async listPrompts() {
+        return { items: [{ name: 'greet' }] };
+      },
+    };
+    manager.setResolved('s', client, []);
+    createService(manager);
+    manager.connect('s');
+
+    const names = ix
+      .get(IAgentToolRegistryService)
+      .list()
+      .filter((tool) => tool.source === 'mcp')
+      .map((tool) => tool.name);
+    expect(names).toEqual(['mcp__s__prompts', 'mcp__s__resources']);
+
+    const tool = ix.get(IAgentToolRegistryService).resolve('mcp__s__resources');
+    expect(tool).toBeDefined();
+    const result = await executeTool(tool!, {
+      turnId: 1,
+      toolCallId: 'surface',
+      args: { operation: 'list' },
+      signal: new AbortController().signal,
+    });
+    expect(result.isError).toBeUndefined();
+    expect(String(result.output)).toContain('fixture://a');
+  });
+
+  it('does not register surface tools when the client does not advertise capabilities', async () => {
+    const manager = new FakeMcpManager();
+    manager.setResolved('s', fakeMcpClient(), await discoverTools(fakeMcpClient()));
+    createService(manager);
+    manager.connect('s');
+
+    const names = ix
+      .get(IAgentToolRegistryService)
+      .list()
+      .filter((tool) => tool.source === 'mcp')
+      .map((tool) => tool.name);
+    expect(names).toEqual(['mcp__s__echo', 'mcp__s__noop']);
+  });
+
+  it('keeps a server-authored tool that already claims the surface tool name', async () => {
+    const manager = new FakeMcpManager();
+    const client: MCPClient = {
+      async listTools() {
+        return [
+          {
+            name: 'resources',
+            description: 'Server-authored resources tool',
+            inputSchema: { type: 'object' },
+          },
+        ];
+      },
+      async callTool() {
+        return { content: [], isError: false };
+      },
+      async ping() {},
+      advertisedCapabilities: () => ['resources'],
+    };
+    manager.setResolved('s', client, await discoverTools(client));
+    createService(manager);
+    manager.connect('s');
+
+    const tool = ix.get(IAgentToolRegistryService).resolve('mcp__s__resources');
+    expect(tool?.description).toBe('Server-authored resources tool');
+    const names = ix
+      .get(IAgentToolRegistryService)
+      .list()
+      .filter((info) => info.source === 'mcp')
+      .map((info) => info.name);
+    expect(names).toEqual(['mcp__s__resources']);
+  });
+
   it('connects registered MCP tools to the session attachment store', async () => {
     const home = await mkdtemp(join(tmpdir(), 'mcp-session-attachments-'));
     try {

@@ -1,7 +1,7 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { ReadBuffer, serializeMessage } from '@modelcontextprotocol/sdk/shared/stdio.js';
 import type { Transport } from '@modelcontextprotocol/sdk/shared/transport.js';
-import type { JSONRPCMessage } from '@modelcontextprotocol/sdk/types.js';
+import type { JSONRPCMessage, PromptMessage } from '@modelcontextprotocol/sdk/types.js';
 
 import { proxyEnvForChild, reconcileChildNoProxy } from '@hilbras/omnicode-base/utils/proxy';
 import { ErrorCodes, Error2 } from '#/errors';
@@ -16,12 +16,18 @@ import {
   MCP_LIVENESS_PROBE_TIMEOUT_MS,
   toMcpToolDefinition,
   toMcpToolResult,
+  toMcpUnsupportedError,
   type UnexpectedCloseListener,
   type UnexpectedCloseReason,
 } from './client-shared';
 import { resolveMcpCommand } from './command-policy';
 import type { McpServerStdioConfig } from './config-schema';
-import type { MCPClient, MCPToolDefinition, MCPToolResult } from './types';
+import type {
+  McpPage,
+  McpPromptDescriptor,
+  McpResourceDescriptor,
+} from './resourceSurface';
+import type { MCPClient, MCPResourceContents, MCPToolDefinition, MCPToolResult } from './types';
 
 export interface StdioMcpClientOptions {
   readonly clientName?: string;
@@ -121,6 +127,109 @@ export class StdioMcpClient implements MCPClient {
       buildRequestOptions(this.startupTimeoutMs, undefined),
     );
     return result.tools.map(toMcpToolDefinition);
+  }
+
+  async listResources(cursor?: string): Promise<McpPage<McpResourceDescriptor>> {
+    return this.surfaceCall('resources/list', async () => {
+      const result = await this.client.listResources(
+        cursor === undefined ? undefined : { cursor },
+        buildRequestOptions(this.toolCallTimeoutMs, undefined),
+      );
+      return {
+        items: result.resources.map((resource) => ({
+          uri: resource.uri,
+          name: resource.name,
+          ...(resource.description === undefined ? {} : { description: resource.description }),
+          ...(resource.mimeType === undefined ? {} : { mimeType: resource.mimeType }),
+        })),
+        ...(result.nextCursor === undefined ? {} : { nextCursor: result.nextCursor }),
+      };
+    });
+  }
+
+  async readResource(uri: string): Promise<readonly MCPResourceContents[]> {
+    return this.surfaceCall('resources/read', async () => {
+      const result = await this.client.readResource(
+        { uri },
+        buildRequestOptions(this.toolCallTimeoutMs, undefined),
+      );
+      return result.contents.map((content) =>
+        'text' in content
+          ? {
+              uri: content.uri,
+              ...(content.mimeType === undefined ? {} : { mimeType: content.mimeType }),
+              text: content.text,
+            }
+          : {
+              uri: content.uri,
+              ...(content.mimeType === undefined ? {} : { mimeType: content.mimeType }),
+              blob: content.blob,
+            },
+      );
+    });
+  }
+
+  async listPrompts(cursor?: string): Promise<McpPage<McpPromptDescriptor>> {
+    return this.surfaceCall('prompts/list', async () => {
+      const result = await this.client.listPrompts(
+        cursor === undefined ? undefined : { cursor },
+        buildRequestOptions(this.toolCallTimeoutMs, undefined),
+      );
+      return {
+        items: result.prompts.map((prompt) => ({
+          name: prompt.name,
+          ...(prompt.description === undefined ? {} : { description: prompt.description }),
+          ...(prompt.arguments === undefined
+            ? {}
+            : {
+                arguments: prompt.arguments.map((argument) => ({
+                  name: argument.name,
+                  ...(argument.required === undefined ? {} : { required: argument.required }),
+                })),
+              }),
+        })),
+        ...(result.nextCursor === undefined ? {} : { nextCursor: result.nextCursor }),
+      };
+    });
+  }
+
+  async getPrompt(
+    name: string,
+    args: Readonly<Record<string, string>>,
+  ): Promise<{
+    readonly messages: readonly { readonly role: 'user' | 'assistant'; readonly text: string }[];
+  }> {
+    return this.surfaceCall('prompts/get', async () => {
+      const result = await this.client.getPrompt(
+        { name, ...(Object.keys(args).length === 0 ? {} : { arguments: { ...args } }) },
+        buildRequestOptions(this.toolCallTimeoutMs, undefined),
+      );
+      return {
+        messages: result.messages.map((message) => ({
+          role: message.role,
+          text: promptMessageText(message.content),
+        })),
+      };
+    });
+  }
+
+  advertisedCapabilities(): readonly string[] {
+    const capabilities = this.client.getServerCapabilities();
+    if (capabilities === undefined) return [];
+    return Object.entries(capabilities)
+      .filter(([, value]) => value !== undefined)
+      .map(([name]) => name);
+  }
+
+  private async surfaceCall<T>(
+    operation: 'resources/list' | 'resources/read' | 'prompts/list' | 'prompts/get',
+    work: () => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await work();
+    } catch (error) {
+      throw toMcpUnsupportedError(error, operation);
+    }
   }
 
   async callTool(
@@ -319,6 +428,16 @@ class BoundedTail {
   snapshot(): string {
     return this.buffer;
   }
+}
+
+/**
+ * Prompt messages may carry image/audio/resource blocks; the surface seam only
+ * carries text, so anything else is reported as omitted instead of dropped
+ * silently.
+ */
+function promptMessageText(content: PromptMessage['content']): string {
+  if (content.type === 'text') return content.text;
+  return `[${content.type} content omitted]`;
 }
 
 const INHERITED_ENV_ALLOWLIST: ReadonlySet<string> = new Set([

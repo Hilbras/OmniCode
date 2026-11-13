@@ -8,6 +8,11 @@ import { describe, expect, it } from 'vitest';
 import { Error2 } from '#/errors';
 import { mergeStdioEnv, StdioMcpClient, type StdioMcpClientOptions } from '#/mcpCore/client-stdio';
 import { McpServerConfigSchema, type McpServerStdioConfig } from '#/mcpCore/config-schema';
+import {
+  McpResourceSurface,
+  McpUnsupportedError,
+  capabilityProjection,
+} from '#/mcpCore/resourceSurface';
 import { HostProcessService } from '#/os/backends/node-local/hostProcessService';
 import { FakeRuntime } from '#/runtime/fakeRuntime';
 
@@ -16,6 +21,7 @@ import {
   cwdStdioFixture,
   stderrThenExitFixture,
   stdioFixture,
+  surfaceStdioFixture,
 } from './stubs';
 
 function createClient(
@@ -387,6 +393,139 @@ describe('StdioMcpClient', () => {
     await client.close();
     await new Promise((r) => setTimeout(r, 100));
     expect(closes).toEqual([]);
+  }, 15000);
+});
+
+describe('StdioMcpClient resources/prompts surface', () => {
+  it('reports no capabilities before initialize', () => {
+    const client = createClient({
+      transport: 'stdio',
+      command: process.execPath,
+      args: [surfaceStdioFixture],
+    });
+    expect(client.advertisedCapabilities()).toEqual([]);
+  });
+
+  it('advertises server capabilities after initialize', async () => {
+    const client = createClient({
+      transport: 'stdio',
+      command: process.execPath,
+      args: [surfaceStdioFixture],
+    });
+    try {
+      await client.connect();
+      expect(client.advertisedCapabilities()).toContain('resources');
+      expect(client.advertisedCapabilities()).toContain('prompts');
+    } finally {
+      await client.close();
+    }
+  }, 15000);
+
+  it('lists resources across server pages by passing the cursor through', async () => {
+    const client = createClient({
+      transport: 'stdio',
+      command: process.execPath,
+      args: [surfaceStdioFixture],
+    });
+    try {
+      await client.connect();
+      const page1 = await client.listResources();
+      expect(page1.items.map((resource) => resource.uri)).toEqual([
+        'fixture://alpha',
+        'fixture://beta',
+      ]);
+      expect(page1.items[0]?.description).toBe('First page resource');
+      expect(page1.items[0]?.mimeType).toBe('text/plain');
+      expect(page1.nextCursor).toBe('page-2');
+      const page2 = await client.listResources(page1.nextCursor);
+      expect(page2.items.map((resource) => resource.uri)).toEqual(['fixture://huge']);
+      expect(page2.nextCursor).toBeUndefined();
+    } finally {
+      await client.close();
+    }
+  }, 15000);
+
+  it('returns text and blob resource contents without decoding blobs', async () => {
+    const client = createClient({
+      transport: 'stdio',
+      command: process.execPath,
+      args: [surfaceStdioFixture],
+    });
+    try {
+      await client.connect();
+      const text = await client.readResource('fixture://alpha');
+      expect(text).toEqual([
+        { uri: 'fixture://alpha', mimeType: 'text/plain', text: 'body of fixture://alpha' },
+      ]);
+      const binary = await client.readResource('fixture://binary');
+      expect(binary[0]?.blob).toBe(Buffer.from([0, 1, 2, 3]).toString('base64'));
+      expect(binary[0]?.text).toBeUndefined();
+    } finally {
+      await client.close();
+    }
+  }, 15000);
+
+  it('gets a prompt and reports non-text message content as omitted', async () => {
+    const client = createClient({
+      transport: 'stdio',
+      command: process.execPath,
+      args: [surfaceStdioFixture],
+    });
+    try {
+      await client.connect();
+      const result = await client.getPrompt('greet', { who: 'mcp' });
+      expect(result.messages).toEqual([
+        { role: 'user', text: 'Hello mcp' },
+        { role: 'assistant', text: '[image content omitted]' },
+      ]);
+    } finally {
+      await client.close();
+    }
+  }, 15000);
+
+  it('caps pages and bodies when the client is wrapped in McpResourceSurface', async () => {
+    const client = createClient({
+      transport: 'stdio',
+      command: process.execPath,
+      args: [surfaceStdioFixture],
+    });
+    try {
+      await client.connect();
+      const surface = new McpResourceSurface(
+        capabilityProjection('surface', client.advertisedCapabilities()),
+        client,
+        { maxPageSize: 1, maxResourceChars: 5 },
+      );
+      const page = await surface.listResources();
+      expect(page.items).toHaveLength(1);
+      expect(page.nextCursor).toBe('page-2');
+      const contents = await surface.readResource('fixture://huge');
+      expect(contents[0]?.text).toBe('xxxxx');
+      expect(contents[0]?.truncated).toBe(true);
+      const labelled = surface.labelResource(contents[0]!);
+      expect(labelled).toContain('trust="untrusted"');
+    } finally {
+      await client.close();
+    }
+  }, 15000);
+
+  it('maps a server without resources/prompts capabilities to McpUnsupportedError', async () => {
+    const client = createClient({
+      transport: 'stdio',
+      command: process.execPath,
+      args: [stdioFixture],
+    });
+    try {
+      await client.connect();
+      await expect(client.listResources()).rejects.toBeInstanceOf(McpUnsupportedError);
+      await expect(client.readResource('fixture://alpha')).rejects.toBeInstanceOf(
+        McpUnsupportedError,
+      );
+      await expect(client.listPrompts()).rejects.toBeInstanceOf(McpUnsupportedError);
+      await expect(client.getPrompt('greet', {})).rejects.toBeInstanceOf(McpUnsupportedError);
+    } finally {
+      await client.close();
+    }
   }, 15000);
 });
 
