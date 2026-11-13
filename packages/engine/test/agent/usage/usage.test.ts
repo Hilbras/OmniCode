@@ -8,6 +8,8 @@ import { IAgentScopeContext, makeAgentScopeContext } from '#/agent/scopeContext/
 import { IAgentStateService } from '#/agent/state/agentState';
 import { AgentStateService } from '#/agent/state/agentStateService';
 import { AgentCacheProbeService } from '#/agent/usage/cacheProbeService';
+import { AgentCostGateService } from '#/agent/usage/costGateService';
+import { AgentCostLedgerService } from '#/agent/usage/costLedgerService';
 import {
   type UsageRecordedContext,
   type UsageStatus,
@@ -15,6 +17,7 @@ import {
 import { ISessionUsageService } from '#/session/usage/sessionUsage';
 import { SessionUsageService } from '#/session/usage/sessionUsageService';
 import type { Event2 } from '#/app/event/event2';
+import type { IConfigService } from '#/app/config/config';
 import { IEventBus } from '#/app/event/eventBus';
 import { EventBusService } from '#/app/event/eventBusService';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
@@ -399,5 +402,118 @@ describe('AgentCacheProbeService', () => {
       input_cache_creation: 400,
       output_tokens: 200,
     });
+  });
+});
+
+describe('AgentCostLedgerService', () => {
+  const PRICED_CONFIG = {
+    costLimits: { modelPrices: { 'model-a': { inputPerMillionUsd: 1, outputPerMillionUsd: 10 } } },
+  };
+
+  function gateWith(config: Record<string, unknown>): AgentCostGateService {
+    const configService = { get: (domain: string) => config[domain] } as unknown as IConfigService;
+    return new AgentCostGateService(configService);
+  }
+
+  function createLedger(config: Record<string, unknown> = PRICED_CONFIG): AgentCostLedgerService {
+    return disposables.add(
+      new AgentCostLedgerService(svc, ix.get(IAgentScopeContext), gateWith(config)),
+    );
+  }
+
+  it('accumulates turn spend and derives the session total from persisted usage', async () => {
+    const ledger = createLedger();
+    await svc.record(agent, 'model-a', a1, { type: 'turn', turnId: 1 });
+    await svc.record(agent, 'model-a', a2, { type: 'turn', turnId: 1 });
+
+    const status = ledger.status();
+    expect(status.unknownPricing).toBe(false);
+    expect(status.liveRecords).toBe(2);
+    expect(status.spentUsd).toBeCloseTo(0.000308, 9);
+    expect(status.turns['1']).toBeCloseTo(0.000308, 9);
+    expect(status.currentTurn).toEqual({ turnId: 1, spentUsd: status.turns['1'] });
+    expect(status.goals).toEqual({});
+  });
+
+  it('reports session spend for usage recorded before the ledger existed', async () => {
+    await svc.record(agent, 'model-a', a1);
+    await svc.record(agent, 'model-a', a2, { type: 'turn', turnId: 1 });
+
+    const ledger = createLedger();
+
+    const status = ledger.status();
+    expect(status.spentUsd).toBeCloseTo(0.000308, 9);
+    expect(status.liveRecords).toBe(0);
+    expect(status.turns).toEqual({});
+  });
+
+  it('keeps per-goal spend across attribution before, between, and after records', async () => {
+    const ledger = createLedger();
+    ledger.attributeGoalTurn('goal-1', 1);
+    await svc.record(agent, 'model-a', a1, { type: 'turn', turnId: 1 });
+    await svc.record(agent, 'model-a', a2, { type: 'turn', turnId: 2 });
+    ledger.attributeGoalTurn('goal-2', 2);
+
+    const status = ledger.status();
+    expect(status.goals['goal-1']).toBeCloseTo(0.000028, 9);
+    expect(status.goals['goal-2']).toBeCloseTo(0.00028, 9);
+  });
+
+  it('moves a turn to a newly attributed goal without double counting', async () => {
+    const ledger = createLedger();
+    ledger.attributeGoalTurn('goal-1', 1);
+    await svc.record(agent, 'model-a', a1, { type: 'turn', turnId: 1 });
+    ledger.attributeGoalTurn('goal-1', 1);
+    ledger.attributeGoalTurn('goal-3', 1);
+
+    const status = ledger.status();
+    expect(status.goals['goal-1']).toBeUndefined();
+    expect(status.goals['goal-3']).toBeCloseTo(0.000028, 9);
+  });
+
+  it('flags unknown pricing without dropping priced models from the totals', async () => {
+    const ledger = createLedger();
+    await svc.record(agent, 'model-a', a1, { type: 'turn', turnId: 1 });
+    await svc.record(agent, 'model-b', b1, { type: 'turn', turnId: 1 });
+
+    const status = ledger.status();
+    expect(status.unknownPricing).toBe(true);
+    expect(status.spentUsd).toBeCloseTo(0.000028, 9);
+    expect(status.turns['1']).toBeCloseTo(0.000028, 9);
+  });
+
+  it('lists an unpriced-only turn as zero spend in both the turn map and the current turn', async () => {
+    const ledger = createLedger();
+    await svc.record(agent, 'model-b', b1, { type: 'turn', turnId: 4 });
+
+    const status = ledger.status();
+    expect(status.unknownPricing).toBe(true);
+    expect(status.spentUsd).toBe(0);
+    expect(status.turns['4']).toBe(0);
+    expect(status.currentTurn).toEqual({ turnId: 4, spentUsd: 0 });
+  });
+
+  it('reports no spend and no unknown pricing before any usage is recorded', () => {
+    const ledger = createLedger();
+
+    expect(ledger.status()).toEqual({
+      spentUsd: 0,
+      unknownPricing: false,
+      liveRecords: 0,
+      currentTurn: undefined,
+      turns: {},
+      goals: {},
+    });
+  });
+
+  it('excludes session-scoped records from turn and goal breakdowns', async () => {
+    const ledger = createLedger();
+    await svc.record(agent, 'model-a', a1);
+
+    const status = ledger.status();
+    expect(status.spentUsd).toBeCloseTo(0.000028, 9);
+    expect(status.liveRecords).toBe(1);
+    expect(status.turns).toEqual({});
+    expect(status.currentTurn).toBeUndefined();
   });
 });

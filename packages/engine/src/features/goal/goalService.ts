@@ -35,6 +35,7 @@ import type { BeforeToolExecuteEvent } from '#/agent/toolExecutor/toolHooks';
 import { IAgentToolPolicyService } from '#/agent/toolPolicy/toolPolicy';
 import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { WAIT_FOR_FLAG_ID } from '#/agent/tools/task/task-wait/flag';
+import { IAgentCostLedgerService } from '#/agent/usage/costLedgerService';
 import { type UsageRecordedContext } from '#/agent/usage/usage';
 import { IConfigService } from '#/app/config/config';
 import { IEventBus } from '#/app/event/eventBus';
@@ -498,6 +499,10 @@ function incrementGoalTurn(context: GoalOperationContext, goalId?: string): Goal
   return toSnapshot(context, next);
 }
 
+function claimGoalTurn(context: GoalOperationContext, turnId: number, goalId: string): void {
+  context.runtime.get(IAgentCostLedgerService).attributeGoalTurn(goalId, turnId);
+}
+
 function handleTurnLaunched(context: GoalOperationContext, turnId: number, origin: TurnStarted['origin']): void {
   context.effects.liveTurnId = turnId;
   context.effects.goalTurnTargets.delete(turnId);
@@ -514,8 +519,10 @@ function handleTurnLaunched(context: GoalOperationContext, turnId: number, origi
       : undefined;
     if (continuationGoalId !== undefined && state?.goalId !== continuationGoalId) {
       context.effects.goalDrivenTurns.set(turnId, continuationGoalId);
+      claimGoalTurn(context, turnId, continuationGoalId);
     } else if (state?.status === 'active' && blockIfBudgetReached(context, state) === null) {
       context.effects.goalDrivenTurns.set(turnId, state.goalId);
+      claimGoalTurn(context, turnId, state.goalId);
     }
   }
   context.effects.pendingContinuationGoals.delete(turnId);
@@ -537,6 +544,7 @@ function adoptStarterTurn(context: GoalOperationContext, actor: GoalActor): void
   }
   if (goalId !== undefined) return;
   context.effects.goalDrivenTurns.set(turnId, state.goalId);
+  claimGoalTurn(context, turnId, state.goalId);
   context.effects.countedGoalTurns.add(turnId);
   context.effects.goalStarterTurns.add(turnId);
 }

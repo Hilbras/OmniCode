@@ -387,6 +387,8 @@ import '#/features/tower/towerFeature';
 export * from '#/agent/usage/usage';
 export * from '#/agent/usage/cacheProbe';
 export * from '#/agent/usage/cacheProbeService';
+export * from '#/agent/usage/costLedger';
+export * from '#/agent/usage/costLedgerService';
 export * from '#/session/usage/sessionUsage';
 export * from '#/session/usage/usageAgentModel';
 export * from '#/session/usage/sessionUsageService';

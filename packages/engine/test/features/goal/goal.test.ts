@@ -7,7 +7,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { IDisposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { isUserCancellation } from '@hilbras/omnicode-base/utils/abort';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
-import { USER_PROMPT_ORIGIN } from '#/agent/contextMemory/types';
+import { USER_PROMPT_ORIGIN, type PromptOrigin } from '#/agent/contextMemory/types';
 import {
   createMaxStepsExceededError,
   IAgentLoopService,
@@ -28,6 +28,12 @@ import {
 import type { ResolvedToolExecutionHookContext } from '#/agent/toolExecutor/toolHooks';
 import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { SubagentTask } from '#/agent/tools/agent/subagent-task';
+import {
+  AgentCostGateService,
+  IAgentCostGateService,
+} from '#/agent/usage/costGateService';
+import { IAgentCostLedgerService } from '#/agent/usage/costLedgerService';
+import type { IConfigService } from '#/app/config/config';
 import { IEventBus } from '#/app/event/eventBus';
 import { IFlagService } from '#/app/flag/flag';
 import { ErrorCodes, Error2, errorInfo, toOmnicodeErrorPayload } from '#/errors';
@@ -187,6 +193,11 @@ const zeroUsage: TokenUsage = {
   output: 0,
 };
 
+const GOAL_CONTINUATION_ORIGIN: PromptOrigin = {
+  kind: 'system_trigger',
+  name: 'goal_continuation',
+};
+
 function goalRecords(records: readonly WireRecord[]): readonly GoalRecord[] {
   return records.filter((record): record is GoalRecord => record.type.startsWith('goal.'));
 }
@@ -239,6 +250,16 @@ async function recordStepUsage(
 ): Promise<boolean> {
   await usageService.record('mock-model', usage, { type: 'turn', turnId: turn.id, step: 1 });
   return goals.getGoal().goal?.budget.overBudget === true;
+}
+
+function costLedgerGate(): IAgentCostGateService {
+  const configService = {
+    get: (domain: string) =>
+      domain === 'costLimits'
+        ? { modelPrices: { 'mock-model': { inputPerMillionUsd: 1, outputPerMillionUsd: 10 } } }
+        : undefined,
+  } as unknown as IConfigService;
+  return new AgentCostGateService(configService);
 }
 
 async function runTerminalUpdateGoalResult(
@@ -619,6 +640,120 @@ describe('AgentGoalService', () => {
       expect(JSON.stringify(telemetry)).not.toContain('private objective');
       expect(JSON.stringify(telemetry)).not.toContain('private pause reason');
       expect(JSON.stringify(telemetry)).not.toContain('private completion reason');
+    });
+  });
+
+  describe('AgentGoalService cost attribution', () => {
+    let ctx: TestAgentContext | undefined;
+    let goals: IAgentGoalService;
+    let loopService: StubLoop;
+    let usageService: TestAgentContext['usage'];
+    let eventBus: IEventBus;
+
+    beforeEach(async () => {
+      loopService = stubLoopWithHooks();
+      ctx = createTestAgent(
+        agentService(IAgentLoopService, loopService),
+        agentService(IAgentCostGateService, costLedgerGate()),
+        permissionModeServices('auto'),
+      );
+      goals = ctx.get(IAgentGoalService);
+      usageService = ctx.usage;
+      eventBus = ctx.get(IEventBus);
+      await ctx.restorePersisted();
+    });
+
+    afterEach(async () => {
+      await ctx?.dispose();
+    });
+
+    it('attributes recorded usage cost of a goal turn to the goal', async () => {
+      await goals.createGoal({ objective: 'work' });
+      const goalId = goals.getGoal().goal?.goalId;
+      const turn = makeTurn(71);
+      eventBus.publish(
+        new TurnStarted({ agentId: 'main', turnId: turn.id, origin: USER_PROMPT_ORIGIN }),
+      );
+      await loopService.hooks.onWillBeginStep.run({
+        turnId: turn.id,
+        step: 1,
+        firstStepOfTurn: true,
+        signal: turn.signal,
+      });
+      await recordStepUsage(usageService, goals, turn, {
+        ...zeroUsage,
+        inputOther: 1_000_000,
+        output: 500_000,
+      });
+
+      const status = ctx!.get(IAgentCostLedgerService).status();
+      expect(status.unknownPricing).toBe(false);
+      expect(status.turns[String(turn.id)]).toBeCloseTo(6, 6);
+      expect(goalId).toBeDefined();
+      expect(status.goals[goalId!]).toBeCloseTo(6, 6);
+    });
+
+    it('keeps spend of non-goal turns out of the goal breakdown', async () => {
+      const turn = makeTurn(72);
+      eventBus.publish(
+        new TurnStarted({ agentId: 'main', turnId: turn.id, origin: USER_PROMPT_ORIGIN }),
+      );
+      await usageService.record('mock-model', { ...zeroUsage, output: 1_000_000 }, {
+        type: 'turn',
+        turnId: turn.id,
+      });
+
+      const status = ctx!.get(IAgentCostLedgerService).status();
+      expect(status.goals).toEqual({});
+      expect(status.turns[String(turn.id)]).toBeCloseTo(10, 6);
+    });
+
+    it('attributes a turn adopted mid-flight when a goal is created during it', async () => {
+      const turn = makeTurn(73);
+      eventBus.publish(
+        new TurnStarted({ agentId: 'main', turnId: turn.id, origin: USER_PROMPT_ORIGIN }),
+      );
+      await goals.createGoal({ objective: 'adopted work' });
+      const goalId = goals.getGoal().goal?.goalId;
+
+      await usageService.record('mock-model', { ...zeroUsage, inputOther: 1_000_000 }, {
+        type: 'turn',
+        turnId: turn.id,
+      });
+
+      const status = ctx!.get(IAgentCostLedgerService).status();
+      expect(goalId).toBeDefined();
+      expect(status.goals[goalId!]).toBeCloseTo(1, 6);
+      expect(status.turns[String(turn.id)]).toBeCloseTo(1, 6);
+    });
+
+    it('attributes a continuation turn to the goal it was launched for after that goal completes', async () => {
+      const turn = makeTurn(74);
+      vi.spyOn(loopService, 'submit').mockReturnValue({ id: 'continuation' });
+      vi.spyOn(loopService, 'promptHandle').mockReturnValue({
+        launched: new Promise<StubTurn>(() => {}),
+        completion: new Promise(() => {}),
+      } as unknown as PromptHandle);
+
+      await goals.createGoal({ objective: 'original goal' });
+      const goalId = goals.getGoal().goal?.goalId;
+      await goals.markBlocked({ reason: 'waiting' });
+      await goals.resumeGoal({ continueIfBlocked: true });
+      await goals.markComplete({ reason: 'done' }, 'model');
+
+      eventBus.publish(
+        new TurnStarted({ agentId: 'main', turnId: turn.id, origin: GOAL_CONTINUATION_ORIGIN }),
+      );
+      await usageService.record('mock-model', { ...zeroUsage, output: 1_000_000 }, {
+        type: 'turn',
+        turnId: turn.id,
+      });
+
+      const status = ctx!.get(IAgentCostLedgerService).status();
+      expect(goals.getGoal().goal).toBeNull();
+      expect(goalId).toBeDefined();
+      expect(status.goals[goalId!]).toBeCloseTo(10, 6);
+      expect(status.turns[String(turn.id)]).toBeCloseTo(10, 6);
     });
   });
 
