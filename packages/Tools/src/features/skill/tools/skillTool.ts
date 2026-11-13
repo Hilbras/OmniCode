@@ -3,6 +3,10 @@ import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolReg
 import { randomUUID } from 'node:crypto';
 
 import type { SkillActivationOrigin } from '@hilbras/omnicode-engine/agent/contextMemory/types';
+import {
+  labelSkillContent,
+  skillTrust,
+} from '@hilbras/omnicode-engine/features/skill/enforcement';
 import { renderModelToolSkillPrompt } from '@hilbras/omnicode-engine/features/skill/prompt';
 import { IAgentSkillService } from '@hilbras/omnicode-engine/features/skill/skillService';
 import type { ExecutableToolResult, ToolDeliveryMessage, ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
@@ -105,7 +109,16 @@ export async function executeModelSkill(
     skillPath: skill.path,
     skillSource: skill.source,
   };
-  const skillContent = catalog.catalog.renderSkillPrompt(skill, skillArgs, { sessionId });
+  const skillContent = labelSkillContent(
+    {
+      skillName: skill.name,
+      source: skill.source,
+      path: skill.path,
+      trust: skillTrust(skill.source),
+      activatedAt: Date.now(),
+    },
+    catalog.catalog.renderSkillPrompt(skill, skillArgs, { sessionId }),
+  );
   const message: ToolDeliveryMessage = {
     role: 'user',
     content: [

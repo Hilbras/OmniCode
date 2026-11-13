@@ -1,10 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createControlledPromise } from '@antfu/utils';
 
+import type { ContextMessage } from '#/agent/contextMemory/types';
+import { IAgentProfileService } from '#/agent/profile/profile';
+import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { InMemorySkillCatalog } from '#/features/skill/catalog/registry';
 import { summarizeSkill } from '#/features/skill/catalog/types';
-import { IAgentSkillService } from '#/features/skill/skillService';
+import { AgentSkillService, IAgentSkillService } from '#/features/skill/skillService';
+import type { ContentPart } from '#human/llm/message';
 import type { LlmRequester } from '#human/llm/requester/requester';
+import type { ExecutableTool, ToolExecution } from '#/tool/toolContract';
 import {
   ISkillTool,
   MAX_SKILL_QUERY_DEPTH,
@@ -222,6 +227,47 @@ describe('SkillTool', () => {
     });
   });
 
+  it('arms the skill enforcer with the invoked skill grant', async () => {
+    skills.register(
+      stubSkill('scoped', {
+        source: 'project',
+        content: 'Use only Read.',
+        metadata: { allowedTools: ['Read'] },
+      }),
+    );
+
+    const result = await executeTool(makeTool(), toolContext({ skill: 'scoped' }));
+
+    expect(result.isError).toBeUndefined();
+    const skillService = ctx.get(IAgentSkillService) as AgentSkillService;
+    expect(skillService.enforcer.activeGrant()).toMatchObject({
+      skillName: 'scoped',
+      source: 'project',
+      allowedTools: ['Read'],
+    });
+    expect(skillService.enforcer.provenance()).toMatchObject({
+      skillName: 'scoped',
+      source: 'project',
+      trust: 'untrusted',
+    });
+    expect(skillService.allowedToolNames()).toEqual(['Read']);
+  });
+
+  it('wraps project skill content in the untrusted envelope on the model-tool path', async () => {
+    skills.register(stubSkill('proj-skill', { source: 'project', content: 'project body' }));
+
+    const result = await executeTool(makeTool(), toolContext({ skill: 'proj-skill' }));
+
+    const text = result.delivery?.message.content[0];
+    expect(text).toMatchObject({ type: 'text' });
+    expect(text).toMatchObject({
+      text: expect.stringContaining(
+        '<skill-content name="proj-skill" source="project" trust="untrusted">',
+      ),
+    });
+    expect(text).toMatchObject({ text: expect.stringContaining('project body') });
+  });
+
   it('honors initialQueryDepth as an alias for queryDepth', async () => {
     const nested = await executeTool(
       makeTool(2),
@@ -330,3 +376,94 @@ describe('AgentSkillService busy delivery (harness)', () => {
     expect(steer).toMatchObject({ origin: { kind: 'skill_activation', skillArgs: 'mission-1' } });
   });
 });
+
+describe('Implicit skill invocation enforcement (harness)', () => {
+  let ctx: TestAgentContext;
+
+  afterEach(async () => {
+    await ctx.dispose();
+  });
+
+  class ProbeTool implements ExecutableTool<Record<string, unknown>> {
+    readonly description = 'Probe tool.';
+    readonly parameters = { type: 'object', additionalProperties: false };
+    readonly calls: unknown[] = [];
+
+    constructor(readonly name: string) {}
+
+    resolveExecution(): ToolExecution {
+      return {
+        approvalRule: this.name,
+        execute: async () => {
+          this.calls.push({});
+          return { output: `${this.name} ran` };
+        },
+      };
+    }
+  }
+
+  function toolMessageText(history: readonly ContextMessage[], toolCallId: string): string {
+    const message = history.find((m) => m.role === 'tool' && m.toolCallId === toolCallId);
+    expect(message).toBeDefined();
+    return message!.content
+      .filter((part): part is Extract<ContentPart, { type: 'text' }> => part.type === 'text')
+      .map((part) => part.text)
+      .join('');
+  }
+
+  it('runs a real skill mid-turn and the executor refuses a tool the skill hides', async () => {
+    const catalog = new InMemorySkillCatalog();
+    catalog.register(
+      stubSkill('scoped', {
+        content: 'Use only Probe.',
+        source: 'project',
+        metadata: { allowedTools: ['Probe'] },
+      }),
+    );
+    ctx = createTestAgent(skillServices(catalog));
+    const registry = ctx.get(IAgentToolRegistryService);
+    const probe = new ProbeTool('Probe');
+    const hidden = new ProbeTool('Hidden');
+    registry.register(probe);
+    registry.register(hidden);
+    ctx.get(IAgentProfileService).update({ activeToolNames: ['Skill', 'Probe', 'Hidden'] });
+    ctx.rpc.setPermission({ mode: 'yolo' });
+
+    ctx.mockNextResponse(
+      { type: 'text', text: 'loading the skill' },
+      { type: 'function', id: 'call-skill-1', name: 'Skill', arguments: '{"skill":"scoped"}' },
+    );
+    ctx.mockNextResponse(
+      { type: 'text', text: 'reaching for the hidden tool' },
+      { type: 'function', id: 'call-hidden-1', name: 'Hidden', arguments: '{}' },
+    );
+    ctx.mockNextResponse(
+      { type: 'text', text: 'using the allowed tool' },
+      { type: 'function', id: 'call-probe-1', name: 'Probe', arguments: '{}' },
+    );
+    ctx.mockNextResponse({ type: 'text', text: 'done' });
+
+    await ctx.rpc.prompt({ input: [{ type: 'text', text: 'run the skill' }] });
+    await ctx.untilTurnEnd();
+
+    const inputs = ctx.llmInputs().inputs;
+    expect(inputs[0]!.tools.map((tool) => tool.name)).toContain('Hidden');
+    expect(inputs[1]!.tools.map((tool) => tool.name)).not.toContain('Hidden');
+    expect(inputs[1]!.tools.map((tool) => tool.name)).toContain('Probe');
+    expect(inputs[1]!.history.at(-1)).toMatchObject({
+      role: 'user',
+      content: [{ type: 'text', text: expect.stringContaining('skill-loaded') }],
+    });
+
+    const hiddenOutput = toolMessageText(ctx.context.get(), 'call-hidden-1');
+    expect(hiddenOutput).toContain('not permitted by the active skill');
+    expect(toolMessageText(ctx.context.get(), 'call-probe-1')).toBe('Probe ran');
+    expect(hidden.calls).toEqual([]);
+    expect(probe.calls).toHaveLength(1);
+
+    const skillService = ctx.get(IAgentSkillService) as AgentSkillService;
+    expect(skillService.enforcer.activeGrant()).toBeUndefined();
+    expect(skillService.allowedToolNames()).toBeUndefined();
+  });
+});
+

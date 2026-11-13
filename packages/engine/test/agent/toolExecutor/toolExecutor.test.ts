@@ -989,6 +989,61 @@ describe('onBeforeExecuteTool veto semantics', () => {
   });
 });
 
+describe('skill grant guard', () => {
+  it('refuses a call for a tool the active skill hid even though it is registered', async () => {
+    const tool = new TestTool('echo');
+    const hidden = new TestTool('hidden');
+    registry.register(tool);
+    registry.register(hidden);
+    executor.setSkillGrant({
+      _serviceBrand: undefined,
+      allowedToolNames: () => ['echo'],
+    });
+
+    const results = await execute([
+      toolCall('call_hidden', 'hidden', {}),
+      toolCall('call_echo', 'echo', { text: 'hi' }),
+    ]);
+
+    expect(results[0]).toMatchObject({
+      output: 'Tool "hidden" is not permitted by the active skill. Finish the skill using only the tools it allows, or tell the user what is blocked.',
+      isError: true,
+    });
+    expect(results[1]).toMatchObject({ output: 'hi' });
+    expect(hidden.calls).toEqual([]);
+    expect(tool.calls).toHaveLength(1);
+  });
+
+  it('allows everything when the grant reports no restriction', async () => {
+    const hidden = new TestTool('hidden');
+    registry.register(hidden);
+    executor.setSkillGrant({
+      _serviceBrand: undefined,
+      allowedToolNames: () => undefined,
+    });
+
+    const results = await execute([toolCall('call_hidden', 'hidden', { text: 'ran' })]);
+
+    expect(results).toEqual([expect.objectContaining({ output: 'ran' })]);
+    expect(hidden.calls).toHaveLength(1);
+  });
+
+  it('refuses every call once the grant is cleared to an empty allowlist', async () => {
+    const tool = new TestTool('echo');
+    registry.register(tool);
+    executor.setSkillGrant({
+      _serviceBrand: undefined,
+      allowedToolNames: () => [],
+    });
+
+    const results = await execute([toolCall('call_echo', 'echo', { text: 'hi' })]);
+
+    expect(results[0]).toMatchObject({ isError: true });
+    expect(results[0]!.output).toContain('not permitted by the active skill');
+    expect(tool.calls).toEqual([]);
+  });
+});
+
 describe('onWillExecuteTool', () => {
   it('awaits registered waitUntil work before executing the tool', async () => {
     const tool = new TestTool('echo');

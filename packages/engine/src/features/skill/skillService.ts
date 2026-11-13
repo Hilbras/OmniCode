@@ -257,7 +257,26 @@ export class AgentSkillService implements IAgentSkillService, IActiveSkillGrant 
   }
 
   recordModelToolActivation(origin: SkillActivationOrigin): void {
+    this.armEnforcerForModelTool(origin);
     void this.recordActivation(origin);
+  }
+
+  /**
+   * The Skill tool loads a skill mid-turn without launching a turn of its
+   * own. The grant arms here from the same catalog the tool resolved the
+   * skill from and clears on TurnEnded like every explicit activation. A
+   * skill the catalog no longer knows arms without metadata, which records
+   * provenance but leaves tools unrestricted rather than inventing a grant.
+   */
+  private armEnforcerForModelTool(origin: SkillActivationOrigin): void {
+    const skill = this.catalog.catalog.getSkill(origin.skillName);
+    const definition = skill ?? {
+      name: origin.skillName,
+      source: origin.skillSource ?? 'extra',
+      path: origin.skillPath ?? '',
+      metadata: {},
+    };
+    this.enforcer.activate(definition);
   }
 
   private prepareBundled(input: PromptSkillActivation): {
