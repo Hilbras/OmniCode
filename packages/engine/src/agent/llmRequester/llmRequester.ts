@@ -49,6 +49,13 @@ export interface AgentLLMRequestOverrides {
   maxOutputSize?: number;
   modelAlias?: string;
   onAttemptRetry?: () => void;
+  /**
+   * Operation request that must not see or consume main-conversation state.
+   * The world-state section is skipped entirely, so an auxiliary call neither
+   * receives the conversation's state nor takes the pending delta away from the
+   * next turn.
+   */
+  isolated?: boolean;
 }
 
 export interface AgentLLMRequestTask {

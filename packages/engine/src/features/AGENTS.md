@@ -7,7 +7,7 @@ the engine. It owns the `Feature` base class, the import-time registry, the
 assembly service, and built-in feature implementations such as `btw`, `cron`,
 `goal`, `plan`, `skill`, `swarm`, `todo`, `notify`, `reminder`, `fileHistory`,
 `externalHooks`, `debugEvents`, `computerUse`, `sessionSearch`, `tower`,
-`tokenCounting`, and `usage`.
+`tokenCounting`, `usage`, and `reviewer`.
 
 Not here: app bootstrap, session lifecycle, tool implementations, MCP
 transports, or host/UI behavior. Those belong to `app/`, `session/`,

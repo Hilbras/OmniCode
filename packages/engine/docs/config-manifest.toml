@@ -8,7 +8,7 @@
 # commented "# field: type" lines describe the remaining schema fields.
 # Values resolve as: default -> config.toml -> env overlay -> memory.
 
-# Index (33 sections · 2 overlay(s))
+# Index (34 sections · 2 overlay(s))
 #   background               src/agent/task/configSection.ts
 #   builtinProductSkills     src/features/skill/catalog/configSection.ts
 #   compaction               src/agent/fullCompaction/configSection.ts
@@ -32,6 +32,7 @@
 #   models                   src/app/kosongConfig/configSection.ts
 #   permission               src/agent/permissionRules/configSection.ts
 #   providers                src/app/kosongConfig/configSection.ts
+#   reviewer                 src/agent/interaction/reviewer/configSection.ts
 #   secondaryModel           src/session/subagent/configSection.ts
 #   services                 src/app/auth/configSection.ts
 #   subagent                 src/session/subagent/configSection.ts
@@ -413,6 +414,28 @@ merge_all_available_skills = true
   # protocol_overrides: record<string, "anthropic" | "openai" | "openai_responses" | "google-genai">
   # excluded_models: string[]
   # disabled: boolean
+
+# ##########################################################################
+# reviewer
+#   owner: src/agent/interaction/reviewer/configSection.ts
+#   scope: core
+#   hooks: stripEnv
+#   env:
+#     enabled <- OMNICODE_REVIEWER (custom parse)
+#     model <- OMNICODE_REVIEWER_MODEL (custom parse)
+#     timeout_ms <- OMNICODE_REVIEWER_TIMEOUT_MS (custom parse)
+#     samples <- OMNICODE_REVIEWER_SAMPLES (custom parse)
+#     max_prompt_chars <- OMNICODE_REVIEWER_MAX_PROMPT_CHARS (custom parse)
+#     max_output_tokens <- OMNICODE_REVIEWER_MAX_OUTPUT_TOKENS (custom parse)
+# ##########################################################################
+
+[reviewer]
+enabled = false
+# model: string
+timeout_ms = 20000
+samples = 1
+max_prompt_chars = 4000
+max_output_tokens = 512
 
 # ##########################################################################
 # secondaryModel (config.toml: secondary_model)

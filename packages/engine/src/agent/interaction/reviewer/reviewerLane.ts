@@ -16,7 +16,16 @@
  * - A reviewer answer of `approve` is honoured only for the exact tool call it
  *   was asked about (`toolCallId` + argument fingerprint), so a stale answer
  *   cannot land on a different call.
+ * - Only a `fallback-ask` origin and a local read/write surface are in scope
+ *   (`reviewerScope.ts`). Boundary asks stay human even when their payload
+ *   looks harmless.
  */
+
+import {
+  REVIEWABLE_POLICY_ORIGINS,
+  classifyReviewAsk,
+  type ReviewerAskKind,
+} from './reviewerScope';
 
 export type ReviewerOutcome =
   | { readonly kind: 'approve'; readonly note?: string }
@@ -28,6 +37,8 @@ export interface ReviewerRequest {
   readonly fingerprint: string;
   readonly approvalRule: string;
   readonly display: unknown;
+  /** What is being approved; defaults to a tool approval. */
+  readonly askKind?: ReviewerAskKind;
 }
 
 export interface ReviewerAnswer {
@@ -36,6 +47,8 @@ export interface ReviewerAnswer {
 }
 
 export interface ReviewerLane {
+  /** Deadline the lane asks the admission path to enforce, when it has one. */
+  readonly timeoutMs?: number;
   review(request: ReviewerRequest, signal: AbortSignal): Promise<ReviewerAnswer>;
 }
 
@@ -130,6 +143,23 @@ export function requiresHumanDecision(
   return reason?.['requires_human'] === true;
 }
 
+/**
+ * Why an ask may not be reviewed, or `undefined` when it is in scope. Kept
+ * separate so the admission path and a lane called directly agree.
+ */
+export function reviewerOutOfScope(
+  request: ReviewerRequest,
+  policyName: string,
+): { readonly why: string } | undefined {
+  const askKind = request.askKind ?? 'tool';
+  if (askKind === 'tool' && !REVIEWABLE_POLICY_ORIGINS.has(policyName)) {
+    return { why: `policy ${policyName} is not reviewable` };
+  }
+  const scope = classifyReviewAsk(askKind, request.display);
+  if (scope.reviewable) return undefined;
+  return { why: scope.why ?? 'outside reviewer scope' };
+}
+
 export async function admitReviewer(input: ReviewerAdmissionInput): Promise<ReviewerOutcome> {
   if (input.decision !== 'ask') {
     return { kind: 'defer', why: `policy ${input.policyName} decided ${input.decision}` };
@@ -139,6 +169,10 @@ export async function admitReviewer(input: ReviewerAdmissionInput): Promise<Revi
   }
   const lane = input.lane;
   if (lane === undefined) return { kind: 'defer', why: 'no reviewer configured' };
+  const outOfScope = reviewerOutOfScope(input.request, input.policyName);
+  if (outOfScope !== undefined) {
+    return { kind: 'defer', why: `outside reviewer scope: ${outOfScope.why}` };
+  }
   const guard = input.guard;
   if (guard !== undefined && !guard.canReview()) {
     return {
@@ -148,9 +182,10 @@ export async function admitReviewer(input: ReviewerAdmissionInput): Promise<Revi
   }
   guard?.begin();
 
+  const requestedTimeout = input.timeoutMs ?? lane.timeoutMs;
   const timeoutMs =
-    input.timeoutMs !== undefined && Number.isInteger(input.timeoutMs) && input.timeoutMs > 0
-      ? input.timeoutMs
+    requestedTimeout !== undefined && Number.isInteger(requestedTimeout) && requestedTimeout > 0
+      ? requestedTimeout
       : DEFAULT_REVIEWER_TIMEOUT_MS;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

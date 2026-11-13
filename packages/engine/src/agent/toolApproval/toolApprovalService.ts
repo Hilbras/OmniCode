@@ -109,15 +109,16 @@ export class AgentToolApprovalService extends Service implements IAgentToolAppro
     origin: string,
   ): Promise<BeforeExecuteDecision | undefined> {
     this.reviewerState = { approved: false };
-    if (this.reviewerLane === undefined || requiresHumanDecision(result.reason)) return undefined;
+    const lane = this.reviewerLane;
+    if (lane === undefined || requiresHumanDecision(result.reason)) return undefined;
     const key = reviewerKey(context, result);
     this.reviewerAffinity = key;
     const outcome = await admitReviewer({
       decision: 'ask',
       reason: result.reason,
       policyName: origin,
-      lane: this.reviewerLane,
-      timeoutMs: undefined,
+      lane,
+      timeoutMs: lane.timeoutMs,
       guard: this.reviewerGuard,
       request: {
         toolCallId: context.toolCall.id,

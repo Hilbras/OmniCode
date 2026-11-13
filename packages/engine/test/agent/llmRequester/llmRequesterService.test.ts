@@ -1824,3 +1824,28 @@ describe('turn machine stream state across service-internal retries', () => {
     expect(doneEntries[0]?.message.toolCalls.map((toolCall) => toolCall.id)).toEqual(['call_b']);
   });
 });
+
+describe('AgentLLMRequesterService isolated operations', () => {
+  it('skips the main-conversation world state and leaves it for the next turn', async () => {
+    const captured: ModelRequestInput[] = [];
+    const { service } = createService(createRequester({ value: 0 }, null, [], captured), undefined);
+    const nextSection = vi.fn(() => 'goal: finish parity');
+    service.setWorldStateProvider?.({
+      _serviceBrand: undefined,
+      nextSection,
+      resetAfterCompaction: () => {},
+    });
+
+    await service.request({ isolated: true });
+    expect(nextSection).not.toHaveBeenCalled();
+    const isolatedInput = captured[0];
+    expect(
+      isolatedInput?.messages.some((message) =>
+        message.content.some((part) => part.type === 'text' && part.text === 'goal: finish parity'),
+      ),
+    ).toBe(false);
+
+    await service.request({ source: { type: 'operation', requestKind: 'reviewer-follow-up' } });
+    expect(nextSection).toHaveBeenCalledTimes(1);
+  });
+});

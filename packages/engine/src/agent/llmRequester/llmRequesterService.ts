@@ -969,8 +969,11 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
       overrides.systemPrompt ?? turnConfig?.systemPrompt ?? this.profile.getSystemPrompt();
     const tools = [...(overrides.tools ?? this.defaultTools())];
     // World-state section is pulled once per request; undefined means the state
-    // did not change since the last ask, so nothing is added.
-    const worldStateSection = this.worldStateProvider?.nextSection();
+    // did not change since the last ask, so nothing is added. An isolated
+    // operation never pulls it: consuming the delta would rob the next turn and
+    // would leak main-conversation state into an auxiliary prompt.
+    const worldStateSection =
+      overrides.isolated === true ? undefined : this.worldStateProvider?.nextSection();
     const messagesWithWorldState =
       worldStateSection === undefined
         ? messages

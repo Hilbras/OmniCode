@@ -704,14 +704,25 @@ describe('AgentToolApprovalService reviewer lane', () => {
     return { requested };
   }
 
+  const writeDisplay: ToolInputDisplay = {
+    kind: 'file_io',
+    operation: 'write',
+    path: '/tmp/reviewer-session/src/app.ts',
+  };
+
+  function writeContext(): ResolvedToolExecutionHookContext {
+    return makeContext('Write', { path: 'src/app.ts', content: 'export {};' }, {
+      display: writeDisplay,
+      approvalRule: 'Write:/tmp/reviewer-session/src/app.ts',
+    });
+  }
+
   it('skips the user prompt when the reviewer approves', async () => {
     const svc = ix.get(IAgentToolApprovalService);
     const { requested } = approveWithReviewer();
     svc.setReviewerLane({ review: async () => ({ kind: 'approve', note: 'safe' }) });
 
-    await expect(
-      svc.requestToolApproval(makeContext('Bash'), ask(), 'fallback-ask'),
-    ).resolves.toBeUndefined();
+    await expect(svc.requestToolApproval(writeContext(), ask(), 'fallback-ask')).resolves.toBeUndefined();
     expect(requested).not.toHaveBeenCalled();
     expect(records.some((record) => record.event === 'permission_reviewer_result')).toBe(true);
   });
@@ -733,14 +744,55 @@ describe('AgentToolApprovalService reviewer lane', () => {
     expect(broker).toBeDefined();
   });
 
+  it('never offers a shell ask to the reviewer', async () => {
+    const svc = ix.get(IAgentToolApprovalService);
+    const review = vi.fn(async () => ({ kind: 'approve' as const }));
+    svc.setReviewerLane({ review });
+    const { requested } = approveWithReviewer();
+    useBrokerStub(disposables);
+
+    await svc.requestToolApproval(makeContext('Bash'), ask(), 'fallback-ask');
+    expect(review).not.toHaveBeenCalled();
+    expect(requested).toHaveBeenCalled();
+  });
+
+  it('never offers a boundary policy origin to the reviewer', async () => {
+    const svc = ix.get(IAgentToolApprovalService);
+    const review = vi.fn(async () => ({ kind: 'approve' as const }));
+    svc.setReviewerLane({ review });
+    const { requested } = approveWithReviewer();
+    useBrokerStub(disposables);
+
+    await svc.requestToolApproval(writeContext(), ask(), 'sensitive-file-access-ask');
+    expect(review).not.toHaveBeenCalled();
+    expect(requested).toHaveBeenCalled();
+  });
+
   it('falls back to the user when the reviewer defers', async () => {
     const svc = ix.get(IAgentToolApprovalService);
     svc.setReviewerLane({ review: async () => ({ kind: 'unclear' }) });
     const { requested } = approveWithReviewer();
     useBrokerStub(disposables);
 
-    await svc.requestToolApproval(makeContext('Bash'), ask(), 'fallback-ask');
+    await svc.requestToolApproval(writeContext(), ask(), 'fallback-ask');
     expect(requested).toHaveBeenCalled();
+  });
+
+  it('enforces the lane timeout before prompting the user', async () => {
+    const svc = ix.get(IAgentToolApprovalService);
+    svc.setReviewerLane({ timeoutMs: 5, review: () => new Promise<never>(() => {}) });
+    const { requested } = approveWithReviewer();
+    useBrokerStub(disposables);
+
+    await svc.requestToolApproval(writeContext(), ask(), 'fallback-ask');
+    expect(requested).toHaveBeenCalled();
+    expect(records).toContainEqual({
+      event: 'permission_reviewer_result',
+      properties: expect.objectContaining({
+        result: 'deferred',
+        why: expect.stringContaining('timed out after 5ms'),
+      }),
+    });
   });
 });
 
