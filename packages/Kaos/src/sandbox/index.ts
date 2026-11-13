@@ -1,5 +1,6 @@
 export * from './types';
 export * from './paths';
+export * from './grants';
 export * from './availability';
 export * from './bwrap';
 export * from './seatbelt';

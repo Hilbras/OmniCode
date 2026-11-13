@@ -33,6 +33,7 @@ export function summarizeSandboxPolicy(policy: SandboxPolicy): SandboxPolicySumm
     tmpfsPaths: uniqueNormalized(policy.tmpfsPaths ?? DEFAULT_SANDBOX_TMPFS_PATHS),
     writeAllowlist:
       policy.writeAllowlist === undefined ? null : uniqueNormalized(policy.writeAllowlist),
+    denyReadPaths: policy.denyReadPaths === undefined ? [] : uniqueNormalized(policy.denyReadPaths),
   };
 }
 

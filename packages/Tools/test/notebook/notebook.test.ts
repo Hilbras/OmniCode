@@ -1,7 +1,7 @@
 import { mkdtemp, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'pathe';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { HostFileSystem } from '@hilbras/omnicode-engine/os/backends/node-local/hostFsService';
 import type { ExecutableToolResult, ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
@@ -153,5 +153,37 @@ describe('NotebookEditTool', () => {
       tool.resolveExecution({ action: 'read', path: 'missing.ipynb' }),
     ).execute(tr.context);
     expect(missing.isError).toBe(true);
+  });
+
+  it('refuses an edit outside the sandbox write allowlist', async () => {
+    const dir = await tempDir();
+    const tr = makeTestRuntime({ fs: new HostFileSystem(), workDir: dir });
+    const tool = new NotebookEditTool(tr.runtimeService, tr.workspaceCtx);
+    vi.stubEnv('OMNICODE_SANDBOX_WRITE_ROOTS', `${dir}/out`);
+    try {
+      const result = await executable(
+        tool.resolveExecution({ action: 'delete', path: 'notes.ipynb', index: 0 }),
+      ).execute(tr.context);
+      expect(result.isError).toBe(true);
+      expect(output(result)).toContain('write allowlist');
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('refuses a read matching a deny-read entry', async () => {
+    const dir = await tempDir();
+    const tr = makeTestRuntime({ fs: new HostFileSystem(), workDir: dir });
+    const tool = new NotebookEditTool(tr.runtimeService, tr.workspaceCtx);
+    vi.stubEnv('OMNICODE_SANDBOX_DENY_READ', `${dir}/private/**`);
+    try {
+      const result = await executable(
+        tool.resolveExecution({ action: 'read', path: `${dir}/private/notes.ipynb` }),
+      ).execute(tr.context);
+      expect(result.isError).toBe(true);
+      expect(output(result)).toContain(`${dir}/private/**`);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

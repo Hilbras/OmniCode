@@ -2,6 +2,7 @@ import { isAbsolute, normalize } from 'pathe';
 
 import type { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
 import type { IHostProcess, IHostProcessService } from '@hilbras/omnicode-engine/os/interface/hostProcess';
+import { prepareChildSandboxSpawn } from '@hilbras/omnicode-engine/os/sandbox/childSandbox';
 import { IAgentRuntimeService, inspectAgentRuntime } from '@hilbras/omnicode-engine/agent/runtimeBinding/agentRuntime';
 import { RuntimeWorkspaceView } from '@hilbras/omnicode-engine/runtime/runtimeWorkspaceView';
 import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
@@ -42,6 +43,8 @@ interface GitRunResult {
   readonly truncated: boolean;
   readonly timedOut: boolean;
   readonly aborted: boolean;
+  /** Why the git child ran without OS sandboxing although sandboxing is configured. */
+  readonly sandboxNote?: string;
 }
 
 async function runGit(
@@ -49,13 +52,41 @@ async function runGit(
   cwd: string,
   args: readonly string[],
   signal: AbortSignal,
+  sandbox?: { readonly workspace: string },
 ): Promise<GitRunResult> {
   if (signal.aborted) {
     return { stdout: '', stderr: '', exitCode: -1, truncated: false, timedOut: false, aborted: true };
   }
+  const argv = ['git', ...args];
+  let spawnCommand = 'git';
+  let spawnArgs: readonly string[] = args;
+  let sandboxNote: string | undefined;
+  if (sandbox !== undefined) {
+    const prepared = await prepareChildSandboxSpawn({
+      argv,
+      cwd,
+      workspace: sandbox.workspace,
+    });
+    if (prepared.kind === 'denied') {
+      return {
+        stdout: '',
+        stderr: prepared.message,
+        exitCode: -1,
+        truncated: false,
+        timedOut: false,
+        aborted: signal.aborted,
+      };
+    }
+    if (prepared.kind === 'sandbox') {
+      spawnCommand = prepared.command;
+      spawnArgs = prepared.args;
+    } else {
+      sandboxNote = prepared.reason;
+    }
+  }
   let process: IHostProcess;
   try {
-    process = await processes.spawn('git', args, {
+    process = await processes.spawn(spawnCommand, spawnArgs, {
       cwd,
       env: {
         GIT_TERMINAL_PROMPT: '0',
@@ -72,6 +103,7 @@ async function runGit(
       truncated: false,
       timedOut: false,
       aborted: signal.aborted,
+      sandboxNote,
     };
   }
   let stdout = '';
@@ -107,7 +139,7 @@ async function runGit(
   }
   try {
     const exitCode = await process.wait();
-    return { stdout, stderr, exitCode, truncated, timedOut, aborted: signal.aborted };
+    return { stdout, stderr, exitCode, truncated, timedOut, aborted: signal.aborted, sandboxNote };
   } finally {
     clearTimeout(timer);
     signal.removeEventListener('abort', onAbort);
@@ -129,8 +161,9 @@ async function repositoryRoot(
   process: IHostProcessService,
   cwd: string,
   signal: AbortSignal,
+  sandbox?: { readonly workspace: string },
 ): Promise<{ root: string } | { error: string }> {
-  const result = await runGit(process, cwd, ['rev-parse', '--show-toplevel'], signal);
+  const result = await runGit(process, cwd, ['rev-parse', '--show-toplevel'], signal, sandbox);
   if (result.exitCode !== 0) {
     return { error: gitFailure(result, 'Not inside a git repository.') };
   }
@@ -150,6 +183,16 @@ function toolRuntime(runtime: IAgentRuntimeService) {
   } as const;
 }
 
+function sandboxWorkspace(
+  workspaceCtx: ISessionWorkspaceContext | undefined,
+): { readonly workspace: string } | undefined {
+  return workspaceCtx === undefined ? undefined : { workspace: workspaceCtx.workDir };
+}
+
+function withSandboxNote(output: string, note: string | undefined): string {
+  return note === undefined ? output : `${output}\n[sandbox] ${note}`;
+}
+
 export class GitWorktreeListTool implements IGitWorktreeListTool {
   declare readonly _serviceBrand: undefined;
   readonly name = 'WorktreeList' as const;
@@ -160,6 +203,7 @@ export class GitWorktreeListTool implements IGitWorktreeListTool {
   constructor(
     @IAgentRuntimeService private readonly runtime: IAgentRuntimeService,
     @ISessionContext private readonly ctx: ISessionContext,
+    @ISessionWorkspaceContext private readonly workspaceCtx?: ISessionWorkspaceContext,
   ) {}
 
   resolveExecution(_args: WorktreeListInput): ToolExecution {
@@ -185,13 +229,17 @@ export class GitWorktreeListTool implements IGitWorktreeListTool {
     processes: IHostProcessService,
     signal: AbortSignal,
   ): Promise<{ output: string; isError?: boolean }> {
-    const repo = await repositoryRoot(processes, this.ctx.cwd, signal);
+    const sandbox = sandboxWorkspace(this.workspaceCtx);
+    const repo = await repositoryRoot(processes, this.ctx.cwd, signal, sandbox);
     if ('error' in repo) return { isError: true, output: repo.error };
-    const result = await runGit(processes, repo.root, ['worktree', 'list', '--porcelain'], signal);
+    const result = await runGit(processes, repo.root, ['worktree', 'list', '--porcelain'], signal, sandbox);
     if (result.exitCode !== 0) return { isError: true, output: gitFailure(result, 'git worktree list failed.') };
     const entries = parseWorktreePorcelain(result.stdout);
     return {
-      output: JSON.stringify({ repository: repo.root, worktrees: entries }, null, 2),
+      output: withSandboxNote(
+        JSON.stringify({ repository: repo.root, worktrees: entries }, null, 2),
+        result.sandboxNote,
+      ),
     };
   }
 }
@@ -264,7 +312,7 @@ export class GitWorktreeCreateTool implements IGitWorktreeCreateTool {
     } catch (error) {
       return { isError: true, output: error instanceof Error ? error.message : String(error) };
     }
-    const repo = await repositoryRoot(processes, this.ctx.cwd, signal);
+    const repo = await repositoryRoot(processes, this.ctx.cwd, signal, sandboxWorkspace(this.workspaceCtx));
     if ('error' in repo) return { isError: true, output: repo.error };
     if (!isPathInsideRepository(target, repo.root, env.pathClass)) {
       return {
@@ -282,10 +330,13 @@ export class GitWorktreeCreateTool implements IGitWorktreeCreateTool {
     }
     const gitArgs = ['worktree', 'add', '-b', args.branch, target];
     if (args.base !== undefined) gitArgs.push(args.base);
-    const result = await runGit(processes, repo.root, gitArgs, signal);
+    const result = await runGit(processes, repo.root, gitArgs, signal, sandboxWorkspace(this.workspaceCtx));
     if (result.exitCode !== 0) return { isError: true, output: gitFailure(result, 'git worktree add failed.') };
     return {
-      output: `Created worktree ${target} on branch ${args.branch}.\n${result.stdout.trim()}`.trim(),
+      output: withSandboxNote(
+        `Created worktree ${target} on branch ${args.branch}.\n${result.stdout.trim()}`.trim(),
+        result.sandboxNote,
+      ),
     };
   }
 }
@@ -348,9 +399,10 @@ export class GitWorktreeRemoveTool implements IGitWorktreeRemoveTool {
     } catch (error) {
       return { isError: true, output: error instanceof Error ? error.message : String(error) };
     }
-    const repo = await repositoryRoot(processes, this.ctx.cwd, signal);
+    const sandbox = sandboxWorkspace(this.workspaceCtx);
+    const repo = await repositoryRoot(processes, this.ctx.cwd, signal, sandbox);
     if ('error' in repo) return { isError: true, output: repo.error };
-    const list = await runGit(processes, repo.root, ['worktree', 'list', '--porcelain'], signal);
+    const list = await runGit(processes, repo.root, ['worktree', 'list', '--porcelain'], signal, sandbox);
     if (list.exitCode !== 0) return { isError: true, output: gitFailure(list, 'git worktree list failed.') };
     const entries = parseWorktreePorcelain(list.stdout);
     if (entries.length > 0 && samePath(entries[0]!.path, target, env.pathClass)) {
@@ -360,7 +412,7 @@ export class GitWorktreeRemoveTool implements IGitWorktreeRemoveTool {
     if (entry === undefined) {
       return { isError: true, output: `Not a registered worktree: ${target}` };
     }
-    const status = await runGit(processes, entry.path, ['status', '--porcelain', '--untracked-files=normal'], signal);
+    const status = await runGit(processes, entry.path, ['status', '--porcelain', '--untracked-files=normal'], signal, sandbox);
     if (status.exitCode !== 0) {
       return { isError: true, output: gitFailure(status, 'Could not check worktree status.') };
     }
@@ -370,9 +422,11 @@ export class GitWorktreeRemoveTool implements IGitWorktreeRemoveTool {
         output: `Refusing to remove dirty worktree ${entry.path}. Commit or clean changes first.`,
       };
     }
-    const result = await runGit(processes, repo.root, ['worktree', 'remove', entry.path], signal);
+    const result = await runGit(processes, repo.root, ['worktree', 'remove', entry.path], signal, sandbox);
     if (result.exitCode !== 0) return { isError: true, output: gitFailure(result, 'git worktree remove failed.') };
-    return { output: `Removed worktree ${entry.path}.`.trim() };
+    return {
+      output: withSandboxNote(`Removed worktree ${entry.path}.`.trim(), result.sandboxNote),
+    };
   }
 }
 

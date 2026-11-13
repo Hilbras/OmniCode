@@ -3,11 +3,12 @@ import { rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 
 import { join } from 'pathe';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { Error2 } from '#/errors';
 import { mergeStdioEnv, StdioMcpClient, type StdioMcpClientOptions } from '#/mcpCore/client-stdio';
 import { McpServerConfigSchema, type McpServerStdioConfig } from '#/mcpCore/config-schema';
+import { setChildSandboxProbeForTests } from '#/os/sandbox/childSandbox';
 import {
   McpResourceSurface,
   McpUnsupportedError,
@@ -91,7 +92,7 @@ describe('StdioMcpClient', () => {
     expect(parsed.success).toBe(false);
   });
 
-  it('rejects an unsupported executor at construction time', () => {
+  it('rejects an unsupported executor at construction time', async () => {
     let thrown: unknown;
     try {
       const client = createClient({
@@ -105,6 +106,48 @@ describe('StdioMcpClient', () => {
     }
     expect(thrown).toBeInstanceOf(Error2);
     expect((thrown as { code?: string }).code).toBe('not_implemented');
+  });
+
+  describe('child sandbox routing', () => {
+    beforeEach(() => {
+      setChildSandboxProbeForTests(async () => []);
+    });
+
+    afterEach(() => {
+      setChildSandboxProbeForTests(undefined);
+      vi.unstubAllEnvs();
+    });
+
+    it('keeps the server direct and records the fallback note when the sandbox is unavailable', async () => {
+      vi.stubEnv('OMNICODE_SANDBOX_MODE', 'auto');
+      vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'landlock');
+      const client = createClient({
+        transport: 'stdio',
+        command: process.execPath,
+        args: [stdioFixture],
+      });
+      try {
+        await client.connect();
+        const result = await client.callTool('echo', { text: 'hello' });
+        expect(result.isError).toBe(false);
+        expect(client.stderrSnapshot()).toContain('[sandbox]');
+        expect(client.stderrSnapshot()).toContain('refuses to substitute');
+      } finally {
+        await client.close();
+      }
+    }, 15000);
+
+    it('fails the connection closed when the mode is required and the backend is unavailable', async () => {
+      vi.stubEnv('OMNICODE_SANDBOX_MODE', 'required');
+      vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'landlock');
+      const client = createClient({
+        transport: 'stdio',
+        command: process.execPath,
+        args: [stdioFixture],
+      });
+      await expect(client.connect()).rejects.toThrow(/preferred sandbox backend landlock/);
+      await client.close();
+    }, 15000);
   });
 
   it('uses defaultCwd when config.cwd is omitted', async () => {

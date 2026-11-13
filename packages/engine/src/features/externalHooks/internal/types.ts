@@ -48,6 +48,8 @@ export interface HookResult {
   readonly timedOut?: boolean;
   readonly errored?: boolean;
   readonly structuredOutput?: boolean;
+  /** Why the hook ran without OS sandboxing although sandboxing is configured. */
+  readonly sandboxNote?: string;
 }
 
 export interface HookBlockDecision {

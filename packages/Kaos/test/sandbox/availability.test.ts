@@ -177,7 +177,7 @@ describe('createSandboxBackend', () => {
 });
 
 describe('probeSandboxBackends', () => {
-  it('probes both backends with injected seams', async () => {
+  it('probes every backend with injected seams', async () => {
     const availability = await probeSandboxBackends({
       bwrap: {
         platform: 'linux',
@@ -187,10 +187,26 @@ describe('probeSandboxBackends', () => {
             : probeOutput(),
       },
       landlock: { platform: 'linux' },
+      seatbelt: { platform: 'linux' },
     });
-    expect(availability.map((item) => item.backend)).toEqual(['bwrap', 'landlock']);
+    expect(availability.map((item) => item.backend)).toEqual(['bwrap', 'landlock', 'seatbelt']);
     expect(availability[0]?.available).toBe(true);
     expect(availability[1]?.available).toBe(false);
     expect(availability[1]?.fallback).toBe('bwrap');
+    expect(availability[2]?.available).toBe(false);
+    expect(availability[2]?.reason).toContain('darwin');
+  });
+
+  it('reports seatbelt as available on darwin through the injected probe', async () => {
+    const availability = await probeSandboxBackends({
+      bwrap: { platform: 'darwin' },
+      landlock: { platform: 'darwin' },
+      seatbelt: {
+        platform: 'darwin',
+        probe: async () => probeOutput(),
+      },
+    });
+    expect(availability[2]?.backend).toBe('seatbelt');
+    expect(availability[2]?.available).toBe(true);
   });
 });

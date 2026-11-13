@@ -44,6 +44,76 @@ describe('selectSandboxBackend', () => {
     expect(selection.enabled).toBe(true);
   });
 
+  it('records an explicit fallback when the default order downgrades', () => {
+    const selection = selectSandboxBackend({
+      permissionMode: 'auto',
+      availability: [
+        availability('bwrap', false, { reason: 'bwrap not found' }),
+        availability('seatbelt', false, { reason: 'seatbelt requires darwin' }),
+        availability('landlock', true),
+      ],
+    });
+    expect(selection.backend).toBe('landlock');
+    expect(selection.fallback).toEqual({
+      from: 'bwrap',
+      to: 'landlock',
+      reason: 'bwrap not found',
+    });
+  });
+
+  it('reports no fallback when the first preference is selected', () => {
+    const selection = selectSandboxBackend({
+      permissionMode: 'auto',
+      availability: [availability('bwrap', true)],
+    });
+    expect(selection.fallback).toBeNull();
+  });
+
+  it('selects exactly the preferred backend when it is available', () => {
+    const selection = selectSandboxBackend({
+      permissionMode: 'auto',
+      preferredBackend: 'seatbelt',
+      availability: [availability('bwrap', true), availability('seatbelt', true)],
+    });
+    expect(selection.backend).toBe('seatbelt');
+    expect(selection.enabled).toBe(true);
+    expect(selection.reason).toBe('sandbox-available');
+    expect(selection.fallback).toBeNull();
+  });
+
+  it('refuses to substitute another backend for an unavailable preferred backend', () => {
+    const selection = selectSandboxBackend({
+      permissionMode: 'auto',
+      preferredBackend: 'seatbelt',
+      availability: [
+        availability('seatbelt', false, { reason: 'sandbox-exec probe failed' }),
+        availability('bwrap', true),
+      ],
+    });
+    expect(selection.backend).toBeNull();
+    expect(selection.enabled).toBe(false);
+    expect(selection.reason).toBe('preferred-backend-unavailable');
+    expect(selection.message).toContain('seatbelt');
+    expect(selection.message).toContain('sandbox-exec probe failed');
+    expect(selection.message).toContain('refuses to substitute');
+    expect(selection.fallback).toEqual({
+      from: 'seatbelt',
+      to: null,
+      reason: 'sandbox-exec probe failed',
+    });
+  });
+
+  it('reports a preferred backend that was never probed', () => {
+    const selection = selectSandboxBackend({
+      permissionMode: 'manual',
+      preferredBackend: 'landlock',
+      availability: [availability('bwrap', true)],
+    });
+    expect(selection.enabled).toBe(false);
+    expect(selection.reason).toBe('preferred-backend-unavailable');
+    expect(selection.fallback).toEqual({ from: 'landlock', to: null, reason: 'no availability probe ran for landlock' });
+  });
+
   it('returns an explicit unsandboxed selection when nothing is available', () => {
     const manual = selectSandboxBackend({
       permissionMode: 'manual',
@@ -53,6 +123,7 @@ describe('selectSandboxBackend', () => {
     expect(manual.enabled).toBe(false);
     expect(manual.reason).toBe('sandbox-unavailable');
     expect(manual.message).toContain('manual mode');
+    expect(manual.fallback).toEqual({ from: 'bwrap', to: null, reason: 'bwrap unavailable' });
 
     const auto = selectSandboxBackend({
       permissionMode: 'auto',
@@ -148,5 +219,14 @@ describe('createSandboxStatus', () => {
     expect(summary.ipcNamespace).toBe('isolated');
     expect(summary.systemPaths).toContain('/usr');
     expect(summary.tmpfsPaths).toEqual(['/tmp']);
+    expect(summary.denyReadPaths).toEqual([]);
+  });
+
+  it('summarizes deny-read paths', () => {
+    const summary = summarizeSandboxPolicy({
+      workspace: '/workspace',
+      denyReadPaths: ['/workspace/.env', '/workspace/.env'],
+    });
+    expect(summary.denyReadPaths).toEqual(['/workspace/.env']);
   });
 });

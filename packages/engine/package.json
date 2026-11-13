@@ -69,6 +69,7 @@
     "@google/genai": "^1.49.0",
     "@hilbras/omnicode-auth": "workspace:^",
     "@hilbras/omnicode-base": "workspace:^",
+    "@hilbras/omnicode-kaos": "workspace:^",
     "@hilbras/omnicode-minidb": "workspace:^",
     "@hilbras/omnicode-tree-sitter-bash": "workspace:^",
     "@jsquash/webp": "^1.5.0",

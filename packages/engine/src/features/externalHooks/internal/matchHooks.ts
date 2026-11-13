@@ -75,6 +75,7 @@ export async function runMatchedHooks(
         shell: hook.shell === true,
         inheritEnv: hook.inheritEnv === true,
         signal: args.signal,
+        sandbox: cwd === '' ? undefined : { workspace: cwd },
       }),
     ),
   );

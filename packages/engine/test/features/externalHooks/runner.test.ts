@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, afterEach, beforeEach, vi } from 'vitest';
 
 import { buildHookSpawnOptions, runHook } from '#/features/externalHooks/internal/runHook';
 import { renderUserPromptHookResult } from '#/features/externalHooks/internal/userPrompt';
+import { setChildSandboxProbeForTests } from '#/os/sandbox/childSandbox';
 import { HostProcessService } from '#/os/backends/node-local/hostProcessService';
 
 const hostProcess = new HostProcessService();
@@ -212,5 +213,69 @@ describe('buildHookSpawnOptions (Windows console-window regression)', () => {
     const options = buildHookSpawnOptions({ cwd: '/repo', env: { FOO: 'bar' } });
     expect(options.cwd).toBe('/repo');
     expect(options.env).toMatchObject({ FOO: 'bar' });
+  });
+});
+
+describe('runHook child sandbox', () => {
+  beforeEach(() => {
+    setChildSandboxProbeForTests(async () => []);
+  });
+
+  afterEach(() => {
+    setChildSandboxProbeForTests(undefined);
+    vi.unstubAllEnvs();
+  });
+
+  it('blocks the hook when the mode is required and no backend is available', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_MODE', 'required');
+    vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'landlock');
+    const result = await runHook(
+      hostProcess,
+      nodeCommand('process.stdout.write("ran\\n");'),
+      {},
+      { timeout: 5, sandbox: { workspace: '/workspace' } },
+    );
+    expect(result.action).toBe('block');
+    expect(result.errored).toBe(true);
+    expect(result.message).toContain('preferred sandbox backend landlock');
+  });
+
+  it('runs the hook unsandboxed in auto mode and records the fallback note', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_MODE', 'auto');
+    vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'landlock');
+    const result = await runHook(
+      hostProcess,
+      nodeCommand('process.stdout.write("ran\\n");'),
+      {},
+      { timeout: 5, sandbox: { workspace: '/workspace' } },
+    );
+    expect(result.action).toBe('allow');
+    expect(result.stdout?.trim()).toBe('ran');
+    expect(result.sandboxNote).toContain('refuses to substitute');
+  });
+
+  it('records why a shell-mode hook runs unsandboxed', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_MODE', 'auto');
+    vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'landlock');
+    const result = await runHook(hostProcess, 'echo hook-shell', {}, {
+      timeout: 5,
+      shell: true,
+      sandbox: { workspace: '/workspace' },
+    });
+    expect(result.action).toBe('allow');
+    expect(result.sandboxNote).toContain('shell mode cannot be sandboxed');
+  });
+
+  it('leaves hooks alone when no sandbox workspace is configured', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_MODE', 'required');
+    vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'landlock');
+    const result = await runHook(
+      hostProcess,
+      nodeCommand('process.stdout.write("ran\\n");'),
+      {},
+      { timeout: 5 },
+    );
+    expect(result.action).toBe('allow');
+    expect(result.sandboxNote).toBeUndefined();
   });
 });

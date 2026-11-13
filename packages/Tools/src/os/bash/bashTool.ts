@@ -27,7 +27,7 @@ import { renderPrompt } from '@hilbras/omnicode-base/utils/render-prompt';
 import { userCancellationReason } from '@hilbras/omnicode-base/utils/abort';
 import bashDescriptionTemplate from './bash.md?raw';
 import { ProcessTask } from './process-task';
-import { IBashSandboxService, hostRestrictionDenialMessage, sandboxWriteAllowlist } from './sandbox';
+import { IBashSandboxService, hostRestrictionDenialMessage, sandboxDenyReadPaths, sandboxWriteAllowlist } from './sandbox';
 import {
   type BashInput,
   BashInputSchema,
@@ -170,7 +170,7 @@ export class BashTool implements IBashTool {
     effectiveCwd: string,
     command: string,
     allowedHosts?: readonly string[],
-  ): Promise<IHostProcess> {
+  ): Promise<{ readonly proc: IHostProcess; readonly sandboxReason?: string }> {
     const shellCwd = getShellPathBridge(env).toShellPath(effectiveCwd);
     const shellCommand = `cd ${shellQuote(shellCwd)} && ${command}`;
     const noninteractiveEnv: Record<string, string> = {
@@ -181,23 +181,30 @@ export class BashTool implements IBashTool {
     };
 
     const writeAllowlist = sandboxWriteAllowlist();
+    const denyReadPaths = sandboxDenyReadPaths();
     const prepared = await this.sandbox?.prepare({
       command,
       cwd: effectiveCwd,
       workspace: this.workspaceCtx.workDir,
       shellPath: env.shellPath,
       env: noninteractiveEnv,
-      ...(writeAllowlist === undefined ? {} : { writeAllowlist }),
-      ...(allowedHosts === undefined ? {} : { allowedHosts }),
+      writeAllowlist,
+      denyReadPaths,
+      allowedHosts,
     });
     if (prepared?.kind === 'denied') throw new Error(prepared.message);
     if (prepared?.kind === 'sandbox') {
-      return processService.spawn(prepared.plan.command, prepared.plan.args, {
-        env: noninteractiveEnv,
-      });
+      return {
+        proc: await processService.spawn(prepared.plan.command, prepared.plan.args, {
+          env: noninteractiveEnv,
+        }),
+      };
     }
 
-    return processService.spawn(env.shellPath, ['-c', shellCommand], { env: noninteractiveEnv });
+    return {
+      proc: await processService.spawn(env.shellPath, ['-c', shellCommand], { env: noninteractiveEnv }),
+      sandboxReason: prepared?.kind === 'direct' ? prepared.reason : undefined,
+    };
   }
 
   private async execution(
@@ -233,10 +240,17 @@ export class BashTool implements IBashTool {
 
     const builder = new ToolOutputAccumulator();
     let proc: IHostProcess;
+    let sandboxNote: string | undefined;
     try {
-      proc = lease.track(
-        await this.spawn(lease.runtime.process!, env, effectiveCwd, command, allowedHosts),
+      const spawned = await this.spawn(
+        lease.runtime.process!,
+        env,
+        effectiveCwd,
+        command,
+        allowedHosts,
       );
+      proc = lease.track(spawned.proc);
+      sandboxNote = spawned.sandboxReason;
     } catch (error) {
       lease.dispose();
       return {
@@ -245,6 +259,9 @@ export class BashTool implements IBashTool {
       };
     }
     closeProcessStdin(proc);
+    if (sandboxNote !== undefined) {
+      builder.write(`[sandbox] ${sandboxNote}\n`);
+    }
 
     let collectForegroundOutput = !startsInBackground;
     let foregroundOutputPersisted = false;
@@ -294,7 +311,7 @@ export class BashTool implements IBashTool {
       return this.backgroundStartedResult(taskId, proc, description, {
         title: 'Background task started',
         brief: `Started ${taskId}`,
-      });
+      }, undefined, 'background_started', sandboxNote);
     }
 
     try {
@@ -418,15 +435,18 @@ export class BashTool implements IBashTool {
     labels: { title: string; brief: string },
     builder = new ToolOutputAccumulator(),
     scenario: 'background_started' | 'foreground_detached' | 'foreground_detached_by_user' = 'background_started',
+    sandboxNote?: string,
   ): ExecutableToolResult {
     const status = this.tasks.getTask(taskId)?.status ?? 'running';
     const detachedByUser = scenario === 'foreground_detached_by_user' ? 'detached_by_user: true\n' : '';
+    const sandboxLine = sandboxNote === undefined ? '' : `sandbox: ${sandboxNote}\n`;
     const metadata =
       `task_id: ${taskId}\n` +
       `pid: ${String(proc.pid)}\n` +
       `description: ${description}\n` +
       `status: ${status}\n` +
       detachedByUser +
+      sandboxLine +
       `automatic_notification: true\n` +
       this.nextStepLines(scenario) +
       'human_shell_hint: The task is visible in the background-task panel.';

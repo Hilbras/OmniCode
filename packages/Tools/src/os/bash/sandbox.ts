@@ -7,6 +7,7 @@ import {
   probeSandboxBackends,
   selectSandboxBackend,
   type SandboxAvailability,
+  type SandboxBackendKind,
   type SandboxExecutionPlan,
   type SandboxPermissionMode,
 } from '@hilbras/omnicode-kaos/sandbox';
@@ -20,6 +21,7 @@ export interface BashSandboxRequest {
   readonly shellPath: string;
   readonly env: Readonly<Record<string, string>>;
   readonly writeAllowlist?: readonly string[];
+  readonly denyReadPaths?: readonly string[];
   /**
    * Hosts an exec-policy rule restricted this command to. No sandbox backend
    * can confine a process's network to specific hosts yet, so a request
@@ -67,10 +69,32 @@ export function resolveBashSandboxMode(env: NodeJS.ProcessEnv = process.env): Ba
 export function sandboxWriteAllowlist(env: NodeJS.ProcessEnv = process.env): readonly string[] | undefined {
   const raw = env['OMNICODE_SANDBOX_WRITE_ROOTS']?.trim();
   if (raw === undefined || raw.length === 0) return undefined;
-  const roots = raw.split(',').map((value) => value.trim()).filter((value) => value.startsWith('/'));
+  const roots = raw.split(',').map((value) => value.trim()).filter((value) => value.length > 0);
   return roots.length === 0 ? undefined : roots;
 }
 
+export function sandboxDenyReadPaths(env: NodeJS.ProcessEnv = process.env): readonly string[] | undefined {
+  const raw = env['OMNICODE_SANDBOX_DENY_READ']?.trim();
+  if (raw === undefined || raw.length === 0) return undefined;
+  const paths = raw.split(',').map((value) => value.trim()).filter((value) => value.length > 0);
+  return paths.length === 0 ? undefined : paths;
+}
+
+/**
+ * Host-configured backend pin. When set, `selectSandboxBackend` uses exactly
+ * this backend or none at all — it never substitutes a different one, and the
+ * refused substitution is reported in the selection.
+ */
+export function sandboxBackendPreference(env: NodeJS.ProcessEnv = process.env): SandboxBackendKind | undefined {
+  const raw = (env['OMNICODE_SANDBOX_BACKEND'] ?? '').trim().toLowerCase();
+  return raw === 'bwrap' || raw === 'seatbelt' || raw === 'landlock' ? raw : undefined;
+}
+
+/**
+ * Parses raw entries without dropping non-absolute ones: an invalid entry
+ * reaches the policy and fails the plan build, so a misconfigured variable
+ * fails closed with the entry named instead of silently shrinking the grants.
+ */
 export function sandboxNetworkShared(env: NodeJS.ProcessEnv = process.env): boolean {
   const raw = (env['OMNICODE_SANDBOX_NETWORK'] ?? '').trim().toLowerCase();
   return raw === '1' || raw === 'true' || raw === 'shared';
@@ -94,7 +118,11 @@ export class BashSandboxService implements IBashSandboxService {
     if (mode === 'off') return { kind: 'direct' };
     const permissionMode = this.options.permissionMode?.() ?? this.modeService.mode;
     const availability = await this.availability();
-    const selection = selectSandboxBackend({ permissionMode, availability });
+    const selection = selectSandboxBackend({
+      permissionMode,
+      availability,
+      preferredBackend: sandboxBackendPreference(),
+    });
     if (!selection.enabled || selection.backend === null || selection.availability === null) {
       if (mode === 'required') return { kind: 'denied', message: selection.message };
       return { kind: 'direct', reason: selection.message };
@@ -110,7 +138,8 @@ export class BashSandboxService implements IBashSandboxService {
         shareNetwork: sandboxNetworkShared(),
         sharePid: false,
         shareIpc: false,
-        ...(request.writeAllowlist === undefined ? {} : { writeAllowlist: request.writeAllowlist }),
+        writeAllowlist: request.writeAllowlist ?? sandboxWriteAllowlist(),
+        denyReadPaths: request.denyReadPaths ?? sandboxDenyReadPaths(),
       },
       request: { command: request.command, mode: 'shell' },
       shellPolicy: {

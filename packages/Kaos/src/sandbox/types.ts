@@ -51,6 +51,8 @@ export interface SandboxPolicy {
   readonly tmpfsPaths?: readonly string[];
   readonly env?: Readonly<Record<string, string>>;
   readonly writeAllowlist?: readonly string[];
+  /** Paths (or `*`/`**`/`?` globs) whose contents must be unreadable inside the sandbox. */
+  readonly denyReadPaths?: readonly string[];
 }
 
 export interface SandboxCommand {
@@ -60,7 +62,7 @@ export interface SandboxCommand {
 export interface SandboxExecutionPlan {
   readonly backend: SandboxBackendKind;
   readonly permissionMode: SandboxPermissionMode;
-  readonly command: 'bwrap';
+  readonly command: string;
   readonly args: readonly string[];
   readonly cwd: string;
 }
@@ -113,9 +115,22 @@ export interface SandboxSelection {
   readonly backend: SandboxBackendKind | null;
   readonly enabled: boolean;
   readonly permissionMode: SandboxPermissionMode;
-  readonly reason: 'sandbox-available' | 'sandbox-unavailable';
+  readonly reason: 'sandbox-available' | 'sandbox-unavailable' | 'preferred-backend-unavailable';
   readonly message: string;
   readonly availability: SandboxAvailability | null;
+  /**
+   * Why the selection did not get the backend it wanted. A downgrade from the
+   * default preference order and a refused substitution for an unavailable
+   * preferred backend are both recorded here, never applied silently.
+   */
+  readonly fallback: SandboxSelectionFallback | null;
+}
+
+export interface SandboxSelectionFallback {
+  readonly from: SandboxBackendKind;
+  /** `null` when the selection refused to substitute another backend. */
+  readonly to: SandboxBackendKind | null;
+  readonly reason: string;
 }
 
 export interface SandboxPolicySummary {
@@ -127,6 +142,7 @@ export interface SandboxPolicySummary {
   readonly systemPaths: readonly string[];
   readonly tmpfsPaths: readonly string[];
   readonly writeAllowlist: readonly string[] | null;
+  readonly denyReadPaths: readonly string[];
 }
 
 export interface SandboxStatus {

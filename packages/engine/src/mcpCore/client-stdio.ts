@@ -5,6 +5,7 @@ import type { JSONRPCMessage, PromptMessage } from '@modelcontextprotocol/sdk/ty
 
 import { proxyEnvForChild, reconcileChildNoProxy } from '@hilbras/omnicode-base/utils/proxy';
 import { ErrorCodes, Error2 } from '#/errors';
+import { prepareChildSandboxSpawn } from '#/os/sandbox/childSandbox';
 import type { IHostProcess } from '#/os/interface/hostProcess';
 import type { IRuntimeResolver } from '#/workspace/workspaceInstance/workspaceInstanceManager';
 
@@ -323,8 +324,21 @@ class RuntimeStdioTransport implements Transport {
           ? {}
           : { allowWorkspaceCommand: this.config.allowWorkspaceCommand }),
       });
+      const prepared = await prepareChildSandboxSpawn({
+        argv: [command, ...(this.config.args ?? [])],
+        cwd,
+        workspace: cwd,
+      });
+      if (prepared.kind === 'denied') {
+        throw new Error2(ErrorCodes.MCP_STARTUP_FAILED, prepared.message);
+      }
+      if (prepared.kind === 'direct' && prepared.reason !== undefined) {
+        this.stderr.push(`[sandbox] ${prepared.reason}\n`);
+      }
+      const spawnCommand = prepared.kind === 'sandbox' ? prepared.command : command;
+      const spawnArgs = prepared.kind === 'sandbox' ? prepared.args : this.config.args;
       const process = lease.track(
-        await lease.runtime.process!.spawn(command, this.config.args, { cwd, env }),
+        await lease.runtime.process!.spawn(spawnCommand, spawnArgs, { cwd, env }),
       );
       this.process = process;
       lease.track(this);

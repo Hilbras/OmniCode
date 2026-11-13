@@ -13,6 +13,7 @@ import {
 } from '@hilbras/omnicode-engine/tool/path-access';
 
 import { writeTextAtomic } from '#/shared/atomicWrite';
+import { checkSandboxReadPath, checkSandboxWritePath } from '../os/sandbox/pathGrants';
 import {
   INotebookEditTool,
   NOTEBOOK_MAX_BYTES,
@@ -56,6 +57,10 @@ export class NotebookEditTool implements INotebookEditTool {
     };
     const operation = args.action === 'read' ? 'read' : 'write';
     const path = resolvePathAccessPath(args.path, { env, workspace, operation });
+    const sandboxRefusal =
+      operation === 'read'
+        ? checkSandboxReadPath(path, view.workDir)
+        : checkSandboxWritePath(path, view.workDir);
     return {
       accesses:
         args.action === 'read' ? ToolAccesses.readFile(path) : ToolAccesses.readWriteFile(path),
@@ -67,6 +72,9 @@ export class NotebookEditTool implements INotebookEditTool {
       },
       approvalRule: literalRulePattern(this.name, path),
       execute: async () => {
+        if (sandboxRefusal !== undefined) {
+          return { isError: true, output: sandboxRefusal };
+        }
         const lease = this.runtime.acquire(['fs']);
         try {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {

@@ -1,10 +1,12 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { IAgentPermissionModeService } from '@hilbras/omnicode-engine/agent/permissionMode/permissionMode';
 import type { SandboxAvailability } from '@hilbras/omnicode-kaos/sandbox';
 
 import {
   BashSandboxService,
+  sandboxBackendPreference,
+  sandboxDenyReadPaths,
   sandboxNetworkShared,
   sandboxWriteAllowlist,
   type BashSandboxRequest,
@@ -14,26 +16,26 @@ function modeService(mode: 'manual' | 'auto' | 'yolo' = 'auto'): IAgentPermissio
   return { mode } as IAgentPermissionModeService;
 }
 
+function availabilityEntry(
+  backend: SandboxAvailability['backend'],
+  available: boolean,
+): SandboxAvailability {
+  return {
+    backend,
+    available,
+    version: available ? '1.0.0' : null,
+    reason: available ? null : `${backend} unavailable`,
+    fallback: null,
+    probes: [],
+    checkedAt: 1,
+  };
+}
+
 function availability(available: boolean): readonly SandboxAvailability[] {
   return [
-    {
-      backend: 'bwrap',
-      available,
-      version: available ? '0.8.0' : null,
-      reason: available ? null : 'bwrap not found',
-      fallback: null,
-      probes: [],
-      checkedAt: 1,
-    },
-    {
-      backend: 'landlock',
-      available: false,
-      version: null,
-      reason: 'landlock unavailable in pure TypeScript',
-      fallback: 'bwrap',
-      probes: [],
-      checkedAt: 1,
-    },
+    availabilityEntry('bwrap', available),
+    availabilityEntry('landlock', false),
+    availabilityEntry('seatbelt', false),
   ];
 }
 
@@ -46,6 +48,10 @@ const request: BashSandboxRequest = {
 };
 
 describe('BashSandboxService', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('keeps direct execution when sandbox mode is off', async () => {
     const service = new BashSandboxService(modeService(), {
       mode: () => 'off',
@@ -97,12 +103,30 @@ describe('BashSandboxService', () => {
     expect(result.plan.args).toEqual(expect.arrayContaining(['--bind-try', '/workspace/src', '/workspace/src']));
   });
 
-  it('parses write roots only from absolute env entries', () => {
+  it('parses write roots without dropping non-absolute entries', () => {
     const previous = process.env['OMNICODE_SANDBOX_WRITE_ROOTS'];
     process.env['OMNICODE_SANDBOX_WRITE_ROOTS'] = '/workspace/src, relative, /workspace/test';
-    expect(sandboxWriteAllowlist()).toEqual(['/workspace/src', '/workspace/test']);
+    expect(sandboxWriteAllowlist()).toEqual(['/workspace/src', 'relative', '/workspace/test']);
     if (previous === undefined) delete process.env['OMNICODE_SANDBOX_WRITE_ROOTS'];
     else process.env['OMNICODE_SANDBOX_WRITE_ROOTS'] = previous;
+  });
+
+  it('fails the plan closed when a write root is not absolute', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_WRITE_ROOTS', 'relative');
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'auto',
+      probe: async () => availability(true),
+    });
+    const result = await service.prepare(request);
+    expect(result.kind).toBe('direct');
+    if (result.kind === 'direct') {
+      expect(result.reason).toContain('must be an absolute path: relative');
+    }
+    const required = new BashSandboxService(modeService(), {
+      mode: () => 'required',
+      probe: async () => availability(true),
+    });
+    await expect(required.prepare(request)).resolves.toMatchObject({ kind: 'denied' });
   });
 
   it('can share the network only through an explicit env switch', () => {
@@ -142,5 +166,73 @@ describe('BashSandboxService', () => {
       probe: async () => availability(true),
     });
     await expect(service.prepare({ ...request, allowedHosts: [] })).resolves.toEqual({ kind: 'direct' });
+  });
+
+  it('parses the backend preference and deny-read paths from env', () => {
+    expect(sandboxBackendPreference({ OMNICODE_SANDBOX_BACKEND: 'SEATBELT' })).toBe('seatbelt');
+    expect(sandboxBackendPreference({ OMNICODE_SANDBOX_BACKEND: 'nope' })).toBeUndefined();
+    expect(sandboxBackendPreference({})).toBeUndefined();
+    expect(sandboxDenyReadPaths({ OMNICODE_SANDBOX_DENY_READ: '/w/.env*, /secrets' })).toEqual([
+      '/w/.env*',
+      '/secrets',
+    ]);
+    expect(sandboxDenyReadPaths({})).toBeUndefined();
+  });
+
+  it('uses the preferred backend when it is available', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'seatbelt');
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'auto',
+      probe: async () => [availabilityEntry('seatbelt', true), availabilityEntry('bwrap', true)],
+    });
+    const result = await service.prepare(request);
+    expect(result.kind).toBe('sandbox');
+    if (result.kind !== 'sandbox') return;
+    expect(result.plan.command).toBe('/usr/bin/sandbox-exec');
+    expect(result.plan.backend).toBe('seatbelt');
+  });
+
+  it('refuses to substitute another backend when the preferred one is unavailable', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'seatbelt');
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'auto',
+      probe: async () => [availabilityEntry('seatbelt', false), availabilityEntry('bwrap', true)],
+    });
+    const result = await service.prepare(request);
+    expect(result).toMatchObject({ kind: 'direct', reason: expect.stringContaining('refuses to substitute') });
+  });
+
+  it('denies a host-preferred backend that is unavailable in required mode', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'seatbelt');
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'required',
+      probe: async () => [availabilityEntry('seatbelt', false), availabilityEntry('bwrap', true)],
+    });
+    const result = await service.prepare(request);
+    expect(result.kind).toBe('denied');
+  });
+
+  it('falls back to direct with an explicit reason when deny-read cannot be expressed', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_DENY_READ', '/workspace/.env');
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'auto',
+      probe: async () => availability(true),
+    });
+    const result = await service.prepare(request);
+    expect(result.kind).toBe('direct');
+    if (result.kind === 'direct') {
+      expect(result.reason).toContain('bwrap cannot express read denial');
+    }
+  });
+
+  it('carries deny-read rules into a seatbelt plan', async () => {
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'auto',
+      probe: async () => [availabilityEntry('seatbelt', true)],
+    });
+    const result = await service.prepare({ ...request, denyReadPaths: ['/workspace/.env'] });
+    expect(result.kind).toBe('sandbox');
+    if (result.kind !== 'sandbox') return;
+    expect(result.plan.args[2]).toContain('(deny file-read* (subpath "/workspace/.env"))');
   });
 });

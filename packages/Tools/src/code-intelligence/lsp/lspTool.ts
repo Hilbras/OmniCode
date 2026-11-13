@@ -12,6 +12,7 @@ import {
   type WorkspaceConfig,
 } from '@hilbras/omnicode-engine/tool/path-access';
 
+import { checkSandboxReadPath } from '../../os/sandbox/pathGrants';
 import {
   ILspTool,
   LSP_BACKEND,
@@ -49,12 +50,16 @@ export class LspTool implements ILspTool {
       additionalDirs: view.additionalDirs,
     };
     const path = resolvePathAccessPath(args.path, { env, workspace, operation: 'read' });
+    const sandboxRefusal = checkSandboxReadPath(path, view.workDir);
     return {
       accesses: ToolAccesses.readFile(path),
       description: `${args.action} ${args.path}`,
       display: { kind: 'generic', summary: `${args.action} ${args.path}` },
       approvalRule: literalRulePattern(this.name, path),
       execute: async () => {
+        if (sandboxRefusal !== undefined) {
+          return { isError: true, output: sandboxRefusal };
+        }
         const lease = this.runtime.acquire(['fs']);
         try {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {

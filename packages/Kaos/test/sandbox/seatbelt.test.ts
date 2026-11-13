@@ -53,6 +53,37 @@ describe('buildSeatbeltProfile', () => {
     const built = buildSeatbeltProfile(policy({ writeAllowlist: [`${workspace}/out`] }));
     expect(built.ok && built.value.writableRoots).toEqual([`${workspace}/out`]);
   });
+
+  it('denies reads of literal deny-read paths and their subtrees', () => {
+    const built = buildSeatbeltProfile(policy({ denyReadPaths: [`${workspace}/.env`, '/etc/ssh'] }));
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.value.profile).toContain('(allow file-read*)');
+    expect(built.value.profile).toContain(`(deny file-read* (subpath "${workspace}/.env"))`);
+    expect(built.value.profile).toContain('(deny file-read* (subpath "/etc/ssh"))');
+  });
+
+  it('projects deny-read globs as anchored regex rules', () => {
+    const built = buildSeatbeltProfile(policy({ denyReadPaths: [`${workspace}/.env*`, `${workspace}/**/id_rsa`] }));
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.value.profile).toContain('(deny file-read* (regex "^/Users/dev/project/\\\\.env[^/]*$"))');
+    expect(built.value.profile).toContain('(deny file-read* (regex "^/Users/dev/project/.*/id_rsa$"))');
+  });
+
+  it('keeps deny-read literals from injecting rules', () => {
+    const built = buildSeatbeltProfile(policy({ denyReadPaths: [`${workspace}"(allow default)"`] }));
+    expect(built.ok).toBe(true);
+    if (!built.ok) return;
+    expect(built.value.profile).toContain(
+      `(deny file-read* (subpath "${workspace}\\"(allow default)\\""))`,
+    );
+  });
+
+  it('rejects a relative deny-read entry', () => {
+    const built = buildSeatbeltProfile(policy({ denyReadPaths: ['.env'] }));
+    expect(built.ok).toBe(false);
+  });
 });
 
 describe('probeSeatbelt', () => {

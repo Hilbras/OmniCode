@@ -8,7 +8,7 @@ import type { ExecutableToolResult, ToolExecution } from '@hilbras/omnicode-engi
 
 import { BashTool } from '#/os/bash/bashTool';
 import { BashSandboxService, hostRestrictionDenialMessage } from '#/os/bash/sandbox';
-import { makeTestRuntime } from '../../helpers/testRuntime';
+import { createFakeProcessService, makeTestRuntime, type FakeGitCall } from '../../helpers/testRuntime';
 
 function executable(execution: ToolExecution): Extract<ToolExecution, { execute: unknown }> {
   if (!('execute' in execution)) throw new Error('expected an executable tool result');
@@ -44,6 +44,29 @@ function bashTool(sandbox: BashSandboxService | undefined): {
   };
 }
 
+function bashToolWithProcesses(sandbox: BashSandboxService): {
+  readonly execute: () => Promise<ExecutableToolResult>;
+  readonly calls: FakeGitCall[];
+} {
+  const calls: FakeGitCall[] = [];
+  const rt = makeTestRuntime({
+    workDir: '/workspace',
+    process: createFakeProcessService(() => ({ stdout: '' }), calls),
+  });
+  const tasks = {
+    registerTask: () => 'task-1',
+    waitForForegroundRelease: async () => 'terminal',
+    getTask: () => undefined,
+    getOutputSnapshot: async () => ({ fullOutputAvailable: false }),
+    persistOutput: () => {},
+  } as unknown as IAgentTaskService;
+  const toolPolicy = { isToolActive: () => false } as unknown as IAgentToolPolicyService;
+  const config = { get: () => undefined } as unknown as IConfigService;
+  const tool = new BashTool(rt.runtimeService, rt.sessionCtx, rt.workspaceCtx, tasks, toolPolicy, config, sandbox);
+  const execution = executable(tool.resolveExecution({ command: 'echo hi' }));
+  return { execute: () => execution.execute({ ...rt.context }), calls };
+}
+
 describe('BashTool exec-policy host amendment', () => {
   it('refuses to run a host-restricted command when no sandbox seam exists', async () => {
     const { execute } = bashTool(undefined);
@@ -67,5 +90,49 @@ describe('BashTool exec-policy host amendment', () => {
       execPolicyAllowedHosts: ['api.example.com', 'cdn.example.com'],
     });
     expect(output(result)).toContain('api.example.com, cdn.example.com');
+  });
+});
+
+describe('BashTool sandbox fallback status', () => {
+  it('records why an unavailable sandbox left the command unsandboxed', async () => {
+    const sandbox = new BashSandboxService(modeService(), {
+      mode: () => 'auto',
+      probe: async () => [
+        {
+          backend: 'bwrap',
+          available: false,
+          version: null,
+          reason: 'bwrap not found',
+          fallback: null,
+          probes: [],
+          checkedAt: 1,
+        },
+      ],
+    });
+    const { execute, calls } = bashToolWithProcesses(sandbox);
+    const result = await execute();
+    expect(output(result)).toContain('[sandbox] no OS sandbox backend is available');
+    expect(calls[0]?.command).toBe('/bin/bash');
+  });
+
+  it('runs inside the sandbox plan without a fallback note when a backend is available', async () => {
+    const sandbox = new BashSandboxService(modeService(), {
+      mode: () => 'auto',
+      probe: async () => [
+        {
+          backend: 'bwrap',
+          available: true,
+          version: '0.9.0',
+          reason: null,
+          fallback: null,
+          probes: [],
+          checkedAt: 1,
+        },
+      ],
+    });
+    const { execute, calls } = bashToolWithProcesses(sandbox);
+    const result = await execute();
+    expect(output(result)).not.toContain('[sandbox]');
+    expect(calls[0]?.command).toBe('bwrap');
   });
 });

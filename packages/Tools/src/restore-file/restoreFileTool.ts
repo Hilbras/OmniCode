@@ -20,6 +20,7 @@ import {
   type ToolExecution,
 } from '@hilbras/omnicode-engine/tool/toolContract';
 import { FILE_RESTORE_FLAG_ID } from './flag';
+import { checkSandboxWritePath } from '../os/sandbox/pathGrants';
 import { IRestoreFileTool, RestoreFileInputSchema, type RestoreFileInput } from './restore-file';
 import RESTORE_DESCRIPTION from './restore-file.md?raw';
 
@@ -122,6 +123,21 @@ export class RestoreFileTool implements IRestoreFileTool {
       return {
         isError: true,
         output: `Turn ${String(args.turn_id)} is not restorable. Restorable turns: ${describeTurnIds(turns)}.`,
+      };
+    }
+
+    // Explicit targets and full-turn restores both write here, so every
+    // candidate path must hold a write grant before the history engine runs.
+    const candidates = targets.length > 0 ? targets : turn.changes.map((change) => change.path);
+    const refusals = candidates
+      .map((path) => ({ path, refusal: checkSandboxWritePath(path, this.workspaceCtx.workDir) }))
+      .filter((entry): entry is { path: string; refusal: string } => entry.refusal !== undefined);
+    if (refusals.length > 0) {
+      return {
+        isError: true,
+        output:
+          `Restore not performed — sandbox policy denies a write target:\n` +
+          refusals.map((entry) => `${entry.path}: ${entry.refusal}`).join('\n'),
       };
     }
 

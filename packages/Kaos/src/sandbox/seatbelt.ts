@@ -10,6 +10,7 @@ import {
   type SandboxPolicy,
   type SandboxResult,
 } from './types';
+import { sandboxDenyReadHasGlob, sandboxDenyReadToRegexSource } from './grants';
 
 /**
  * macOS Seatbelt (`sandbox-exec`) backend.
@@ -26,6 +27,10 @@ import {
  * - Network is denied unless the policy shares it; there is no `allow default`.
  * - Writes are permitted only under the workspace (or the explicit write
  *   allowlist); system paths stay readable and never writable.
+ * - `denyReadPaths` become explicit `(deny file-read* ...)` rules, which
+ *   precedence rules put above the broad read allow: literal paths deny their
+ *   subtree, globs deny through an anchored regex projection of the same glob
+ *   matcher the pure grant checker uses.
  * - Like landlock, this backend reports availability honestly: a probe must
  *   actually run `sandbox-exec` before anything claims enforcement.
  */
@@ -52,6 +57,18 @@ export function escapeSeatbeltString(value: string): string {
 function subpathRule(operation: 'file-read*' | 'file-write*', path: string): string {
   const normalized = normalize(path).replace(/\/+$/, '') || '/';
   return `(allow ${operation} (subpath "${escapeSeatbeltString(normalized)}"))`;
+}
+
+function denyReadRule(path: string): SandboxResult<string> {
+  const normalized = normalize(path).replace(/\/+$/, '');
+  if (!isAbsolute(normalized) || /[\0\n\r]/.test(normalized)) {
+    return sandboxFailure('invalid-request', `deny-read entry must be an absolute clean path or glob: ${path}`);
+  }
+  if (!sandboxDenyReadHasGlob(normalized)) {
+    return sandboxSuccess(`(deny file-read* (subpath "${escapeSeatbeltString(normalized)}"))`);
+  }
+  const pattern = sandboxDenyReadToRegexSource(normalized);
+  return sandboxSuccess(`(deny file-read* (regex "${escapeSeatbeltString(pattern)}"))`);
 }
 
 export interface SeatbeltProfile {
@@ -92,6 +109,13 @@ export function buildSeatbeltProfile(policy: SandboxPolicy): SandboxResult<Seatb
     .map((path) => path.replace(/\/+$/, ''))
     .filter((path) => !isSandboxPathContained(workspace, path));
 
+  const denyReadRules: string[] = [];
+  for (const path of policy.denyReadPaths ?? []) {
+    const rule = denyReadRule(path);
+    if (!rule.ok) return rule;
+    denyReadRules.push(rule.value);
+  }
+
   const lines: string[] = [
     '(version 1)',
     '(deny default)',
@@ -102,6 +126,8 @@ export function buildSeatbeltProfile(policy: SandboxPolicy): SandboxResult<Seatb
     '(allow signal (target self))',
     // Devices are readable; nothing is writable outside the listed roots.
     '(allow file-read*)',
+    // Deny rules take precedence over the read allow above.
+    ...denyReadRules,
     ...(policy.shareNetwork === true ? ['(allow network*)'] : []),
     ...(policy.tmpfsPaths ?? ['/tmp', '/private/tmp']).map((path) => subpathRule('file-write*', path)),
     ...readonlyRoots.map((path) => subpathRule('file-read*', path)),
@@ -109,6 +135,22 @@ export function buildSeatbeltProfile(policy: SandboxPolicy): SandboxResult<Seatb
   ];
 
   return sandboxSuccess({ profile: lines.join('\n'), writableRoots });
+}
+
+/** Builds the `sandbox-exec` argv that runs `request.command` under a policy profile. */
+export function buildSeatbeltArgv(
+  request: SandboxCommand,
+  policy: SandboxPolicy,
+): SandboxResult<readonly string[]> {
+  if (request.command.length === 0) {
+    return sandboxFailure('invalid-request', 'sandbox command must contain at least one argument');
+  }
+  if (request.command.some((argument) => /[\0\n\r]/.test(argument))) {
+    return sandboxFailure('invalid-request', 'sandbox command arguments must not contain NUL or newline characters');
+  }
+  const built = buildSeatbeltProfile(policy);
+  if (!built.ok) return built;
+  return sandboxSuccess([SEATBELT_EXECUTABLE, '-p', built.value.profile, '--', ...request.command]);
 }
 
 export async function probeSeatbelt(deps: SeatbeltProbeDeps = {}): Promise<SandboxAvailability> {
@@ -176,14 +218,6 @@ export class SeatbeltSandboxBackend implements SandboxBackend {
   }
 
   buildArgv(request: SandboxCommand, policy: SandboxPolicy): SandboxResult<readonly string[]> {
-    if (request.command.length === 0) {
-      return sandboxFailure('invalid-request', 'sandbox command must contain at least one argument');
-    }
-    if (request.command.some((argument) => /[\0\n\r]/.test(argument))) {
-      return sandboxFailure('invalid-request', 'sandbox command arguments must not contain NUL or newline characters');
-    }
-    const built = buildSeatbeltProfile(policy);
-    if (!built.ok) return built;
-    return sandboxSuccess([SEATBELT_EXECUTABLE, '-p', built.value.profile, '--', ...request.command]);
+    return buildSeatbeltArgv(request, policy);
   }
 }

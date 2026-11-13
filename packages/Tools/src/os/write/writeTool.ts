@@ -19,6 +19,7 @@ import {
 import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
 import { literalRulePattern, matchesPathRuleSubject } from '@hilbras/omnicode-engine/tool/rule-match';
 import { withWorkspaceWriteLock } from '@hilbras/omnicode-engine/workspace/writeLock';
+import { checkSandboxWritePath } from '../sandbox/pathGrants';
 import { IWriteTool, WriteInputSchema, type WriteInput } from './write';
 import WRITE_DESCRIPTION from './write.md?raw';
 
@@ -54,6 +55,7 @@ export class WriteTool implements IWriteTool {
       workspace,
       operation: 'write',
     });
+    const sandboxRefusal = checkSandboxWritePath(path, view.workDir);
     return {
       accesses: ToolAccesses.writeFile(path),
       description: `Writing ${args.path}`,
@@ -66,6 +68,9 @@ export class WriteTool implements IWriteTool {
           homeDir: env.homeDir,
         }),
       execute: async () => {
+        if (sandboxRefusal !== undefined) {
+          return { isError: true, output: sandboxRefusal };
+        }
         const lease = this.runtime.acquire(['fs']);
         try {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {

@@ -152,4 +152,50 @@ describe('createSandboxExecutionPlan', () => {
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.code).toBe('invalid-request');
   });
+
+  it('builds a seatbelt plan with the sandbox-exec command', () => {
+    const result = createSandboxExecutionPlan({
+      backend: 'seatbelt',
+      availability: availability('seatbelt', true),
+      permissionMode: 'auto',
+      policy: { workspace: '/workspace' },
+      request: { command: 'node', args: ['build.js'] },
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.command).toBe('/usr/bin/sandbox-exec');
+    expect(result.value.backend).toBe('seatbelt');
+    expect(result.value.cwd).toBe('/workspace');
+    expect(result.value.args[0]).toBe('/usr/bin/sandbox-exec');
+    expect(result.value.args[2]).toContain('(deny default)');
+    expect(result.value.args.slice(-3)).toEqual(['--', 'node', 'build.js']);
+  });
+
+  it('builds a seatbelt plan that denies configured reads', () => {
+    const result = createSandboxExecutionPlan({
+      backend: 'seatbelt',
+      availability: availability('seatbelt', true),
+      permissionMode: 'auto',
+      policy: { workspace: '/workspace', denyReadPaths: ['/workspace/.env'] },
+      request: { command: 'cat', args: ['.env'] },
+    });
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    expect(result.value.args.join('\n')).toContain('(deny file-read* (subpath "/workspace/.env"))');
+  });
+
+  it('rejects deny-read policies on the bwrap backend as unsupported', () => {
+    const result = createSandboxExecutionPlan({
+      backend: 'bwrap',
+      availability: availability('bwrap', true),
+      permissionMode: 'auto',
+      policy: { workspace: '/workspace', denyReadPaths: ['/workspace/.env'] },
+      request: { command: 'cat', args: ['.env'] },
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('unsupported-operation');
+      expect(result.message).toContain('bwrap cannot express read denial');
+    }
+  });
 });

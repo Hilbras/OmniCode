@@ -28,13 +28,17 @@ Root `src/index.ts` exports:
   `translateShellDrivePath`.
 - Errors: `KaosError`, `KaosValueError`, `KaosFileExistsError`,
   `KaosShellNotFoundError`.
-- Sandbox: `probeBwrap`, `probeLandlock`, `BwrapSandboxBackend`,
-  `LandlockSandboxBackend`, `createSandboxBackend`, `buildBwrapArgv`,
-  `evaluateRuntimeShellPolicy`, `createSandboxExecutionPlan`,
+- Sandbox: `probeBwrap`, `probeLandlock`, `probeSeatbelt`, `probeSandboxBackends`,
+  `BwrapSandboxBackend`, `LandlockSandboxBackend`, `SeatbeltSandboxBackend`,
+  `createSandboxBackend`, `buildBwrapArgv`, `buildSeatbeltProfile`,
+  `buildSeatbeltArgv`, `evaluateRuntimeShellPolicy`, `createSandboxExecutionPlan`,
   `selectSandboxBackend`, `createSandboxStatus`, `summarizeSandboxPolicy`,
   `SandboxFileWorker`, `createNodeFileWorkerFs`, `parseFileWorkerRequest`,
-  `isSandboxPathContained`, `resolveSandboxPath`, `normalizeSandboxRoot`, and
-  the sandbox result/availability/policy types.
+  `isSandboxPathContained`, `resolveSandboxPath`, `normalizeSandboxRoot`,
+  `normalizeSandboxPathGrants`, `mergeSandboxPathGrants`,
+  `intersectSandboxPathGrants`, `evaluateSandboxPathGrants`,
+  `isSandboxDenyReadMatch`, `sandboxDenyReadToRegExp`, and the sandbox
+  result/availability/policy/grant types.
 
 `SSHKaos` is not on the root barrel. Import it from
 `@hilbras/omnicode-kaos/ssh`.
@@ -48,7 +52,9 @@ Key files:
 - `src/environment.ts`, `src/login-shell-path.ts`, `src/shell-path-bridge.ts`.
 - `src/internal.ts`: buffered streams, decode-with-errors, glob regex.
 - `src/sandbox/types.ts`: backend, availability, policy, failure, status types.
-- `src/sandbox/availability.ts`: injected `bwrap` / landlock probes.
+- `src/sandbox/grants.ts`: per-path grants (write allowlist, deny-read globs)
+  with merge/intersect composition and the pure read/write grant check.
+- `src/sandbox/availability.ts`: injected `bwrap` / landlock / seatbelt probes.
 - `src/sandbox/bwrap.ts`, `src/sandbox/backends.ts`: safe bwrap argv and
   backend adapters.
 - `src/sandbox/shell-policy.ts`, `src/sandbox/execution.ts`: argv validation
@@ -109,9 +115,9 @@ parity, lifecycle, large stdout) plus SSH validation/mocked-SFTP tests, not a
 live SSH server. Some tests skip on Windows (`kill`, symlinks).
 `test/fixtures/killtree.cjs` supports process-tree tests.
 `test/sandbox/` covers bwrap argv shape, availability/failure states, shell
-policy, file-worker commit/abort, path and symlink containment, and selection.
-It uses injected probes and an in-memory filesystem; it never runs real
-sandboxing tools.
+policy, per-path grants (merge/intersect, deny-read globs), file-worker
+commit/abort, path and symlink containment, and selection. It uses injected
+probes and an in-memory filesystem; it never runs real sandboxing tools.
 ## Local traps
 
 - Directory casing is `Kaos`; package name is lowercase `kaos`; Vitest project
@@ -143,6 +149,16 @@ The `@hilbras/omnicode-kaos/sandbox` surface is consumed by the Bash tool throug
 
 `SandboxPolicy.writeAllowlist` binds the workspace read-only and exposes only listed contained paths RW via `--bind-try`. Undefined preserves whole-workspace RW. Bash reads optional absolute roots from `OMNICODE_SANDBOX_WRITE_ROOTS`.
 
+## Deny-read and per-path grants
+
+`SandboxPolicy.denyReadPaths` lists absolute paths (or `*`/`**`/`?` globs) whose contents must be unreadable inside the sandbox. `src/sandbox/grants.ts` is the policy algebra: `normalizeSandboxPathGrants` validates entries against the workspace, `mergeSandboxPathGrants` unions sources (a source without a write allowlist widens the merge to whole-workspace RW; deny-read always unions), `intersectSandboxPathGrants` intersects write grants across independent authorities while deny-read still unions, and `evaluateSandboxPathGrants` answers one read/write check. Deny-read never blocks a write.
+
+Backend projection is honest about capability: seatbelt emits `(deny file-read* ...)` rules (literal subpath, or an anchored regex from the same glob matcher); bwrap **refuses** a policy carrying `denyReadPaths` (`unsupported-operation`) because bind mounts cannot hide bound content — callers surface that reason and fall back explicitly. In-process consumers (Write/Edit/Read/LSP in `packages/Tools`) enforce the same grants through the pure checker on every platform.
+
+## Host backend selection
+
+`selectSandboxBackend` walks `SANDBOX_BACKEND_PREFERENCE` (bwrap, seatbelt, landlock) and records a `fallback` whenever it did not get its first choice. A host-configured `preferredBackend` (env `OMNICODE_SANDBOX_BACKEND` at the call sites) is a hard choice: unavailable means `enabled: false` with reason `preferred-backend-unavailable` and `fallback.to: null` — the selection never substitutes a different backend, and the refusal text names the real probe failure. `probeSandboxBackends` probes all three backends.
+
 ## Seatbelt backend
 
-`src/sandbox/seatbelt.ts` builds a deny-by-default `sandbox-exec` profile for macOS: writes only under the workspace (or a contained `writeAllowlist`), system paths read-only, network only when `shareNetwork`. Literals only — paths are escaped, never interpolated as rules. `probeSeatbelt` is honest (non-darwin, missing probe, and real probe result) and never claims enforcement without a probe.
+`src/sandbox/seatbelt.ts` builds a deny-by-default `sandbox-exec` profile for macOS: writes only under the workspace (or a contained `writeAllowlist`), system paths read-only, network only when `shareNetwork`, and `denyReadPaths` as explicit `(deny file-read* ...)` rules that precedence puts above the broad read allow. Literals only — paths are escaped, never interpolated as rules. `probeSeatbelt` is honest (non-darwin, missing probe, and real probe result) and never claims enforcement without a probe.

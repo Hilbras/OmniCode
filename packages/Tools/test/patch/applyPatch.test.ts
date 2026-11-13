@@ -1,7 +1,20 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import type { ExecutableToolResult, ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
 
 import { applyPatch, parsePatch, type PatchFileAdapter } from '#/patch/applyPatch';
+import { ApplyPatchTool } from '#/patch/patchTool';
 import { PatchStreamParser } from '#/patch/patchStream';
+import { makeTestRuntime } from '../helpers/testRuntime';
+
+function executable(execution: ToolExecution): Extract<ToolExecution, { execute: unknown }> {
+  if (!('execute' in execution)) throw new Error('expected an executable tool result');
+  return execution;
+}
+
+function output(result: ExecutableToolResult): string {
+  return typeof result.output === 'string' ? result.output : JSON.stringify(result.output);
+}
 
 class MemoryFs implements PatchFileAdapter {
   readonly files = new Map<string, string>();
@@ -152,5 +165,36 @@ describe('PatchStreamParser', () => {
     expect(parsePatch('*** Begin Patch\n*** Add File: a.txt\n+x\rX\n*** End Patch')).toEqual([
       { kind: 'add', path: 'a.txt', content: 'x\rX\n' },
     ]);
+  });
+});
+
+describe('ApplyPatchTool sandbox write grants', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it('refuses a patch whose target is outside the sandbox write allowlist', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_WRITE_ROOTS', '/workspace/out');
+    const tr = makeTestRuntime({ workDir: '/workspace' });
+    const tool = new ApplyPatchTool(tr.runtimeService, tr.workspaceCtx);
+    const execution = executable(
+      tool.resolveExecution({ patch: '*** Begin Patch\n*** Add File: src/new.ts\n+content\n*** End Patch' }),
+    );
+    const result = await execution.execute(tr.context);
+    expect(result.isError).toBe(true);
+    expect(output(result)).toContain('sandbox policy denies a write target');
+    expect(output(result)).toContain('src/new.ts');
+  });
+
+  it('lets a patch through when every target holds a write grant', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_WRITE_ROOTS', '/workspace/src');
+    const tr = makeTestRuntime({ workDir: '/workspace' });
+    const tool = new ApplyPatchTool(tr.runtimeService, tr.workspaceCtx);
+    const execution = executable(
+      tool.resolveExecution({ patch: '*** Begin Patch\n*** Add File: src/new.ts\n+content\n*** End Patch' }),
+    );
+    const result = await execution.execute(tr.context);
+    expect(output(result)).not.toContain('sandbox policy denies');
+    expect(output(result)).not.toContain('write allowlist');
   });
 });

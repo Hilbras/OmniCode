@@ -11,6 +11,18 @@ function requireArgs(result: SandboxResult<readonly string[]>): readonly string[
 const WORKSPACE: SandboxPolicy = { workspace: '/workspace' };
 
 describe('buildBwrapArgv', () => {
+  it('rejects deny-read paths instead of pretending bwrap can hide them', () => {
+    const result = buildBwrapArgv(
+      { command: ['true'] },
+      { ...WORKSPACE, denyReadPaths: ['/workspace/.env'] },
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.code).toBe('unsupported-operation');
+      expect(result.message).toContain('deny');
+      expect(result.detail?.['denyReadPaths']).toEqual(['/workspace/.env']);
+    }
+  });
   it('builds an argv array with workspace writable, system paths read-only, and network denied', () => {
     const argv = requireArgs(
       buildBwrapArgv({ command: ['node', '-e', 'console.log(1)'] }, WORKSPACE),

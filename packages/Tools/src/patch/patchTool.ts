@@ -12,6 +12,7 @@ import { ToolAccesses, type AgentTool, type ExecutableToolResult, type ToolExecu
 import { toInputJsonSchema } from '@hilbras/omnicode-engine/tool/input-schema';
 import { literalRulePattern } from '@hilbras/omnicode-engine/tool/rule-match';
 import { withWorkspaceWriteLock } from '@hilbras/omnicode-engine/workspace/writeLock';
+import { checkSandboxWritePath } from '../os/sandbox/pathGrants';
 
 import {
   PatchApplyError,
@@ -78,6 +79,11 @@ export class ApplyPatchTool implements IApplyPatchTool {
     const accesses = [
       ...new Set([...safePaths.values()].flatMap((safe) => ToolAccesses.writeFile(safe))),
     ];
+    const sandboxRefusals = new Map<string, string>();
+    for (const [authored, safe] of safePaths) {
+      const refusal = checkSandboxWritePath(safe, view.workDir);
+      if (refusal !== undefined) sandboxRefusals.set(authored, refusal);
+    }
     return {
       accesses,
       description: `Applying multi-file patch (${String(operations.length)} operation${operations.length === 1 ? '' : 's'})`,
@@ -85,6 +91,13 @@ export class ApplyPatchTool implements IApplyPatchTool {
       approvalRule: literalRulePattern(this.name, [...safePaths.values()].sort().join(',')),
       execute: async (): Promise<ExecutableToolResult> => {
         if (parseError !== undefined) return { isError: true, output: parseError };
+        if (sandboxRefusals.size > 0) {
+          const lines = [...sandboxRefusals.entries()].map(([authored, refusal]) => `${authored}: ${refusal}`);
+          return {
+            isError: true,
+            output: `Patch not applied — sandbox policy denies a write target:\n${lines.join('\n')}`,
+          };
+        }
         const lease = this.runtime.acquire(['fs']);
         try {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {

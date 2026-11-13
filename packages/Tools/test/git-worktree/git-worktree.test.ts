@@ -1,9 +1,10 @@
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'pathe';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { HostFileSystem } from '@hilbras/omnicode-engine/os/backends/node-local/hostFsService';
+import { setChildSandboxProbeForTests } from '@hilbras/omnicode-engine/os/sandbox/childSandbox';
 import type { ExecutableToolResult, ToolExecution } from '@hilbras/omnicode-engine/tool/toolContract';
 
 import {
@@ -109,6 +110,48 @@ describe('git worktree tools', () => {
     expect(output(result)).toContain('"worktrees"');
     expect(calls.every((call) => call.command === 'git')).toBe(true);
     expect(calls.some((call) => call.args.join(' ').includes('--porcelain'))).toBe(true);
+  });
+
+  it('runs git unsandboxed with an explicit note when the configured sandbox is unavailable', async () => {
+    setChildSandboxProbeForTests(async () => []);
+    const repo = await tempDir();
+    const calls: FakeGitCall[] = [];
+    const process = createFakeProcessService(
+      gitHandler(repo, `worktree ${repo}\nHEAD 1111\nbranch refs/heads/main\n\n`),
+      calls,
+    );
+    const tr = makeTestRuntime({ workDir: repo, process });
+    const tool = new GitWorktreeListTool(tr.runtimeService, tr.sessionCtx, tr.workspaceCtx);
+    vi.stubEnv('OMNICODE_SANDBOX_MODE', 'auto');
+    vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'landlock');
+    try {
+      const result = await executable(tool.resolveExecution({})).execute(tr.context);
+      expect(result.isError).toBeFalsy();
+      expect(output(result)).toContain('[sandbox]');
+      expect(output(result)).toContain('refuses to substitute');
+      expect(calls.every((call) => call.command === 'git')).toBe(true);
+    } finally {
+      setChildSandboxProbeForTests(undefined);
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('fails the git run when the sandbox is required and unavailable', async () => {
+    setChildSandboxProbeForTests(async () => []);
+    const repo = await tempDir();
+    const process = createFakeProcessService(gitHandler(repo, ''));
+    const tr = makeTestRuntime({ workDir: repo, process });
+    const tool = new GitWorktreeListTool(tr.runtimeService, tr.sessionCtx, tr.workspaceCtx);
+    vi.stubEnv('OMNICODE_SANDBOX_MODE', 'required');
+    vi.stubEnv('OMNICODE_SANDBOX_BACKEND', 'landlock');
+    try {
+      const result = await executable(tool.resolveExecution({})).execute(tr.context);
+      expect(result.isError).toBe(true);
+      expect(output(result)).toContain('preferred sandbox backend landlock');
+    } finally {
+      setChildSandboxProbeForTests(undefined);
+      vi.unstubAllEnvs();
+    }
   });
 
   it('creates a worktree only inside the repository without force', async () => {

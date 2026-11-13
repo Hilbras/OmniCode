@@ -7,11 +7,13 @@ import {
   type RuntimeShellPolicy,
   type ShellPolicyRequest,
 } from './shell-policy';
+import { buildSeatbeltArgv, SEATBELT_EXECUTABLE } from './seatbelt';
 import {
   sandboxFailure,
   sandboxSuccess,
   type SandboxAvailability,
   type SandboxBackendKind,
+  type SandboxCommand,
   type SandboxExecutionPlan,
   type SandboxPermissionMode,
   type SandboxPolicy,
@@ -37,6 +39,15 @@ function isPolicyDenial(code: string): boolean {
     code === 'unsafe-shell-path' ||
     code === 'environment-assignment'
   );
+}
+
+function buildBackendArgv(
+  backend: SandboxBackendKind,
+  request: SandboxCommand,
+  policy: SandboxPolicy,
+): SandboxResult<readonly string[]> {
+  if (backend === 'seatbelt') return buildSeatbeltArgv(request, policy);
+  return buildBwrapArgv(request, policy);
 }
 
 export function createSandboxExecutionPlan(
@@ -78,13 +89,13 @@ export function createSandboxExecutionPlan(
     );
   }
 
-  const argv = buildBwrapArgv({ command: shell.argv }, input.policy);
+  const argv = buildBackendArgv(input.backend, { command: shell.argv }, input.policy);
   if (!argv.ok) return argv;
 
   return sandboxSuccess({
     backend: input.backend,
     permissionMode: input.permissionMode,
-    command: 'bwrap',
+    command: input.backend === 'seatbelt' ? SEATBELT_EXECUTABLE : 'bwrap',
     args: argv.value,
     cwd: normalize(input.policy.cwd ?? input.policy.workspace),
   });

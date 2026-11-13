@@ -1,5 +1,6 @@
 import { execFile } from 'node:child_process';
 
+import { probeSeatbelt, type SeatbeltProbeDeps } from './seatbelt';
 import type {
   SandboxAvailability,
   SandboxProbeCommand,
@@ -198,14 +199,16 @@ export async function probeLandlock(deps: LandlockProbeDeps = {}): Promise<Sandb
 export interface SandboxProbeDeps {
   readonly bwrap?: BwrapProbeDeps;
   readonly landlock?: LandlockProbeDeps;
+  readonly seatbelt?: SeatbeltProbeDeps;
 }
 
 export async function probeSandboxBackends(
   deps: SandboxProbeDeps = {},
 ): Promise<readonly SandboxAvailability[]> {
-  const [bwrap, landlock] = await Promise.all([
+  const [bwrap, landlock, seatbelt] = await Promise.all([
     probeBwrap(deps.bwrap),
     probeLandlock(deps.landlock),
+    probeSeatbelt(deps.seatbelt),
   ]);
-  return [bwrap, landlock];
+  return [bwrap, landlock, seatbelt];
 }

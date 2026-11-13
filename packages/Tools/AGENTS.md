@@ -33,7 +33,10 @@ or UI. Tools are implementations; the engine owns admission and execution.
   computed from file text and bounded.
 - `src/git-worktree/` owns worktree list/create/remove. It uses the host process
   seam with argument arrays, never a shell, never `--force`, and rejects
-  creation outside the repository.
+  creation outside the repository. Every git child goes through the engine
+  child-sandbox seam (`OMNICODE_SANDBOX_MODE`); `required` with no backend
+  fails the git run, `auto` without a backend runs direct and appends the
+  `[sandbox]` reason to the tool output.
 - `src/notebook/` owns `.ipynb` parsing and cell edits with JSON schema
   validation and atomic writes.
 - `src/tasks/` owns the session task board store and tools. `TaskBoardList` is
@@ -132,10 +135,15 @@ transports, agent loop logic, UI code, or tests that only read source text.
 
 ## Bash sandbox
 
-`src/os/bash/sandbox.ts` selects a Kaos sandbox backend for Bash. `OMNICODE_SANDBOX_MODE=off|auto|required` controls it; default is `off`. `auto` falls back to direct execution with an explicit reason, while `required` fails closed. `OMNICODE_SANDBOX_NETWORK=shared` keeps the network namespace shared; default is denied. Permission mode still gates execution first.
+`src/os/bash/sandbox.ts` selects a Kaos sandbox backend for Bash. `OMNICODE_SANDBOX_MODE=off|auto|required` controls it; default is `off`. `auto` falls back to direct execution with an explicit reason, while `required` fails closed. `OMNICODE_SANDBOX_NETWORK=shared` keeps the network namespace shared; default is denied. `OMNICODE_SANDBOX_BACKEND` pins one backend (bwrap, seatbelt, landlock); an unavailable pinned backend is never substituted — in `auto` the command runs direct and `BashTool` prefixes the refusal reason to the output, in `required` the command is denied. Permission mode still gates execution first.
+
+`OMNICODE_SANDBOX_DENY_READ` (comma-separated absolute paths/globs) flows into the sandbox policy. bwrap cannot express read denial, so a deny-read policy on bwrap fails the plan with an explicit reason (direct in `auto`, denied in `required`); the seatbelt backend projects the rules. Write-root and deny-read values are passed to the plan builder unfiltered: a non-absolute entry fails plan validation, so a misconfigured variable falls back with the entry named instead of silently shrinking the grants.
 
 A `BashSandboxRequest` may carry `allowedHosts` — the exec-policy host amendment attached to an approved command. No backend can confine a process's network to specific hosts yet, so `prepare` refuses such a request (`kind: 'denied'` with `hostRestrictionDenialMessage`), and `BashTool` refuses on its own when the sandbox seam is absent. Never let a host-restricted command run with unrestricted network; when host-level enforcement exists, thread the amendment into the backend policy instead of removing the refusal.
 
+## Per-path grants for in-process tools
+
+`src/os/sandbox/pathGrants.ts` applies the same grants to in-process tools: `OMNICODE_SANDBOX_WRITE_ROOTS` restricts Write/Edit/ApplyPatch/NotebookEdit/RestoreFile to the allowlisted subtrees, and `OMNICODE_SANDBOX_DENY_READ` refuses Read/Lsp (and notebook reads) on matched paths. Configure nothing and the checks pass. Parsing is fail-closed in both directions: a non-absolute entry is a refusal naming the rejected entries (never a silent shrink of the grant set), and an invalid allowlist denies the operation until the host fixes the variable. For the child-process path the raw entries reach the plan builder, whose validation fails the plan with the entry named. Grep/Glob tree walks do not apply deny-read yet; session-record writers (`records/`) never take model paths and stay outside the grant check.
 
 ## Multi-file patch
 

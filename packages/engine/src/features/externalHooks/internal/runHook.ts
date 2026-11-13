@@ -2,6 +2,7 @@ import { type SpawnOptionsWithoutStdio } from 'node:child_process';
 
 import { z } from 'zod';
 
+import { prepareChildSandboxSpawn } from '#/os/sandbox/childSandbox';
 import { type IHostProcess, IHostProcessService } from '#/os/interface/hostProcess';
 
 import type { HookResult } from './types';
@@ -13,6 +14,11 @@ export interface RunHookOptions {
   readonly signal?: AbortSignal;
   readonly shell?: boolean;
   readonly inheritEnv?: boolean;
+  /**
+   * Workspace the hook's child process is sandboxed against when the host
+   * enabled `OMNICODE_SANDBOX_MODE`. Absent means the hook runs unsandboxed.
+   */
+  readonly sandbox?: { readonly workspace: string };
 }
 
 export function buildHookSpawnOptions(options: {
@@ -59,6 +65,35 @@ const HookJsonOutputSchema = z.looseObject({
   hookSpecificOutput: HookSpecificOutputSchema,
 });
 
+type HookSandbox =
+  | { readonly kind: 'unsandboxed'; readonly note?: string }
+  | { readonly kind: 'sandboxed'; readonly command: string; readonly args: readonly string[] }
+  | { readonly kind: 'denied'; readonly message: string };
+
+async function prepareHookSandbox(
+  options: RunHookOptions,
+  command: string,
+  args: readonly string[],
+): Promise<HookSandbox> {
+  if (options.sandbox === undefined) return { kind: 'unsandboxed' };
+  if (options.shell === true) {
+    return {
+      kind: 'unsandboxed',
+      note: 'hook shell mode cannot be sandboxed; the hook runs outside the OS sandbox',
+    };
+  }
+  const prepared = await prepareChildSandboxSpawn({
+    argv: [command, ...args],
+    cwd: options.cwd ?? options.sandbox.workspace,
+    workspace: options.sandbox.workspace,
+  });
+  if (prepared.kind === 'denied') return { kind: 'denied', message: prepared.message };
+  if (prepared.kind === 'sandbox') {
+    return { kind: 'sandboxed', command: prepared.command, args: prepared.args };
+  }
+  return { kind: 'unsandboxed', note: prepared.reason };
+}
+
 export async function runHook(
   hostProcess: IHostProcessService,
   command: string,
@@ -69,16 +104,41 @@ export async function runHook(
   if ('error' in parsed) {
     return { action: 'block', message: parsed.error, reason: parsed.error, errored: true };
   }
+  const sandbox = await prepareHookSandbox(options, parsed.command, parsed.args);
+  if (sandbox.kind === 'denied') {
+    return {
+      action: 'block',
+      message: sandbox.message,
+      reason: sandbox.message,
+      errored: true,
+    };
+  }
+  const sandboxNote = sandbox.kind === 'unsandboxed' ? sandbox.note : undefined;
   let proc: IHostProcess;
   try {
-    proc = await hostProcess.spawn(parsed.command, parsed.args, {
-      shell: options.shell === true,
-      cwd: options.cwd,
-      env: buildHookEnv(options.env, options.inheritEnv === true),
-      inheritEnv: false,
-    });
+    if (sandbox.kind === 'sandboxed') {
+      proc = await hostProcess.spawn(sandbox.command, sandbox.args, {
+        cwd: options.cwd,
+        env: buildHookEnv(options.env, options.inheritEnv === true),
+        inheritEnv: false,
+      });
+    } else {
+      proc = await hostProcess.spawn(parsed.command, parsed.args, {
+        shell: options.shell === true,
+        cwd: options.cwd,
+        env: buildHookEnv(options.env, options.inheritEnv === true),
+        inheritEnv: false,
+      });
+    }
   } catch (error) {
-    return { action: 'block', message: errorMessage(error), reason: errorMessage(error), errored: true };
+    const message = errorMessage(error);
+    return {
+      action: 'block',
+      message,
+      reason: message,
+      errored: true,
+      sandboxNote,
+    };
   }
 
   return new Promise<HookResult>((resolve) => {
@@ -96,7 +156,7 @@ export async function runHook(
       if (settled) return;
       settled = true;
       cleanup();
-      resolve(result);
+      resolve({ ...result, sandboxNote });
     };
 
     proc.stdout.setEncoding('utf8');

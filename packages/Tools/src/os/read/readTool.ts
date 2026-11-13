@@ -39,6 +39,7 @@ import {
 } from './read';
 import { IAgentToolResultTruncationService } from '@hilbras/omnicode-engine/agent/toolResultTruncation/toolResultTruncation';
 import { READ_SECTION, type ReadConfig } from './configSection';
+import { checkSandboxReadPath } from '../sandbox/pathGrants';
 import { DOCUMENT_EXTRACT_FLAG_ID } from './extract/flag';
 import {
   DOCUMENT_EXTRACT_MAX_BYTES,
@@ -246,6 +247,7 @@ export class ReadTool implements IReadTool {
       workspace,
       operation: 'read',
     });
+    const sandboxRefusal = checkSandboxReadPath(path, view.workDir);
     return {
       accesses: ToolAccesses.readFile(path),
       description: `Reading ${args.path}`,
@@ -258,6 +260,9 @@ export class ReadTool implements IReadTool {
           homeDir: env.homeDir,
         }),
       execute: async () => {
+        if (sandboxRefusal !== undefined) {
+          return { isError: true, output: sandboxRefusal };
+        }
         const lease = this.runtime.acquire(['fs']);
         try {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {

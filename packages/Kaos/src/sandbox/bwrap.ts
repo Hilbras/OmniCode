@@ -84,6 +84,15 @@ export function buildBwrapArgv(
   const cwd = resolveSandboxPath(workspace, policy.cwd ?? workspace);
   if (!cwd.ok) return cwd;
 
+  if (policy.denyReadPaths !== undefined && policy.denyReadPaths.length > 0) {
+    return sandboxFailure(
+      'unsupported-operation',
+      'bwrap cannot express read denial for bound paths; ' +
+        'drop denyReadPaths or use a backend that projects deny-read rules (seatbelt)',
+      { denyReadPaths: [...policy.denyReadPaths] },
+    );
+  }
+
   const systemPaths = collectMountPaths(
     policy.systemPaths,
     DEFAULT_SANDBOX_SYSTEM_PATHS,

@@ -95,6 +95,11 @@ pnpm --filter @hilbras/omnicode-engine test
   composition root before debugging the feature itself.
 - Registering a tool in a feature does not admit it to a profile. Update the
   profile allowlist and, if safe, the default approval policy.
+- `externalHooks` hook commands run through the child-sandbox seam
+  (`#/os/sandbox/childSandbox`) with the trigger cwd as the workspace: `off`
+  (default) is unchanged, `auto` falls back direct with `HookResult.sandboxNote`,
+  `required` blocks the hook when no backend is available, and `shell: true`
+  hooks always run unsandboxed with a note.
 - Moving a core-required feature to `packages/Addons` requires inverting static
   imports and DI lookups; `packages/README.md` lists the known blockers.
 - New core-required behavior goes in `features/`; new optional behavior that

@@ -19,6 +19,7 @@ import {
 import { registerAgentToolService } from '@hilbras/omnicode-engine/agent/toolRegistry/toolContribution';
 import { withWorkspaceWriteLock } from '@hilbras/omnicode-engine/workspace/writeLock';
 
+import { checkSandboxWritePath } from '../os/sandbox/pathGrants';
 import { EditInputSchema, IEditTool, type EditInput } from './edit';
 import editDescriptionTemplate from './edit.md?raw';
 
@@ -55,6 +56,7 @@ export class EditTool implements IEditTool {
       workspace,
       operation: 'write',
     });
+    const sandboxRefusal = checkSandboxWritePath(path, workspace.workspaceDir);
     return {
       accesses: ToolAccesses.readWriteFile(path),
       description: `Editing ${args.path}`,
@@ -73,6 +75,9 @@ export class EditTool implements IEditTool {
           homeDir: env.homeDir,
         }),
       execute: async () => {
+        if (sandboxRefusal !== undefined) {
+          return { isError: true, output: sandboxRefusal };
+        }
         const lease = this.runtime.acquire(['fs']);
         try {
           if (lease.runtime.identity.generation !== inspected.identity.generation) {

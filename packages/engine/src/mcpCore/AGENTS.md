@@ -57,9 +57,9 @@ management commands, prompts, permissions, or UI. Those live in `agent/mcp/`,
 
 ## Import boundaries
 
-- Engine rules apply: import leaf packages only (`base`, `auth`, `minidb`,
-  `tree-sitter-bash`). Current code also uses `#/os/...`, `#/errors`, and
-  `#human/llm/message` for tool descriptions.
+- Engine rules apply: import leaf packages only (`base`, `auth`, `kaos`,
+  `minidb`, `tree-sitter-bash`). Current code also uses `#/os/...`, `#/errors`,
+  and `#human/llm/message` for tool descriptions.
 - Keep this layer below `agent/`, `session/`, and `app/`; importing upward would
   invert the MCP stack and create cycles.
 - Do not import `packages/Tools`, `packages/Addons`, `packages/memory`, `core`,
@@ -108,7 +108,7 @@ management commands, permission policy, prompt text, or UI behavior.
 
 ## Stdio command trust
 
-`command-policy.ts` resolves stdio commands to absolute trusted PATH executables, rejects relative PATH entries and workspace-resident commands unless `allowWorkspaceCommand` is set, and preserves the existing `inheritEnv` allowlist. Sandboxing MCP children remains a host-layer deferral.
+`command-policy.ts` resolves stdio commands to absolute trusted PATH executables, rejects relative PATH entries and workspace-resident commands unless `allowWorkspaceCommand` is set, and preserves the existing `inheritEnv` allowlist. The resolved child then goes through the child-sandbox seam (`#/os/sandbox/childSandbox`, env `OMNICODE_SANDBOX_MODE`/`OMNICODE_SANDBOX_BACKEND`/`OMNICODE_SANDBOX_NETWORK`/write-root/deny-read knobs): `off` (default) spawns exactly as before, `auto` wraps the argv in the selected backend's plan or runs direct with the reason pushed into the stderr tail as a `[sandbox]` line, and `required` fails the connection (`MCP_STARTUP_FAILED`) when no backend is available. The server cwd doubles as the sandbox workspace.
 
 
 MCP stdio `inheritEnv` defaults to false: children receive the platform-safe env allowlist plus explicit `env`; full host env requires `inheritEnv: true`.
