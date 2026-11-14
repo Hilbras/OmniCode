@@ -201,4 +201,81 @@ describe('AgentTurnDiffService', () => {
     await service.settled();
     expect(await service.snapshot(2)).toBeUndefined();
   });
+
+  it('renders the latest turn through the bounded diff renderer', async () => {
+    files.files.set(`${WORK_DIR}/a.txt`, 'one\n');
+    startTurn(1);
+    await writeTool(1, `${WORK_DIR}/a.txt`, () => files.files.set(`${WORK_DIR}/a.txt`, 'ONE\n'), [
+      { kind: 'file', operation: 'write', path: `${WORK_DIR}/a.txt` },
+    ]);
+    endTurn(1);
+    await service.settled();
+
+    const view = await service.render('latest');
+    expect(view).toMatchObject({ scope: 'latest', turnId: 1, truncated: false });
+    expect(view.text).toContain('Diff: 1 file(s) changed, +1 -1');
+    expect(view.text).toContain('-one');
+    expect(view.text).toContain('+ONE');
+    expect(view.files).toEqual([{ path: 'a.txt', status: 'modified', additions: 1, deletions: 1 }]);
+  });
+
+  it('renders the session scope merged across turns', async () => {
+    files.files.set(`${WORK_DIR}/a.txt`, 'one\n');
+    startTurn(1);
+    await writeTool(1, `${WORK_DIR}/a.txt`, () => files.files.set(`${WORK_DIR}/a.txt`, 'two\n'), [
+      { kind: 'file', operation: 'write', path: `${WORK_DIR}/a.txt` },
+    ]);
+    endTurn(1);
+    await service.settled();
+    startTurn(2);
+    await writeTool(2, `${WORK_DIR}/a.txt`, () => files.files.set(`${WORK_DIR}/a.txt`, 'three\n'), [
+      { kind: 'file', operation: 'write', path: `${WORK_DIR}/a.txt` },
+    ]);
+    endTurn(2);
+    await service.settled();
+
+    const session = await service.render('session');
+    expect(session.scope).toBe('session');
+    expect(session.turnId).toBeUndefined();
+    expect(session.text).toContain('-one');
+    expect(session.text).toContain('+three');
+    expect(session.text).not.toContain('+two');
+
+    const latest = await service.render('latest');
+    expect(latest.turnId).toBe(2);
+    expect(latest.text).toContain('-two');
+    expect(latest.text).toContain('+three');
+  });
+
+  it('renders No changes when nothing was tracked', async () => {
+    const view = await service.render('latest');
+    expect(view.text).toBe('No changes.');
+    expect(view.turnId).toBeUndefined();
+    expect(view.files).toEqual([]);
+  });
+
+  it('truncates a diff that exceeds the renderer line cap', async () => {
+    files.files.set(
+      `${WORK_DIR}/a.txt`,
+      Array.from({ length: 400 }, (_, index) => `old ${String(index)}`).join('\n'),
+    );
+    startTurn(1);
+    await writeTool(
+      1,
+      `${WORK_DIR}/a.txt`,
+      () =>
+        files.files.set(
+          `${WORK_DIR}/a.txt`,
+          Array.from({ length: 400 }, (_, index) => `new ${String(index)}`).join('\n'),
+        ),
+      [{ kind: 'file', operation: 'write', path: `${WORK_DIR}/a.txt` }],
+    );
+    endTurn(1);
+    await service.settled();
+
+    const view = await service.render('latest');
+    expect(view.truncated).toBe(true);
+    expect(view.text).toContain('(diff truncated at 600 lines)');
+    expect(view.text).toContain('more line(s) in this hunk');
+  });
 });

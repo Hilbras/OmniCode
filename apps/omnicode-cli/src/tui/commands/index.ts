@@ -22,6 +22,7 @@ export {
   showSettingsSelector,
 } from './config';
 export { formatContextSize, handleContextCommand, parseContextSize } from './context';
+export { diffPanelLines, handleDiffCommand, parseDiffCommand } from './diff';
 export { handleSwarmCommand } from './swarm';
 export { handleTowerCommand } from './tower';
 export { handleFeedbackCommand, showStatusReport, showUsage } from './info';
@@ -29,6 +30,12 @@ export { handlePluginsCommand } from './plugins';
 export { handleReloadCommand, handleReloadTuiCommand } from './reload';
 export { handleGoalCommand, parseGoalCommand, goalObjectiveLengthWarning } from './goal';
 export { handleMemoryCommand, parseMemoryCommand } from './memory';
+export {
+  buildReviewPrompt,
+  handleReviewCommand,
+  parseReviewCommand,
+  type ReviewScope,
+} from './review';
 export { goalArgumentCompletions } from './registry';
 export { handleForkCommand, handleInitCommand, handleTitleCommand } from './session';
 export { handleUndoCommand } from './undo';

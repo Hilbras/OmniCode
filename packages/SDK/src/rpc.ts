@@ -88,6 +88,8 @@ import type {
   SessionSummary,
   SessionSummaryPage,
   SkillSummary,
+  TurnDiffRenderScope,
+  TurnDiffView,
   PluginCommandDef,
   SuggestFilesInput,
   SuggestFilesResult,
@@ -451,6 +453,10 @@ export abstract class SDKRpcClientBase {
   abstract undoHistory(input: SessionIdRpcInput & { count: number }): Promise<void>;
 
   abstract listFileChanges(input: SessionIdRpcInput): Promise<readonly FileHistoryTurnSummary[]>;
+
+  abstract getTurnDiff(
+    input: SessionIdRpcInput & { scope?: TurnDiffRenderScope },
+  ): Promise<TurnDiffView>;
 
   abstract restoreFiles(
     input: SessionIdRpcInput & {

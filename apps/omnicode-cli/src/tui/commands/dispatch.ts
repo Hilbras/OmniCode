@@ -47,7 +47,9 @@ import {
 import { handleContextCommand } from './context';
 import { handleCopyCommand } from './copy';
 import { handleDesktopCommand } from './desktop';
+import { handleDiffCommand } from './diff';
 import { handleGoalCommand } from './goal';
+import { handleReviewCommand } from './review';
 import { handleMemoryCommand } from './memory';
 import { handleFeedbackCommand, showStatusReport, showUsage } from './info';
 import { parseSlashInput } from './parse';
@@ -87,6 +89,7 @@ export { handleLoginCommand, handleLogoutCommand } from './auth';
 export { handleBtwCommand } from './btw';
 export { handleCopyCommand } from './copy';
 export { handleDesktopCommand } from './desktop';
+export { handleDiffCommand } from './diff';
 export { handleAddDirCommand } from './add-dir';
 export {
   handleCompactCommand,
@@ -108,6 +111,7 @@ export { handlePluginsCommand } from './plugins';
 export { handleReloadCommand, handleReloadTuiCommand } from './reload';
 export { handleGoalCommand } from './goal';
 export { handleMemoryCommand } from './memory';
+export { handleReviewCommand } from './review';
 export {
   handleExportDebugZipCommand,
   handleExportMdCommand,
@@ -417,12 +421,14 @@ async function ensureSessionForCommand(host: SlashCommandHost): Promise<Session 
 const SESSION_REQUIRING_COMMANDS: ReadonlySet<BuiltinSlashCommandName> = new Set([
   'btw',
   'compact',
+  'diff',
   'export-debug-zip',
   'export-md',
   'fork',
   'goal',
   'init',
   'plan',
+  'review',
   'swarm',
   'undo',
   'web',
@@ -615,6 +621,12 @@ async function handleBuiltInSlashCommand(
       return;
     case 'copy':
       await handleCopyCommand(host);
+      return;
+    case 'diff':
+      await handleDiffCommand(host, args);
+      return;
+    case 'review':
+      await handleReviewCommand(host, args);
       return;
     case 'login':
       await handleLoginCommand(host);

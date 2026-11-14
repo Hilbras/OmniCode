@@ -699,7 +699,7 @@ describe('Agent tool description', () => {
     const description = agentDescription();
 
     expect(description).toContain(
-      'Tools: Bash, Read, ReadMediaFile, Glob, Grep, WebSearch, FetchURL',
+      'Tools: Bash, Read, ReadMediaFile, Glob, Grep, SearchSessions, WebSearch, FetchURL',
     );
     expect(description).toContain('Tools: Bash, CronCreate, CronDelete, CronList, Edit');
   });
@@ -711,7 +711,7 @@ describe('Agent tool description', () => {
 
     expect(description).toContain('Available agent types');
     expect(description).not.toContain('ReadMediaFile');
-    expect(description).toContain('Tools: Bash, Read, Glob, Grep, WebSearch, FetchURL');
+    expect(description).toContain('Tools: Bash, Read, Glob, Grep, SearchSessions, WebSearch, FetchURL');
   });
 
   it('lists ReadMediaFile when a selectable pool model has image input even if the primary model does not', () => {

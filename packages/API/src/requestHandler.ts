@@ -161,6 +161,7 @@ import {
   IAgentSkillService,
   IAgentSwarmService,
   IAgentTaskService,
+  IAgentTurnDiffService,
   ISessionTokenCountingService,
   IAgentToolPolicyService,
   IAgentToolRegistryService,
@@ -226,6 +227,8 @@ import {
   type Scope,
   type ServicesAccessor,
   type SessionSummary as V2SessionSummary,
+  type TurnDiffRenderScope,
+  type TurnDiffView,
 } from '@hilbras/omnicode-core';
 import { encodeWorkDirKey } from '@hilbras/omnicode-base/utils/workdir-slug';
 import { loadMcpServers } from '@hilbras/omnicode-engine/app/mcpConfig/configLoader';
@@ -2202,6 +2205,27 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
     input: SessionIdRpcInput,
   ): Promise<readonly FileHistoryTurnSummary[]> {
     return (await this.mainAgentFileHistory(input.sessionId)).turns();
+  }
+
+  /**
+   * Turn-level diffs live on the main agent's `IAgentTurnDiffService`, the
+   * same main-only resolution as file history: a subagent's handle tracks its
+   * own turns, and the diff a user asks for is always the main agent's.
+   */
+  private async mainAgentTurnDiff(sessionId: string): Promise<IAgentTurnDiffService> {
+    const session = this.requireLiveSession(sessionId);
+    const context = await ensureMainAgent(session);
+    const main = session.accessor.get(IAgentLifecycleService).handleOf(context.agentId);
+    if (main === undefined) {
+      throw new OmnicodeError(ErrorCodes.AGENT_NOT_FOUND, 'Main agent was not found');
+    }
+    return main.accessor.get(IAgentTurnDiffService);
+  }
+
+  override async getTurnDiff(
+    input: SessionIdRpcInput & { scope?: TurnDiffRenderScope },
+  ): Promise<TurnDiffView> {
+    return (await this.mainAgentTurnDiff(input.sessionId)).render(input.scope ?? 'latest');
   }
 
   override async restoreFiles(

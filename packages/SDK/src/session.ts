@@ -50,6 +50,8 @@ import type {
   SkillSummary,
   PluginCommandDef,
   ThinkingEffort,
+  TurnDiffRenderScope,
+  TurnDiffView,
   Unsubscribe,
 } from '#/types';
 
@@ -405,6 +407,17 @@ export class Session {
   async listFileChanges(): Promise<readonly FileHistoryTurnSummary[]> {
     this.ensureOpen();
     return this.rpc.listFileChanges({ sessionId: this.id });
+  }
+
+  /**
+   * Bounded rendered file diffs: the latest turn (`latest`, the default) or
+   * every retained turn merged per path (`session`). `truncated` says a
+   * render cap dropped content; binary/oversize files appear in `files`
+   * without a rendered body.
+   */
+  async getTurnDiff(options?: { scope?: TurnDiffRenderScope }): Promise<TurnDiffView> {
+    this.ensureOpen();
+    return this.rpc.getTurnDiff({ sessionId: this.id, scope: options?.scope });
   }
 
   /** Rewind files to how they were at the start of `turnId`. */

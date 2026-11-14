@@ -222,6 +222,14 @@ export type {
   FileHistoryTurnSummary,
 } from '@hilbras/omnicode-engine/features/fileHistory/fileHistory';
 
+/** Per-turn and cumulative file diffs rendered for `/diff`, from the engine's turn-diff tracker. */
+export type {
+  TurnDiffFile,
+  TurnDiffRenderScope,
+  TurnDiffStatus,
+  TurnDiffView,
+} from '@hilbras/omnicode-engine/agent/turnDiff/turnDiff';
+
 /** Input for `restoreFiles`: which of the turn's files to rewind, and whether to overwrite drift. */
 export interface RestoreFilesOptions {
   /** Restrict the restore to these paths. Defaults to every file the turn changed. */

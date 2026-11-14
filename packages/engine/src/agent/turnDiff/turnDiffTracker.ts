@@ -1,4 +1,4 @@
-import type { TurnDiffFile, TurnDiffSnapshot } from './turnDiff';
+import type { TurnDiffFile, TurnDiffRenderScope, TurnDiffSnapshot } from './turnDiff';
 import { countLineDelta, countTextLines, isBinaryText } from './turnDiffOps';
 
 export interface TurnDiffCapture {
@@ -95,6 +95,64 @@ export class TurnDiffTracker {
     return buildSnapshot(turnId, 'open', record.files);
   }
 
+  /**
+   * Render inputs for the diff renderer, one entry per path whose content is
+   * diffable: `latest` resolves the most recent turn, `session` merges every
+   * retained turn per path (first pre-image wins, last post-image wins).
+   * Unchanged, binary, oversize, and never-fully-observed paths are omitted —
+   * the renderer only sees content it can honestly diff.
+   */
+  diffInputs(scope: TurnDiffRenderScope): readonly { readonly path: string; readonly before: string; readonly after: string }[] {
+    const entries = scope === 'latest' ? this.turnEntries(this.latestTurnId()) : this.mergedEntries();
+    if (entries === undefined) return [];
+    const inputs: { path: string; before: string; after: string }[] = [];
+    for (const key of [...entries.keys()].toSorted()) {
+      const entry = entries.get(key)!;
+      const input = renderableInput(entry.before, entry.after);
+      if (input !== undefined) inputs.push({ path: key, before: input.before, after: input.after });
+    }
+    return inputs;
+  }
+
+  /** Delta files behind `diffInputs`, including the binary/oversize paths the renderer omits. */
+  files(scope: TurnDiffRenderScope): readonly TurnDiffFile[] {
+    if (scope === 'latest') {
+      const turnId = this.latestTurnId();
+      return turnId === undefined ? [] : (this.snapshot(turnId)?.files ?? []);
+    }
+    const entries = this.mergedEntries();
+    if (entries === undefined) return [];
+    return deltaFiles(entries).files;
+  }
+
+  private latestTurnId(): number | undefined {
+    return this.activeTurn() ?? this.latestTurn();
+  }
+
+  private turnEntries(turnId: number | undefined): ReadonlyMap<string, TrackedEntry> | undefined {
+    if (turnId === undefined) return undefined;
+    return this.turns.get(turnId)?.files;
+  }
+
+  /** Per-path union of every retained turn: earliest `before`, latest `after`. */
+  private mergedEntries(): ReadonlyMap<string, TrackedEntry> | undefined {
+    if (this.order.length === 0) return undefined;
+    const merged = new Map<string, TrackedEntry>();
+    for (const turnId of this.order) {
+      const record = this.turns.get(turnId);
+      if (record === undefined) continue;
+      for (const [key, entry] of record.files) {
+        const existing = merged.get(key);
+        if (existing === undefined) {
+          merged.set(key, { absolute: entry.absolute, before: entry.before, after: entry.after });
+          continue;
+        }
+        if (entry.after !== undefined) existing.after = entry.after;
+      }
+    }
+    return merged;
+  }
+
   close(turnId: number): TurnDiffSnapshot | undefined {
     const record = this.turns.get(turnId);
     if (record === undefined) return undefined;
@@ -139,6 +197,15 @@ function buildSnapshot(
   state: 'open' | 'closed',
   entries: ReadonlyMap<string, TrackedEntry>,
 ): TurnDiffSnapshot {
+  const { files, additions, deletions } = deltaFiles(entries);
+  return { turnId, state, files, additions, deletions };
+}
+
+function deltaFiles(entries: ReadonlyMap<string, TrackedEntry>): {
+  readonly files: readonly TurnDiffFile[];
+  readonly additions: number;
+  readonly deletions: number;
+} {
   const files: TurnDiffFile[] = [];
   let additions = 0;
   let deletions = 0;
@@ -150,7 +217,30 @@ function buildSnapshot(
     additions += file.additions;
     deletions += file.deletions;
   }
-  return { turnId, state, files, additions, deletions };
+  return { files, additions, deletions };
+}
+
+/**
+ * Content pair the renderer can honestly diff: both sides observed, neither
+ * oversize, neither binary, and actually different. Missing sides become
+ * empty strings so adds/deletes render as pure insertion/deletion. The gate
+ * mirrors `fileDelta` exactly — including its LCS-budget check — so a path
+ * `files()` flags `oversize` can never reach the renderer while the panel
+ * note still claims it was not rendered.
+ */
+function renderableInput(
+  before: TurnDiffCapture,
+  after: TurnDiffCapture | undefined,
+): { readonly before: string; readonly after: string } | undefined {
+  if (!before.captured || after === undefined || !after.captured) return undefined;
+  if (before.oversize === true || after.oversize === true) return undefined;
+  if (before.content === undefined && after.content === undefined) return undefined;
+  if (before.content === undefined) return { before: '', after: after.content! };
+  if (after.content === undefined) return { before: before.content, after: '' };
+  if (before.content === after.content) return undefined;
+  if (isBinaryText(before.content) || isBinaryText(after.content)) return undefined;
+  if (countLineDelta(before.content, after.content) === undefined) return undefined;
+  return { before: before.content, after: after.content };
 }
 
 function fileDelta(key: string, entry: TrackedEntry): TurnDiffFile | undefined {

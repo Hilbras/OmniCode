@@ -11,7 +11,9 @@ import { IHostFileSystem } from '#/os/interface/hostFileSystem';
 import { ISessionWorkspaceContext } from '#/session/workspaceContext/workspaceContext';
 import type { ToolAccesses } from '#/tool/toolContract';
 
-import { IAgentTurnDiffService, type TurnDiffSnapshot } from './turnDiff';
+import { renderDiffs } from '#/features/sessionSearch/diffRender';
+
+import { IAgentTurnDiffService, type TurnDiffRenderScope, type TurnDiffSnapshot, type TurnDiffView } from './turnDiff';
 import { turnDiffPath } from './turnDiffOps';
 import { TurnDiffTracker, type TurnDiffCapture } from './turnDiffTracker';
 
@@ -91,6 +93,25 @@ export class AgentTurnDiffService extends Disposable implements IAgentTurnDiffSe
 
   turns(): Promise<readonly TurnDiffSnapshot[]> {
     return this.enqueueValue(async () => this.tracker.closedSnapshots());
+  }
+
+  /**
+   * Bounded rendering through `features/sessionSearch/diffRender` with its
+   * default caps (600 lines, 200 per hunk, 400 chars per line); binary and
+   * oversize files stay in the view's `files` list but contribute no body.
+   */
+  render(scope: TurnDiffRenderScope): Promise<TurnDiffView> {
+    return this.enqueueValue(async () => {
+      const turnId = scope === 'latest' ? (this.tracker.activeTurn() ?? this.tracker.latestTurn()) : undefined;
+      const rendered = renderDiffs(this.tracker.diffInputs(scope));
+      return {
+        scope,
+        turnId,
+        text: rendered.text,
+        truncated: rendered.truncated,
+        files: this.tracker.files(scope),
+      };
+    });
   }
 
   private async captureBefore(turnId: number, paths: readonly string[]): Promise<void> {

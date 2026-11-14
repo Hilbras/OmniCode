@@ -431,6 +431,21 @@ export const BUILTIN_SLASH_COMMANDS = [
     availability: 'always',
   },
   {
+    name: 'diff',
+    aliases: [],
+    description: 'Show the file changes of the latest turn (or the whole session)',
+    priority: 60,
+    argumentHint: '[session]',
+    availability: 'always',
+  },
+  {
+    name: 'review',
+    aliases: [],
+    description: 'Send a structured code-review prompt for the latest turn or session changes',
+    priority: 60,
+    argumentHint: '[session] [<focus>]',
+  },
+  {
     name: 'status',
     aliases: [],
     description: 'Show current session and runtime status',

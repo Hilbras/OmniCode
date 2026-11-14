@@ -28,6 +28,12 @@ describe('builtin agent profiles', () => {
     expect(profile('explore').tools).not.toContain('memory_save');
   });
 
+  it('admits the read-only SearchSessions tool into the default, coder, and explore profiles', () => {
+    for (const name of ['agent', 'coder', 'explore']) {
+      expect(profile(name).tools).toContain('SearchSessions');
+    }
+  });
+
   it('caps the default profile delegation at non-spawning profiles', () => {
     const agent = profile('agent');
     expect(agent.subagents).toEqual(['coder', 'explore', 'plan']);
