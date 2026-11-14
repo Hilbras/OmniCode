@@ -312,6 +312,7 @@ export * from '#/features/skill/workspace/extraFileSkillSource';
 export * from '#/features/skill/workspace/explicitFileSkillSource';
 export * from '#/features/skill/workspace/rootFileSkillSource';
 export * from '#/features/skill/workspace/pluginSkillSource';
+export * from '#/features/skill/curator/index';
 export * from '#/workspace/workspaceAgentProfileLoader/workspaceAgentProfileLoader';
 export * from '#/workspace/workspaceAgentProfileLoader/workspaceAgentProfileLoaderService';
 export * from '#/workspace/workspaceAgentProfileLoader/extraAgentProfileLoader';
