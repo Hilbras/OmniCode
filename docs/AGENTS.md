@@ -8,6 +8,8 @@ span packages. Current contents are sparse and plan-oriented:
 - `memory-upgrade-plan.md` — memory package upgrade scope and phases
 - `telegram-upgrade-plan.md` — original Telegram connector plan
 - `telegram-upgrade-plan-v2.md` — supersedes the original Telegram plan
+- `release.md` — versioning policy, changesets flow, and what is deliberately
+  not built yet on the release surface
 - `plans/qwen-parity-improvement-plan.md` — active seven-workstream plan
 - `en/architecture/` and `zh/architecture/` — bilingual architecture and
   workstream status, English as source of truth

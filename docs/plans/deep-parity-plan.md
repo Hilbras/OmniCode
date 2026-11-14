@@ -710,6 +710,67 @@ Tasks:
 6. CONTRIBUTING/SECURITY/templates.
 7. Bundled skills.
 
+#### 5.3 progress
+
+Feasible-local scope only. Files changed: `.changeset/config.json`,
+`.changeset/README.md`, `CONTRIBUTING.md`, `SECURITY.md`,
+`.github/ISSUE_TEMPLATE/{config.yml,bug_report.yml,feature_request.yml}`,
+`.github/PULL_REQUEST_TEMPLATE.md`, `docs/release.md`, `docs/AGENTS.md`,
+`packages/engine/AGENTS.md`. No workflows were modified.
+
+- Changesets: `.changeset/config.json` pins the policy — `@omnicode/cli` is the
+  only published package (`access: public`, matching its `publishConfig`); the
+  private `@hilbras/*` packages are versioned with changelog entries
+  (`privatePackages.version: true`) but never published or tagged (`tag: false`)
+  so `workspace:^` ranges stay coherent at publish time; no `fixed`/`linked`
+  groups; internal dependency bumps are patch-level. `.changeset/README.md`
+  documents the flow (author a changeset with the PR, `changeset version` on
+  `main`, publish as a manual owner step). `@changesets/cli` is deliberately
+  not installed yet: adding it edits `pnpm-lock.yaml`, and the lockfile carries
+  unrelated in-flight work. No publishing workflow was added.
+- `CONTRIBUTING.md`: setup, guard/check commands as they exist in the root
+  `package.json`, the known command gaps from `AGENTS.md` (no-op root `lint`,
+  broken CLI `test`/`e2e` scripts, `tui` on `node --test`), testing rules, and
+  PR expectations mirroring the `AGENTS.md` review rules.
+- `SECURITY.md`: supported surface is the latest `@omnicode/cli` release plus
+  the default branch tip (private packages are never published, so fixes ship
+  from `main` only), private reporting via GitHub private vulnerability
+  reporting, the repo's trust boundaries as reporting scope, and coordinated
+  disclosure. No fabricated security email or endpoint.
+- Templates: `.github/ISSUE_TEMPLATE/` bug report and feature request forms
+  (surface dropdown, redaction reminder) with `blank_issues_enabled: false` and
+  no contact links (the repo slug for advisory URLs is not verifiable from this
+  tree), and a `.github/PULL_REQUEST_TEMPLATE.md` whose validation checklist
+  mirrors the per-change-type definition of done and requires honest
+  validation reporting.
+- Bundled skills (task 7): the convention already exists and is complete —
+  `packages/engine/src/features/skill/catalog/builtin/` holds `<name>.md` +
+  `<name>.ts` pairs registered through `BUILTIN_SKILLS` in `builtin.ts` with a
+  `registerBuiltinSkill` import-time contribution seam in `registry.ts`,
+  `builtinSkillSource.ts` feeding the catalog, and an inventory-pinning test.
+  Nothing structural was missing, so no scaffolding was added; the convention
+  is now documented in a "Bundled skills" section in `packages/engine/AGENTS.md`
+  (the repo keeps src-level docs in `AGENTS.md` guides; no src READMEs exist
+  anywhere).
+- Docs scaffold: `docs/release.md` (single-language — `docs/AGENTS.md` forbids
+  inventing bilingual mirrors for documents that never had one) states the
+  versioning policy, release flow, release gates, and the deliberately-absent
+  items; `docs/AGENTS.md` content list updated.
+- Deferred, with reasons: desktop supervisor/updater and inspector panels — no
+  desktop app exists in this tree and both need packaged-app, code-signing, and
+  update-server infrastructure; official plugins and marketplace CDN — the CLI
+  ships local development/build scripts (`dev:plugin-marketplace`,
+  `build:plugin-marketplace`) but hosting a CDN needs external
+  infrastructure; OIDC trusted publishing — needs npm registry trusted-publisher
+  configuration and a publish workflow; the CLI's `publishConfig.provenance` is
+  `false` today; Nix closure check — the tree has no `flake.nix` and
+  `scripts/AGENTS.md` says not to add one to satisfy the legacy check;
+  SBOM/digest workflows — need a publish pipeline and artifact-signing
+  infrastructure that do not exist; VitePress bilingual docs site — needs a
+  hosted site build; the existing docs tree is plain markdown with `docs/en/`
+  and `docs/zh/` mirrors governed by `docs/AGENTS.md`, which this item's docs
+  scaffold follows instead.
+
 ## Validation
 
 - `pnpm check:guards`

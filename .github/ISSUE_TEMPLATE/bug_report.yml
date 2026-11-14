@@ -1,0 +1,64 @@
+name: Bug report
+description: Something in the CLI, server, or a workspace package misbehaves
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Also tell us what you expected to happen instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: |
+        Minimal steps from a clean state. Include the command or entry point
+        (CLI invocation, SDK call, server route) and any config section involved.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: The @omnicode/cli version you installed, or the commit if running from source.
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Affected surface
+      options:
+        - CLI / TUI
+        - Server / web
+        - SDK / API
+        - Engine (agent loop, tools, permissions)
+        - Memory
+        - Docs
+        - Other / not sure
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Node version, install method, and terminal if the issue is TUI-related.
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and output
+      description: |
+        Relevant output. Redact secrets, tokens, and anything private before
+        pasting; do not rely on us to redact for you.
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues for a duplicate.
+        - label: I redacted secrets and private paths from everything above.
