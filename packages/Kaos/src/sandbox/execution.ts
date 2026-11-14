@@ -8,6 +8,7 @@ import {
   type ShellPolicyRequest,
 } from './shell-policy';
 import { buildSeatbeltArgv, SEATBELT_EXECUTABLE } from './seatbelt';
+import { buildWindowsSandboxArgv } from './windows';
 import {
   sandboxFailure,
   sandboxSuccess,
@@ -29,6 +30,8 @@ export interface CreateSandboxExecutionPlanInput {
   readonly policy: SandboxPolicy;
   readonly request: SandboxExecutionRequest;
   readonly shellPolicy?: RuntimeShellPolicy;
+  /** Native helper for the windows backend; without one the windows plan refuses. */
+  readonly windowsHelperPath?: string;
 }
 
 function isPolicyDenial(code: string): boolean {
@@ -42,7 +45,7 @@ function isPolicyDenial(code: string): boolean {
 }
 
 function buildBackendArgv(
-  backend: SandboxBackendKind,
+  backend: Exclude<SandboxBackendKind, 'windows' | 'landlock'>,
   request: SandboxCommand,
   policy: SandboxPolicy,
 ): SandboxResult<readonly string[]> {
@@ -87,6 +90,22 @@ export function createSandboxExecutionPlan(
       shell.message,
       { denial: shell.code, offending: shell.offending },
     );
+  }
+
+  if (input.backend === 'windows') {
+    const windowsArgv = buildWindowsSandboxArgv(
+      { command: shell.argv },
+      input.policy,
+      { helperPath: input.windowsHelperPath },
+    );
+    if (!windowsArgv.ok) return windowsArgv;
+    return sandboxSuccess({
+      backend: 'windows',
+      permissionMode: input.permissionMode,
+      command: windowsArgv.value[0],
+      args: windowsArgv.value,
+      cwd: normalize(input.policy.cwd ?? input.policy.workspace),
+    });
   }
 
   const argv = buildBackendArgv(input.backend, { command: shell.argv }, input.policy);

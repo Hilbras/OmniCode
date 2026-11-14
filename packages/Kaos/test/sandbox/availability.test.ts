@@ -173,6 +173,7 @@ describe('createSandboxBackend', () => {
   it('creates the requested backend', () => {
     expect(createSandboxBackend('bwrap').kind).toBe('bwrap');
     expect(createSandboxBackend('landlock').kind).toBe('landlock');
+    expect(createSandboxBackend('windows').kind).toBe('windows');
   });
 });
 
@@ -188,13 +189,17 @@ describe('probeSandboxBackends', () => {
       },
       landlock: { platform: 'linux' },
       seatbelt: { platform: 'linux' },
+      windows: { platform: 'linux' },
     });
-    expect(availability.map((item) => item.backend)).toEqual(['bwrap', 'landlock', 'seatbelt']);
+    expect(availability.map((item) => item.backend)).toEqual(['bwrap', 'landlock', 'seatbelt', 'windows']);
     expect(availability[0]?.available).toBe(true);
     expect(availability[1]?.available).toBe(false);
     expect(availability[1]?.fallback).toBe('bwrap');
     expect(availability[2]?.available).toBe(false);
     expect(availability[2]?.reason).toContain('darwin');
+    expect(availability[3]?.available).toBe(false);
+    expect(availability[3]?.reason).toContain('win32');
+    expect(availability[3]?.fallback).toBe('bwrap');
   });
 
   it('reports seatbelt as available on darwin through the injected probe', async () => {

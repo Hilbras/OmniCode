@@ -40,7 +40,7 @@ export function resolveChildSandboxBackendPreference(
   env: NodeJS.ProcessEnv = process.env,
 ): SandboxBackendKind | undefined {
   const raw = (env['OMNICODE_SANDBOX_BACKEND'] ?? '').trim().toLowerCase();
-  return raw === 'bwrap' || raw === 'seatbelt' || raw === 'landlock' ? raw : undefined;
+  return raw === 'bwrap' || raw === 'seatbelt' || raw === 'landlock' || raw === 'windows' ? raw : undefined;
 }
 
 export function childSandboxWriteRoots(env: NodeJS.ProcessEnv = process.env): readonly string[] | undefined {

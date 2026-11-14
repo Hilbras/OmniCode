@@ -28,10 +28,12 @@ Root `src/index.ts` exports:
   `translateShellDrivePath`.
 - Errors: `KaosError`, `KaosValueError`, `KaosFileExistsError`,
   `KaosShellNotFoundError`.
-- Sandbox: `probeBwrap`, `probeLandlock`, `probeSeatbelt`, `probeSandboxBackends`,
-  `BwrapSandboxBackend`, `LandlockSandboxBackend`, `SeatbeltSandboxBackend`,
-  `createSandboxBackend`, `buildBwrapArgv`, `buildSeatbeltProfile`,
-  `buildSeatbeltArgv`, `evaluateRuntimeShellPolicy`, `createSandboxExecutionPlan`,
+- Sandbox: `probeBwrap`, `probeLandlock`, `probeSeatbelt`, `probeWindowsSandbox`,
+  `probeSandboxBackends`, `BwrapSandboxBackend`, `LandlockSandboxBackend`,
+  `SeatbeltSandboxBackend`, `WindowsSandboxBackend`, `createSandboxBackend`,
+  `buildBwrapArgv`, `buildSeatbeltProfile`, `buildSeatbeltArgv`,
+  `buildWindowsSandboxProfile`, `buildWindowsSandboxArgv`,
+  `evaluateRuntimeShellPolicy`, `createSandboxExecutionPlan`,
   `selectSandboxBackend`, `createSandboxStatus`, `summarizeSandboxPolicy`,
   `SandboxFileWorker`, `createNodeFileWorkerFs`, `parseFileWorkerRequest`,
   `isSandboxPathContained`, `resolveSandboxPath`, `normalizeSandboxRoot`,
@@ -39,6 +41,12 @@ Root `src/index.ts` exports:
   `intersectSandboxPathGrants`, `evaluateSandboxPathGrants`,
   `isSandboxDenyReadMatch`, `sandboxDenyReadToRegExp`, and the sandbox
   result/availability/policy/grant types.
+- Network egress seam: `authorizeSandboxNetworkDestination`,
+  `sandboxNetworkDestinationFromUrl`, `resolveSandboxNetworkEgress`,
+  `normalizeSandboxNetworkCredentials`, `createMapCredentialBroker`,
+  `selectSandboxCredentialsForAuthorization`, `substituteSandboxSecrets`,
+  `normalizeSandboxNetworkHosts`, `normalizeSandboxNetworkProxy`, and the
+  network policy/authorization/credential types.
 
 `SSHKaos` is not on the root barrel. Import it from
 `@hilbras/omnicode-kaos/ssh`.
@@ -54,9 +62,14 @@ Key files:
 - `src/sandbox/types.ts`: backend, availability, policy, failure, status types.
 - `src/sandbox/grants.ts`: per-path grants (write allowlist, deny-read globs)
   with merge/intersect composition and the pure read/write grant check.
-- `src/sandbox/availability.ts`: injected `bwrap` / landlock / seatbelt probes.
+- `src/sandbox/availability.ts`: injected `bwrap` / landlock / seatbelt /
+  windows probes.
 - `src/sandbox/bwrap.ts`, `src/sandbox/backends.ts`: safe bwrap argv and
   backend adapters.
+- `src/sandbox/windows.ts`: AppContainer/Job Object backend descriptor, helper
+  argv, and honest availability probing.
+- `src/sandbox/network.ts`: destination authorization, proxy-env projection,
+  credential broker, and secret substitution.
 - `src/sandbox/shell-policy.ts`, `src/sandbox/execution.ts`: argv validation
   and execution-plan construction.
 - `src/sandbox/paths.ts`, `src/sandbox/file-worker.ts`: containment and the
@@ -86,9 +99,10 @@ Key files:
   `runWithKaos` for an isolated subtree; do not add a mutable global singleton.
 - Workspace trust and `resolveCommandPath` are caller responsibilities. This
   package does no PATH trust check before spawn.
-- Sandbox argv is always `bwrap` plus an argument array. Never build a shell
-  string. The workspace is bound read-write, system paths read-only, and the
-  network is unshared unless policy explicitly shares it.
+- Sandbox argv is an argument array (`bwrap`, `sandbox-exec`, or the
+  configured windows helper). Never build a shell string. The workspace is
+  bound read-write, system paths read-only, and the network is unshared unless
+  policy explicitly shares it.
 - `probeBwrap` runs only `bwrap --version` and a fixed
   `bwrap --unshare-all ... /bin/true` probe. Tests must inject the probe seam
   and never execute real `bwrap` or landlock syscalls.
@@ -116,7 +130,8 @@ live SSH server. Some tests skip on Windows (`kill`, symlinks).
 `test/fixtures/killtree.cjs` supports process-tree tests.
 `test/sandbox/` covers bwrap argv shape, availability/failure states, shell
 policy, per-path grants (merge/intersect, deny-read globs), file-worker
-commit/abort, path and symlink containment, and selection. It uses injected
+commit/abort, path and symlink containment, selection, the windows profile/argv
+shapes and probe states, and the network egress seam. It uses injected
 probes and an in-memory filesystem; it never runs real sandboxing tools.
 ## Local traps
 
@@ -157,8 +172,16 @@ Backend projection is honest about capability: seatbelt emits `(deny file-read* 
 
 ## Host backend selection
 
-`selectSandboxBackend` walks `SANDBOX_BACKEND_PREFERENCE` (bwrap, seatbelt, landlock) and records a `fallback` whenever it did not get its first choice. A host-configured `preferredBackend` (env `OMNICODE_SANDBOX_BACKEND` at the call sites) is a hard choice: unavailable means `enabled: false` with reason `preferred-backend-unavailable` and `fallback.to: null` — the selection never substitutes a different backend, and the refusal text names the real probe failure. `probeSandboxBackends` probes all three backends.
+`selectSandboxBackend` walks `SANDBOX_BACKEND_PREFERENCE` (bwrap, seatbelt, windows, landlock) and records a `fallback` whenever it did not get its first choice. A host-configured `preferredBackend` (env `OMNICODE_SANDBOX_BACKEND` at the call sites) is a hard choice: unavailable means `enabled: false` with reason `preferred-backend-unavailable` and `fallback.to: null` — the selection never substitutes a different backend, and the refusal text names the real probe failure. `probeSandboxBackends` probes all four backends.
 
 ## Seatbelt backend
 
 `src/sandbox/seatbelt.ts` builds a deny-by-default `sandbox-exec` profile for macOS: writes only under the workspace (or a contained `writeAllowlist`), system paths read-only, network only when `shareNetwork`, and `denyReadPaths` as explicit `(deny file-read* ...)` rules that precedence puts above the broad read allow. Literals only — paths are escaped, never interpolated as rules. `probeSeatbelt` is honest (non-darwin, missing probe, and real probe result) and never claims enforcement without a probe.
+
+## Windows backend
+
+`src/sandbox/windows.ts` is the AppContainer/Job Object backend (kind `windows`). Creating an AppContainer child needs Win32 process-creation attributes a plain argv cannot carry, so the backend is honest the way landlock is: off win32 the probe reports unavailable (fallback `bwrap`); on win32 it stays unavailable until a host wires a native helper (`WindowsSandboxBackendDeps.helperPath`, absolute path) plus a probe. With a helper the argv is the run protocol `[helper, 'run', '--profile', <profile JSON>, '--', ...argv]`, and `buildWindowsSandboxProfile` is the descriptor: named capabilities (`internetClient` only when the network is shared), Job Object limits with kill-on-close and no breakaway, and per-path rules where deny-read is literal-path-only (ACLs cannot be globs) and explicit tmpfs is refused. Without a helper `buildWindowsSandboxArgv` refuses with `backend-unavailable` instead of emitting an argv that would run the child unconfined.
+
+## Network egress seam
+
+`src/sandbox/network.ts` is the pure egress policy. `authorizeSandboxNetworkDestination` authorizes one destination (exact, case-insensitive host match, trailing dot stripped; wildcards and ports in allow entries are rejected) and is deny-by-default. `resolveSandboxNetworkEgress` projects the child env: `unrestricted`, `proxy-env` (sets `HTTPS_PROXY`/`HTTP_PROXY` both cases and removes `NO_PROXY`/`no_proxy` from the caller-supplied env), or `denied`. `proxy-env` is advisory routing, not enforcement — a child that ignores proxy env vars connects directly, so a caller that must guarantee host confinement (the exec-policy `hosts` amendment on a shell command) keeps refusing until an OS-enforced proxy transport exists; a restricted policy without a configured proxy is `denied`, never a silent downgrade. `createMapCredentialBroker` releases credentials only for an *enforced* authorization whose host matches the credential host (unrestricted policies release nothing), and `substituteSandboxSecrets` fills `$OMNICODE_SECRET_<id>` / `${OMNICODE_SECRET_<id>}` placeholders from released credentials only, leaving unknown tokens literal. The authorization→release→substitution order is structural: substitution has no input path that bypasses destination authorization.

@@ -44,6 +44,7 @@ describe('child sandbox env parsing', () => {
 
   it('parses the backend preference, write roots, deny-read paths, and network switch', () => {
     expect(resolveChildSandboxBackendPreference({ OMNICODE_SANDBOX_BACKEND: 'Seatbelt' })).toBe('seatbelt');
+    expect(resolveChildSandboxBackendPreference({ OMNICODE_SANDBOX_BACKEND: 'Windows' })).toBe('windows');
     expect(resolveChildSandboxBackendPreference({ OMNICODE_SANDBOX_BACKEND: 'nope' })).toBeUndefined();
     expect(childSandboxWriteRoots({ OMNICODE_SANDBOX_WRITE_ROOTS: '/w/src, relative, /w/test' })).toEqual([
       '/w/src',

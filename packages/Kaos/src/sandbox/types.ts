@@ -1,4 +1,4 @@
-export type SandboxBackendKind = 'bwrap' | 'landlock' | 'seatbelt';
+export type SandboxBackendKind = 'bwrap' | 'landlock' | 'seatbelt' | 'windows';
 
 export type SandboxPermissionMode = 'manual' | 'auto' | 'yolo';
 

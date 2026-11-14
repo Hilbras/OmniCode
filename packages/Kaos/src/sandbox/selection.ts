@@ -5,10 +5,11 @@ import type {
   SandboxSelection,
 } from './types';
 
-/** Ordered by platform coverage: bwrap (Linux), seatbelt (macOS), landlock (reserved). */
+/** Ordered by platform coverage: bwrap (Linux), seatbelt (macOS), windows (Windows), landlock (reserved). */
 export const SANDBOX_BACKEND_PREFERENCE: readonly SandboxBackendKind[] = [
   'bwrap',
   'seatbelt',
+  'windows',
   'landlock',
 ];
 

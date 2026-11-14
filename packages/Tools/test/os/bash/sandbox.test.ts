@@ -170,6 +170,7 @@ describe('BashSandboxService', () => {
 
   it('parses the backend preference and deny-read paths from env', () => {
     expect(sandboxBackendPreference({ OMNICODE_SANDBOX_BACKEND: 'SEATBELT' })).toBe('seatbelt');
+    expect(sandboxBackendPreference({ OMNICODE_SANDBOX_BACKEND: 'Windows' })).toBe('windows');
     expect(sandboxBackendPreference({ OMNICODE_SANDBOX_BACKEND: 'nope' })).toBeUndefined();
     expect(sandboxBackendPreference({})).toBeUndefined();
     expect(sandboxDenyReadPaths({ OMNICODE_SANDBOX_DENY_READ: '/w/.env*, /secrets' })).toEqual([

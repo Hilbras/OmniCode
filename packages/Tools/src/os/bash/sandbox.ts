@@ -87,7 +87,7 @@ export function sandboxDenyReadPaths(env: NodeJS.ProcessEnv = process.env): read
  */
 export function sandboxBackendPreference(env: NodeJS.ProcessEnv = process.env): SandboxBackendKind | undefined {
   const raw = (env['OMNICODE_SANDBOX_BACKEND'] ?? '').trim().toLowerCase();
-  return raw === 'bwrap' || raw === 'seatbelt' || raw === 'landlock' ? raw : undefined;
+  return raw === 'bwrap' || raw === 'seatbelt' || raw === 'landlock' || raw === 'windows' ? raw : undefined;
 }
 
 /**
