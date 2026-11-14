@@ -140,6 +140,11 @@ export class SubagentActivityStore {
     return this.records.get(agentId);
   }
 
+  /** All records in spawn order; the `/agents` live panel lists these. */
+  list(): SubagentActivityRecord[] {
+    return [...this.records.values()];
+  }
+
   agentIds(): readonly string[] {
     return [...this.records.keys()];
   }

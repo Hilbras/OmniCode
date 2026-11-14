@@ -19,6 +19,11 @@ import {
 } from '#/utils/usage/usage-format';
 import { currentTheme } from '#/tui/theme';
 import type { ColorToken } from '#/tui/theme';
+import {
+  cacheHitRatePercent,
+  formatSessionStatsLines,
+  type SessionStatsSnapshot,
+} from '#/tui/utils/session-stats';
 
 const LEFT_MARGIN = 2;
 const SIDE_PADDING = 1;
@@ -58,6 +63,7 @@ export interface UsageReportOptions {
   readonly maxContextTokens: number;
   readonly managedUsage?: ManagedUsageReport;
   readonly managedUsageError?: string;
+  readonly sessionStats?: SessionStatsSnapshot;
 }
 
 export interface ManagedUsageReportLineOptions {
@@ -92,11 +98,17 @@ function buildSessionUsageSection(
   const lines: string[] = [];
   let totalInput = 0;
   let totalOutput = 0;
+  let cacheRead = 0;
+  let cacheCreation = 0;
+  let inputOther = 0;
   for (const [model, row] of entries) {
     const input = usageInputTotal(row);
     const output = usageNumber(row.output);
     totalInput += input;
     totalOutput += output;
+    cacheRead += usageNumber(row.inputCacheRead);
+    cacheCreation += usageNumber(row.inputCacheCreation);
+    inputOther += usageNumber(row.inputOther);
     lines.push(
       `  ${muted(model)}  input ${value(formatTokenCount(input))}  output ${value(
         formatTokenCount(output),
@@ -108,6 +120,21 @@ function buildSessionUsageSection(
       `  ${muted('total')}  input ${value(formatTokenCount(totalInput))}  output ${value(
         formatTokenCount(totalOutput),
       )}  total ${value(formatTokenCount(totalInput + totalOutput))}`,
+    );
+  }
+  // The RPC's `total` wins when present; older payloads only carry byModel,
+  // so the rate falls back to the sums this section already computed.
+  const cacheRate =
+    cacheHitRatePercent(usage?.total) ??
+    cacheHitRatePercent({
+      inputOther,
+      output: totalOutput,
+      inputCacheRead: cacheRead,
+      inputCacheCreation: cacheCreation,
+    });
+  if (cacheRate !== undefined) {
+    lines.push(
+      `  ${muted('cache hit')}  ${value(`${cacheRate.toFixed(0)}%`)}${muted(' of input tokens')}`,
     );
   }
   return lines;
@@ -259,11 +286,22 @@ export function buildUsageReportLines(options: UsageReportOptions): string[] {
   const accent = (text: string) => currentTheme.boldFg('primary', text);
   const value = (text: string) => currentTheme.fg('text', text);
   const muted = (text: string) => currentTheme.fg('textDim', text);
+  const errorStyle = (text: string) => currentTheme.fg('error', text);
 
   const lines: string[] = [
     accent('Session usage'),
     ...buildSessionUsageSection(options.sessionUsage, options.sessionUsageError, value, muted),
   ];
+
+  const statsSection =
+    options.sessionStats === undefined
+      ? []
+      : formatSessionStatsLines(options.sessionStats, muted, value, errorStyle);
+  if (statsSection.length > 0) {
+    lines.push('');
+    lines.push(accent('Session stats'));
+    lines.push(...statsSection);
+  }
 
   lines.push('');
   lines.push(accent('Context window'));

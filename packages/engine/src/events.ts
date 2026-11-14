@@ -13,6 +13,7 @@ import type {
   AssistantDeltaEvent,
   ThinkingDeltaEvent,
 } from '#/agent/loop/turnEvents';
+import type { LoopSignalDetectedEvent } from '#/agent/loop/loopWatchEvents';
 import type { TurnEndedEvent } from '#/agent/loop/turnOps';
 import type { PluginCommandActivatedEvent } from '#/agent/pluginCommand/pluginCommand';
 import type {
@@ -94,6 +95,7 @@ export type AgentEvent =
   | PluginCommandActivatedEvent
   | TurnStartedEvent
   | TurnEndedEvent
+  | LoopSignalDetectedEvent
   | TurnStepStartedEvent
   | TurnStepCompletedEvent
   | TurnStepRetryingEvent

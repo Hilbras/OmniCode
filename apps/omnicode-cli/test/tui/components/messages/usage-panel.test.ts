@@ -46,6 +46,7 @@ describe('UsagePanelComponent', () => {
 
       expect(lines).toContain('Session usage');
       expect(lines).toContain('  omnicode  input 2k  output 250  total 2.3k');
+      expect(lines.join('\n')).toContain('cache hit  25% of input tokens');
       expect(lines).toContain('Context window');
       expect(lines.join('\n')).toContain('25%');
       expect(lines).toContain('Plan usage');
@@ -190,6 +191,48 @@ describe('UsagePanelComponent', () => {
     expect(lines).toContain('Context window');
     expect(lines.join('\n')).toContain('no context window declared');
     expect(lines.join('\n')).toContain('3.5k used');
+  });
+
+  it('renders the session stats section when the host tracks turns', () => {
+    const lines = buildUsageReportLines({
+      sessionUsage: { byModel: {} },
+      contextUsage: 0,
+      contextTokens: 0,
+      maxContextTokens: 0,
+      sessionStats: {
+        turnsStarted: 4,
+        turnsCompleted: 3,
+        turnsFailed: 1,
+        errorEvents: 2,
+        turnsWithDuration: 4,
+        totalTurnMs: 12_000,
+        lastTurnMs: 4200,
+        stepsWithFirstToken: 5,
+        totalFirstTokenMs: 4000,
+        lastFirstTokenMs: 800,
+      },
+    }).map(strip);
+
+    expect(lines).toContain('Session stats');
+    const output = lines.join('\n');
+    expect(output).toContain('4 turns');
+    expect(output).toContain('1 failed');
+    expect(output).toContain('2 errors');
+    expect(output).toContain('25%');
+    expect(output).toContain('4.2s');
+    expect(output).toContain('3.0s');
+    expect(output).toContain('800ms');
+  });
+
+  it('omits the session stats section when the host tracks none', () => {
+    const lines = buildUsageReportLines({
+      sessionUsage: { byModel: {} },
+      contextUsage: 0,
+      contextTokens: 0,
+      maxContextTokens: 0,
+    }).map(strip);
+
+    expect(lines).not.toContain('Session stats');
   });
 
   it('formats extra usage with CNY currency', () => {

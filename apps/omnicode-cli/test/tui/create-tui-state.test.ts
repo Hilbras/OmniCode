@@ -4,7 +4,8 @@ import { describe, it, expect } from 'vitest';
 import { GutterContainer } from '#/tui/components/chrome/gutter-container';
 import { StickyUserMessageComponent } from '#/tui/components/messages/sticky-user-message';
 import { TranscriptView } from '#/tui/components/messages/transcript-view';
-import { createTUIState, type OmnicodeTUIOptions } from '#/tui/omnicode-tui';
+import { createTUIState, type OmnicodeTUIOptions, type TUIState } from '#/tui/omnicode-tui';
+import { fullscreenSurfaceOpen } from '#/tui/utils/fullscreen-surface';
 import type { AppState } from '#/tui/types';
 
 function fakeInitialAppState(): AppState {
@@ -159,5 +160,92 @@ describe('createTUIState', () => {
     };
     expect(typeof internals.openUrl).toBe('function');
     expect(typeof internals.onRightClickPaste).toBe('function');
+  });
+});
+
+describe('fullscreenSurfaceOpen', () => {
+  function makeState(): ReturnType<typeof createTUIState> {
+    return createTUIState({
+      initialAppState: fakeInitialAppState(),
+      startup: { continueLast: false, yolo: false, auto: false, plan: false },
+    });
+  }
+
+  it('is false for a freshly created state', () => {
+    expect(fullscreenSurfaceOpen(makeState())).toBe(false);
+  });
+
+  it('is true while any takeover or editor-replacement slot is open', () => {
+    const slotStubs: ReadonlyArray<{
+      label: string;
+      set: (state: ReturnType<typeof createTUIState>) => void;
+    }> = [
+      {
+        label: 'editorReplacementMounted',
+        set: (state) => {
+          state.editorReplacementMounted = true;
+        },
+      },
+      {
+        label: 'tasksBrowser',
+        set: (state) => {
+          state.tasksBrowser = { viewer: undefined } as TUIState['tasksBrowser'];
+        },
+      },
+      {
+        label: 'toolCallsBrowser',
+        set: (state) => {
+          state.toolCallsBrowser = { viewer: undefined } as TUIState['toolCallsBrowser'];
+        },
+      },
+      {
+        label: 'liveAgentsBrowser',
+        set: (state) => {
+          state.liveAgentsBrowser = { viewer: undefined } as TUIState['liveAgentsBrowser'];
+        },
+      },
+      {
+        label: 'skillsBrowser',
+        set: (state) => {
+          state.skillsBrowser = {} as TUIState['skillsBrowser'];
+        },
+      },
+      {
+        label: 'subagentsBrowser',
+        set: (state) => {
+          state.subagentsBrowser = {} as TUIState['subagentsBrowser'];
+        },
+      },
+      {
+        label: 'connectorsBrowser',
+        set: (state) => {
+          state.connectorsBrowser = {} as TUIState['connectorsBrowser'];
+        },
+      },
+      {
+        label: 'updateRecommender',
+        set: (state) => {
+          state.updateRecommender = {} as TUIState['updateRecommender'];
+        },
+      },
+      {
+        label: 'mcpManager',
+        set: (state) => {
+          state.mcpManager = {} as TUIState['mcpManager'];
+        },
+      },
+      {
+        label: 'externalEditorRunning',
+        set: (state) => {
+          state.externalEditorRunning = true;
+        },
+      },
+    ];
+
+    for (const slot of slotStubs) {
+      const state = makeState();
+      slot.set(state);
+      expect(fullscreenSurfaceOpen(state), slot.label).toBe(true);
+    }
   });
 });

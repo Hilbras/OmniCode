@@ -13,6 +13,7 @@ import type {
   GoalChange,
   GoalUpdatedEvent,
   HookResultEvent,
+  LoopSignalDetectedEvent,
   Session,
   SessionMetaUpdatedEvent,
   SkillActivatedEvent,
@@ -36,6 +37,7 @@ import type { Component, Focusable } from '@hilbras/omnicode-tui';
 import { currentTheme } from '#/tui/theme';
 import type { ColorToken } from '#/tui/theme';
 import { openUrl } from '#/utils/open-url';
+import { SessionStats, type SessionStatsSnapshot } from '#/tui/utils/session-stats';
 import { formatStepDebugTiming } from '#/utils/usage/debug-timing';
 
 import { createGoal as startGoalCommand } from '../commands/goal';
@@ -126,6 +128,7 @@ export interface SessionEventHost {
   steerQueuedMessagesIntoRunningTurn(): void;
   handleTurnStarted?(event: TurnStartedEvent): void;
   handleTurnEnded?(event: TurnEndedEvent): void;
+  handleLoopDetected?(event: LoopSignalDetectedEvent): void;
   readonly btwPanelController: BtwPanelController;
   readonly tasksBrowserController: TasksBrowserController;
   readonly surveyController: SurveyController;
@@ -176,6 +179,7 @@ export class SessionEventHandler {
   private pendingModelBlockedFallback: GoalChange | undefined;
   private queuedGoalPromotionPending = false;
   private queuedGoalPromotionInFlight = false;
+  private readonly sessionStats = new SessionStats();
   private queuedGoalPromotionTimer: ReturnType<typeof setTimeout> | undefined;
   private stepRetryAttemptTimer: ReturnType<typeof setTimeout> | undefined;
 
@@ -196,6 +200,7 @@ export class SessionEventHandler {
     this.pendingModelBlockedFallback = undefined;
     this.queuedGoalPromotionPending = false;
     this.queuedGoalPromotionInFlight = false;
+    this.sessionStats.reset();
     this.clearQueuedGoalPromotionTimer();
     this.clearStepRetryAttemptTimer();
     this.stopAllMcpServerStatusSpinners();
@@ -207,6 +212,10 @@ export class SessionEventHandler {
 
   hasActiveAgentSwarmToolCall(): boolean {
     return this.subAgentEventHandler.hasActiveAgentSwarmToolCall();
+  }
+
+  getSessionStatsSnapshot(): SessionStatsSnapshot {
+    return this.sessionStats.snapshot();
   }
 
   syncAgentSwarmActivitySpinner(spinner: MoonLoader | undefined): void {
@@ -298,6 +307,9 @@ export class SessionEventHandler {
         break;
       case 'turn.step.retrying':
         this.handleStepRetrying(event);
+        break;
+      case 'loop.detected':
+        this.host.handleLoopDetected?.(event);
         break;
       case 'tool.progress':
         this.handleToolProgress(event);
@@ -416,6 +428,7 @@ export class SessionEventHandler {
   }
 
   private handleTurnBegin(event: TurnStartedEvent): void {
+    this.sessionStats.recordTurnStarted();
     this.renderExternalUserPrompt(event);
     this.host.handleTurnStarted?.(event);
     this.currentTurnHasAssistantText = false;
@@ -469,6 +482,7 @@ export class SessionEventHandler {
   }
 
   private handleTurnEnd(event: TurnEndedEvent, sendQueued: (item: QueuedMessage) => void): void {
+    this.sessionStats.recordTurnEnded({ reason: event.reason, durationMs: event.durationMs });
     this.host.handleTurnEnded?.(event);
     this.host.streamingUI.flushNow();
     this.clearStepRetry();
@@ -531,6 +545,7 @@ export class SessionEventHandler {
   }
 
   private handleStepCompleted(event: TurnStepCompletedEvent): void {
+    this.sessionStats.recordStepCompleted(event);
     this.host.streamingUI.flushNow();
     this.clearStepRetry();
     this.host.noteStepUsage(event.usage);
@@ -1097,6 +1112,7 @@ export class SessionEventHandler {
   }
 
   private handleSessionError(event: ErrorEvent): void {
+    this.sessionStats.recordError();
     this.host.streamingUI.flushNow();
     this.host.streamingUI.resetToolUi();
     this.host.streamingUI.finalizeLiveTextBuffers('idle');

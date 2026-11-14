@@ -27,6 +27,7 @@ export type {
   TurnStepInterruptedEvent,
   TurnEndReason,
 } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+export type { LoopSignalDetectedEvent } from '@hilbras/omnicode-engine/agent/loop/loopWatchEvents';
 export type { TurnEndedEvent } from '@hilbras/omnicode-engine/agent/loop/turnOps';
 
 export type {

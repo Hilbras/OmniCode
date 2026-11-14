@@ -93,6 +93,7 @@ describe('Event public types', () => {
         case 'turn.step.completed':
         case 'turn.step.retrying':
         case 'turn.step.interrupted':
+        case 'loop.detected':
         case 'assistant.delta':
         case 'hook.result':
         case 'thinking.delta':

@@ -30,6 +30,7 @@ import {
 import { WelcomeComponent } from '#/tui/components/chrome/welcome';
 import { ApprovalPanelComponent } from '#/tui/components/dialogs/approval-panel';
 import { EffortSelectorComponent } from '#/tui/components/dialogs/effort-selector';
+import { LoopConfirmationDialog } from '#/tui/components/dialogs/loop-confirmation';
 import { ModelSelectorComponent } from '#/tui/components/dialogs/model-selector';
 import { PermissionSelectorComponent } from '#/tui/components/dialogs/permission-selector';
 import {
@@ -10181,5 +10182,158 @@ describe('transcript fold block clicks', () => {
     expect(closed).not.toContain('wide-tail');
     expect(closed).toContain('wide-head');
     expect(driver.state.toolOutputExpanded).toBe(true);
+  });
+});
+
+describe('loop-detection confirmation', () => {
+  interface LoopTui {
+    handleLoopDetected(event: Event): void;
+    mountEditorReplacement(panel: unknown): void;
+    showStatus(message: string, color?: unknown): void;
+  }
+
+  function loopEvent(turnId: number): Event {
+    return {
+      type: 'loop.detected',
+      sessionId: 'ses-1',
+      agentId: 'main',
+      turnId,
+      kind: 'text_loop',
+      detail: 'the same phrase was emitted repeatedly',
+    } as Event;
+  }
+
+  it('mounts the dialog once per turn id and again on a later turn', async () => {
+    const { driver } = await makeDriver();
+    const tui = driver as unknown as LoopTui;
+    const mount = vi.spyOn(tui, 'mountEditorReplacement');
+
+    tui.handleLoopDetected(loopEvent(1));
+    expect(driver.state.editorReplacementMounted).toBe(true);
+    expect(driver.state.editorContainer.children[0]).toBeInstanceOf(LoopConfirmationDialog);
+    expect(mount).toHaveBeenCalledTimes(1);
+
+    // A second signal in the same turn is ignored outright (dedupe): no
+    // remount and no stacked dialog.
+    tui.handleLoopDetected(loopEvent(1));
+    expect(mount).toHaveBeenCalledTimes(1);
+    expect(driver.state.editorContainer.children).toHaveLength(1);
+
+    (driver.state.editorContainer.children[0] as LoopConfirmationDialog).handleInput(ESC);
+    expect(driver.state.editorReplacementMounted).toBe(false);
+
+    tui.handleLoopDetected(loopEvent(2));
+    expect(mount).toHaveBeenCalledTimes(2);
+    expect(driver.state.editorReplacementMounted).toBe(true);
+  });
+
+  it('degrades to a status hint instead of the dialog while any takeover surface is open', async () => {
+    const { driver } = await makeDriver();
+    const tui = driver as unknown as LoopTui;
+    const mount = vi.spyOn(tui, 'mountEditorReplacement');
+    const status = vi.spyOn(tui, 'showStatus');
+
+    const slots: ReadonlyArray<{
+      label: string;
+      open: (state: TUIState) => void;
+      close: (state: TUIState) => void;
+    }> = [
+      {
+        label: 'tasksBrowser',
+        open: (state) => {
+          state.tasksBrowser = { viewer: undefined } as TUIState['tasksBrowser'];
+        },
+        close: (state) => {
+          state.tasksBrowser = undefined;
+        },
+      },
+      {
+        label: 'toolCallsBrowser',
+        open: (state) => {
+          state.toolCallsBrowser = { viewer: undefined } as TUIState['toolCallsBrowser'];
+        },
+        close: (state) => {
+          state.toolCallsBrowser = undefined;
+        },
+      },
+      {
+        label: 'liveAgentsBrowser',
+        open: (state) => {
+          state.liveAgentsBrowser = { viewer: undefined } as TUIState['liveAgentsBrowser'];
+        },
+        close: (state) => {
+          state.liveAgentsBrowser = undefined;
+        },
+      },
+      {
+        label: 'skillsBrowser',
+        open: (state) => {
+          state.skillsBrowser = {} as TUIState['skillsBrowser'];
+        },
+        close: (state) => {
+          state.skillsBrowser = undefined;
+        },
+      },
+      {
+        label: 'subagentsBrowser',
+        open: (state) => {
+          state.subagentsBrowser = {} as TUIState['subagentsBrowser'];
+        },
+        close: (state) => {
+          state.subagentsBrowser = undefined;
+        },
+      },
+      {
+        label: 'connectorsBrowser',
+        open: (state) => {
+          state.connectorsBrowser = {} as TUIState['connectorsBrowser'];
+        },
+        close: (state) => {
+          state.connectorsBrowser = undefined;
+        },
+      },
+      {
+        label: 'updateRecommender',
+        open: (state) => {
+          state.updateRecommender = {} as TUIState['updateRecommender'];
+        },
+        close: (state) => {
+          state.updateRecommender = undefined;
+        },
+      },
+      {
+        label: 'mcpManager',
+        open: (state) => {
+          state.mcpManager = {} as TUIState['mcpManager'];
+        },
+        close: (state) => {
+          state.mcpManager = undefined;
+        },
+      },
+      {
+        label: 'externalEditorRunning',
+        open: (state) => {
+          state.externalEditorRunning = true;
+        },
+        close: (state) => {
+          state.externalEditorRunning = false;
+        },
+      },
+    ];
+
+    let turnId = 100;
+    for (const slot of slots) {
+      slot.open(driver.state);
+      status.mockClear();
+      tui.handleLoopDetected(loopEvent(turnId));
+      expect(driver.state.editorReplacementMounted, slot.label).toBe(false);
+      expect(mount, slot.label).not.toHaveBeenCalled();
+      expect(status, slot.label).toHaveBeenCalledWith(
+        expect.stringContaining(`Agent looks stuck (turn ${String(turnId)})`),
+        'warning',
+      );
+      slot.close(driver.state);
+      turnId += 1;
+    }
   });
 });

@@ -9,6 +9,7 @@ import type {
   ApprovalResponse,
   BackgroundTaskInfo,
   CreateSessionOptions,
+  LoopSignalDetectedEvent,
   OmnicodeHarness,
   PermissionMode,
   PluginCommandDef,
@@ -106,6 +107,7 @@ import {
 } from './components/messages/status-message';
 import { StepSummaryComponent } from './components/messages/step-summary';
 import { ThinkingComponent } from './components/messages/thinking';
+import { UsagePanelComponent } from './components/messages/usage-panel';
 import { ToolCallComponent } from './components/messages/tool-call';
 import {
   ReplayTurnBoundaryComponent,
@@ -136,6 +138,7 @@ import {
 import { ConnectorsController } from './controllers/connectors';
 import { ClipboardImageHintController } from './controllers/clipboard-image-hint';
 import { EditorKeyboardController } from './controllers/editor-keyboard';
+import { LiveAgentsController } from './controllers/live-agents';
 import { McpManagerController } from './controllers/mcp-manager';
 import { SessionEventHandler } from './controllers/session-event-handler';
 import { SessionReplayRenderer } from './controllers/session-replay';
@@ -143,6 +146,7 @@ import { StagingLeaseTracker, type StagingLease } from './controllers/staging-le
 import { StreamingUIController } from './controllers/streaming-ui';
 import { SurveyController } from './controllers/survey-controller';
 import { TasksBrowserController } from './controllers/tasks-browser';
+import { ToolCallsController } from './controllers/tool-calls';
 import {
   UpdateRecommenderController,
   type UpdateRecommenderState,
@@ -158,6 +162,7 @@ import type { ApprovalPanelData, QuestionPanelData } from './reverse-rpc/types';
 import { currentTheme, getColorPalette, getBuiltInPalette, isBuiltInTheme } from './theme';
 import type { ColorToken, ResolvedTheme, ThemeName } from './theme';
 import { createTUIState, type TUIState } from './tui-state';
+import { LoopConfirmationDialog } from './components/dialogs/loop-confirmation';
 import {
   INITIAL_LIVE_PANE,
   sumTokenUsage,
@@ -205,6 +210,8 @@ import { sessionRowsForPicker } from './utils/session-picker-rows';
 import { formatBashOutputForDisplay } from './utils/shell-output';
 import { combineStartupNotice, isOAuthLoginRequiredError } from './utils/startup';
 import { combineSteerInput } from './utils/steer-input';
+import { fullscreenSurfaceOpen } from './utils/fullscreen-surface';
+import type { SessionStatsSnapshot } from './utils/session-stats';
 import { formatStepRetryDetail, formatStepRetryLabel } from './utils/step-retry';
 import { installTerminalFocusTracking } from './utils/terminal-focus';
 import { notifyTerminalOnce } from './utils/terminal-notification';
@@ -411,6 +418,8 @@ export class OmnicodeTUI {
   readonly sessionEventHandler: SessionEventHandler;
   readonly sessionReplay: SessionReplayRenderer;
   readonly tasksBrowserController: TasksBrowserController;
+  readonly toolCallsController: ToolCallsController;
+  readonly liveAgentsController: LiveAgentsController;
   readonly skillsBrowserController: SkillsBrowserController;
   readonly subagentsBrowserController: SubagentsBrowserController;
   readonly connectorsController: ConnectorsController;
@@ -426,6 +435,8 @@ export class OmnicodeTUI {
   // preview viewer can restore focus to the exact same instance (and its
   // selection / feedback state) when it closes.
   private activeApprovalPanel: ApprovalPanelComponent | undefined;
+  /** Turn id that last mounted a loop-detection confirmation (one per turn). */
+  private loopDialogTurnId: number | undefined;
   // Active full-screen approval preview. While set, the previous screen is
   // stashed in `takeover` (root children in regular mode, the layout root in
   // fullscreen); closing restores it.
@@ -526,6 +537,20 @@ export class OmnicodeTUI {
     this.sessionEventHandler = new SessionEventHandler(this);
     this.sessionReplay = new SessionReplayRenderer(this);
     this.tasksBrowserController = new TasksBrowserController(this);
+    this.toolCallsController = new ToolCallsController(this);
+    this.liveAgentsController = new LiveAgentsController({
+      state: this.state,
+      activityRecords: () => this.sessionEventHandler.subAgentEventHandler.activityStore.list(),
+      setLiveAgentsBrowser: (value) => {
+        this.state.liveAgentsBrowser = value;
+      },
+      showError: (msg) => {
+        this.showError(msg);
+      },
+      showStatus: (msg, color) => {
+        this.showStatus(msg, color);
+      },
+    });
     this.skillsBrowserController = new SkillsBrowserController(this);
     this.subagentsBrowserController = new SubagentsBrowserController(this);
     this.connectorsController = new ConnectorsController(this);
@@ -1104,6 +1129,8 @@ export class OmnicodeTUI {
     // before tearing the UI down, so they can't keep firing requestRender after
     // stop() returns (or leak when stop() runs without process.exit).
     this.tasksBrowserController.close();
+    this.toolCallsController.close();
+    this.liveAgentsController.close();
     this.updateRecommenderController.close();
     this.skillsBrowserController.close();
     this.subagentsBrowserController.close();
@@ -2346,6 +2373,25 @@ export class OmnicodeTUI {
     this.state.tasksBrowser = value;
   }
 
+  sessionStatsSnapshot(): SessionStatsSnapshot | undefined {
+    return this.sessionEventHandler.getSessionStatsSnapshot();
+  }
+
+  setToolCallsBrowser(value: TUIState['toolCallsBrowser']): void {
+    this.state.toolCallsBrowser = value;
+  }
+
+  retryLastPrompt(text: string): void {
+    this.sendNormalUserInput(text);
+  }
+
+  showCardDiffPanel(lines: readonly string[]): void {
+    this.state.transcriptContainer.addChild(
+      new UsagePanelComponent(() => lines, 'primary', ' Diff '),
+    );
+    this.state.ui.requestRender();
+  }
+
   setSkillsBrowser(value: TUIState['skillsBrowser']): void {
     this.state.skillsBrowser = value;
   }
@@ -2904,6 +2950,7 @@ export class OmnicodeTUI {
 
   resetSessionRuntime(): void {
     this.aborted = false;
+    this.loopDialogTurnId = undefined;
     this.cacheHint.resetRuntime();
     this.surveyController.reset();
     this.streamingUI.discardPending();
@@ -2913,6 +2960,8 @@ export class OmnicodeTUI {
     this.streamingUI.resetToolUi();
     this.sessionEventHandler.resetRuntimeState();
     this.tasksBrowserController.close();
+    this.toolCallsController.close();
+    this.liveAgentsController.close();
     this.updateRecommenderController.close();
     this.skillsBrowserController.close();
     this.subagentsBrowserController.close();
@@ -4542,6 +4591,42 @@ export class OmnicodeTUI {
   private hideQuestionDialog(): void {
     this.patchLivePane({ pendingQuestion: null });
     this.restoreEditor();
+  }
+
+  /**
+   * One loop-detection confirmation per turn. The turn keeps running behind
+   * the dialog (the model already got the reminder); a dialog can only mount
+   * when no full-screen surface owns the terminal — over any takeover
+   * browser, editor replacement, or the external editor it degrades to a
+   * status hint so it never mounts invisibly or steals input routing from
+   * the surface the user is navigating.
+   */
+  handleLoopDetected(event: LoopSignalDetectedEvent): void {
+    if (this.loopDialogTurnId === event.turnId) return;
+    if (fullscreenSurfaceOpen(this.state)) {
+      this.showStatus(
+        `Agent looks stuck (turn ${String(event.turnId)}) — press Esc or Ctrl-C to stop.`,
+        'warning',
+      );
+      return;
+    }
+    this.loopDialogTurnId = event.turnId;
+    const dialog = new LoopConfirmationDialog({
+      kind: event.kind,
+      detail: event.detail,
+      turnId: event.turnId,
+      onSelect: (action) => {
+        this.restoreEditor();
+        this.state.ui.requestRender();
+        if (action === 'stop') void this.session?.cancel();
+      },
+      onCancel: () => {
+        this.restoreEditor();
+        this.state.ui.requestRender();
+      },
+    });
+    this.mountEditorReplacement(dialog);
+    this.state.ui.requestRender();
   }
 }
 

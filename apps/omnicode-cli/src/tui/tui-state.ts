@@ -21,8 +21,10 @@ import { CustomEditor } from './components/editor/custom-editor';
 import { DEFAULT_MARKDOWN_CONFIG, DEFAULT_TUI_CONFIG } from './config';
 import { CHROME_GUTTER } from './constant/rendering';
 import type { CatalogBrowserState } from './controllers/catalog-browser';
+import type { LiveAgentsBrowserState } from './controllers/live-agents';
 import type { McpManagerState } from './controllers/mcp-manager';
 import type { TasksBrowserState } from './controllers/tasks-browser';
+import type { ToolCallsBrowserState } from './controllers/tool-calls';
 import type { UpdateRecommenderState } from './controllers/update-recommender';
 import { currentTheme, type Theme } from './theme';
 import {
@@ -86,6 +88,8 @@ export interface TUIState {
    */
   editorReplacementMounted: boolean;
   tasksBrowser: TasksBrowserState | undefined;
+  toolCallsBrowser: ToolCallsBrowserState | undefined;
+  liveAgentsBrowser: LiveAgentsBrowserState | undefined;
   skillsBrowser: CatalogBrowserState | undefined;
   subagentsBrowser: CatalogBrowserState | undefined;
   connectorsBrowser: CatalogBrowserState | undefined;
@@ -223,6 +227,8 @@ export function createTUIState(options: OmnicodeTUIOptions): TUIState {
     connectorsBrowser: undefined,
     updateRecommender: undefined,
     mcpManager: undefined,
+    toolCallsBrowser: undefined,
+    liveAgentsBrowser: undefined,
     externalEditorRunning: false,
     queuedMessages: [],
     queuedMessageDispatchPending: false,

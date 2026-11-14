@@ -12,10 +12,12 @@ import type {
   SubagentsBrowserController,
 } from '../controllers/catalog-browser';
 import type { ConnectorsController } from '../controllers/connectors';
+import type { LiveAgentsController } from '../controllers/live-agents';
 import type { McpManagerController } from '../controllers/mcp-manager';
 import type { UpdateRecommenderController } from '../controllers/update-recommender';
 import type { StreamingUIController } from '../controllers/streaming-ui';
 import type { TasksBrowserController } from '../controllers/tasks-browser';
+import type { ToolCallsController } from '../controllers/tool-calls';
 import { tryHandleDanceCommand } from '../easter-eggs/dance';
 import type { ResolvedTheme } from '../theme/colors';
 import type { TUIState } from '../tui-state';
@@ -28,6 +30,7 @@ import type {
 } from '../types';
 import { formatErrorMessage } from '../utils/event-payload';
 import { extractInlineSkillActivations, findInlineSkillTokens } from '../utils/inline-skill-tokens';
+import type { SessionStatsSnapshot } from '../utils/session-stats';
 import { handleAddDirCommand } from './add-dir';
 import { handleLoginCommand, handleLogoutCommand } from './auth';
 import { handleBtwCommand } from './btw';
@@ -229,12 +232,16 @@ export interface SlashCommandHost {
   readonly streamingUI: StreamingUIController;
   readonly btwPanelController: BtwPanelController;
   readonly tasksBrowserController: TasksBrowserController;
+  readonly toolCallsController: ToolCallsController;
+  readonly liveAgentsController: LiveAgentsController;
   readonly skillsBrowserController: SkillsBrowserController;
   readonly subagentsBrowserController: SubagentsBrowserController;
   readonly connectorsController: ConnectorsController;
   readonly mcpManagerController: McpManagerController;
   readonly updateRecommenderController: UpdateRecommenderController;
   readonly authFlow: AuthFlowController;
+  /** Turn/latency/error counters collected from session events; absent when the host tracks none. */
+  sessionStatsSnapshot?(): SessionStatsSnapshot | undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -501,6 +508,12 @@ async function handleBuiltInSlashCommand(
       return;
     case 'tasks':
       void host.tasksBrowserController.show();
+      return;
+    case 'tools':
+      void host.toolCallsController.show();
+      return;
+    case 'agents':
+      void host.liveAgentsController.show();
       return;
     case 'skills':
       void host.skillsBrowserController.show();

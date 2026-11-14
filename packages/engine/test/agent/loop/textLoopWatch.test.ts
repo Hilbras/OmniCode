@@ -9,6 +9,7 @@ import type {
 } from '#/features/reminder/types';
 import type { IAgentReminderService } from '#/features/reminder/reminderService';
 import { AssistantDelta, ThinkingDelta } from '#/agent/loop/turnEvents';
+import { LoopSignalDetected } from '#/agent/loop/loopWatchEvents';
 import { TurnEnded } from '#/agent/loop/turnOps';
 import { ToolCallStarted, ToolResultEvent } from '#/agent/toolExecutor/toolExecutorEvents';
 import { AgentTextLoopWatchService } from '#/agent/loop/textLoopWatchService';
@@ -31,11 +32,14 @@ const PROSE = [
 interface FakeBus {
   readonly bus: IEventBus;
   emit(cls: unknown, event: unknown): void;
+  readonly published: unknown[];
 }
 
 function makeBus(): FakeBus {
   const handlers = new Map<unknown, Set<(event: unknown) => void>>();
+  const published: unknown[] = [];
   return {
+    published,
     bus: {
       subscribe(cls: unknown, handler?: (event: unknown) => void) {
         const key = handler === undefined ? undefined : cls;
@@ -45,7 +49,9 @@ function makeBus(): FakeBus {
         handlers.set(key, set);
         return { dispose: () => set.delete(fn) };
       },
-      publish() {},
+      publish(event: unknown) {
+        published.push(event);
+      },
     } as unknown as IEventBus,
     emit(cls, event) {
       for (const handler of handlers.get(cls) ?? []) handler(event);
@@ -193,6 +199,39 @@ describe('AgentTextLoopWatchService', () => {
     const { bus, reminder } = makeWatch({ OMNICODE_TEXT_LOOP_BREAKER: '0' });
     bus.emit(AssistantDelta, { turnId: 1, delta: LOOP_TEXT });
     expect(reminder.consume()).toBeUndefined();
+  });
+
+  it('publishes one loop.detected event per newly detected text signal', () => {
+    const { bus } = makeWatch();
+    bus.emit(AssistantDelta, { turnId: 7, delta: LOOP_TEXT });
+
+    expect(bus.published).toHaveLength(1);
+    const event = bus.published[0];
+    expect(event).toBeInstanceOf(LoopSignalDetected);
+    const payload = event as InstanceType<typeof LoopSignalDetected>;
+    expect(payload.type).toBe('loop.detected');
+    expect(payload.turnId).toBe(7);
+    expect(payload.kind).toBe('text_loop');
+    expect(payload.detail.length).toBeGreaterThan(0);
+
+    // The signal stays pending for the reminder slot: further matching deltas
+    // must not re-announce.
+    bus.emit(AssistantDelta, { turnId: 7, delta: LOOP_LINE });
+    expect(bus.published).toHaveLength(1);
+  });
+
+  it('announces result stagnation with its own kind once per detection', () => {
+    const { bus } = makeWatch();
+    repeatTool(bus, 3, { name: 'Bash', args: { command: 'make build' }, output: 'same error' });
+    expect(bus.published).toHaveLength(1);
+    const payload = bus.published[0] as InstanceType<typeof LoopSignalDetected>;
+    expect(payload.type).toBe('loop.detected');
+    expect(payload.kind).toBe('result_stagnation');
+    expect(payload.detail).toContain('Bash');
+
+    // A second detection would announce again; while the first is pending it must not.
+    repeatTool(bus, 3, { name: 'Bash', args: { command: 'make build' }, output: 'same error' });
+    expect(bus.published).toHaveLength(1);
   });
 });
 

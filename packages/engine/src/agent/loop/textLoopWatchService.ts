@@ -1,11 +1,13 @@
 import { Disposable } from '@hilbras/omnicode-base/di/lifecycle';
 import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
+import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { LifecycleScope } from '#/app/scopes';
 import { IEventBus } from '#/app/event/eventBus';
 import { IAgentReminderService } from '#/features/reminder/reminderService';
 import { isReadOnlyToolName } from '#/tool/read-only-command';
 import { ToolCallStarted, ToolResultEvent } from '#/agent/toolExecutor/toolExecutorEvents';
 
+import { LoopSignalDetected, type LoopSignalKind } from './loopWatchEvents';
 import { AssistantDelta, ThinkingDelta } from './turnEvents';
 import { TurnEnded } from './turnOps';
 import { TextLoopDetector, type TextLoopSignal } from './textLoopDetector';
@@ -92,9 +94,10 @@ export class AgentTextLoopWatchService
   private config: LoopWatchConfig;
 
   constructor(
-    @IEventBus eventBus: IEventBus,
+    @IEventBus private readonly eventBus: IEventBus,
     @IAgentReminderService reminder: IAgentReminderService,
     env?: NodeJS.ProcessEnv,
+    @IAgentScopeContext private readonly scopeContext?: IAgentScopeContext,
   ) {
     super();
     this.config = resolveLoopWatchConfig(env ?? process.env);
@@ -153,6 +156,29 @@ export class AgentTextLoopWatchService
       return;
     }
     this.pendingText = this.textDetector.push(delta);
+    this.announceSignal(turnId, 'text_loop', this.pendingText);
+  }
+
+  /**
+   * One user-visible event per newly detected signal, mirroring the pending
+   * reminder: a signal that is already pending (waiting for the reminder
+   * slot) must not re-announce on every further matching delta. Advisory
+   * only — the turn keeps running either way.
+   */
+  private announceSignal(
+    turnId: number,
+    kind: LoopSignalKind,
+    signal: TextLoopSignal | ResultStagnationSignal | undefined,
+  ): void {
+    if (signal === undefined) return;
+    this.eventBus.publish(
+      new LoopSignalDetected({
+        agentId: this.scopeContext?.agentId ?? '',
+        turnId,
+        kind,
+        detail: signal.detail,
+      }),
+    );
   }
 
   private observeToolCall(
@@ -189,6 +215,7 @@ export class AgentTextLoopWatchService
       outputSignature: outputSignatureOf(output),
       readOnly: isReadOnlyToolName(call.name),
     });
+    this.announceSignal(turnId, 'result_stagnation', this.pendingStagnation);
   }
 
   /**

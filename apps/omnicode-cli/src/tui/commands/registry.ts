@@ -299,6 +299,13 @@ export const BUILTIN_SLASH_COMMANDS = [
     availability: 'always',
   },
   {
+    name: 'tools',
+    aliases: ['tool'],
+    description: 'Browse recent tool calls and act on them (output, diff, path, retry)',
+    priority: 80,
+    availability: 'always',
+  },
+  {
     name: 'connectors',
     aliases: [],
     description: 'Set up connectors (Telegram)',
@@ -316,6 +323,13 @@ export const BUILTIN_SLASH_COMMANDS = [
     name: 'subagents',
     aliases: [],
     description: 'Browse available subagent profiles',
+    priority: 80,
+    availability: 'always',
+  },
+  {
+    name: 'agents',
+    aliases: ['agent'],
+    description: 'Watch the live activity of the agents spawned this session',
     priority: 80,
     availability: 'always',
   },
