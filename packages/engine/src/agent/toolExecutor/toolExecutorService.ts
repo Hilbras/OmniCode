@@ -126,6 +126,7 @@ export class AgentToolExecutorService implements IAgentToolExecutorService {
   private missingToolDescriber: MissingToolDescriber | undefined;
   private unavailableToolDescriber: UnavailableToolDescriber | undefined;
   private toolCallGuard: ToolCallGuard | undefined;
+  private extraToolCallGuards: readonly ToolCallGuard[] = [];
 
   recordDupType(toolCallId: string, dupType: ToolCallDupType): void {
     this.toolCallDupTypes.set(toolCallId, dupType);
@@ -140,6 +141,13 @@ export class AgentToolExecutorService implements IAgentToolExecutorService {
     this.toolCallGuard = guard;
     return toDisposable(() => {
       if (this.toolCallGuard === guard) this.toolCallGuard = undefined;
+    });
+  }
+
+  addToolCallGuard(guard: ToolCallGuard) {
+    this.extraToolCallGuards = [...this.extraToolCallGuards, guard];
+    return toDisposable(() => {
+      this.extraToolCallGuards = this.extraToolCallGuards.filter((extra) => extra !== guard);
     });
   }
 
@@ -200,7 +208,13 @@ export class AgentToolExecutorService implements IAgentToolExecutorService {
       preflightToolCall(
         this.toolRegistry,
         call,
-        combineGuards(this.toolCallGuard, skillBlocked === undefined ? undefined : skillGuard(skillBlocked)),
+        combineGuards(
+          this.extraToolCallGuards.reduce<ToolCallGuard | undefined>(
+            (combined, extra) => combineGuards(combined, extra),
+            this.toolCallGuard,
+          ),
+          skillBlocked === undefined ? undefined : skillGuard(skillBlocked),
+        ),
         this.unavailableToolDescriber,
         this.missingToolDescriber,
         this.log,

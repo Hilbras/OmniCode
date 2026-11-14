@@ -1044,6 +1044,67 @@ describe('skill grant guard', () => {
   });
 });
 
+describe('addToolCallGuard', () => {
+  it('refuses a call at preflight through an added guard', async () => {
+    const tool = new TestTool('guarded');
+    registry.register(tool);
+    executor.addToolCallGuard(({ name }) =>
+      name === 'guarded' ? 'Refused by the speculative boundary' : undefined,
+    );
+
+    const results = await execute([toolCall('call_guarded', 'guarded', {})]);
+
+    expect(results[0]).toMatchObject({
+      output: 'Refused by the speculative boundary',
+      isError: true,
+    });
+    expect(tool.calls).toEqual([]);
+  });
+
+  it('composes with the primary guard instead of replacing it', async () => {
+    const primaryBlocked = new TestTool('primary-blocked');
+    const extraBlocked = new TestTool('extra-blocked');
+    const unaffected = new TestTool('unaffected');
+    registry.register(primaryBlocked);
+    registry.register(extraBlocked);
+    registry.register(unaffected);
+    executor.registerToolCallGuard(({ name }) =>
+      name === 'primary-blocked' ? 'primary refusal' : undefined,
+    );
+    const extraGuard = executor.addToolCallGuard(({ name }) =>
+      name === 'extra-blocked' ? 'extra refusal' : undefined,
+    );
+
+    const results = await execute([
+      toolCall('call_primary', 'primary-blocked', {}),
+      toolCall('call_extra', 'extra-blocked', {}),
+      toolCall('call_ok', 'unaffected', { text: 'ran' }),
+    ]);
+
+    expect(results[0]).toMatchObject({ output: 'primary refusal', isError: true });
+    expect(results[1]).toMatchObject({ output: 'extra refusal', isError: true });
+    expect(results[2]).toMatchObject({ output: 'ran' });
+    expect(primaryBlocked.calls).toEqual([]);
+    expect(extraBlocked.calls).toEqual([]);
+    expect(unaffected.calls).toHaveLength(1);
+    extraGuard.dispose();
+  });
+
+  it('stops refusing after the added guard is disposed', async () => {
+    const tool = new TestTool('guarded');
+    registry.register(tool);
+    const disposable = executor.addToolCallGuard(({ name }) =>
+      name === 'guarded' ? 'Refused by the speculative boundary' : undefined,
+    );
+
+    disposable.dispose();
+    const results = await execute([toolCall('call_guarded', 'guarded', {})]);
+
+    expect(results[0]).toMatchObject({ output: 'guarded result' });
+    expect(tool.calls).toHaveLength(1);
+  });
+});
+
 describe('onWillExecuteTool', () => {
   it('awaits registered waitUntil work before executing the tool', async () => {
     const tool = new TestTool('echo');

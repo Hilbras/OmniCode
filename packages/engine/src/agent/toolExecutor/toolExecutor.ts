@@ -65,6 +65,13 @@ export interface IAgentToolExecutorService {
 
   registerToolCallGuard(guard: ToolCallGuard): IDisposable;
 
+  /**
+   * Appends a guard that refuses tool calls at preflight, composed with (not
+   * replacing) the primary guard. Preflight refusals hold even when a
+   * before-execute listener would short-circuit the chain with `allow()`.
+   */
+  addToolCallGuard(guard: ToolCallGuard): IDisposable;
+
   /** Binds (or clears) the active skill grant that refuses non-permitted tools. */
   setSkillGrant(grant: IActiveSkillGrant | undefined): void;
   registerUnavailableToolDescriber(describer: UnavailableToolDescriber): IDisposable;

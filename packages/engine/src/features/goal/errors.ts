@@ -10,6 +10,7 @@ export const GoalErrors = {
     GOAL_METADATA_RESERVED: 'goal.metadata_reserved',
     GOAL_NOT_RESUMABLE: 'goal.not_resumable',
     GOAL_UNSUPPORTED_AGENT: 'goal.unsupported_agent',
+    GOAL_NOT_VERIFIED: 'goal.not_verified',
   },
   info: {
     'goal.already_exists': {
@@ -59,6 +60,13 @@ export const GoalErrors = {
       retryable: false,
       public: true,
       action: 'Run goal lifecycle commands on the main agent.',
+    },
+    'goal.not_verified': {
+      title: 'Goal completion was not verified',
+      retryable: false,
+      public: true,
+      action:
+        'Produce runtime-observed evidence (run the validation commands, e.g. tests) and call UpdateGoal with `complete` again, or keep the goal active.',
     },
   },
 } as const satisfies ErrorDomain;

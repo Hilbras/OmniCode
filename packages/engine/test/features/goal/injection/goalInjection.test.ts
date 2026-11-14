@@ -251,6 +251,14 @@ function lastGoalReminder(context: IAgentContextMemoryService): string | undefin
   return message.content.map((part) => (part.type === 'text' ? part.text : '')).join('');
 }
 
+beforeEach(() => {
+  vi.stubEnv('OMNICODE_GOAL_VERIFIER', '0');
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
+
 describe('GoalInjection integration', () => {
   describe('enabled goal injection', () => {
     let ctx: TestAgentContext;

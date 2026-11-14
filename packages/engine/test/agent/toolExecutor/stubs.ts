@@ -33,6 +33,7 @@ export function stubToolExecutorEvents(): ToolExecutorEventStubs {
     hooks: { onDidExecuteTool: didExecuteSlot },
     recordDupType: () => {},
     registerToolCallGuard: () => ({ dispose() {} }),
+    addToolCallGuard: () => ({ dispose() {} }),
     registerUnavailableToolDescriber: () => ({ dispose() {} }),
     setSkillGrant: () => undefined,
     registerMissingToolDescriber: () => ({ dispose() {} }),

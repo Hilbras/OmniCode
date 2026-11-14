@@ -60,6 +60,8 @@ import type { ExecutableToolResult } from '#/tool/toolContract';
 
 import type { GoalReasonInput, ResumeGoalInput } from './goal';
 import { IGoalDeadlineScheduler } from './goalDeadlineScheduler';
+import { IAgentGoalEvidenceService } from './goalEvidence';
+import { gateModelCompletion, isGoalVerifierEnabled } from './verificationGate';
 import {
   GoalClear,
   GoalCreate,
@@ -433,6 +435,7 @@ async function markComplete(context: GoalOperationContext,
   assertSupportedAgent(context);
   const state = context.runtime.getState().goal;
   if (state === null || state.status !== 'active') return null;
+  if (actor === 'model') assertModelCompletionVerified(context, state.goalId);
   dispatchCompletion(context, state, input.reason, actor);
   const completed = requireState(context);
   const snapshot = toSnapshot(context, completed);
@@ -440,6 +443,20 @@ async function markComplete(context: GoalOperationContext,
   trackStatusChanged(context, completed, actor);
   clearInternal(context, actor, { preserveLiveContinuation: true });
   return snapshot;
+}
+
+function assertModelCompletionVerified(context: GoalOperationContext, goalId: string): void {
+  if (!isGoalVerifierEnabled()) return;
+  const evidence = context.runtime
+    .get(IAgentGoalEvidenceService)
+    .list()
+    .filter((record) => record.goalId === goalId);
+  const result = gateModelCompletion({ goalId, evidence });
+  if (result.allowed) return;
+  throw new Error2(
+    ErrorCodes.GOAL_NOT_VERIFIED,
+    `Goal completion was refused: ${result.summary}`,
+  );
 }
 
 function dispatchCompletion(context: GoalOperationContext, state: GoalState, reason: string | undefined, actor: GoalActor): void {

@@ -6,6 +6,11 @@ import {
   type VerificationCheck,
   type VerificationEvidence,
 } from '#/features/goal/verifier';
+import {
+  gateModelCompletion,
+  isGoalVerifierEnabled,
+} from '#/features/goal/verificationGate';
+import type { StoredGoalEvidence } from '#/features/goal/goalEvidence';
 
 const now = 1_000;
 
@@ -106,5 +111,94 @@ describe('verifyGoalCompletion', () => {
     // Exit codes are recorded, but a check can demand 0 via its own reader;
     // the verifier itself never treats a failure as absence.
     expect(report.results[0]?.outcome).toBe('passed');
+  });
+});
+
+function stored(overrides: Partial<StoredGoalEvidence> & { readonly id: string }): StoredGoalEvidence {
+  return {
+    goalId: 'g',
+    claim: 'observed',
+    source: 'file_read',
+    provenance: 'src/a.ts',
+    observer: 'runtime',
+    observedAt: now,
+    ...overrides,
+  };
+}
+
+describe('gateModelCompletion', () => {
+  it('refuses when no runtime evidence exists for the goal', () => {
+    const result = gateModelCompletion({ goalId: 'g', evidence: [] });
+    expect(result).toMatchObject({ verdict: 'rejected', allowed: false });
+    expect(result.summary).toContain('No runtime-observed evidence');
+  });
+
+  it('allows a newest observation that survives the verifier', () => {
+    const result = gateModelCompletion({
+      goalId: 'g',
+      evidence: [
+        stored({ id: 'ev-0', source: 'command_run', provenance: 'vitest', exitCode: 0 }),
+        stored({ id: 'ev-1', source: 'file_read', provenance: 'src/a.ts' }),
+      ],
+    });
+    expect(result).toMatchObject({ verdict: 'verified', allowed: true });
+  });
+
+  it('refuses when the newest observation fails the verifier (self-claim)', () => {
+    const result = gateModelCompletion({
+      goalId: 'g',
+      evidence: [stored({ id: 'ev-0', source: 'agent_claim', provenance: '' })],
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.summary).toContain('untrusted-evidence');
+  });
+
+  it('refuses when the newest observed run failed even if a later read exists', () => {
+    const result = gateModelCompletion({
+      goalId: 'g',
+      evidence: [
+        stored({ id: 'ev-0', source: 'command_run', provenance: 'vitest', exitCode: 2 }),
+        stored({ id: 'ev-1', source: 'file_read', provenance: 'src/a.ts' }),
+      ],
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.summary).toContain('exit code 2');
+  });
+
+  it('allows a failed older run superseded by a passing one', () => {
+    const result = gateModelCompletion({
+      goalId: 'g',
+      evidence: [
+        stored({ id: 'ev-0', source: 'command_run', provenance: 'vitest', exitCode: 2 }),
+        stored({ id: 'ev-1', source: 'command_run', provenance: 'vitest', exitCode: 0 }),
+      ],
+    });
+    expect(result).toMatchObject({ verdict: 'verified', allowed: true });
+  });
+
+  it('treats an unobservable exit code as untrusted evidence', () => {
+    const result = gateModelCompletion({
+      goalId: 'g',
+      evidence: [
+        stored({ id: 'ev-0', source: 'command_run', provenance: 'opaque runner' }),
+      ],
+    });
+    expect(result.allowed).toBe(false);
+    expect(result.summary).toContain('run evidence has no exit code');
+  });
+});
+
+describe('isGoalVerifierEnabled', () => {
+  it('defaults to enabled for unset and unrecognized values', () => {
+    expect(isGoalVerifierEnabled({})).toBe(true);
+    expect(isGoalVerifierEnabled({ OMNICODE_GOAL_VERIFIER: '' })).toBe(true);
+    expect(isGoalVerifierEnabled({ OMNICODE_GOAL_VERIFIER: 'junk' })).toBe(true);
+    expect(isGoalVerifierEnabled(undefined)).toBe(true);
+  });
+
+  it('is disabled by 0 and false in any casing', () => {
+    expect(isGoalVerifierEnabled({ OMNICODE_GOAL_VERIFIER: '0' })).toBe(false);
+    expect(isGoalVerifierEnabled({ OMNICODE_GOAL_VERIFIER: 'false' })).toBe(false);
+    expect(isGoalVerifierEnabled({ OMNICODE_GOAL_VERIFIER: ' FALSE ' })).toBe(false);
   });
 });

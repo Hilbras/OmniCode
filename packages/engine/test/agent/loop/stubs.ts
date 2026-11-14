@@ -342,6 +342,7 @@ export function stubToolExecutor(): IAgentToolExecutorService {
     hooks: { onDidExecuteTool: new OrderedHookSlot<ToolDidExecuteContext>() },
     recordDupType: () => {},
     registerToolCallGuard: () => ({ dispose() {} }),
+    addToolCallGuard: () => ({ dispose() {} }),
     registerUnavailableToolDescriber: () => ({ dispose() {} }),
     setSkillGrant: () => undefined,
     registerMissingToolDescriber: () => ({ dispose() {} }),

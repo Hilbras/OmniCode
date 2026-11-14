@@ -3,7 +3,7 @@ import { GetGoalTool } from '@hilbras/omnicode-tools/features/goal/tools/get-goa
 import { SetGoalBudgetTool } from '@hilbras/omnicode-tools/features/goal/tools/set-goal-budget/setGoalBudgetTool';
 import { UpdateGoalToolInputSchema } from '@hilbras/omnicode-tools/features/goal/tools/update-goal/update-goal';
 import { UpdateGoalTool } from '@hilbras/omnicode-tools/features/goal/tools/update-goal/updateGoalTool';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { USER_PROMPT_ORIGIN } from '#/agent/contextMemory/types';
 import { IAgentLoopService } from '#/agent/loop/loop';
@@ -31,6 +31,14 @@ import {
 import { stubAgentSwarm } from '../stubs';
 
 const signal = new AbortController().signal;
+
+beforeEach(() => {
+  vi.stubEnv('OMNICODE_GOAL_VERIFIER', '0');
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe('goal tools', () => {
   let ctx: TestAgentContext;

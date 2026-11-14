@@ -38,6 +38,10 @@ import { IEventBus } from '#/app/event/eventBus';
 import { IFlagService } from '#/app/flag/flag';
 import { ErrorCodes, Error2, errorInfo, toOmnicodeErrorPayload } from '#/errors';
 import { IGoalDeadlineScheduler } from '#/features/goal/goalDeadlineScheduler';
+import {
+  IAgentGoalEvidenceService,
+  type StoredGoalEvidence,
+} from '#/features/goal/goalEvidence';
 import { GoalUpdated } from '#/features/goal/goalOps';
 import { AgentGoalService, IAgentGoalService } from '#/features/goal/goalService';
 import { IAgentSwarmService } from '#/features/swarm/agent/swarm';
@@ -316,6 +320,14 @@ function endTurn(
     }),
   );
 }
+
+beforeEach(() => {
+  vi.stubEnv('OMNICODE_GOAL_VERIFIER', '0');
+});
+
+afterEach(() => {
+  vi.unstubAllEnvs();
+});
 
 describe('AgentGoalService', () => {
   let ctx: TestAgentContext;
@@ -3067,5 +3079,95 @@ describe('AgentGoalService WaitFor flag', () => {
     } finally {
       await ctx.dispose();
     }
+  });
+});
+
+describe('AgentGoalService completion verifier', () => {
+  let ctx: TestAgentContext;
+  let goals: GoalServiceTestManager;
+  let evidence: IAgentGoalEvidenceService;
+
+  beforeEach(() => {
+    vi.stubEnv('OMNICODE_GOAL_VERIFIER', '1');
+    ctx = createTestAgent();
+    goals = ctx.get(IAgentGoalService);
+    evidence = ctx.get(IAgentGoalEvidenceService);
+  });
+
+  afterEach(async () => {
+    await ctx.dispose();
+  });
+
+  function recordRun(exitCode: number, goalId: string): StoredGoalEvidence {
+    return evidence.record({
+      goalId,
+      source: 'command_run',
+      claim: 'vitest run observed',
+      provenance: 'pnpm --filter @hilbras/omnicode-engine exec vitest run',
+      exitCode,
+    });
+  }
+
+  it('refuses a model completion with no runtime evidence and keeps the goal active', async () => {
+    const snapshot = await goals.createGoal({ objective: 'ship it' });
+    await expect(goals.markComplete({ reason: 'done' }, 'model')).rejects.toMatchObject({
+      code: ErrorCodes.GOAL_NOT_VERIFIED,
+    });
+    const current = goals.getGoal().goal;
+    expect(current?.goalId).toBe(snapshot.goalId);
+    expect(current?.status).toBe('active');
+  });
+
+  it('accepts a model completion backed by a successful observed run', async () => {
+    const snapshot = await goals.createGoal({ objective: 'ship it' });
+    recordRun(0, snapshot.goalId);
+    const completed = await goals.markComplete({ reason: 'done' }, 'model');
+    expect(completed?.status).toBe('complete');
+    expect(goals.getGoal().goal).toBeNull();
+  });
+
+  it('refuses a model completion whose newest observed run failed', async () => {
+    const snapshot = await goals.createGoal({ objective: 'ship it' });
+    recordRun(1, snapshot.goalId);
+    await expect(goals.markComplete({ reason: 'done' }, 'model')).rejects.toThrow(
+      /exit code 1/,
+    );
+    expect(goals.getGoal().goal?.status).toBe('active');
+    recordRun(0, snapshot.goalId);
+    expect((await goals.markComplete({}, 'model'))?.status).toBe('complete');
+  });
+
+  it('does not count evidence captured for another goal', async () => {
+    await goals.createGoal({ objective: 'first goal' });
+    recordRun(0, 'some-other-goal');
+    await expect(goals.markComplete({}, 'model')).rejects.toMatchObject({
+      code: ErrorCodes.GOAL_NOT_VERIFIED,
+    });
+  });
+
+  it('does not gate a user-actor completion', async () => {
+    await goals.createGoal({ objective: 'ship it' });
+    const completed = await goals.markComplete({ reason: 'user decided' }, 'user');
+    expect(completed?.status).toBe('complete');
+  });
+
+  it('is disabled by OMNICODE_GOAL_VERIFIER=0', async () => {
+    vi.stubEnv('OMNICODE_GOAL_VERIFIER', '0');
+    await goals.createGoal({ objective: 'ship it' });
+    const completed = await goals.markComplete({ reason: 'done' }, 'model');
+    expect(completed?.status).toBe('complete');
+  });
+
+  it('reports the verifier summary in the refusal', async () => {
+    await goals.createGoal({ objective: 'ship it' });
+    evidence.record({
+      goalId: goals.getGoal().goal!.goalId,
+      source: 'agent_claim',
+      claim: 'I implemented everything',
+      provenance: '',
+    });
+    await expect(goals.markComplete({}, 'model')).rejects.toThrow(
+      /untrusted-evidence|no exit code|external observation/,
+    );
   });
 });

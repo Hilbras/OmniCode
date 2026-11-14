@@ -26,6 +26,7 @@ import { ModelsDevImportErrors } from '#/app/kosongConfig/errors';
 import { SessionExportErrors } from '#/app/sessionExport/errors';
 import { SessionErrors } from '#/session/errors';
 import { SkillErrors } from '#/features/skill/catalog/errors';
+import { SpeculationErrors } from '#/agent/speculation/errors';
 import { StateErrors } from '#/state/errors';
 import { StorageErrors } from '#/persistence/interface/storage';
 import { TerminalErrors } from '#/os/interface/terminalErrors';
@@ -64,6 +65,7 @@ export { ModelsDevImportErrors } from '#/app/kosongConfig/errors';
 export { SessionExportErrors } from '#/app/sessionExport/errors';
 export { SessionErrors } from '#/session/errors';
 export { SkillErrors } from '#/features/skill/catalog/errors';
+export { SpeculationErrors } from '#/agent/speculation/errors';
 export { StorageErrors } from '#/persistence/interface/storage';
 export { TerminalErrors } from '#/os/interface/terminalErrors';
 export { UsageErrors } from '#/agent/usage/errors';
@@ -100,6 +102,7 @@ export const ErrorCodes = {
   ...SessionExportErrors.codes,
   ...SessionErrors.codes,
   ...SkillErrors.codes,
+  ...SpeculationErrors.codes,
   ...StorageErrors.codes,
   ...TerminalErrors.codes,
   ...UsageErrors.codes,
@@ -153,6 +156,7 @@ export type OmnicodeErrorCode =
   | 'goal.metadata_reserved'
   | 'goal.not_resumable'
   | 'goal.unsupported_agent'
+  | 'goal.not_verified'
   | 'model.not_configured'
   | 'model.config_invalid'
   | 'profile.thinking_alias_conflict'
@@ -179,6 +183,9 @@ export type OmnicodeErrorCode =
   | 'skill.name_empty'
   | 'skill.parse_failed'
   | 'skill.nested_too_deep'
+  | 'speculation.branch_active'
+  | 'speculation.loop_busy'
+  | 'speculation.no_branch'
   | 'records.write_failed'
   | 'compaction.failed'
   | 'compaction.unable'

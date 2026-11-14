@@ -360,6 +360,12 @@ export interface GoalStatusChangedEvent extends GoalBudgetProperties {
   wall_clock_ms: number;
 }
 
+export interface SpeculationBranchEvent {
+  outcome: 'started' | 'accepted' | 'apply_failed' | 'discarded';
+  origin?: string;
+  applied?: number;
+}
+
 export interface ToolCallDedupDetectedEvent {
   turn_id?: number;
   step_no: number;
@@ -1068,6 +1074,15 @@ export const telemetryEventDefinitions = {
       has_token_budget: 'Whether a token budget was set',
       has_turn_budget: 'Whether a turn budget was set',
       has_wall_clock_budget: 'Whether a wall-clock budget was set',
+    },
+  }),
+  speculation_branch: defineAgentTelemetryEvent<SpeculationBranchEvent>({
+    owner: 'omnicode',
+    comment: 'A speculative branch lifecycle transition.',
+    properties: {
+      outcome: 'Branch lifecycle outcome',
+      origin: 'Why the branch started; absent for non-start outcomes',
+      applied: 'How many overlay writes were applied on accept; absent otherwise',
     },
   }),
   tool_call_dedup_detected: defineAgentTelemetryEvent<ToolCallDedupDetectedEvent>({
