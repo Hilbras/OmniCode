@@ -50,6 +50,7 @@ import type {
   TurnEndedEvent as TurnEndedTelemetryEvent,
   TurnInterruptedEvent,
   TurnStartedEvent as TurnStartedTelemetryEvent,
+  TurnStepRetryingTelemetryEvent,
 } from '#/app/telemetry/events';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { BugIndicatingError, ErrorCodes, Error2, isError2, toOmnicodeErrorPayload } from '#/errors';
@@ -1662,6 +1663,17 @@ export class AgentLoopService extends Disposable implements IAgentLoopService {
             statusCode: fields.statusCode,
           }),
         );
+        const retrying: TurnStepRetryingTelemetryEvent = {
+          turn_id: turn.id,
+          step: step?.number ?? turn.gatedSteps,
+          failed_attempt: event.failedAttempt,
+          next_attempt: event.nextAttempt,
+          max_attempts: event.maxAttempts,
+          delay_ms: event.delayMs,
+          error_type: fields.errorName,
+        };
+        if (fields.statusCode !== undefined) retrying.status_code = fields.statusCode;
+        this.telemetry.track2('turn_step_retrying', retrying);
         turn.current = undefined;
         return;
       }

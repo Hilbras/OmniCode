@@ -70,6 +70,7 @@ export * from '#/app/telemetry/events';
 export * from '#/app/telemetry/telemetryService';
 export * from '#/app/telemetry/consoleAppender';
 export * from '#/app/telemetry/cloudAppender';
+export * from '#/app/telemetry/otlpAppender';
 export * from '#/app/bootstrap/bootstrap';
 export * from '#/app/bootstrap/bootstrapService';
 export * from '#/os/interface/hostClock';

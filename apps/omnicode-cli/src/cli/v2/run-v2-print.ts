@@ -85,6 +85,7 @@ import {
   setTelemetryContext,
   setTelemetryModel,
   shouldEnableTelemetry,
+  shutdownOtlpRuntime,
   shutdownTelemetry,
 } from '@hilbras/omnicode-telemetry';
 import { resolve } from 'pathe';
@@ -120,6 +121,7 @@ import {
   raceWithTimeout,
   requireConfiguredModel,
 } from '../run-prompt';
+import { configureCliOtlpTelemetry } from '../telemetry';
 import { createOmnicodeCodeHostIdentity } from '../version';
 
 const PROMPT_UI_MODE = 'print';
@@ -194,6 +196,7 @@ export async function runV2Print(
     configTelemetryEnabled = true;
   }
   const telemetryEnabled = shouldEnableTelemetry({ enabled: configTelemetryEnabled });
+  configureCliOtlpTelemetry();
   for (const diagnostic of configService.diagnostics()) {
     if (diagnostic.severity === 'warning') {
       stderr.write(`Warning: ${diagnostic.message}\n`);
@@ -225,6 +228,7 @@ export async function runV2Print(
             telemetryService !== undefined
               ? raceWithTimeout(telemetryService.shutdown(), CLI_SHUTDOWN_TIMEOUT_MS)
               : Promise.resolve(),
+            shutdownOtlpRuntime().catch(() => {}),
             shutdownTelemetry({ timeoutMs: CLI_SHUTDOWN_TIMEOUT_MS }).catch(() => {}),
           ]);
           app.dispose();

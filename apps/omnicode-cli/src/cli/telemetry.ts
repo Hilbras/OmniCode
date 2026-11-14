@@ -11,6 +11,8 @@ import {
 
 import type { PromptHarness } from './prompt-session';
 import {
+  configureOtlpRuntime,
+  DEFAULT_OTLP_FLUSH_INTERVAL_MS,
   initializeTelemetry,
   setTelemetryContext,
   track,
@@ -21,6 +23,54 @@ import { CLI_USER_AGENT_PRODUCT, WEB_UI_MODE } from '#/constant/app';
 import { currentOmnicodeProfile } from '#/utils/region';
 
 import { createOmnicodeCodeHostIdentity } from './version';
+
+export const OTLP_ENDPOINT_ENV = 'OMNICODE_OTLP_ENDPOINT';
+export const OTLP_TOKEN_ENV = 'OMNICODE_OTLP_TOKEN';
+export const OTLP_FLUSH_INTERVAL_ENV = 'OMNICODE_OTLP_FLUSH_INTERVAL_MS';
+
+/**
+ * Turns on OTLP span/metric export for this process when an endpoint is
+ * configured. The endpoint comes from the environment read here, at the host
+ * boundary; the token is re-read per send so a rotated value takes effect
+ * without a restart. No endpoint means OTLP stays off — nothing is recorded,
+ * and no default collector is ever assumed. The engine records spans/metrics
+ * through the leaf's runtime only while this configuration is active.
+ */
+export function configureCliOtlpTelemetry(): void {
+  if (readOtlpEndpoint() === undefined) {
+    if ((process.env[OTLP_ENDPOINT_ENV] ?? '').trim().length > 0) {
+      log.warn('ignoring invalid OTLP endpoint; OTLP telemetry stays off', {
+        env: OTLP_ENDPOINT_ENV,
+      });
+    }
+    return;
+  }
+  configureOtlpRuntime({
+    endpoint: () => readOtlpEndpoint(),
+    serviceName: CLI_USER_AGENT_PRODUCT,
+    getAccessToken: () => process.env[OTLP_TOKEN_ENV] || null,
+    flushIntervalMs: readOtlpFlushIntervalMs() ?? DEFAULT_OTLP_FLUSH_INTERVAL_MS,
+  });
+}
+
+function readOtlpEndpoint(): string | undefined {
+  const raw = (process.env[OTLP_ENDPOINT_ENV] ?? '').trim();
+  if (raw.length === 0) return undefined;
+  try {
+    const parsed = new URL(raw);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return undefined;
+  } catch {
+    return undefined;
+  }
+  return raw;
+}
+
+function readOtlpFlushIntervalMs(): number | undefined {
+  const raw = process.env[OTLP_FLUSH_INTERVAL_ENV]?.trim();
+  if (raw === undefined || raw.length === 0) return undefined;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed >= 1 ? parsed : undefined;
+}
 
 export interface CliTelemetryBootstrap {
   readonly homeDir: string;

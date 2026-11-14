@@ -12,7 +12,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 import { createServerLogger, startServer, type ServerLogger } from '@hilbras/omnicode-server';
-import { shutdownTelemetry, track } from '@hilbras/omnicode-telemetry';
+import { shutdownOtlpRuntime, shutdownTelemetry, track } from '@hilbras/omnicode-telemetry';
 import chalk from 'chalk';
 import { type Command, Option } from 'commander';
 
@@ -332,6 +332,7 @@ async function runServerInProcess(
     }
     try {
       await running?.close();
+      await shutdownOtlpRuntime().catch(() => {});
       await shutdownTelemetry({ timeoutMs: CLI_SHUTDOWN_TIMEOUT_MS });
     } catch (error) {
       running?.logger.error(
@@ -405,6 +406,7 @@ async function runServerInProcess(
       await hooks.onShutdown?.('startup_failed');
     } finally {
       await running.close();
+      await shutdownOtlpRuntime().catch(() => {});
       await shutdownTelemetry({ timeoutMs: CLI_SHUTDOWN_TIMEOUT_MS }).catch(() => {});
     }
     throw error;

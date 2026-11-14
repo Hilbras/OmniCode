@@ -63,6 +63,7 @@ vi.mock('@hilbras/omnicode-telemetry', () => ({
   setTelemetryContext: mocks.setTelemetryContext,
   withTelemetryContext: mocks.withTelemetryContext,
   shutdownTelemetry: mocks.shutdownTelemetry,
+  shutdownOtlpRuntime: vi.fn(async () => {}),
 }));
 
 vi.mock('@hilbras/omnicode-api', async () => {
@@ -93,6 +94,7 @@ vi.mock('@hilbras/omnicode-api', async () => {
 });
 
 vi.mock('../../src/cli/telemetry', () => ({
+  configureCliOtlpTelemetry: vi.fn(),
   createCliTelemetryBootstrap: mocks.createCliTelemetryBootstrap,
   initializeCliTelemetry: mocks.initializeCliTelemetry,
 }));

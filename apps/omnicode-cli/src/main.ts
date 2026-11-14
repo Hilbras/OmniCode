@@ -18,6 +18,7 @@ import {
 import {
   installCrashHandlers,
   setTelemetryContext,
+  shutdownOtlpRuntime,
   shutdownTelemetry,
   track,
   withTelemetryContext,
@@ -35,7 +36,7 @@ import { formatStartupError } from './cli/startup-error';
 import { runPluginNodeEntry } from './cli/sub/plugin-run-node';
 import { runUpdateDownloadCommand } from './cli/sub/update-download';
 import { handleUpgrade } from './cli/sub/upgrade';
-import { createCliTelemetryBootstrap, initializeCliTelemetry } from './cli/telemetry';
+import { configureCliOtlpTelemetry, createCliTelemetryBootstrap, initializeCliTelemetry } from './cli/telemetry';
 import { runUpdatePreflight } from './cli/update/preflight';
 import { detectNativeInstall } from './cli/update/source';
 import { maybeRelaunchWithStagedNativeUpdate } from './cli/update/native-swap';
@@ -118,6 +119,7 @@ async function handleMigrateCommand(
 
 export async function handleUpgradeCommand(version: string, yes: boolean): Promise<void> {
   const telemetryBootstrap = createCliTelemetryBootstrap();
+  configureCliOtlpTelemetry();
   const telemetryClient: TelemetryClient = {
     track,
     withContext: withTelemetryContext,
@@ -141,6 +143,7 @@ export async function handleUpgradeCommand(version: string, yes: boolean): Promi
     });
     exitCode = await handleUpgrade(version, { track, logger: log, yes });
   } finally {
+    await shutdownOtlpRuntime().catch(() => {});
     await shutdownTelemetry({ timeoutMs: CLI_SHUTDOWN_TIMEOUT_MS }).catch(() => {});
     await harness.close().catch(() => {});
   }

@@ -4,6 +4,8 @@ import { ILogService, type ILogger } from '@hilbras/omnicode-base/log/log';
 import { IHostFileSystem } from '@hilbras/omnicode-engine/os/interface/hostFileSystem';
 import { ISessionContext } from '@hilbras/omnicode-engine/session/sessionContext/sessionContext';
 import { IAgentContextMemoryService } from '@hilbras/omnicode-engine/agent/contextMemory/contextMemory';
+import type { MemoryRecallEvent } from '@hilbras/omnicode-engine/app/telemetry/events';
+import { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
 
 import type { MemorySearchQuery } from '#/contracts/memoryContract';
 import type { MemoryScope, MemoryScopeTier } from '#/contracts/memoryTypes';
@@ -52,6 +54,7 @@ export class AgentMemoryContextService extends Service implements IAgentMemoryCo
     @ISessionContext session: ISessionContext,
     @IMemoryService memory: IMemoryService,
     @IAgentContextMemoryService context: IAgentContextMemoryService,
+    @ITelemetryService private readonly telemetry?: ITelemetryService,
   ) {
     super();
     this.log = log.child({ memory: 'agent-context' });
@@ -71,8 +74,22 @@ export class AgentMemoryContextService extends Service implements IAgentMemoryCo
   }
 
   async search(query: MemorySearchQuery): Promise<RetrievalResult> {
+    const startedAt = Date.now();
     const projectId = await this.projectId();
-    return this.memory.search({ workspaceId: this.session.workspaceId, projectId, ...query });
+    const result = await this.memory.search({
+      workspaceId: this.session.workspaceId,
+      projectId,
+      ...query,
+    });
+    const recall: MemoryRecallEvent = {
+      purpose: result.purpose,
+      status: result.status,
+      result_count: result.memories.length,
+      duration_ms: Math.max(0, Date.now() - startedAt),
+      top_trust: result.memories[0]?.record.trust,
+    };
+    this.telemetry?.track2('memory_recall', recall);
+    return result;
   }
 
   sessionId(): string {

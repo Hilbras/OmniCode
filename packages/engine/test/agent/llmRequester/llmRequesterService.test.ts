@@ -590,7 +590,7 @@ describe('AgentLLMRequesterService model fallback', () => {
   it('falls back to an eligible configured model and reports the switch', async () => {
     const primary = aliasedRequester('m', [quota()]);
     const models = { m: primary, m2: aliasedRequester('m2', [undefined]) };
-    const { service, events } = createService(primary, undefined, {
+    const { service, events, telemetryRecords } = createService(primary, undefined, {
       models,
       env: { OMNICODE_MODEL_FALLBACK: '1' },
     });
@@ -609,6 +609,18 @@ describe('AgentLLMRequesterService model fallback', () => {
     expect(warnings[0]).toMatchObject({
       message: expect.stringContaining('quota_exhausted'),
     });
+    expect(telemetryRecords.find((record) => record.event === 'model_fallback')).toEqual({
+      event: 'model_fallback',
+      properties: { fallback_from: 'm', fallback_to: 'm2', reason: 'quota_exhausted' },
+    });
+    expect(telemetryRecords.find((record) => record.event === 'llm_request_finished')?.properties)
+      .toMatchObject({
+        model: 'm2',
+        alias: 'm2',
+        protocol: 'anthropic',
+        input_tokens: 0,
+        output_tokens: 0,
+      });
   });
 
   it('does not fall back unless OMNICODE_MODEL_FALLBACK opts in', async () => {

@@ -74,4 +74,42 @@ describe('OtlpExporter', () => {
     ex.exportMetric({ name: 'x', value: Number.POSITIVE_INFINITY, timeUnixNano: '1', attributes: {} });
     expect(JSON.stringify(ex.toResourceMetricsJson('s'))).not.toContain('Infinity');
   });
+
+  it('bounds buffered points per metric name, dropping the oldest', () => {
+    const ex = exporter({ maxBufferedPointsPerMetric: 3 });
+    for (let i = 0; i < 7; i += 1) {
+      ex.exportMetric({ name: 'llm.tokens.input', value: i, timeUnixNano: String(i), attributes: {} });
+    }
+    ex.exportMetric({ name: 'llm.tokens.output', value: 1, timeUnixNano: '1', attributes: {} });
+    expect(ex.metricPointCount()).toBe(4);
+    expect(ex.droppedMetricPointCount()).toBe(4);
+    const points = JSON.parse(JSON.stringify(ex.toResourceMetricsJson('s'))) as {
+      resourceMetrics: readonly { scopeMetrics: readonly { metrics: readonly { name: string; gauge: { dataPoints: readonly { asDouble: number }[] } }[] }[] }[];
+    };
+    const input = points.resourceMetrics[0]?.scopeMetrics[0]?.metrics.find(
+      (metric) => metric.name === 'llm.tokens.input',
+    );
+    expect(input?.gauge.dataPoints.map((point) => point.asDouble)).toEqual([4, 5, 6]);
+  });
+
+  it('restores a failed batch ahead of later points and keeps the cap', () => {
+    const ex = exporter({ maxBufferedPointsPerMetric: 3 });
+    ex.exportMetric({ name: 'm', value: 1, timeUnixNano: '1', attributes: {} });
+    const batch = ex.takeMetrics();
+    expect(ex.metricPointCount()).toBe(0);
+    ex.exportMetric({ name: 'm', value: 2, timeUnixNano: '2', attributes: {} });
+    ex.restoreMetrics(batch);
+    expect(ex.metricPointCount()).toBe(2);
+    for (let i = 0; i < 5; i += 1) {
+      ex.exportMetric({ name: 'm', value: i, timeUnixNano: String(i), attributes: {} });
+    }
+    expect(ex.metricPointCount()).toBe(3);
+    expect(ex.droppedMetricPointCount()).toBe(4);
+    ex.takeSpans();
+    ex.restoreSpans([
+      { name: 'a', startTimeUnixNano: '1', endTimeUnixNano: '2', status: { code: 'OK' }, attributes: {} },
+      { name: 'b', startTimeUnixNano: '1', endTimeUnixNano: '2', status: { code: 'OK' }, attributes: {} },
+    ]);
+    expect(ex.spanCount()).toBe(2);
+  });
 });

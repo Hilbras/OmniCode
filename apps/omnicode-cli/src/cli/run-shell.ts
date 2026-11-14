@@ -12,6 +12,7 @@ import {
 import {
   setCrashPhase,
   setTelemetryContext,
+  shutdownOtlpRuntime,
   shutdownTelemetry,
   track,
   withTelemetryContext,
@@ -32,7 +33,7 @@ import { resolveCommandPath } from '#/utils/process/resolve-command';
 
 import type { CLIOptions } from './options';
 import { resolveAgentProfileSelection } from './agent-selection';
-import { createCliTelemetryBootstrap, initializeCliTelemetry } from './telemetry';
+import { configureCliOtlpTelemetry, createCliTelemetryBootstrap, initializeCliTelemetry } from './telemetry';
 import { createOmnicodeCodeHostIdentity } from './version';
 
 export async function runShell(
@@ -58,6 +59,7 @@ export async function runShell(
 
   const workDir = process.cwd();
   const telemetryBootstrap = createCliTelemetryBootstrap();
+  configureCliOtlpTelemetry();
   const telemetryClient: TelemetryClient = {
     track,
     withContext: withTelemetryContext,
@@ -242,6 +244,9 @@ export async function runShell(
     setCrashPhase('shutdown');
     trackLifecycle('exit', { duration_ms: Date.now() - startedAt, tui_mode: tui.state.ui.mode });
     try {
+      await shutdownOtlpRuntime();
+    } catch {}
+    try {
       await shutdownTelemetry({ timeoutMs: CLI_SHUTDOWN_TIMEOUT_MS });
     } catch {}
     const gutter = ' '.repeat(CHROME_GUTTER);
@@ -286,6 +291,9 @@ export async function runShell(
     removeCrashHandlers();
     setCrashPhase('shutdown');
     trackLifecycle('exit', { duration_ms: Date.now() - startedAt, tui_mode: tui.state.ui.mode });
+    try {
+      await shutdownOtlpRuntime();
+    } catch {}
     try {
       await shutdownTelemetry({ timeoutMs: CLI_SHUTDOWN_TIMEOUT_MS });
     } catch {}

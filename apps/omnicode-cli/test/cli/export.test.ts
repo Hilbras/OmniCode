@@ -91,6 +91,7 @@ vi.mock('@hilbras/omnicode-auth', async () => {
 vi.mock('@hilbras/omnicode-telemetry', () => ({
   initializeTelemetry: mocks.initializeTelemetry,
   shutdownTelemetry: mocks.shutdownTelemetry,
+  shutdownOtlpRuntime: vi.fn(async () => {}),
   track: mocks.telemetryTrack,
   setTelemetryContext: mocks.setTelemetryContext,
   withTelemetryContext: mocks.withTelemetryContext,

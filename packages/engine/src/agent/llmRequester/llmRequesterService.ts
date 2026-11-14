@@ -46,7 +46,12 @@ import { IConfigService } from '#/app/config/config';
 import { IFlagService } from '#/app/flag/flag';
 import { THINKING_SECTION } from '#/app/kosongConfig/configSection';
 import { LifecycleScope } from '#/app/scopes';
-import type { ApiErrorEvent, LlmRequestProjectionFallbackEvent } from '#/app/telemetry/events';
+import type {
+  ApiErrorEvent,
+  LlmRequestFinishedEvent,
+  LlmRequestProjectionFallbackEvent,
+  ModelFallbackEvent,
+} from '#/app/telemetry/events';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { ErrorCodes, Error2, unwrapErrorCause } from '#/errors';
 import {
@@ -382,7 +387,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
         const failed = request;
         request = this.resolveRequest({ ...overrides, modelAlias: selected });
         this.assertCostBudget(request);
-        this.reportModelFallback(failed, selection, selected, error);
+        this.reportModelFallback(failed, selection, selected, error, overrides.source);
       }
     }
   }
@@ -440,6 +445,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     selection: FallbackSelection,
     selected: string,
     error: unknown,
+    source?: AgentLLMRequestSource,
   ): void {
     const errorKind = classifyApiError(unwrapErrorCause(error)).kind;
     const rejected = selection.verdicts.filter((verdict) => !verdict.eligible).length;
@@ -451,6 +457,13 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
       rejectedCandidates: rejected,
       ...failed.logFields,
     });
+    const fallback: ModelFallbackEvent = {
+      fallback_from: failed.modelAlias,
+      fallback_to: selected,
+      reason: errorKind,
+      turn_id: source?.type === 'turn' ? source.turnId : undefined,
+    };
+    this.telemetry.track2('model_fallback', fallback);
     try {
       void this.dispatcher.dispatch(
         new WarningIssued({
@@ -610,6 +623,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     let previousMediaPolicy: ProjectionPolicy['media'];
     let mediaPaths: ReadonlyMap<string, string> | undefined;
     const run = async (policy: ProjectionPolicy | undefined): Promise<AgentLLMRequestFinish> => {
+      const startedAt = Date.now();
       onRequestTrace(undefined);
       const projection = projectionNameOf(policy);
       const fields =
@@ -731,6 +745,22 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
         usage ?? emptyUsage(),
         request.source,
       );
+      const usageForTelemetry = usage ?? emptyUsage();
+      const finished: LlmRequestFinishedEvent = {
+        model: request.model.id,
+        alias: request.modelAlias,
+        provider_type: request.model.providerType,
+        protocol: request.model.protocol,
+        duration_ms: Math.max(0, Date.now() - startedAt),
+        input_tokens: inputTotal(usageForTelemetry),
+        output_tokens: usageForTelemetry.output,
+        input_cache_read: usageForTelemetry.inputCacheRead,
+        input_cache_creation: usageForTelemetry.inputCacheCreation,
+        turn_id: request.source?.type === 'turn' ? request.source.turnId : undefined,
+        request_kind: requestKindForTelemetry(request.source),
+        trace_id: finish.traceId,
+      };
+      this.telemetry.track2('llm_request_finished', finished);
       if (usage !== undefined) {
         this.tokenCounting.measured(
           this.scopeContext.agentContext,

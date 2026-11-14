@@ -20,6 +20,8 @@ Root `@hilbras/omnicode-telemetry` (`src/index.ts`) exports:
   `withTelemetryContext`, `setTelemetryEnabled`.
 - `flushTelemetrySync`, `shutdownTelemetry`.
 - `initializeTelemetry`, `isTelemetryDisabledByEnv`, `shouldEnableTelemetry`.
+- OTLP: `recordOtlpSpan`, `recordOtlpMetric` (emitters), `configureOtlpRuntime`,
+  `flushOtlpRuntime`, `shutdownOtlpRuntime` (hosts), `isOtlpRuntimeConfigured`.
 - `installCrashHandlers`, `setCrashPhase`, `normalizeRemote`.
 - Types `TelemetryProperties`, `TelemetryPrimitive`, `TelemetryClient`,
   `TelemetryContextIds`.
@@ -64,7 +66,9 @@ Key files:
 
 ## Tests
 Test root: `packages/telemetry/test/`; `package.json` has `test`; project is
-`omnicode-telemetry`. Files: `telemetry.test.ts`, `normalize-remote.test.ts`.
+`omnicode-telemetry`. Files: `telemetry.test.ts`, `normalize-remote.test.ts`,
+`agentMetrics.test.ts`, `otlp.test.ts`, `otlpSender.test.ts`,
+`otlpRuntime.test.ts`.
 ```bash
 pnpm --filter @hilbras/omnicode-telemetry test
 pnpm --filter @hilbras/omnicode-telemetry exec vitest run test/normalize-remote.test.ts
@@ -96,3 +100,14 @@ spawned child for crash behavior. No external endpoint is required.
 ## OTLP export shape
 
 `src/otlp.ts` builds OTLP/HTTP JSON payloads: attribute allowlists per signal (`SPAN_ATTRIBUTE_ALLOWLIST`, `METRIC_ATTRIBUTE_ALLOWLIST`), primitives only, bounded span buffer, and a per-metric series cap that folds extra series into `overflow=true`. `src/otlpSender.ts` (`OtlpHttpSender`) is the transport: per-send endpoint and bearer token resolution, bounded 5xx retry, no 4xx retry, timeout, and never throws. No endpoint means no send. Never add a free-form attribute path here.
+
+`src/otlpRuntime.ts` is the process-wide emission seam: emitters call
+`recordOtlpSpan` / `recordOtlpMetric` (no-ops until a host configures the
+runtime), the host calls `configureOtlpRuntime` once with endpoint/token and
+`flushOtlpRuntime` / `shutdownOtlpRuntime` on exit. An absent or empty endpoint
+keeps the runtime off and drops records. Each flush drains a signal's batch
+before its send and restores it on failure, so acceptance is per signal and
+overlapping flushes are skipped. Buffers are bounded: spans by `maxBufferedSpans`
+and metric points by `maxBufferedPointsPerMetric` per name, oldest dropped and
+counted. Extend the metric allowlist only for bounded, operator-controlled
+values (model aliases, enums) — never for ids or paths.

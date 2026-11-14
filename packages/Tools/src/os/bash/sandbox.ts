@@ -2,6 +2,8 @@ import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { IAgentPermissionModeService } from '@hilbras/omnicode-engine/agent/permissionMode/permissionMode';
 import { LifecycleScope } from '@hilbras/omnicode-engine/app/scopes';
+import type { SandboxDecisionEvent } from '@hilbras/omnicode-engine/app/telemetry/events';
+import { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
 import {
   createSandboxExecutionPlan,
   probeSandboxBackends,
@@ -108,14 +110,39 @@ export class BashSandboxService implements IBashSandboxService {
   constructor(
     @IAgentPermissionModeService private readonly modeService: IAgentPermissionModeService,
     private readonly options: BashSandboxOptions = {},
+    @ITelemetryService private readonly telemetry?: ITelemetryService,
   ) {}
 
   async prepare(request: BashSandboxRequest): Promise<BashSandboxPreparation> {
-    if (request.allowedHosts !== undefined && request.allowedHosts.length > 0) {
-      return { kind: 'denied', message: hostRestrictionDenialMessage(request.allowedHosts) };
-    }
     const mode = this.options.mode?.() ?? resolveBashSandboxMode();
-    if (mode === 'off') return { kind: 'direct' };
+    const decided = await this.decide(request, mode);
+    const decision: SandboxDecisionEvent = {
+      mode,
+      backend: decided.backend,
+      outcome: decided.outcome,
+    };
+    this.telemetry?.track2('sandbox_decision', decision);
+    return decided.preparation;
+  }
+
+  private async decide(
+    request: BashSandboxRequest,
+    mode: BashSandboxMode,
+  ): Promise<{
+    preparation: BashSandboxPreparation;
+    backend: string;
+    outcome: SandboxDecisionEvent['outcome'];
+  }> {
+    if (request.allowedHosts !== undefined && request.allowedHosts.length > 0) {
+      return {
+        preparation: { kind: 'denied', message: hostRestrictionDenialMessage(request.allowedHosts) },
+        backend: 'none',
+        outcome: 'denied',
+      };
+    }
+    if (mode === 'off') {
+      return { preparation: { kind: 'direct' }, backend: 'none', outcome: 'direct' };
+    }
     const permissionMode = this.options.permissionMode?.() ?? this.modeService.mode;
     const availability = await this.availability();
     const selection = selectSandboxBackend({
@@ -124,8 +151,18 @@ export class BashSandboxService implements IBashSandboxService {
       preferredBackend: sandboxBackendPreference(),
     });
     if (!selection.enabled || selection.backend === null || selection.availability === null) {
-      if (mode === 'required') return { kind: 'denied', message: selection.message };
-      return { kind: 'direct', reason: selection.message };
+      if (mode === 'required') {
+        return {
+          preparation: { kind: 'denied', message: selection.message },
+          backend: 'none',
+          outcome: 'denied',
+        };
+      }
+      return {
+        preparation: { kind: 'direct', reason: selection.message },
+        backend: 'none',
+        outcome: 'fallback',
+      };
     }
     const result = createSandboxExecutionPlan({
       backend: selection.backend,
@@ -148,9 +185,25 @@ export class BashSandboxService implements IBashSandboxService {
         shellPath: request.shellPath,
       },
     });
-    if (result.ok) return { kind: 'sandbox', plan: result.value };
-    if (mode === 'required') return { kind: 'denied', message: result.message };
-    return { kind: 'direct', reason: result.message };
+    if (result.ok) {
+      return {
+        preparation: { kind: 'sandbox', plan: result.value },
+        backend: selection.backend,
+        outcome: 'sandbox',
+      };
+    }
+    if (mode === 'required') {
+      return {
+        preparation: { kind: 'denied', message: result.message },
+        backend: selection.backend,
+        outcome: 'denied',
+      };
+    }
+    return {
+      preparation: { kind: 'direct', reason: result.message },
+      backend: selection.backend,
+      outcome: 'fallback',
+    };
   }
 
   private availability(): Promise<readonly SandboxAvailability[]> {

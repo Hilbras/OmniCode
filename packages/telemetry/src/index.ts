@@ -63,3 +63,4 @@ export type { TelemetryClient, TelemetryContextIds } from './client';
 export * from './agentMetrics';
 export * from './otlp';
 export * from './otlpSender';
+export * from './otlpRuntime';

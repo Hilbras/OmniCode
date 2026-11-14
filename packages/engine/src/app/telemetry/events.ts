@@ -127,6 +127,46 @@ export interface ApiErrorEvent {
   trace_id?: string;
 }
 
+export interface LlmRequestFinishedEvent {
+  model: string;
+  alias?: string;
+  provider_type?: string;
+  protocol?: string;
+  duration_ms: number;
+  input_tokens: number;
+  output_tokens: number;
+  input_cache_read?: number;
+  input_cache_creation?: number;
+  turn_id?: number;
+  request_kind?: string;
+  trace_id?: string;
+}
+
+export interface TurnStepRetryingTelemetryEvent {
+  turn_id: number;
+  step: number;
+  failed_attempt: number;
+  next_attempt: number;
+  max_attempts: number;
+  delay_ms: number;
+  error_type: string;
+  status_code?: number;
+}
+
+export interface ModelFallbackEvent {
+  fallback_from: string;
+  fallback_to: string;
+  reason: string;
+  turn_id?: number;
+}
+
+export interface CostRecordedEvent {
+  model: string;
+  cost_usd: number;
+  priced: boolean;
+  scope: 'session' | 'turn';
+}
+
 export interface SkillInvokedEvent {
   skill_name: string;
   trigger: 'user-slash' | 'model-tool' | 'nested-skill';
@@ -576,6 +616,20 @@ export interface ShellCommandFinishedEvent {
   backgrounded: boolean;
 }
 
+export interface SandboxDecisionEvent {
+  mode: 'off' | 'auto' | 'required';
+  backend: string;
+  outcome: 'sandbox' | 'direct' | 'denied' | 'fallback';
+}
+
+export interface MemoryRecallEvent {
+  purpose: string;
+  status: string;
+  result_count: number;
+  duration_ms: number;
+  top_trust?: string;
+}
+
 export interface AgentCreateFailedEvent {
   agent_id: string;
   stage: string;
@@ -740,6 +794,62 @@ export const telemetryEventDefinitions = {
       step_no: 'Step index within the turn, when the request belongs to a turn step',
       trace_id:
         'Trace id of the failed request, from its response headers or its error response; absent when the failure happened before any response headers arrived (network errors, local aborts), and for non-Omnicode protocols',
+    },
+  }),
+  llm_request_finished: defineAgentTelemetryEvent<LlmRequestFinishedEvent>({
+    owner: 'omnicode',
+    comment: 'An LLM API request completes successfully.',
+    properties: {
+      model: 'Model id the request targeted',
+      alias: 'Model alias the request targeted',
+      provider_type: 'Provider protocol type',
+      protocol: 'Request protocol',
+      duration_ms: 'Request wall-clock time in milliseconds',
+      input_tokens: 'Total input tokens (other + cache read + cache creation)',
+      output_tokens: 'Output tokens',
+      input_cache_read: 'Cache-read input tokens',
+      input_cache_creation: 'Cache-creation input tokens',
+      turn_id:
+        'Per-agent turn index when the request belongs to a turn; omitted for out-of-turn operations',
+      request_kind:
+        "Request source vocabulary: 'turn' for turn requests, the operation's requestKind (e.g. 'full_compaction') otherwise",
+      trace_id: 'Trace id of the finished request; absent for non-Omnicode protocols',
+    },
+  }),
+  turn_step_retrying: defineAgentTelemetryEvent<TurnStepRetryingTelemetryEvent>({
+    owner: 'omnicode',
+    comment: 'A failed turn step is scheduled for another attempt.',
+    properties: {
+      turn_id:
+        'Per-agent turn index (main or subagent); pair with agent_id to locate a turn within a session',
+      step: 'Step index that failed',
+      failed_attempt: 'Attempt number that failed',
+      next_attempt: 'Attempt number about to run',
+      max_attempts: 'Configured attempt ceiling',
+      delay_ms: 'Backoff delay before the next attempt in milliseconds',
+      error_type: 'Error class name of the failed attempt',
+      status_code: 'HTTP status code when available',
+    },
+  }),
+  model_fallback: defineAgentTelemetryEvent<ModelFallbackEvent>({
+    owner: 'omnicode',
+    comment: 'A request continues on a fallback model after the primary failed.',
+    properties: {
+      fallback_from: 'Model alias that failed',
+      fallback_to: 'Model alias the request continues on',
+      reason: 'Classified error category of the failure',
+      turn_id:
+        'Per-agent turn index when the request belongs to a turn; omitted for out-of-turn operations',
+    },
+  }),
+  cost_recorded: defineAgentTelemetryEvent<CostRecordedEvent>({
+    owner: 'omnicode',
+    comment: 'Recorded usage is priced through the configured model price table.',
+    properties: {
+      model: 'Model id the usage is attributed to',
+      cost_usd: 'Priced cost of the usage in USD; 0 when pricing is unknown',
+      priced: 'Whether the model had a configured price',
+      scope: "Whether the usage was recorded against the current turn or the session",
     },
   }),
   skill_invoked: defineAgentTelemetryEvent<SkillInvokedEvent>({
@@ -1383,6 +1493,26 @@ export const telemetryEventDefinitions = {
       duration_ms: 'Execution wall-clock time in milliseconds',
       is_error: 'Whether the execution ended with an error',
       backgrounded: 'Whether the command was sent to the background',
+    },
+  }),
+  sandbox_decision: defineAgentTelemetryEvent<SandboxDecisionEvent>({
+    owner: 'omnicode',
+    comment: 'The Bash sandbox seam decides how an already-approved command executes.',
+    properties: {
+      mode: 'Configured sandbox mode for the call',
+      backend: 'Sandbox backend used, or none when the command runs directly',
+      outcome: 'Whether the command was sandboxed, ran directly, fell back, or was denied',
+    },
+  }),
+  memory_recall: defineTelemetryEvent<MemoryRecallEvent>({
+    owner: 'omnicode',
+    comment: 'A memory retrieval completes for an explicit search, auto-injection, or session restore.',
+    properties: {
+      purpose: 'Why memory was retrieved',
+      status: 'Retrieval completion status',
+      result_count: 'Number of memories returned',
+      duration_ms: 'Retrieval wall-clock time in milliseconds',
+      top_trust: 'Trust level of the first returned memory',
     },
   }),
   agent_create_failed: defineTelemetryEvent<AgentCreateFailedEvent>({

@@ -47,10 +47,17 @@ export interface OtlpExporterOptions {
   readonly maxMetricSeries?: number;
   /** Spans buffered before the oldest is dropped. */
   readonly maxBufferedSpans?: number;
+  /**
+   * Buffered points per metric name before the oldest is dropped. Bounds the
+   * buffer while a send keeps failing; new points keep folding into the
+   * overflow series, so the metric name itself never disappears.
+   */
+  readonly maxBufferedPointsPerMetric?: number;
 }
 
 export const DEFAULT_MAX_METRIC_SERIES = 500;
 export const DEFAULT_MAX_BUFFERED_SPANS = 1_000;
+export const DEFAULT_MAX_BUFFERED_METRIC_POINTS = 2_000;
 
 export const SPAN_ATTRIBUTE_ALLOWLIST: readonly string[] = [
   'agent.id',
@@ -91,6 +98,9 @@ export const METRIC_ATTRIBUTE_ALLOWLIST: readonly string[] = [
   'approval.decision',
   'sandbox.backend',
   'fallback.reason',
+  'fallback.from',
+  'fallback.to',
+  'memory.recall.status',
 ];
 
 function isPrimitive(value: unknown): value is OtlpAttributeValue {
@@ -139,6 +149,7 @@ export class OtlpExporter {
   private readonly options: Required<Omit<OtlpExporterOptions, 'allowedSpanAttributes' | 'allowedMetricAttributes'>> &
     Pick<OtlpExporterOptions, 'allowedSpanAttributes' | 'allowedMetricAttributes'>;
   private droppedSpans = 0;
+  private droppedMetricPoints = 0;
   private overflowedSeries = 0;
 
   constructor(options: OtlpExporterOptions) {
@@ -147,6 +158,10 @@ export class OtlpExporter {
       allowedMetricAttributes: options.allowedMetricAttributes,
       maxMetricSeries: positive(options.maxMetricSeries, DEFAULT_MAX_METRIC_SERIES),
       maxBufferedSpans: positive(options.maxBufferedSpans, DEFAULT_MAX_BUFFERED_SPANS),
+      maxBufferedPointsPerMetric: positive(
+        options.maxBufferedPointsPerMetric,
+        DEFAULT_MAX_BUFFERED_METRIC_POINTS,
+      ),
     };
   }
 
@@ -188,6 +203,10 @@ export class OtlpExporter {
     const entry = this.metrics.get(point.name) ?? { unit: point.unit, points: [] };
     if (entry.unit === undefined && point.unit !== undefined) entry.unit = point.unit;
     entry.points.push({ value: point.value, timeUnixNano: point.timeUnixNano, attributes: effectiveAttributes });
+    if (entry.points.length > this.options.maxBufferedPointsPerMetric) {
+      entry.points.shift();
+      this.droppedMetricPoints += 1;
+    }
     this.metrics.set(point.name, entry);
   }
 
@@ -195,38 +214,111 @@ export class OtlpExporter {
     return this.spans.length;
   }
 
+  metricCount(): number {
+    return this.metrics.size;
+  }
+
+  metricPointCount(): number {
+    let total = 0;
+    for (const entry of this.metrics.values()) total += entry.points.length;
+    return total;
+  }
+
   droppedSpanCount(): number {
     return this.droppedSpans;
+  }
+
+  droppedMetricPointCount(): number {
+    return this.droppedMetricPoints;
   }
 
   overflowedSeriesCount(): number {
     return this.overflowedSeries;
   }
 
+  /**
+   * Removes and returns the buffered spans so a send can be attempted without
+   * holding the buffer hostage; restoreSpans puts a failed batch back.
+   */
+  takeSpans(): OtlpExportedSpan[] {
+    const batch = this.spans.slice();
+    this.spans.length = 0;
+    return batch;
+  }
+
+  /**
+   * Removes the buffered metric points; the per-name series sets stay put so a
+   * failed send restores into unchanged cardinality state and a successful one
+   * simply leaves them (they are a process-lifetime cap, not a per-batch one).
+   */
+  takeMetrics(): OtlpExportedMetric[] {
+    const batch = [...this.metrics.entries()].map(([name, entry]) => ({
+      name,
+      ...(entry.unit === undefined ? {} : { unit: entry.unit }),
+      points: entry.points.slice(),
+    }));
+    this.metrics.clear();
+    return batch;
+  }
+
+  /** Puts a failed span batch back at the front of the buffer, oldest first. */
+  restoreSpans(batch: readonly OtlpExportedSpan[]): void {
+    for (let index = batch.length - 1; index >= 0; index -= 1) {
+      const span = batch[index];
+      if (span !== undefined) this.spans.unshift(span);
+    }
+    while (this.spans.length > this.options.maxBufferedSpans) {
+      this.spans.shift();
+      this.droppedSpans += 1;
+    }
+  }
+
+  /** Puts a failed metric batch back ahead of anything buffered since. */
+  restoreMetrics(batch: readonly OtlpExportedMetric[]): void {
+    for (const metric of batch) {
+      const entry = this.metrics.get(metric.name) ?? { unit: metric.unit, points: [] };
+      if (entry.unit === undefined && metric.unit !== undefined) entry.unit = metric.unit;
+      entry.points.unshift(...metric.points);
+      const overflow = entry.points.length - this.options.maxBufferedPointsPerMetric;
+      if (overflow > 0) {
+        entry.points.splice(0, overflow);
+        this.droppedMetricPoints += overflow;
+      }
+      this.metrics.set(metric.name, entry);
+    }
+  }
+
   /** OTLP/HTTP JSON body; the caller posts it and decides the endpoint. */
-  toResourceSpansJson(serviceName: string): object {
+  toResourceSpansJson(serviceName: string, batch: readonly OtlpExportedSpan[] = this.spans): object {
     return {
       resourceSpans: [
         {
           resource: { attributes: [{ key: 'service.name', value: { stringValue: serviceName } }] },
-          scopeSpans: [{ spans: this.spans.map(spanToJson) }],
+          scopeSpans: [{ spans: batch.map(spanToJson) }],
         },
       ],
     };
   }
 
-  toResourceMetricsJson(serviceName: string): object {
+  toResourceMetricsJson(
+    serviceName: string,
+    batch: readonly OtlpExportedMetric[] = [...this.metrics.entries()].map(([name, entry]) => ({
+      name,
+      ...(entry.unit === undefined ? {} : { unit: entry.unit }),
+      points: entry.points,
+    })),
+  ): object {
     return {
       resourceMetrics: [
         {
           resource: { attributes: [{ key: 'service.name', value: { stringValue: serviceName } }] },
           scopeMetrics: [
             {
-              metrics: [...this.metrics.entries()].map(([name, entry]) => ({
-                name,
-                ...(entry.unit === undefined ? {} : { unit: entry.unit }),
+              metrics: batch.map((metric) => ({
+                name: metric.name,
+                ...(metric.unit === undefined ? {} : { unit: metric.unit }),
                 gauge: {
-                  dataPoints: entry.points.map((point) => ({
+                  dataPoints: metric.points.map((point) => ({
                     timeUnixNano: point.timeUnixNano,
                     asDouble: point.value,
                     attributes: Object.entries(point.attributes).map(([key, value]) => ({
@@ -248,6 +340,7 @@ export class OtlpExporter {
     this.metrics.clear();
     this.series.clear();
     this.droppedSpans = 0;
+    this.droppedMetricPoints = 0;
     this.overflowedSeries = 0;
   }
 }

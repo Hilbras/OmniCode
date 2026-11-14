@@ -2,6 +2,8 @@ import { Service } from '@hilbras/omnicode-base/di/service';
 import { createDecorator } from '@hilbras/omnicode-base/di/instantiation';
 import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/di/scope';
 import { LifecycleScope } from '#/app/scopes';
+import type { CostRecordedEvent } from '#/app/telemetry/events';
+import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
 import { ISessionUsageService } from '#/session/usage/sessionUsage';
 
@@ -38,12 +40,21 @@ export class AgentCostLedgerService extends Service implements IAgentCostLedgerS
     @ISessionUsageService private readonly usage: ISessionUsageService,
     @IAgentScopeContext private readonly scopeContext: IAgentScopeContext,
     @IAgentCostGateService private readonly gate?: IAgentCostGateService,
+    @ITelemetryService private readonly telemetry?: ITelemetryService,
   ) {
     super();
     this._register(
       usage.onDidRecord((e) => {
         if (e.agent.agentId !== this.scopeContext.agentId) return;
-        this.ledger.record(e.source, this.gate?.priceUsage(e.model, e.usage));
+        const priced = this.gate?.priceUsage(e.model, e.usage);
+        this.ledger.record(e.source, priced);
+        const recorded: CostRecordedEvent = {
+          model: e.model,
+          cost_usd: priced ?? 0,
+          priced: priced !== undefined,
+          scope: e.source?.type === 'turn' ? 'turn' : 'session',
+        };
+        this.telemetry?.track2('cost_recorded', recorded);
       }),
     );
   }

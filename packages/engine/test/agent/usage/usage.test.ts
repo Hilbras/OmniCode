@@ -415,11 +415,51 @@ describe('AgentCostLedgerService', () => {
     return new AgentCostGateService(configService);
   }
 
-  function createLedger(config: Record<string, unknown> = PRICED_CONFIG): AgentCostLedgerService {
+  function createLedger(
+    config: Record<string, unknown> = PRICED_CONFIG,
+    telemetry?: ITelemetryService,
+  ): AgentCostLedgerService {
     return disposables.add(
-      new AgentCostLedgerService(svc, ix.get(IAgentScopeContext), gateWith(config)),
+      new AgentCostLedgerService(svc, ix.get(IAgentScopeContext), gateWith(config), telemetry),
     );
   }
+
+  it('records a cost_recorded telemetry event per priced usage record', async () => {
+    const track2 = vi.fn();
+    createLedger(PRICED_CONFIG, {
+      _serviceBrand: undefined,
+      track2,
+    } as unknown as ITelemetryService);
+    await svc.record(agent, 'model-a', a1, { type: 'turn', turnId: 1 });
+    await svc.record(agent, 'model-a', a2);
+
+    expect(track2).toHaveBeenCalledTimes(2);
+    expect(track2).toHaveBeenNthCalledWith(1, 'cost_recorded', {
+      model: 'model-a',
+      cost_usd: expect.any(Number),
+      priced: true,
+      scope: 'turn',
+    });
+    expect(track2).toHaveBeenNthCalledWith(2, 'cost_recorded', {
+      model: 'model-a',
+      cost_usd: expect.any(Number),
+      priced: true,
+      scope: 'session',
+    });
+  });
+
+  it('flags cost_recorded as unpriced instead of fabricating a cost', async () => {
+    const track2 = vi.fn();
+    createLedger({}, { _serviceBrand: undefined, track2 } as unknown as ITelemetryService);
+    await svc.record(agent, 'model-a', a1, { type: 'turn', turnId: 1 });
+
+    expect(track2).toHaveBeenCalledWith('cost_recorded', {
+      model: 'model-a',
+      cost_usd: 0,
+      priced: false,
+      scope: 'turn',
+    });
+  });
 
   it('accumulates turn spend and derives the session total from persisted usage', async () => {
     const ledger = createLedger();

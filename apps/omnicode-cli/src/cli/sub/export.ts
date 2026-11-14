@@ -9,6 +9,7 @@ import { createInterface } from 'node:readline/promises';
 
 import {
   setTelemetryContext,
+  shutdownOtlpRuntime,
   shutdownTelemetry,
   track,
   withTelemetryContext,
@@ -177,6 +178,7 @@ function createDefaultExportDeps(overrides: Partial<ExportDeps> = {}): ExportDep
   const shutdownDefaultTelemetry = async (): Promise<void> => {
     if (!telemetryInitialized || telemetryShutdown) return;
     telemetryShutdown = true;
+    await shutdownOtlpRuntime().catch(() => {});
     await shutdownTelemetry({ timeoutMs: CLI_SHUTDOWN_TIMEOUT_MS });
   };
   return {

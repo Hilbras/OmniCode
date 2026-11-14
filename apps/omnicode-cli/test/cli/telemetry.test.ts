@@ -3,10 +3,11 @@
  * `omnicode web` / `omnicode server run` host wiring added in `cli/telemetry.ts`.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => ({
   initializeTelemetry: vi.fn(),
+  configureOtlpRuntime: vi.fn(),
   createOmnicodeDeviceId: vi.fn(() => 'device-123'),
   resolveOmnicodeHome: vi.fn(() => '/home/.omnicode'),
   resolveConfigPath: vi.fn(() => '/home/.omnicode/config.toml'),
@@ -24,6 +25,8 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock('@hilbras/omnicode-telemetry', () => ({
   initializeTelemetry: mocks.initializeTelemetry,
+  configureOtlpRuntime: mocks.configureOtlpRuntime,
+  DEFAULT_OTLP_FLUSH_INTERVAL_MS: 30_000,
   setTelemetryContext: vi.fn(),
   track: vi.fn(),
   withTelemetryContext: vi.fn(),
@@ -117,5 +120,74 @@ describe('initializeServerTelemetry', () => {
     expect(mocks.initializeTelemetry).toHaveBeenCalledWith(
       expect.objectContaining({ enabled: true, model: undefined }),
     );
+  }, 60_000);
+});
+
+describe('configureCliOtlpTelemetry', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    mocks.configureOtlpRuntime.mockClear();
+  });
+
+  it('keeps OTLP off when no endpoint is configured', async () => {
+    const { configureCliOtlpTelemetry } = await import('#/cli/telemetry');
+    vi.stubEnv('OMNICODE_OTLP_ENDPOINT', '');
+    configureCliOtlpTelemetry();
+    expect(mocks.configureOtlpRuntime).not.toHaveBeenCalled();
+
+    vi.stubEnv('OMNICODE_OTLP_ENDPOINT', undefined as unknown as string);
+    configureCliOtlpTelemetry();
+    expect(mocks.configureOtlpRuntime).not.toHaveBeenCalled();
+  }, 60_000);
+
+  it('configures the runtime with the CLI service name and per-send endpoint/token resolvers', async () => {
+    const { configureCliOtlpTelemetry } = await import('#/cli/telemetry');
+    vi.stubEnv('OMNICODE_OTLP_ENDPOINT', 'http://collector.lan:4318');
+    vi.stubEnv('OMNICODE_OTLP_TOKEN', 'tok-1');
+    configureCliOtlpTelemetry();
+
+    expect(mocks.configureOtlpRuntime).toHaveBeenCalledTimes(1);
+    const options = mocks.configureOtlpRuntime.mock.calls[0]?.[0] as {
+      serviceName: string;
+      endpoint: () => string | undefined;
+      getAccessToken: () => string | null;
+      flushIntervalMs: number;
+    };
+    expect(options.serviceName).toBe('omnicode-cli');
+    expect(options.endpoint()).toBe('http://collector.lan:4318');
+    expect(options.getAccessToken()).toBe('tok-1');
+    expect(options.flushIntervalMs).toBe(30_000);
+
+    vi.stubEnv('OMNICODE_OTLP_TOKEN', '');
+    vi.stubEnv('OMNICODE_OTLP_ENDPOINT', 'https://collector2.lan:4318');
+    expect(options.getAccessToken()).toBeNull();
+    expect(options.endpoint()).toBe('https://collector2.lan:4318');
+  }, 60_000);
+
+  it('honours a valid flush interval override and ignores junk', async () => {
+    const { configureCliOtlpTelemetry } = await import('#/cli/telemetry');
+    vi.stubEnv('OMNICODE_OTLP_ENDPOINT', 'http://collector.lan:4318');
+    vi.stubEnv('OMNICODE_OTLP_FLUSH_INTERVAL_MS', '5000');
+    configureCliOtlpTelemetry();
+    expect(mocks.configureOtlpRuntime).toHaveBeenCalledWith(
+      expect.objectContaining({ flushIntervalMs: 5000 }),
+    );
+
+    vi.stubEnv('OMNICODE_OTLP_FLUSH_INTERVAL_MS', 'nope');
+    configureCliOtlpTelemetry();
+    expect(mocks.configureOtlpRuntime).toHaveBeenLastCalledWith(
+      expect.objectContaining({ flushIntervalMs: 30_000 }),
+    );
+  }, 60_000);
+
+  it('stays off for a malformed or non-http endpoint', async () => {
+    const { configureCliOtlpTelemetry } = await import('#/cli/telemetry');
+    vi.stubEnv('OMNICODE_OTLP_ENDPOINT', 'not-a-url');
+    configureCliOtlpTelemetry();
+    expect(mocks.configureOtlpRuntime).not.toHaveBeenCalled();
+
+    vi.stubEnv('OMNICODE_OTLP_ENDPOINT', 'ftp://collector.lan');
+    configureCliOtlpTelemetry();
+    expect(mocks.configureOtlpRuntime).not.toHaveBeenCalled();
   }, 60_000);
 });
