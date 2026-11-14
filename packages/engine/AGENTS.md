@@ -15,11 +15,12 @@ memory in `packages/memory`; host/UI surfaces in `apps/*`, `packages/API`, and
 
 `packages/engine/src/index.ts` is the package entry and composition root; it
 exports contracts and imports services/features for registration side effects.
-Ownership: `agent/` loop/tools/permissions/media/teams; `session/` lifecycle/profile/
+Ownership: `agent/` loop/tools/permissions/media/teams; `agents/` workflow
+runtime; `session/` lifecycle/profile/
 state/subagent/MCP overlay; `app/` app-scope services; `features/` feature seam;
 `human/` pure LLM/agent kernel; `llm-adapter/` compatibility boundary; `mcpCore/`
 transports/config/OAuth; `workspace/` workspace/session lifecycle; `state/` state
-contributions; `wire/` durable log/replay. Local guides cover `agent/`,
+contributions. Local guides cover `agent/`,
 `features/`, `session/`, `app/`, `human/`, and `mcpCore/`.
 
 ## Registration rules
@@ -114,3 +115,8 @@ or host-specific code, a second DI facade, direct provider SDK calls outside
 ## Permission policy
 
 Auto mode now uses `AutoModeClassifierPermissionPolicyService` (`auto-mode-classifier`) instead of blanket auto-approval. Denial tracking state resets on mode change. Dangerous-command and ask-user-question-deny policies remain ahead of the classifier.
+
+
+## Workflow runtime
+
+`src/agents/runtime/workflow/` is a pure step-graph runtime, exported through the package entry. `script.ts` parses the declarative script (inert JSON args via `z.json()`, acyclic deps); `runner.ts` executes it through a host-injected `WorkflowStepExecutor` seam with an explicit `maxConcurrentSteps` window, a fail-closed host-provided tool allowlist, and an optional `WorkflowTokenBudget` seam (satisfied by `agent/team/workflowBudget`'s ledger); `journal.ts` owns the seq-contiguous journal, replay, checkpoints, pure stall detection, and fingerprint-checked resume. The runtime never spawns processes, resolves command names, or touches the filesystem itself; no model-visible tool wraps it yet. Tests: `test/agents/workflow/`.
