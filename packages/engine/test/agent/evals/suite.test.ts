@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
+import { hermeticEvalCases } from '#/agent/evals/cases';
 import { evalGateExitCode, runEvalSuite, type EvalCase } from '#/agent/evals/suite';
 
 function evalCase(overrides: Partial<EvalCase> & { readonly name: string }): EvalCase {
@@ -62,5 +63,16 @@ describe('runEvalSuite', () => {
       evalCase({ name: 'async', run: async () => ({ turns: [{ toolCalls: [{ name: 'Read' }] }] }) }),
     ]);
     expect(report.passed).toBe(true);
+  });
+
+  it('passes the gate over the shipped hermetic inventory', async () => {
+    const report = await runEvalSuite(hermeticEvalCases);
+    expect(hermeticEvalCases.length).toBeGreaterThan(0);
+    expect(report.passed).toBe(true);
+    expect(report.requiredFailures).toEqual([]);
+    expect(evalGateExitCode(report)).toBe(0);
+    expect(report.results.map((result) => result.name)).toEqual(
+      hermeticEvalCases.map((evalCase) => evalCase.name),
+    );
   });
 });

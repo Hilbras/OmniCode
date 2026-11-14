@@ -20,6 +20,7 @@ import {
 } from './cassette';
 
 const cassetteDir = fileURLToPath(new URL('./cassettes/', import.meta.url));
+const goldenDir = fileURLToPath(new URL('./goldens/', import.meta.url));
 
 const model: LlmModel = {
   provider: 'test',
@@ -73,6 +74,16 @@ describe('fetch cassette', () => {
     expect(calls[0]?.url).toBe('https://example.test/v1/chat/completions');
     expect(calls[0]?.headers['authorization']).toBe('[redacted]');
     expect(JSON.parse(calls[0]?.body ?? '{}')).toMatchObject({ model: 'gpt-5-mini', stream: true });
+  });
+
+  it('pins the rendered wire request body against the golden', async () => {
+    const { body } = await withFetchCassette(replay('openai-chat-stream'), async (cassette) => {
+      await generate(createOpenAIRequester());
+      return { body: cassette.calls[0]?.body ?? '' };
+    });
+
+    const golden = await readFile(join(goldenDir, 'openai-chat-stream-wire-body.json'), 'utf8');
+    expect(JSON.parse(body)).toEqual(JSON.parse(golden));
   });
 
   it('fails a recording that ends without a finish event', async () => {

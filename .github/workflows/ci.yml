@@ -118,3 +118,31 @@ jobs:
       - name: Test Kaos sandbox
         run: pnpm --filter @hilbras/omnicode-kaos exec vitest run test/sandbox
 
+  eval-gate:
+    name: Eval gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Test eval suites
+        run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/agent/evals test/evals src/human/test/llm/cassette.test.ts src/human/test/llm/rendered-context-golden.test.ts
+
+      - name: Run eval gate
+        run: pnpm --filter @hilbras/omnicode-engine exec tsx scripts/run-eval-gate.mts
+

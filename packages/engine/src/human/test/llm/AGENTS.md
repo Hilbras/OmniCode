@@ -40,3 +40,19 @@ passed to `withFetchCassette` directly.
 - `cassettes/openai-chat-stream.json` and `openai-chat-truncated.json` are hand-authored
   to the providers' wire formats, not captured from live traffic. Refresh them with real
   recordings once credentials and network are available.
+
+### Rendered-context goldens
+
+`goldens/` pins the exact request bytes the provider path renders. A golden test deep-equals
+the parsed body against the committed JSON, so any change to request shaping (system prompt
+placement, think lowering, tool schema rendering, thinking/cache/token kwargs, SDK
+serialization) fails loudly instead of shipping a drifted request.
+
+- `goldens/openai-chat-stream-wire-body.json`: the body the real SDK sent under cassette
+  replay (`cassette.calls[0].body` in `cassette.test.ts`).
+- `goldens/openai-chat-rendered-request.json`: `prepareOpenAIRequest` output for a full
+  agent context — system prompt, think history, tool call/result, tools, thinking,
+  cache key, and token cap (`rendered-context-golden.test.ts`).
+
+Hand-edit a golden only to adopt an intentional shaping change; the test failure is the
+review point for that diff.

@@ -1,0 +1,82 @@
+{
+  "model": "gpt-5-mini",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are a careful coding agent."
+    },
+    {
+      "role": "user",
+      "content": "the parser tests fail"
+    },
+    {
+      "role": "assistant",
+      "content": "Let me look.",
+      "tool_calls": [
+        {
+          "id": "call_1",
+          "type": "function",
+          "function": {
+            "name": "Read",
+            "arguments": "{\"path\":\"src/parser.ts\"}"
+          }
+        }
+      ],
+      "reasoning_content": "inspect the failing module first"
+    },
+    {
+      "role": "tool",
+      "tool_call_id": "call_1",
+      "content": "export function parse(input: string): string { return input; }"
+    },
+    {
+      "role": "user",
+      "content": "fix it"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "function": {
+        "name": "Read",
+        "description": "Read a file from the workspace.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "path"
+          ]
+        }
+      }
+    },
+    {
+      "type": "function",
+      "function": {
+        "name": "ApplyPatch",
+        "description": "Apply a patch to a file.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "patch": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "patch"
+          ]
+        }
+      }
+    }
+  ],
+  "stream": true,
+  "stream_options": {
+    "include_usage": true
+  },
+  "prompt_cache_key": "session-abc",
+  "reasoning_effort": "high",
+  "max_completion_tokens": 4096
+}
