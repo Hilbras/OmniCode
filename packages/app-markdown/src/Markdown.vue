@@ -1,4 +1,18 @@
 <!-- @hilbras/app-markdown — Markdown.vue -->
+<script lang="ts">
+// Shape of the `openFile` prop payload. Declared locally so the package has no
+// reverse dependency on the host app's types; structurally compatible with the
+// host's `FilePreviewRequest` (`{ path: string; line?: number }`).
+//
+// Exported rather than only declared: `src/index.ts` re-exports the async-component
+// wrapper, whose inferred type names this interface, and an unexported one leaves a
+// consumer that type-checks with declarations on with TS4023 ("cannot be named").
+export interface FilePreviewRequest {
+  path: string;
+  line?: number;
+}
+</script>
+
 <script setup lang="ts">
 import { computed, inject, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue';
 import { useOmnicodeI18n } from '@hilbras/app-i18n';
@@ -20,14 +34,6 @@ import {
   type TableWideToggleLabels,
 } from './lib/tableWide';
 import { streamingLinkAction } from './lib/streamingLinkGuard';
-
-// Shape of the `openFile` prop payload. Declared locally so the package has no
-// reverse dependency on the host app's types; structurally compatible with the
-// host's `FilePreviewRequest` (`{ path: string; line?: number }`).
-interface FilePreviewRequest {
-  path: string;
-  line?: number;
-}
 import { Icon, IconButton, Tooltip } from '@hilbras/app-ui';
 // px-based CSS build (our app is px, not rem). Imported here so the styles
 // load wherever Markdown is used; scoped overrides below re-skin it to

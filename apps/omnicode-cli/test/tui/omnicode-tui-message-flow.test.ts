@@ -466,7 +466,7 @@ function countOccurrences(haystack: string, needle: string): number {
 }
 
 const tempDirs: string[] = [];
-const originalOmnicodeCodeHome = process.env['OMNICODE_HOME'];
+const originalOmnicodeCodeHome = process.env['OMNICODE_V_HOME'];
 const originalPluginMarketplaceUrl = process.env['OMNICODE_PLUGIN_MARKETPLACE_URL'];
 const originalVisual = process.env['VISUAL'];
 const originalEditor = process.env['EDITOR'];
@@ -511,9 +511,9 @@ afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
   }
   if (originalOmnicodeCodeHome === undefined) {
-    delete process.env['OMNICODE_HOME'];
+    delete process.env['OMNICODE_V_HOME'];
   } else {
-    process.env['OMNICODE_HOME'] = originalOmnicodeCodeHome;
+    process.env['OMNICODE_V_HOME'] = originalOmnicodeCodeHome;
   }
   if (originalVisual === undefined) {
     delete process.env['VISUAL'];
@@ -1924,7 +1924,7 @@ describe('OmnicodeTUI message flow', () => {
 
   it('hydrates lazy config defaults on a sessionless /reload (v2 engine)', async () => {
     const homeDir = await makeTempHome();
-    process.env['OMNICODE_HOME'] = homeDir;
+    process.env['OMNICODE_V_HOME'] = homeDir;
     const session = makeSession({ id: 'ses-lazy' });
     const getConfig = vi.fn(
       async (): Promise<{ models: Record<string, unknown>; defaultModel?: string }> => ({
@@ -1952,7 +1952,7 @@ describe('OmnicodeTUI message flow', () => {
 
   it('clears stale lazy defaults when the default model is removed (v2 engine)', async () => {
     const homeDir = await makeTempHome();
-    process.env['OMNICODE_HOME'] = homeDir;
+    process.env['OMNICODE_V_HOME'] = homeDir;
     const session = makeSession({ id: 'ses-lazy' });
     const getConfig = vi.fn(
       async (): Promise<{ models: Record<string, unknown>; defaultModel?: string }> => ({
@@ -2019,7 +2019,7 @@ describe('OmnicodeTUI message flow', () => {
 
   it('clears the stale permission default when it is removed from config (v2 engine)', async () => {
     const homeDir = await makeTempHome();
-    process.env['OMNICODE_HOME'] = homeDir;
+    process.env['OMNICODE_V_HOME'] = homeDir;
     const session = makeSession({ id: 'ses-lazy' });
     const getConfig = vi.fn(
       async (): Promise<{
@@ -2218,7 +2218,7 @@ describe('OmnicodeTUI message flow', () => {
   });
 
   it('tracks theme changes from slash commands', async () => {
-    process.env['OMNICODE_HOME'] = await makeTempHome();
+    process.env['OMNICODE_V_HOME'] = await makeTempHome();
     const { driver, harness } = await makeDriver();
     harness.track.mockClear();
 
@@ -2233,7 +2233,7 @@ describe('OmnicodeTUI message flow', () => {
 
   it('dispatches /reload-tui without reloading the active session', async () => {
     const homeDir = await makeTempHome();
-    process.env['OMNICODE_HOME'] = homeDir;
+    process.env['OMNICODE_V_HOME'] = homeDir;
     await writeFile(
       join(homeDir, 'tui.toml'),
       `
@@ -2260,7 +2260,7 @@ command = "vim"
 
   it('dispatches /reload through session reload and applies tui.toml', async () => {
     const homeDir = await makeTempHome();
-    process.env['OMNICODE_HOME'] = homeDir;
+    process.env['OMNICODE_V_HOME'] = homeDir;
     await writeFile(join(homeDir, 'tui.toml'), 'theme = "light"\n', 'utf-8');
     const { driver, session, harness } = await makeDriver();
     harness.track.mockClear();
@@ -3620,7 +3620,7 @@ command = "vim"
   });
 
   it('releases every queued use of shared media when the queue is discarded', async () => {
-    process.env['OMNICODE_HOME'] = await makeTempHome();
+    process.env['OMNICODE_V_HOME'] = await makeTempHome();
     const { driver, harness } = await makeDriver();
     const imageStore = (driver as unknown as { imageStore: ImageAttachmentStore }).imageStore;
     const attachment = stagedImage(imageStore, 'file-queued');
@@ -9457,7 +9457,7 @@ describe('OmnicodeTUI session rating survey', () => {
   it.each(['startup', 'switch', 'reload'] as const)(
     'reports cumulative user turns after a %s mount',
     async (mount) => {
-      process.env['OMNICODE_HOME'] = await makeTempHome();
+      process.env['OMNICODE_V_HOME'] = await makeTempHome();
       vi.spyOn(Math, 'random').mockReturnValue(0);
       try {
         const session = makeSession();
@@ -9504,7 +9504,7 @@ describe('OmnicodeTUI session rating survey', () => {
   it.each(['lazy', 'new-command'] as const)(
     'starts from zero when a new session is created through %s',
     async (creation) => {
-      process.env['OMNICODE_HOME'] = await makeTempHome();
+      process.env['OMNICODE_V_HOME'] = await makeTempHome();
       vi.spyOn(Math, 'random').mockReturnValue(0);
       try {
         const session = makeSession({ getResumeState: vi.fn(() => undefined) });
@@ -9545,7 +9545,7 @@ describe('OmnicodeTUI session rating survey', () => {
   it('runs the end-to-end rating flow after five user turns', async () => {
     vi.useFakeTimers();
     const homeDir = await makeTempHome();
-    process.env['OMNICODE_HOME'] = homeDir;
+    process.env['OMNICODE_V_HOME'] = homeDir;
     vi.spyOn(Math, 'random').mockReturnValue(0);
     try {
       const { driver, harness } = await makeDriver();
@@ -9688,7 +9688,7 @@ describe('OmnicodeTUI session rating survey', () => {
   it('shows the long-context survey once the context window crosses the threshold', async () => {
     vi.useFakeTimers();
     const homeDir = await makeTempHome();
-    process.env['OMNICODE_HOME'] = homeDir;
+    process.env['OMNICODE_V_HOME'] = homeDir;
     vi.spyOn(Math, 'random').mockReturnValue(0);
     try {
       const { driver, harness } = await makeDriver();
@@ -9760,7 +9760,7 @@ describe('OmnicodeTUI session rating survey', () => {
 
   it('ignores non-user turns for the survey warmup', async () => {
     vi.useFakeTimers();
-    process.env['OMNICODE_HOME'] = await makeTempHome();
+    process.env['OMNICODE_V_HOME'] = await makeTempHome();
     vi.spyOn(Math, 'random').mockReturnValue(0);
     try {
       const { driver } = await makeDriver();
@@ -9797,7 +9797,7 @@ describe('OmnicodeTUI session rating survey', () => {
 
       vi.useRealTimers();
       await vi.waitFor(() => {
-        expect(existsSync(join(process.env['OMNICODE_HOME']!, 'feedback-survey-state.json'))).toBe(
+        expect(existsSync(join(process.env['OMNICODE_V_HOME']!, 'feedback-survey-state.json'))).toBe(
           true,
         );
       });
@@ -9809,7 +9809,7 @@ describe('OmnicodeTUI session rating survey', () => {
 
   it('counts user-slash skill and plugin command turns toward the survey warmup', async () => {
     vi.useFakeTimers();
-    process.env['OMNICODE_HOME'] = await makeTempHome();
+    process.env['OMNICODE_V_HOME'] = await makeTempHome();
     vi.spyOn(Math, 'random').mockReturnValue(0);
     try {
       const { driver } = await makeDriver();
@@ -9876,7 +9876,7 @@ describe('OmnicodeTUI session rating survey', () => {
 
       vi.useRealTimers();
       await vi.waitFor(() => {
-        expect(existsSync(join(process.env['OMNICODE_HOME']!, 'feedback-survey-state.json'))).toBe(
+        expect(existsSync(join(process.env['OMNICODE_V_HOME']!, 'feedback-survey-state.json'))).toBe(
           true,
         );
       });

@@ -33,9 +33,9 @@ describe('ensureHome', () => {
     writeFileSync(join(dir, 'logs', 'cli.log'), 'noise\n');
   }
 
-  it('respects an explicit OMNICODE_HOME and never migrates into it', () => {
+  it('respects an explicit OMNICODE_V_HOME and never migrates into it', () => {
     writeHomeLayout();
-    env['OMNICODE_HOME'] = join(root, 'custom-home');
+    env['OMNICODE_V_HOME'] = join(root, 'custom-home');
 
     const outcome = ensureHome(env, root);
 
@@ -55,6 +55,7 @@ describe('ensureHome', () => {
       defaultApplied: true,
       migrated: false,
     });
+    expect(env['OMNICODE_V_HOME']).toBe(home());
     expect(env['OMNICODE_HOME']).toBe(home());
   });
 
@@ -85,7 +86,7 @@ describe('ensureHome', () => {
   });
 
   it('names no legacy home distinct from the data home itself', () => {
-    expect(LEGACY_HOME_DIRNAMES).toEqual([HOME_DIRNAME]);
+    expect(LEGACY_HOME_DIRNAMES).toEqual([]);
 
     const outcome = ensureHome(env, root);
 

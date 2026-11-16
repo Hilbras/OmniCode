@@ -42,7 +42,7 @@ function hex(s: string): Rgb {
   ];
 }
 function rgbaOver(rgb: Rgb, alpha: number, bg: Rgb): Rgb {
-  return rgb.map((c, i) => alpha * c + (1 - alpha) * bg[i]) as Rgb;
+  return rgb.map((c, i) => alpha * c + (1 - alpha) * (bg[i] ?? 0)) as Rgb;
 }
 function parseRgba(value: string): { rgb: Rgb; alpha: number } {
   const m = value.match(/rgba\(\s*(\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\s*\)/);

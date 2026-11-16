@@ -723,11 +723,11 @@ describe('useMentionMenu — pill-boundary token detection', () => {
   });
 
   const SKILL = { name: 'goal', description: '', path: '/skills/goal/SKILL.md', source: 'builtin' };
-  // '[x](omnicode://skill/x)' is 24 chars; the '@g' token follows at 24..26.
+  // '[x](omnicode://skill/x)' is 23 chars; the '@g' token follows at 23..25.
   const AFTER_PILL = '[x](omnicode://skill/x)@g';
 
   it('detects the @token typed right after a pill', () => {
-    const { mention } = setup(AFTER_PILL, undefined, { skills: [SKILL], runStart: 24 });
+    const { mention } = setup(AFTER_PILL, undefined, { skills: [SKILL], runStart: 23 });
     mention.update();
     expect(mention.open.value).toBe(true);
     expect(mention.skillItems.value.map((s) => s.skill.name)).toEqual(['goal']);
@@ -743,11 +743,11 @@ describe('useMentionMenu — pill-boundary token detection', () => {
     const calls: Array<{ range: { start: number; end: number } }> = [];
     const { mention } = setup(AFTER_PILL, undefined, {
       skills: [SKILL],
-      runStart: 24,
+      runStart: 23,
       insertMention: (_entry, range) => calls.push({ range }),
     });
     mention.select({ kind: 'skill', skill: SKILL });
-    expect(calls[0]?.range).toEqual({ start: 24, end: 26 });
+    expect(calls[0]?.range).toEqual({ start: 23, end: 25 });
   });
 
   it('a whitespace-delimited token inside the post-pill run still works', () => {

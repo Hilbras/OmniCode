@@ -9,7 +9,7 @@
 // session intent) arrive via ./deps.
 
 import { reactive, type ComputedRef, type Ref } from 'vue';
-import { consumeSessionIntent, getOmnicodeWebApi, sessionExportTraceToJsonl, t, traceKeyEvent, type SessionCreatedSource } from './deps';
+import { clientDepsGeneration, consumeSessionIntent, getOmnicodeWebApi, hasOmnicodeClientDeps, sessionExportTraceToJsonl, t, traceKeyEvent, type SessionCreatedSource } from './deps';
 import { useConfirmDialog } from '../composables/useConfirmDialog';
 import { isDaemonApiError } from '@hilbras/app-core/api';
 import { SERVER_AUTH_UNAUTHORIZED_CODE, isPageTokenMismatchError, isPlaceholderSessionUsage, toAppSessionFromV2, SESSION_EXPORT_TOO_LARGE_CODE } from '@hilbras/app-core/api';
@@ -435,7 +435,16 @@ export function useWorkspaceState(rawState: ExtendedState, deps: UseWorkspaceSta
     // Critical (header/model): stay synchronous.
     if (opts?.skipStatus !== true) void refreshSessionStatus(sessionId);
     // Non-critical: defer so they don't contend with the baseline fetch.
+    // Captured now: if the deps are reinstalled or reset before this task runs,
+    // the client that queued it is gone — and so are the bindings it captured
+    // (a `vi.resetModules` graph reports them as `not a function`).
+    const scheduledGeneration = clientDepsGeneration();
     const runDeferred = () => {
+      // The deferred task may outlive the client that queued it (a test reset,
+      // or HMR dropping the graph): calling the un-registered deps throws, and
+      // a sidecar read for a client that no longer exists has nothing to do.
+      if (!hasOmnicodeClientDeps()) return;
+      if (clientDepsGeneration() !== scheduledGeneration) return;
       void taskPoller.loadTasksForSession(sessionId);
       void filesStore().loadGitStatus(sessionId);
       void refreshSessionGoal(sessionId);

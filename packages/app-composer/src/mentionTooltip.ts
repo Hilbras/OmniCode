@@ -429,8 +429,11 @@ export function startMentionTooltip(host: MentionTooltipHost): () => void {
    *  settling flight only removes the spinner when its key is still the one
    *  on display. */
   let shownProbeKey: string | null = null;
-  let showTimer: ReturnType<typeof setTimeout> | undefined;
-  let hideTimer: ReturnType<typeof setTimeout> | undefined;
+  // `number`, not `ReturnType<typeof setTimeout>`: these are browser timers, and
+  // `window` is typed `Window & typeof globalThis`, so that return type resolves to
+  // Node's `Timeout` while the DOM call returns a number.
+  let showTimer: number | undefined;
+  let hideTimer: number | undefined;
   let disconnectObserver: MutationObserver | undefined;
   /** Confirmed-existing probe verdicts: `${scope}|${path}` → confirmation
    *  timestamp, honored for PROBE_CACHE_TTL only. Missing verdicts are

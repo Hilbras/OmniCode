@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { applySessionEmoji, splitSessionEmoji } from '../src/lib/sessionEmoji';
 
+/** `Intl.Segmenter` is read-only in the DOM lib, so both directions of the
+ *  unavailability simulation go through one place with one suppression. */
+function stubSegmenter(value: typeof Intl.Segmenter | undefined): void {
+  // @ts-expect-error deliberately simulating a webview without the API
+  Intl.Segmenter = value;
+}
+
 describe('splitSessionEmoji', () => {
   it('returns null emoji for plain titles', () => {
     expect(splitSessionEmoji('做一个 desktop 的需求')).toEqual({
@@ -63,13 +70,12 @@ describe('splitSessionEmoji', () => {
 
   it('degrades to "no icon" when Intl.Segmenter is unavailable', () => {
     const original = Intl.Segmenter;
-    // @ts-expect-error deliberately simulating a webview without the API
-    Intl.Segmenter = undefined;
+    stubSegmenter(undefined);
     try {
       expect(splitSessionEmoji('⏳ 标题')).toEqual({ emoji: null, rest: '⏳ 标题' });
       expect(applySessionEmoji('⏳ 标题', '🔥')).toBe('🔥 ⏳ 标题');
     } finally {
-      Intl.Segmenter = original;
+      stubSegmenter(original);
     }
   });
 });

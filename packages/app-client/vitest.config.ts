@@ -15,5 +15,10 @@ export default defineConfig({
   plugins: preset.plugins,
   test: {
     include: ['test/**/*.test.ts'],
+    // The suite drives real composables with real timers: `apply-event-slices`
+    // needs ~9 s here (transcript baseline + a 50 ms batcher flush) and outruns
+    // Vitest's 5 s default. This is a bound on the slowest honest test, not a
+    // synchronization sleep — the tests still await observable state.
+    testTimeout: 20_000,
   },
 });

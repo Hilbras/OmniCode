@@ -64,11 +64,25 @@ between the composer and message content. Treat it as an API:
 ## Validation
 
 ```bash
-cd packages/app-composer
-../../node_modules/.bin/vitest run --config vitest.config.ts test/mention-match.test.ts
+pnpm --filter @hilbras/app-composer test
 ```
 
 The package has 19 Vitest files under `test/` and its config resolves the virtual
-icons used by `icons.ts`. Run a focused file while iterating, then the whole
-suite for wire/editor changes. There is no package `typecheck` script; use the
-consumer's bundler resolution if you need a type pass.
+icons used by `icons.ts`; `@iconify-json/{ri,tabler}` are devDependencies here, so the
+command above runs 19 files / 354 tests green. Run a focused file while iterating,
+then the whole suite for wire/editor changes.
+
+Type-check is wired and green:
+
+```bash
+pnpm --filter @hilbras/app-composer typecheck
+```
+
+`vue-tsc` is a devDependency here (plain `tsc` would skip `ComposerText.vue`
+silently), so the one `.vue` file is checked too. `tsconfig.json` extends the **root**
+config — not `tsconfig.base.json`, whose NodeNext resolution rejects this package's
+extensionless imports — and lists `../vite-preset/src/{icons,worker}.d.ts` plus
+`../app-core/src/env.d.ts`, because its program compiles the `app-*` sources it imports
+and those declarations live beside them. `src/env.d.ts` declares the single
+`import.meta.env.DEV` guard the editor uses, so `vite` itself is not needed. First run
+after wiring: **0 diagnostics**.

@@ -64,6 +64,50 @@ The theme apply/switch mechanics live in the `write-tui` skill. The following ru
 - Do not cache styled chalk functions at module top level. Theme switching must take effect within a single render, so styles must be generated on the render path from the current palette.
 - Non-comment code must not contain chalk named colors such as `chalk.white`, `chalk.cyan`, `chalk.red`, `chalk.green`, `chalk.gray`, `chalk.yellow`, `chalk.blue`, `chalk.magenta`, `chalk.whiteBright`, or `chalk.blackBright`. `test/tui/chalk-named-color-guard.test.ts` enforces this in CI.
 
+## Tests
+
+`test/` mirrors `src/`. TUI behaviour is covered in-process under `test/tui/`;
+`test/e2e/` holds the gated suites (`OMNICODE_E2E=1`, and `OMNICODE_E2E_REAL=1`
+for the real-LLM smoke).
+
+`test/e2e/pty-tui.e2e.test.ts` is the only suite that drives the app as a
+terminal: it spawns the CLI through a PTY and checks the workspace trust gate
+renders, that trusting it brings up the TUI, and that `/exit` leaves with code 0.
+Two facts it pins, both surprising enough to be worth knowing before changing the
+startup path:
+
+- `Ctrl+C` does **not** exit the TUI (one or two presses leave the process
+  running); `/exit` does. A test that waits for an exit after `Ctrl+C` will hang
+  until its timeout.
+- The built bundle cannot boot in this workspace: `node dist/main.mjs` dies with
+  `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` (workspace packages export TypeScript
+  source, and Node's strip-only mode rejects parameter properties). The suite
+  therefore runs the dev entry, `tsx src/main.ts`, exactly as
+  `scripts/omnicode-dev.mjs` does.
+
+Booting takes tens of seconds, so the suite is gated and waits for output
+markers instead of sleeping.
+
+```bash
+OMNICODE_E2E=1 pnpm --filter @omnicode/cli exec vitest run test/e2e/pty-tui.e2e.test.ts
+```
+
+## Embedded vis web asset
+
+`src/generated/vis-web-asset.ts` is generated, never edited: it holds the gzipped,
+base64-encoded single-file build of `apps/omnicode-vis/web`, which the CLI serves for
+its web surface. `scripts/build-vis-asset.mjs` is the owner, wired as the package
+`prebuild`, so `pnpm --filter @omnicode/cli build` refreshes it first. The script
+runs `VIS_SINGLEFILE=1 vite build` in the vis web package, reads the resulting
+`apps/omnicode-vis/web/dist-single/index.html` (an untracked intermediate, ignored on
+purpose), and writes the encoded asset.
+
+It also takes `--check` (`pnpm --filter @omnicode/cli gen:vis-asset -- --check`):
+it builds as usual, compares the encoding against the committed module, and exits
+non-zero without writing when they differ. That is what `pnpm check:generated` runs,
+so a vis-web change that nobody re-encoded fails the guard instead of shipping a CLI
+whose web UI is an older build.
+
 ## General Coding Requirements
 
 - The startup path before the workspace trust gate (`OmnicodeTUI.start()` -> `maybeRunWorkspaceTrustPrompt()`) must not spawn child processes by bare command name — on Windows, cmd.exe / CreateProcess resolve them from the current directory first, so a binary planted in an untrusted workspace would run before the user confirms trust. When an external command is unavoidable, resolve it with `resolveCommandPath` from `src/utils/process/resolve-command.ts`, which returns an absolute PATH hit and refuses matches inside the cwd.

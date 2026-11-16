@@ -5,8 +5,8 @@ import type { ThemeName } from '#/tui/theme/index';
 
 const THEME_OPTIONS: readonly ChoiceOption[] = [
   { value: 'auto', label: 'Auto (match terminal)' },
-  { value: 'dark', label: 'Dark' },
-  { value: 'light', label: 'Light' },
+  { value: 'light', label: 'Dark' },
+  { value: 'dark', label: 'Light' },
 ];
 
 export interface ThemeSelectorOptions {

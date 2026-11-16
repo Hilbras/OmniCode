@@ -3409,7 +3409,7 @@ const pendingInteractionAtBySid = shallowReactive(new Map<string, ReadonlyMap<st
           // submission path — sees one consistent fact.
           const meta = entry.channel.snapshot.meta;
           let statusMetaChanged = false;
-          const planOn = meta.modes?.plan !== undefined;
+          const planOn = meta.modes?.plan != null;
           // Same shield as swarm below: while the user's plan-off profile
           // write is in flight, a stale meta must not flip the mode back on —
           // the next prompt would resubmit with plan mode still enabled.
@@ -3420,7 +3420,7 @@ const pendingInteractionAtBySid = shallowReactive(new Map<string, ReadonlyMap<st
             rawState.planModeBySession = { ...rawState.planModeBySession, [sid]: planOn };
             statusMetaChanged = true;
           }
-          const swarmOn = meta.modes?.swarm !== undefined;
+          const swarmOn = meta.modes?.swarm != null;
           // Shielded like the thinking fold below: while the user's own
           // profile write is in flight, a stale meta (built before the write
           // landed) must not flip the optimistic toggle back — the next

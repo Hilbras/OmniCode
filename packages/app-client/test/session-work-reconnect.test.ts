@@ -47,7 +47,14 @@ beforeEach(() => {
   setOmnicodeClientDeps({ api: () => clientApiMock as unknown as OmnicodeWebApi, t: (key) => key });
 });
 
-afterEach(() => {
+afterEach(async () => {
+  // A session selection defers its sidecar reads onto an idle/0 ms task
+  // (`refreshSessionSidecars`), and that task is not cancelled. Let any queued
+  // callback run while the deps are still installed: otherwise it fires after
+  // this reset, `getOmnicodeWebApi()` throws "client deps not installed", and
+  // vitest reports an unhandled error — exiting 1 even though every test passed.
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  await new Promise((resolve) => setTimeout(resolve, 0));
   resetOmnicodeClientDeps();
 });
 
@@ -5725,7 +5732,10 @@ describe('useOmnicodeWebClient session work reconnect baseline', () => {
 
       // The meta flips to paused mid-read: the invalidated backfill settles
       // (its stale answer dropped) and a NEW read follows with the current
-      // status.
+      // status. Settle EVERY read in flight: `selectSession` may leave its own
+      // read pending, and resolving only the last-pushed resolver settled that
+      // one instead of the backfill, so the invalidated chain never settled and
+      // the follow-up read never fired.
       handlers!.onTranscriptOps?.(
         target.id,
         'main',
@@ -5733,7 +5743,9 @@ describe('useOmnicodeWebClient session work reconnect baseline', () => {
         3,
       );
       await new Promise((resolve) => setTimeout(resolve, 150));
-      resolvers[resolvers.length - 1]!({ status: 'active', objective: 'ship it', turns: 1 });
+      for (const settle of resolvers.splice(0)) {
+        settle({ status: 'active', objective: 'ship it', turns: 1 });
+      }
       await vi.waitFor(() =>
         expect((api.getSessionGoal as ReturnType<typeof vi.fn>).mock.calls.length).toBe(
           callsAfterActive + 1,
@@ -6829,15 +6841,24 @@ describe('useOmnicodeWebClient session work reconnect baseline', () => {
       expect(client.swarmMode.value).toBe(true);
 
       // The bounded retry re-reads (+2s) and acks: NOW a meta fold is just
-      // an ordinary fold again (the shield is down) — clearing plan folds
-      // the daemon fact back off.
+      // an ordinary fold again (the shield is down). `modes.swarm` has to
+      // actually CHANGE for the fold to run — the fold is driven by the
+      // snapshot's meta version, and a merge that clears an already-absent
+      // mode is a no-op — so frame the mode on first, then clear it.
       await vi.waitFor(() => expect(statusCalls).toBe(callsAtWrite + 2), { timeout: 4000 });
       await new Promise((resolve) => setTimeout(resolve, 100));
       handlers!.onTranscriptOps?.(
         target.id,
         'main',
-        [{ op: 'meta.merge', meta: { modes: { swarm: null } } }],
+        [{ op: 'meta.merge', meta: { modes: { swarm: {} } } }],
         3,
+      );
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      handlers!.onTranscriptOps?.(
+        target.id,
+        'main',
+        [{ op: 'meta.merge', meta: { modes: { swarm: null } } }],
+        4,
       );
       await vi.waitFor(() => expect(client.swarmMode.value).toBe(false));
     } finally {

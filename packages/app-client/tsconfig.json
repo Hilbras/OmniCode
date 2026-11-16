@@ -1,11 +1,14 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
-    "types": [],
-    // Match the consumers: both apps compile package source with
-    // noPropertyAccessFromIndexSignature off (same rationale as app-core).
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src"]
+  "include": [
+    "src",
+    "../vite-preset/src/icons.d.ts",
+    "../vite-preset/src/worker.d.ts",
+    "../app-core/src/env.d.ts",
+    "../app-composer/src/env.d.ts"
+  ]
 }

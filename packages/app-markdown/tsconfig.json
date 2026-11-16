@@ -1,7 +1,21 @@
 {
-  "extends": "../../tsconfig.base.json",
+  "extends": "../../tsconfig.json",
   "compilerOptions": {
-    "lib": ["ES2023", "DOM", "DOM.Iterable"]
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src"]
+  // There is no `test/` directory: the eight suites are co-located with their modules
+  // under `src/lib/`, so `include: ["src"]` type-checks them too — confirmed by
+  // planting an error in `src/lib/codeWrap.test.ts` and watching this script fail on it.
+  //
+  // The sibling declaration files are listed because this package's program compiles
+  // the `app-*` sources it imports, and those rely on declarations that live beside
+  // them rather than in an ambient package.
+  "include": [
+    "src",
+    "../vite-preset/src/icons.d.ts",
+    "../vite-preset/src/worker.d.ts",
+    "../app-core/src/env.d.ts",
+    "../app-composer/src/env.d.ts"
+  ]
 }

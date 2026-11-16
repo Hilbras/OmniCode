@@ -19,7 +19,7 @@ import {
 } from '#/tui/utils/markdown-options';
 
 const tempDirs: string[] = [];
-const originalOmnicodeCodeHome = process.env['OMNICODE_HOME'];
+const originalOmnicodeCodeHome = process.env['OMNICODE_V_HOME'];
 
 beforeEach(() => {
   vi.stubEnv('OMNICODE_TUI_FULL_SCREEN', '');
@@ -32,9 +32,9 @@ afterEach(async () => {
     await rm(dir, { recursive: true, force: true });
   }
   if (originalOmnicodeCodeHome === undefined) {
-    delete process.env['OMNICODE_HOME'];
+    delete process.env['OMNICODE_V_HOME'];
   } else {
-    process.env['OMNICODE_HOME'] = originalOmnicodeCodeHome;
+    process.env['OMNICODE_V_HOME'] = originalOmnicodeCodeHome;
   }
 });
 
@@ -220,7 +220,7 @@ async function writeTuiConfig(text: string): Promise<void> {
   );
   tempDirs.push(dir);
   await mkdir(dir, { recursive: true });
-  process.env['OMNICODE_HOME'] = dir;
+  process.env['OMNICODE_V_HOME'] = dir;
   await writeFile(join(dir, 'tui.toml'), text, 'utf-8');
 }
 

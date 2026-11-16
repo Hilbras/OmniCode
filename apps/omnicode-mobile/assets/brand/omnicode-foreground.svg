@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <linearGradient id="face" x1="0" y1="0" x2="0.4" y2="1"><stop offset="0" stop-color="#f2cb63"/><stop offset="1" stop-color="#d9a83a"/></linearGradient>
+    <mask id="eyes" maskUnits="userSpaceOnUse">
+      <rect width="1024" height="1024" fill="#fff"/>
+      <rect x="432.5" y="438.5" width="57" height="147" rx="28.5" fill="#000"/>
+      <rect x="534.5" y="438.5" width="57" height="147" rx="28.5" fill="#000"/>
+    </mask>
+  </defs>
+  <rect x="272" y="347" width="480" height="330" rx="99" fill="url(#face)" mask="url(#eyes)"/>
+</svg>

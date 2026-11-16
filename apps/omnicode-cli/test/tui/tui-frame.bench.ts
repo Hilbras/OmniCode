@@ -11,6 +11,10 @@
  *
  * Run:
  *   pnpm --filter @hilbras/omnicode exec vitest bench test/tui/tui-frame.bench.ts
+ *
+ * This file prints numbers; it does not fail. The failing gate on the same
+ * frame path is `test/tui/frame-latency-budget.test.ts` (per-line frame
+ * budget) — read both when investigating a frame-cost change.
  */
 
 import type { Component, Terminal } from '@hilbras/omnicode-tui';

@@ -17,7 +17,7 @@ let dir: string;
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'omnicode-banner-state-'));
-  process.env['OMNICODE_HOME'] = dir;
+  process.env['OMNICODE_V_HOME'] = dir;
 });
 
 afterEach(() => {

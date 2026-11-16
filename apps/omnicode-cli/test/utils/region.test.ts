@@ -12,8 +12,8 @@ let home: string;
 
 beforeEach(() => {
   home = mkdtempSync(join(tmpdir(), 'omnicode-region-test-'));
+  process.env['OMNICODE_V_HOME'] = home;
   process.env['OMNICODE_HOME'] = home;
-  delete process.env['OMNICODE_OAUTH_HOST'];
   delete process.env['OMNICODE_OAUTH_HOST'];
   delete process.env['OMNICODE_REGION_MARKER'];
   refreshOmnicodeRegion();

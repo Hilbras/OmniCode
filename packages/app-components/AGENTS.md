@@ -51,17 +51,35 @@ Non-goals:
 - Use `useOmnicodeI18n()`/`t()` rather than hard-coded user-facing English.
 - Async components should keep the existing import shape; do not eagerly import
   xterm, Rive, or Markdown workers from the barrel.
-- There is no `tsconfig.json` in this package. Consumers type-check the source
-  with their bundler resolution; do not invent a standalone NodeNext config.
+- `tsconfig.json` extends the **root** config — not a standalone NodeNext one; the
+  base's `NodeNext` resolution rejects this package's extensionless imports — and lists
+  the sibling declaration files it needs (`../vite-preset/src/{icons,worker}.d.ts`,
+  `../app-core/src/env.d.ts`, `../app-composer/src/env.d.ts`,
+  `../app-client/src/env.d.ts`, `../app-markdown/src/env.d.ts`) because its program
+  compiles the `app-*` sources it imports. `src/env.d.ts` declares the `?url` and `*.css`
+  module shapes the Rive, xterm, and Markdown assets rely on.
 
 ## Validation
 
-Only `test/openInTarget.test.ts` exists, and there is no package
-`vitest.config.ts` or `test` script, so the suite is not wired into the root
-Vitest projects. Running `vitest` here resolves the root config and fails.
-Treat component behavior as covered by the consuming app's tests and add a
-focused test when extracting new pure logic into `src/lib/` or `support.ts`.
+`test/openInTarget.test.ts` (7 tests) is wired into the root Vitest graph through
+this package's `vitest.config.ts` (project `app-components`, `environment: 'node'`):
 
-Until test wiring exists, validate by type-checking and building the consuming
-app after the component is imported there. Do not report this package's test
-script as green; it has none.
+```bash
+pnpm --filter @hilbras/app-components test
+```
+
+That suite installs a fake `localStorage` for the duration of each test, because
+the node environment has none — keep that pattern for storage-touching logic
+rather than reaching for a DOM environment. Component behavior is otherwise
+covered by the consuming app's tests; add a focused test when extracting new pure
+logic into `src/lib/` or `support.ts`.
+
+Type-check is wired and green:
+
+```bash
+pnpm --filter @hilbras/app-components typecheck
+```
+
+`vue-tsc` is a devDependency, so the `.vue` sources are checked rather than skipped by
+plain `tsc`; the first run reports **0 diagnostics**. Component behavior is still covered
+by the consuming app's tests — this only proves the source type-checks.

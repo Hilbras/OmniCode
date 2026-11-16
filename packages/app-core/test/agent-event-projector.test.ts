@@ -7,11 +7,20 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import type { AppEvent } from '../src/api/types';
 import type { Translator } from '../src/contracts';
 import { createAgentProjector, subagentProgressText } from '../src/api/daemon/agentEventProjector';
 import { classifyFrame } from '../src/api/daemon/frameClassifier';
 
 const t: Translator = (key) => key;
+
+/** The projected `taskCreated` event, or `undefined` when the fold emitted none.
+ *  Tests reach for `.task` on this rather than on `events[0]`, which is the whole
+ *  `AppEvent` union: `AppEvent` only carries `task` on its `taskCreated` member, so
+ *  indexing the union was a type error that no test type-check ever reported. */
+function taskCreatedOf(events: AppEvent[]): Extract<AppEvent, { type: 'taskCreated' }> | undefined {
+  return events.find((event) => event.type === 'taskCreated');
+}
 
 describe('subagentProgressText', () => {
   it('drops turn.step.started as noise', () => {
@@ -589,7 +598,7 @@ describe('background subagent task registration', () => {
       's1',
     );
 
-    expect(events[0]?.task).toMatchObject({
+    expect(taskCreatedOf(events)?.task).toMatchObject({
       id: 'agent-1',
       description: 'Explore repo',
     });
@@ -671,7 +680,7 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.backgroundTaskId).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.backgroundTaskId).toBeUndefined();
   });
 
   it('stamps working on a first registration that shares the spawned binding', () => {
@@ -783,7 +792,7 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.backgroundTaskId).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.backgroundTaskId).toBeUndefined();
   });
 
   it('does not let an outdated spawned replay regress the current run’s binding', () => {
@@ -918,7 +927,7 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.startedAt).toBeDefined();
+    expect(taskCreatedOf(events)?.task.startedAt).toBeDefined();
   });
 
   it('keeps working through the registration when started already re-opened the run', () => {
@@ -945,7 +954,7 @@ describe('background subagent task registration', () => {
       },
       's1',
     );
-    expect(registration[0]?.task).toMatchObject({
+    expect(taskCreatedOf(registration)?.task).toMatchObject({
       id: 'agent-1',
       status: 'running',
       subagentPhase: 'working',
@@ -957,7 +966,7 @@ describe('background subagent task registration', () => {
       { subagentId: 'agent-1', description: 'Explore repo', taskId: 'task-10' },
       's1',
     );
-    expect(spawned[0]?.task).toMatchObject({
+    expect(taskCreatedOf(spawned)?.task).toMatchObject({
       id: 'agent-1',
       status: 'running',
       subagentPhase: 'working',
@@ -990,7 +999,7 @@ describe('background subagent task registration', () => {
       's1',
     );
 
-    expect(registration[0]?.task).toMatchObject({
+    expect(taskCreatedOf(registration)?.task).toMatchObject({
       id: 'agent-1',
       status: 'running',
       subagentPhase: 'working',
@@ -1155,7 +1164,7 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.startedAt).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.startedAt).toBeUndefined();
   });
 
   it('keeps the skeleton registration background mode when the new spawned omits it', () => {
@@ -1229,7 +1238,7 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.startedAt).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.startedAt).toBeUndefined();
   });
 
   it('keeps the started-confirmed phase and timing when the resume spawned lands', () => {
@@ -1260,8 +1269,8 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.startedAt).toBeDefined();
-    expect(events[0]?.task.backgroundTaskId).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.startedAt).toBeDefined();
+    expect(taskCreatedOf(events)?.task.backgroundTaskId).toBeUndefined();
   });
 
   it('clears the old binding and background mode when a started-first resume goes foreground', () => {
@@ -1291,7 +1300,7 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.backgroundTaskId).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.backgroundTaskId).toBeUndefined();
   });
 
   it('resets even when a fresh spawn lands while the meta still says running', () => {
@@ -1321,7 +1330,7 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.completedAt).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.completedAt).toBeUndefined();
   });
 
   it('clears the suspension reason when started returns the row to work', () => {
@@ -1350,7 +1359,7 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.suspendedReason).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.suspendedReason).toBeUndefined();
   });
 
   it('treats a taskless spawned over a settled row as a new run too', () => {
@@ -1407,9 +1416,9 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.completedAt).toBeUndefined();
-    expect(events[0]?.task.outputPreview).toBeUndefined();
-    expect(events[0]?.task.outputLines).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.completedAt).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.outputPreview).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.outputLines).toBeUndefined();
   });
 
   it('adopts the event background mode for a new run instead of inheriting the old one', () => {
@@ -1467,7 +1476,7 @@ describe('background subagent task registration', () => {
         }),
       },
     ]);
-    expect(events[0]?.task.completedAt).toBeUndefined();
+    expect(taskCreatedOf(events)?.task.completedAt).toBeUndefined();
   });
 
   it('stamps a fresh registration even when the projector meta still says running', () => {
@@ -1494,7 +1503,7 @@ describe('background subagent task registration', () => {
       's1',
     );
 
-    expect(registration[0]?.task).toMatchObject({
+    expect(taskCreatedOf(registration)?.task).toMatchObject({
       id: 'agent-1',
       status: 'running',
       backgroundTaskId: 'task-10',
@@ -1527,7 +1536,7 @@ describe('background subagent task registration', () => {
       's1',
     );
 
-    expect(registration[0]?.task).toMatchObject({
+    expect(taskCreatedOf(registration)?.task).toMatchObject({
       id: 'agent-1',
       status: 'running',
       backgroundTaskId: 'task-10',
@@ -1563,7 +1572,7 @@ describe('background subagent task registration', () => {
       },
       's1',
     );
-    expect(registration[0]?.task).toMatchObject({
+    expect(taskCreatedOf(registration)?.task).toMatchObject({
       id: 'agent-1',
       status: 'running',
       subagentPhase: 'working',
@@ -1571,15 +1580,15 @@ describe('background subagent task registration', () => {
       createdAt: '2026-01-01T00:00:00.000Z',
       startedAt: '2026-01-01T00:00:00.000Z',
     });
-    expect(registration[0]?.task.completedAt).toBeUndefined();
-    expect(registration[0]?.task.outputPreview).toBeUndefined();
+    expect(taskCreatedOf(registration)?.task.completedAt).toBeUndefined();
+    expect(taskCreatedOf(registration)?.task.outputPreview).toBeUndefined();
 
     const spawned = projector.project(
       'subagent.spawned',
       { subagentId: 'agent-1', description: 'Explore repo', taskId: 'task-10' },
       's1',
     );
-    expect(spawned[0]?.task).toMatchObject({
+    expect(taskCreatedOf(spawned)?.task).toMatchObject({
       id: 'agent-1',
       status: 'running',
       backgroundTaskId: 'task-10',
@@ -1685,7 +1694,7 @@ describe('background subagent task registration', () => {
         }),
       }),
     );
-    expect(events[0]?.task).not.toHaveProperty('agentId');
+    expect(taskCreatedOf(events)?.task).not.toHaveProperty('agentId');
   });
 
   it('keeps projecting process tasks as bash rows', () => {

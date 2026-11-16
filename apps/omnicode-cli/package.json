@@ -38,19 +38,20 @@
     "#/tui/commands": "./src/tui/commands/index.ts",
     "#/cli/sub/web": "./src/cli/sub/web/index.ts",
     "#/cli/sub/web/*": "./src/cli/sub/web/*.ts",
-    "#/generated/vis-web-asset": [
-      "./src/generated/vis-web-asset.ts",
-      "./src/generated/vis-web-asset.d.ts"
-    ],
+    "#/generated/vis-web-asset": {
+      "types": "./src/generated/vis-web-asset.d.ts",
+      "default": "./src/generated/vis-web-asset.ts"
+    },
     "#/*": "./src/*.ts"
   },
   "publishConfig": {
     "access": "public",
-    "provenance": false
+    "provenance": true
   },
   "scripts": {
     "build": "tsdown && tsdown --config tsdown.dist-worker.config.ts && node scripts/copy-native-assets.mjs && node scripts/check-web-assets.mjs",
     "prebuild": "node scripts/build-vis-asset.mjs",
+    "gen:vis-asset": "node scripts/build-vis-asset.mjs",
     "catalog:update": "node scripts/update-catalog.mjs --out dist/built-in-catalog.json",
     "smoke": "node scripts/smoke.mjs",
     "build:native:js": "node scripts/native/01-bundle.mjs",
@@ -72,9 +73,9 @@
     "dev:prod": "node dist/main.mjs",
     "clean": "rm -rf dist",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "pnpm -w run build:packages && vitest run",
-    "e2e": "pnpm -w run build:packages && OMNICODE_E2E=1 vitest run test/e2e",
-    "e2e:real": "pnpm -w run build:packages && OMNICODE_E2E_REAL=1 vitest run test/e2e/real-llm-smoke.e2e.test.ts"
+    "test": "pnpm -w run build:cli && vitest run",
+    "e2e": "pnpm -w run build:cli && OMNICODE_E2E=1 vitest run test/e2e",
+    "e2e:real": "pnpm -w run build:cli && OMNICODE_E2E_REAL=1 vitest run test/e2e/real-llm-smoke.e2e.test.ts"
   },
   "optionalDependencies": {
     "@mariozechner/clipboard": "^0.3.9",

@@ -6,7 +6,7 @@ import { dispatchInput } from '#/tui/commands/index';
 function makeHost(options: { streaming?: boolean } = {}) {
   const skillsBrowserController = { show: vi.fn(async () => {}) };
   const subagentsBrowserController = { show: vi.fn(async () => {}) };
-  const connectorsBrowserController = { show: vi.fn(async () => {}) };
+  const connectorsController = { show: vi.fn(async () => {}) };
   const host = {
     state: {
       appState: {
@@ -26,9 +26,9 @@ function makeHost(options: { streaming?: boolean } = {}) {
     pluginCommandMap: new Map<string, string>(),
     skillsBrowserController,
     subagentsBrowserController,
-    connectorsBrowserController,
+    connectorsController,
   } as unknown as SlashCommandHost;
-  return { host, skillsBrowserController, subagentsBrowserController, connectorsBrowserController };
+  return { host, skillsBrowserController, subagentsBrowserController, connectorsController };
 }
 
 async function flush(): Promise<void> {
@@ -83,33 +83,33 @@ describe('catalog browser slash commands', () => {
   });
 
   it('routes /connectors to the connectors browser', async () => {
-    const { host, connectorsBrowserController } = makeHost();
+    const { host, connectorsController } = makeHost();
 
     dispatchInput(host, '/connectors');
     await flush();
 
-    expect(connectorsBrowserController.show).toHaveBeenCalledTimes(1);
+    expect(connectorsController.show).toHaveBeenCalledTimes(1);
   });
 
   it('never creates a session for the connectors browser', async () => {
-    const { host, connectorsBrowserController } = makeHost();
+    const { host, connectorsController } = makeHost();
 
     dispatchInput(host, '/connectors');
     await flush();
 
-    expect(connectorsBrowserController.show).toHaveBeenCalledTimes(1);
+    expect(connectorsController.show).toHaveBeenCalledTimes(1);
     expect(host.ensureSession).not.toHaveBeenCalled();
     expect(host.sendNormalUserInput).not.toHaveBeenCalled();
     expect(host.showError).not.toHaveBeenCalled();
   });
 
   it('keeps the connectors browser available while a turn is running', async () => {
-    const { host, connectorsBrowserController } = makeHost({ streaming: true });
+    const { host, connectorsController } = makeHost({ streaming: true });
 
     dispatchInput(host, '/connectors');
     await flush();
 
-    expect(connectorsBrowserController.show).toHaveBeenCalledTimes(1);
+    expect(connectorsController.show).toHaveBeenCalledTimes(1);
     expect(host.showError).not.toHaveBeenCalled();
   });
 });

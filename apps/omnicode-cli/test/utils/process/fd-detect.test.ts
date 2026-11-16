@@ -59,7 +59,7 @@ describe('getFdAssetName', () => {
 describe('detectFdPath', () => {
   it('returns the absolute resolved path for a system fd binary', () => {
     tempHome = mkdtempSync(join(tmpdir(), 'omnicode-fd-home-'));
-    process.env['OMNICODE_HOME'] = tempHome;
+    process.env['OMNICODE_V_HOME'] = tempHome;
     mocks.resolveCommandPath.mockImplementation((name: string) =>
       name === 'fd' ? '/usr/local/bin/fd' : undefined,
     );
@@ -71,9 +71,9 @@ describe('detectFdPath', () => {
     });
   });
 
-  it('prefers the managed fd binary under OMNICODE_HOME', () => {
+  it('prefers the managed fd binary under OMNICODE_V_HOME', () => {
     tempHome = mkdtempSync(join(tmpdir(), 'omnicode-fd-home-'));
-    process.env['OMNICODE_HOME'] = tempHome;
+    process.env['OMNICODE_V_HOME'] = tempHome;
     mkdirSync(getBinDir(), { recursive: true });
 
     const binaryPath = join(getBinDir(), process.platform === 'win32' ? 'fd.exe' : 'fd');

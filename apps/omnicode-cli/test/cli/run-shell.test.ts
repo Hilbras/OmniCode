@@ -967,16 +967,16 @@ describe('runShell', () => {
     expect(mocks.tuiStart).not.toHaveBeenCalled();
   });
 
-  it('refuses migration when OMNICODE_SHARE_DIR resolves to the Omnicode home', async () => {
+  it('refuses migration when OMNICODE_V_SHARE_DIR resolves to the Omnicode home', async () => {
     const stderrSpy = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     try {
-      await withEnv({ OMNICODE_SHARE_DIR: '/tmp/omnicode-test-home' }, async () => {
+      await withEnv({ OMNICODE_V_SHARE_DIR: '/tmp/omnicode-test-home' }, async () => {
         await runShell(minimalCliOptions, '1.2.3-test', { migrateOnly: true });
       });
       expect(mocks.detectPendingMigration).not.toHaveBeenCalled();
       expect(mocks.harnessClose).toHaveBeenCalledOnce();
       expect(mocks.tuiStart).not.toHaveBeenCalled();
-      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('OMNICODE_SHARE_DIR'));
+      expect(stderrSpy).toHaveBeenCalledWith(expect.stringContaining('OMNICODE_V_SHARE_DIR'));
     } finally {
       stderrSpy.mockRestore();
     }

@@ -15,7 +15,7 @@ describe('cli version helpers', () => {
     const pkgPath = getHostPackageJsonPath();
     const pkg = JSON.parse(readFileSync(pkgPath, 'utf8')) as { version: string };
 
-    expect(pkgPath.endsWith(join('apps', 'omnicode', 'package.json'))).toBe(true);
+    expect(pkgPath.endsWith(join('apps', 'omnicode-cli', 'package.json'))).toBe(true);
     expect(getHostPackageRoot()).toBe(dirname(pkgPath));
     expect(getVersion()).toBe(pkg.version);
   });

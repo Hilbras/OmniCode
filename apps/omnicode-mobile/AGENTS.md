@@ -1,198 +1,85 @@
-# omnicode-mobile — Agent Guide
+# OmniCode Mobile — Agent Guide
 
-Flutter remote-control client for the Omnicode daemon. Read `README.md` in this
-folder before changing anything: it carries the setup steps, the unverified
-dependency list, and the transcribed server contract.
+Expo SDK 58 / React Native 0.88 / React 19.3 app. On-device AI agent surface:
+BYOK chat, tool calls, approval prompts. No OmniCode backend — the phone talks
+straight to provider APIs (wiring lands after the UI phase; the agent loop is
+currently a local mock in `src/lib/agent.ts`). `README.md` states plainly which
+parts are real and which are mocked, and the About block in
+`src/app/settings.tsx` labels the app `ON-DEVICE AGENT · PREVIEW` so the same is
+true inside the app; keep those three in step when the loop becomes real.
 
-## Role
+Part of the pnpm workspace (`@omnicode/mobile`). Install from the repo root
+with `pnpm install`; never run `npm install` inside this directory.
 
-Thin client. It talks to a running `packages/server` daemon over REST and
-WebSocket and renders what the daemon reports.
+## Design system — Hilbras, not generic
 
-Non-goals:
+Visual language is copied from the Hilbras company site
+(`/home/gin/work/Hilbras/Hilbras`, `src/app/globals.css`). Do not invent a
+parallel palette.
 
-- never runs the agent, a model call, a local PTY, or SSH
-- never owns session state; the daemon is the only source of truth
-- is not part of the TypeScript build graph
+- Tokens live in `src/theme/tokens.ts`: gold-on-warm-neutral, dark default,
+  light variant, exact hex values from the site.
+- Type: Geist + Geist Mono via `@expo-google-fonts`. Micro-labels are mono,
+  uppercase, wide tracking; headings tight negative tracking.
+- Icons: `lucide-react-native`, strokeWidth 1.4–1.6.
+- Brand marks: `src/components/BrandMark.tsx` ports the OmniCode face and the
+  Hilbras hexagon-H from `Hilbras/public/logos/omnicode.svg` and
+  `public/favicon.svg`. Raster assets in `assets/` are generated from
+  `assets/brand/*.svg` with `sharp-cli`; regenerate, never hand-edit.
+- Signature elements: aurora gold glow, particle constellation, hairline gold
+  dividers, gradient gold buttons with glow, status pills, 16px card radii.
 
-## Hard rules
+## Structure
 
-### 1. Write boundary
+```text
+src/app/          expo-router screens (_layout, index chat, settings)
+src/components/   UI components (no routes here)
+src/hooks/        useAgentRunner — drives the mock agent into the store
+src/lib/          pure logic: types, state reducer, agent planner, providers,
+                  seed data, secure key storage, persistence
+src/theme/        tokens, typography, ThemeProvider
+test/             vitest unit tests for pure logic (mirrors src/lib)
+```
 
-Everything this app changes lives under `apps/omnicode-mobile/`.
-
-| Do not | Instead |
-|---|---|
-| import monorepo TS code | transcribe the contract into `lib/src/ws/ws_protocol.dart` and `lib/src/api/` |
-| edit `pnpm-workspace.yaml`, root `tsconfig.json`, `vitest.config.ts`, `turbo.json`, root `package.json` | note the need in the change report |
-| add a `package.json` here | keep the folder invisible to pnpm and Turbo |
-| run `pnpm install` / `pnpm add` for this app | use `flutter pub get` inside this folder |
-| hand-write `android/`, `ios/`, `linux/`, `web/` | run `flutter create . --platforms=…` |
-
-The missing `package.json` is deliberate. `pnpm-workspace.yaml` globs `apps/*`,
-but a directory without `package.json` is not a workspace package, so this app
-does not affect `pnpm install`, Turbo, Vitest, or `pnpm check:workspace`.
-
-### 2. Protocol constants have one home
-
-Nothing else defines a wire string.
-
-| Constant | Owner |
-|---|---|
-| `WS_PROTOCOL_VERSION` (`WsProtocol.protocolVersion = 2`) | `lib/src/ws/ws_protocol.dart` |
-| `omnicode.bearer.` subprotocol prefix | `lib/src/ws/ws_protocol.dart` |
-| every frame `type` string | `lib/src/ws/ws_protocol.dart` (`WsMessageType`) |
-| `/api/v1`, `/api/v1/healthz`, `/api/v1/sessions`, `/api/v1/ws` | `lib/src/config/server_config.dart` (`ApiPaths`) |
-| success/unauthorized/client-error codes | `lib/src/api/envelope.dart` (`ApiCodes`) |
-
-Server error-code numbers (`SESSION_NOT_FOUND`, `TERMINAL_NOT_FOUND`,
-`VALIDATION_FAILED`, `FS_PATH_ESCAPES_SESSION`) are never hardcoded. Surface
-`code` and `msg` from the response.
-
-### 3. Errors are one type and are never silent
-
-`ApiFailure` (`lib/src/api/envelope.dart`) carries `code`, `message`, `fatal`,
-`requestId`, `details`, `httpStatus`, and a `FailureSource` of `rest`, `ws`, or
-`client`. REST failures, server `error` frames, decode failures, transport drops,
-and ack rejections all become `ApiFailure` and reach the UI through
-`AppState`. A `fatal` error stops auto-reconnect and must stay visible.
-
-### 4. Terminal I/O is WebSocket only
-
-There is no REST read or write endpoint for a terminal. Do not add one.
-`terminal_input` carries a raw JSON string: control characters and UTF-8 pass
-through, and nothing is base64-encoded.
-
-### 5. Comments
-
-Comment only non-obvious constraints: protocol ones (the ping/pong direction,
-the `since_seq` resume rule, duplicate-seq dropping) and, in `lib/src/theme/`,
-the CSS rule a literal value was derived from. No narration, no doc comments on
-every member.
-
-### 6. Design tokens have one home
-
-`lib/src/theme/omni_palette.dart` transcribes
-`/home/gin/work/Hilbras/OmniCloud/apps/web/src/index.css` — "gold on warm paper,
-Geist + Geist Mono". **When a token changes there, change it here in the same
-change.** Drift is silent: both apps still build and still look plausible, and
-only a side-by-side comparison shows the difference.
-
-| Rule | Detail |
-|---|---|
-| Never hardcode a colour in a screen or widget | Read it from `omniPaletteOf(context)`, or from `OmniTerminalTokens` inside the terminal viewport |
-| Never invent a shade | Derive it from an existing token with an explicit alpha and name it in the palette |
-| Never blend at runtime | Flutter has no `color-mix`; mixed values are precomputed literals in the palette |
-| The terminal viewport is dark in both themes | `terminal_screen.dart` paints it from `OmniTerminalTokens`; only the chrome follows `themeMode` |
-| No `fonts:` block without the binaries | A declared-but-missing family breaks the build. Family names live in `OmniFont`; the block to add is in `README.md` |
-
-New components go in `lib/src/theme/omni_widgets.dart` and take their metrics
-from `OmniRadius`, `OmniType`, and `OmniMotion`. Any motion must go through
-`OmniMotion.interactionFor` / `entranceFor`, which honour
-`MediaQuery.disableAnimations`.
-
-## Contract source of truth
-
-The daemon owns the contract. These files are authoritative; this client tracks
-them.
-
-| Server file | Defines |
-|---|---|
-| `packages/server/src/protocol/ws-control.ts` | WS control frames, acks, `server_hello`, `ping`, `resync_required`, `error`, protocol version |
-| `packages/server/src/protocol/envelope.ts` | REST envelope, `code == 0` success, `request_id` |
-| `packages/server/src/middleware/auth.ts` | Bearer auth, the bypass list, `40101 Unauthorized`, rate-limit bans |
-| `packages/server/src/transport/ws/bearerProtocol.ts` | `omnicode.bearer.<token>` subprotocol, Host and Origin allowlists on upgrade |
-| `packages/server/src/routes/terminals.ts` | terminal REST routes and terminal WS message handling |
-| `packages/server/src/routes/sessions.ts` | session list/detail routes and pagination |
-
-**When any of those changes, update this client's protocol constants and frame
-models in the same change.** A drifted constant is a silent failure: the socket
-opens, the handshake is rejected, and the UI only sees a reconnect loop. Check
-`WsProtocol.protocolVersion` against `ws-control.ts` first.
-
-## Layout
-
-| Path | Role |
-|---|---|
-| `lib/main.dart` | Entry point, provider wiring, root screen gate. Keep it small. |
-| `lib/src/config/server_config.dart` | `ServerConfig`, `ApiPaths`, URL and WS-URL derivation |
-| `lib/src/config/settings_store.dart` | Base URL in `shared_preferences`, token in `flutter_secure_storage` |
-| `lib/src/api/envelope.dart` | Envelope decode, `ApiFailure`, `ApiCodes`, defensive JSON readers |
-| `lib/src/api/api_client.dart` | REST transport and error mapping |
-| `lib/src/api/sessions_api.dart` | Session and terminal calls, `SessionRef`, `SessionPage`, `TerminalInfo` |
-| `lib/src/ws/ws_protocol.dart` | Constants, frame models, encode/decode, payload builders |
-| `lib/src/ws/ws_client.dart` | Socket lifecycle, handshake, ping/pong, ack correlation, reconnect, streams |
-| `lib/src/ws/terminal_channel.dart` | Per-terminal attach/detach/input/resize/close and `since_seq` tracking |
-| `lib/src/terminal/terminal_controller.dart` | Binds a channel to an `xterm` `Terminal`, derives `cols`/`rows` |
-| `lib/src/state/app_state.dart` | `ChangeNotifier` for config, connection state, and the session list |
-| `lib/src/theme/omni_palette.dart` | Light and dark design tokens, transcribed from OmniCloud `apps/web/src/index.css`; `OmniTerminalTokens` for the always-dark terminal |
-| `lib/src/theme/omni_theme.dart` | `OmniTheme.lightTheme` / `darkTheme`, `OmniRadius`, `OmniType`, `OmniMotion`, `OmniFont`, `omniPaletteOf`, `OmniThemeController` |
-| `lib/src/theme/omni_widgets.dart` | The component library the screens are built from |
-| `lib/src/ui/connect_screen.dart` | Base URL and token entry, `healthz` probe, brand mark |
-| `lib/src/ui/sessions_screen.dart` | Session list, terminals of one session, terminal creation |
-| `lib/src/ui/terminal_screen.dart` | `xterm` view, resize on layout change, reconnect and close actions |
-
-## Where new work goes
-
-| Change | Home |
-|---|---|
-| New REST call | `lib/src/api/sessions_api.dart` (or a sibling `*_api.dart`) + path in `ApiPaths` |
-| New WS frame | model and constants in `ws_protocol.dart`, dispatch in `ws_client.dart` |
-| New per-session channel (messages, approvals, questions) | a sibling of `terminal_channel.dart` in `lib/src/ws/` |
-| New screen state | `lib/src/state/app_state.dart`; keep widgets free of protocol logic |
-| New screen | `lib/src/ui/`, reached from `sessions_screen.dart` or `main.dart` |
-| New design token or reusable component | `lib/src/theme/`; keep `omni_palette.dart` in sync with OmniCloud `apps/web/src/index.css` |
-| Theme mode switch or persistence | `OmniThemeController` in `lib/src/theme/omni_theme.dart`, rendered by `OmniThemeToggle` |
+State: single reducer in `src/lib/state.ts`, context in `src/lib/store.tsx`,
+persisted to AsyncStorage (`omnicode-state-v1`). Theme is owned solely by
+`ThemeProvider` (`hilbras-theme` key) — do not duplicate it in settings state.
+API keys: `expo-secure-store` on native, AsyncStorage fallback on web, via
+`src/lib/secure.ts`.
 
 ## Commands
 
-All of these run inside this folder and need a Flutter toolchain, which is not
-installed on every machine that touches this repo.
-
 ```bash
-flutter create . --platforms=android   # once, to generate platform dirs
-flutter pub get
-flutter analyze
-flutter test
-flutter run
-flutter build apk
+pnpm --filter @omnicode/mobile dev        # expo start
+pnpm --filter @omnicode/mobile typecheck
+pnpm --filter @omnicode/mobile test
+pnpm --filter @omnicode/mobile lint
+pnpm --filter @omnicode/mobile build      # expo export --platform web
 ```
 
-Report the real result. If no toolchain is available, say so instead of claiming
-the code is verified.
+Metro is configured for the pnpm monorepo (`metro.config.js`: watchFolders +
+nodeModulesPaths + disableHierarchicalLookup). Do not remove that config.
 
-## Known traps
+## Expo has changed — do not trust your training data
 
-- `xterm` resolves at 4.0.0, which moved `onOutput` from `TerminalView` to
-  `Terminal`. `OmniTerminalController` assigns `terminal.onOutput` in its
-  constructor body so an injected `terminalOverride` is wired the same way.
-- `xterm` also exports its own `TerminalController`. The app's class is
-  `OmniTerminalController`; do not rename it back or the import goes ambiguous.
-- `web_socket_channel` resolves at 3.0.3, where `WebSocketChannel.connect` takes
-  no `headers`. `ws_client.dart` therefore connects with
-  `IOWebSocketChannel.connect` from `package:web_socket_channel/io.dart`, which
-  requires `dart:io`. A web target would have to authenticate with the
-  `omnicode.bearer.<token>` subprotocol alone.
-- `package:flutter/material.dart` is deprecated from Flutter 3.47 on, so this
-  app imports `package:material_ui/material_ui.dart`. `xterm` still uses the
-  legacy library, but only for `Colors` and widget-level types, so no
-  `MaterialUiCompatibilityBridge` is needed around `TerminalView`.
-- `OmniTerminalTokens.cursorAccent` has nothing to bind to: `xterm` 4.0.0's
-  `TerminalTheme` has no cursor-accent field. Every other terminal token reaches
-  the grid through `OmniTerminalTokens.xtermTheme`.
-- Ack success is assumed to be `code == 0`, mirroring the REST envelope. If the
-  daemon disagrees, `WsAck.isSuccess` is the one place to fix.
-- Session summaries and session-event payloads are intentionally loosely typed.
-  Do not promote a guessed field to a required one without reading the server
-  route that produces it.
-- Two runs can hit different daemons if the saved base URL is stale; the connect
-  screen shows the stored URL and can forget it.
-- `OmniTheme` also installs fallback `ButtonStyle`s for the Material buttons, but
-  `ButtonStyle` cannot carry a `boxShadow`. A raw `ElevatedButton` therefore
-  never looks like `GoldButton`; use the components in `omni_widgets.dart`.
-- `OmniCard` fades in on first build. Inside a `ListView` that means it
-  re-animates every time a row scrolls back into view, so list rows pass
-  `animateEntrance: false`.
-- The terminal viewport ignores `themeMode` on purpose. Reading
-  `omniPaletteOf(context)` inside it still returns the app palette, because the
-  dark `Theme` wrapper sits below the app bar; use `OmniTerminalTokens` there.
+Expo ships breaking changes every SDK release. Before writing code that
+touches an Expo, EAS, or React Native API:
+
+1. Read the major version of `expo` in `package.json`.
+2. Fetch the matching versioned docs: `https://docs.expo.dev/versions/v<major>.0.0/`
+3. Otherwise fetch https://docs.expo.dev/llms.txt and follow its links.
+
+Use `npx expo install <package>` (never raw npm/pnpm add) so versions stay
+SDK-compatible. Run lint and typecheck before declaring a task done.
+
+## Rules
+
+- Expo Router for navigation; routes only in `src/app/`.
+- `ios/` and `android/` are generated (CNG). Never create or edit them by
+  hand; configure native behavior in `app.json` and config plugins.
+- Expo Go only bundles its own native modules. Added native code needs a
+  development build (`npx expo run:ios|android` or EAS).
+- Keep the agent planner and reducer pure (no React Native imports) so
+  vitest covers them in node.
+- Approval-gated tools must stay approval-gated when the real engine lands.
+- Memory writes stay `unverified`; keys never appear in logs or telemetry.

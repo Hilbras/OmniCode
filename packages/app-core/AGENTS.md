@@ -57,17 +57,36 @@ Non-goals:
 
 ## Validation
 
-Tests live in `test/` and cover the projections and daemon client heavily, but
-the package currently has no `vitest.config.ts` or `test` script, so the root
-Vitest project list does not run them. Running `vitest` from this directory
-resolves the root config and fails on relative project paths. Add a package
-Vitest config and a root project entry before claiming this suite is wired.
+Tests live in `test/` and cover the projections and daemon client heavily. The
+package is wired into the root Vitest graph through its own `vitest.config.ts`
+(project `app-core`, `test/**/*.test.ts`, `environment: 'node'`):
+
+```bash
+pnpm --filter @hilbras/app-core test
+```
+
+63 files, 831 tests as of the wiring.
 
 Type-check with the bundler resolution the consumers use:
 
 ```bash
-pnpm --filter @hilbras/app-core exec tsc --noEmit -p tsconfig.json --module ESNext --moduleResolution bundler
+pnpm --filter @hilbras/app-core typecheck
 ```
 
-The only expected error today is the missing `__OMNICODE_WEB_DESKTOP__` global
-declaration; it is supplied by the consuming app build.
+`tsconfig.json` extends the **root** `tsconfig.json` for that resolution
+(`tsconfig.base.json`'s `NodeNext` rejects this package's extensionless imports)
+and includes `src` and `test`, so the suite is type-checked as well. The 34 errors
+that used to keep `test/` out were all test-side: 25 reached into `events[0]?.task`
+on the whole `AppEvent` union instead of narrowing to its `taskCreated` member (now
+through a `taskCreatedOf` helper beside the imports), four assigned to the readonly
+`items` of an `AgentTranscriptSnapshot` (now built in one spread expression), two
+indexed `fetchMock.mock.calls[0][1]` without a guard, and three fixtures were stale —
+`AppSession.status` is `busy`, `AppTask.busy` is `status` (whose union includes
+`'running'`), and the `Intl.Segmenter` restore assignment needed the suppression its
+first assignment already carried. What the tests assert did not change: 63 files and
+831 tests still pass, and the narrowed sites resolve to the same `<taskCreated>`
+event in every case — the `startedAt`/`backgroundTaskId` assertions would fail
+otherwise.
+
+`src/env.d.ts` declares `__OMNICODE_WEB_DESKTOP__`, the Vite `define` the
+consuming app injects; without it the package could not be type-checked at all.

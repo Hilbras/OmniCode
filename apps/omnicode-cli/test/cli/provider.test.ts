@@ -1013,7 +1013,7 @@ describe('omnicode provider add-builtin', () => {
   });
 
   it('documents every vendor in the README table', async () => {
-    const readme = await readFile(new URL('../../../../README.md', import.meta.url), 'utf8');
+    const readme = await readFile(new URL('../../README.md', import.meta.url), 'utf8');
 
     // The README carried a stale seven-vendor table for a while, so the table in
     // code is the source of truth and the docs are pinned to it.

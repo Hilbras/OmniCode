@@ -2704,7 +2704,7 @@ describe('OmnicodeTUI startup', () => {
   it('writes display state after rendering a once banner', async () => {
     const originalEnv = { ...process.env };
     const dir = mkdtempSync(join(tmpdir(), 'omnicode-startup-banner-'));
-    process.env['OMNICODE_HOME'] = dir;
+    process.env['OMNICODE_V_HOME'] = dir;
 
     try {
       const banner = {
@@ -2760,7 +2760,7 @@ describe('OmnicodeTUI startup', () => {
   it('does not write display state for an always banner', async () => {
     const originalEnv = { ...process.env };
     const dir = mkdtempSync(join(tmpdir(), 'omnicode-startup-banner-'));
-    process.env['OMNICODE_HOME'] = dir;
+    process.env['OMNICODE_V_HOME'] = dir;
 
     try {
       const banner = {

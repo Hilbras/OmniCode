@@ -56,7 +56,10 @@ modules; the web app talks HTTP only. This deviates from the root rule that
 - Root `build` runs both, then `copy-web-dist.mjs`; `start` runs the built server,
   which serves `dist/public` with SPA fallback.
 - `VIS_SINGLEFILE=1` builds `web/dist-single/index.html` for embedding; normal
-  `dist/` is unaffected.
+  `dist/` is unaffected. That output is an untracked intermediate: nothing in this
+  repo reads it except `apps/omnicode-cli/scripts/build-vis-asset.mjs`, which builds
+  it and immediately encodes it into the CLI's `src/generated/vis-web-asset.ts`. That
+  encoded asset is what is committed and what `pnpm check:generated` gates.
 - `VIS_AUTH_TOKEN` is required outside loopback; the URL token is scrubbed after
   storage. Runtime knobs: `OMNICODE_HOME`, `PORT`, `HOST`/`VIS_HOST`, `WEB_PORT`
   (see `server/src/config.ts` before adding another).

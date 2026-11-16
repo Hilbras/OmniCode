@@ -34,7 +34,7 @@ export interface HomeOutcome {
 
 /**
  * Point the CLI at its data home. `OMNICODE_V_HOME` always wins; otherwise the
- * default is `~/.omnicode-v-v`, and on the very first run the user data from the
+ * default is `~/.omnicode-v`, and on the very first run the user data from the
  * newest legacy home is copied in so existing sessions and config follow.
  * Legacy homes are never modified or removed.
  */

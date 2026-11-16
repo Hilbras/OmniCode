@@ -63,11 +63,27 @@ cd packages/app-client
 ../../node_modules/.bin/vitest run --config vitest.config.ts test/task-poller.test.ts
 ```
 
-Vitest covers 50+ files under `test/`. Tests that import the icon registry or
-composer mention icons currently fail with `Icon ... not found` for
-`~icons/tabler/*`, `~icons/ri/*`, and some `~icons/omnicode/*` entries; that is
-an icon-resolution/setup problem in this checkout, not a passing baseline.
+The suite is wired and green: **53 files, 1036 tests**, runnable through the package
+script (which the root Turbo graph uses too):
 
-Type-checking the package directly also needs the consumer Vite virtual-module
-types, so a clean `vue-tsc` run is not available in isolation. Validate changes
-through the consuming app once this package is wired there.
+```bash
+pnpm --filter @hilbras/app-client test
+pnpm --filter @hilbras/app-client typecheck
+```
+
+`testTimeout` is 20 s in `vitest.config.ts`: `test/apply-event-slices.test.ts` needs
+~9 s here (transcript baseline plus a batcher flush), so the Vitest default of 5 s
+reported a slow test as a failure.
+
+Two things in this package's runtime exist purely for tests and HMR teardown:
+`hasOmnicodeClientDeps()` and `clientDepsGeneration()`. A session selection defers its
+sidecar reads onto an idle/0 ms task, and that task can outlive the client that queued
+it — a test reset, or HMR dropping the module graph, leaves the callback with stale
+bindings. The deferred callback checks both before doing anything, which is why the
+suite no longer reports unhandled errors from it.
+
+`vue-tsc` is wired here (0 diagnostics): `tsconfig.json` extends the root config and
+lists the sibling declaration files its program compiles (`vite-preset` icons + worker,
+`app-core`/`app-composer` env), and `src/env.d.ts` declares the two build-tool facts this
+package reads — `import.meta.hot` for the HMR self-accept and `*.css` for the side-effect
+stylesheet imports in `lib/mediaPreview.ts`.

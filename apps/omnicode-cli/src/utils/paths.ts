@@ -35,7 +35,7 @@ import {
 /**
  * Return the root data directory for Omnicode.
  *
- * Priority: `OMNICODE_V_HOME` env var > `~/.omnicode-v-v`.
+ * Priority: `OMNICODE_V_HOME` env var > `~/.omnicode-v`.
  */
 export function getDataDir(): string {
   const envDir = process.env[OMNICODE_HOME_ENV];

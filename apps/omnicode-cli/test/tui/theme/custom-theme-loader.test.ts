@@ -14,20 +14,20 @@ import {
 import { darkColors, lightColors } from '#/tui/theme';
 
 let home: string;
-const originalHome = process.env['OMNICODE_HOME'];
+const originalHome = process.env['OMNICODE_V_HOME'];
 
 beforeEach(() => {
   home = join(tmpdir(), `omnicode-themes-${Date.now()}-${Math.random().toString(36).slice(2)}`);
   mkdirSync(join(home, 'themes'), { recursive: true });
-  process.env['OMNICODE_HOME'] = home;
+  process.env['OMNICODE_V_HOME'] = home;
 });
 
 afterEach(() => {
   rmSync(home, { recursive: true, force: true });
   if (originalHome === undefined) {
-    delete process.env['OMNICODE_HOME'];
+    delete process.env['OMNICODE_V_HOME'];
   } else {
-    process.env['OMNICODE_HOME'] = originalHome;
+    process.env['OMNICODE_V_HOME'] = originalHome;
   }
 });
 

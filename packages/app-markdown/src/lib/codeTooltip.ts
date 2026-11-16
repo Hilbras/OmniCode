@@ -39,7 +39,10 @@ const VISIBLE_CLASS = 'md-code-tip--visible';
 let started = false;
 let bubble: HTMLElement | null = null;
 let visible = false;
-let showTimer: ReturnType<typeof setTimeout> | undefined;
+// `number`, not `ReturnType<typeof setTimeout>`: this is a browser timer, and
+// `window` is typed `Window & typeof globalThis`, so that return type resolves to
+// Node's `Timeout` while the DOM call returns a number.
+let showTimer: number | undefined;
 let anchor: HTMLElement | null = null;
 
 const STYLE_TEXT = `

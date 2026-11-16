@@ -69,7 +69,7 @@ describe('DaemonHttpClient injection', () => {
 
     await client.get('/api/v1/meta');
 
-    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Record<string, string>;
     expect(headers['Authorization']).toBe('Bearer tok_abc');
     expect(tracer.restRequest).toHaveBeenCalledOnce();
   });
@@ -83,7 +83,7 @@ describe('DaemonHttpClient injection', () => {
 
     await client.get('/api/v1/meta');
 
-    const headers = fetchMock.mock.calls[0][1].headers as Record<string, string>;
+    const headers = fetchMock.mock.calls[0]?.[1]?.headers as Record<string, string>;
     expect(headers['Authorization']).toBeUndefined();
   });
 

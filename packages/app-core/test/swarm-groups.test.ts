@@ -44,7 +44,7 @@ function bashTask(id: string): AppTask {
     sessionId: 'session-1',
     kind: 'bash',
     description: `bash ${id}`,
-    busy: true,
+    status: 'running',
     createdAt: '2026-01-01T00:00:00.000Z',
   };
 }

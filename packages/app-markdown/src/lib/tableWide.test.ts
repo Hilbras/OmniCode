@@ -166,7 +166,9 @@ function makeWrapper(opts: { clientWidth?: number; tableWidth?: number | null; h
   } else {
     wrapper.scrollWidth = wrapper.clientWidth;
   }
-  return wrapper as unknown as HTMLElement;
+  // `StubElement & HTMLElement`: callers pass it where an element is expected and
+  // also read the stub's own fields (`hostContext`, `clientWidth`, ...).
+  return wrapper as unknown as StubElement & HTMLElement;
 }
 
 function stubOf(el: HTMLElement): StubElement {

@@ -51,7 +51,10 @@ const open = ref(false);
 const positioned = ref(false);
 const bubbleStyle = ref<Record<string, string>>({ maxWidth: `${props.maxWidth}px` });
 
-let showTimer: ReturnType<typeof setTimeout> | undefined;
+// `number`: this is a browser timer. `ReturnType<typeof window.setTimeout>` is
+// wrong here — `window` is typed `Window & typeof globalThis`, so the return type
+// resolves to Node's `Timeout`, not to the `number` the DOM call actually returns.
+let showTimer: number | undefined;
 let attachedTo: HTMLElement | null = null;
 let observer: MutationObserver | undefined;
 

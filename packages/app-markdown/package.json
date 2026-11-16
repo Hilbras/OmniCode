@@ -7,10 +7,14 @@
     ".": "./src/index.ts",
     "./lib/filePathLinks": "./src/lib/filePathLinks.ts"
   },
+  "scripts": {
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
   "dependencies": {
+    "@hilbras/app-client": "workspace:*",
     "@hilbras/app-composer": "workspace:^",
     "@hilbras/app-core": "workspace:*",
-    "@hilbras/app-client": "workspace:*",
     "@hilbras/app-i18n": "workspace:*",
     "@hilbras/app-ui": "workspace:*",
     "katex": "^0.17.0",
@@ -25,12 +29,14 @@
     "vue-i18n": "^11.4.5"
   },
   "devDependencies": {
+    "@hilbras/vite-preset": "workspace:*",
+    "@iconify-json/ri": "1.2.10",
+    "@iconify-json/tabler": "^1.2.46",
     "stream-markdown-parser": "1.2.6",
+    "typescript": "6.0.2",
+    "vitest": "4.1.4",
     "vue": "^3.5.35",
     "vue-i18n": "^11.4.5",
-    "vue-tsc": "~3.2.0",
-    "typescript": "6.0.2",
-    "@hilbras/vite-preset": "workspace:*",
-    "vitest": "4.1.4"
+    "vue-tsc": "~3.2.0"
   }
 }

@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "noPropertyAccessFromIndexSignature": false
+  },
+  "include": [
+    "src",
+    "test",
+    "../vite-preset/src/icons.d.ts",
+    "../vite-preset/src/worker.d.ts",
+    "../app-core/src/env.d.ts",
+    "../app-composer/src/env.d.ts",
+    "../app-client/src/env.d.ts",
+    "../app-markdown/src/env.d.ts"
+  ]
+}

@@ -61,14 +61,26 @@ Non-goals:
 
 ## Validation
 
-Type-check, which currently passes with the consumers' bundler resolution:
+Type-check with the consumers' bundler resolution:
 
 ```bash
-cd packages/app-ui
-./node_modules/.bin/vue-tsc --noEmit -p tsconfig.json --module ESNext --moduleResolution bundler
+pnpm --filter @hilbras/app-ui typecheck
 ```
 
-`test/` has three files (`menuStack`, `selectMenu`, `useImeComposition`), but the
-package has no `vitest.config.ts` and no `test` script, so they are not in the
-root Vitest projects. Running Vitest from this directory resolves the root config
-and fails. Add a package config before claiming the suite runs.
+`tsconfig.json` extends the **root** `tsconfig.json` for that resolution
+(`tsconfig.base.json`'s `NodeNext` rejects this package's extensionless imports),
+keeps `lib` for the DOM, and includes `src` **and** `test`. It disables
+`noPropertyAccessFromIndexSignature` for the same documented reason as `app-core`:
+the renderer code passes `Record` payloads around and reads them by property.
+
+`vue-tsc`, not `tsc`: the package ships 38 `.vue` files and plain `tsc` skips them
+silently, which would make the gate look greener than it is.
+
+`test/` has three files (`menuStack`, `selectMenu`, `useImeComposition`) — 24 tests.
+They are wired into the root Vitest graph through this package's
+`vitest.config.ts` (project `app-ui`, `environment: 'node'`), and they are also
+type-checked by the command above, which is why `test` is in the include.
+
+```bash
+pnpm --filter @hilbras/app-ui test
+```

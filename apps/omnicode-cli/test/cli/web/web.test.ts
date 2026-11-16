@@ -1086,16 +1086,16 @@ describe('`omnicode web rotate-token`', () => {
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), 'omnicode-rotate-'));
-    prevHome = process.env['OMNICODE_HOME'];
-    process.env['OMNICODE_HOME'] = dir;
+    prevHome = process.env['OMNICODE_V_HOME'];
+    process.env['OMNICODE_V_HOME'] = dir;
     vi.resetModules();
   });
 
   afterEach(() => {
     if (prevHome === undefined) {
-      delete process.env['OMNICODE_HOME'];
+      delete process.env['OMNICODE_V_HOME'];
     } else {
-      process.env['OMNICODE_HOME'] = prevHome;
+      process.env['OMNICODE_V_HOME'] = prevHome;
     }
     rmSync(dir, { recursive: true, force: true });
   });

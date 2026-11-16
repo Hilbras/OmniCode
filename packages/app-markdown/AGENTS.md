@@ -64,5 +64,24 @@ cd packages/app-markdown
 ```
 
 The package config includes `src/**/*.test.ts` and supplies the virtual icons
-used by code-wrap helpers. There is no package `typecheck` script; a standalone
-run also needs the consumer's Vite types for workers and `~icons/*`.
+used by code-wrap helpers.
+
+Type-check and tests are wired and green:
+
+```bash
+pnpm --filter @hilbras/app-markdown typecheck
+pnpm --filter @hilbras/app-markdown test
+```
+
+Its `tsconfig.json` extends the root config with DOM libs and lists the sibling
+declaration files (`../vite-preset/src/{icons,worker}.d.ts`,
+`../app-core/src/env.d.ts`, `../app-composer/src/env.d.ts`), because this package's
+program compiles the `app-*` sources it imports and those declarations live beside
+them rather than in an ambient package. There is no `test/` directory: all eight
+suites are co-located with their modules under `src/lib/`, so `include: ["src"]`
+type-checks them as well.
+
+The suite was dark until recently: no `@iconify-json/*` collection was installed, so
+three of its eight files died in transform with
+`Icon `tabler/adjustments-horizontal` not found`. `@iconify-json/{ri,tabler}` are
+devDependencies here now, and `test` runs 8 files / 277 tests green.

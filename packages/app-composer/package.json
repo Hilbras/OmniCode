@@ -14,6 +14,10 @@
     "./editor": "./src/editor.ts",
     "./mention-dom": "./src/mention-dom.ts"
   },
+  "scripts": {
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
   "dependencies": {
     "@hilbras/app-core": "workspace:^",
     "micromark": "^4.0.2",
@@ -28,10 +32,12 @@
     "vue": "^3.5.35"
   },
   "devDependencies": {
-    "@hilbras/app-client": "workspace:*",
     "@hilbras/vite-preset": "workspace:*",
+    "@iconify-json/ri": "1.2.10",
+    "@iconify-json/tabler": "^1.2.46",
     "typescript": "6.0.2",
     "vitest": "4.1.4",
-    "vue": "^3.5.35"
+    "vue": "^3.5.35",
+    "vue-tsc": "~3.2.9"
   }
 }

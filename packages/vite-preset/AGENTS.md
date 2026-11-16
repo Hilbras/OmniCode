@@ -57,12 +57,23 @@ Non-goals:
 
 ## Validation
 
-The test file exists at `test/preset.test.ts` and covers worker format, target,
-defines, the icon plugin, and raw-icon loading. There is no package
-`vitest.config.ts` or `test` script, so the suite is not wired into the root
-Vitest projects; running `vitest` from this directory resolves the root config
-and fails. Add a package config before claiming it runs.
+```bash
+pnpm --filter @hilbras/vite-preset typecheck
+pnpm --filter @hilbras/vite-preset test
+```
 
-Until then, validate by importing the preset in a consumer's Vite config and
-running that consumer's dev/build, and run `pnpm check:workspace` to confirm the
-root project globs still resolve.
+`test/preset.test.ts` (2 cases) is wired through this package's `vitest.config.ts`
+(project `vite-preset`, `environment: 'node'`), and `tsconfig.json` already covers
+`src` and `test`, so `typecheck` checks both. Both had no script before, which is why
+neither ran.
+
+The raw-icon case loads `~icons/omnicode/probe?raw` against
+`test/fixtures/icons/omnicode/probe.svg` rather than an installed
+`@iconify-json/*` collection: this workspace installs none, so an upstream-collection
+id makes the case fail inside unplugin-icons with `Icon `ri/add-line` not found`. The
+fixture also keeps the case hermetic — it exercises the preset's own
+`customCollections.omnicode` path, which is what a consumer uses.
+
+For behaviour the unit suite cannot reach, validate by importing the preset in a
+consumer's Vite config and running that consumer's dev/build, and run
+`pnpm check:workspace` to confirm the root project globs still resolve.

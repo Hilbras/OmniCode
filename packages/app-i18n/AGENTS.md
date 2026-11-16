@@ -33,7 +33,13 @@ Non-goals:
 - Do not use `|` inside a message unless you intend Vue I18n plural syntax;
   literal pipes must be escaped.
 - Do not rename or delete a key that is still referenced. Search the shared
-  packages and the consuming app first.
+  packages and the consuming app first. `test/i18n.test.ts` enforces this: it scans
+  the `src/` of every workspace package that depends on this one, collects the
+  literal keys passed to `t('…')`, and fails when a key resolves in neither bundle,
+  when its first segment is not a namespace this package defines, or when the scan
+  finds implausibly few keys (a gate that silently scans nothing is worse than no
+  gate). Renaming a key in both bundles therefore fails until the call sites move
+  with it.
 - Locale detection persists to the `omnicode-locale` storage key. Keep it in sync
   with the host app's `STORAGE_KEYS.locale`; this package deliberately does not
   import the host.
@@ -63,11 +69,22 @@ Non-goals:
 Type-check with the bundler resolution the consumers use:
 
 ```bash
-cd packages/app-i18n
-./node_modules/.bin/vue-tsc --noEmit -p tsconfig.json --module ESNext --moduleResolution bundler
+pnpm --filter @hilbras/app-i18n typecheck
 ```
 
-`test/i18n.test.ts` covers the EN/ZH lookup and injection precedence, but the
-package has no `vitest.config.ts`, so it is not in the root Vitest project list.
-Its `pnpm test` script currently fails because Vitest resolves the root config
-from this directory. Add a package config before relying on that script.
+`tsconfig.json` extends the **root** `tsconfig.json` (not `tsconfig.base.json`, whose
+`NodeNext` resolution rejects this package's extensionless imports) and covers
+`src` and `test`. `vue-tsc` is installed, but plain `tsc` is enough here: the package
+ships no `.vue` files.
+
+`vitest.config.ts` registers the package as the `app-i18n` project
+(`include: ['test/**/*.test.ts']`), and the root config picks it up through the
+`packages/*/vitest.config.ts` glob, so `pnpm --filter @hilbras/app-i18n test` and
+the root run both execute `test/i18n.test.ts`.
+
+That suite enforces the message rules above mechanically: every key must exist in
+both `en` and `zh`; no key may be blank in **both** locales; and every literal key
+referenced by a consuming package must resolve (see the rename rule above). An
+individual locale may be empty on purpose — English leaves
+`sidebar.archiveToastTail` and `tools.activity.liveDonePrefix` empty where Chinese
+carries the suffix — so do not "fix" those into English text.

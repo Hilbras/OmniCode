@@ -11,6 +11,10 @@
     "./icons": "./src/icons.d.ts",
     "./worker": "./src/worker.d.ts"
   },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
   "peerDependencies": {
     "@vitejs/plugin-vue": "^5.2.4",
     "unplugin-icons": "^23.0.0",

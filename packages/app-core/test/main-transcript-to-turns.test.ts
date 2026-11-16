@@ -266,13 +266,10 @@ describe('mainTranscriptToTurns', () => {
       },
       at: '2026-07-27T00:00:06.000Z',
     });
-    const input = snapshot([], []);
-    input.items = [
-      markerOf('m-a'),
-      markerOf('m-b'),
-      cronTurnOf('turn-a'),
-      cronTurnOf('turn-b'),
-    ];
+    const input: AgentTranscriptSnapshot = {
+      ...snapshot([], []),
+      items: [markerOf('m-a'), markerOf('m-b'), cronTurnOf('turn-a'), cronTurnOf('turn-b')],
+    };
     const turns = mainTranscriptToTurns(input, DEPS);
 
     // Exactly the two real turns as cron cards — no synthetic marker card.
@@ -298,8 +295,7 @@ describe('mainTranscriptToTurns', () => {
       },
       at: '2026-07-27T00:00:06.000Z',
     });
-    const input = snapshot([], []);
-    input.items = [markerOf('m-a'), markerOf('m-b'), cronTurn];
+    const input: AgentTranscriptSnapshot = { ...snapshot([], []), items: [markerOf('m-a'), markerOf('m-b'), cronTurn] };
     const turns = mainTranscriptToTurns(input, DEPS);
 
     expect(turns.filter((turn) => turn.role === 'cron')).toHaveLength(2);
@@ -323,8 +319,7 @@ describe('mainTranscriptToTurns', () => {
       at: '2026-07-27T00:00:06.000Z',
     };
     // The daemon emits cron.fired BEFORE steer-injecting the turn.
-    const input = snapshot([], []);
-    input.items = [marker, cronTurn];
+    const input: AgentTranscriptSnapshot = { ...snapshot([], []), items: [marker, cronTurn] };
     const turns = mainTranscriptToTurns(input, DEPS);
 
     expect(turns.filter((turn) => turn.role === 'cron')).toHaveLength(1);
@@ -351,8 +346,7 @@ describe('mainTranscriptToTurns', () => {
       },
       at: '2026-07-27T00:00:06.000Z',
     });
-    const input = snapshot([], []);
-    input.items = [markerOf('m-a', 'status'), markerOf('m-b', 'status quo'), cronTurn];
+    const input: AgentTranscriptSnapshot = { ...snapshot([], []), items: [markerOf('m-a', 'status'), markerOf('m-b', 'status quo'), cronTurn] };
     const turns = mainTranscriptToTurns(input, DEPS);
 
     // Marker A keeps its own synthetic card ('status'); marker B yields to

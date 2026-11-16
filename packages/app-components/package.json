@@ -8,6 +8,10 @@
     ".": "./src/index.ts",
     "./support": "./src/support.ts"
   },
+  "scripts": {
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
   "dependencies": {
     "@hilbras/app-client": "workspace:*",
     "@hilbras/app-composer": "workspace:*",

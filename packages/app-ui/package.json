@@ -8,6 +8,10 @@
     "./style.css": "./src/style.css",
     "./fonts.css": "./src/fonts.css"
   },
+  "scripts": {
+    "typecheck": "vue-tsc --noEmit -p tsconfig.json",
+    "test": "vitest run"
+  },
   "dependencies": {
     "@hilbras/app-i18n": "workspace:*"
   },

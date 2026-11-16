@@ -55,18 +55,49 @@ const defaultDeps: OmnicodeClientDeps = {
 // The registry cell lives on globalThis so a test that re-imports the client
 // modules through a fresh module graph (vi.resetModules) still sees the same
 // registry as the test file's statically imported setOmnicodeClientDeps.
-const cell = ((globalThis as { __omnicodeAppClientDeps?: { current: OmnicodeClientDeps } }).__omnicodeAppClientDeps ??= {
+// The defaults live ON the cell, not only in this module: a test that re-imports
+// these modules through `vi.resetModules` gets its own `defaultDeps` object, so
+// comparing against the module-level one would report "installed" for defaults
+// that belong to another graph.
+const cell = ((globalThis as {
+  __omnicodeAppClientDeps?: {
+    current: OmnicodeClientDeps;
+    defaults: OmnicodeClientDeps;
+    generation: number;
+  };
+}).__omnicodeAppClientDeps ??= {
   current: defaultDeps,
+  defaults: defaultDeps,
+  // Bumped whenever the deps are installed or reset. A deferred task captures it
+  // and bails if it moved: the client it was queued for is gone (a test reset, or
+  // HMR dropping the graph), and so are the bindings it captured.
+  generation: 0,
 });
 
 /** Install the app's implementations once at bootstrap (composition root). */
 export function setOmnicodeClientDeps(deps: OmnicodeClientDeps): void {
   cell.current = deps;
+  cell.generation += 1;
+}
+
+/** Whether an app has registered its implementations. Deferred work — an idle
+ *  callback or timer queued by a client that is then torn down (a test reset, or
+ *  HMR dropping the graph) — must check this first: the defaults' `api` throws,
+ *  and a deferred read for a client that no longer exists has nothing to do. */
+export function hasOmnicodeClientDeps(): boolean {
+  return cell.current !== cell.defaults;
+}
+
+/** The deps' generation, for a deferred task to compare against the value it
+ *  captured: equal means the client it was queued for is still the live one. */
+export function clientDepsGeneration(): number {
+  return cell.generation;
 }
 
 /** Restore the un-registered defaults (test isolation). */
 export function resetOmnicodeClientDeps(): void {
-  cell.current = defaultDeps;
+  cell.current = cell.defaults;
+  cell.generation += 1;
 }
 
 // Internal delegates consumed by the client modules — they keep the names of

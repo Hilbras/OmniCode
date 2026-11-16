@@ -33,7 +33,7 @@ let dir: string;
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'omnicode-update-cache-'));
-  process.env['OMNICODE_HOME'] = dir;
+  process.env['OMNICODE_V_HOME'] = dir;
 });
 
 afterEach(() => {

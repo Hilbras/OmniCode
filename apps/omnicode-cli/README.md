@@ -81,3 +81,30 @@ Take a look at this project and explain the main directories.
 ## License
 
 MIT
+
+## Built-in providers
+
+`omnicode provider add-builtin <vendor>` configures one of these endpoints. The
+table below is pinned by a test against the provider catalog in
+`src/utils/built-in-providers.ts`; add new vendors there and regenerate this
+table.
+
+| Vendor | Name | Base URL |
+|---|---|---|
+| `cline` | Cline | `https://api.cline.bot/api/v1` |
+| `openrouter` | OpenRouter | `https://openrouter.ai/api/v1` |
+| `opencode-zen` | OpenCode Zen | `https://opencode.ai/zen/v1` |
+| `opencode-go` | OpenCode Go | `https://opencode.ai/zen/go/v1` |
+| `nvidia` | NVIDIA | `https://integrate.api.nvidia.com/v1` |
+| `nara` | NaraRouter | `https://router.bynara.id/v1` |
+| `tokenharbor` | Token Harbor | `https://tokenharbor.ai/v1` |
+| `openai` | OpenAI | `https://api.openai.com/v1` |
+| `anthropic` | Anthropic | `https://api.anthropic.com` |
+| `gemini` | Google Gemini | `https://generativelanguage.googleapis.com/v1beta` |
+| `grok` | xAI Grok | `https://api.x.ai/v1` |
+| `groq` | Groq | `https://api.groq.com/openai/v1` |
+| `qwen` | Qwen | `https://dashscope-intl.aliyuncs.com/compatible-mode/v1` |
+| `minimax` | MiniMax | `https://api.minimax.io/v1` |
+| `deepseek` | DeepSeek | `https://api.deepseek.com` |
+| `mistral` | Mistral | `https://api.mistral.ai/v1` |
+| `huggingface` | Hugging Face | `https://router.huggingface.co/v1` |

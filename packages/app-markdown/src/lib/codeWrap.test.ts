@@ -982,13 +982,13 @@ describe('codeTooltip singleton (ensureCodeTooltip)', () => {
 
     // Another instance's root does not own this anchor — tip survives.
     const otherRoot = new TipStubEl();
-    hideCodeTooltipIfAnchorWithin(otherRoot);
+    hideCodeTooltipIfAnchorWithin(otherRoot as unknown as HTMLElement);
     expect(visibleNow()).toBe(true);
 
     // The owning root (this instance's mdRef) closes it on unmount.
     const owningRoot = new TipStubEl();
     owningRoot.appendChild(el);
-    hideCodeTooltipIfAnchorWithin(owningRoot);
+    hideCodeTooltipIfAnchorWithin(owningRoot as unknown as HTMLElement);
     expect(visibleNow()).toBe(false);
   });
 
