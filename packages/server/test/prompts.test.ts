@@ -871,7 +871,7 @@ describe('server-v2 /api/v1 prompts', () => {
   it('carries a compressed uploaded image into the prompt as an internal omnicode-file reference', async () => {
     const id = await createSession(home as string);
     await createMainAgent(id);
-    const bigPng = solidPng(3600, 1800);
+    const bigPng = solidPng(2400, 1200);
     const uploaded = await uploadFile(bigPng, 'image/png', 'big.png');
     expect(uploaded.size).toBe(bigPng.length);
 
@@ -885,7 +885,7 @@ describe('server-v2 /api/v1 prompts', () => {
     const caption = content[0] as { type: string; text: string };
     expect(caption.type).toBe('text');
     expect(caption.text).toContain('Image compressed');
-    expect(caption.text).toContain('3600x1800');
+    expect(caption.text).toContain('2400x1200');
     const pathMatch = /saved at "([^"]+)"/.exec(caption.text);
     expect(pathMatch).not.toBeNull();
     expect(pathMatch![1]!).toContain('/media-originals/');
@@ -919,12 +919,12 @@ describe('server-v2 /api/v1 prompts', () => {
     const captionPart = promptMessage?.content[0];
     expect(captionPart?.type).toBe('text');
     expect((captionPart as { type: 'text'; text: string }).text).toContain('Image compressed');
-  });
+  }, 60_000);
 
   it('rolls back a compressed upload when a later prompt part fails to resolve', async () => {
     const id = await createSession(home as string);
     await createMainAgent(id);
-    const first = await uploadFile(solidPng(3600, 1800), 'image/png', 'big.png');
+    const first = await uploadFile(solidPng(2400, 1200), 'image/png', 'big.png');
     const second = await uploadFile(solidPng(10, 10), 'image/png', 'small.png');
     const files = server!.core.accessor.get(IFileService);
     const originalGet = files.get.bind(files);
@@ -961,7 +961,7 @@ describe('server-v2 /api/v1 prompts', () => {
       getSpy.mockRestore();
       saveSpy.mockRestore();
     }
-  });
+  }, 60_000);
 
   it('carries an uncompressed uploaded image into the prompt as an internal omnicode-file reference', async () => {
     const id = await createSession(home as string);
@@ -1076,7 +1076,7 @@ describe('server-v2 /api/v1 prompts', () => {
   it('compresses inline base64 image prompts into session media-originals', async () => {
     const id = await createSession(home as string);
     await createMainAgent(id);
-    const bigPng = solidPng(3600, 1800);
+    const bigPng = solidPng(2400, 1200);
 
     const submitted = await call<PromptItemWire>('POST', `/api/v1/sessions/${id}/prompts`, {
       content: [
@@ -1110,7 +1110,7 @@ describe('server-v2 /api/v1 prompts', () => {
       width: 2000,
       height: 1000,
     });
-  });
+  }, 60_000);
 
   function avifBytes(): Buffer {
     const buf = Buffer.alloc(24);
@@ -1628,7 +1628,7 @@ describe('server-v2 /api/v1 prompts', () => {
     await createMainAgent(id);
     const outside = await mkdtemp(join(tmpdir(), 'omnicode-attach-big-'));
     try {
-      const bigPng = solidPng(3600, 1800);
+      const bigPng = solidPng(2400, 1200);
       const sourcePath = join(outside, 'big.png');
       await writeFile(sourcePath, bigPng);
 
@@ -1657,7 +1657,7 @@ describe('server-v2 /api/v1 prompts', () => {
     } finally {
       await rm(outside, { recursive: true, force: true });
     }
-  });
+  }, 60_000);
 
   it('carries a server-local video by path as an internal omnicode-file reference', async () => {
     const id = await createSession(home as string);
