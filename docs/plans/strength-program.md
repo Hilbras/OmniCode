@@ -2099,6 +2099,29 @@ entries carry the fail-on-base evidence they recorded at the time.
 | `pnpm check:package` (after building tui, SDK bundle + declarations, CLI) | `package hygiene check: OK (@omnicode/cli (publint), @hilbras/omnicode-sdk (publint, attw), @hilbras/omnicode-tui (publint, attw))` — and the CLI build in front of it passed with `build:dts` in check mode, so the API-report tripwire does not obstruct the release path |
 | release path re-run on the current tree | all green: SDK `build` 11 files/10.35 MB (11.7 s) and `build:dts` `API Extractor completed successfully`, TUI `build` (8.5 s), CLI `build` with `Web assets OK: …/dist-web (747 entries, synced from code-app)` and the native prebuild copy, then `package hygiene check: OK` for CLI, SDK, and TUI. So the commands CI's `package-hygiene` job walks work, and the root `pnpm build` now runs too (decision 2) |
 
+**Verification after the owner decisions (2026-11-17).** The branch is committed in 11
+logical commits and the working tree matches HEAD except two intentionally untracked
+directories (`apps/omnicode-mobile.old/`, awaiting the owner's deletion call, and
+`plugins/`, an unreviewed marketplace catalog). Verified on the committed tree:
+- `pnpm install --frozen-lockfile` → **exit 0** (`Already up to date`) — the step every CI
+  job starts with, which failed on the previous lockfile.
+- `pnpm check:guards`, `pnpm typecheck` (39/39 tasks), `pnpm build --concurrency=1`
+  (23/23 tasks), `pnpm lint`, `pnpm docs:check`, `pnpm check:package` were each run
+  green while landing the corresponding work, with the counts recorded in the rows
+  above.
+- Every package suite was run individually and green (engine 426 files / 6835 passed,
+  4 skipped; features-integration 47 / 1689; app-client 53 / 1036; app-composer 354;
+  app-markdown 277; app-core 831; migration 34 files / 323; SDK 75; auth 376 +1 skipped;
+  Kaos 504 +22 skipped; server 78 files; llm 52 files; minidb 45 files; …).
+**The aggregate `pnpm test --concurrency=1` could not be completed.** Two attempts were
+stopped for the same external reason: an unrelated `hilbras-kernel` QEMU VM holds ~66 %
+of one core and the box runs at load 9–24 on 4 cores. The second attempt was measured
+rather than estimated — **21 tests in about six minutes** at load 17.75, which projects
+to tens of hours and would also risk contention-induced failures in timing-sensitive
+suites. Nothing was adjusted to make it "pass". The command is sound (it ran 32/32 and
+34 tasks green earlier in this program); it simply needs an idle machine, and that is
+the one verification this branch still owes.
+
 **A note on the aggregate run.** The full `pnpm test --concurrency=1` graph was
 re-run with every wired suite in it; it was stopped after ~15 minutes with **zero
 failures** across the tasks that completed — CLI (269 files), server (78), `app-core` (63),
