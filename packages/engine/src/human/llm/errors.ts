@@ -89,6 +89,7 @@ export type LlmErrorKind =
   | 'request_too_large'
   | 'request_structure'
   | 'image_format'
+  | 'content_filter'
   | 'empty_response'
   | 'incomplete_stream'
   | 'provider'
@@ -106,7 +107,8 @@ export type LlmStatusErrorKind =
   | 'context_overflow'
   | 'request_too_large'
   | 'request_structure'
-  | 'image_format';
+  | 'image_format'
+  | 'content_filter';
 
 export interface LlmStatusErrorInfo {
   readonly statusCode: number;
@@ -143,6 +145,7 @@ export function llmStatusErrorMessage(
     case 'request_too_large':
     case 'request_structure':
     case 'image_format':
+    case 'content_filter':
       return error;
     default:
       return null;
@@ -234,6 +237,21 @@ const IMAGE_FORMAT_STATUS_MESSAGE_PATTERNS = [
 ] as const;
 
 const MEDIA_TYPE_FIELD_PATTERN = /(?:media|mime)_?type/;
+
+const CONTENT_FILTER_STATUS_MESSAGE_PATTERNS = [
+  /content[ _-]?safety/,
+  /content[ _-]?filter/,
+  /content[ _-]?policy/,
+  /content[ _-]?management policy/,
+  /safety[ _-]?(?:filter|screening|system)/,
+  /(?:prompt|input|request|message|content)[\s\S]{0,40}(?:rejected|blocked|flagged)[\s\S]{0,40}(?:safety|content|moderation|policy|filter)/,
+  /(?:rejected|blocked|flagged)[\s\S]{0,40}(?:safety|content|moderation|policy|filter)/,
+  /response was filtered/,
+  /blocked by (?:the )?(?:content|safety|moderation|provider)/,
+  /flagged as potentially (?:harmful|unsafe|violating|inappropriate)/,
+  /responsible ai/,
+  /moderation/,
+] as const;
 
 const QUOTA_EXHAUSTED_CODES: ReadonlySet<string> = new Set([
   'insufficient_quota',
@@ -332,6 +350,9 @@ export function toLlmStatusErrorMessage(input: LlmStatusErrorInput): LlmRemoteEr
   if (isImageFormatStatusError(input.statusCode, input.message)) {
     return { kind: 'image_format', message, ...info };
   }
+  if (isContentFilterStatusError(input.statusCode, input.message)) {
+    return { kind: 'content_filter', message, ...info };
+  }
   return {
     kind: 'status',
     message: appendThinkingEffortConfigHint(input.statusCode, message),
@@ -408,4 +429,10 @@ export function isImageFormatStatusError(statusCode: number, message: string): b
     IMAGE_FORMAT_STATUS_MESSAGE_PATTERNS.some((pattern) => pattern.test(lowerMessage)) ||
     (MEDIA_TYPE_FIELD_PATTERN.test(lowerMessage) && lowerMessage.includes('image'))
   );
+}
+
+export function isContentFilterStatusError(statusCode: number, message: string): boolean {
+  if (statusCode !== 400 && statusCode !== 403 && statusCode !== 422) return false;
+  const lowerMessage = message.toLowerCase();
+  return CONTENT_FILTER_STATUS_MESSAGE_PATTERNS.some((pattern) => pattern.test(lowerMessage));
 }

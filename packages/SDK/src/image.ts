@@ -60,7 +60,8 @@ export function compressImageForModel(
   mimeType: string,
   options: CompressImageOptions = {},
 ): Promise<CompressImageResult> {
-  const { telemetry, ...rest } = options;
+  const telemetry = options.telemetry;
+  const rest: CompressImageOptions = { ...options, telemetry: undefined };
   return v2CompressImageForModel(bytes, mimeType, {
     ...rest,
     telemetry: toV2TelemetryService(telemetry),
@@ -73,7 +74,8 @@ export function compressBase64ForModel(
   mimeType: string,
   options: CompressImageOptions = {},
 ): Promise<CompressBase64Result> {
-  const { telemetry, ...rest } = options;
+  const telemetry = options.telemetry;
+  const rest: CompressImageOptions = { ...options, telemetry: undefined };
   return v2CompressBase64ForModel(base64, mimeType, {
     ...rest,
     telemetry: toV2TelemetryService(telemetry),

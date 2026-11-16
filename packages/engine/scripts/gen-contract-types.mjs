@@ -1,4 +1,5 @@
 import { execFileSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import {
   cpSync,
   existsSync,
@@ -7,8 +8,9 @@ import {
   readFileSync,
   rmSync,
   statSync,
+  writeFileSync,
 } from 'node:fs';
-import { dirname, join, relative } from 'node:path';
+import { dirname, join, relative, sep } from 'node:path';
 import { createRequire } from 'node:module';
 // oxlint-disable-next-line typescript/no-unused-vars -- import.meta.url needs the helper
 import { fileURLToPath } from 'node:url';
@@ -20,10 +22,11 @@ const PKG = join(__dirname, '..');
 const SRC = join(PKG, 'src');
 const TMP = join(PKG, '.contract-types-tmp');
 const TSCONFIG = join(PKG, 'tsconfig.contract.json');
+const DIGEST_PATH = join(PKG, 'docs', 'contract-types.sha256');
 
-const repoRoot = join(PKG, '..', '..');
-const defaultOut = join(repoRoot, '..', 'omnicode-mini-bench', 'types', 'agent-core-v2');
-const OUT = process.argv[2] ? join(process.cwd(), process.argv[2]) : defaultOut;
+const argv = process.argv.slice(2).filter((arg) => arg !== '--');
+const checkOnly = argv.includes('--check');
+const outArg = argv.find((arg) => !arg.startsWith('--'));
 
 const require = createRequire(import.meta.url);
 const tscBin = require.resolve('typescript/bin/tsc');
@@ -39,6 +42,53 @@ function walk(dir, out) {
     if (s.isDirectory()) walk(p, out);
     else out.push(p);
   }
+}
+
+function renderDigest(root) {
+  const files = [];
+  walk(root, files);
+  files.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+  return (
+    files
+      .map((file) => {
+        const rel = relative(root, file).split(sep).join('/');
+        const hash = createHash('sha256').update(readFileSync(file)).digest('hex');
+        return `${hash}  ${rel}`;
+      })
+      .join('\n') + '\n'
+  );
+}
+
+function digestEntries(text) {
+  const entries = new Map();
+  for (const line of text.split('\n')) {
+    if (line.trim() === '') continue;
+    const at = line.indexOf('  ');
+    if (at < 0) continue;
+    entries.set(line.slice(at + 2), line.slice(0, at));
+  }
+  return entries;
+}
+
+function reportDigestDrift(current, next) {
+  const before = digestEntries(current);
+  const after = digestEntries(next);
+  const changed = [];
+  const added = [];
+  const removed = [];
+  for (const [file, hash] of after) {
+    const previous = before.get(file);
+    if (previous === undefined) added.push(file);
+    else if (previous !== hash) changed.push(file);
+  }
+  for (const file of before.keys()) if (!after.has(file)) removed.push(file);
+  log(
+    `contract declaration drift: ${String(changed.length)} changed, ${String(added.length)} added, ${String(removed.length)} removed`,
+  );
+  for (const file of [...changed, ...added].slice(0, 10)) log(`  changed: ${file}`);
+  for (const file of removed.slice(0, 10)) log(`  removed: ${file}`);
+  const total = changed.length + added.length + removed.length;
+  if (total > 20) log(`  ... ${String(total - 20)} more`);
 }
 
 rmSync(TMP, { recursive: true, force: true });
@@ -145,28 +195,57 @@ for (const dtsPath of emittedDts) {
 }
 log(`scrubbed ${scrubbedReexports} re-export(s) of impl classes from alias modules`);
 
-rmSync(OUT, { recursive: true, force: true });
-mkdirSync(dirname(OUT), { recursive: true });
-cpSync(TMP, OUT, { recursive: true });
-
-const emitted = [];
-walk(OUT, emitted);
-const dtsCount = emitted.filter((f) => f.endsWith('.d.ts')).length;
-log(`wrote ${dtsCount} declaration file(s) -> ${OUT}`);
-
-const leaks = [];
+const leaked = [];
 for (const [dtsPath, names] of dropByDts) {
-  const outPath = join(OUT, relative(TMP, dtsPath));
-  if (!existsSync(outPath) || names.has('*')) continue;
-  const text = readFileSync(outPath, 'utf8');
+  if (!existsSync(dtsPath) || names.has('*')) continue;
+  const text = readFileSync(dtsPath, 'utf8');
   for (const n of names) {
     const re = new RegExp(`declare\\s+class\\s+${n}\\b`);
-    if (re.test(text)) leaks.push(`${relative(OUT, outPath)} still declares ${n}`);
+    if (re.test(text)) leaked.push(`${relative(TMP, dtsPath)} still declares ${n}`);
   }
 }
-if (leaks.length > 0) {
-  log(`WARNING: ${leaks.length} possible leak(s):`);
-  for (const l of leaks) log(`  - ${l}`);
+
+const emitted = [];
+walk(TMP, emitted);
+const dtsCount = emitted.filter((f) => f.endsWith('.d.ts')).length;
+const digest = renderDigest(TMP);
+
+if (outArg !== undefined) {
+  const out = join(process.cwd(), outArg);
+  rmSync(out, { recursive: true, force: true });
+  mkdirSync(dirname(out), { recursive: true });
+  cpSync(TMP, out, { recursive: true });
+  log(`copied ${dtsCount} declaration file(s) -> ${out}`);
+}
+
+if (checkOnly) {
+  let current = '';
+  try {
+    current = readFileSync(DIGEST_PATH, 'utf-8');
+  } catch {
+    current = '';
+  }
+  if (current !== digest) {
+    if (current === '') {
+      log(`${relative(PKG, DIGEST_PATH)} is missing; regenerate to record the contract digest`);
+    } else {
+      reportDigestDrift(current, digest);
+    }
+    process.exitCode = 1;
+  } else {
+    log(`contract types are fresh (${dtsCount} declaration files)`);
+  }
+} else {
+  writeFileSync(DIGEST_PATH, digest);
+  log(`recorded ${dtsCount} declaration hash(es) -> ${relative(PKG, DIGEST_PATH)}`);
+}
+
+if (leaked.length > 0) {
+  log(`FAILED: ${leaked.length} registered impl class(es) survive the contract scrub:`);
+  for (const l of leaked) log(`  - ${l}`);
+  process.exitCode = 1;
 } else {
   log('leak check passed: no registered impl class survives in its declaring file');
 }
+
+rmSync(TMP, { recursive: true, force: true });

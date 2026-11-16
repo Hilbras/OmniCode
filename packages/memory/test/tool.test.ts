@@ -396,6 +396,21 @@ describe('memory_save tool', () => {
     expect(output).toContain('Memory is disabled');
   });
 
+  it('tells the model what to save, where it applies, and what to avoid', () => {
+    const tool = new MemorySaveTool(
+      writeContext(),
+      createHarness().service,
+      { agentId: 'main' } as never,
+      { dispatch: async () => undefined } as never,
+    );
+    expect(tool.description).toContain('Judge for yourself');
+    expect(tool.description).toContain('source of truth');
+    expect(tool.description).toContain('Do not save:');
+    expect(tool.description).toContain('repository');
+    expect(tool.description).toContain('global');
+    expect(tool.description).toContain('unverified');
+  });
+
   it('requires its own approval rule and validates input', () => {
     const tool = new MemorySaveTool(writeContext(), createHarness().service, { agentId: 'main' } as never, { dispatch: async () => undefined } as never);
     const resolved = tool.resolveExecution({ content: 'x', category: 'fact' });

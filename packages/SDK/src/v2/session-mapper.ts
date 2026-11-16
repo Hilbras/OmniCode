@@ -79,7 +79,9 @@ export function v2MetaToSessionMeta(meta: V2SessionMeta): SessionMeta {
 
 function v2AgentsToV1(agents: Readonly<Record<string, V2AgentMeta>>): Record<string, AgentMeta> {
   const mapped: Record<string, AgentMeta> = {};
-  for (const [agentId, agent] of Object.entries(agents)) {
+  for (const entry of Object.entries(agents)) {
+    const agentId = entry[0];
+    const agent = entry[1];
     mapped[agentId] = {
       homedir: agent.homedir,
       // v2 registers every agent with a type; the fallbacks only cover

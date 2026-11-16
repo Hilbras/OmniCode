@@ -107,7 +107,9 @@ export function redactCtx(ctx: LogContext): LogContext {
       return value.map((item) => walk(item, depth + 1));
     }
     const out: Record<string, unknown> = {};
-    for (const [key, raw] of Object.entries(value as Record<string, unknown>)) {
+    for (const entry of Object.entries(value as Record<string, unknown>)) {
+      const key = entry[0];
+      const raw = entry[1];
       out[key] = isSecretKey(key) ? REDACTED : walk(raw, depth + 1);
     }
     return out;
@@ -207,7 +209,9 @@ export function formatEntry(entry: LogEntry): FormattedEntry {
   const msg = truncate(redactString(entry.msg), MSG_MAX_CHARS);
   const pairs: string[] = [];
   if (ctx) {
-    for (const [k, v] of Object.entries(ctx)) {
+    for (const entry of Object.entries(ctx)) {
+      const k = entry[0];
+      const v = entry[1];
       if (v !== undefined) pairs.push(formatPair(k, v));
     }
   }

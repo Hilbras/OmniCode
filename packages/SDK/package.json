@@ -5,11 +5,11 @@
   "description": "TypeScript SDK for the Omnicode Agent",
   "license": "MIT",
   "author": "Hilbras",
-  "homepage": "https://github.com/Hilbras/omnicode/tree/main/Kernel/SDK#readme",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/SDK#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hilbras/omnicode.git",
-    "directory": "Kernel/SDK"
+    "directory": "packages/SDK"
   },
   "bugs": {
     "url": "https://github.com/Hilbras/omnicode/issues"
@@ -60,10 +60,12 @@
     "provenance": true
   },
   "scripts": {
+    "test": "vitest run",
     "build": "tsdown",
     "build:dts": "node scripts/build-dts.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "clean": "rm -rf dist .tmp-api-extractor"
+    "clean": "rm -rf dist .tmp-api-extractor",
+    "build:dts:update": "node scripts/build-dts.mjs --local"
   },
   "dependencies": {
     "@antfu/utils": "^9.3.0",

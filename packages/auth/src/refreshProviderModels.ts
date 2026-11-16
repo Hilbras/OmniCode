@@ -179,7 +179,9 @@ function protocolOverridesFor(
   const raw = provider.protocolOverrides;
   if (!isRecord(raw)) return undefined;
   const out: Record<string, ManagedOmnicodeCodeProtocol> = {};
-  for (const [pattern, wire] of Object.entries(raw)) {
+  for (const entry of Object.entries(raw)) {
+    const pattern = entry[0];
+    const wire = entry[1];
     const parsed = parseModelProtocol(wire);
     // `omnicode` is a provider wire, not a `Protocol` member: ProtocolSchema rejects
     // it at the config boundary, so accepting it here would persist a pin the
@@ -332,7 +334,9 @@ function collectModelIdsForAliases(
 
 function providerAliasKeys(config: ManagedOmnicodeConfigShape, providerId: string): Set<string> {
   const keys = new Set<string>();
-  for (const [alias, raw] of Object.entries(config.models ?? {})) {
+  for (const entry of Object.entries(config.models ?? {})) {
+    const alias = entry[0];
+    const raw = entry[1];
     if ((raw as ManagedOmnicodeModelAlias).provider === providerId) keys.add(alias);
   }
   return keys;
@@ -350,7 +354,9 @@ function generatedProviderAliasKeys(
   aliasPrefix: string,
 ): Set<string> {
   const keys = new Set<string>();
-  for (const [alias, raw] of Object.entries(config.models ?? {})) {
+  for (const entry of Object.entries(config.models ?? {})) {
+    const alias = entry[0];
+    const raw = entry[1];
     const model = raw as ManagedOmnicodeModelAlias;
     if (model.freeTier === true) continue;
     if (model.provider === providerId && alias.startsWith(aliasPrefix)) {
@@ -445,7 +451,9 @@ function preserveUserProviderAliases(
   refreshedAliasKeys: ReadonlySet<string>,
 ): Record<string, ManagedOmnicodeModelAlias> {
   const preserved: Record<string, ManagedOmnicodeModelAlias> = {};
-  for (const [alias, raw] of Object.entries(config.models ?? {})) {
+  for (const entry of Object.entries(config.models ?? {})) {
+    const alias = entry[0];
+    const raw = entry[1];
     const model = raw as ManagedOmnicodeModelAlias;
     if (model.provider !== providerId || refreshedAliasKeys.has(alias)) continue;
     preserved[alias] = structuredClone(model);

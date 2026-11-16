@@ -158,8 +158,9 @@ function resolvePayload(
   if (typeof payload === 'object') {
     const obj = payload as Record<string, unknown>;
     if (obj['error'] instanceof Error) {
-      const { error: errValue, ...rest } = obj;
-      return { ctx: rest as LogContext, error: extractError(errValue) };
+      const rest = { ...obj } as { -readonly [K in keyof typeof obj]: typeof obj[K] };
+      delete rest['error'];
+      return { ctx: rest as LogContext, error: extractError(obj['error']) };
     }
     return { ctx: obj as LogContext, error: undefined };
   }

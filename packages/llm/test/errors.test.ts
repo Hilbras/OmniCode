@@ -2,12 +2,14 @@ import {
   APIConnectionError,
   APIContextOverflowError,
   APIEmptyResponseError,
+  APIProviderFilteredError,
   APIProviderQuotaExhaustedError,
   APIProviderRateLimitError,
   APIRequestTooLargeError,
   APIStatusError,
   APITimeoutError,
   ChatProviderError,
+  isContentFilterStatusError,
   isImageFormatError,
   isProviderRateLimitError,
   isRecoverableRequestStructureError,
@@ -742,5 +744,37 @@ describe('quota-exhausted retry and rate-limit semantics', () => {
       false,
     );
     expect(isProviderRateLimitError(new APIProviderRateLimitError('rate limited'))).toBe(true);
+  });
+});
+
+describe('content-filter classification', () => {
+  it('recognizes content-safety rejections on 400/403/422', () => {
+    expect(isContentFilterStatusError(422, 'input rejected by content safety screening')).toBe(true);
+    expect(
+      isContentFilterStatusError(400, 'Your request was rejected as a result of our safety system'),
+    ).toBe(true);
+    expect(isContentFilterStatusError(403, 'blocked by content management policy')).toBe(true);
+  });
+
+  it('does not match unrelated statuses or messages', () => {
+    expect(isContentFilterStatusError(429, 'rate limited')).toBe(false);
+    expect(isContentFilterStatusError(400, 'invalid tool_use_id')).toBe(false);
+    expect(isContentFilterStatusError(422, 'context length exceeded')).toBe(false);
+  });
+
+  it('normalizes a content-safety 422 into APIProviderFilteredError', () => {
+    const error = normalizeAPIStatusError(422, 'input rejected by content safety screening', 'req-1');
+    expect(error).toBeInstanceOf(APIProviderFilteredError);
+    expect(error).toBeInstanceOf(APIStatusError);
+    expect(error.statusCode).toBe(422);
+    expect(error.requestId).toBe('req-1');
+  });
+
+  it('is not retryable', () => {
+    expect(
+      isRetryableGenerateError(
+        normalizeAPIStatusError(422, 'input rejected by content safety screening'),
+      ),
+    ).toBe(false);
   });
 });

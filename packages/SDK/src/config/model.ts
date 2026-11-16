@@ -10,7 +10,8 @@ export function effectiveModelAlias(
   alias: ModelAlias,
   providerType?: ProviderType,
 ): ModelAlias {
-  const { overrides, ...base } = alias;
+  const overrides = alias.overrides;
+  const base: ModelAlias = { ...alias, overrides: undefined };
   const effective: ModelAlias = overrides === undefined ? alias : { ...base, ...overrides };
 
   if (

@@ -12,6 +12,9 @@ import {
   type ToolDescription,
 } from '#/llm/message';
 import type { LlmModel } from '#/llm/model';
+import { prepareAnthropicRequest } from '#/llm/requester/bases/anthropic/requester';
+import { prepareGoogleGenAIRequest } from '#/llm/requester/bases/google-genai/requester';
+import { prepareOpenAIResponsesRequest } from '#/llm/requester/bases/openai-responses/requester';
 import { prepareOpenAIRequest } from '#/llm/requester/bases/openai/requester';
 
 const goldenDir = fileURLToPath(new URL('./goldens/', import.meta.url));
@@ -75,5 +78,32 @@ describe('rendered context goldens', () => {
     const golden = await readFile(join(goldenDir, 'openai-chat-rendered-request.json'), 'utf8');
     expect(wire.params).toEqual(JSON.parse(golden));
     expect(wire.toolNameAliases).toBeUndefined();
+  });
+
+  it('pins the rendered Anthropic messages request for a full agent context', async () => {
+    const wire = prepareAnthropicRequest(requestInput);
+
+    const golden = await readFile(
+      join(goldenDir, 'anthropic-messages-rendered-request.json'),
+      'utf8',
+    );
+    expect(wire.params).toEqual(JSON.parse(golden));
+  });
+
+  it('pins the rendered OpenAI Responses request for a full agent context', async () => {
+    const wire = prepareOpenAIResponsesRequest(requestInput);
+
+    const golden = await readFile(
+      join(goldenDir, 'openai-responses-rendered-request.json'),
+      'utf8',
+    );
+    expect(wire.params).toEqual(JSON.parse(golden));
+  });
+
+  it('pins the rendered Google GenAI request for a full agent context', async () => {
+    const wire = prepareGoogleGenAIRequest(requestInput);
+
+    const golden = await readFile(join(goldenDir, 'google-genai-rendered-request.json'), 'utf8');
+    expect(wire.params).toEqual(JSON.parse(golden));
   });
 });

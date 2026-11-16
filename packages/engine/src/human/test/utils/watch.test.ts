@@ -1,4 +1,4 @@
-import { execFileSync } from 'node:child_process';
+import { execFileSync, type ExecFileSyncOptionsWithStringEncoding } from 'node:child_process';
 import { existsSync, readdirSync, realpathSync } from 'node:fs';
 import { mkdtemp, mkdir, realpath, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -498,10 +498,14 @@ describe('watch chokidar mode', () => {
       root = await mkdtemp(join(tmpdir(), 'watch-'));
       const long = join(root, 'long directory name');
       await mkdir(long);
-      const short = execFileSync('cmd.exe', ['/d', '/s', '/c', `"for %I in ("${long}") do @echo %~sI"`], {
+      // `windowsVerbatimArguments` reaches `spawn` at runtime through this call, but the
+      // Node 22 `ExecFileSyncOptions` type does not declare it, so the object is typed
+      // here rather than inlined as a literal the overloads reject.
+      const options: ExecFileSyncOptionsWithStringEncoding & { windowsVerbatimArguments: boolean } = {
         encoding: 'utf8',
         windowsVerbatimArguments: true,
-      }).trim();
+      };
+      const short = execFileSync('cmd.exe', ['/d', '/s', '/c', `"for %I in ("${long}") do @echo %~sI"`], options).trim();
       expect(basename(short)).toMatch(/~\d/);
       expect(existsSync(short)).toBe(true);
       await writeFile(join(long, 'config.toml'), 'v1');

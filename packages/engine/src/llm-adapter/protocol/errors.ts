@@ -61,7 +61,8 @@ export const ProtocolErrors = {
       title: 'Provider filtered response',
       retryable: false,
       public: true,
-      action: 'Revise the prompt or model configuration to avoid provider safety filtering.',
+      action:
+        'Revise the prompt, or switch to another model or provider. The provider (or its gateway) screened the request and refused it before generating; a benign-looking input usually means the endpoint\u2019s own safety filter is the cause.',
     },
     'provider.auth_error': {
       title: 'Provider authentication failed',

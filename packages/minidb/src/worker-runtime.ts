@@ -1,8 +1,12 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
 export const TEXT_BUILD_WORKER_PROTOCOL_VERSION = 1;
+
+const TRANSFORM_TYPES_FLAG = '--experimental-transform-types';
+const EXPERIMENTAL_WARNING_FLAG = '--disable-warning=ExperimentalWarning';
 
 export type TextBuildWorkerRuntimeEntry =
   | { readonly kind: 'packaged'; readonly path: string }
@@ -68,4 +72,37 @@ export function getTextBuildWorkerRuntimeState(): TextBuildWorkerRuntimeState {
   return configuredEntry === null
     ? { configured: false }
     : { configured: true, entry: configuredEntry };
+}
+
+let transformTypesFlagUsable: boolean | undefined;
+
+function supportsTransformTypesFlag(): boolean {
+  transformTypesFlagUsable ??= (() => {
+    try {
+      const probe = spawnSync(process.execPath, [TRANSFORM_TYPES_FLAG, '-e', ''], {
+        encoding: 'utf8',
+      });
+      return probe.status === 0;
+    } catch {
+      return false;
+    }
+  })();
+  return transformTypesFlagUsable;
+}
+
+function tsxLoaderSpecifier(): string {
+  return fileURLToPath(new URL('../../../node_modules/tsx/dist/loader.mjs', import.meta.url));
+}
+
+/**
+ * `execArgv` that lets a worker thread run this repository's TypeScript worker
+ * sources. The sources use non-erasable syntax, so plain strip-only mode fails;
+ * Node 22–25 needs `--experimental-transform-types`, while Node ≥26 removed the
+ * flag (passing it to `Worker` is a hard error) and no longer maps `.js`
+ * specifiers onto `.ts`, so the repository's `tsx` loader takes over both jobs.
+ */
+export function tsWorkerExecArgv(): readonly string[] {
+  return supportsTransformTypesFlag()
+    ? [TRANSFORM_TYPES_FLAG, EXPERIMENTAL_WARNING_FLAG]
+    : ['--import', tsxLoaderSpecifier(), EXPERIMENTAL_WARNING_FLAG];
 }

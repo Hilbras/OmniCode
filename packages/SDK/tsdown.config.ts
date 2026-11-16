@@ -20,7 +20,10 @@ export default defineConfig({
     ].join('\n'),
   },
   alias: {
-    '@hilbras/omnicode-kaos': fileURLToPath(new URL('../kaos/src/index.ts', import.meta.url)),
+    '@hilbras/omnicode-kaos/sandbox': fileURLToPath(
+      new URL('../Kaos/src/sandbox/index.ts', import.meta.url),
+    ),
+    '@hilbras/omnicode-kaos': fileURLToPath(new URL('../Kaos/src/index.ts', import.meta.url)),
     '@hilbras/omnicode-auth/provider-credential': fileURLToPath(
       new URL('../auth/src/provider-credential.ts', import.meta.url),
     ),

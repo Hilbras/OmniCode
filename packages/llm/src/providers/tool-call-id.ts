@@ -14,7 +14,7 @@ export function sanitizeToolCallId(id: string, maxLength?: number): string {
 }
 
 export function sanitizeOpenAIResponsesCallId(id: string, maxLength?: number): string {
-  const [callId] = id.split('|', 1);
+  const callId = id.split('|', 1)[0];
   return sanitizeToolCallId(callId ?? id, maxLength);
 }
 

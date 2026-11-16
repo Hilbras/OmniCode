@@ -17,6 +17,11 @@ function refOf(entry: EntryLine): string {
   return entry.payload.ref;
 }
 
+function dataOf(entry: EntryLine): unknown {
+  if ('ref' in entry.payload) throw new Error('expected an inline payload');
+  return entry.payload.data;
+}
+
 const HEADER = '{"kind":"header","version":1,"tree":"chat","branch":"main","createdAt":1}';
 
 function entryJson(seq: number, text: string): string {
@@ -97,13 +102,13 @@ describe('fork', () => {
     expect(fileOf(backend, 'chat', 'fork').trim().split('\n')).toHaveLength(1);
     await forked.append(entryData('d'));
     const walked = [...forked.walk()];
-    expect(walked.map((entry) => entry.payload.data)).toEqual([
+    expect(walked.map(dataOf)).toEqual([
       { text: 'd' },
       { text: 'b' },
       { text: 'a' },
     ]);
     await main.append(entryData('e'));
-    expect([...forked.walk()].map((entry) => entry.payload.data)).toEqual([
+    expect([...forked.walk()].map(dataOf)).toEqual([
       { text: 'd' },
       { text: 'b' },
       { text: 'a' },
@@ -157,8 +162,8 @@ describe('concurrent branches', () => {
     ]);
     expect([a0?.seq, a1?.seq]).toEqual([0, 1]);
     expect([b0?.seq, b1?.seq]).toEqual([0, 1]);
-    expect([...first.walk()].map((entry) => entry.payload.data)).toEqual([{ text: 'a1' }, { text: 'a0' }]);
-    expect([...second.walk()].map((entry) => entry.payload.data)).toEqual([{ text: 'b1' }, { text: 'b0' }]);
+    expect([...first.walk()].map(dataOf)).toEqual([{ text: 'a1' }, { text: 'a0' }]);
+    expect([...second.walk()].map(dataOf)).toEqual([{ text: 'b1' }, { text: 'b0' }]);
     expect(fileOf(backend, 'chat', 'a')).not.toContain('b0');
     expect(fileOf(backend, 'chat', 'b')).not.toContain('a0');
   });
@@ -222,7 +227,7 @@ describe('persistence', () => {
     const reopened = await openStore(backend);
     expect(reopened.names().toSorted()).toEqual(['a', 'b']);
     const loaded = (await reopened.tree('a')).openBranch('main');
-    expect([...loaded.walk()].map((entry) => entry.payload.data)).toEqual([{ text: '3' }, { text: '1' }]);
+    expect([...loaded.walk()].map(dataOf)).toEqual([{ text: '3' }, { text: '1' }]);
     const appended = await loaded.append(entryData('4'));
     expect(appended.seq).toBe(2);
   });
@@ -240,7 +245,7 @@ describe('persistence', () => {
     const loaded = (await reopened.tree('chat')).openBranch('fork');
     expect(loaded.header.parentBranch).toBe('main');
     expect(loaded.header.parentSeq).toBe(0);
-    expect([...loaded.walk()].map((entry) => entry.payload.data)).toEqual([{ text: 'c' }, { text: 'a' }]);
+    expect([...loaded.walk()].map(dataOf)).toEqual([{ text: 'c' }, { text: 'a' }]);
   });
 
   it('terminates an unterminated tail on load', async () => {
@@ -342,7 +347,8 @@ describe('walk and tip', () => {
     await main.append(entryData('b'));
     await main.append(entryData('c'));
     expect(main.head).toBe(2);
-    expect(main.tip()?.payload.data).toEqual({ text: 'c' });
+    const tip = main.tip();
+    expect(tip && dataOf(tip)).toEqual({ text: 'c' });
     expect([...main.walk()].map((entry) => entry.seq)).toEqual([2, 1, 0]);
   });
 

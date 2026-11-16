@@ -20,13 +20,13 @@ export function secondaryModelPatch(
   secondary: SecondaryModelConfig | undefined,
 ): ModelAliasOverrides | undefined {
   if (secondary === undefined) return undefined;
-  const {
-    model: _model,
-    defaultModel: _defaultModel,
-    models: _models,
-    force: _force,
-    ...rawPatch
-  } = secondary;
+  const rawPatch = { ...secondary } as {
+    -readonly [K in keyof SecondaryModelConfig]: SecondaryModelConfig[K];
+  };
+  delete rawPatch['model'];
+  delete rawPatch['defaultModel'];
+  delete rawPatch['models'];
+  delete rawPatch['force'];
   const patch = Object.fromEntries(
     Object.entries(rawPatch).filter(([, value]) => value !== undefined),
   ) as ModelAliasOverrides;
@@ -55,7 +55,11 @@ export function applySecondaryModelConfig(config: OmnicodeConfig, env: Env = pro
   const base = next.models?.[baseId];
   if (base === undefined) return next;
 
-  const { overrides: baseOverrides, ...baseFields } = base;
+  const baseOverrides = base['overrides'];
+  const baseFields = { ...base } as {
+    -readonly [K in keyof typeof base]: (typeof base)[K];
+  };
+  delete baseFields['overrides'];
   const derived: ModelAlias = {
     ...baseFields,
     overrides: { ...baseOverrides, ...patch },

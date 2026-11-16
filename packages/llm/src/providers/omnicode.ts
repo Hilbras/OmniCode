@@ -536,7 +536,9 @@ export class OmnicodeChatProvider implements ChatProvider {
     // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete kwargs['max_tokens'];
 
-    const { extra_body: extraBody, ...requestKwargs } = kwargs;
+    const extraBody = kwargs['extra_body'];
+    const requestKwargs = { ...kwargs } as { -readonly [K in keyof typeof kwargs]: typeof kwargs[K] };
+    delete requestKwargs['extra_body'];
 
     const createParams: Record<string, unknown> = {
       model: this._model,

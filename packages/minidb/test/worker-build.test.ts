@@ -8,6 +8,7 @@
 // inline fallback produces byte-identical artifacts.
 
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
 import path from 'node:path';
@@ -18,6 +19,7 @@ import {
   configureTextBuildWorkerRuntime,
   getTextBuildWorkerRuntimeState,
   resetTextBuildWorkerRuntime,
+  tsWorkerExecArgv,
 } from '../src/worker-runtime.js';
 import { buildTextArtifacts } from '../src/worker/text-build-core.js';
 import type { TextBuildCoreSpec } from '../src/worker/text-build-core.js';
@@ -995,4 +997,23 @@ describe('worker slot queue (TUI-safe slot pressure policy)', () => {
     expect(db.search('ft', 'hello').length).toBeGreaterThan(0);
     await db.close();
   }, 60000);
+});
+
+describe('ts worker exec args', () => {
+  test('every flag handed to the worker thread is accepted by this node', () => {
+    const argv = tsWorkerExecArgv();
+    const probe = spawnSync(process.execPath, [...argv, '-e', 'process.exit(0)'], {
+      encoding: 'utf8',
+    });
+    assert.equal(probe.status, 0, `node ${argv.join(' ')} -> ${probe.stderr}`);
+    assert.ok(argv.includes('--disable-warning=ExperimentalWarning'));
+  });
+
+  test('runs worker TypeScript through a transform, never strip-only mode', () => {
+    const argv = tsWorkerExecArgv();
+    const carriesTransform = argv.includes('--experimental-transform-types');
+    const carriesLoader =
+      argv.includes('--import') && argv.some((arg) => arg.endsWith('tsx/dist/loader.mjs'));
+    assert.ok(carriesTransform || carriesLoader, argv.join(' '));
+  });
 });

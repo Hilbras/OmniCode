@@ -207,11 +207,11 @@ export interface SandboxProbeDeps {
 export async function probeSandboxBackends(
   deps: SandboxProbeDeps = {},
 ): Promise<readonly SandboxAvailability[]> {
-  const [bwrap, landlock, seatbelt, windows] = await Promise.all([
+  const probes = await Promise.all([
     probeBwrap(deps.bwrap),
     probeLandlock(deps.landlock),
     probeSeatbelt(deps.seatbelt),
     probeWindowsSandbox(deps.windows),
   ]);
-  return [bwrap, landlock, seatbelt, windows];
+  return probes;
 }

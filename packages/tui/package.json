@@ -5,11 +5,11 @@
   "description": "Terminal User Interface library with differential rendering for efficient text-based applications",
   "license": "MIT",
   "author": "Hilbras",
-  "homepage": "https://github.com/Hilbras/omnicode/tree/main/Kernel/tui#readme",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/tui#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hilbras/omnicode.git",
-    "directory": "Kernel/tui"
+    "directory": "packages/tui"
   },
   "bugs": {
     "url": "https://github.com/Hilbras/omnicode/issues"

@@ -8,9 +8,11 @@ import {
   createHarness,
   evidenceFor,
   FailingStore,
+  globalScope,
   REPO_A,
   repoScope,
   sessionScope,
+  WORKSPACE,
 } from './helpers';
 
 describe('capture pipeline', () => {
@@ -49,6 +51,42 @@ describe('capture pipeline', () => {
     expect(again.status).toBe('deduplicated');
     expect(again.id).toBe(first.id);
     expect(await harness.service.list({ projectId: REPO_A })).toHaveLength(1);
+  });
+
+  it('coalesces a re-statement of the same subject value instead of flagging a conflict', async () => {
+    const harness = createHarness();
+    const first = await harness.service.capture(
+      captureInput("The user's name is Hassan.", {
+        category: 'preference',
+        subject: 'user.name',
+        scope: globalScope(),
+      }),
+    );
+    const again = await harness.service.capture(
+      captureInput('User name is Hassan', {
+        category: 'preference',
+        subject: 'user.name',
+        scope: globalScope(),
+      }),
+    );
+    expect(first.status).toBe('stored');
+    expect(again.status).toBe('deduplicated');
+    expect(again.id).toBe(first.id);
+    const stored = await harness.service.list({ workspaceId: WORKSPACE, scopes: ['global'] });
+    expect(stored).toHaveLength(1);
+    expect(stored[0]?.conflictsWith).toEqual([]);
+  });
+
+  it('still records a conflict when the same subject states a different value', async () => {
+    const harness = createHarness();
+    await harness.service.capture(
+      captureInput('devserver port is 5173', { subject: 'devserver.port', scope: repoScope(REPO_A) }),
+    );
+    const second = await harness.service.capture(
+      captureInput('devserver port is 3000', { subject: 'devserver.port', scope: repoScope(REPO_A) }),
+    );
+    expect(second.status).toBe('stored');
+    expect(second.record?.conflictsWith.length).toBeGreaterThan(0);
   });
 
   it('keeps identical content in different scopes apart', async () => {

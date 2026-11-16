@@ -1,6 +1,7 @@
 import {
   APIConnectionError,
   APIEmptyResponseError,
+  APIProviderFilteredError,
   APIProviderQuotaExhaustedError,
   APIStatusError,
   APITimeoutError,
@@ -90,7 +91,7 @@ export interface OmnicodeErrorInfo {
   readonly action?: string;
 }
 
-export const OMNICODE_ERROR_INFO = {
+export const OMNICODE_ERROR_INFO: Record<OmnicodeErrorCode, OmnicodeErrorInfo> = {
   'config.invalid': {
     title: 'Invalid configuration',
     retryable: false,
@@ -310,7 +311,8 @@ export const OMNICODE_ERROR_INFO = {
     title: 'Provider filtered response',
     retryable: false,
     public: true,
-    action: 'Revise the prompt or model configuration to avoid provider safety filtering.',
+    action:
+      'Revise the prompt, or switch to another model or provider. The provider (or its gateway) screened the request and refused it before generating; a benign-looking input usually means the endpoint\u2019s own safety filter is the cause.',
   },
   'provider.rate_limit': {
     title: 'Provider rate limit',
@@ -457,10 +459,14 @@ export const OMNICODE_ERROR_INFO = {
     public: true,
     action: 'Inspect logs or report the issue with diagnostics.',
   },
-} as const satisfies Record<OmnicodeErrorCode, OmnicodeErrorInfo>;
+};
 
 export function isOmnicodeErrorCode(code: unknown): code is OmnicodeErrorCode {
   return typeof code === 'string' && Object.hasOwn(OMNICODE_ERROR_INFO, code);
+}
+
+function errorInfo(code: OmnicodeErrorCode): OmnicodeErrorInfo {
+  return OMNICODE_ERROR_INFO[code] as OmnicodeErrorInfo;
 }
 
 export interface OmnicodeErrorOptions {
@@ -504,7 +510,7 @@ export function makeErrorPayload(
     message,
     name: options?.name,
     details: options?.details,
-    retryable: OMNICODE_ERROR_INFO[code].retryable,
+    retryable: errorInfo(code).retryable,
   };
 }
 
@@ -515,19 +521,21 @@ export function toOmnicodeErrorPayload(error: unknown): OmnicodeErrorPayload {
       message: error.message,
       name: error.name,
       details: error.details,
-      retryable: OMNICODE_ERROR_INFO[error.code].retryable,
+      retryable: errorInfo(error.code).retryable,
     };
   }
 
   if (error instanceof APIStatusError) {
     const code: OmnicodeErrorCode =
-      error instanceof APIProviderQuotaExhaustedError
-        ? ErrorCodes.PROVIDER_API_ERROR
-        : error.statusCode === 429
-          ? ErrorCodes.PROVIDER_RATE_LIMIT
-          : error.statusCode === 401
-            ? ErrorCodes.PROVIDER_AUTH_ERROR
-            : ErrorCodes.PROVIDER_API_ERROR;
+      error instanceof APIProviderFilteredError
+        ? ErrorCodes.PROVIDER_FILTERED
+        : error instanceof APIProviderQuotaExhaustedError
+          ? ErrorCodes.PROVIDER_API_ERROR
+          : error.statusCode === 429
+            ? ErrorCodes.PROVIDER_RATE_LIMIT
+            : error.statusCode === 401
+              ? ErrorCodes.PROVIDER_AUTH_ERROR
+              : ErrorCodes.PROVIDER_API_ERROR;
     return {
       code,
       message: sanitizeStatusErrorMessage(error.message),
@@ -536,7 +544,7 @@ export function toOmnicodeErrorPayload(error: unknown): OmnicodeErrorPayload {
         statusCode: error.statusCode,
         requestId: error.requestId,
       },
-      retryable: OMNICODE_ERROR_INFO[code].retryable,
+      retryable: errorInfo(code).retryable,
     };
   }
 
@@ -545,7 +553,7 @@ export function toOmnicodeErrorPayload(error: unknown): OmnicodeErrorPayload {
       code: ErrorCodes.PROVIDER_CONNECTION_ERROR,
       message: error.message,
       name: error.name,
-      retryable: OMNICODE_ERROR_INFO[ErrorCodes.PROVIDER_CONNECTION_ERROR].retryable,
+      retryable: errorInfo(ErrorCodes.PROVIDER_CONNECTION_ERROR).retryable,
     };
   }
 
@@ -562,7 +570,7 @@ export function toOmnicodeErrorPayload(error: unknown): OmnicodeErrorPayload {
         finishReason: error.finishReason,
         rawFinishReason: error.rawFinishReason,
       },
-      retryable: OMNICODE_ERROR_INFO[code].retryable,
+      retryable: errorInfo(code).retryable,
     };
   }
 
@@ -571,7 +579,7 @@ export function toOmnicodeErrorPayload(error: unknown): OmnicodeErrorPayload {
       code: ErrorCodes.PROVIDER_API_ERROR,
       message: error.message,
       name: error.name,
-      retryable: OMNICODE_ERROR_INFO[ErrorCodes.PROVIDER_API_ERROR].retryable,
+      retryable: errorInfo(ErrorCodes.PROVIDER_API_ERROR).retryable,
     };
   }
 
@@ -580,14 +588,14 @@ export function toOmnicodeErrorPayload(error: unknown): OmnicodeErrorPayload {
       code: ErrorCodes.INTERNAL,
       message: error.message,
       name: error.name,
-      retryable: OMNICODE_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
+      retryable: errorInfo(ErrorCodes.INTERNAL).retryable,
     };
   }
 
   return {
     code: ErrorCodes.INTERNAL,
     message: String(error),
-    retryable: OMNICODE_ERROR_INFO[ErrorCodes.INTERNAL].retryable,
+    retryable: errorInfo(ErrorCodes.INTERNAL).retryable,
   };
 }
 

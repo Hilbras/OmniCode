@@ -14,12 +14,16 @@ import { IBashParserService } from '#/app/bashParser/bashParser';
 /**
  * Applies a loaded exec policy to `Bash` calls.
  *
- * Placement matters more than the matching rules: this policy runs *after*
- * the sensitive-file and git-control policies in the chain, so a rule can only
- * ever narrow what would otherwise be admitted — it can never re-open a
- * path the workspace layer already refused. It also runs before the auto-mode
- * classifier, so an explicit `forbidden` is not something the classifier's
- * "safe tool" fast path can bypass.
+ * Placement matters more than the matching rules, so the pass is split in two:
+ *
+ * - `verdict` — `forbidden` and `allow` — runs early, right after the
+ *   sensitive-file and git-control policies, so a rule can only ever narrow
+ *   what would otherwise be admitted, and an explicit `forbidden` is not
+ *   something the auto-mode classifier's "safe tool" fast path can bypass.
+ * - `prompt` — `prompt` and `prompt-user` — runs after the session approval
+ *   history, so a command the user already approved for the session is not
+ *   asked about again on every repeat. A `forbidden` rule is unaffected: it
+ *   never reaches this pass, because the verdict pass already denied the call.
  *
  * The policy itself is composed by `AgentPermissionPolicyService` from the
  * `execPolicy` config section; this class only holds the loaded policy. Without
@@ -31,12 +35,22 @@ import { IBashParserService } from '#/app/bashParser/bashParser';
  * executing tool must refuse to run when it cannot confine the command's
  * network use to those hosts.
  */
+export type ExecPolicyPass = 'all' | 'verdict' | 'prompt';
+
 export class ExecPolicyPermissionPolicyService implements PermissionPolicy {
-  readonly name = 'exec-policy';
+  readonly name: string;
 
   private policy: ExecPolicy | undefined;
 
-  constructor(@IBashParserService private readonly bashParser: IBashParserService) {}
+  constructor(
+    @IBashParserService private readonly bashParser: IBashParserService,
+    pass: ExecPolicyPass = 'all',
+  ) {
+    this.name = pass === 'prompt' ? 'exec-policy-prompt' : 'exec-policy';
+    this.pass = pass;
+  }
+
+  private readonly pass: ExecPolicyPass;
 
   /** Replaces the active policy. `undefined` disables the rule pass. */
   setPolicy(policy: ExecPolicy | undefined): void {
@@ -56,7 +70,35 @@ export class ExecPolicyPermissionPolicyService implements PermissionPolicy {
     if (command === undefined) return undefined;
 
     const match = matchExecPolicy(command, policy, { parser: this.bashParser });
+    if (!this.accepts(match.decision)) return undefined;
     return decisionResult(match.decision, match.reason, command, match.rule?.hosts);
+  }
+
+  private accepts(decision: ExecDecision): boolean {
+    switch (this.pass) {
+      case 'all':
+        return true;
+      case 'verdict':
+        return decision === 'forbidden' || decision === 'allow';
+      case 'prompt':
+        return decision === 'prompt' || decision === 'prompt-user';
+    }
+  }
+}
+
+/**
+ * Verdicts (`forbidden`, `allow`) keep their early chain position; prompts are
+ * a separate pass so they can run after session approvals.
+ */
+export class ExecPolicyVerdictPermissionPolicyService extends ExecPolicyPermissionPolicyService {
+  constructor(@IBashParserService parser: IBashParserService) {
+    super(parser, 'verdict');
+  }
+}
+
+export class ExecPolicyPromptPermissionPolicyService extends ExecPolicyPermissionPolicyService {
+  constructor(@IBashParserService parser: IBashParserService) {
+    super(parser, 'prompt');
   }
 }
 
@@ -88,7 +130,9 @@ function decisionResult(
       return { kind: 'ask', reason: { exec_policy: reason, command } };
     case 'prompt-user':
       // A bare prompt-user means "a human decides" — an approval that no
-      // reviewer lane may auto-approve later.
+      // reviewer lane may auto-approve later. An approve-for-session by the
+      // user themselves does satisfy it: nothing here re-asks a human who
+      // already answered for this exact command.
       return {
         kind: 'ask',
         reason: { exec_policy: reason, command, requires_human: true },

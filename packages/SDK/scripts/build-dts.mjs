@@ -12,13 +12,15 @@ const providerClientShimPath = path.join(dtsRoot, 'provider-clients.d.ts');
 const tscBinPath = packageBinPath('typescript', 'bin/tsc');
 const apiExtractorBinPath = packageBinPath('@microsoft/api-extractor', 'bin/api-extractor');
 
-const packageDirs = new Set(['omnicode-core', 'omnicode-kaos', 'omnicode-client', 'omnicode-llm', 'omnicode-auth', 'omnicode-sdk']);
+const packageDirs = new Set(['core', 'Kaos', 'llm', 'auth', 'SDK', 'engine', 'base', 'memory']);
 const workspacePackages = new Map([
-  ['@hilbras/omnicode-core', 'omnicode-core'],
-  ['@hilbras/omnicode-kaos', 'omnicode-kaos'],
-  ['@hilbras/omnicode-auth', 'omnicode-auth'],
-  ['@hilbras/omnicode-client', 'omnicode-client'],
-  ['@hilbras/omnicode-llm', 'omnicode-llm'],
+  ['@hilbras/omnicode-core', 'core'],
+  ['@hilbras/omnicode-engine', 'engine'],
+  ['@hilbras/omnicode-kaos', 'Kaos'],
+  ['@hilbras/omnicode-auth', 'auth'],
+  ['@hilbras/omnicode-llm', 'llm'],
+  ['@hilbras/omnicode-base', 'base'],
+  ['@hilbras/omnicode-memory', 'memory'],
 ]);
 
 // Derived from `workspacePackages` rather than hand-listed: a specifier the
@@ -44,7 +46,13 @@ try {
   await run('tsc', tscBinPath, ['-p', 'tsconfig.dts.json']);
   await writeProviderClientShim();
   await rewriteWorkspaceSpecifiers();
-  await run('api-extractor', apiExtractorBinPath, ['run', '--local']);
+  // Default is api-extractor's check mode: it fails when the committed API report
+  // in `etc/` no longer matches the built surface. `--local` rewrites the report,
+  // which is what an intentional API change needs.
+  const updateReport = process.argv.includes('--local');
+  // api-extractor refuses to create the report folder itself.
+  await mkdir(path.join(packageRoot, 'etc'), { recursive: true });
+  await run('api-extractor', apiExtractorBinPath, updateReport ? ['run', '--local'] : ['run']);
 } finally {
   await rm(tempDir, { recursive: true, force: true });
 }

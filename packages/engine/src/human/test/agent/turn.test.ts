@@ -3,7 +3,7 @@ import { assign, createActor, emit, setup } from '#/xstate2';
 
 import { credentialsRecovery } from '#/credentials/credentials';
 import { UNKNOWN_CAPABILITY } from '#/llm/capability';
-import type { LlmErrorMessage } from '#/llm/errors';
+import type { LlmErrorMessage, LlmRemoteErrorMessage } from '#/llm/errors';
 import type { ContentPart, Message, UserMessage } from '#/llm/message';
 import { createMediaDegradeRecovery } from '#/llm/media/degrade';
 import type { LlmModel } from '#/llm/model';
@@ -31,7 +31,7 @@ function statusError(
   statusCode: number,
   message: string,
   retryAfterMs: number | null = null,
-): LlmErrorMessage {
+): LlmRemoteErrorMessage {
   return { kind: 'status', statusCode, message, requestId: null, retryAfterMs, headers: null };
 }
 
@@ -43,6 +43,7 @@ function createStubRequester(
     generate: (_config, _content, { onEvent }) => {
       const step = plan[Math.min(calls, plan.length - 1)];
       calls += 1;
+      if (step === undefined) throw new Error('the plan must not be empty');
       if (step === 'ok') {
         onEvent?.({ type: 'llm.streaming.part', part: { type: 'text', text: 'done' } });
         onEvent?.({ type: 'llm.done' });
@@ -459,6 +460,7 @@ function createCapturingRequester(plan: readonly (LlmErrorMessage | 'ok')[]) {
       seen.push(content.messages);
       const step = plan[Math.min(calls, plan.length - 1)];
       calls += 1;
+      if (step === undefined) throw new Error('the plan must not be empty');
       control.onEvent?.({ type: 'llm.sent' });
       if (step === 'ok') {
         control.onEvent?.({ type: 'llm.streaming.part', part: { type: 'text', text: 'done' } });

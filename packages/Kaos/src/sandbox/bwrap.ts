@@ -110,7 +110,10 @@ export function buildBwrapArgv(
   if (!tmpfsPaths.ok) return tmpfsPaths;
 
   const envEntries: [string, string][] = [];
-  for (const [key, value] of Object.entries(policy.env ?? {})) {
+  const envPairs = Object.entries(policy.env ?? {});
+  for (const entry of envPairs) {
+    const key = entry[0];
+    const value = entry[1];
     if (!ENV_KEY_PATTERN.test(key)) {
       return sandboxFailure('invalid-request', `invalid sandbox environment key: ${key}`);
     }
@@ -158,8 +161,8 @@ export function buildBwrapArgv(
     args.push('--tmpfs', tmpfsPath);
   }
 
-  for (const [key, value] of envEntries) {
-    args.push('--setenv', key, value);
+  for (const entry of envEntries) {
+    args.push('--setenv', entry[0], entry[1]);
   }
 
   args.push('--chdir', cwd.value, '--', ...request.command);

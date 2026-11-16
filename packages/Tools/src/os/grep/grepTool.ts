@@ -278,12 +278,14 @@ export class GrepTool implements IGrepTool {
       ),
     );
     const contentBody = displayedLines.join('\n');
+    const filteredCount = filteredSensitive.size;
     const visibleBody =
-      orderedLines.length === 0 && filteredSensitive.size > 0
-        ? 'No non-sensitive matches found'
-        : contentBody;
+      orderedLines.length === 0 && filteredCount > 0 ? 'No non-sensitive matches found' : contentBody;
+    // Only claim filtering when something was actually filtered: "No matches
+    // found" is otherwise the truthful answer. The list of filtered paths and
+    // their count is appended separately below, so the message stays bare here.
     const emptyResultMessage =
-      SENSITIVE_GLOBS_TO_EXCLUDE.length > 0 ? 'No non-sensitive matches found' : 'No matches found';
+      filteredCount > 0 ? 'No non-sensitive matches found' : 'No matches found';
     const body =
       visibleBody === '' && headerLines.length === 0 && messages.length === 0
         ? emptyResultMessage

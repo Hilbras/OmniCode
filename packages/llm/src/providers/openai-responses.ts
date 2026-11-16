@@ -498,7 +498,7 @@ function mapAudioUrlToInputItem(url: string): unknown {
       const b64 = parts[1];
       const subtypePart = header.split('/')[1];
       if (subtypePart === undefined) return null;
-      const [subtypeHead = ''] = subtypePart.split(';');
+      const subtypeHead = subtypePart.split(';')[0] ?? '';
       const subtype = subtypeHead.toLowerCase();
       const ext =
         subtype === 'mp3' || subtype === 'mpeg' ? 'mp3' : subtype === 'wav' ? 'wav' : null;

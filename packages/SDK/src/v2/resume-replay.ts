@@ -79,7 +79,9 @@ function mapReplayRecord(record: V2AgentReplayRecord): AgentReplayRecord {
 function parseWireRecords(content: string, userTurns: UserTurnCounter): WireRecord[] {
   const lines = content.split('\n');
   const records: WireRecord[] = [];
-  for (const [index, rawLine] of lines.entries()) {
+  for (const entry of lines.entries()) {
+    const index = entry[0];
+    const rawLine = entry[1];
     const line = rawLine.endsWith('\r') ? rawLine.slice(0, -1) : rawLine;
     if (line.length === 0) continue;
     try {

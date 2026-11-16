@@ -147,6 +147,27 @@ export class APIProviderQuotaExhaustedError extends APIStatusError {
 }
 
 /**
+ * HTTP 400/403/422 that specifically means the provider rejected the request —
+ * or would not return a response — because it tripped a content-safety,
+ * moderation, or provider policy filter. Deterministic: replaying the same
+ * request re-triggers the filter, so it is excluded from retry and surfaces as
+ * `provider.filtered`, letting the host steer the user to revise the prompt or
+ * the offending content.
+ */
+export class APIProviderFilteredError extends APIStatusError {
+  constructor(
+    statusCode: number,
+    message: string,
+    requestId?: string | null,
+    retryAfterMs?: number | null,
+    traceId?: string | null,
+  ) {
+    super(statusCode, message, requestId, retryAfterMs, traceId);
+    this.name = 'APIProviderFilteredError';
+  }
+}
+
+/**
  * The API returned an empty response (no content, no tool calls).
  */
 export class APIEmptyResponseError extends ChatProviderError {
@@ -292,6 +313,38 @@ const IMAGE_FORMAT_STATUS_MESSAGE_PATTERNS = [
 // so the anchor costs nothing on the known cases.
 const MEDIA_TYPE_FIELD_PATTERN = /(?:media|mime)_?type/;
 
+// Provider-side content-safety / moderation rejections. Worded differently by
+// every provider (Hilbras "input rejected by content safety screening",
+// OpenAI "rejected as a result of our safety system", Azure "content
+// management policy", Anthropic "output blocked by content filtering policy",
+// Gemini "blocked due to safety"), so match on the shared vocabulary.
+const CONTENT_FILTER_STATUS_MESSAGE_PATTERNS = [
+  /content[ _-]?safety/,
+  /content[ _-]?filter/,
+  /content[ _-]?policy/,
+  /content[ _-]?management policy/,
+  /safety[ _-]?(?:filter|screening|system)/,
+  /(?:prompt|input|request|message|content)[\s\S]{0,40}(?:rejected|blocked|flagged)[\s\S]{0,40}(?:safety|content|moderation|policy|filter)/,
+  /(?:rejected|blocked|flagged)[\s\S]{0,40}(?:safety|content|moderation|policy|filter)/,
+  /response was filtered/,
+  /blocked by (?:the )?(?:content|safety|moderation|provider)/,
+  /flagged as potentially (?:harmful|unsafe|violating|inappropriate)/,
+  /responsible ai/,
+  /moderation/,
+] as const;
+
+/**
+ * Whether the provider rejected the request (or refused to respond) because it
+ * tripped a content-safety, moderation, or provider policy filter. The
+ * rejection is deterministic for a given history, so callers must not retry it
+ * and should surface it as `provider.filtered`.
+ */
+export function isContentFilterStatusError(statusCode: number, message: string): boolean {
+  if (statusCode !== 400 && statusCode !== 403 && statusCode !== 422) return false;
+  const lowerMessage = message.toLowerCase();
+  return CONTENT_FILTER_STATUS_MESSAGE_PATTERNS.some((pattern) => pattern.test(lowerMessage));
+}
+
 /**
  * Whether the provider rejected an IMAGE in the request because of its
  * FORMAT or DATA — an unsupported media type or undecodable image bytes.
@@ -436,6 +489,9 @@ export function normalizeAPIStatusError(
   }
   if (isRequestTooLargeStatusError(statusCode, message)) {
     return new APIRequestTooLargeError(statusCode, message, requestId, retryAfterMs, traceId);
+  }
+  if (isContentFilterStatusError(statusCode, message)) {
+    return new APIProviderFilteredError(statusCode, message, requestId, retryAfterMs, traceId);
   }
   return new APIStatusError(
     statusCode,

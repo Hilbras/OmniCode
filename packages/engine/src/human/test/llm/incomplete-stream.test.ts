@@ -73,6 +73,7 @@ describe('incomplete stream guard', () => {
   it('does not reclassify a stream that a provider already failed', async () => {
     const events: LlmRequestEvent[] = [];
     const failing: StreamParser<Chunk> = (_chunk, sink) => {
+      if (sink.onError === undefined) throw new Error('expected an onError sink');
       sink.onError({ kind: 'provider', message: 'upstream exploded' });
     };
     await consumeStream<Chunk>(streamOf([{ kind: 'delta', text: 'x' }]), failing, (event) =>

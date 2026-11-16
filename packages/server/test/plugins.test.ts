@@ -18,7 +18,7 @@ interface Envelope<T> {
   request_id: string;
 }
 
-const CATALOG_URL = 'http://marketplace.test/marketplace.json';
+const CATALOG_URL = 'https://marketplace.test/marketplace.json';
 
 const CATALOG = {
   version: '1',
@@ -291,9 +291,9 @@ describe('server-v2 /api/v1 plugins', () => {
     ]);
     expect(before.body.data.entries[0]?.installed).toBeUndefined();
     const relative = before.body.data.entries.find((e) => e.id === 'relative-plugin');
-    expect(relative?.source).toBe('http://marketplace.test/plugins/relative.zip');
+    expect(relative?.source).toBe('https://marketplace.test/plugins/relative.zip');
     const alias = before.body.data.entries.find((e) => e.id === 'alias-plugin');
-    expect(alias?.source).toBe('http://marketplace.test/plugins/alias.zip');
+    expect(alias?.source).toBe('https://marketplace.test/plugins/alias.zip');
     expect(before.body.data.entries.find((e) => e.id === 'gh-plugin')?.version).toBe('2.0.0');
     expect(before.body.data.entries.find((e) => e.id === 'third-party-plugin')?.version).toBe(
       '3.1.0',

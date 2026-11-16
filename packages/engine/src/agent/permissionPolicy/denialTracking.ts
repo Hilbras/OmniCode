@@ -8,6 +8,13 @@ import { canonicalizeCommand } from './commandCanonicalization';
  * DEFAULT-mode confirmation. Reaching a consecutive threshold or the total denial
  * cap also falls back to that confirmation. The session stays in AUTO; only the
  * single offending call is downgraded.
+ *
+ * Approving a fallback confirmation is a decision, not just an escape hatch:
+ * `recordFallbackApprove` clears the consecutive counters and the classifier
+ * remembers the action as a trusted answer, so the state does not pin the call
+ * into permanent fallback. `AutoModeClassifierPermissionPolicyService` is the
+ * only caller that must do this; the transition lives here to keep one
+ * documented contract.
  */
 
 export type DenialFallbackReason =

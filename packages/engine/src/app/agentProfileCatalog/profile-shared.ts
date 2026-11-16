@@ -108,6 +108,9 @@ export const DEFAULT_REPLY_STYLE_GUIDE =
 export const NOTIFY_USER_GUIDANCE =
   "When `NotifyUser` is available, use it proactively to keep the end user informed while you work. For a multi-step task, send an early update describing your approach, then report meaningful findings, phase conclusions, long waits, and blockers. Keep each update to one or two sentences in the end user's language; avoid repeating unchanged status. The UI adds the source label automatically. If you are working as a subagent, report only your own subtask's progress, do not present its completion as completion of the whole task, and do not ask the end user questions or request decisions. Updates do not automatically reach your parent agent: include every important finding in your final handoff. Updates remain visible until the main agent starts its next turn, so your final reply must still stand on its own.";
 
+export const MEMORY_GUIDANCE =
+  'Durable memory is available through `memory_search`, `memory_save`, and `memory_forget`. Decide for yourself what is worth keeping: save anything that will still be true and useful in a future session and that you would otherwise have to rediscover — a durable fact or preference the user states about themselves or their setup, a non-obvious project fact or convention, or a decision whose reason the code does not capture — and save it as it comes up, without waiting to be asked. Do not save secrets, credentials, transient progress, one-off steps, todo state, or anything already recorded in the code and docs (read that instead). Choose the narrowest scope that fits (`repository` for this project, `global` for facts about the user and cross-project preferences, `session` for the rest of this session), match `category` to the content, search before saving to avoid duplicates, and set `subject` on a fact that may later be contradicted. Everything you save is stored unverified until the user confirms it, so it is not auto-injected yet.';
+
 export function renderAgentProfilePrompt(
   profile: AgentProfile,
   context: AgentProfileContext,
@@ -145,6 +148,8 @@ export function systemPromptVars(
     product_name: context.productName ?? DEFAULT_PRODUCT_NAME,
     reply_style_guide: context.replyStyleGuide ?? DEFAULT_REPLY_STYLE_GUIDE,
     notify_user_guidance: context.notifyUserActive === true ? ` ${NOTIFY_USER_GUIDANCE}` : '',
+    memory_guidance:
+      context.memoryActive === true ? `\n\n# Memory\n\n${MEMORY_GUIDANCE}\n\n` : '',
     os: context.osKind ?? '',
     windows_notes: context.osKind === 'Windows' ? `\n\n${WINDOWS_NOTES}\n\n` : '',
     shell: shellName.length > 0 ? `${shellName} (\`${shellPath}\`)` : '',

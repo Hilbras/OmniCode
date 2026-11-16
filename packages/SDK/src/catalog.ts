@@ -53,7 +53,9 @@ export async function fetchCatalog(
   url: string,
   options: FetchCatalogOptions = {},
 ): Promise<Catalog> {
-  const { signal, fetchImpl = fetch, userAgent } = options;
+  const signal = options.signal;
+  const fetchImpl = options.fetchImpl ?? fetch;
+  const userAgent = options.userAgent;
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (userAgent !== undefined) headers['User-Agent'] = userAgent;
   const res = await fetchImpl(url, { headers, signal });
@@ -153,7 +155,10 @@ export function applyCatalogProvider(
   };
 
   const models = config.models ?? {};
-  for (const [key, alias] of Object.entries(models)) {
+  const modelEntries = Object.entries(models);
+  for (const entry of modelEntries) {
+    const key = entry[0];
+    const alias = entry[1];
     if (alias.provider === options.providerId) delete models[key];
   }
   for (const model of options.models) {

@@ -36,7 +36,9 @@ function userExtras(
   remoteOwnedFields: ReadonlySet<string>,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(existing)) {
+  for (const entry of Object.entries(existing)) {
+    const key = entry[0];
+    const value = entry[1];
     if (key === 'overrides') continue;
     if (!remoteOwnedFields.has(key)) out[key] = value;
   }

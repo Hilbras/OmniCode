@@ -45,6 +45,22 @@ export function hostRestrictionDenialMessage(allowedHosts: readonly string[]): s
   );
 }
 
+/**
+ * Denial message for `OMNICODE_SANDBOX_MODE=required` when no backend can be
+ * used. The sandbox is prepared before the command starts, so the same command
+ * fails the same way every time: say so, instead of letting the model retry a
+ * command whose failure has nothing to do with the command.
+ */
+export function sandboxRequiredDenialMessage(reason: string): string {
+  return (
+    'Command not run: OMNICODE_SANDBOX_MODE=required and no OS sandbox backend could be used ' +
+    `for this command (${reason}). Retrying will not help - the sandbox is prepared before ` +
+    'the command starts, so every attempt is refused the same way. Do not try to express the ' +
+    'command differently; ask the user to install or enable a sandbox backend (for example ' +
+    'bubblewrap on Linux), or to relax OMNICODE_SANDBOX_MODE.'
+  );
+}
+
 export type BashSandboxPreparation =
   | { readonly kind: 'direct'; readonly reason?: string }
   | { readonly kind: 'sandbox'; readonly plan: SandboxExecutionPlan }
@@ -153,7 +169,7 @@ export class BashSandboxService implements IBashSandboxService {
     if (!selection.enabled || selection.backend === null || selection.availability === null) {
       if (mode === 'required') {
         return {
-          preparation: { kind: 'denied', message: selection.message },
+          preparation: { kind: 'denied', message: sandboxRequiredDenialMessage(selection.message) },
           backend: 'none',
           outcome: 'denied',
         };
@@ -194,7 +210,7 @@ export class BashSandboxService implements IBashSandboxService {
     }
     if (mode === 'required') {
       return {
-        preparation: { kind: 'denied', message: result.message },
+        preparation: { kind: 'denied', message: sandboxRequiredDenialMessage(result.message) },
         backend: selection.backend,
         outcome: 'denied',
       };

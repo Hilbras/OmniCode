@@ -12,7 +12,7 @@ import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { isWithinWorkspace } from '#/tool/path-access';
 import { isReadOnlyShellCall } from '#/tool/read-only-shell';
 import { writeFileAccesses } from './path-utils';
-import { actionFingerprint, consumePendingManualRetry, createDenialState, recordAllow, recordBlock, shouldFallback } from '../denialTracking';
+import { actionFingerprint, consumePendingManualRetry, createDenialState, recordAllow, recordBlock, recordFallbackApprove, shouldFallback } from '../denialTracking';
 import { readAutoModeContext, type AutoModeContext } from '../autoModeContext';
 
 const SAFE_AUTO_TOOLS = new Set<string>([
@@ -119,43 +119,62 @@ export class AutoModeClassifierPermissionPolicyService implements PermissionPoli
     }
 
     if (toolName.startsWith('mcp__')) {
-      const blockedState = recordBlock(this.denialState, fingerprint);
-      const fallback = shouldFallback(blockedState, fingerprint);
-      if (fallback.fallback) {
-        this.denialState = consumePendingManualRetry(blockedState);
-        finish('ask', 'mcp_grant_ambiguity');
-        return {
-          kind: 'ask',
-          reason: { auto_mode_classifier: 'mcp_grant_ambiguity', denial_fallback: fallback.reason },
-        };
-      }
-      this.denialState = blockedState;
-      finish('ask', 'mcp_grant_ambiguity');
-      return {
-        kind: 'ask',
-        reason: { auto_mode_classifier: 'mcp_grant_ambiguity' },
-        resolveApproval: (response) => {
-          if (response.decision === 'approved') this.trustedAnswers.add(fingerprint);
-          return undefined;
-        },
-      };
+      return this.askAfterBlock({
+        fingerprint,
+        category: 'mcp_grant_ambiguity',
+        telemetryCategory: 'mcp_grant_ambiguity',
+        finish,
+      });
     }
 
+    return this.askAfterBlock({
+      fingerprint,
+      category: 'ask',
+      telemetryCategory: 'classifier_ask',
+      finish,
+    });
+  }
+
+  /**
+   * The one denial-retry code path: every unclassified tool call counts as a
+   * block, and once the block thresholds are reached the call is downgraded to
+   * a manual confirmation (`denial_fallback`) instead of being silently refused.
+   *
+   * Both branches resolve the same way — the user's approval is remembered for
+   * the session, and a fallback approval additionally clears the consecutive
+   * counters through `recordFallbackApprove`, so one manually confirmed action
+   * does not pin the classifier into permanent fallback.
+   */
+  private askAfterBlock(input: {
+    readonly fingerprint: string;
+    /** Value used as the `auto_mode_classifier` reason on the ask. */
+    readonly category: string;
+    /** Value reported to telemetry, which distinguishes the MCP ambiguity case. */
+    readonly telemetryCategory: string;
+    readonly finish: (decision: 'approve' | 'deny' | 'ask', category: string) => void;
+  }): PermissionPolicyResult {
+    const { fingerprint, category, telemetryCategory, finish } = input;
     const blockedState = recordBlock(this.denialState, fingerprint);
     const fallback = shouldFallback(blockedState, fingerprint);
     if (fallback.fallback) {
       this.denialState = consumePendingManualRetry(blockedState);
-      finish('ask', 'classifier_ask');
+      finish('ask', telemetryCategory);
       return {
         kind: 'ask',
-        reason: { auto_mode_classifier: 'ask', denial_fallback: fallback.reason },
+        reason: { auto_mode_classifier: category, denial_fallback: fallback.reason },
+        resolveApproval: (response) => {
+          if (response.decision !== 'approved') return undefined;
+          this.denialState = recordFallbackApprove(this.denialState);
+          this.trustedAnswers.add(fingerprint);
+          return undefined;
+        },
       };
     }
     this.denialState = blockedState;
-    finish('ask', 'classifier_ask');
+    finish('ask', telemetryCategory);
     return {
       kind: 'ask',
-      reason: { auto_mode_classifier: 'ask' },
+      reason: { auto_mode_classifier: category },
       resolveApproval: (response) => {
         if (response.decision === 'approved') this.trustedAnswers.add(fingerprint);
         return undefined;

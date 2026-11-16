@@ -111,6 +111,10 @@ function describeInactiveToolPattern(
 
 export const PLUGIN_SECTIONS_MAX_BYTES = 64 * 1024;
 
+// The memory package owns this tool; the engine only needs its name to gate the
+// memory section of the system prompt, exactly as it does for NotifyUser.
+const MEMORY_SAVE_TOOL_NAME = 'memory_save';
+
 export const profileActiveToolNamesOverlayKey = defineState<readonly string[] | undefined>(
   'profile.activeToolNamesOverlay',
   () => undefined as readonly string[] | undefined,
@@ -877,6 +881,7 @@ export class AgentProfileService extends Disposable implements IAgentProfileServ
       replyStyleGuide: this.bootstrap.args.replyStyleGuide,
       notifyUserActive:
         this.notify.enabled && this.isToolActiveForProfile(profile, NOTIFY_USER_TOOL_NAME),
+      memoryActive: this.isToolActiveForProfile(profile, MEMORY_SAVE_TOOL_NAME),
     };
   }
 

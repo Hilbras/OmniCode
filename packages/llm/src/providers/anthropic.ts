@@ -1194,7 +1194,9 @@ export class AnthropicChatProvider implements ChatProvider {
     for (const name of this._anthropicCustomHeaderEnvNames()) {
       defaultHeaders[name] = null;
     }
-    for (const [name, value] of Object.entries(this._defaultHeaders ?? {})) {
+    for (const entry of Object.entries(this._defaultHeaders ?? {})) {
+      const name = entry[0];
+      const value = entry[1];
       defaultHeaders[name.toLowerCase()] = value;
     }
     defaultHeaders['x-api-key'] = apiKey;

@@ -7,6 +7,7 @@ import {
   createOAuthCredentialProvider,
   createStaticCredentialProvider,
 } from '#/credentials/credentials';
+import { UNKNOWN_CAPABILITY } from '#/llm/capability';
 import type { LlmModel } from '#/llm/model';
 import type { LlmRecoveryContext, LlmRecoveryRecord } from '#/llm/requester/recovery';
 import type { LlmCredentialProvider } from '#/llm/requester/requester';
@@ -16,6 +17,7 @@ const MODEL: LlmModel = {
   model: 'fake-model',
   apiKey: 'base-key',
   defaultHeaders: { 'x-base': '1' },
+  capability: UNKNOWN_CAPABILITY,
 };
 
 describe('createStaticCredentialProvider', () => {
@@ -237,7 +239,9 @@ describe('redactSecrets', () => {
     }) as { headers: Record<string, unknown>; items: Array<Record<string, unknown> | number> };
     expect(out.headers['Authorization']).toBe(REDACTED);
     expect(out.headers['X-Trace']).toBe('sk-************abcd');
-    expect(out.items[0]?.['apiKey']).toBe(REDACTED);
+    const item = out.items[0];
+    if (typeof item !== 'object' || item === null) throw new Error('expected an object item');
+    expect(item['apiKey']).toBe(REDACTED);
     expect(out.items[1]).toBe(7);
   });
 

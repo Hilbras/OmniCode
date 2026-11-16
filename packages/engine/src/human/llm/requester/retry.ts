@@ -55,6 +55,7 @@ export function isRetryableError(error: LlmErrorMessage): boolean {
     case 'request_too_large':
     case 'request_structure':
     case 'image_format':
+    case 'content_filter':
     case 'unknown':
       return false;
     case 'empty_response':

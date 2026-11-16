@@ -178,7 +178,8 @@ export function createNodeFileWorkerFs(): FileWorkerFs {
         const length = Math.min(Math.max(options.limit, 0), totalSize - start);
         if (length === 0) return { data: Buffer.alloc(0), totalSize };
         const buffer = Buffer.allocUnsafe(length);
-        const { bytesRead } = await handle.read(buffer, 0, length, start);
+        const readResult = await handle.read(buffer, 0, length, start);
+        const bytesRead = readResult.bytesRead;
         return { data: buffer.subarray(0, bytesRead), totalSize };
       } finally {
         await handle.close();

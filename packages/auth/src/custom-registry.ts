@@ -232,7 +232,9 @@ function toProviderEntry(value: unknown): CustomRegistryProviderEntry | undefine
   if (!isRecord(models)) return undefined;
 
   const parsedModels: Record<string, CustomRegistryModelEntry> = {};
-  for (const [key, raw] of Object.entries(models)) {
+  for (const entry of Object.entries(models)) {
+    const key = entry[0];
+    const raw = entry[1];
     const modelEntry = toModelEntry(raw);
     if (modelEntry === undefined) continue;
     parsedModels[key] = modelEntry;
@@ -298,9 +300,11 @@ export async function fetchCustomRegistry(
   }
 
   const out: Record<string, CustomRegistryProviderEntry> = {};
-  for (const [key, raw] of Object.entries(payload)) {
-    const entry = toProviderEntry(raw);
-    if (entry === undefined) {
+  for (const entry of Object.entries(payload)) {
+    const key = entry[0];
+    const raw = entry[1];
+    const entryValue = toProviderEntry(raw);
+    if (entryValue === undefined) {
       // Skip invalid/unknown provider entries instead of aborting the whole
       // fetch, mirroring `toModelEntry`'s skip-on-invalid behavior. This keeps
       // existing providers working when kokub adds a new provider type that
@@ -310,7 +314,7 @@ export async function fetchCustomRegistry(
       );
       continue;
     }
-    out[key] = entry;
+    out[key] = entryValue;
   }
 
   return out;
@@ -438,13 +442,17 @@ export function applyCustomRegistryProvider(
   const upstreamKeys = new Set(
     Object.keys(entry.models).map((modelKey) => `${providerKey}/${modelKey}`),
   );
-  for (const [key, alias] of Object.entries(existingModels)) {
+  for (const entry of Object.entries(existingModels)) {
+    const key = entry[0];
+    const alias = entry[1];
     if (isRecord(alias) && alias['provider'] === providerKey && !upstreamKeys.has(key)) {
       delete existingModels[key];
     }
   }
 
-  for (const [modelKey, model] of Object.entries(entry.models)) {
+  for (const modelEntry of Object.entries(entry.models)) {
+    const modelKey = modelEntry[0];
+    const model = modelEntry[1];
     const aliasKey = `${providerKey}/${modelKey}`;
     const maxContextSize = resolveMaxContextSize(model);
     const capabilities = resolveCapabilities(model);
@@ -484,7 +492,9 @@ export function removeCustomRegistryProvider(
 
   let removedDefault = false;
   const existingModels = config.models ?? {};
-  for (const [key, alias] of Object.entries(existingModels)) {
+  for (const entry of Object.entries(existingModels)) {
+    const key = entry[0];
+    const alias = entry[1];
     if (!isRecord(alias) || alias['provider'] !== providerId) continue;
     delete existingModels[key];
     if (config.defaultModel === key) removedDefault = true;
@@ -550,7 +560,9 @@ export function removeCustomRegistryEntries(
     previousDefault: config.defaultModel,
     previousDefaultProvider: config['defaultProvider'] as string | undefined,
   };
-  for (const [providerId, provider] of Object.entries(config.providers)) {
+  for (const providerEntry of Object.entries(config.providers)) {
+    const providerId = providerEntry[0];
+    const provider = providerEntry[1];
     if (!isRecord(provider)) continue;
     if (provider['oauth'] !== undefined || isReservedProviderId(providerId)) continue;
     const existingSource = provider['source'];
@@ -573,13 +585,17 @@ export function customRegistryReplacementKeys(
   source: CustomRegistrySource,
 ): CustomRegistryReplacementKeys {
   const providerIds = new Set(Object.values(entries).map((entry) => entry.id));
-  for (const [providerId, provider] of Object.entries(config.providers)) {
+  for (const providerEntry of Object.entries(config.providers)) {
+    const providerId = providerEntry[0];
+    const provider = providerEntry[1];
     if (!isRecord(provider)) continue;
     if (provider['oauth'] !== undefined || isReservedProviderId(providerId)) continue;
     if (customRegistrySourceUrl(provider) === source.url) providerIds.add(providerId);
   }
   const modelIds = new Set<string>();
-  for (const [modelId, model] of Object.entries(config.models ?? {})) {
+  for (const modelEntry of Object.entries(config.models ?? {})) {
+    const modelId = modelEntry[0];
+    const model = modelEntry[1];
     if (isRecord(model) && providerIds.has(String(model['provider']))) modelIds.add(modelId);
   }
   for (const entry of Object.values(entries)) {

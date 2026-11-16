@@ -288,7 +288,9 @@ export function resolveProtocolOverride(
   if (exact !== undefined) return exact;
 
   let best: { readonly prefix: string; readonly protocol: ManagedOmnicodeCodeProtocol } | undefined;
-  for (const [pattern, protocol] of Object.entries(overrides)) {
+  for (const entry of Object.entries(overrides)) {
+    const pattern = entry[0];
+    const protocol = entry[1];
     if (!pattern.endsWith('*')) continue;
     const prefix = pattern.slice(0, -1);
     if (!modelId.startsWith(prefix)) continue;
@@ -373,7 +375,9 @@ export function applyDiscoveredModels(
 ): void {
   const existingModels = config.models ?? {};
   const upstreamKeys = new Set(models.map((m) => `${aliasPrefix}${m.id}`));
-  for (const [key, model] of Object.entries(existingModels)) {
+  for (const entry of Object.entries(existingModels)) {
+    const key = entry[0];
+    const model = entry[1];
     if (isRecord(model) && model['provider'] === providerId && !upstreamKeys.has(key)) {
       delete existingModels[key];
     }

@@ -13,13 +13,18 @@ import type { LlmRequester } from '#/llm/requester/requester';
 import { createAgentMachine } from '#/agent/machine';
 import type { StateUpdated } from '#/agent/events';
 import type { AgentEventStore, TurnIndexState } from '#/agent/slices';
-import type { HistoryMessage } from '#/agent/turn';
+import type { AssistantMeta, EntryMeta, HistoryMessage, UserMeta } from '#/agent/turn';
 import { createSessionMachine, type AgentActorRef } from '#/session/machine';
 import type { SessionStores } from '#/session/stores';
 import { createSlice } from '#/eventStore/slice';
 import { openSessionStore } from '#/persist/open';
 import { migrateV2Session } from '#/persist/v2/migrate';
 import { testScopeFactory } from '#/test/agent/scope-factory';
+
+function assistantMetaOf(meta: EntryMeta | UserMeta | AssistantMeta | undefined): AssistantMeta {
+  if (meta === undefined || !('usage' in meta)) throw new Error('expected assistant meta');
+  return meta;
+}
 
 const MAIN = 'main';
 
@@ -265,15 +270,16 @@ describe('migrateV2Session', () => {
       expect(first.message.toolCalls).toEqual([
         { type: 'function', id: 'c1', name: 'bash', arguments: '{"cmd":"ls"}' },
       ]);
-      expect(first.meta?.usage).toEqual({ inputOther: 1, output: 2, inputCacheRead: 3, inputCacheCreation: 4 });
-      expect(first.meta?.finish).toEqual({ finishReason: 'tool_calls', rawFinishReason: 'stop_raw' });
-      expect(first.meta?.messageId).toBe('msg_v2_1');
-      expect(first.meta?.model).toEqual({ provider: 'prov', model: 'mod' });
+      const meta = assistantMetaOf(first.meta);
+      expect(meta.usage).toEqual({ inputOther: 1, output: 2, inputCacheRead: 3, inputCacheCreation: 4 });
+      expect(meta.finish).toEqual({ finishReason: 'tool_calls', rawFinishReason: 'stop_raw' });
+      expect(meta.messageId).toBe('msg_v2_1');
+      expect(meta.model).toEqual({ provider: 'prov', model: 'mod' });
     }
     expect(agent.messages[2]?.meta?.source).toBe('tool');
     const second = agent.messages[3];
     if (second?.message.role === 'assistant') {
-      expect(second.meta?.finish).toEqual({ finishReason: 'completed', rawFinishReason: null });
+      expect(assistantMetaOf(second.meta).finish).toEqual({ finishReason: 'completed', rawFinishReason: null });
     }
     expect(agent.turnIndex.nextTurnId).toBe(1);
     expect(loaded.meta).toMatchObject({

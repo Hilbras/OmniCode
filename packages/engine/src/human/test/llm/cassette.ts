@@ -4,6 +4,13 @@ import { dirname } from 'node:path';
 export type CassetteMode = 'replay' | 'record';
 
 export const CASSETTE_RECORD_ENV = 'OMNICODE_CASSETTE_RECORD';
+/**
+ * Opt-in gate for the external MCP conformance test
+ * (`packages/engine/test/mcpCore/external-filesystem-conformance.e2e.test.ts`),
+ * which launches a real third-party MCP server over `npx`. Unset means the
+ * suite stays offline.
+ */
+export const MCP_CONFORMANCE_ENV = 'OMNICODE_MCP_CONFORMANCE';
 
 const REDACTED_HEADERS = new Set(['authorization', 'api-key', 'x-api-key', 'cookie', 'set-cookie']);
 
@@ -68,7 +75,7 @@ export function cassetteModeFromEnv(name: string): CassetteMode {
 }
 
 export function isPreservedEnvKey(key: string): boolean {
-  return key === CASSETTE_RECORD_ENV;
+  return key === CASSETTE_RECORD_ENV || key === MCP_CONFORMANCE_ENV;
 }
 
 function toHeaders(

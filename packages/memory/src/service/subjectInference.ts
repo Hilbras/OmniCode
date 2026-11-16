@@ -48,3 +48,51 @@ export function subjectFor(input: MemoryCaptureInput, content: string): string |
   if (input.category !== 'fact' && input.category !== 'preference') return undefined;
   return inferSubject(content);
 }
+
+const VALUE_STOPWORDS: ReadonlySet<string> = new Set([
+  'a', 'an', 'the', 'and', 'or', 'to', 'of', 'for', 'in', 'on', 'at', 'by', 'with',
+  'is', 'are', 'was', 'were', 'be', 'being', 'been',
+  'use', 'uses', 'used', 'using', 'require', 'requires', 'required',
+  'default', 'defaults', 'run', 'runs', 'that', 'this', 'these', 'those', 'it', 'its',
+]);
+
+/**
+ * The value part of a memory whose `subject` names the property it is about:
+ * the content with the subject's own words, articles, and copulas removed,
+ * returned as a multiset (sorted tokens, repetitions kept). Two memories that
+ * share a subject state the SAME value when their token multisets are equal —
+ * "The user's name is Hassan." and "User name is Hassan" both reduce to
+ * `[hassan]`. Repetitions matter: a merged statement that merely happens to
+ * reuse the same vocabulary ("… uses tsup | … bundles with tsup") does not
+ * collapse onto one of its parts.
+ */
+export function subjectValueTokens(content: string, subject: string | undefined): readonly string[] {
+  const drop = new Set(VALUE_STOPWORDS);
+  if (subject !== undefined) {
+    for (const token of subject.split(/[._\-\s]+/)) {
+      if (token.length > 0) drop.add(token);
+    }
+  }
+  const normalized = content
+    .normalize('NFKC')
+    .toLowerCase()
+    .replace(/['\u2019]s\b/g, '')
+    .replace(/[^a-z0-9]+/g, ' ');
+  const tokens: string[] = [];
+  for (const token of normalized.split(' ')) {
+    if (token.length > 0 && !drop.has(token)) tokens.push(token);
+  }
+  return tokens.sort();
+}
+
+export function sameSubjectValue(
+  left: string,
+  leftSubject: string | undefined,
+  right: string,
+  rightSubject: string | undefined,
+): boolean {
+  const a = subjectValueTokens(left, leftSubject);
+  if (a.length === 0) return false;
+  const b = subjectValueTokens(right, rightSubject);
+  return a.length === b.length && a.every((token, index) => token === b[index]);
+}

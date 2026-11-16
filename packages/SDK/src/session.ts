@@ -614,8 +614,8 @@ export class Session {
   }
 
   /**
-   * Used by `omnicode -p` after the main agent's turn ends with `reason ===
-   * 'completed'`. Returns `'finish'` when the run may exit, or `'continue'` when
+   * Used by `omnicode -p` after the main agent's turn ends with
+   * `reason === 'completed'`. Returns `'finish'` when the run may exit, or `'continue'` when
    * the caller must keep the session alive so a background-task completion can
    * steer the main agent into a new turn. Policy is selected by
    * `background.print_background_mode` (`'exit' | 'drain' | 'steer'`); when unset

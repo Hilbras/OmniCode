@@ -638,7 +638,8 @@ export class SSHKaos implements Kaos {
   ): AsyncGenerator<string> {
     if (patternParts.length === 0) return;
 
-    const [currentPattern, ...remainingParts] = patternParts;
+    const currentPattern = patternParts[0];
+    const remainingParts = patternParts.slice(1);
 
     if (currentPattern === '**') {
       // `**` matches zero or more directory components.
@@ -797,7 +798,9 @@ export class SSHKaos implements Kaos {
     const parts = path.split('/').filter(Boolean);
     let current = path.startsWith('/') ? '/' : '';
     const lastIndex = parts.length - 1;
-    for (const [i, part] of parts.entries()) {
+    for (const partEntry of parts.entries()) {
+      const i = partEntry[0];
+      const part = partEntry[1];
       current = current ? join(current, part) : part;
 
       const isFinal = i === lastIndex;
@@ -900,7 +903,9 @@ export class SSHKaos implements Kaos {
 
     if (env !== undefined) {
       const assignments: string[] = [];
-      for (const [key, value] of Object.entries(env)) {
+      for (const envEntry of Object.entries(env)) {
+        const key = envEntry[0];
+        const value = envEntry[1];
         // Reject anything that isn't a POSIX-valid shell variable name so
         // the injected prefix can never become a shell-injection vector.
         if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {

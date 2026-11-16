@@ -72,7 +72,7 @@ import { checkTierAdmission, evaluatePromotion } from '#/trust/trustPolicy';
 import { fingerprintText, isFingerprintOfKind } from './evidence';
 import { buildRecord, withUpdated } from './memoryRecordFactory';
 import { DEFAULT_MEMORY_SETTINGS, type MemoryPolicySettings } from './memorySettings';
-import { subjectFor } from './subjectInference';
+import { sameSubjectValue, subjectFor } from './subjectInference';
 import { isFuzzyDigestDuplicate, isSupersetContent } from './digest';
 
 export interface MemoryServiceDeps {
@@ -198,6 +198,19 @@ export class MemoryService extends Disposable implements IMemoryService {
     const duplicate = await this.findDuplicate(built.record);
     if (duplicate !== undefined) {
       return { status: 'deduplicated', id: duplicate.id, record: duplicate, reason: 'identical content in scope' };
+    }
+
+    // A re-statement of a fact under the same subject is not a contradiction:
+    // coalesce it onto the existing memory instead of storing a second record
+    // that would cross-link as a conflict (see resolveConflicts).
+    const equivalent = await this.findEquivalentSubjectMemory(built.record);
+    if (equivalent !== undefined) {
+      return {
+        status: 'deduplicated',
+        id: equivalent.id,
+        record: equivalent,
+        reason: 'equivalent value already stored for this subject',
+      };
     }
 
     const resolution = await this.resolveConflicts(built.record, now);
@@ -1357,6 +1370,24 @@ export class MemoryService extends Disposable implements IMemoryService {
     if (typeof id !== 'string') return undefined;
     const existing = await this.read(id);
     return existing !== undefined && existing.lifecycle === 'active' ? existing : undefined;
+  }
+
+  private async findEquivalentSubjectMemory(record: MemoryRecord): Promise<MemoryRecord | undefined> {
+    if (record.subject === undefined) return undefined;
+    for (const sibling of await this.findBySubject(record.subject, record.scope)) {
+      if (sibling.id === record.id || sibling.lifecycle !== 'active') continue;
+      if (
+        sameSubjectValue(
+          record.content,
+          record.subject,
+          sibling.content,
+          sibling.subject ?? record.subject,
+        )
+      ) {
+        return sibling;
+      }
+    }
+    return undefined;
   }
 
   private async missingSources(ids: readonly string[]): Promise<string[]> {

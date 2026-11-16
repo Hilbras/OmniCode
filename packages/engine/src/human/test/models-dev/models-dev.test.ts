@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { modelsDevProviderModels, resolveModelsDevImport } from '#/models-dev/models-dev';
+import type { LlmModel } from '#/llm/model';
 import type { Provider } from '#/llm/provider/definition';
 import {
   createMemoryProviderCatalogStore,
@@ -13,6 +14,13 @@ function byId(
   models: readonly CatalogModelDefinition[],
 ): Map<string, CatalogModelDefinition> {
   return new Map(models.map((model) => [model.model, model]));
+}
+
+/** Deliberately malformed rows for the catalog's degradation path: they omit `model` or
+ *  carry unknown fields on purpose, which an `LlmModel[]` cannot express, so the cast
+ *  lives here instead of at each call site. */
+function rawListModels(rows: readonly unknown[]): Provider['listModels'] {
+  return async () => rows as readonly LlmModel[];
 }
 
 describe('resolveModelsDevImport', () => {
@@ -553,12 +561,12 @@ describe('providerCatalog', () => {
 
       const dedupeProvider: Provider = {
         ...provider,
-        listModels: async () => [
+        listModels: rawListModels([
           { provider: 'openai', model: 'gpt-5', maxContextSize: 100000 },
           { provider: 'openai', model: 'gpt-5', maxContextSize: 999999 },
           { provider: 'openai', model: '', maxContextSize: 1 },
           { provider: 'openai', maxContextSize: 2 },
-        ],
+        ]),
       };
       catalog.refresh(dedupeProvider);
       await new Promise((resolve) => {
@@ -571,7 +579,7 @@ describe('providerCatalog', () => {
 
       const largeProvider: Provider = {
         ...provider,
-        listModels: async () => [
+        listModels: rawListModels([
           {
             provider: 'openai',
             model: 'giant',
@@ -580,7 +588,7 @@ describe('providerCatalog', () => {
             maxOutputSize: 8192,
             extras: { custom_field: 'ok', nested: { a: 1 } },
           },
-        ],
+        ]),
       };
       catalog.refresh(largeProvider);
       await new Promise((resolve) => {

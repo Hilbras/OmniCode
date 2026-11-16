@@ -29,6 +29,8 @@ import {
   type VideoURLPart,
 } from '#/llm/message';
 import type { LlmModel } from '#/llm/model';
+import type { AnthropicWireContentBlock } from '#/llm/requester/bases/anthropic/contract';
+import type { ModelThinkingMetadata } from '#/llm/thinking';
 import { createProvider } from '#/llm/provider/definition';
 import {
   anthropicProvider,
@@ -66,8 +68,18 @@ const omnicodeAnthropic = {
   classifyError: classifyOmnicodeQuotaError,
 } as const;
 
-async function generateAndCollectUsage(requester: LlmRequester): Promise<TokenUsage | undefined> {
-  let usage: TokenUsage | undefined;
+/** Thinking metadata rides on an `LlmModel` at runtime — `thinkingMetadataOf` reads it
+ *  through a cast in `#/llm/thinking` — so the fields are spread here the way
+ *  `thinking.test.ts`'s `modelWith` does, which also keeps them off the excess-property
+ *  check that an inline literal would trip. */
+function withThinking(meta: ModelThinkingMetadata): LlmModel {
+  return { ...model, ...meta };
+}
+
+async function generateAndCollectUsage(
+  requester: LlmRequester,
+): Promise<Partial<TokenUsage> | undefined> {
+  let usage: Partial<TokenUsage> | undefined;
   await requester.generate(
     { model },
     { messages },
@@ -941,7 +953,7 @@ describe('extractUsage', () => {
       },
     ]);
     const requester = createOpenAIRequester({ clientFactory: client.clientFactory });
-    let usage: TokenUsage | undefined;
+    let usage: Partial<TokenUsage> | undefined;
     let finish: FinishInfo | undefined;
     let messageId: string | undefined;
     await requester.generate(
@@ -1157,7 +1169,7 @@ describe('request pipeline', () => {
         mergeHistory: (history) => {
           order.push('mergeHistory');
           historySeenByMerge = history;
-          return history;
+          return [...history];
         },
         convertTool: (tool) => {
           order.push('convertTool');
@@ -1304,7 +1316,7 @@ describe('anthropic trait', () => {
           return {
             ...converted,
             content: [
-              ...(converted['content'] as Record<string, unknown>[]),
+              ...(converted['content'] as AnthropicWireContentBlock[]),
               { type: 'text', text: 'suffix' },
             ],
           };
@@ -1626,9 +1638,8 @@ describe('anthropic thinking kwargs', () => {
     await defaultRequester.generate(
       {
         model: {
-          ...model,
+          ...withThinking({ supportEfforts: ['low', 'medium', 'high', 'xhigh'] }),
           model: 'claude-sonnet-4-5',
-          supportEfforts: ['low', 'medium', 'high', 'xhigh'],
         },
         thinking: { effort: 'xhigh' },
       },
@@ -1642,7 +1653,7 @@ describe('anthropic thinking kwargs', () => {
 
     await defaultRequester.generate(
       {
-        model: { ...model, supportEfforts: ['low', 'medium', 'high'], adaptiveThinking: false },
+        model: withThinking({ supportEfforts: ['low', 'medium', 'high'], adaptiveThinking: false }),
         thinking: { effort: 'high' },
       },
       { messages },
@@ -1782,7 +1793,7 @@ describe('openai responses base', () => {
       clientFactory: client.clientFactory,
     });
     const parts: StreamedMessagePart[] = [];
-    let usage: TokenUsage | undefined;
+    let usage: Partial<TokenUsage> | undefined;
     let finish: FinishInfo | undefined;
     let messageId: string | undefined;
     await requester.generate(
@@ -1921,7 +1932,7 @@ describe('google genai base', () => {
       clientFactory: client.clientFactory,
     });
     const parts: StreamedMessagePart[] = [];
-    let usage: TokenUsage | undefined;
+    let usage: Partial<TokenUsage> | undefined;
     let finish: FinishInfo | undefined;
     let messageId: string | undefined;
     await requester.generate(

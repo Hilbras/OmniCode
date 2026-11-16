@@ -157,7 +157,16 @@ export function resolveOmnicodeHome(
   env: NodeJS.ProcessEnv = process.env,
   osHomeDir: string = homedir(),
 ): string {
-  return homeDir ?? env['OMNICODE_V_HOME'] ?? join(osHomeDir, '.omnicode-v');
+  // The product name is OMNICODE_V_HOME. OMNICODE_HOME is the pre-rename name
+  // that most of the runtime (auth, ACP, SDK, plugins, workspace locks) and its
+  // tests still use, so honour both rather than let the engine resolve a home
+  // the rest of the process does not agree with.
+  return (
+    homeDir ??
+    env['OMNICODE_V_HOME'] ??
+    env['OMNICODE_HOME'] ??
+    join(osHomeDir, '.omnicode-v')
+  );
 }
 
 export function resolveConfigPath(input: {

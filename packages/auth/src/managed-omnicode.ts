@@ -637,7 +637,9 @@ export function applyManagedOmnicodeCodeConfig(
   // rest are merged field-by-field — upstream-owned fields are overwritten,
   // everything else is preserved.
   const upstreamKeys = new Set(options.models.map((m) => managedModelKey(m.id)));
-  for (const [key, model] of Object.entries(existingModels)) {
+  for (const entry of Object.entries(existingModels)) {
+    const key = entry[0];
+    const model = entry[1];
     if (
       isRecord(model) &&
       model['provider'] === OMNICODE_PROVIDER_NAME &&
@@ -708,7 +710,9 @@ export function applyManagedApiKeyProviderModels(
   // are overwritten, hand-written extras survive, and aliases upstream no
   // longer lists are removed (the orchestrator restores non-prefix ones).
   const upstreamKeys = new Set(models.map((m) => `${aliasPrefix}${m.id}`));
-  for (const [key, model] of Object.entries(existingModels)) {
+  for (const entry of Object.entries(existingModels)) {
+    const key = entry[0];
+    const model = entry[1];
     if (isRecord(model) && model['provider'] === providerId && !upstreamKeys.has(key)) {
       delete existingModels[key];
     }
@@ -731,7 +735,9 @@ export function applyManagedOmnicodeCodeLogoutConfig(config: ManagedOmnicodeConf
 
   let removedDefaultModel = false;
   const existingModels = config.models ?? {};
-  for (const [key, model] of Object.entries(existingModels)) {
+  for (const entry of Object.entries(existingModels)) {
+    const key = entry[0];
+    const model = entry[1];
     if (!isRecord(model) || model['provider'] !== OMNICODE_PROVIDER_NAME) continue;
     delete existingModels[key];
     if (config.defaultModel === key) removedDefaultModel = true;
@@ -825,7 +831,9 @@ export function clearManagedOmnicodeCodeConfig(
   const removedModels: string[] = [];
   const models = config.models;
   if (models !== undefined) {
-    for (const [key, model] of Object.entries(models)) {
+    for (const entry of Object.entries(models)) {
+      const key = entry[0];
+      const model = entry[1];
       if (!isRecord(model) || model['provider'] !== OMNICODE_PROVIDER_NAME) continue;
       delete models[key];
       removedModels.push(key);

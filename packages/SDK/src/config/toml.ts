@@ -188,7 +188,8 @@ function salvageConfigData(transformed: Record<string, unknown>): SalvageResult 
     }
     let deletedAny = false;
     for (const issue of result.error.issues) {
-      const [section, entry] = issue.path;
+      const section = issue.path[0];
+      const entry = issue.path[1];
       if (typeof section !== 'string' || !(section in transformed)) continue;
       const sectionValue = transformed[section];
       if (
@@ -266,7 +267,9 @@ function parseConfigData(data: Record<string, unknown>, filePath: string): Omnic
 
 export function transformTomlData(data: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
+  for (const entry of Object.entries(data)) {
+    const key = entry[0];
+    const value = entry[1];
     const targetKey = snakeToCamel(key);
 
     if (targetKey === 'providers' && isPlainObject(value)) {
@@ -306,7 +309,9 @@ function transformRecord(
   transformName: (name: string) => string = (name) => name,
 ): Record<string, unknown> {
   const record: Record<string, unknown> = {};
-  for (const [entryName, entryConfig] of Object.entries(value)) {
+  for (const entry of Object.entries(value)) {
+    const entryName = entry[0];
+    const entryConfig = entry[1];
     record[transformName(entryName)] = isPlainObject(entryConfig)
       ? transformEntry(entryConfig)
       : entryConfig;
@@ -316,7 +321,9 @@ function transformRecord(
 
 function transformPlainObject(data: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
+  for (const entry of Object.entries(data)) {
+    const key = entry[0];
+    const value = entry[1];
     out[snakeToCamel(key)] = value;
   }
   return out;
@@ -324,7 +331,9 @@ function transformPlainObject(data: Record<string, unknown>): Record<string, unk
 
 function transformProviderData(data: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
+  for (const entry of Object.entries(data)) {
+    const key = entry[0];
+    const value = entry[1];
     const targetKey = snakeToCamel(key);
     if (targetKey === 'oauth') {
       out[targetKey] = isPlainObject(value) ? transformPlainObject(value) : value;
@@ -401,7 +410,9 @@ function transformPermissionRule(value: unknown, decision?: 'allow' | 'deny' | '
 
 function transformServiceData(data: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(data)) {
+  for (const entry of Object.entries(data)) {
+    const key = entry[0];
+    const value = entry[1];
     const targetKey = snakeToCamel(key);
     if (targetKey === 'oauth') {
       out[targetKey] = isPlainObject(value) ? transformPlainObject(value) : value;
@@ -485,7 +496,9 @@ function setRecordSection<T>(
 
   const rawSub = cloneRecord(out[snakeKey]);
   const converted: Record<string, unknown> = {};
-  for (const [entryName, entryConfig] of Object.entries(value)) {
+  for (const entry of Object.entries(value)) {
+    const entryName = entry[0];
+    const entryConfig = entry[1];
     converted[entryName] = toToml(entryConfig, rawSub[entryName]);
   }
 
@@ -520,7 +533,9 @@ function providerToToml(provider: ProviderConfig, rawProvider: unknown): Record<
   for (const key of PROVIDER_CREDENTIAL_FIELDS) {
     if (provider[key] === undefined) delete out[camelToSnake(key)];
   }
-  for (const [key, value] of Object.entries(provider)) {
+  for (const entry of Object.entries(provider)) {
+    const key = entry[0];
+    const value = entry[1];
     if (key === 'oauth' && value !== undefined) {
       out[camelToSnake(key)] = oauthToToml(value as OAuthRef);
     } else if ((key === 'env' || key === 'customHeaders') && value !== undefined) {
@@ -536,7 +551,9 @@ const PROVIDER_CREDENTIAL_FIELDS = ['apiKey', 'oauth', 'apiKeyEnv'] as const;
 
 function modelToToml(model: ModelAlias, rawModel: unknown): Record<string, unknown> {
   const out = cloneRecord(rawModel);
-  for (const [key, value] of Object.entries(model)) {
+  for (const entry of Object.entries(model)) {
+    const key = entry[0];
+    const value = entry[1];
     if (key === 'capabilities' && Array.isArray(value)) {
       out[camelToSnake(key)] = [...value];
     } else if (key === 'overrides' && isPlainObject(value)) {
@@ -554,7 +571,9 @@ function modelOverridesToToml(
   rawOverrides: unknown,
 ): Record<string, unknown> {
   const out = cloneRecord(rawOverrides);
-  for (const [key, value] of Object.entries(overrides)) {
+  for (const entry of Object.entries(overrides)) {
+    const key = entry[0];
+    const value = entry[1];
     if (key === 'capabilities' && Array.isArray(value)) {
       out[camelToSnake(key)] = [...value];
     } else {
@@ -567,7 +586,9 @@ function modelOverridesToToml(
 function thinkingToToml(thinking: ThinkingConfig, rawThinking: unknown): Record<string, unknown> {
   const out = cloneRecord(rawThinking);
   delete out['mode'];
-  for (const [key, value] of Object.entries(thinking)) {
+  for (const entry of Object.entries(thinking)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, camelToSnake(key), value);
   }
   return out;
@@ -594,7 +615,9 @@ function permissionRuleToToml(
   rule: NonNullable<PermissionConfig['rules']>[number],
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(rule)) {
+  for (const entry of Object.entries(rule)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, camelToSnake(key), value);
   }
   return out;
@@ -617,7 +640,9 @@ function servicesToToml(services: ServicesConfig, rawServices: unknown): Record<
 
 function serviceToToml(service: HilbrasServiceConfig): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(service)) {
+  for (const entry of Object.entries(service)) {
+    const key = entry[0];
+    const value = entry[1];
     if (key === 'oauth' && value !== undefined) {
       out[camelToSnake(key)] = oauthToToml(value as OAuthRef);
     } else if (key === 'customHeaders' && value !== undefined) {
@@ -634,7 +659,9 @@ function loopControlToToml(
   rawLoopControl: unknown,
 ): Record<string, unknown> {
   const out = cloneRecord(rawLoopControl);
-  for (const [key, value] of Object.entries(loopControl)) {
+  for (const entry of Object.entries(loopControl)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, camelToSnake(key), value);
   }
   return out;
@@ -645,7 +672,9 @@ function backgroundToToml(
   rawBackground: unknown,
 ): Record<string, unknown> {
   const out = cloneRecord(rawBackground);
-  for (const [key, value] of Object.entries(background)) {
+  for (const entry of Object.entries(background)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, camelToSnake(key), value);
   }
   return out;
@@ -653,7 +682,9 @@ function backgroundToToml(
 
 function subagentToToml(subagent: SubagentConfig, rawSubagent: unknown): Record<string, unknown> {
   const out = cloneRecord(rawSubagent);
-  for (const [key, value] of Object.entries(subagent)) {
+  for (const entry of Object.entries(subagent)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, camelToSnake(key), value);
   }
   return out;
@@ -664,7 +695,9 @@ function secondaryModelToToml(
   rawSecondaryModel: unknown,
 ): Record<string, unknown> {
   const out = cloneRecord(rawSecondaryModel);
-  for (const [key, value] of Object.entries(secondaryModel)) {
+  for (const entry of Object.entries(secondaryModel)) {
+    const key = entry[0];
+    const value = entry[1];
     if (key === 'capabilities' && Array.isArray(value)) {
       out[camelToSnake(key)] = [...value];
     } else {
@@ -676,7 +709,9 @@ function secondaryModelToToml(
 
 function mcpToToml(mcp: McpConfig, rawMcp: unknown): Record<string, unknown> {
   const out = cloneRecord(rawMcp);
-  for (const [key, value] of Object.entries(mcp)) {
+  for (const entry of Object.entries(mcp)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, camelToSnake(key), value);
   }
   return out;
@@ -684,7 +719,9 @@ function mcpToToml(mcp: McpConfig, rawMcp: unknown): Record<string, unknown> {
 
 function imageToToml(image: ImageConfig, rawImage: unknown): Record<string, unknown> {
   const out = cloneRecord(rawImage);
-  for (const [key, value] of Object.entries(image)) {
+  for (const entry of Object.entries(image)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, camelToSnake(key), value);
   }
   return out;
@@ -695,7 +732,9 @@ function experimentalToToml(
   _rawExperimental: unknown,
 ): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(experimental)) {
+  for (const entry of Object.entries(experimental)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, key, value);
   }
   return out;
@@ -711,7 +750,9 @@ function setHooks(out: Record<string, unknown>, hooks: readonly HookDefConfig[] 
 
 function hookToToml(hook: HookDefConfig): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(hook)) {
+  for (const entry of Object.entries(hook)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, camelToSnake(key), value);
   }
   return out;
@@ -719,7 +760,9 @@ function hookToToml(hook: HookDefConfig): Record<string, unknown> {
 
 function oauthToToml(oauth: OAuthRef): Record<string, unknown> {
   const out: Record<string, unknown> = {};
-  for (const [key, value] of Object.entries(oauth)) {
+  for (const entry of Object.entries(oauth)) {
+    const key = entry[0];
+    const value = entry[1];
     setDefined(out, camelToSnake(key), value);
   }
   return out;

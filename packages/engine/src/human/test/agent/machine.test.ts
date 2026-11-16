@@ -27,6 +27,7 @@ import {
   toInputMessages,
   type AssistantEntry,
   type HistoryMessage,
+  type ToolEntry,
 } from '#/agent/turn';
 import { createEventStore } from '#/eventStore/eventStore';
 import { journalFromBranch } from '#/eventStore/journal';
@@ -169,6 +170,16 @@ async function runAgent(
 function rolesAndTexts(messages: readonly HistoryMessage[]): string[] {
   return toInputMessages(messages).map(
     (message) => `${message.role}:${extractText(message, '\n')}`,
+  );
+}
+
+function toolEntries(messages: readonly HistoryMessage[]): ToolEntry[] {
+  return messages.filter((entry): entry is ToolEntry => entry.message.role === 'tool');
+}
+
+function assistantEntriesWithCalls(messages: readonly HistoryMessage[]): AssistantEntry[] {
+  return messages.filter(
+    (entry): entry is AssistantEntry => 'toolCalls' in entry.message && entry.message.toolCalls.length > 0,
   );
 }
 
@@ -354,15 +365,16 @@ describe('agent machine tool failure', () => {
       'tool:slow once more',
       'assistant:done',
     ]);
+    expect(toolEntries(dupMessages).map((entry) => entry.message.toolCallId)).toEqual([
+      'call-1',
+      'call-1__2',
+      'call-1__3',
+      'call-1__4',
+    ]);
     expect(
-      dupMessages
-        .filter((entry) => entry.message.role === 'tool')
-        .map((entry) => entry.message.toolCallId),
-    ).toEqual(['call-1', 'call-1__2', 'call-1__3', 'call-1__4']);
-    expect(
-      dupMessages
-        .filter((entry) => entry.message.role === 'assistant' && entry.message.toolCalls.length > 0)
-        .map((entry) => entry.message.toolCalls.map((call) => `${call.id}:${call.rawId ?? ''}`)),
+      assistantEntriesWithCalls(dupMessages).map((entry) =>
+        entry.message.toolCalls.map((call) => `${call.id}:${call.rawId ?? ''}`),
+      ),
     ).toEqual([['call-1:', 'call-1__2:call-1'], ['call-1__3:call-1'], ['call-1__4:call-original']]);
 
     let attempt = 0;

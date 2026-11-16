@@ -142,7 +142,9 @@ function hasUnresolvedDefinitionRef(node: unknown, bucketKey: string): boolean {
     if (typeof ref === 'string' && ref.startsWith(`#/${bucketKey}/`)) {
       return true;
     }
-    for (const [key, value] of Object.entries(obj)) {
+    for (const entry of Object.entries(obj)) {
+      const key = entry[0];
+      const value = entry[1];
       // Skip the definition bucket itself when walking the result — we only
       // care about `$ref` pointers living elsewhere in the schema.
       if (key === bucketKey) continue;
@@ -181,7 +183,9 @@ function resolveNode(node: unknown, root: Record<string, unknown>, visited: Set<
           // sibling keys on the local node take precedence.
           if (typeof resolved === 'object' && resolved !== null && !Array.isArray(resolved)) {
             const merged: Record<string, unknown> = { ...(resolved as Record<string, unknown>) };
-            for (const [key, value] of Object.entries(obj)) {
+            for (const entry of Object.entries(obj)) {
+              const key = entry[0];
+              const value = entry[1];
               if (key === '$ref') continue;
               merged[key] = resolveNode(value, root, visited);
             }
@@ -195,7 +199,9 @@ function resolveNode(node: unknown, root: Record<string, unknown>, visited: Set<
     }
 
     const resolved: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj)) {
+    for (const entry of Object.entries(obj)) {
+      const key = entry[0];
+      const value = entry[1];
       resolved[key] = resolveNode(value, root, visited);
     }
     return resolved;
@@ -454,7 +460,9 @@ function cloneJsonValue(value: unknown): unknown {
   }
   if (isRecord(value)) {
     const cloned: Record<string, unknown> = {};
-    for (const [key, child] of Object.entries(value)) {
+    for (const entry of Object.entries(value)) {
+      const key = entry[0];
+      const child = entry[1];
       cloned[key] = cloneJsonValue(child);
     }
     return cloned;

@@ -29,10 +29,10 @@ export function providerEndpointEnvNames(
   providerType: string,
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): ProviderEndpointEnvNames {
-  const { apiKeyEnvName, baseUrlEnvName, baseUrlIsDefault } = explainProviderEndpoint(providerType, env);
+  const explained = explainProviderEndpoint(providerType, env);
   return {
-    apiKeyEnvName,
-    baseUrlEnvName,
-    baseUrlIsDefault,
+    apiKeyEnvName: explained.apiKeyEnvName,
+    baseUrlEnvName: explained.baseUrlEnvName,
+    baseUrlIsDefault: explained.baseUrlIsDefault,
   };
 }

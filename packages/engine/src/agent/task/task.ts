@@ -8,6 +8,7 @@ export type {
   AgentTask,
   AgentTaskInfo,
   AgentTaskInfoBase,
+  AgentTaskInfoByKind,
   AgentTaskKind,
   AgentTaskStatus,
 } from './types';

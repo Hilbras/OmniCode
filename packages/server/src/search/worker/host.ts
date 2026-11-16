@@ -5,7 +5,10 @@ import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { Worker } from 'node:worker_threads';
 
-import { getTextBuildWorkerRuntimeState } from '@hilbras/omnicode-minidb/worker-runtime';
+import {
+  getTextBuildWorkerRuntimeState,
+  tsWorkerExecArgv,
+} from '@hilbras/omnicode-minidb/worker-runtime';
 
 import { GlobalSearchError } from '../contract';
 import type {
@@ -301,8 +304,7 @@ export class SearchWorkerHost {
         return {
           url: source,
           execArgv: [
-            '--experimental-transform-types',
-            '--disable-warning=ExperimentalWarning',
+            ...tsWorkerExecArgv(),
             '--import',
             new URL('./register-dev-hooks.mjs', import.meta.url).href,
           ],

@@ -117,7 +117,9 @@ export function planProviderRemoval(input: {
 
   const models: Record<string, unknown> = {};
   let removedDefault = false;
-  for (const [key, model] of Object.entries(input.models ?? {})) {
+  for (const entry of Object.entries(input.models ?? {})) {
+    const key = entry[0];
+    const model = entry[1];
     if (model['provider'] === input.providerId) {
       if (input.defaultModel === key) removedDefault = true;
       continue;

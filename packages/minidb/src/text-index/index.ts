@@ -73,8 +73,11 @@ export type { AttachImageRaw, TextIndexImage } from './image.js';
  */
 export class TextIndexBuildingError extends Error {
   readonly code = 'TEXT_INDEX_BUILDING';
-  constructor(readonly indexName: string | undefined) {
+  readonly indexName: string | undefined;
+
+  constructor(indexName: string | undefined) {
     super(`text index${indexName ? ` "${indexName}"` : ''} base is still building`);
+    this.indexName = indexName;
     this.name = 'TextIndexBuildingError';
   }
 }

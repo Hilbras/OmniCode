@@ -428,7 +428,7 @@ export function catalogProviderModels(entry: CatalogProviderEntry): CatalogModel
         model.alwaysThinking === true &&
         (protocol === 'anthropic' || protocol === 'omnicode')
       ) {
-        const { alwaysThinking: _dropped, ...rest } = model;
+        const rest = { ...model, alwaysThinking: undefined };
         return rest as CatalogModel;
       }
       return model;

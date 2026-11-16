@@ -148,7 +148,10 @@ export class OmnicodeAuthFacade {
     providerName: string | undefined = OMNICODE_PROVIDER_NAME,
     options: OmnicodeAuthLoginOptions = {},
   ): Promise<OmnicodeAuthLoginResult> {
-    const { region, ...loginOptions } = options;
+    const mutableOptions = { ...options } as { -readonly [K in keyof OmnicodeAuthLoginOptions]: OmnicodeAuthLoginOptions[K] };
+    const region = mutableOptions.region;
+    delete mutableOptions.region;
+    const loginOptions = mutableOptions;
     const regionHosts = region === undefined ? undefined : omnicodeRegionLoginHosts(region);
     const auth = this.resolveManagedAuth(providerName);
     const loginAuth = resolveOmnicodeCodeLoginAuth({

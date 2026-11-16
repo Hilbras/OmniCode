@@ -217,7 +217,8 @@ export class LocalKaos implements Kaos {
     // commands find user-installed tools (e.g. Homebrew's gh) even when
     // omnicode itself was launched without the full profile PATH. Both
     // probes are memoised, independent, and run concurrently.
-    const [osEnv] = await Promise.all([detectEnvironmentFromNode(), applyLoginShellPathFromNode()]);
+    const osEnvResult = await Promise.all([detectEnvironmentFromNode(), applyLoginShellPathFromNode()]);
+    const osEnv = osEnvResult[0];
     return new LocalKaos(osEnv);
   }
 
@@ -351,7 +352,8 @@ export class LocalKaos implements Kaos {
       return;
     }
 
-    const [currentPattern, ...remainingParts] = patternParts;
+    const currentPattern = patternParts[0];
+    const remainingParts = patternParts.slice(1);
 
     if (currentPattern === '**') {
       // `**` matches zero or more directory components.

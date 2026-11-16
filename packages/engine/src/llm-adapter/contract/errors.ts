@@ -2,6 +2,7 @@ import { Error2, type Error2Options } from '@hilbras/omnicode-base/errors/errors
 import {
   appendThinkingEffortConfigHint,
   isAbortError,
+  isContentFilterStatusError,
   isContextOverflowStatusError,
   isImageFormatStatusError,
   isProviderOverloadStatusError,
@@ -17,6 +18,7 @@ import type { FinishReason } from '#human/llm/finish-reason';
 
 export {
   isAbortError,
+  isContentFilterStatusError,
   parseRetryAfterMs,
   sanitizeStatusErrorMessage,
 } from '#human/llm/errors';
@@ -173,6 +175,19 @@ export class APIProviderOverloadedError extends APIStatusError {
   }
 }
 
+export class APIProviderFilteredError extends APIStatusError {
+  constructor(
+    statusCode: number,
+    message: string,
+    requestId?: string | null,
+    retryAfterMs?: number | null,
+    traceId?: string | null,
+  ) {
+    super(statusCode, message, requestId, retryAfterMs, traceId, PROVIDER_FILTERED_ERROR_CODE);
+    this.name = 'APIProviderFilteredError';
+  }
+}
+
 export class APIEmptyResponseError extends ChatProviderError {
   readonly finishReason: FinishReason | null;
   readonly rawFinishReason: string | null;
@@ -232,6 +247,9 @@ export function isRetryableGenerateError(error: unknown): boolean {
   if (error instanceof APIEmptyResponseError) {
     return error.finishReason !== 'filtered';
   }
+  if (error instanceof APIProviderFilteredError) {
+    return false;
+  }
   if (error instanceof APIProviderOverloadedError) {
     return true;
   }
@@ -289,6 +307,9 @@ export function normalizeAPIStatusError(
   }
   if (isProviderOverloadStatusError(statusCode, message)) {
     return new APIProviderOverloadedError(statusCode, message, requestId, retryAfterMs, traceId);
+  }
+  if (isContentFilterStatusError(statusCode, message)) {
+    return new APIProviderFilteredError(statusCode, message, requestId, retryAfterMs, traceId);
   }
   return new APIStatusError(
     statusCode,
@@ -368,6 +389,7 @@ export type ApiErrorKind =
   | 'overloaded'
   | 'rate_limit'
   | 'quota_exhausted'
+  | 'content_filter'
   | 'auth'
   | '5xx_server'
   | '4xx_client'
@@ -384,6 +406,7 @@ export interface ApiErrorClassification {
 export function classifyApiError(error: unknown): ApiErrorClassification {
   const statusCode = getStatusCode(error);
   if (error instanceof APIContextOverflowError) return { kind: 'context_overflow', statusCode };
+  if (error instanceof APIProviderFilteredError) return { kind: 'content_filter', statusCode };
   if (error instanceof APIProviderOverloadedError) return { kind: 'overloaded', statusCode };
   if (error instanceof APIProviderQuotaExhaustedError) {
     return { kind: 'quota_exhausted', statusCode };
@@ -475,6 +498,14 @@ export function errorFromLlmMessage(error: LlmErrorMessage): Error {
         error.retryAfterMs,
         traceIdFromHeadersRecord(error.headers),
       );
+    case 'content_filter':
+      return new APIProviderFilteredError(
+        error.statusCode,
+        error.message,
+        error.requestId,
+        error.retryAfterMs,
+        traceIdFromHeadersRecord(error.headers),
+      );
     case 'empty_response':
       return new APIEmptyResponseError(error.message, {
         finishReason: error.finishReason,
@@ -535,6 +566,16 @@ export function llmMessageFromError(error: unknown): LlmRemoteErrorMessage | und
   if (error instanceof APIProviderOverloadedError) {
     return {
       kind: 'overloaded',
+      message: error.message,
+      statusCode: error.statusCode,
+      requestId: error.requestId,
+      retryAfterMs: error.retryAfterMs,
+      headers: traceHeadersOf(error),
+    };
+  }
+  if (error instanceof APIProviderFilteredError) {
+    return {
+      kind: 'content_filter',
       message: error.message,
       statusCode: error.statusCode,
       requestId: error.requestId,

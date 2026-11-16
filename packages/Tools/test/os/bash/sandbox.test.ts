@@ -69,6 +69,31 @@ describe('BashSandboxService', () => {
     expect(result.kind).toBe('denied');
   });
 
+  it('tells the model a required-mode denial cannot be retried', async () => {
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'required',
+      probe: async () => availability(false),
+    });
+    const result = await service.prepare(request);
+    if (result.kind !== 'denied') throw new Error('expected denial');
+    expect(result.message).toContain('OMNICODE_SANDBOX_MODE=required');
+    expect(result.message).toContain('Retrying will not help');
+    expect(result.message).toContain('Do not try to express the command differently');
+    expect(result.message).toContain('no OS sandbox backend is available');
+  });
+
+  it('tells the model a required-mode plan failure cannot be retried', async () => {
+    vi.stubEnv('OMNICODE_SANDBOX_WRITE_ROOTS', 'relative');
+    const service = new BashSandboxService(modeService(), {
+      mode: () => 'required',
+      probe: async () => availability(true),
+    });
+    const result = await service.prepare(request);
+    if (result.kind !== 'denied') throw new Error('expected denial');
+    expect(result.message).toContain('OMNICODE_SANDBOX_MODE=required');
+    expect(result.message).toContain('relative');
+  });
+
   it('falls back to direct execution in auto mode when unavailable', async () => {
     const service = new BashSandboxService(modeService(), {
       mode: () => 'auto',

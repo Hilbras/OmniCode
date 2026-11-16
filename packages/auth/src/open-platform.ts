@@ -180,13 +180,12 @@ export function applyOpenPlatformConfig(
   // env sub-table, …) survive a refresh; credential fields always get replace
   // semantics — never a merge that could resurrect a conflicting second source.
   const existing = config.providers[providerKey];
-  const {
-    apiKey: _droppedKey,
-    apiKeyEnv: _droppedEnv,
-    oauth: _droppedOAuth,
-    source: _droppedSource,
-    ...preserved
-  } = (existing ?? {}) as Record<string, unknown>;
+  const existingRecord = (existing ?? {}) as Record<string, unknown>;
+  const preserved = { ...existingRecord };
+  delete preserved['apiKey'];
+  delete preserved['apiKeyEnv'];
+  delete preserved['oauth'];
+  delete preserved['source'];
   config.providers[providerKey] = {
     ...preserved,
     type: 'omnicode',
@@ -200,7 +199,9 @@ export function applyOpenPlatformConfig(
   // refresh. Models that upstream no longer lists are removed; the rest are
   // merged field-by-field.
   const upstreamKeys = new Set(options.models.map((m) => `${providerKey}/${m.id}`));
-  for (const [key, model] of Object.entries(existingModels)) {
+  for (const entry of Object.entries(existingModels)) {
+    const key = entry[0];
+    const model = entry[1];
     if (isRecord(model) && model['provider'] === providerKey && !upstreamKeys.has(key)) {
       delete existingModels[key];
     }
@@ -244,7 +245,9 @@ export function removeOpenPlatformConfig(
 
   let removedDefault = false;
   const existingModels = config.models ?? {};
-  for (const [key, model] of Object.entries(existingModels)) {
+  for (const entry of Object.entries(existingModels)) {
+    const key = entry[0];
+    const model = entry[1];
     if (!isRecord(model) || model['provider'] !== platformId) continue;
     delete existingModels[key];
     if (config.defaultModel === key) removedDefault = true;

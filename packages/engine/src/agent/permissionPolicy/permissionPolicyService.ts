@@ -9,7 +9,11 @@ import { AutoModeAskUserQuestionDenyPermissionPolicyService } from '#/agent/perm
 import { AutoModeClassifierPermissionPolicyService } from '#/agent/permissionPolicy/policies/auto-mode-classifier';
 import { DangerousCommandAskPermissionPolicyService } from '#/agent/permissionPolicy/policies/dangerous-command-ask';
 import { DefaultToolApprovePermissionPolicyService } from '#/agent/permissionPolicy/policies/default-tool-approve';
-import { ExecPolicyPermissionPolicyService } from '#/agent/permissionPolicy/policies/exec-policy-rule';
+import {
+  ExecPolicyPermissionPolicyService,
+  ExecPolicyPromptPermissionPolicyService,
+  ExecPolicyVerdictPermissionPolicyService,
+} from '#/agent/permissionPolicy/policies/exec-policy-rule';
 import { FallbackAskPermissionPolicyService } from '#/agent/permissionPolicy/policies/fallback-ask';
 import { GitControlPathAccessAskPermissionPolicyService } from '#/agent/permissionPolicy/policies/git-control-path-access-ask';
 import { GitCwdWriteApprovePermissionPolicyService } from '#/agent/permissionPolicy/policies/git-cwd-write-approve';
@@ -36,6 +40,7 @@ export class AgentPermissionPolicyService
 
   private readonly policies: readonly PermissionPolicy[];
   private readonly execPolicy: ExecPolicyPermissionPolicyService;
+  private readonly execPolicyPrompts: ExecPolicyPermissionPolicyService;
 
   constructor(
     @IInstantiationService private readonly instantiation: IInstantiationService,
@@ -43,7 +48,12 @@ export class AgentPermissionPolicyService
     @IConfigService config: IConfigService,
   ) {
     super();
-    this.execPolicy = this.instantiation.createInstance(ExecPolicyPermissionPolicyService);
+    this.execPolicy = this.instantiation.createInstance(
+      ExecPolicyVerdictPermissionPolicyService,
+    );
+    this.execPolicyPrompts = this.instantiation.createInstance(
+      ExecPolicyPromptPermissionPolicyService,
+    );
     this.policies = [
       this.instantiation.createInstance(AutoModeAskUserQuestionDenyPermissionPolicyService),
       this.instantiation.createInstance(UserConfiguredDenyPermissionPolicyService),
@@ -55,6 +65,7 @@ export class AgentPermissionPolicyService
       this.execPolicy,
       this.instantiation.createInstance(AutoModeClassifierPermissionPolicyService),
       this.instantiation.createInstance(SessionApprovalHistoryPermissionPolicyService),
+      this.execPolicyPrompts,
       this.instantiation.createInstance(UserConfiguredAskPermissionPolicyService),
       this.instantiation.createInstance(UserConfiguredAllowPermissionPolicyService),
       this.instantiation.createInstance(YoloModeApprovePermissionPolicyService),
@@ -78,9 +89,10 @@ export class AgentPermissionPolicyService
     this.setExecPolicy(loadExecPolicyFromConfig(configuredPath, bootstrap.homeDir, bootstrap.osHomeDir));
   }
 
-  /** Installs or clears the exec policy used by the rule pass in the chain. */
+  /** Installs or clears the exec policy used by both rule passes in the chain. */
   setExecPolicy(policy: ExecPolicy | undefined): void {
     this.execPolicy.setPolicy(policy);
+    this.execPolicyPrompts.setPolicy(policy);
   }
 
   async evaluate(

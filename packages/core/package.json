@@ -5,11 +5,11 @@
   "description": "Re-export facade over the kernel engine and foundation, kept so existing consumers keep importing one package.",
   "license": "MIT",
   "author": "Hilbras",
-  "homepage": "https://github.com/Hilbras/omnicode/tree/main/Kernel/core#readme",
+  "homepage": "https://github.com/Hilbras/omnicode/tree/main/packages/core#readme",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Hilbras/omnicode.git",
-    "directory": "Kernel/core"
+    "directory": "packages/core"
   },
   "bugs": {
     "url": "https://github.com/Hilbras/omnicode/issues"

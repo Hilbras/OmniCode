@@ -10,6 +10,7 @@ import { crc32 } from '../crc32';
 import {
   getTextBuildWorkerRuntimeState,
   TEXT_BUILD_WORKER_PROTOCOL_VERSION,
+  tsWorkerExecArgv,
   type TextBuildWorkerRuntimeEntry,
 } from '../worker-runtime';
 import { buildTextArtifacts } from './text-build-core';
@@ -122,9 +123,7 @@ function spawnWorker(
   }
   return new Worker(entry.url, {
     workerData: spec,
-    // --experimental-transform-types runs the TS worker source directly in dev;
-    // silence its experimental warning so it does not bleed into the TUI.
-    execArgv: ['--experimental-transform-types', '--disable-warning=ExperimentalWarning'],
+    execArgv: [...tsWorkerExecArgv()],
     resourceLimits,
   });
 }
@@ -305,6 +304,9 @@ export function startWorkerTextBuild(
       }
 
       if (event.type === 'error') {
+        if (process.env['MINIDB_WORKER_DEBUG'] === '1') {
+          console.error('[minidb worker] error before ready:', event.error.message);
+        }
         await stopWorker();
         if (!ready && !cancelRequested) return startFallback('bootstrap-failure');
         throw new WorkerTextBuildError(

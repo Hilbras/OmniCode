@@ -44,6 +44,7 @@
     }
   },
   "scripts": {
+    "test": "vitest run",
     "build": "tsdown",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "clean": "rm -rf dist"

@@ -279,8 +279,14 @@ function sameRefreshSave<T extends object>(expected: T, actual: T): boolean {
   ) {
     return false;
   }
-  const { refresh_token: _expectedRefreshToken, ...expectedWithoutRefresh } = expectedRecord;
-  const { refresh_token: _actualRefreshToken, ...actualWithoutRefresh } = actualRecord;
+  const expectedWithoutRefresh = { ...expectedRecord } as {
+    -readonly [K in keyof typeof expectedRecord]: typeof expectedRecord[K];
+  };
+  delete expectedWithoutRefresh['refresh_token'];
+  const actualWithoutRefresh = { ...actualRecord } as {
+    -readonly [K in keyof typeof actualRecord]: typeof actualRecord[K];
+  };
+  delete actualWithoutRefresh['refresh_token'];
   return isDeepStrictEqual(expectedWithoutRefresh, actualWithoutRefresh);
 }
 

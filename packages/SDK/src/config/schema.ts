@@ -381,7 +381,9 @@ export function formatConfigValidationError(error: unknown): string {
 function missingModelContextSizeMessage(error: unknown): string | undefined {
   if (!(error instanceof z.ZodError)) return undefined;
   for (const issue of error.issues) {
-    const [section, modelName, field] = issue.path;
+    const section = issue.path[0];
+    const modelName = issue.path[1];
+    const field = issue.path[2];
     if (section === 'models' && typeof modelName === 'string' && field === 'maxContextSize') {
       return `Model "${modelName}" must define a positive max_context_size in config.toml.`;
     }

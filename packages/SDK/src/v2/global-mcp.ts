@@ -22,7 +22,10 @@ import type { McpServerConfig as GlobalMcpServerConfig } from '#/mcp';
 
 /** Byte-identical port of v1's `mcpConfigWithoutName`. */
 export function mcpConfigWithoutName(server: GlobalMcpServerConfig): McpServerConfig {
-  const { name: _name, ...config } = server;
+  const config = { ...server } as GlobalMcpServerConfig extends infer T
+    ? { [K in keyof T as K extends 'name' ? never : K]: T[K] }
+    : never;
+  delete (config as { name?: unknown })['name'];
   return config;
 }
 

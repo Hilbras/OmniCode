@@ -3,6 +3,7 @@ import { Feature } from '#/features/feature';
 import { registerFeature } from '#/features/featureRegistry';
 
 import { IActiveSkillGrant } from './enforcement';
+import { AgentSkillCuratorService, ISkillCuratorService } from './curator/curatorService';
 import { AgentSkillService, IAgentSkillService } from './skillService';
 
 export class SkillFeature extends Feature {
@@ -11,6 +12,9 @@ export class SkillFeature extends Feature {
   constructor() {
     super();
     this.contributeAgentService(IAgentSkillService, AgentSkillService, {
+      activation: ScopeActivation.OnDemand,
+    });
+    this.contributeAgentService(ISkillCuratorService, AgentSkillCuratorService, {
       activation: ScopeActivation.OnDemand,
     });
     // Same instance under a narrow read-only interface so the request path can

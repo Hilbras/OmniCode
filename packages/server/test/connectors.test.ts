@@ -106,7 +106,7 @@ describe('server-v2 /api/v1/connectors', () => {
     expect(telegram.running).toBe(false);
   });
 
-  it('writes the bot token and chat ids to the home directory', async () => {
+  it('stores the bot token encrypted at rest in the home directory', async () => {
     const body = await saveTelegram({ botToken: BOT_TOKEN, allowedChatIds: [7, 8] });
 
     expect(body.code).toBe(0);
@@ -118,7 +118,11 @@ describe('server-v2 /api/v1/connectors', () => {
     const written = JSON.parse(
       await readFile(join(home as string, 'telegram.json'), 'utf8'),
     ) as Record<string, unknown>;
-    expect(written['botToken']).toBe(BOT_TOKEN);
+    expect(written['botToken']).toBeUndefined();
+    expect(typeof written['botTokenEncrypted']).toBe('string');
+    expect(typeof written['botTokenIv']).toBe('string');
+    expect(typeof written['botTokenTag']).toBe('string');
+    expect(JSON.stringify(written)).not.toContain(BOT_TOKEN);
     expect(written['allowedChatIds']).toEqual([7, 8]);
   });
 
@@ -135,7 +139,9 @@ describe('server-v2 /api/v1/connectors', () => {
     const written = JSON.parse(
       await readFile(join(home as string, 'telegram.json'), 'utf8'),
     ) as Record<string, unknown>;
-    expect(written['botToken']).toBe(BOT_TOKEN);
+    expect(written['botToken']).toBeUndefined();
+    expect(typeof written['botTokenEncrypted']).toBe('string');
+    expect(JSON.stringify(written)).not.toContain(BOT_TOKEN);
   });
 
   it('rejects an empty settings body', async () => {

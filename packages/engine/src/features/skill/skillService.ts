@@ -16,6 +16,7 @@ import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { TurnEnded } from '#/agent/loop/turnOps';
 import { IAgentToolRegistryService } from '#/agent/toolRegistry/toolRegistry';
 import { ErrorCodes, Error2 } from '#/errors';
+import { ISkillCuratorService } from '#/features/skill/curator/curatorService';
 import type { ContentPart } from '#human/llm/message';
 import { skillActivationPart } from '#human/agent/origin';
 import { MAIN_AGENT_ID } from '#/session/agentLifecycle/agentLifecycle';
@@ -67,6 +68,7 @@ export class AgentSkillService implements IAgentSkillService, IActiveSkillGrant 
     @IAgentToolRegistryService private readonly toolRegistry?: IAgentToolRegistryService,
     @IAgentLLMRequesterService requester?: IAgentLLMRequesterService,
     @IInstantiationService private readonly instantiation?: IInstantiationService,
+    @ISkillCuratorService private readonly curator?: ISkillCuratorService,
   ) {
     this.bindExecutorGrant();
     // Push the grant into the requester so it can narrow the offered tool list
@@ -349,6 +351,7 @@ export class AgentSkillService implements IAgentSkillService, IActiveSkillGrant 
       }),
     );
     this.publishActivation(origin);
+    this.recordCuratorUsage(origin);
 
     if (input === undefined) return undefined;
     const steer = this.loop.snapshot().state === 'running';
@@ -360,6 +363,25 @@ export class AgentSkillService implements IAgentSkillService, IActiveSkillGrant 
       { steerIfActive: steer },
     );
     return this.loop.promptHandle(id)!.launched;
+  }
+
+  /**
+   * Curation is bookkeeping, so a store failure must never fail the activation
+   * being recorded: the write is fire-and-forget and its errors are dropped.
+   * Activations with no resolved source or path carry no usable ref and are
+   * skipped rather than recorded with invented provenance.
+   */
+  private recordCuratorUsage(origin: SkillActivationOrigin): void {
+    const curator = this.curator;
+    if (curator === undefined) return;
+    const { skillSource, skillPath } = origin;
+    if (skillSource === undefined || skillPath === undefined) return;
+    void curator
+      .recordUsage(
+        { name: origin.skillName, source: skillSource, path: skillPath },
+        { trigger: origin.trigger },
+      )
+      .catch(() => undefined);
   }
 
   private renderSkillPrompt(skill: SkillDefinition, rawArgs: string): string {

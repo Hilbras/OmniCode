@@ -149,15 +149,15 @@ export class OmnicodeHarness {
     this.telemetry.setContext?.(patch);
   }
 
-  async createSession(options: CreateSessionOptions): Promise<Session> {
-    const { planMode, kaos, persistenceKaos, sessionStartedProperties, ...coreOptions } = options;
+  async createSession(input: CreateSessionOptions): Promise<Session> {
+    const coreOptions: CreateSessionOptions = { ...input };
     const summary =
-      kaos === undefined && persistenceKaos === undefined
+      input.kaos === undefined && input.persistenceKaos === undefined
         ? await this.rpc.createSession(coreOptions)
         : await this.rpc.createSessionWithKaos(
             coreOptions,
-            kaos ?? (persistenceKaos as Kaos),
-            persistenceKaos,
+            input.kaos ?? (input.persistenceKaos as Kaos),
+            input.persistenceKaos,
           );
     const session = new Session({
       id: summary.id,
@@ -171,10 +171,10 @@ export class OmnicodeHarness {
       },
     });
     this.activeSessions.set(session.id, session);
-    if (planMode === true) {
+    if (input.planMode === true) {
       await session.setPlanMode(true);
     }
-    this.trackSessionStarted(summary.id, false, sessionStartedProperties);
+    this.trackSessionStarted(summary.id, false, input.sessionStartedProperties);
     this.trackSessionEvent(session.id, 'session_new');
     return session;
   }
@@ -182,12 +182,14 @@ export class OmnicodeHarness {
   async resumeSession(input: ResumeSessionInput): Promise<Session> {
     const id = normalizeSessionId(input.id);
     const active = this.activeSessions.get(id);
-    const {
-      kaos,
-      persistenceKaos,
-      sessionStartedProperties: _sessionStartedProperties,
-      ...resumeInput
-    } = input;
+    const resumeInput: Omit<ResumeSessionInput, 'kaos' | 'persistenceKaos'> & {
+      kaos?: Kaos | undefined;
+      persistenceKaos?: Kaos | undefined;
+    } = { ...input };
+    const kaos = resumeInput.kaos;
+    const persistenceKaos = resumeInput.persistenceKaos;
+    delete resumeInput.kaos;
+    delete resumeInput.persistenceKaos;
     // A session whose close is in flight (`isClosed` but not yet unmapped)
     // is not a valid resume target — fall through and re-resume fresh, which
     // the engine serializes behind that close.
@@ -228,7 +230,14 @@ export class OmnicodeHarness {
   }
 
   private async doResumeSession(input: ResumeSessionInput, id: string): Promise<Session> {
-    const { kaos, persistenceKaos, sessionStartedProperties, ...resumeInput } = input;
+    const resumeInput: Omit<ResumeSessionInput, 'kaos' | 'persistenceKaos'> & {
+      kaos?: Kaos | undefined;
+      persistenceKaos?: Kaos | undefined;
+    } = { ...input };
+    const kaos = resumeInput.kaos;
+    const persistenceKaos = resumeInput.persistenceKaos;
+    delete resumeInput.kaos;
+    delete resumeInput.persistenceKaos;
     const summary =
       kaos === undefined && persistenceKaos === undefined
         ? await this.rpc.resumeSession({ ...resumeInput, id })
@@ -249,7 +258,7 @@ export class OmnicodeHarness {
       },
     });
     this.activeSessions.set(session.id, session);
-    this.trackSessionStarted(summary.id, true, sessionStartedProperties);
+    this.trackSessionStarted(summary.id, true, input.sessionStartedProperties);
     this.trackSessionEvent(session.id, 'session_resume');
     return session;
   }
@@ -462,7 +471,7 @@ export class OmnicodeHarness {
   }
 
   /**
-   * File suggestions for @ mention-style completion under `workDir`, no
+   * File suggestions for \@ mention-style completion under `workDir`, no
    * session required. `undefined` on the v1 engine, which has no equivalent
    * capability; callers fall back to their own file search there.
    */
@@ -808,7 +817,11 @@ export class OmnicodeHarness {
 const DEFAULT_SESSION_STARTED_UI_MODE = 'shell';
 
 function resumeCoalesceKey(id: string, input: ResumeSessionInput): string {
-  const { kaos, persistenceKaos, ...rest } = input;
+  const kaos = input.kaos;
+  const persistenceKaos = input.persistenceKaos;
+  const rest = { ...input } as { -readonly [K in keyof ResumeSessionInput]: ResumeSessionInput[K] };
+  delete rest.kaos;
+  delete rest.persistenceKaos;
   return JSON.stringify({
     ...rest,
     id,
