@@ -9,18 +9,22 @@ an editor-facing surface, not a general-purpose server.
 (or a supplied stream). It handles `initialize`, session lifecycle, prompts,
 cancel, config options, slash commands, approvals, questions, and replay.
 
-- It is an adapter, not an engine; it drives the engine through `@hilbras/omnicode-api`.
+- It is an adapter, not an engine; it drives the engine through a `Klient`
+  injected by the embedding host. The klient/facade types it consumes come from
+  `@hilbras/omnicode-client-contract`, not from `@hilbras/omnicode-api`.
 - It is not a REST/WS server; `packages/server` owns that.
 - It is not imported by apps. Only `packages/API` may import ACP; it exposes
-  `loadAcpServer()`. ACP does not own auth token storage.
+  `loadAcpServer()`. ACP must not import `@hilbras/omnicode-api` — that edge is
+  the cycle the shared contract package exists to break. ACP does not own auth
+  token storage.
 
 ## 2. Public entry points and important modules
 
 - `src/index.ts` — `AcpServer`, `createAcpAgentApp`, `runAcpServer`,
   `runAcpServerWithStream`, `AcpSession`, conversion/event helpers, modes,
   slash parsing, approval/question bridges.
-- `src/start.ts` — composition root: `bootstrap()` → `createKlient()` → bind
-  `IAcpConnection` → `AcpServer`; owns shutdown drains.
+- `src/start.ts` — composition root: `bootstrap()` → `opts.createKlient()` →
+  bind `IAcpConnection` → `AcpServer`; owns shutdown drains.
 - `src/server.ts` — ACP method handlers and capability negotiation; routes calls
   to `klient.global.sessions` and `klient.session(id).agent('main')`.
 - `src/session.ts` — prompt flow and event-stream → `session/update` translation.
@@ -36,10 +40,15 @@ cancel, config options, slash commands, approvals, questions, and replay.
 ## 3. Boundary rules
 
 - Only `packages/API` may import ACP (`scripts/check-kernel-layering.mjs`).
-  ACP importing API is expected and allowed.
+- ACP must not import `@hilbras/omnicode-api`: API owns the ACP loader, so the
+  reverse edge closes a build cycle. Client-facing types come from
+  `@hilbras/omnicode-client-contract`; the klient itself is injected through
+  `RunAcpServerOptions.createKlient` (the CLI passes
+  `@hilbras/omnicode-api/memory`; the suite passes `test/_helpers/klient.ts`).
 - Do not import `server`, `apps/*`, or UI packages.
-- Keep engine access behind `Klient`; if a facade method is missing, add it in
-  API/SDK rather than importing an engine service into ACP.
+- Keep engine access behind the injected `Klient`; if a facade method is
+  missing, add it in the client contract + API/SDK rather than importing an
+  engine service into ACP.
 - Stdout is the ACP JSON-RPC channel. `start.ts` redirects `console.*` to
   stderr; new logging must use `src/log.ts` and never write stdout.
 - The connection can reverse-RPC into the editor. Do not assume a local terminal

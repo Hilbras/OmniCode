@@ -85,7 +85,7 @@ export type {
   GenerateParams,
   ProviderAuth,
   ProviderInput,
-} from './core/facade/kosong-types.js';
+} from '@hilbras/omnicode-client-contract';
 
 export type {
   SessionApprovalsFacade,
@@ -114,9 +114,9 @@ export type {
   KlientEventPayloads,
   SessionArchivedPayload,
   SessionMetaUpdatedPayload,
-} from './contract/global/events.js';
-export type { SessionEventPayloads } from './contract/session/events.js';
-export type { AgentEventPayloads } from './contract/agent/events.js';
+} from '@hilbras/omnicode-client-contract';
+export type { SessionEventPayloads } from '@hilbras/omnicode-client-contract';
+export type { AgentEventPayloads } from '@hilbras/omnicode-client-contract';
 
 // Wire types re-exported for consumer convenience (type-only; the engine is
 // not pulled in at runtime for http consumers).

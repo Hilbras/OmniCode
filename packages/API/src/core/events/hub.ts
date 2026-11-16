@@ -12,20 +12,14 @@
  * right scope's event stream on every transport.
  */
 
-import type { KlientEventPayloads } from '#/contract/global/events';
-import type { EventRegistration } from '#/contract/types';
+import type { KlientEventPayloads } from '@hilbras/omnicode-client-contract/contract/global/events';
+import type { EventRegistration } from '@hilbras/omnicode-client-contract/contract/types';
+import type { KlientEvents } from '@hilbras/omnicode-client-contract/events';
 
 import type { IDisposable, KlientChannel, ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import { parseEvent } from '../validation.js';
 
-export interface KlientEvents<TPayloadMap extends object = KlientEventPayloads> {
-  on<E extends keyof TPayloadMap & string>(
-    event: E,
-    listener: (payload: TPayloadMap[E]) => void,
-  ): IDisposable;
-  /** Validation failures and listener exceptions surface here. */
-  onError(listener: (error: Error) => void): IDisposable;
-}
+export type { KlientEvents } from '@hilbras/omnicode-client-contract/events';
 
 type AnyListener = (payload: never) => void;
 

@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 
 import { runAcpServerWithStream } from '../src/start';
 import { CURRENT_VERSION, MIN_PROTOCOL_VERSION, negotiateVersion } from '../src/version';
+import { createKlient } from './_helpers/klient';
 
 interface JsonRpcMessage {
   readonly jsonrpc?: string;
@@ -66,7 +67,7 @@ describe('omnicode-acp initialize handshake', () => {
       const toClient = new PassThrough();
       try {
         const stream = ndJsonStream(Writable.toWeb(toClient), Readable.toWeb(toAgent));
-        const server = await runAcpServerWithStream(stream, { homeDir });
+        const server = await runAcpServerWithStream(stream, { homeDir, createKlient });
 
         const request = {
           jsonrpc: '2.0',
@@ -106,7 +107,7 @@ describe('omnicode-acp initialize handshake', () => {
       const toClient = new PassThrough();
       try {
         const stream = ndJsonStream(Writable.toWeb(toClient), Readable.toWeb(toAgent));
-        const server = await runAcpServerWithStream(stream, { homeDir });
+        const server = await runAcpServerWithStream(stream, { homeDir, createKlient });
 
         toAgent.write(
           `${JSON.stringify({
@@ -141,6 +142,7 @@ describe('omnicode-acp initialize handshake', () => {
         const stream = ndJsonStream(Writable.toWeb(toClient), Readable.toWeb(toAgent));
         const server = await runAcpServerWithStream(stream, {
           homeDir,
+          createKlient,
           terminalAuthEnv: { OMNICODE_HOME: '/tmp/sandbox' },
           terminalAuthLegacyCommand: '/opt/omnicode/bin/omnicode',
         });

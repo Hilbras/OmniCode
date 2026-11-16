@@ -5,48 +5,40 @@
  * which transport carried the bytes.
  */
 
-import { agentEvents, type AgentEventPayloads } from '#/contract/agent/events';
-import { globalEvents, type KlientEventPayloads } from '#/contract/global/events';
-import { globalContract, isStreamingContract } from '#/contract/index';
-import { sessionEvents, type SessionEventPayloads } from '#/contract/session/events';
-import type { EventRegistration, StreamingProcedureContract } from '#/contract/types';
+import { agentEvents } from '@hilbras/omnicode-client-contract/contract/agent/events';
+import { globalEvents } from '@hilbras/omnicode-client-contract/contract/global/events';
+import {
+  globalContract,
+  isStreamingContract,
+} from '@hilbras/omnicode-client-contract/contract/index';
+import { sessionEvents } from '@hilbras/omnicode-client-contract/contract/session/events';
+import type {
+  EventRegistration,
+  StreamingProcedureContract,
+} from '@hilbras/omnicode-client-contract/contract/types';
+import type {
+  AgentEventPayloads,
+  AgentHandle,
+  Klient,
+  KlientEventPayloads,
+  KlientOptions,
+  SessionEventPayloads,
+  SessionHandle,
+} from '@hilbras/omnicode-client-contract';
 
 import type { KlientChannel, ScopeRef } from '@hilbras/omnicode-rpc/channel';
 import { EventHub, type KlientEvents } from './events/hub.js';
-import { createAgentFacade, type AgentFacade } from './facade/agent.js';
-import {
-  createGlobalFacade,
-  type GlobalFacade,
-  type ScopedCaller,
-  type ScopedStreamCaller,
-} from './facade/global.js';
-import { createSessionFacade, type SessionFacade } from './facade/session.js';
+import { createAgentFacade } from './facade/agent.js';
+import { createGlobalFacade, type ScopedCaller, type ScopedStreamCaller } from './facade/global.js';
+import { createSessionFacade } from './facade/session.js';
 import { parseChunk, parseInput, parseOutput } from './validation.js';
 
-export interface KlientOptions {
-  /**
-   * Validate wire inputs/outputs and event payloads against the contract.
-   * Default `true`. Disable only on measured hot paths — validation is cheap
-   * (sub-µs for typical payloads) and is the drift tripwire.
-   */
-  readonly validate?: boolean;
-}
-
-export interface SessionHandle extends SessionFacade {
-  readonly events: KlientEvents<SessionEventPayloads>;
-  agent(agentId: string): AgentHandle;
-}
-
-export interface AgentHandle extends AgentFacade {
-  readonly events: KlientEvents<AgentEventPayloads>;
-}
-
-export interface Klient {
-  readonly global: GlobalFacade;
-  readonly events: KlientEvents;
-  session(sessionId: string): SessionHandle;
-  close(): Promise<void>;
-}
+export type {
+  AgentHandle,
+  Klient,
+  KlientOptions,
+  SessionHandle,
+} from '@hilbras/omnicode-client-contract';
 
 export function createKlientFromChannel(
   channel: KlientChannel,

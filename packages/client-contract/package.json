@@ -1,0 +1,32 @@
+{
+  "name": "@hilbras/omnicode-client-contract",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Client-facing contract types shared by the OmniCode API daemon and the ACP host",
+  "license": "MIT",
+  "author": "Hilbras",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./package.json": "./package.json",
+    "./contract/*.js": {
+      "types": "./src/contract/*.ts",
+      "default": "./src/contract/*.ts"
+    },
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@hilbras/omnicode-engine": "workspace:^",
+    "@hilbras/omnicode-rpc": "workspace:^",
+    "zod": "catalog:"
+  }
+}

@@ -3,6 +3,7 @@ import { PassThrough, Readable, Writable } from 'node:stream';
 import { ndJsonStream } from '@agentclientprotocol/sdk';
 
 import { runAcpServerWithStream, type RunningAcpServer, type RunAcpServerOptions } from '../../src/start';
+import { createKlient } from './klient';
 
 interface RpcMessage {
   readonly id?: number;
@@ -52,6 +53,7 @@ export async function createTestClient(opts: {
   const stream = ndJsonStream(Writable.toWeb(toClient), Readable.toWeb(toAgent));
   const server = await runAcpServerWithStream(stream, {
     homeDir: opts.homeDir,
+    createKlient,
     disableAuth: opts.disableAuth ?? true,
     extraSeeds: opts.extraSeeds,
     slashCommands: opts.slashCommands,

@@ -1,6 +1,6 @@
 import type { RequestPermissionResponse } from '@agentclientprotocol/sdk';
 import type { Interaction } from '@hilbras/omnicode-core';
-import type { SessionHandle } from '@hilbras/omnicode-api';
+import type { SessionHandle } from '@hilbras/omnicode-client-contract';
 import type { ToolInputDisplay } from '@hilbras/omnicode-engine/tool/toolInputDisplay';
 import { describe, expect, it } from 'vitest';
 

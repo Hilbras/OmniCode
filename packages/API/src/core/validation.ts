@@ -8,7 +8,10 @@
 
 import { z } from 'zod';
 
-import type { ProcedureContract, StreamingProcedureContract } from '#/contract/types';
+import type {
+  ProcedureContract,
+  StreamingProcedureContract,
+} from '@hilbras/omnicode-client-contract/contract/types';
 
 export type ValidationPhase = 'input' | 'output' | 'event' | 'chunk';
 

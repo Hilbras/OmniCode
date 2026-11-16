@@ -58,8 +58,15 @@ export function registerAcpCommand(parent: Command): void {
       // path to this very binary so the client can spawn it for login.
       const legacyCommand = process.argv[1];
       try {
-        const { runAcpServer } = await loadAcpServer();
+        // Both the ACP host and its in-memory klient transport load lazily:
+        // parsing the CLI must not initialize the ACP engine, and the memory
+        // transport is the host's half of the injected klient factory.
+        const [{ runAcpServer }, { createKlient }] = await Promise.all([
+          loadAcpServer(),
+          import('@hilbras/omnicode-api/memory'),
+        ]);
         await runAcpServer({
+          createKlient,
           homeDir: getDataDir(),
           agentInfo: { name: 'Omnicode CLI', version: getVersion() },
           ...(terminalAuthEnv ? { terminalAuthEnv } : {}),

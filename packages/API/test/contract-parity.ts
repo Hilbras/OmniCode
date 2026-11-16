@@ -184,7 +184,7 @@ import {
   turnEndedEventSchema,
   turnStartedEventSchema,
   warningEventSchema,
-} from '../src/contract/agent/events.js';
+} from '@hilbras/omnicode-client-contract/contract/agent/events.js';
 import {
   agentCommandInfoSchema,
   agentContextDataSchema,
@@ -214,8 +214,8 @@ import {
   stopTaskPayloadSchema,
   tokenUsageSchema,
   usageStatusSchema,
-} from '../src/contract/agent/schemas.js';
-import { fullCompactionInputSchema, mcpServerEntrySchema } from '../src/contract/agent/services.js';
+} from '@hilbras/omnicode-client-contract/contract/agent/schemas.js';
+import { fullCompactionInputSchema, mcpServerEntrySchema } from '@hilbras/omnicode-client-contract/contract/agent/services.js';
 import {
   authStatusSchema,
   oAuthFlowSnapshotSchema,
@@ -223,22 +223,22 @@ import {
   oAuthLoginCancelResponseSchema,
   oAuthLogoutResponseSchema,
   refreshOAuthProviderModelsResponseSchema,
-} from '../src/contract/global/auth.js';
+} from '@hilbras/omnicode-client-contract/contract/global/auth.js';
 import {
   capabilityInstallProgressSchema,
   capabilityStatusSchema,
   capabilityStepSchema,
-} from '../src/contract/global/capabilities.js';
+} from '@hilbras/omnicode-client-contract/contract/global/capabilities.js';
 import {
   modelCatalogItemSchema,
   providerCatalogItemSchema,
   setDefaultModelResponseSchema,
-} from '../src/contract/global/catalog.js';
+} from '@hilbras/omnicode-client-contract/contract/global/catalog.js';
 import {
   configDiagnosticSchema,
   configInspectValueSchema,
   configTargetSchema,
-} from '../src/contract/global/config.js';
+} from '@hilbras/omnicode-client-contract/contract/global/config.js';
 import {
   connectorActionSchema,
   connectorCapabilitySchema,
@@ -246,16 +246,16 @@ import {
   connectorKindSchema,
   connectorScopeSchema,
   connectorStatusSchema,
-} from '../src/contract/global/connectors.js';
-import { fileMetaSchema, fileSaveOptionsSchema } from '../src/contract/global/files.js';
-import { experimentalFeatureStateSchema } from '../src/contract/global/flags.js';
+} from '@hilbras/omnicode-client-contract/contract/global/connectors.js';
+import { fileMetaSchema, fileSaveOptionsSchema } from '@hilbras/omnicode-client-contract/contract/global/files.js';
+import { experimentalFeatureStateSchema } from '@hilbras/omnicode-client-contract/contract/global/flags.js';
 import {
   githubConnectResultSchema,
   githubConnectionStatusSchema,
   githubDeviceFlowStartSchema,
   githubDisconnectResultSchema,
-} from '../src/contract/global/github.js';
-import { fsBrowseResponseSchema, fsHomeResponseSchema } from '../src/contract/global/hostFs.js';
+} from '@hilbras/omnicode-client-contract/contract/global/github.js';
+import { fsBrowseResponseSchema, fsHomeResponseSchema } from '@hilbras/omnicode-client-contract/contract/global/hostFs.js';
 import {
   globalMcpServerConfigSchema,
   mcpAuthStatusQuerySchema,
@@ -272,8 +272,8 @@ import {
   mcpServerSourceSchema,
   mcpServerTestResultSchema,
   mcpServerTestTargetSchema,
-} from '../src/contract/global/mcpManagement.js';
-import { modelConfigSchema } from '../src/contract/global/models.js';
+} from '@hilbras/omnicode-client-contract/contract/global/mcpManagement.js';
+import { modelConfigSchema } from '@hilbras/omnicode-client-contract/contract/global/models.js';
 import {
   getPluginInfoInputSchema,
   installPluginInputSchema,
@@ -289,37 +289,37 @@ import {
   removePluginInputSchema,
   setPluginEnabledInputSchema,
   setPluginMcpServerEnabledInputSchema,
-} from '../src/contract/global/plugins.js';
+} from '@hilbras/omnicode-client-contract/contract/global/plugins.js';
 import {
   refreshProviderModelsOptionsSchema,
   refreshProviderModelsResponseSchema,
-} from '../src/contract/global/providerDiscovery.js';
-import { providerConfigSchema } from '../src/contract/global/providers.js';
+} from '@hilbras/omnicode-client-contract/contract/global/providerDiscovery.js';
+import { providerConfigSchema } from '@hilbras/omnicode-client-contract/contract/global/providers.js';
 import {
   importCustomRegistryOptionsSchema,
   importCustomRegistryResultSchema,
-} from '../src/contract/global/registryImport.js';
-import { sessionListQuerySchema, sessionSummarySchema } from '../src/contract/global/sessions.js';
-import { workspaceSchema, workspaceUpdateSchema } from '../src/contract/global/workspaces.js';
-import { sessionActivityStateSchema } from '../src/contract/session/activity.js';
-import { approvalRequestSchema, approvalResponseSchema } from '../src/contract/session/approval.js';
+} from '@hilbras/omnicode-client-contract/contract/global/registryImport.js';
+import { sessionListQuerySchema, sessionSummarySchema } from '@hilbras/omnicode-client-contract/contract/global/sessions.js';
+import { workspaceSchema, workspaceUpdateSchema } from '@hilbras/omnicode-client-contract/contract/global/workspaces.js';
+import { sessionActivityStateSchema } from '@hilbras/omnicode-client-contract/contract/session/activity.js';
+import { approvalRequestSchema, approvalResponseSchema } from '@hilbras/omnicode-client-contract/contract/session/approval.js';
 import {
   interactionResolutionSchema,
   interactionSchema,
-} from '../src/contract/session/interaction.js';
+} from '@hilbras/omnicode-client-contract/contract/session/interaction.js';
 import {
   createChildSessionOptionsSchema,
   createSessionOptionsSchema,
   forkSessionOptionsSchema,
   handleWireSchema,
   resumeSessionOptionsSchema,
-} from '../src/contract/session/lifecycle.js';
+} from '@hilbras/omnicode-client-contract/contract/session/lifecycle.js';
 import {
   agentMetaSchema,
   sessionMetaPatchSchema,
   sessionMetaSchema,
   sessionMetadataChangedEventSchema,
-} from '../src/contract/session/metadata.js';
+} from '@hilbras/omnicode-client-contract/contract/session/metadata.js';
 import {
   questionAnswersSchema,
   questionItemSchema,
@@ -327,9 +327,9 @@ import {
   questionRequestSchema,
   questionResponseSchema,
   questionResultSchema,
-} from '../src/contract/session/question.js';
-import { skillSummarySchema } from '../src/contract/session/skills.js';
-import { sessionTitleContract } from '../src/contract/session/title.js';
+} from '@hilbras/omnicode-client-contract/contract/session/question.js';
+import { skillSummarySchema } from '@hilbras/omnicode-client-contract/contract/session/skills.js';
+import { sessionTitleContract } from '@hilbras/omnicode-client-contract/contract/session/title.js';
 import type { AgentFacade } from '../src/core/facade/agent.js';
 import type { AssertWire, MutableDeep } from './helpers/typeAssert.js';
 

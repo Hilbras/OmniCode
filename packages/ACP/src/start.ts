@@ -38,8 +38,7 @@ import {
   type ScopeSeed,
   sessionMediaOriginalsDir,
 } from '@hilbras/omnicode-core';
-import type { Klient } from '@hilbras/omnicode-api';
-import { createKlient } from '@hilbras/omnicode-api/memory';
+import type { Klient } from '@hilbras/omnicode-client-contract';
 
 import { acpClientFromContext } from './acp-client';
 // Importing the `acp-fs` barrel also registers the ACP-backed Session-scope
@@ -56,6 +55,12 @@ export interface RunAcpServerOptions extends AcpServerOptions {
   readonly configPath?: string;
   readonly input?: NodeJS.ReadableStream;
   readonly output?: NodeJS.WritableStream;
+  /**
+   * Builds the klient over the app scope the server just bootstrapped. The
+   * embedding host owns its transport (`@hilbras/omnicode-api/memory`,
+   * `@hilbras/omnicode-api/ipc`, …); ACP must not import API.
+   */
+  readonly createKlient: (options: { readonly scope: Scope }) => Klient;
   /**
    * Extra App-scope service seeds forwarded to `bootstrap()`. Intended for
    * tests — e.g. seeding a scripted `IProtocolAdapterRegistry` to drive a
@@ -96,7 +101,7 @@ function redirectConsoleToStderr(): void {
  */
 export async function runAcpServerWithStream(
   stream: Stream,
-  opts: RunAcpServerOptions = {},
+  opts: RunAcpServerOptions,
 ): Promise<RunningAcpServer> {
   const homeDir = resolveOmnicodeHome(opts.homeDir);
   const configPath = resolveConfigPath({ homeDir, configPath: opts.configPath });
@@ -126,7 +131,7 @@ export async function runAcpServerWithStream(
   // The klient dispatches against the same app scope — calls and events stay
   // in-process but observe wire-shaped (JSON-cloned) data. The klient does
   // NOT own the scope: lifecycle stays with this composition root.
-  const klient = createKlient({ scope: core });
+  const klient = opts.createKlient({ scope: core });
   const acpConnection = core.accessor.get(IAcpConnection);
 
   // Route every inbound ACP method to the `AcpServer`. The app must be
@@ -236,7 +241,7 @@ export async function runAcpServerWithStream(
  * The ACP SDK speaks Web `ReadableStream` / `WritableStream`, so Node stdio is
  * bridged through `Readable.toWeb` / `Writable.toWeb`.
  */
-export async function runAcpServer(opts: RunAcpServerOptions = {}): Promise<void> {
+export async function runAcpServer(opts: RunAcpServerOptions): Promise<void> {
   redirectConsoleToStderr();
   const input = (opts.input ?? process.stdin) as Readable;
   const output = (opts.output ?? process.stdout) as Writable;

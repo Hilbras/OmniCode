@@ -23,14 +23,18 @@ internals.
 - `src/index.ts` — the main surface: `export *` from SDK, Addons, Tools, Memory,
   and Channels, plus `loadAcpServer()`. Importing it activates those packages'
   load-time registrations. SDK re-exports the Kaos sandbox surface.
-- `src/core/klient.ts` — `createKlientFromChannel`, `Klient`, `SessionHandle`,
-  `AgentHandle`. Every transport produces the same facade.
-- `src/core/facade/global.ts`, `session.ts`, `agent.ts` — scoped facade shapes.
+- `src/core/klient.ts` — `createKlientFromChannel`; `Klient`, `SessionHandle`,
+  `AgentHandle` and the facade shapes are re-exported from
+  `@hilbras/omnicode-client-contract`. Every transport produces the same facade.
+- `src/core/facade/global.ts`, `session.ts`, `agent.ts` — facade implementations;
+  the interfaces and value types live in `@hilbras/omnicode-client-contract`.
 - `src/transports/memory/index.ts` — `createKlient({ scope })` over a live
   engine scope. `src/transports/memory/dispatcher.ts` does the DI dispatch;
   `serviceRegistry.ts` maps wire service names to DI tokens.
 - `src/transports/ipc/index.ts` and `host.ts` — Unix-socket transport and host.
-- `src/contract/` — zod wire contracts for global/session/agent services.
+- `packages/client-contract/src/contract/` (in `@hilbras/omnicode-client-contract`)
+  — zod wire contracts for global/session/agent services. They moved out of this
+  package so the ACP host can consume them without importing API.
 - `src/core/validation.ts` — input/output/chunk/event validation.
 - `src/requestHandler.ts` — `createOmnicodeHarness` and `SDKRpcClientV2`, the
   v1-shaped request handler backed by the v2 engine.
@@ -51,7 +55,8 @@ Run `pnpm check:architecture` after touching imports.
 
 ## 4. Contract and schema rules
 
-- Every facade method needs an entry in `src/contract/`; a missing entry throws
+- Every facade method needs an entry in the contract tables under
+  `packages/client-contract/src/contract/`; a missing entry throws
   `no contract registered for <service>.<method>`.
 - Inputs are zod tuples over positional engine arguments; outputs are zod
   schemas of the resolved value (`maybe`/`noResult` normalize `null`/`undefined`).
@@ -73,15 +78,61 @@ pnpm --filter @hilbras/omnicode-api test
 pnpm --filter @hilbras/omnicode-api exec vitest run test/facade.test.ts
 ```
 
+## 5a. The client wire contract artifact
+
+`docs/wire-contract.json` is the whole client boundary in one diffable file:
+every service method's input tuple schema plus its resolved output (or the
+chunk schema for a streaming procedure), and every registered `global`,
+`session`, and `agent` event with its registration kind and payload schema.
+
+It is generated from the zod contract tables in
+`packages/client-contract/src/contract/` — those tables are the source; the
+artifact is never hand-edited:
+
+```bash
+pnpm --filter @hilbras/omnicode-api gen:wire-contract          # rewrite
+pnpm --filter @hilbras/omnicode-api gen:wire-contract -- --check  # fail on drift
+```
+
+Alongside it, `gen:api-reference` renders the same contract tables as a
+human-readable Markdown index at `packages/API/docs/wire-contract.md` — a table
+per service (method, kind, shallow input and output summaries) plus the three
+event scopes. It is deliberately shallow: the full JSON Schema stays in
+`packages/API/docs/wire-contract.json`. Both artifacts are listed in
+`scripts/check-generated-freshness.mjs`, so `pnpm check:generated` fails when
+either drifts from the contract source. It lives in this package rather than
+under `docs/` because `docs/AGENTS.md` keeps generated reference tables out of
+the repo-level docs tree.
+
+`test/wireContract.test.ts` asserts the artifact matches `renderWireContract()`,
+and `pnpm check:generated` (inside `pnpm check:guards`) runs the `--check` mode,
+so drift fails both the package suite and CI.
+
+`test/wireContractConformance.test.ts` gates the shape the artifact depends on:
+every registered event carries a payload schema, every `stream` registration
+names its source stream (a missing `type` is deliberate — it means "forward the
+whole stream"), and every procedure declares an input plus an output or chunk.
+An event whose `type` is absent from the engine's emitted set cannot be checked
+here: klient event names are a mapped namespace, `EVENT2_REGISTRY` holds only
+transient `Event2` classes at runtime, and `docs/wire-manifest.d.ts` lists
+durable records only. Closing that gap needs a producer-side mapping table,
+which does not exist yet.
+
+A `null` schema in the artifact means the entry has no JSON Schema
+representation: 50 procedures resolve with no value (`z.void()` results), which
+JSON Schema cannot express. Adding or removing a contract entry, changing an
+event payload, or adding a schema field all show up as a named diff line
+(`procedures.<service>`, `events.<scope>.<name>`).
+
 Known gaps: `smoke*` scripts reference a missing `tsconfig.examples.json`, and
 `docker:e2e` references `scripts/run-docker-e2e.sh`, which is absent. Do not
 report those scripts as passing.
 
 ## 6. Local traps and where new logic belongs
 
-- New wire method: contract fragment → `src/contract/index.ts` for a new service
-  → facade method → `serviceRegistry.ts` token if new → conformance test. Keep
-  the wire argument order mechanical.
+- New wire method: contract fragment → `packages/client-contract/src/contract/index.ts`
+  for a new service → facade method → `serviceRegistry.ts` token if new →
+  conformance test. Keep the wire argument order mechanical.
 - New transport: implement `KlientChannel` under `src/transports/<name>/` and
   reuse `createKlientFromChannel`; add a host if another process serves it.
 - New v1-compatible method: add it in `src/requestHandler.ts` and its mapper in

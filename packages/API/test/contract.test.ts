@@ -8,10 +8,10 @@
 
 import { describe, expect, it } from 'vitest';
 
-import { pluginManifestSchema } from '../src/contract/global/plugins.js';
-import { mcpServerAuthFlowHandleSchema } from '../src/contract/global/mcpManagement.js';
-import { createSessionOptionsSchema } from '../src/contract/session/lifecycle.js';
-import { promptPayloadSchema } from '../src/contract/agent/schemas.js';
+import { pluginManifestSchema } from '@hilbras/omnicode-client-contract/contract/global/plugins.js';
+import { mcpServerAuthFlowHandleSchema } from '@hilbras/omnicode-client-contract/contract/global/mcpManagement.js';
+import { createSessionOptionsSchema } from '@hilbras/omnicode-client-contract/contract/session/lifecycle.js';
+import { promptPayloadSchema } from '@hilbras/omnicode-client-contract/contract/agent/schemas.js';
 
 type McpTimeoutField = 'startupTimeoutMs' | 'toolTimeoutMs';
 

@@ -30,18 +30,16 @@ import type {
   ToolCallLocation,
 } from '@agentclientprotocol/sdk';
 import { RequestError } from '@agentclientprotocol/sdk';
-import type { ContextMessage } from '@hilbras/omnicode-core';
+import type { ContentPart, ContextMessage, SkillSummary } from '@hilbras/omnicode-core';
 import type {
   AgentEventPayloads,
   AgentHandle,
-  ContentPart,
-  IDisposable,
   Klient,
   PromptLaunchResult,
   SessionEventPayloads,
   SessionHandle,
-  SkillSummary,
-} from '@hilbras/omnicode-api';
+} from '@hilbras/omnicode-client-contract';
+import type { IDisposable } from '@hilbras/omnicode-rpc/channel';
 import type { ToolResultEvent } from '@hilbras/omnicode-engine/events';
 import type {
   ToolCallDeltaEvent,

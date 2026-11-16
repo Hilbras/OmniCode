@@ -20,9 +20,10 @@
   },
   "dependencies": {
     "@agentclientprotocol/sdk": "^1.3.0",
-    "@hilbras/omnicode-api": "workspace:^",
+    "@hilbras/omnicode-client-contract": "workspace:^",
     "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-engine": "workspace:^",
+    "@hilbras/omnicode-rpc": "workspace:^",
     "@hilbras/omnicode-tools": "workspace:^"
   }
 }
