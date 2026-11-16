@@ -1,0 +1,113 @@
+{
+  "model": "gpt-5-mini",
+  "max_tokens": 4096,
+  "metadata": {
+    "user_id": "session-abc"
+  },
+  "thinking": {
+    "type": "adaptive",
+    "display": "summarized"
+  },
+  "output_config": {
+    "effort": "high"
+  },
+  "system": [
+    {
+      "type": "text",
+      "text": "You are a careful coding agent.",
+      "cache_control": {
+        "type": "ephemeral"
+      }
+    }
+  ],
+  "messages": [
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "text",
+          "text": "the parser tests fail"
+        }
+      ]
+    },
+    {
+      "role": "assistant",
+      "content": [
+        {
+          "type": "thinking",
+          "thinking": "inspect the failing module first"
+        },
+        {
+          "type": "text",
+          "text": "Let me look."
+        },
+        {
+          "type": "tool_use",
+          "id": "call_1",
+          "name": "Read",
+          "input": {
+            "path": "src/parser.ts"
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "content": [
+        {
+          "type": "tool_result",
+          "tool_use_id": "call_1",
+          "content": [
+            {
+              "type": "text",
+              "text": "export function parse(input: string): string { return input; }"
+            }
+          ]
+        },
+        {
+          "type": "text",
+          "text": "fix it",
+          "cache_control": {
+            "type": "ephemeral"
+          }
+        }
+      ]
+    }
+  ],
+  "tools": [
+    {
+      "name": "Read",
+      "description": "Read a file from the workspace.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      }
+    },
+    {
+      "name": "ApplyPatch",
+      "description": "Apply a patch to a file.",
+      "input_schema": {
+        "type": "object",
+        "properties": {
+          "patch": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patch"
+        ]
+      },
+      "cache_control": {
+        "type": "ephemeral"
+      }
+    }
+  ],
+  "stream": true
+}

@@ -1,0 +1,98 @@
+{
+  "model": "gpt-5-mini",
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "the parser tests fail"
+        }
+      ]
+    },
+    {
+      "role": "model",
+      "parts": [
+        {
+          "text": "inspect the failing module first",
+          "thought": true
+        },
+        {
+          "text": "Let me look."
+        },
+        {
+          "functionCall": {
+            "name": "Read",
+            "args": {
+              "path": "src/parser.ts"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "fix it"
+        },
+        {
+          "functionResponse": {
+            "name": "Read",
+            "response": {
+              "output": "export function parse(input: string): string { return input; }"
+            },
+            "parts": []
+          }
+        }
+      ]
+    }
+  ],
+  "config": {
+    "systemInstruction": "You are a careful coding agent.",
+    "tools": [
+      {
+        "functionDeclarations": [
+          {
+            "name": "Read",
+            "description": "Read a file from the workspace.",
+            "parametersJsonSchema": {
+              "type": "object",
+              "properties": {
+                "path": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "path"
+              ]
+            }
+          }
+        ]
+      },
+      {
+        "functionDeclarations": [
+          {
+            "name": "ApplyPatch",
+            "description": "Apply a patch to a file.",
+            "parametersJsonSchema": {
+              "type": "object",
+              "properties": {
+                "patch": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "patch"
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "thinkingConfig": {
+      "includeThoughts": true,
+      "thinkingBudget": 32000
+    },
+    "maxOutputTokens": 4096
+  }
+}

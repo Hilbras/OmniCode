@@ -1,0 +1,109 @@
+{
+  "model": "gpt-5-mini",
+  "instructions": "You are a careful coding agent.",
+  "input": [
+    {
+      "content": [
+        {
+          "type": "input_text",
+          "text": "the parser tests fail"
+        }
+      ],
+      "role": "user",
+      "type": "message"
+    },
+    {
+      "summary": [
+        {
+          "type": "summary_text",
+          "text": "inspect the failing module first"
+        }
+      ],
+      "type": "reasoning"
+    },
+    {
+      "content": [
+        {
+          "type": "output_text",
+          "text": "Let me look.",
+          "annotations": []
+        }
+      ],
+      "role": "assistant",
+      "type": "message"
+    },
+    {
+      "arguments": "{\"path\":\"src/parser.ts\"}",
+      "call_id": "call_1",
+      "name": "Read",
+      "type": "function_call"
+    },
+    {
+      "call_id": "call_1",
+      "output": [
+        {
+          "type": "input_text",
+          "text": "export function parse(input: string): string { return input; }"
+        }
+      ],
+      "type": "function_call_output"
+    },
+    {
+      "content": [
+        {
+          "type": "input_text",
+          "text": "fix it"
+        }
+      ],
+      "role": "user",
+      "type": "message"
+    }
+  ],
+  "tools": [
+    {
+      "type": "function",
+      "name": "Read",
+      "description": "Read a file from the workspace.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ]
+      },
+      "strict": false
+    },
+    {
+      "type": "function",
+      "name": "ApplyPatch",
+      "description": "Apply a patch to a file.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "patch": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "patch"
+        ]
+      },
+      "strict": false
+    }
+  ],
+  "store": false,
+  "stream": true,
+  "prompt_cache_key": "session-abc",
+  "max_output_tokens": 4096,
+  "reasoning": {
+    "effort": "high",
+    "summary": "auto"
+  },
+  "include": [
+    "reasoning.encrypted_content"
+  ]
+}
