@@ -1,0 +1,2 @@
+description = "Review code"
+prompt = "Review the diff and list real defects."

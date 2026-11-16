@@ -1,0 +1,11 @@
+model = "gpt-5-codex"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[mcp_servers.docs]
+command = "npx"
+args = ["-y", "docs-server"]
+env = { DOCS = "1" }
+
+[mcp_servers.remote]
+url = "https://mcp.example.com"

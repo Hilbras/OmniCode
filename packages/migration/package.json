@@ -28,9 +28,14 @@
     "@hilbras/omnicode-core": "workspace:^",
     "@hilbras/omnicode-engine": "workspace:^",
     "smol-toml": "^1.6.1",
+    "tar": "^7.5.22",
+    "yauzl": "^3.3.0",
     "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@hilbras/omnicode-transcript": "workspace:^"
+    "@hilbras/omnicode-transcript": "workspace:^",
+    "@types/yauzl": "^2.10.3",
+    "@types/yazl": "^2.4.6",
+    "yazl": "^3.3.1"
   }
 }

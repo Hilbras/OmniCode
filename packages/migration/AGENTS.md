@@ -34,6 +34,8 @@ wording is stale.
 - `src/omnicode-cli-schema.ts` — zod schemas for legacy JSON shapes.
 - `src/marker.ts`, `src/report.ts`, `src/migration-errors-log.ts` and
   `src/atomic-write.ts` — idempotency, reporting, durable writes.
+- `src/import/` — the separate foreign-tool import surface (T5.1); see section 8.
+  It is not part of `MigrationPlan` or `runMigration`.
 
 ## 3. Boundary rules
 
@@ -98,3 +100,48 @@ changing those files.
 - Engine, server, API, SDK, or ACP imports.
 - Reverse migration or a live dual-write path.
 - Hand-edited golden fixtures used to mask a translation regression.
+
+## 8. Foreign-tool importers (T5.1)
+
+`src/import/` imports Claude Code, OpenAI Codex, and Qwen Code layouts beside the
+legacy migration. It reads caller-supplied directories only: no network, no
+writes, no `MigrationPlan` involvement.
+
+- `schema.ts` — the unified zod contract. `ImportedSource` is
+  `claude-code | codex | qwen`. `ImportBundle` carries `source`, `root`
+  (absolute), `agents`, `skills`, `config`, and `warnings`; every entry has a
+  `sourcePath` relative to `root`. Names and all text reject NUL bytes and empty
+  names. `ImportedConfig.settings` is a flattened record of scalar values
+  (`a.b` keys); MCP servers are separate and carry their own `sourcePath`.
+- `sources/{claude-code,codex,qwen}.ts` — one adapter each:
+  `detect(root)` / `read(root)`. Layouts: Claude `agents/*.md` (YAML
+  frontmatter), `skills/<name>/SKILL.md`, `settings.json`, `CLAUDE.md`; Codex
+  `config.toml`, `AGENTS.md`, `prompts/*.md`, `skills/`; Qwen `settings.json`,
+  `QWEN.md`, `commands/*.{toml,md}`, `skills/`. `CLAUDE.md`, `AGENTS.md`, and
+  `QWEN.md` become agents whose `instructions` are the file body; prompt and
+  command files become agents/skills. Unknown or malformed files become coded
+  warnings (`malformed-json`, `malformed-toml`, `malformed-frontmatter`,
+  `invalid-entry`, `unrecognized-entry`, `missing-name`, `duplicate-name`,
+  `unreadable-file`); only a structurally invalid bundle throws.
+- Frontmatter is parsed locally (`frontmatter.ts`), not with a YAML dependency.
+- `archive.ts` — `extractArchive({ kind?, archivePath, destDir })` for `zip`,
+  `tar`, and `tar.gz` (`yauzl` + `tar`; `yazl` is test-only). It is deliberately
+  stricter than `packages/engine/src/app/plugin/archive.ts`:
+  - entry validation completes before `destDir` is created; any security
+    violation throws `ArchiveError` with a stable `code`;
+  - absolute paths, drive/UNC paths, every `..` segment after backslash
+    normalisation, empty names, and NUL bytes are rejected;
+  - symlink, hardlink, device, and FIFO entries are rejected, never resolved;
+  - each destination is checked lexically (`path.resolve` containment) and after
+    `mkdir` by `realpath`; files are written with `O_NOFOLLOW` and pre-existing
+    symlinks are refused;
+  - `MAX_ARCHIVE_ENTRIES` (10 000) and `MAX_ENTRY_BYTES` (256 MiB) are exported
+    and enforced from archive metadata before any write;
+  - directories use default permissions and archive mode bits are never
+    applied (`chmod: false` for tar).
+- Tests: `test/import/archive.test.ts` (hostile archives built with `yazl` and a
+  raw tar header writer; each case asserts the error code and that the parent of
+  `destDir` stayed empty), `test/import/sources/` (fixtures under
+  `test/import/fixtures/<source>/`), and `test/import/import.e2e.test.ts`
+  (fixture → zip/tar/tar.gz → extract → adapter, compared to the direct read).
+

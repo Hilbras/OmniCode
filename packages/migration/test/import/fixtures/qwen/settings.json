@@ -1,0 +1,7 @@
+{
+  "model": "qwen3-coder-plus",
+  "theme": "dark",
+  "mcpServers": {
+    "local": { "command": "node", "args": ["server.js"] }
+  }
+}
