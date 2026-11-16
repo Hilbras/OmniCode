@@ -46,7 +46,9 @@ contributions. Local guides cover `agent/`,
 - The kernel-layering guard allows `engine` to import leaf packages only:
   `base`, `auth`, `minidb`, `tree-sitter-bash`, and the other declared leaves.
 - Engine source must not import `Tools`, `Addons`, `memory`, `core`, `SDK`,
-  `API`, `server`, or `ACP`. They are dev-only test dependencies where present.
+  `API`, `server`, or `ACP`, and neither must its tests: cross-package tests
+  that need those packages live in `packages/features-integration` so the
+  engine manifest keeps no build edge to them.
 - `human/` is the pure kernel. Outside the sanctioned adapters
   (`agent/loop/machine`, `session/agentLifecycle`, `llm-adapter`), use only the
   human vocabulary modules exported through `#human/...` contracts.
@@ -58,10 +60,14 @@ contributions. Local guides cover `agent/`,
 
 Generated files live in `packages/engine/docs/` and are never hand-edited:
 `config-manifest.toml` (config sections and environment overlays),
-`wire-manifest.d.ts` (durable/observable wire events), and
-`state-manifest.d.ts` (app/workspace/session/agent state snapshots).
-Regenerate after changing a config schema, an `Event2` shape, a wire event, or
-a state definition:
+`wire-manifest.d.ts` (durable/observable wire events),
+`state-manifest.d.ts` (app/workspace/session/agent state snapshots), and
+`contract-types.sha256` (a `sha256  path` digest of every declaration
+`gen:contract-types` emits after scrubbing `registerScopedService`
+implementations out of the public surface — the 1 126 emitted `.d.ts` files
+themselves are written to a directory the caller passes, never tracked here).
+Regenerate after changing a config schema, an `Event2` shape, a wire event, a
+state definition, or a registered implementation's declaration footprint:
 
 ```bash
 pnpm --filter @hilbras/omnicode-engine gen:config-manifest
@@ -70,8 +76,33 @@ pnpm --filter @hilbras/omnicode-engine gen:state-manifest
 pnpm --filter @hilbras/omnicode-engine gen:contract-types
 ```
 
-A generator that reports stale output is a failure. Do not commit generated
+Each generator takes `--check`, renders in memory, and exits non-zero when the
+tracked artifact is stale; `pnpm check:generated` (part of `pnpm check:guards`)
+runs all four, so CI fails on drift instead of relying on a reviewer to notice.
+`gen:contract-types <dir>` additionally copies the declaration tree to `<dir>`
+for the external consumer. Do not commit generated
 outputs unless the owning script and guard expect them.
+
+## Plugin manifests
+
+`src/app/plugin/manifest.ts` parses `omnicode.plugin.json` and
+`.omnicode-plugin/plugin.json`. Plugins stay declarative: a manifest that
+declares `hooks`, `commands`, or `mcpServers` must also set the matching
+`permissions.<field>: true`. `permissions` accepts only the boolean keys
+`hooks`, `commands`, `mcpServers`, `skills`, and `agents`; an unknown key, a
+non-boolean value, or a non-object `permissions` value is an error.
+`skills`/`agents` acknowledgements are accepted but not required for the static
+directory scans.
+
+`engines.omnicode` must be a valid semver range. The host version defaults to
+`getCoreVersion()` and can be overridden through
+`parseManifest(root, { hostVersion })`. A range that does not satisfy a known
+host version is an error. An unknown host version — the `0.0.0` placeholder or
+a non-semver string — is only a warning that names the reason, and the plugin is
+not rejected; an unknown build must not fail plugins. Every `error` flips
+`PluginRecord.state` to `error`, and each contribution reader skips non-`ok`
+records, so an under-declared manifest contributes nothing. Tests:
+`test/app/plugin/manifest.test.ts` and `test/app/plugin/manager.test.ts`.
 
 ## Tests
 
@@ -81,7 +112,10 @@ Tests mirror source under `packages/engine/test/`: `test/agent/`, `test/app/`,
 `test/human/llm/protocol/` and `src/human/test/`.
 
 `packages/engine/test/setup.ts` clears `OMNICODE_*` env vars except the cassette
-key and imports `@hilbras/omnicode-addons` + `@hilbras/omnicode-tools`.
+key and the MCP conformance gate (`OMNICODE_MCP_CONFORMANCE`). Tests that need
+`@hilbras/omnicode-tools`, `@hilbras/omnicode-addons`, or
+`@hilbras/omnicode-memory` live in `packages/features-integration`, whose own
+setup imports the add-ons and tools.
 
 ```bash
 pnpm --filter @hilbras/omnicode-engine typecheck
@@ -123,7 +157,7 @@ Auto mode now uses `AutoModeClassifierPermissionPolicyService` (`auto-mode-class
 
 ## Skill curator
 
-`src/features/skill/curator/` is host-side skill-curation infrastructure, exported through the package entry; no model-visible tool and no composition-root wiring yet. `usage.ts` tracks per-skill activation aggregates with bounded recent events and a skill cap (overflow is counted, never silent); `lifecycle.ts` owns archive/restore/pin/unpin plus pure staleness (a skill is stale only if usage was observed, it is beyond the window, and it is neither pinned nor archived); `lockfile.ts` builds and diffs curated-set lockfiles with sha256 `{name, content}` fingerprints. Trust invariant: curator documents never persist a trust label; consumers derive trust from `source` via `skillTrust`, so curator state cannot raise skill trust. `store.ts` is a traversal-checked, byte-capped, atomic-rename store whose `runExclusive` serializes read-modify-write cycles per key in-process (cross-process is last-writer-wins on whole documents). Tests: `test/features/skill/curator/`.
+`src/features/skill/curator/` is host-side skill-curation infrastructure, exported through the package entry; no model-visible tool wraps it yet. The usage half is wired: `skillFeature` contributes `ISkillCuratorService` and `AgentSkillService.recordActivation` feeds it through `recordCuratorUsage`. The lifecycle half is **not** reachable at runtime — `ISkillCuratorService` exposes only `recordUsage`/`usage`, so nothing outside the curator can call `archive`/`pin`/`staleSkills`, and there is no sweep trigger and no CLI surface for curated sets. `usage.ts` tracks per-skill activation aggregates with bounded recent events and a skill cap (overflow is counted, never silent); `lifecycle.ts` owns archive/restore/pin/unpin plus pure staleness (a skill is stale only if usage was observed, it is beyond the window, and it is neither pinned nor archived); `lockfile.ts` builds and diffs curated-set lockfiles with sha256 `{name, content}` fingerprints. Trust invariant: curator documents never persist a trust label; consumers derive trust from `source` via `skillTrust`, so curator state cannot raise skill trust. `store.ts` is a traversal-checked, byte-capped, atomic-rename store whose `runExclusive` serializes read-modify-write cycles per key in-process (cross-process is last-writer-wins on whole documents). Tests: `test/features/skill/curator/`.
 
 ## Bundled skills
 

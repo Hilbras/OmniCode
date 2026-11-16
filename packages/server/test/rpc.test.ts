@@ -589,7 +589,11 @@ describe('server-v2 /api/v1/debug RPC', () => {
       await writeFile(join(pluginRoot, 'deploy.md'), '---\ndescription: Deploy\n---\n\nDeploy body', 'utf8');
       await writeFile(
         join(pluginRoot, 'omnicode.plugin.json'),
-        JSON.stringify({ name: 'rpc-plugin', commands: ['./deploy.md'] }),
+        JSON.stringify({
+          name: 'rpc-plugin',
+          permissions: { commands: true },
+          commands: ['./deploy.md'],
+        }),
         'utf8',
       );
 

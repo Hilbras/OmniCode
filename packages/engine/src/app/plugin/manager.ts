@@ -47,13 +47,13 @@ interface ManagedPluginCopy {
 export class PluginManager {
   private readonly omnicodeHomeDir: string;
   private readonly discoverSkills: (roots: readonly SkillRoot[]) => Promise<SkillDiscoveryResult>;
-  private readonly defaultEnabledOnInstall: boolean;
+  private readonly defaultEnabledOnInstall: boolean | undefined;
   private records = new Map<string, PluginRecord>();
 
   constructor(options: PluginManagerOptions) {
     this.omnicodeHomeDir = options.omnicodeHomeDir;
     this.discoverSkills = options.discoverSkills ?? discoverFileSkills;
-    this.defaultEnabledOnInstall = options.defaultEnabledOnInstall === true;
+    this.defaultEnabledOnInstall = options.defaultEnabledOnInstall;
   }
 
   async load(): Promise<void> {
@@ -139,7 +139,7 @@ export class PluginManager {
       const record = await recordFrom({
         id,
         root: normalizedRoot,
-        enabled: existing?.enabled ?? this.defaultEnabledOnInstall,
+        enabled: existing?.enabled ?? (this.defaultEnabledOnInstall ?? true),
         installedAt: existing?.installedAt ?? now,
         updatedAt: now,
         originalSource,

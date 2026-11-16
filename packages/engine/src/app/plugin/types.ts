@@ -23,6 +23,23 @@ export interface PluginAgentRoot {
   readonly source: 'plugin';
 }
 
+export interface PluginPermissions {
+  /** Allow hooks declared in `hooks`. */
+  readonly hooks?: boolean;
+  /** Allow slash commands declared in `commands`. */
+  readonly commands?: boolean;
+  /** Allow MCP servers declared in `mcpServers`. */
+  readonly mcpServers?: boolean;
+  /** Acknowledge the static skills this plugin ships. */
+  readonly skills?: boolean;
+  /** Acknowledge the static agents this plugin ships. */
+  readonly agents?: boolean;
+}
+
+export interface PluginEngines {
+  readonly omnicode?: string;
+}
+
 export interface PluginInterface {
   readonly displayName?: string;
   readonly shortDescription?: string;
@@ -46,6 +63,8 @@ export interface PluginManifest {
   readonly mcpServers?: Readonly<Record<string, McpServerConfig>>;
   readonly hooks?: readonly HookDefConfig[];
   readonly commands?: readonly PluginCommandEntry[];
+  readonly permissions?: PluginPermissions;
+  readonly engines?: PluginEngines;
   readonly interface?: PluginInterface;
   readonly skillInstructions?: string;
   readonly systemPrompt?: string;

@@ -59,7 +59,11 @@ relative imports; follow the file.
   `normalizeSlashes`, `findUpwardRoot`). Do not compare raw path strings.
 - `di/testInstantiationService.ts`, `di/test.ts`, and `sinon` are test-only
   surfaces. Do not make production code depend on them.
-- `getCoreVersion()` is a static placeholder, not package metadata.
+- `getCoreVersion()` reads the package's real `package.json` version through
+  `createRequire(import.meta.url)` and falls back to `'0.0.0'` only when the
+  manifest is unreadable; it is not a static placeholder. The engine test
+  `packages/engine/test/_base/version.test.ts` pins the value against
+  `packages/base/package.json`.
 ## Tests
 Test root: `packages/base/test/`. Vitest project name: `omnicode-base`. Exactly
 one package-local test exists: `test/asyncEventQueue.test.ts`. The DI container,

@@ -1,6 +1,9 @@
 import { readdir, readFile, realpath, stat } from 'node:fs/promises';
 import path from 'node:path';
 
+import { getCoreVersion } from '@hilbras/omnicode-base/version';
+import { satisfies, valid, validRange } from 'semver';
+
 import { HookDefSchema, type HookDefConfig } from '#/features/externalHooks/configSection';
 import { McpServerConfigSchema, type McpServerConfig } from '#/mcpCore/config-schema';
 
@@ -8,9 +11,11 @@ import {
   PLUGIN_NAME_REGEX,
   type PluginCommandEntry,
   type PluginDiagnostic,
+  type PluginEngines,
   type PluginInterface,
   type PluginManifest,
   type PluginManifestKind,
+  type PluginPermissions,
 } from './types';
 
 const OMNICODE_PLUGIN_ROOT_PATH = 'omnicode.plugin.json';
@@ -27,6 +32,22 @@ const UNSUPPORTED_RUNTIME_FIELDS = [
   'bootstrap',
 ] as const;
 
+const PLUGIN_PERMISSION_KEYS = [
+  'hooks',
+  'commands',
+  'mcpServers',
+  'skills',
+  'agents',
+] as const;
+
+const REQUIRED_PERMISSION_FIELDS = ['hooks', 'commands', 'mcpServers'] as const;
+
+type PluginPermissionKey = (typeof PLUGIN_PERMISSION_KEYS)[number];
+
+export interface ParseManifestOptions {
+  readonly hostVersion?: string;
+}
+
 export interface ParsedManifestResult {
   readonly manifest?: PluginManifest;
   readonly manifestKind?: PluginManifestKind;
@@ -35,7 +56,10 @@ export interface ParsedManifestResult {
   readonly diagnostics: readonly PluginDiagnostic[];
 }
 
-export async function parseManifest(pluginRoot: string): Promise<ParsedManifestResult> {
+export async function parseManifest(
+  pluginRoot: string,
+  options: ParseManifestOptions = {},
+): Promise<ParsedManifestResult> {
   const rootJsonPath = path.join(pluginRoot, OMNICODE_PLUGIN_ROOT_PATH);
   const dirJsonPath = path.join(pluginRoot, OMNICODE_PLUGIN_DIR_PATH);
   const rootJsonExists = await isFile(rootJsonPath);
@@ -126,6 +150,11 @@ export async function parseManifest(pluginRoot: string): Promise<ParsedManifestR
 
   recordUnsupportedRuntimeFields(raw, diagnostics);
 
+  const permissions = readPermissions(raw['permissions'], diagnostics);
+  assertDeclaredPermissions(raw, permissions, diagnostics);
+  const engines = readEngines(raw['engines'], diagnostics);
+  checkEngineCompatibility(engines?.omnicode, options.hostVersion ?? getCoreVersion(), diagnostics);
+
   const manifest: PluginManifest = {
     name,
     version: stringField(raw, 'version'),
@@ -141,6 +170,8 @@ export async function parseManifest(pluginRoot: string): Promise<ParsedManifestR
     mcpServers: await readMcpServers(pluginRoot, raw['mcpServers'], diagnostics),
     hooks: readHooks(raw['hooks'], diagnostics),
     commands: await readCommands(pluginRoot, raw['commands'], diagnostics),
+    permissions,
+    engines,
     interface: readInterface(raw['interface']),
     skillInstructions,
     systemPrompt,
@@ -160,6 +191,124 @@ function recordUnsupportedRuntimeFields(
       message: `"${field}" is present but not supported by Omnicode plugins`,
     });
   }
+}
+
+function readPermissions(
+  raw: unknown,
+  diagnostics: PluginDiagnostic[],
+): PluginPermissions | undefined {
+  if (raw === undefined) return undefined;
+  if (!isObject(raw)) {
+    diagnostics.push({ severity: 'error', message: '"permissions" must be an object' });
+    return undefined;
+  }
+  const out: {
+    hooks?: boolean;
+    commands?: boolean;
+    mcpServers?: boolean;
+    skills?: boolean;
+    agents?: boolean;
+  } = {};
+  for (const [key, value] of Object.entries(raw)) {
+    if (!isPermissionKey(key)) {
+      diagnostics.push({
+        severity: 'error',
+        message: `Unknown key "${key}" in "permissions" (expected one of ${PLUGIN_PERMISSION_KEYS.join(', ')})`,
+      });
+      continue;
+    }
+    if (typeof value !== 'boolean') {
+      diagnostics.push({
+        severity: 'error',
+        message: `"permissions.${key}" must be a boolean`,
+      });
+      continue;
+    }
+    out[key] = value;
+  }
+  return Object.keys(out).length === 0 ? undefined : out;
+}
+
+function isPermissionKey(key: string): key is PluginPermissionKey {
+  return (PLUGIN_PERMISSION_KEYS as readonly string[]).includes(key);
+}
+
+function assertDeclaredPermissions(
+  raw: Record<string, unknown>,
+  permissions: PluginPermissions | undefined,
+  diagnostics: PluginDiagnostic[],
+): void {
+  for (const field of REQUIRED_PERMISSION_FIELDS) {
+    if (raw[field] === undefined) continue;
+    if (permissions?.[field] === true) continue;
+    diagnostics.push({
+      severity: 'error',
+      message: `"${field}" requires "permissions.${field}": true`,
+    });
+  }
+}
+
+function readEngines(raw: unknown, diagnostics: PluginDiagnostic[]): PluginEngines | undefined {
+  if (raw === undefined) return undefined;
+  if (!isObject(raw)) {
+    diagnostics.push({ severity: 'error', message: '"engines" must be an object' });
+    return undefined;
+  }
+  const omnicode = raw['omnicode'];
+  if (omnicode === undefined) return undefined;
+  if (typeof omnicode !== 'string') {
+    diagnostics.push({ severity: 'error', message: '"engines.omnicode" must be a string' });
+    return undefined;
+  }
+  const range = omnicode.trim();
+  if (range.length === 0) {
+    diagnostics.push({
+      severity: 'error',
+      message: '"engines.omnicode" must be a valid semver range (got "")',
+    });
+    return undefined;
+  }
+  return { omnicode: range };
+}
+
+function checkEngineCompatibility(
+  range: string | undefined,
+  hostVersion: string,
+  diagnostics: PluginDiagnostic[],
+): void {
+  if (range === undefined) return;
+  if (validRange(range) === null) {
+    diagnostics.push({
+      severity: 'error',
+      message: `"engines.omnicode" must be a valid semver range (got "${range}")`,
+    });
+    return;
+  }
+  if (!isKnownHostVersion(hostVersion)) {
+    const reason =
+      hostVersion === '0.0.0'
+        ? 'the host version is a placeholder'
+        : 'the host version is not valid semver';
+    diagnostics.push({
+      severity: 'warn',
+      message:
+        `Cannot verify "engines.omnicode" range "${range}" against host version ` +
+        `"${hostVersion}": ${reason}; plugins are not rejected when the host version is unknown`,
+    });
+    return;
+  }
+  if (!satisfies(hostVersion, range)) {
+    diagnostics.push({
+      severity: 'error',
+      message:
+        `Plugin requires Omnicode "${range}" ("engines.omnicode") but the host version is ` +
+        `"${hostVersion}"`,
+    });
+  }
+}
+
+function isKnownHostVersion(hostVersion: string): boolean {
+  return hostVersion !== '0.0.0' && valid(hostVersion) !== null;
 }
 
 async function resolveDirListField(
