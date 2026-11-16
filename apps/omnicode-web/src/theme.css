@@ -1,0 +1,548 @@
+@import "tailwindcss";
+
+/*
+  Design tokens ported from ZCode Desktop (Electron app, @zcode/desktop).
+  Theme: "zai-dark" as baseline (dark), with a light override below.
+*/
+
+:root {
+  /* ── Fonts ─────────────────────────────────────────────────────────── */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+
+  /* ── UI base font size ───────────────────────────────────────────── */
+  --ui-font-size: 14px;
+
+  /* ── Dark theme (baseline) ───────────────────────────────────────── */
+  --color-background: #161616;
+  --color-background-alt: #20202099;
+  --color-background-win-alt: #2b2b2b;
+
+  --color-brand: #4099ff;
+  --color-brand-sky-300: #80beff;
+  --color-brand-sky-400: #4099ff;
+  --color-brand-sky-500: #2f83ff;
+  --color-brand-sky-600: #1e60d8;
+
+  /* Surfaces */
+  --color-header: #202020;
+  --color-panel: #202020;
+  --color-sidebar: #161616;
+  --color-card: #2b2b2b;
+  --color-card-selected: #363636;
+  --color-tab: #202020;
+  --color-tab-active: #161616;
+  --color-menu: #2b2b2b;
+  --color-menu-hover: #363636;
+  --color-popover: #2b2b2b;
+  --color-popover-foreground: #f8f8f8;
+  --color-popover-header: #202020;
+  --color-input: #2b2b2b;
+  --color-input-focused: #161616;
+  --color-input-border: #ffffff1a;
+  --color-toast: #2b2b2b;
+  --color-tooltip: #2b2b2b;
+  --color-tooltip-foreground: #f8f8f8;
+
+  /* Foreground */
+  --color-foreground: #d4d4d4;
+  --color-foreground-subtle: #d4d4d4b3;
+  --color-foreground-subtlest: #d4d4d44d;
+  --color-foreground-inverse: #000;
+
+  /* Border / selection */
+  --color-border: #ffffff1a;
+  --color-border-hover: #ffffff26;
+  --color-hover: #ffffff0d;
+  --color-selected: #ffffff1a;
+  --color-surface: #ffffff0d;
+  --color-surface-hover: #ffffff1a;
+  --color-user-message-bubble: #ffffff14;
+  --color-tag: #363636;
+  --color-tooltip-tag: #363636;
+  --color-tooltip-tag-foreground: #adadad;
+
+  /* Brand accent / interaction */
+  --color-accent: #001d3d;
+  --color-interaction-ask-surface: #001d3d;
+  --color-interaction-ask-foreground: #80beff;
+  --color-interaction-confirmation-surface: #46bf7229;
+  --color-interaction-confirmation-foreground: #87d9a4;
+
+  /* Semantic */
+  --color-primary: #fff;
+  --color-primary-foreground: #000;
+  --color-secondary: #363636;
+  --color-success: #46bf72;
+  --color-success-foreground: #000;
+  --color-success-surface: #46bf7229;
+  --color-success-surface-foreground: #87d9a4;
+  --color-warning: #ff8a30;
+  --color-warning-foreground: #000;
+  --color-warning-surface: #cd890029;
+  --color-warning-surface-foreground: #ffa159;
+  --color-destructive: #ff5c5c;
+  --color-destructive-foreground: #fff;
+  --color-destructive-surface: #e4001429;
+  --color-destructive-surface-foreground: #ff8585;
+  --color-progress-surface: #4682f029;
+  --color-progress-surface-foreground: #9dceff;
+  --color-idle-task: #7b5ce5;
+  --color-idle-task-surface: #160d38;
+
+  /* Trajectory / agent color coding */
+  --color-trajectory-user: #60a5fa;
+  --color-trajectory-assistant: #2dd4bf;
+  --color-trajectory-reasoning: #a78bfa;
+  --color-trajectory-tool-call: #f59e0b;
+  --color-trajectory-tool-result: #38bdf8;
+
+  /* Workflow / timeline */
+  --color-workflow-rule: #ffffff0d;
+  --color-workflow-trace: #ffffff59;
+  --color-workflow-trace-strong: #ffffff99;
+
+  /* Git status */
+  --color-git-modified: #ff8a30;
+  --color-git-added: #46bf72;
+  --color-git-deleted: #ff5c5c;
+  --color-git-renamed: #4099ff;
+  --color-git-untracked: #46bf72;
+  --color-git-ignored: #d4d4d44d;
+
+  /* Diff */
+  --color-diff-added: #46bf72;
+  --color-diff-added-foreground: #000;
+  --color-diff-removed: #ff5c5c;
+  --color-diff-removed-foreground: #000;
+
+  /* Terminal */
+  --color-terminal-bg: #161616;
+  --color-terminal-fg: #f8f8f8;
+  --color-terminal-cursor: #f8f8f8;
+  --color-terminal-red: #ff5c5c;
+  --color-terminal-green: #46bf72;
+  --color-terminal-yellow: #ff8a30;
+  --color-terminal-blue: #4099ff;
+  --color-terminal-magenta: #7b5ce5;
+  --color-terminal-cyan: #42c8c8;
+  --color-terminal-white: #adadad;
+  --color-terminal-bright-black: #747474;
+  --color-terminal-bright-red: #ff9999;
+  --color-terminal-bright-green: #87d9a4;
+  --color-terminal-bright-yellow: #ffb26b;
+  --color-terminal-bright-blue: #80beff;
+  --color-terminal-bright-magenta: #a888f2;
+  --color-terminal-bright-cyan: #8ee5e5;
+  --color-terminal-bright-white: #f8f8f8;
+  --color-terminal-selection: #4099ff47;
+  --color-terminal-selection-inactive: #ffffff1a;
+
+  /* Usage / context chart palette (dark) */
+  --color-usage-1: #4099ff;
+  --color-usage-2: #46bf72;
+  --color-usage-3: #7b5ce5;
+  --color-usage-4: #ff5c5c;
+  --color-usage-5: #ff8a30;
+  --color-usage-6: #42c8c8;
+  --color-context-1: #4099ff;
+  --color-context-2: #66adff;
+  --color-context-3: #80beff;
+  --color-context-4: #9dceff;
+  --color-context-5: #b9ddff;
+  --color-context-6: #d0e8ff;
+  --color-context-7: #e4f1ff;
+
+  /* Agent node colors (workflow graph) */
+  --color-file-node: #70aee029;
+  --color-file-node-hover: #70aee038;
+  --color-file-node-foreground: #8fc5ef;
+  --color-skill-node: #a689da29;
+  --color-skill-node-hover: #a689da38;
+  --color-skill-node-foreground: #bda5e6;
+  --color-command-node: #9aa6b424;
+  --color-command-node-hover: #9aa6b433;
+  --color-command-node-foreground: #b5c0cc;
+  --color-subagent-node: #b7bd7529;
+  --color-subagent-node-hover: #b7bd7538;
+  --color-subagent-node-foreground: #c8cd90;
+  --color-session-node: #68c4bc29;
+  --color-session-node-hover: #68c4bc38;
+  --color-session-node-foreground: #93d8d2;
+  --color-plugin-node: #e0ae7029;
+  --color-plugin-node-hover: #e0ae7038;
+  --color-plugin-node-foreground: #efc58f;
+
+  /* High-speed / sidebar model indicator */
+  --highspeed-model-icon: #6041ff;
+  --highspeed-model-gradient: linear-gradient(90deg, #4830c8 0%, #6041ff 50%, #8955db 100%);
+  --highspeed-sidebar-card-surface: #2b2b2b;
+
+  /* Find / highlight */
+  --color-find-highlight: #542500;
+  --color-find-highlight-active: #ff8a30;
+
+  /* Animated gradient text */
+  --animated-gradient-text-strong: #fff;
+  --animated-gradient-text-soft: #ffffff38;
+
+  /* ── Motion tokens (from zcode) ────────────────────────────────── */
+  --wf-t-fast: 0.12s;
+  --wf-t-base: 0.16s;
+  --wf-t-enter: 0.2s;
+  --wf-t-ink: 0.32s;
+  --wf-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --wf-beat: 1.6s;
+
+  /* ── Tailwind-compatible utility tokens ─────────────────────────── */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+  --radius-3xl: 1.5rem;
+
+  /* ── Text size scale ───────────────────────────────────────────── */
+  --text-ui-xl: calc(var(--ui-font-size) + 4px);
+  --text-ui-lg: calc(var(--ui-font-size) + 2px);
+  --text-ui-base: var(--ui-font-size);
+  --text-ui-caption: calc(var(--ui-font-size) - 1px);
+  --text-ui-sm: calc(var(--ui-font-size) - 2px);
+  --text-ui-xs: calc(var(--ui-font-size) - 4px);
+  --text-ui-2xs: calc(var(--ui-font-size) - 5px);
+}
+
+/* ── Light theme override ────────────────────────────────────────── */
+.theme-light,
+.light {
+  --color-background: #f8f8f8;
+  --color-background-alt: #fafafab3;
+  --color-background-win-alt: #ececee;
+
+  --color-brand: #0b7fff;
+  --color-brand-sky-300: #5ca7ff;
+  --color-brand-sky-400: #0b7fff;
+  --color-brand-sky-500: #0066dd;
+  --color-brand-sky-600: #0047a8;
+
+  --color-header: #fff;
+  --color-panel: #fff;
+  --color-sidebar: #f0f0f0;
+  --color-card: #fff;
+  --color-card-selected: #e6e6e6;
+  --color-tab: #f0f0f0;
+  --color-tab-active: #fff;
+  --color-menu: #fff;
+  --color-menu-hover: #f0f0f0;
+  --color-popover: #fff;
+  --color-popover-foreground: #0d0d0d;
+  --color-popover-header: #f8f8f8;
+  --color-input: #fff;
+  --color-input-focused: #fff;
+  --color-input-border: #0d0d0d1a;
+  --color-toast: #fff;
+  --color-tooltip: #f0f0f0;
+  --color-tooltip-foreground: #0d0d0d;
+
+  --color-foreground: #0d0d0d;
+  --color-foreground-subtle: #26262699;
+  --color-foreground-subtlest: #26262666;
+  --color-foreground-inverse: #fff;
+
+  --color-border: #0d0d0d1a;
+  --color-border-hover: #0d0d0d26;
+  --color-hover: #0d0d0d0d;
+  --color-selected: #0d0d0d0d;
+  --color-surface: #0d0d0d08;
+  --color-surface-hover: #0d0d0d0d;
+  --color-user-message-bubble: #0d0d0d0d;
+  --color-tag: #e6e6e6;
+  --color-tooltip-tag: #e6e6e6;
+  --color-tooltip-tag-foreground: #5c5c5c;
+
+  --color-accent: #ebf4ff;
+  --color-interaction-ask-surface: #ebf4ff;
+  --color-interaction-ask-foreground: #0066dd;
+  --color-interaction-confirmation-surface: #eaf7ee;
+  --color-interaction-confirmation-foreground: #166b32;
+
+  --color-primary: #000;
+  --color-primary-foreground: #fff;
+  --color-secondary: #e6e6e6;
+  --color-success: #1e8a3e;
+  --color-success-foreground: #fff;
+  --color-success-surface: #eaf7ee;
+  --color-success-surface-foreground: #166b32;
+  --color-warning: #e07b00;
+  --color-warning-foreground: #fff;
+  --color-warning-surface: #cd89001f;
+  --color-warning-surface-foreground: #914e00;
+  --color-destructive: #e03131;
+  --color-destructive-foreground: #fff;
+  --color-destructive-surface: #e400141a;
+  --color-destructive-surface-foreground: #b42020;
+  --color-progress-surface: #0b7fff1a;
+  --color-progress-surface-foreground: #1d4ed8;
+  --color-idle-task: #9e77ed;
+  --color-idle-task-surface: #f5f3ff;
+
+  --color-trajectory-user: #2563eb;
+  --color-trajectory-assistant: #0f766e;
+  --color-trajectory-reasoning: #7c3aed;
+  --color-trajectory-tool-call: #d97706;
+  --color-trajectory-tool-result: #0284c7;
+
+  --color-workflow-rule: #0d0d0d0e;
+  --color-workflow-trace: #0d0d0d4d;
+  --color-workflow-trace-strong: #0d0d0d8c;
+
+  --color-git-modified: #e07b00;
+  --color-git-added: #1e8a3e;
+  --color-git-deleted: #e03131;
+  --color-git-renamed: #0b7fff;
+  --color-git-untracked: #1e8a3e;
+  --color-git-ignored: #26262666;
+
+  --color-diff-added: #1e8a3e;
+  --color-diff-added-foreground: #fff;
+  --color-diff-removed: #e03131;
+  --color-diff-removed-foreground: #fff;
+
+  --color-terminal-bg: #f8f8f8;
+  --color-terminal-fg: #0d0d0d;
+  --color-terminal-cursor: #0d0d0d;
+  --color-terminal-red: #e03131;
+  --color-terminal-green: #1e8a3e;
+  --color-terminal-yellow: #e07b00;
+  --color-terminal-blue: #0b7fff;
+  --color-terminal-magenta: #9e77ed;
+  --color-terminal-cyan: #0aa7a7;
+  --color-terminal-white: #adadad;
+  --color-terminal-bright-black: #888;
+  --color-terminal-bright-red: #e03131;
+  --color-terminal-bright-green: #1e8a3e;
+  --color-terminal-bright-yellow: #e07b00;
+  --color-terminal-bright-blue: #0066dd;
+  --color-terminal-bright-magenta: #9e77ed;
+  --color-terminal-bright-cyan: #0aa7a7;
+  --color-terminal-bright-white: #0d0d0d;
+  --color-terminal-selection: #0b7fff38;
+  --color-terminal-selection-inactive: #0d0d0d1a;
+
+  --color-usage-1: #0b7fff;
+  --color-usage-2: #1e8a3e;
+  --color-usage-3: #9e77ed;
+  --color-usage-4: #e03131;
+  --color-usage-5: #e07b00;
+  --color-usage-6: #0aa7a7;
+  --color-context-1: #0b7fff;
+  --color-context-2: #338fff;
+  --color-context-3: #5ca7ff;
+  --color-context-4: #85bbff;
+  --color-context-5: #acd0ff;
+  --color-context-6: #c8ddff;
+  --color-context-7: #e0ecff;
+
+  --color-file-node: #1a70b81a;
+  --color-file-node-hover: #1a70b829;
+  --color-file-node-foreground: #1a70b8;
+  --color-skill-node: #7453b01a;
+  --color-skill-node-hover: #7453b029;
+  --color-skill-node-foreground: #7453b0;
+  --color-command-node: #5662701a;
+  --color-command-node-hover: #56627029;
+  --color-command-node-foreground: #566270;
+  --color-subagent-node: #6f7a2f1a;
+  --color-subagent-node-hover: #6f7a2f29;
+  --color-subagent-node-foreground: #6f7a2f;
+  --color-session-node: #14807a1a;
+  --color-session-node-hover: #14807a29;
+  --color-session-node-foreground: #14807a;
+  --color-plugin-node: #b87a1a1a;
+  --color-plugin-node-hover: #b87a1a29;
+  --color-plugin-node-foreground: #b87a1a;
+
+  --highspeed-model-icon: #6041ff;
+  --highspeed-model-gradient: linear-gradient(90deg, #4830c8 0%, #6041ff 50%, #8955db 100%);
+  --highspeed-sidebar-card-surface: #fafafa;
+
+  --color-find-highlight: #fff4eb;
+  --color-find-highlight-active: #ffb26b;
+
+  --animated-gradient-text-strong: #0a0a0a;
+  --animated-gradient-text-soft: #0a0a0a38;
+}
+
+/* ── Base reset ────────────────────────────────────────────────────── */
+body {
+  margin: 0;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  font-size: var(--ui-font-size);
+  line-height: 1.5;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Scrollbar (zcode style) ──────────────────────────────────────── */
+* {
+  scrollbar-width: auto;
+  scrollbar-color: var(--color-border) transparent;
+}
+::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  background-clip: padding-box;
+  border: 3px solid transparent;
+  border-radius: 9999px;
+  min-width: 32px;
+  min-height: 32px;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* ── Keyframes (ported from zcode) ────────────────────────────────── */
+@keyframes wf-unfold {
+  0% { opacity: 0; transform: translateY(-3px); }
+}
+@keyframes wf-swap {
+  0% { opacity: 0; transform: translateY(3px); }
+}
+@keyframes wf-draw {
+  to { stroke-dashoffset: 0; }
+}
+@keyframes wf-caret {
+  50% { opacity: 0; }
+}
+@keyframes wf-rail-grow {
+  0% { transform: scaleX(0); }
+}
+@keyframes wf-slide {
+  0% { transform: translateX(var(--wf-slide, 0px)); }
+}
+@keyframes wf-beat {
+  0% {
+    box-shadow:
+      0 0 0 3px color-mix(in oklab, var(--color-warning) 20%, transparent),
+      0 0 0 3px color-mix(in oklab, var(--color-warning) 35%, transparent);
+    transform: scale(1);
+  }
+  12% { transform: scale(1.12); }
+  40% { transform: scale(1); }
+  70%, 100% {
+    box-shadow:
+      0 0 0 3px color-mix(in oklab, var(--color-warning) 20%, transparent),
+      0 0 0 8px color-mix(in oklab, var(--color-warning) 0%, transparent);
+  }
+}
+@keyframes wf-land {
+  0% { opacity: 0; transform: scale(0.6); }
+}
+@keyframes wf-ws-land {
+  0% { background-color: transparent; }
+  20% { background-color: var(--color-surface-hover); }
+  100% { background-color: transparent; }
+}
+@keyframes wf-ws-shine {
+  to { background-position: 200% 0; }
+}
+@keyframes stream-text-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+@keyframes draft-prompt-waterfall {
+  0% { opacity: 0; clip-path: inset(0 0 100%); transform: translateY(-12px); }
+  100% { opacity: 1; clip-path: inset(0); transform: translateY(0); }
+}
+@keyframes stream-marker-in {
+  0% { color: transparent; }
+  100% { color: var(--color-foreground-subtlest); }
+}
+@keyframes collapsible-up {
+  0% { height: var(--collapsible-content-height, auto); }
+  100% { height: 0; }
+}
+@keyframes collapsible-fade-out {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes gradient-flow {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes pixel-on {
+  0%, 100% { opacity: 0.15; transform: scale(1); }
+  35% { opacity: var(--loading-pixel-peak, 0.75); transform: scale(1.08); }
+}
+@keyframes reaction-pop {
+  0% { transform: scale(0); }
+  45% { transform: scale(1.3); }
+  70% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+@keyframes breathe {
+  0%, 100% {
+    background-color: color-mix(in oklab, var(--color-brand) 10%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-brand) 10%, transparent);
+  }
+  50% {
+    background-color: color-mix(in oklab, var(--color-brand) 16%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-brand) 18%, transparent);
+  }
+}
+@keyframes progress-indeterminate {
+  0% { left: -33%; }
+  100% { left: 100%; }
+}
+@keyframes fade-up {
+  0% { opacity: 0; transform: translateY(8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes model-sweep {
+  0% { background-position: calc(0% - 96px) 0; }
+  100% { background-position: calc(100% + 96px) 0; }
+}
+@keyframes charge-sweep {
+  0% { opacity: 0.35; transform: translate(-120%); }
+  50% { opacity: 0.9; }
+  100% { opacity: 0.35; transform: translate(260%); }
+}
+@keyframes countdown {
+  0% { transform: scaleX(var(--interaction-progress, 1)); }
+  100% { transform: scaleX(0); }
+}
+@keyframes search-highlight {
+  0% { background-color: var(--color-find-highlight-active); }
+  100% { background-color: var(--color-find-highlight); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Reduced motion ───────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
