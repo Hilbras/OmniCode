@@ -54,10 +54,11 @@ between the composer and message content. Treat it as an API:
 
 - ProseMirror packages are direct dependencies; keep imports explicit rather than
   creating a barrel alias.
-- `vue` is a peer dependency. `app-client` is a dev-only dependency used for
-  tests and icon resolution.
-- Tests use the `omnicode` custom icon collection from `app-client`; keep
-  `vitest.config.ts` pointed at that collection.
+- `vue` is a peer dependency. `app-client` is **not** a dependency, not even a
+  dev-only one: it depends on this package, so any edge back would close a Turbo
+  cycle.
+- Tests use the `omnicode` custom icon collection from `app-client`; `vitest.config.ts`
+  points at `../app-client/src/icons/omnicode` by path, not by package resolution.
 - Avoid adding a second text model. The plain-text projection in `wire.ts` is the
   source of truth for what the host receives.
 
