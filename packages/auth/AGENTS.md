@@ -61,10 +61,11 @@ Important modules:
   read or mutate `config.toml` directly here.
 - Never log raw tokens or authorization headers.
 ## Tests
-Test root: `packages/auth/test/`. No `test` script; run Vitest via the
-package filter. Project is `omnicode-oauth`, not `omnicode-auth`.
+Test root: `packages/auth/test/`. The package has a `test` script (`vitest run`),
+so the root Turbo graph runs the suite; it did not until that script existed.
+Project is `omnicode-oauth`, not `omnicode-auth`. 21 files, 376 tests.
 ```bash
-pnpm --filter @hilbras/omnicode-auth exec vitest run
+pnpm --filter @hilbras/omnicode-auth test
 pnpm --filter @hilbras/omnicode-auth exec vitest run test/oauth-manager.test.ts
 pnpm --filter @hilbras/omnicode-auth typecheck
 ```

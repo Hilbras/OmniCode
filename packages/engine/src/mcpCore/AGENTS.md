@@ -82,6 +82,19 @@ Tests live under `packages/engine/test/mcpCore/` and mirror the source:
 `tool-naming.test.ts`, and `oauth/`. Stdio fixtures are in
 `test/mcpCore/fixtures/`; stubs are in `test/mcpCore/stubs.ts`.
 
+`external-filesystem-conformance.e2e.test.ts` is the one suite that talks to a
+**third-party** server instead of our own fixtures: it launches the reference
+`@modelcontextprotocol/server-filesystem` through `npx` and drives our client
+through the handshake, `tools/list` and a real `read_text_file` call. It needs
+the npm registry, so it is skipped unless the developer opts in:
+
+```bash
+OMNICODE_MCP_CONFORMANCE=1 pnpm --filter @hilbras/omnicode-engine exec \
+  vitest run test/mcpCore/external-filesystem-conformance.e2e.test.ts
+```
+
+That gate is one of the two `OMNICODE_*` keys `test/setup.ts` preserves.
+
 ```bash
 pnpm --filter @hilbras/omnicode-engine typecheck
 pnpm --filter @hilbras/omnicode-engine exec vitest run test/mcpCore

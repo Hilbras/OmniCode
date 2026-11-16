@@ -116,9 +116,11 @@ Key files:
   stays in the engine; do not import engine policy here.
 ## Tests
 Test root: `packages/Kaos/test/`, with setup that creates a `LocalKaos` and
-binds it in `beforeEach`. Vitest project: `kaos`. No `test` script exists.
+binds it in `beforeEach`. Vitest project: `kaos`. The package has a `test` script
+(`vitest run`), so the root Turbo graph runs the suite; it did not until that
+script existed. 30 files, 504 tests (22 skipped).
 ```bash
-pnpm --filter @hilbras/omnicode-kaos exec vitest run
+pnpm --filter @hilbras/omnicode-kaos test
 pnpm --filter @hilbras/omnicode-kaos exec vitest run test/local.test.ts
 pnpm --filter @hilbras/omnicode-kaos exec vitest run test/e2e
 pnpm --filter @hilbras/omnicode-kaos exec vitest run test/sandbox

@@ -12,7 +12,8 @@ reach these through `packages/API` rather than importing each other directly.
 | `ACP` | `@hilbras/omnicode-acp` | the Agent Client Protocol host, so editors can drive Omnicode |
 | `Addons` | `@hilbras/omnicode-addons` | optional agent behaviours that plug in through the Feature seam |
 | `Tools` | `@hilbras/omnicode-tools` | the built-in agent tools — filesystem, shell, search, prompts |
-| `memory` | `@hilbras/omnicode-memory` | trust-gated persistent memory — provenance, deterministic promotion, lexical retrieval with honest budgets; behind `OMNICODE_EXPERIMENTAL_MEMORY` |
+| `memory` | `@hilbras/omnicode-memory` | trust-gated persistent memory — provenance, deterministic promotion, lexical retrieval with honest budgets; experimental flag `OMNICODE_EXPERIMENTAL_MEMORY` (default on) |
+| `features-integration` | `@hilbras/omnicode-features-integration` | cross-package integration tests for engine, Tools, Addons, and memory; test-only, so the engine keeps no build edge to those three |
 
 ## Current status
 

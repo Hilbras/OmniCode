@@ -23,8 +23,9 @@ behavior.
   feature class. `sessionInit.ts` re-exports the engine contract
   `ISessionInitService` from `session/sessionInit/sessionInitContract`.
 - Addons are activated when the package is imported. Today the public
-  `packages/API/src/index.ts` re-exports Addons, and the engine test setup
-  imports it; a new surface must import it too or the addon is inert.
+  `packages/API/src/index.ts` re-exports Addons, and the cross-package test
+  suite `packages/features-integration/test/setup.ts` imports it; a new surface
+  must import it too or the addon is inert.
 
 ## Registration rules
 
@@ -50,8 +51,8 @@ behavior.
   such as `@hilbras/omnicode-engine/features/feature` and
   `@hilbras/omnicode-engine/session/sessionInit/sessionInitContract`; import base
   utilities from `@hilbras/omnicode-base`.
-- The engine must never import `packages/Addons` from `src/`. It is a dev-only
-  test dependency for the engine test setup.
+- The engine must never import `packages/Addons` from `src/` or `test/`. The
+  cross-package suite in `packages/features-integration` owns the test edge.
 - Addons must not import `human/` implementation, `llm-adapter/` internals,
   `packages/Tools`, `packages/memory`, or app packages.
 - Addons are not part of the kernel layering graph; do not rely on cycle

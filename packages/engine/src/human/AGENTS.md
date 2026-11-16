@@ -67,9 +67,36 @@ contract surface changes. Never hand-edit generated files under
 
 ## Tests
 
-Human kernel tests live in `packages/engine/src/human/test/` and are explicitly
-included by `packages/engine/vitest.config.ts` despite being excluded from the
-engine `tsconfig.json`. Additional protocol tests live in
+Human kernel tests live in `packages/engine/src/human/test/` and are included by both
+`packages/engine/vitest.config.ts` and `packages/engine/tsconfig.json`, so all 41 files
+run and are type-checked. They were excluded from the type-check until the 36
+diagnostics it hid were fixed; the fixes, each verified by running its suite, were:
+`store/` (seven `.payload.data` reads now go through a `dataOf` helper beside the
+existing `refOf`), `session/` (`migrate-v2.test.ts` narrows `meta` through an
+`assistantMetaOf` helper instead of reaching into the `EntryMeta | UserMeta |
+AssistantMeta` union), `credentials/` (the `LlmModel` fixture was missing the required
+`capability`, and one indexed read now narrows its item), `utils/` (`watch.test.ts`
+types its `execFileSync` options, because Node 22's
+`ExecFileSyncOptionsWithStringEncoding` does not declare `windowsVerbatimArguments`
+while the call does pass it through to `spawn` at runtime), `llm/incomplete-stream.test.ts`
+(asserts the sink carries `onError` instead of calling it blindly), `agent/`
+(`machine.test.ts`'s two filters compared a nested `entry.message.role`, which
+TypeScript cannot use to narrow the filtered result, so typed predicates now sit beside
+the file's existing helpers; `turn.test.ts`'s two stub requesters indexed `plan[...]`
+under `noUncheckedIndexedAccess` and now guard the impossible empty-plan case, while its
+`statusError` helper returns the `LlmRemoteErrorMessage` subtype `llm.failed.remote`
+requires), `models-dev/` (both `listModels` stubs resolve rows malformed on purpose,
+which an `LlmModel[]` cannot express, so a documented `rawListModels` helper performs
+the single cast), and `llm/trait.test.ts` (streaming usage is collected as
+`Partial<TokenUsage>`, which is what `llm.streaming.usage` carries; `mergeHistory`
+returns a mutable copy of the readonly array it is handed; the custom Anthropic
+`convertMessage` builds `AnthropicWireContentBlock[]` rather than
+`Record<string, unknown>[]`; and models carrying thinking metadata go through a
+`withThinking` helper that spreads it, mirroring `thinking.test.ts`'s `modelWith` and
+the cast `thinkingMetadataOf` itself performs). Keep new tests type-clean: the file is
+now inside the type-check, so a diagnostic here fails `pnpm typecheck`.
+
+Additional protocol tests live in
 `packages/engine/test/human/llm/protocol/`; adapter tests live in
 `packages/engine/test/llm-adapter/`. Read the local guides
 `packages/engine/src/human/llm/AGENTS.md` and

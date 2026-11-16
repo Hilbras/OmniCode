@@ -81,6 +81,13 @@ Tests mirror source under `packages/engine/test/app/`: `bootstrap/`, `config/`,
 `auth/`, `provider/`, and the remaining sibling directories. Stubs live beside
 the tests.
 
+`test/app/agentProfileCatalog/systemPromptGolden.test.ts` pins the rendered
+system prompt of the built-in `agent` and `coder` profiles against
+`test/app/agentProfileCatalog/goldens/`, driving the real profile definitions so
+a change to `system.md` prose, the role slot, or a context section fails the
+test instead of shipping a drifted prompt. Regenerate a golden only for an
+intentional prompt change, and read that diff before adopting it.
+
 ```bash
 pnpm --filter @hilbras/omnicode-engine typecheck
 pnpm --filter @hilbras/omnicode-engine exec vitest run test/app

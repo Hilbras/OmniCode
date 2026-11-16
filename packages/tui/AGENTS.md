@@ -19,3 +19,12 @@ Skip step 3 and the change is not done. Do not rewrite a rendering strategy.
 ## Tests
 
 This package runs `node --test` via `pnpm --filter @hilbras/omnicode-tui test`. The repo-root vitest run does not execute these tests.
+
+## Publish surface
+
+`package.json` declares `publishConfig.access: "public"` and repoints `.` at
+`dist/` (`publishConfig.exports`), because the top-level `exports` resolves to
+`src/`, which `files` excludes. Publish with **`pnpm publish`**: npm ignores
+`publishConfig.exports` and would ship a tarball with no resolvable entry point.
+`pnpm check:package` packs this package and runs `publint` and `attw` on the
+tarball, after `pnpm --filter @hilbras/omnicode-tui build`.

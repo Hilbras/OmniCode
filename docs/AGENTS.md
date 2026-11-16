@@ -10,7 +10,10 @@ span packages. Current contents are sparse and plan-oriented:
 - `telegram-upgrade-plan-v2.md` — supersedes the original Telegram plan
 - `release.md` — versioning policy, changesets flow, and what is deliberately
   not built yet on the release surface
-- `plans/qwen-parity-improvement-plan.md` — active seven-workstream plan
+- `plans/qwen-parity-improvement-plan.md` — seven-workstream qwen-parity plan
+  (marked complete; superseded by `plans/strength-program.md`)
+- `plans/strength-program.md` — active competitive-strength program (T0–T5),
+  consolidating the Codex / qwen-code / old-OmniCode study
 - `en/architecture/` and `zh/architecture/` — bilingual architecture and
   workstream status, English as source of truth
 - `en/quality/` and `zh/quality/` — bilingual E2E test plan and memory recall
@@ -18,6 +21,13 @@ span packages. Current contents are sparse and plan-oriented:
 
 These are working plans and internal design notes, not published user
 documentation or generated API reference.
+
+Rendering and checking: `pnpm docs:build` renders the reader-facing documents
+(`README.md`, `CONTRIBUTING.md`, `docs/en`, `docs/zh`, `docs/release.md`, the CLI README,
+the generated wire contract) into `docs-site/` (gitignored) with `scripts/build-docs.mjs`.
+`pnpm docs:check` — part of `pnpm check:guards` — validates them without writing: every
+relative link must resolve, and every `docs/zh/<path>` needs its `docs/en/<path>` source.
+`docs/plans/**` and all `AGENTS.md` files are agent working notes, deliberately excluded.
 
 Non-goals:
 

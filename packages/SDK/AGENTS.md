@@ -50,6 +50,16 @@ Exports are `"."`, `"./core-interop"`, `"./engine-interop"`, and
 - `src/index.ts` is the published API. Adding or removing an export changes the
   contract; `build:dts` rolls declarations through API Extractor
   (`api-extractor.json`, `scripts/build-dts.mjs`).
+- `packages/SDK/etc/omnicode-sdk.api.md` is a committed API Extractor report and
+  the tripwire for that contract: `build:dts` runs API Extractor in **check**
+  mode, so it fails when the report no longer matches the source. After an
+  intentional public-API change, run
+  `pnpm --filter @hilbras/omnicode-sdk build:dts:update` (API Extractor's
+  `--local`) to rewrite the report, and review the diff as part of the change.
+  CI's `package-hygiene` job runs `build:dts`, so a stale report fails the PR.
+- API Extractor in check mode fails on **any** warning, not only a changed
+  report, so a new TSDoc defect (an unescaped `@` in prose, a code span split
+  across lines) also fails it. Fix the comment; do not silence the message.
 - Keep `rpc-exports.ts` intentional: it exists for host compatibility, not as a
   second public API. Config changes go through `src/config/schema.ts` and
   `resolve.ts`; do not accept unvalidated TOML.
@@ -65,17 +75,44 @@ Tests live in `packages/SDK/test/` (`catalog`, `config`, `logging-formatter`,
 `setup.ts`). The Vitest config aliases `@hilbras/omnicode-auth` to source and
 sets `OMNICODE_LOG_LEVEL=off`; `test/setup.ts` imports the tools package.
 
-`package.json` has no `test` script — run Vitest through the filter:
+The package has a `test` script (`vitest run`), so the root Turbo graph runs this
+suite too — it did not until that script existed, which is why the SDK's tests
+never appeared in a full-graph `pnpm test`:
 
 ```bash
 pnpm --filter @hilbras/omnicode-sdk typecheck
-pnpm --filter @hilbras/omnicode-sdk exec vitest run
+pnpm --filter @hilbras/omnicode-sdk test
 pnpm --filter @hilbras/omnicode-sdk exec vitest run test/catalog.test.ts
 pnpm --filter @hilbras/omnicode-sdk build
+pnpm --filter @hilbras/omnicode-sdk build:dts
 ```
 
-Do not claim `... test` works. `build:dts` is also currently broken:
-`@microsoft/api-extractor` is not installed.
+13 files, 75 tests as of the wiring.
+
+## 5a. Publish surface
+
+`publishConfig.exports` points `.` at `dist/index.mjs` (`build`, via tsdown) and
+`dist/index.d.mts` (`build:dts`, via API Extractor). Run **both, in that order**:
+tsdown runs with `clean: true`, so a `build:dts` before `build` leaves a package
+that publint rejects for a missing import target. `build:dts` also validates the
+committed API report (see §4); it writes `dist/`, which is ignored, and never
+rewrites `etc/omnicode-sdk.api.md` unless you pass `--local`.
+
+`tsdown.config.ts` aliases every `@hilbras/*` specifier the barrel imports onto
+its source file. An alias matches a whole prefix, so a missing subpath alias
+fails the build with `Matched alias not found` instead of falling through to the
+dependency's `exports` map — `@hilbras/omnicode-kaos/sandbox` needs its own
+entry. Keep the alias paths' case exact: the directory is `packages/Kaos`.
+
+`pnpm check:package` (root) runs publint over every package that declares
+`publishConfig`, and for the ones that publish declarations it packs the package
+with `pnpm pack` and runs `attw --profile esm-only` on the tarball; it needs the
+packages built first.
+
+Publish with **`pnpm publish`**, never `npm publish`: npm ignores
+`publishConfig.exports`, and this package's top-level `exports` points at `src/`,
+which `files` excludes — an npm-published tarball would have no resolvable entry
+point.
 
 ## 6. Local traps and where new logic belongs
 

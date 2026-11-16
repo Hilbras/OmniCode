@@ -53,6 +53,16 @@ serialization) fails loudly instead of shipping a drifted request.
 - `goldens/openai-chat-rendered-request.json`: `prepareOpenAIRequest` output for a full
   agent context — system prompt, think history, tool call/result, tools, thinking,
   cache key, and token cap (`rendered-context-golden.test.ts`).
+- `goldens/anthropic-messages-rendered-request.json`,
+  `goldens/openai-responses-rendered-request.json`, and
+  `goldens/google-genai-rendered-request.json`: the same full agent context rendered by
+  the other three protocol bases, so a wire that shapes the request differently (or stops
+  being exercised) shows up as its own diff instead of hiding behind the OpenAI golden.
+
+The rendered system prompt itself is pinned outside this directory, in
+`test/app/agentProfileCatalog/systemPromptGolden.test.ts` against
+`test/app/agentProfileCatalog/goldens/`, because it is the profile catalog that renders
+it, not the provider layer.
 
 Hand-edit a golden only to adopt an intentional shaping change; the test failure is the
 review point for that diff.

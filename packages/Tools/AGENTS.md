@@ -77,8 +77,10 @@ registerAgentToolService(ITool, ToolClass, { name: TOOL_NAME, domain: '...' });
   utilities from `@hilbras/omnicode-base`.
 - Tools must not import `human/` implementation, `llm-adapter/` internals,
   `packages/Addons`, `packages/memory`, or an app package.
-- The engine must never import `packages/Tools` from `src/`; engine tests may
-  import it through `packages/engine/test/setup.ts`.
+- The engine must never import `packages/Tools` from `src/` or `test/`. Tests
+  that drive the built-in tools live in `packages/features-integration`, whose
+  setup imports this package; that keeps the engine manifest free of a build
+  edge to Tools.
 - Do not add a new package-level dependency without checking the workspace
   graph and `pnpm check:architecture`.
 
@@ -96,10 +98,57 @@ wired into an engine-owned section. There are no wire/state manifests here.
 `packages/Tools/test/extract.test.ts` covers document format detection and RTF
 extraction. The expansion tools have per-area tests under `test/tasks/`,
 `test/teams/`, `test/code-intelligence/`, `test/git-worktree/`,
-`test/notebook/`, `test/records/`, and `test/diagnostics/`. There are still no
-per-tool tests for Bash, Edit, Read, Grep, Glob, Write, WebSearch, FetchURL, or
-the feature tools. The package Vitest config uses `passWithNoTests`, so a
-missing or unmatched test file does not fail the run.
+`test/notebook/`, `test/records/`, `test/os/bash/`, and `test/diagnostics/`.
+The tools themselves are tested one layer down, from the cross-package suite:
+`packages/features-integration/test/os/backends/node-local/tools/` holds
+`read.test.ts` (82 cases), `grep.test.ts` (100), `bash.test.ts` (73),
+`glob.test.ts` (60) and `write.test.ts` (22),
+`packages/features-integration/test/app/edit/tools/edit.test.ts` covers `Edit`,
+and `packages/features-integration/test/app/web/tools/fetch-url.test.ts` covers
+`FetchURL`. `WebSearch` was the one tool with no tool-behaviour test of its own; it now has
+`test/web-search/webSearchTool.test.ts` (result formatting, the empty-result and
+provider-removed messages, and the five failure classifications in
+`classifySearchError`). So the *package* grew no per-tool tests for a long time
+while the *engine* had them; check there before concluding a tool is untested.
+The package Vitest config no longer sets
+`passWithNoTests`: an unmatched `include` fails the run instead of passing it.
+
+`test/os/glob/globTool.test.ts` and `test/os/grep/grepTool.test.ts` are the pattern
+for testing a tool that talks to a host seam: `makeTestRuntime` from
+`test/helpers/testRuntime.ts` supplies the runtime, workspace, session and scope
+contexts, `createFakeProcessService` serves both the ripgrep availability probe
+and the real run from one handler (the probe only reads the exit code), and the
+tool is constructed with those stubs. That harness makes the user-visible
+contract testable without a real filesystem or `rg`:
+
+- `Glob`: missing and non-directory roots, matches listed relative to the
+  workspace, the `No matches found` and pagination notices, a failed ripgrep
+  run, and the sensitive-file filter (`.env` dropped, `.env.example` kept, with
+  `(N sensitive file(s) filtered)` when nothing survives).
+- `Grep`: the three `output_mode`s (`content` records as `path:line:text`,
+  `files_with_matches`, `count_matches` with its `Found N total occurrences…`
+  summary), no-match wording, a failed ripgrep run, sensitive-file filtering, and
+  the truncation notice. Note `Grep` sets `isError: false` on success where
+  `Glob` leaves it undefined.
+
+Both tools use `rg --null` output, so a record is `path\0payload\n`; a
+`files_with_matches` record has an empty payload. `Grep` also stats each
+reported file to sort by mtime, so give the fake filesystem a `stat`.
+
+- `Read`: numbered lines rendered as `1\tone` with `Read` leaving `isError`
+  **undefined** on success (a third convention — `Glob` undefined, `Grep` false),
+  a `line_offset` + `n_lines` window, a negative `line_offset` tail read, and a
+  missing file reported with its path. `Read` needs nine services plus an
+  optional media store; only four do anything on a plain text read
+  (`resultTruncation.isWireJournalPath`, `profile.getModelCapabilities`,
+  `toolRegistry.resolve`, `toolPolicy.isToolActive`, `flags.enabled` — the last
+  three only in the media branch), so the rest are one-line stubs. Its file reads
+  go through the file source abstraction, which wants `readBytes`, `readLines`
+  and `stat` on the fake filesystem.
+- Note for tail reads: a file that ends with a newline has a final empty line, so
+  `line_offset: -2` on `"one\ntwo\nthree\nfour\n"` returns `four` plus that empty
+  line. Write tail assertions against a file without the trailing newline, or the
+  expectation is wrong rather than the tool.
 
 ```bash
 pnpm --filter @hilbras/omnicode-tools typecheck
@@ -135,7 +184,7 @@ transports, agent loop logic, UI code, or tests that only read source text.
 
 ## Bash sandbox
 
-`src/os/bash/sandbox.ts` selects a Kaos sandbox backend for Bash. `OMNICODE_SANDBOX_MODE=off|auto|required` controls it; default is `off`. `auto` falls back to direct execution with an explicit reason, while `required` fails closed. `OMNICODE_SANDBOX_NETWORK=shared` keeps the network namespace shared; default is denied. `OMNICODE_SANDBOX_BACKEND` pins one backend (bwrap, seatbelt, windows, landlock); an unavailable pinned backend is never substituted — in `auto` the command runs direct and `BashTool` prefixes the refusal reason to the output, in `required` the command is denied. Permission mode still gates execution first.
+`src/os/bash/sandbox.ts` selects a Kaos sandbox backend for Bash. `OMNICODE_SANDBOX_MODE=off|auto|required` controls it; default is `off`. `auto` falls back to direct execution with an explicit reason, while `required` fails closed with `sandboxRequiredDenialMessage(reason)` — a message that states the command will not run, that retrying cannot help because the sandbox is prepared before the command starts, and what the user can change. `OMNICODE_SANDBOX_NETWORK=shared` keeps the network namespace shared; default is denied. `OMNICODE_SANDBOX_BACKEND` pins one backend (bwrap, seatbelt, windows, landlock); an unavailable pinned backend is never substituted — in `auto` the command runs direct and `BashTool` prefixes the refusal reason to the output, in `required` the command is denied. Permission mode still gates execution first.
 
 `OMNICODE_SANDBOX_DENY_READ` (comma-separated absolute paths/globs) flows into the sandbox policy. bwrap cannot express read denial, so a deny-read policy on bwrap fails the plan with an explicit reason (direct in `auto`, denied in `required`); the seatbelt backend projects the rules. Write-root and deny-read values are passed to the plan builder unfiltered: a non-absolute entry fails plan validation, so a misconfigured variable falls back with the entry named instead of silently shrinking the grants.
 
