@@ -118,6 +118,72 @@ jobs:
       - name: Test Kaos sandbox
         run: pnpm --filter @hilbras/omnicode-kaos exec vitest run test/sandbox
 
+  full-suite:
+    name: Full typecheck and tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck everything
+        run: pnpm typecheck
+
+      - name: Run every package test suite
+        # Serial execution: the heavy suites (API, engine, CLI) are
+        # memory- and CPU-bound; 4-way Turbo parallelism OOM-kills them
+        # (exit 137) and trips per-test timeouts that never fire in isolation.
+        run: pnpm test --concurrency=1
+
+  package-hygiene:
+    name: Package hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the published surfaces
+        # publint packs each package and checks its declared entries exist, so
+        # every publish-intended package must be built first. tsdown runs with
+        # clean: true, which is why the SDK's declarations come after its bundle.
+        run: |
+          pnpm --filter @hilbras/omnicode-tui build
+          pnpm --filter @hilbras/omnicode-sdk build
+          pnpm --filter @hilbras/omnicode-sdk build:dts
+          pnpm --filter @omnicode/cli build
+
+      - name: Check package hygiene
+        run: pnpm check:package
+
   eval-gate:
     name: Eval gate
     runs-on: ubuntu-latest

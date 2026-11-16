@@ -6,10 +6,50 @@ Scope: versioning policy for the workspace; release flow and tooling for
 
 ## What is published
 
-`@omnicode/cli` is the only published npm package (`publishConfig.access` is
-`public`). Every package under `packages/` is private and stays in the
-workspace; their versions exist so `workspace:^` ranges between packages stay
-coherent when the CLI is published.
+`@omnicode/cli` is the only package in the documented publish flow
+(`publishConfig.access` is `public`). Every package under `packages/` is private
+and stays in the workspace; their versions exist so `workspace:^` ranges between
+packages stay coherent when the CLI is published.
+
+Two of them nevertheless declare a packed publish surface:
+`@hilbras/omnicode-sdk` and `@hilbras/omnicode-tui` set
+`publishConfig.access: "public"` and a `publishConfig.exports` override that repoints
+`.` at `dist/`. Both are `private: true`, so no publish flow can ship them — the
+declaration exists because `pnpm check:package` packs them and runs `publint`/`attw`
+against that surface, which is what keeps the packed manifest honest. That resolves the
+older contradiction here: **the CLI is the only published package; SDK and TUI stay
+private and are held to their declared packed surface by the hygiene gate.**
+
+**Publish with `pnpm`.** `publishConfig.exports` is what makes the packed manifest
+resolvable — the top-level `exports` point at `src/`, which `files` deliberately
+excludes. `pnpm publish`/`pnpm pack` apply the override; `npm publish`/`npm pack`
+ignore it, so an npm publish would ship a manifest whose entry point is not in the
+tarball at all. `pnpm check:package` verifies the pnpm path by packing and running
+`attw` on the tarball. `@omnicode/cli` now publishes with `provenance: true`, so a
+local `pnpm publish` is expected to fail: provenance is only available from CI with an
+OIDC token.
+
+## Automation
+
+`.github/workflows/release.yml` runs on every push to `main` in two gated phases:
+
+1. `verify` calls the reusable `release-gate.yml` (guards, typecheck, build, test). A
+   red gate stops the pipeline before anything is published.
+2. `release` runs `changesets/action`: it opens or updates the "Version Packages" PR
+   (`pnpm release:version`), and once that PR merges it publishes (`pnpm release`) and
+   creates the GitHub Release with the changelog.
+
+Secrets live in the repository's `release` **environment**, never in the tree:
+
+| Secret | Purpose | Notes |
+|---|---|---|
+| `NPM_TOKEN` | npm automation token scoped to `@omnicode` | `actions/setup-node` writes it into the runner's `.npmrc` as `NODE_AUTH_TOKEN`; the workflow warns (rather than fails) when it is absent so the version PR still works |
+| `GITHUB_TOKEN` | push the version branch, tag, create the Release | automatic; the job grants `contents: write` and `pull-requests: write` |
+| OIDC (`id-token: write`) | npm provenance | no long-lived secret; with npm trusted publishing configured, `NPM_TOKEN` can be removed entirely |
+
+Concurrency is serialized per ref (`release-${{ github.ref }}`), so two merges cannot
+race the same version bump. A local dry run of the verification phase is
+`pnpm release:gate`; the workflow itself only runs on GitHub.
 
 ## Versioning policy
 

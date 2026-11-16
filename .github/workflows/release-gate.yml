@@ -2,6 +2,8 @@ name: Release gate
 
 on:
   workflow_dispatch:
+  # Called by `release.yml` so a publish can only happen after this gate passes.
+  workflow_call:
 
 jobs:
   release-gate:

@@ -18,6 +18,8 @@ const LEAVES = new Set([
   'tui',
 ]);
 
+const FEATURES_INTEGRATION_DEPS = new Set(['engine', 'tools', 'addons', 'memory', 'base']);
+
 const RULES = [
   {
     name: 'leaf packages must not import other kernel packages',
@@ -40,9 +42,26 @@ const RULES = [
     hint: 'core is now a re-export facade over base and engine',
   },
   {
+    name: 'client-contract may import engine and rpc only',
+    test: (from, to) =>
+      from === 'client-contract' && to !== null && to !== 'engine' && to !== 'rpc',
+    hint: 'the shared client contract sits beneath api and acp; importing either would close the cycle it exists to break',
+  },
+  {
     name: 'sdk must not import api',
     test: (from, to) => from === 'sdk' && to === 'api',
     hint: 'api re-exports sdk, so sdk depending on api is a cycle',
+  },
+  {
+    name: 'acp must not import api',
+    test: (from, to) => from === 'acp' && to === 'api',
+    hint: 'api owns the acp loader, so the reverse edge closes a build cycle; acp consumes the shared client-contract package instead',
+  },
+  {
+    name: 'features-integration may import engine, tools, addons, memory and base only',
+    test: (from, to) =>
+      from === 'features-integration' && to !== null && !FEATURES_INTEGRATION_DEPS.has(to),
+    hint: 'this package exists so cross-package tests need not make engine depend on tools, addons or memory; it must not import api, acp or server',
   },
   {
     name: 'nothing may import server',

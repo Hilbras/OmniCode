@@ -18,10 +18,40 @@ Non-goals:
   every root Vitest project path, and fails when one resolves to zero packages,
   files, or testable TypeScript sources. This is what stops a suite from going
   green while running nothing. Run `pnpm check:workspace`.
+- `check-test-reachability.mjs` — the reverse direction of the above: every test
+  file in the workspace must be run by something. Reachable means its workspace
+  package has a `test` script (`pnpm test` is `turbo run test`; nothing invokes a root
+  `vitest run`) **and** that package's `vitest.config.*` matches the file. Failing
+  either half is silent otherwise: a `test/` directory with no config executes
+  nothing (862 tests across three `app-*` packages), and a config with no `test`
+  script executes nothing either (955 tests across `SDK`, `auth`, `Kaos`).
+  `check-workspace-globs.mjs` cannot see either, because nothing declares those
+  suites. Workspace packages come from `pnpm-workspace.yaml` rather than the nearest
+  `package.json`, so nested helper manifests
+  (`packages/engine/src/human/package.json`) do not steal ownership of the tests
+  engine's own script runs. Files known to execute nowhere sit in a shrink-only list
+  with a reason each, matched by path or prefix; an entry that matches nothing fails
+  the guard, so a fix cannot leave a stale exception. Costs a few seconds. Run
+  `pnpm check:tests`.
+- `check-typecheck-coverage.mjs` — the same class of hole one gate over: every
+  workspace package with `src/` must have a `typecheck` script, because
+  `pnpm typecheck` is `turbo run typecheck` and runs only the packages that declare
+  the script. Nothing else type-checks a package either — the consumer apps run plain
+  `tsc` (not `vue-tsc`) over their own `src`, which cannot check `.vue` sources, and
+  the bundler that transpiles those sources does not type-check at all — so a package
+  without the script can carry thousands of diagnostics no command reports, which is
+  where `app-client`, `app-composer`, and `app-components` sat. Those three are wired now
+  and the exception list is **empty** — every package with `src/` type-checks, and
+  `pnpm check:typecheck` reports `39 wired, 0 documented`. The list is still shrink-only
+  and still exists for a future decision: wiring a package without removing its entry
+  fails the guard, and so does an exception whose directory vanished. Costs well under a
+  second. Run `pnpm check:typecheck`.
 - `check-kernel-layering.mjs` — parses static and dynamic
-  `@hilbras/omnicode-*` imports, enforces the leaf/`rpc`/`engine`/`core`/`sdk`
-  rules, forbids imports of `server`, restricts `acp` to `api`, and rejects
-  import cycles. Run `pnpm check:architecture`.
+  `@hilbras/omnicode-*` imports, enforces the leaf/`rpc`/`engine`/`core`/
+  `client-contract`/`sdk` rules, confines `features-integration` to `engine`,
+  `tools`, `addons`, `memory` and `base`, forbids imports of `server`, restricts
+  `acp` to `api` and forbids `acp` → `api`, and rejects import cycles. Run
+  `pnpm check:architecture`.
 - `check-no-comments.mjs` — bans comments, JSDoc, and tooling directives in
   `packages/core`, `packages/server`, and `packages/transcript` under
   `src`, `test`, and `scripts`. Outside those packages, comment only non-obvious
@@ -31,12 +61,80 @@ Non-goals:
   directory references in every `AGENTS.md`. Run `pnpm check:agent-docs`.
 - `check-docs-claims.mjs` — rejects stale CI, flake, and E2E coverage claims when
   the corresponding files or tests are absent. Run `pnpm check:docs-claims`.
-- `pnpm check:guards` runs workspace + architecture + docs-claims + agent-docs
-  together. This is the default pre-handoff guard command.
+- `check-oxlint-baseline.mjs` — runs `oxlint --type-aware` and fails on any
+  finding not present in `scripts/oxlint-baseline.json` (frozen pre-existing
+  debt). The baseline is shrink-only: the check also fails when a fix makes the
+  stored entries stale, which is the signal to regenerate. Run as part of
+  `pnpm lint`.
+- `build-docs.mjs` — renders the reader-facing documents to `docs-site/` with `marked`
+  (already the workspace's renderer; no site framework) and, in `--check` mode, validates
+  them: relative links resolve and every `docs/zh/<path>` has its `docs/en/<path>` source.
+  Part of `pnpm check:guards` as `pnpm docs:check`, so a dead link fails the gate rather
+  than sitting in a document nobody reopens. Costs under a second.
+- `check-generated-freshness.mjs` — runs each generator in its `--check` mode
+  (`gen:config-manifest`, `gen:wire-manifest`, `gen:state-manifest`,
+  `gen:contract-types` in `@hilbras/omnicode-engine`, `gen:wire-contract` and
+  `gen:api-reference` in `@hilbras/omnicode-api`, `gen:vis-asset` in
+  `@omnicode/cli`) and fails when an on-disk artifact no longer matches what its
+  generator produces. Seven artifacts today: the three engine manifests, the engine
+  contract-types digest, the API wire contract JSON, the generated API reference at
+  `packages/API/docs/wire-contract.md`, and the CLI's embedded vis web asset
+  (`apps/omnicode-cli/src/generated/vis-web-asset.ts`). Six of them render in
+  memory (or into a scratch dir), so the guard never rewrites the tree it is
+  checking; `gen:vis-asset` is the exception in shape, not in effect — it must run a
+  `vite build` of the vis web app (~4 s) to know what the current source produces,
+  then compares without writing. That build writes the untracked intermediate
+  `apps/omnicode-vis/web/dist-single/index.html`, which is why that path is ignored.
+  Total cost about two minutes, mostly `tsc` over the engine source.
+  `gen:contract-types` emits 1 126 declaration files for an external consumer, so
+  what is tracked in-repo is a digest manifest
+  (`packages/engine/docs/contract-types.sha256`, one `sha256  path` line per
+  emitted file) rather than the files themselves; a drift report names the
+  changed declarations. Run `pnpm check:generated`.
+- `check-package-hygiene.mjs` — for every workspace package that declares
+  `publishConfig`, runs `publint`, and — when that package's
+  `publishConfig.exports` ships declarations — packs it with `pnpm pack` and runs
+  `attw --profile esm-only` on the tarball, so the check measures the artifact a
+  consumer receives rather than the source tree. It runs **pnpm**-packed
+  tarballs on purpose: `npm pack` ignores `publishConfig.exports`, and attw on an
+  npm-packed SDK/TUI tarball reports `NoResolution` in every mode because the
+  packed manifest points `.` at `src/index.ts`, which `files` excludes. That
+  makes the check both the pnpm-path gate and the detector for "someone
+  published with npm". It builds nothing, so run it after the packages are
+  built; it is not part of `pnpm check:guards` for that reason. Run
+  `pnpm check:package`.
+- The SDK's committed API report (`packages/SDK/etc/omnicode-sdk.api.md`) is gated
+  the same way: `pnpm --filter @hilbras/omnicode-sdk build:dts` runs API Extractor
+  in check mode and fails when the report drifts from `src/index.ts`. It is not a
+  `check:*.mjs` script and not part of `pnpm check:guards` because it costs about
+  40 s and needs the declarations built; CI's `package-hygiene` job already runs
+  that exact command on every PR and push, so a stale report cannot land. Rewrite
+  the report with `build:dts:update` after an intentional public-API change.
+- `check:skills` (root script, no file of its own) — runs the project skill
+  library's own test files with `node --test ".agents/skills/*/*.test.cjs"`. Two
+  skills ship validators: `security-audit` (report validators
+  `validate-findings.cjs`, `validate-coverage-ledger.cjs`) and `review-pr`
+  (`validate-surfaces.cjs`, which resolves every path cited by
+  `review-pr/surfaces.md` against the tree so the review checklist cannot rot into
+  false facts); 75 tests today. Without this step those tests exist and never run.
+  It is part of `pnpm check:guards` and costs about two seconds. A skill directory
+  with no `.test.cjs` contributes nothing, so the pattern is safe to widen when
+  another skill arrives with validators.
+- `gen-oxlint-baseline.mjs` — regenerates the baseline after fixing findings.
+  Only run it when the intent of the change is "the baseline shrinks"; never run
+  it to make a new violation pass.
+- `pnpm check:guards` runs workspace + architecture + docs-claims + agent-docs +
+  generated-freshness + tests + typecheck-coverage + skills together. This is the
+  default pre-handoff guard command.
 - `preflight.mjs` — local delivery gate. Runs the workspace check, guards,
   typechecks for engine, memory, channels, Tools, Kaos, API, and the CLI, then targeted
-  permission-policy, memory-lifecycle, channels, API-connectivity, Tools, engine-team, and Kaos-sandbox tests. `--dry-run` prints the steps, `--skip-typecheck`
-  and `--skip-tests` narrow the run while iterating. Root script:
+  permission-policy, memory-lifecycle, channels, API-connectivity, Tools, engine-team, and Kaos-sandbox tests,
+  and finally the eval gate
+  (`pnpm --filter @hilbras/omnicode-engine exec tsx scripts/run-eval-gate.mts`),
+  which is the same command the CI `eval-gate` job runs, so a failing eval suite
+  is caught before CI instead of only by it. `--dry-run` prints the steps, `--skip-typecheck`
+  and `--skip-tests` narrow the run while iterating (`--skip-tests` skips the eval
+  gate too). Root script:
   `pnpm preflight`. It is a runner, not a guard; it does not replace the
   package test suites.
 
@@ -59,9 +157,6 @@ with a test or a documented reason, and call out the behavior change.
 - `omnicode-dev.mjs` — dev wrapper that sets `OMNICODE_HOME` and strips a leading
   `--`. Its `apps/omnicode` path is stale in this tree; the current app is
   `apps/omnicode-cli`. Prefer `pnpm dev:cli` unless this script is updated.
-- `check-nix-workspace.mjs` — legacy Nix workspace check that reads `flake.nix`.
-  This tree has no `flake.nix` and no root script invoking it. Do not treat it as
-  an active guard or add a `flake.nix` just to satisfy it.
 
 ## Local constraints
 
@@ -81,6 +176,8 @@ pnpm check:workspace
 pnpm check:architecture
 pnpm check:docs-claims
 pnpm check:agent-docs
+pnpm check:tests
+pnpm check:typecheck
 pnpm check:guards
 node scripts/preflight.mjs --dry-run
 ```

@@ -125,6 +125,10 @@ if (!skipTests) {
       name: 'test:kaos-sandbox',
       args: ['--filter', '@hilbras/omnicode-kaos', 'exec', 'vitest', 'run', 'test/sandbox'],
     },
+    {
+      name: 'eval-gate',
+      args: ['--filter', '@hilbras/omnicode-engine', 'exec', 'tsx', 'scripts/run-eval-gate.mts'],
+    },
   );
 }
 

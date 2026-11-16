@@ -23,7 +23,7 @@ import { resolve } from 'node:path';
 // dirname(fileURLToPath(import.meta.url)) — same result, and it keeps the
 // type-aware lint pass from flagging the helper imports as unused.
 const repoRoot = resolve(import.meta.dirname, '..');
-const appRoot = resolve(repoRoot, 'apps/omnicode');
+const appRoot = resolve(repoRoot, 'apps/omnicode-cli');
 
 process.env.OMNICODE_HOME ??= resolve(repoRoot, '.omnicode-dev-home');
 mkdirSync(process.env.OMNICODE_HOME, { recursive: true });
