@@ -1205,7 +1205,7 @@ describe('agentsMdReminder round-2 hardening', () => {
         return {
           accesses: ToolAccesses.readFile(String(args['path'])),
           approvalRule: this.name,
-          execute: async (_ctx: ExecutableToolContext) => ({ output: 'x'.repeat(60_000) }),
+          execute: async (_ctx: ExecutableToolContext) => ({ output: 'x'.repeat(120_000) }),
         };
       }
     }

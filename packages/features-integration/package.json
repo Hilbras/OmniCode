@@ -1,0 +1,41 @@
+{
+  "name": "@hilbras/omnicode-features-integration",
+  "version": "0.0.0",
+  "description": "Cross-package integration tests for the engine, built-in tools, add-ons, and memory.",
+  "license": "MIT",
+  "author": "Hilbras",
+  "type": "module",
+  "private": true,
+  "imports": {
+    "#/*": "./src/*.ts"
+  },
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./*": {
+      "types": "./src/*.ts",
+      "default": "./src/*.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@hilbras/omnicode-addons": "workspace:^",
+    "@hilbras/omnicode-base": "workspace:^",
+    "@hilbras/omnicode-engine": "workspace:^",
+    "@hilbras/omnicode-memory": "workspace:^",
+    "@hilbras/omnicode-tools": "workspace:^"
+  },
+  "devDependencies": {
+    "@antfu/utils": "^9.3.0",
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "@types/yazl": "^2.4.6",
+    "immer": "^11.1.0",
+    "jimp": "^1.6.1",
+    "yazl": "^3.3.1"
+  }
+}

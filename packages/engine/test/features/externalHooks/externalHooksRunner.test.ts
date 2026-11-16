@@ -570,7 +570,7 @@ describe('ExternalHooksRunnerService', () => {
         'external_hook_resolved',
         {
           event: 'PreToolUse',
-          action: 'allow',
+          action: 'block',
           matched_count: 1,
           failed_count: 1,
         },

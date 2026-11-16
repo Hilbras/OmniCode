@@ -1,5 +1,5 @@
 import { mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 
 import { join } from 'pathe';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
@@ -7,6 +7,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   acquireWorkspaceWriteLock,
   canonicalWorkspaceRoot,
+  defaultWorkspaceLockDir,
   withWorkspaceWriteLock,
   workspaceLockPath,
   WorkspaceLockTimeoutError,
@@ -120,5 +121,20 @@ describe('workspace write lock', () => {
     const reacquired = await acquireWorkspaceWriteLock(root, { timeoutMs: 200 });
     expect(reacquired.held()).toBe(true);
     await reacquired.release();
+  });
+});
+
+describe('default workspace lock directory', () => {
+  it('resolves the product home, honours the renamed env var first, and keeps the explicit override', () => {
+    expect(defaultWorkspaceLockDir({})).toBe(join(homedir(), '.omnicode-v', 'locks'));
+    expect(defaultWorkspaceLockDir({ OMNICODE_HOME: '/legacy-home' })).toBe(
+      join('/legacy-home', 'locks'),
+    );
+    expect(
+      defaultWorkspaceLockDir({ OMNICODE_V_HOME: '/v-home', OMNICODE_HOME: '/legacy-home' }),
+    ).toBe(join('/v-home', 'locks'));
+    expect(defaultWorkspaceLockDir({ OMNICODE_WRITE_LOCK_DIR: '/explicit-locks' })).toBe(
+      '/explicit-locks',
+    );
   });
 });

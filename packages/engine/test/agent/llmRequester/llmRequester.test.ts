@@ -294,6 +294,10 @@ describe('LLMRequester service migration coverage', () => {
       });
       await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Look up moon' }] });
 
+      // Auto mode classifies unknown tools as ask: the user-registered Lookup
+      // surfaces an approval interaction before its user_tool call bridges.
+      await ctx.untilApproval(true);
+
       await ctx.untilToolCall({
         content: 'moon-result',
         output: 'moon-result',

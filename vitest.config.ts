@@ -5,8 +5,10 @@ export default defineConfig({
     projects: [
       'packages/*/vitest.config.ts',
       'apps/omnicode-cli/vitest.config.ts',
+      'apps/omnicode-mobile',
       'apps/omnicode-vis/server',
       'apps/omnicode-vis/web',
+      'apps/omnicode-web',
     ],
     coverage: {
       provider: 'v8',

@@ -127,11 +127,11 @@ function deferred<T>(): {
 
 async function makePluginDir(name: string, manifest: Record<string, unknown>): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), `plugin-${name}-`));
-  await writeFile(
-    path.join(root, 'omnicode.plugin.json'),
-    JSON.stringify({ name, ...manifest }),
-    'utf8',
-  );
+  const merged: Record<string, unknown> = { name, ...manifest };
+  if (manifest['mcpServers'] !== undefined) {
+    merged['permissions'] = { mcpServers: true };
+  }
+  await writeFile(path.join(root, 'omnicode.plugin.json'), JSON.stringify(merged), 'utf8');
   return realpath(root);
 }
 

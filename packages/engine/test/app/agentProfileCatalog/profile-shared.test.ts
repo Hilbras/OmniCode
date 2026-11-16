@@ -104,6 +104,19 @@ describe('systemPromptVars', () => {
     expect(systemPromptVars({}, { skillActive: true })['plugin_sections']).toBe('');
   });
 
+  it('adds the memory section only when the memory tool is active', () => {
+    const withMemory = systemPromptVars({ memoryActive: true }, { skillActive: true });
+    expect(withMemory['memory_guidance']).toContain('# Memory');
+    expect(withMemory['memory_guidance']).toContain('memory_save');
+    expect(withMemory['memory_guidance']).toContain('Decide for yourself');
+    expect(withMemory['memory_guidance']).toContain('Do not save secrets');
+
+    expect(systemPromptVars({}, { skillActive: true })['memory_guidance']).toBe('');
+    expect(
+      systemPromptVars({ memoryActive: false }, { skillActive: true })['memory_guidance'],
+    ).toBe('');
+  });
+
   it('defaults host-identity variables to the CLI text', () => {
     const vars = systemPromptVars({}, { skillActive: true });
 
@@ -208,6 +221,23 @@ describe('renderSystemPromptResult', () => {
 
     expect(prompt).not.toContain('# Skills');
     expect(prompt).not.toContain('SKILLS');
+  });
+
+  it('renders the memory section only when the memory tool is active', () => {
+    const withMemory = renderSystemPromptResult(
+      'ROLE_TEXT',
+      { memoryActive: true },
+      { skillActive: false },
+    ).text;
+    expect(withMemory).toContain('# Memory');
+    expect(withMemory).toContain('memory_save');
+
+    const withoutMemory = renderSystemPromptResult(
+      'ROLE_TEXT',
+      {},
+      { skillActive: false },
+    ).text;
+    expect(withoutMemory).not.toContain('# Memory');
   });
 
   it('shows Windows notes only on Windows', () => {

@@ -2,6 +2,7 @@ import {
   APIConnectionError,
   APIContextOverflowError,
   APIEmptyResponseError,
+  APIProviderFilteredError,
   APIProviderOverloadedError,
   APIProviderQuotaExhaustedError,
   APIProviderRateLimitError,
@@ -9,11 +10,15 @@ import {
   APIStatusError,
   APITimeoutError,
   ChatProviderError,
+  classifyApiError,
+  errorFromLlmMessage,
+  isContentFilterStatusError,
   isImageFormatError,
   isProviderRateLimitError,
   isRecoverableRequestStructureError,
   isRetryableGenerateError,
   isToolExchangeAdjacencyError,
+  llmMessageFromError,
   normalizeAPIStatusError,
   parseRetryAfterMs,
 } from '#/llm-adapter/contract/errors';
@@ -721,5 +726,51 @@ describe('quota-exhausted error contract', () => {
     expect(isProviderRateLimitError(quota)).toBe(false);
     expect(isRetryableGenerateError(new APIProviderRateLimitError('rate limited'))).toBe(true);
     expect(isProviderRateLimitError(new APIProviderRateLimitError('rate limited'))).toBe(true);
+  });
+});
+
+describe('content-filter classification', () => {
+  it('recognizes content-safety rejections on 400/403/422', () => {
+    expect(isContentFilterStatusError(422, 'input rejected by content safety screening')).toBe(true);
+    expect(isContentFilterStatusError(400, 'Your request was rejected as a result of our safety system')).toBe(true);
+    expect(isContentFilterStatusError(403, 'blocked by content management policy')).toBe(true);
+    expect(isContentFilterStatusError(422, 'the response was filtered')).toBe(true);
+  });
+
+  it('does not match unrelated statuses or messages', () => {
+    expect(isContentFilterStatusError(429, 'rate limited')).toBe(false);
+    expect(isContentFilterStatusError(400, 'invalid tool_use_id')).toBe(false);
+    expect(isContentFilterStatusError(422, 'context length exceeded')).toBe(false);
+  });
+
+  it('normalizes a content-safety 422 into APIProviderFilteredError', () => {
+    const error = normalizeAPIStatusError(422, 'input rejected by content safety screening', 'req-1');
+    expect(error).toBeInstanceOf(APIProviderFilteredError);
+    expect(error).toBeInstanceOf(APIStatusError);
+    expect(error.statusCode).toBe(422);
+    expect(error.requestId).toBe('req-1');
+  });
+
+  it('classifies as a non-retryable content filter', () => {
+    const error = normalizeAPIStatusError(422, 'input rejected by content safety screening');
+    expect(isRetryableGenerateError(error)).toBe(false);
+    expect(classifyApiError(error)).toEqual({ kind: 'content_filter', statusCode: 422 });
+  });
+
+  it('round-trips through the llm message helpers under a content_filter kind', () => {
+    const error = errorFromLlmMessage({
+      kind: 'content_filter',
+      message: 'input rejected by content safety screening',
+      statusCode: 422,
+      requestId: 'req-2',
+      retryAfterMs: null,
+      headers: null,
+    });
+    expect(error).toBeInstanceOf(APIProviderFilteredError);
+    expect(llmMessageFromError(error)).toMatchObject({
+      kind: 'content_filter',
+      statusCode: 422,
+      requestId: 'req-2',
+    });
   });
 });

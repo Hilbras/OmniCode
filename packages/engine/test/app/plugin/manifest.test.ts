@@ -38,6 +38,7 @@ describe('plugin manifest parser', () => {
       join(dir, 'omnicode.plugin.json'),
       JSON.stringify({
         name: 'demo',
+        permissions: { commands: true, hooks: true },
         commands: ['./commands'],
         hooks: [{ event: 'Stop', command: 'echo stop' }],
       }),
@@ -60,6 +61,7 @@ describe('plugin manifest parser', () => {
       join(dir, 'omnicode.plugin.json'),
       JSON.stringify({
         name: 'demo',
+        permissions: { commands: true, hooks: true },
         commands: ['../outside.md'],
         hooks: [{ event: 'Nope', command: 'echo nope' }],
       }),
@@ -344,5 +346,219 @@ describe('plugin manifest parser', () => {
 
     expect(result.manifest?.systemPrompt).toBe('x'.repeat(PLUGIN_SYSTEM_PROMPT_MAX_BYTES));
     expect(result.diagnostics).toEqual([]);
+  });
+
+  it('accepts declared permissions and retains them on the manifest', async () => {
+    await mkdir(join(dir, 'commands'), { recursive: true });
+    await writeFile(join(dir, 'commands', 'deploy.md'), '# Deploy', 'utf8');
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({
+        name: 'demo',
+        permissions: {
+          hooks: true,
+          commands: true,
+          mcpServers: true,
+          skills: true,
+          agents: true,
+        },
+        commands: ['./commands'],
+        hooks: [{ event: 'Stop', command: 'echo stop' }],
+        mcpServers: { finance: { command: 'finance-mcp' } },
+      }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir);
+
+    expect(result.manifest?.permissions).toEqual({
+      hooks: true,
+      commands: true,
+      mcpServers: true,
+      skills: true,
+      agents: true,
+    });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('rejects hooks without "permissions.hooks"', async () => {
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', hooks: [{ event: 'Stop', command: 'echo stop' }] }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir);
+
+    expect(result.diagnostics.map((d) => d.message)).toEqual([
+      '"hooks" requires "permissions.hooks": true',
+    ]);
+    expect(result.diagnostics[0]?.severity).toBe('error');
+  });
+
+  it('rejects commands without "permissions.commands"', async () => {
+    await mkdir(join(dir, 'commands'), { recursive: true });
+    await writeFile(join(dir, 'commands', 'deploy.md'), '# Deploy', 'utf8');
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', commands: ['./commands'] }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir);
+
+    expect(result.diagnostics.map((d) => d.message)).toEqual([
+      '"commands" requires "permissions.commands": true',
+    ]);
+    expect(result.diagnostics[0]?.severity).toBe('error');
+  });
+
+  it('rejects mcpServers without "permissions.mcpServers"', async () => {
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', mcpServers: { finance: { command: 'finance-mcp' } } }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir);
+
+    expect(result.diagnostics.map((d) => d.message)).toEqual([
+      '"mcpServers" requires "permissions.mcpServers": true',
+    ]);
+    expect(result.diagnostics[0]?.severity).toBe('error');
+  });
+
+  it('accepts skills and agents acknowledgements without requiring them', async () => {
+    await mkdir(join(dir, 'skills'), { recursive: true });
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({
+        name: 'demo',
+        skills: ['./skills'],
+        agents: [],
+        permissions: { skills: true, agents: true },
+      }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir);
+
+    expect(result.manifest?.permissions).toEqual({ skills: true, agents: true });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('rejects unknown permission keys', async () => {
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', permissions: { network: true } }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir);
+
+    expect(result.manifest?.permissions).toBeUndefined();
+    expect(result.diagnostics.map((d) => d.message)).toEqual([
+      expect.stringContaining('Unknown key "network" in "permissions"'),
+    ]);
+    expect(result.diagnostics[0]?.severity).toBe('error');
+  });
+
+  it('rejects non-object and non-boolean permission values', async () => {
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', permissions: 'all' }),
+      'utf8',
+    );
+
+    const nonObject = await parseManifest(dir);
+    expect(nonObject.diagnostics.map((d) => d.message)).toEqual([
+      '"permissions" must be an object',
+    ]);
+
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', permissions: { hooks: 'yes' } }),
+      'utf8',
+    );
+
+    const nonBoolean = await parseManifest(dir);
+    expect(nonBoolean.diagnostics.map((d) => d.message)).toEqual([
+      '"permissions.hooks" must be a boolean',
+    ]);
+  });
+
+  it('accepts a satisfiable "engines.omnicode" range against an explicit host version', async () => {
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', engines: { omnicode: '^0.6.0' } }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir, { hostVersion: '0.6.0' });
+
+    expect(result.manifest?.engines).toEqual({ omnicode: '^0.6.0' });
+    expect(result.diagnostics).toEqual([]);
+  });
+
+  it('rejects an unsatisfiable "engines.omnicode" range', async () => {
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', engines: { omnicode: '^2.0.0' } }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir, { hostVersion: '0.6.0' });
+
+    expect(result.diagnostics.map((d) => d.message)).toEqual([
+      'Plugin requires Omnicode "^2.0.0" ("engines.omnicode") but the host version is "0.6.0"',
+    ]);
+    expect(result.diagnostics[0]?.severity).toBe('error');
+  });
+
+  it('rejects an invalid "engines.omnicode" range', async () => {
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', engines: { omnicode: 'not-a-range' } }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir, { hostVersion: '0.6.0' });
+
+    expect(result.diagnostics.map((d) => d.message)).toEqual([
+      '"engines.omnicode" must be a valid semver range (got "not-a-range")',
+    ]);
+    expect(result.diagnostics[0]?.severity).toBe('error');
+  });
+
+  it('warns but keeps the manifest when the host version is the placeholder', async () => {
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', engines: { omnicode: '^9.0.0' } }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir, { hostVersion: '0.0.0' });
+
+    expect(result.manifest?.name).toBe('demo');
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.severity).toBe('warn');
+    expect(result.diagnostics[0]?.message).toContain('^9.0.0');
+    expect(result.diagnostics[0]?.message).toContain('plugins are not rejected');
+  });
+
+  it('warns but keeps the manifest when the host version is not valid semver', async () => {
+    await writeFile(
+      join(dir, 'omnicode.plugin.json'),
+      JSON.stringify({ name: 'demo', engines: { omnicode: '^9.0.0' } }),
+      'utf8',
+    );
+
+    const result = await parseManifest(dir, { hostVersion: 'not-semver' });
+
+    expect(result.manifest?.name).toBe('demo');
+    expect(result.diagnostics).toHaveLength(1);
+    expect(result.diagnostics[0]?.severity).toBe('warn');
+    expect(result.diagnostics[0]?.message).toContain('not-semver');
+    expect(result.diagnostics[0]?.message).toContain('plugins are not rejected');
   });
 });

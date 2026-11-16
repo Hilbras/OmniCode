@@ -36,6 +36,7 @@ describe('LLM retry taxonomy', () => {
       { kind: 'quota_exhausted', message: 'quota', statusCode: 429, requestId: null, retryAfterMs: null, headers: null },
       { kind: 'context_overflow', message: 'context', statusCode: 400, requestId: null, retryAfterMs: null, headers: null },
       { kind: 'request_too_large', message: 'large', statusCode: 413, requestId: null, retryAfterMs: null, headers: null },
+      { kind: 'content_filter', message: 'input rejected by content safety screening', statusCode: 422, requestId: null, retryAfterMs: null, headers: null },
       { kind: 'unknown', message: 'unknown' },
     ] as LlmErrorMessage[]) {
       expect(isRetryableError(error), error.kind).toBe(false);

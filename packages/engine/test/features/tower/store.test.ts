@@ -3308,13 +3308,17 @@ describe('concurrent state writes', () => {
     let heldContent = '';
     for (;;) {
       try {
-        heldContent = await readFile(lockPath, 'utf8');
-        break;
+        const content = await readFile(lockPath, 'utf8');
+        if (content.length > 0) {
+          heldContent = content;
+          break;
+        }
       } catch {
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 10);
-        });
+        // lock file recreated between rm and write — poll until written
       }
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, 10);
+      });
     }
     expect(heldContent).toMatch(/pid=\d+ since=\S+ token=[0-9a-f-]+/);
 

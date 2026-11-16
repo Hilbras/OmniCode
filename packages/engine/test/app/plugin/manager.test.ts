@@ -22,6 +22,7 @@ describe('PluginManager', () => {
       join(root, 'omnicode.plugin.json'),
       JSON.stringify({
         name: 'demo',
+        permissions: { commands: true, hooks: true },
         commands: ['./commands'],
         hooks: [{ event: 'Stop', command: 'echo stop' }],
       }),
@@ -76,11 +77,48 @@ describe('PluginManager', () => {
     ]);
   });
 
-  it('leaves newly installed plugins disabled by default', async () => {
+  it('fails closed when a plugin under-declares permissions', async () => {
+    await writeFile(
+      join(root, 'omnicode.plugin.json'),
+      JSON.stringify({
+        name: 'demo',
+        commands: ['./commands'],
+        hooks: [{ event: 'Stop', command: 'echo stop' }],
+      }),
+      'utf8',
+    );
+    const manager = new PluginManager({ omnicodeHomeDir: home, defaultEnabledOnInstall: true });
+    await manager.load();
+
+    expect(manager.summaries()[0]).toEqual(
+      expect.objectContaining({ id: 'demo', state: 'error', hasErrors: true }),
+    );
+    expect(manager.get('demo')?.diagnostics.map((d) => d.message)).toEqual([
+      '"hooks" requires "permissions.hooks": true',
+      '"commands" requires "permissions.commands": true',
+    ]);
+    expect(manager.enabledHooks()).toEqual([]);
+    await expect(manager.enabledCommands()).resolves.toEqual([]);
+  });
+
+  it('enables newly installed plugins by default', async () => {
+    const sourceRoot = await mkdtemp(join(tmpdir(), 'plugin-install-default-'));
+    try {
+      await writeFile(join(sourceRoot, 'omnicode.plugin.json'), JSON.stringify({ name: 'enabled-by-default' }), 'utf8');
+      const manager = new PluginManager({ omnicodeHomeDir: home });
+      const record = await manager.install(sourceRoot);
+      expect(record.enabled).toBe(true);
+      expect(manager.get('enabled-by-default')?.enabled).toBe(true);
+    } finally {
+      await rm(sourceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it('honours defaultEnabledOnInstall: false when explicitly configured', async () => {
     const sourceRoot = await mkdtemp(join(tmpdir(), 'plugin-install-disabled-'));
     try {
       await writeFile(join(sourceRoot, 'omnicode.plugin.json'), JSON.stringify({ name: 'disabled-by-default' }), 'utf8');
-      const manager = new PluginManager({ omnicodeHomeDir: home });
+      const manager = new PluginManager({ omnicodeHomeDir: home, defaultEnabledOnInstall: false });
       const record = await manager.install(sourceRoot);
       expect(record.enabled).toBe(false);
       expect(manager.get('disabled-by-default')?.enabled).toBe(false);

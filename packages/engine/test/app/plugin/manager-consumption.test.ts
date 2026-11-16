@@ -46,6 +46,7 @@ async function makePlugin(
 ): Promise<string> {
   const root = await mkdtemp(path.join(tmpdir(), `plugin-${name}-`));
   const manifest: Record<string, unknown> = { name };
+  const permissions: Record<string, boolean> = {};
   if (options.version !== undefined) {
     manifest['version'] = options.version;
   }
@@ -79,18 +80,24 @@ async function makePlugin(
   }
   if (options.mcpServers !== undefined) {
     manifest['mcpServers'] = options.mcpServers;
+    permissions['mcpServers'] = true;
   }
   if (options.hooks !== undefined) {
     manifest['hooks'] = options.hooks;
+    permissions['hooks'] = true;
   }
   if (options.commands !== undefined) {
     manifest['commands'] = ['./commands'];
+    permissions['commands'] = true;
     await mkdir(path.join(root, 'commands'), { recursive: true });
     for (const [file, body] of Object.entries(options.commands)) {
       const filePath = path.join(root, 'commands', file);
       await mkdir(path.dirname(filePath), { recursive: true });
       await writeFile(filePath, body, 'utf8');
     }
+  }
+  if (Object.keys(permissions).length > 0) {
+    manifest['permissions'] = permissions;
   }
   await writeFile(path.join(root, 'omnicode.plugin.json'), JSON.stringify(manifest), 'utf8');
   return realpath(root);

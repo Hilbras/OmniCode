@@ -537,6 +537,58 @@ describe('AgentPermissionPolicyService chain', () => {
     });
   });
 
+  it('reuses a session approval for an exec-policy prompt instead of asking again', async () => {
+    execPolicyDir = await mkdtemp(join(tmpdir(), 'exec-policy-chain-'));
+    await writeFile(
+      join(execPolicyDir, 'prompt.json'),
+      JSON.stringify({ version: 1, rules: [{ decision: 'prompt', prefix: 'npm run build' }] }),
+    );
+    execPolicyConfig = { path: join(execPolicyDir, 'prompt.json') };
+
+    await expect(
+      evaluate({ toolName: 'Bash', args: { command: 'npm run build', timeout: 60 } }),
+    ).resolves.toMatchObject({ policyName: 'exec-policy-prompt', result: { kind: 'ask' } });
+
+    sessionApprovalRulePatterns.push('Bash(npm run build)');
+
+    await expect(
+      evaluate({ toolName: 'Bash', args: { command: 'npm run build', timeout: 60 } }),
+    ).resolves.toMatchObject({
+      policyName: 'session-approval-history',
+      result: { kind: 'approve' },
+    });
+  });
+
+  it('clears the auto-mode denial fallback once the user approves the fallback ask', async () => {
+    mode = 'auto';
+    const input = { toolName: 'Lookup', args: { query: 'blocked action' } };
+
+    await expect(evaluate(input)).resolves.toMatchObject({
+      policyName: 'auto-mode-classifier',
+      result: { kind: 'ask', reason: { auto_mode_classifier: 'ask' } },
+    });
+    await expect(evaluate(input)).resolves.toMatchObject({
+      policyName: 'auto-mode-classifier',
+      result: { kind: 'ask', reason: { auto_mode_classifier: 'ask' } },
+    });
+    const fallback = await evaluate(input);
+    expect(fallback?.result).toMatchObject({
+      kind: 'ask',
+      reason: { auto_mode_classifier: 'ask', denial_fallback: 'consecutive_block' },
+    });
+
+    const resolved =
+      fallback?.result !== undefined && 'resolveApproval' in fallback.result
+        ? fallback.result.resolveApproval?.({ decision: 'approved' })
+        : 'missing resolveApproval';
+    expect(resolved).toBeUndefined();
+
+    await expect(evaluate(input)).resolves.toMatchObject({
+      policyName: 'auto-mode-classifier',
+      result: { kind: 'approve', reason: { auto_mode_classifier: 'trusted_user_answer' } },
+    });
+  });
+
   it('fails the policy service when the configured exec policy is broken', async () => {
     execPolicyDir = await mkdtemp(join(tmpdir(), 'exec-policy-chain-'));
     await writeFile(

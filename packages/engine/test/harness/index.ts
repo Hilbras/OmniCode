@@ -1,6 +1,4 @@
 
-import '@hilbras/omnicode-tools';
-
 export {
   additionalDirServices,
   agentService,
