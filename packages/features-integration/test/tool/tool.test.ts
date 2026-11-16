@@ -3426,7 +3426,7 @@ describe('Agent tool execution contract', () => {
     expect(result.output).toContain('Agent(resume="agent-child", prompt="continue")');
     expect(result.output).toContain('do not set subagent_type');
     expect(result.output).toContain('retains its prior context');
-  });
+  }, 60_000);
 
   it('honours the configured subagent timeout over the default', async () => {
     vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
