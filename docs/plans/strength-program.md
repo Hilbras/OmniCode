@@ -2099,6 +2099,29 @@ entries carry the fail-on-base evidence they recorded at the time.
 | `pnpm check:package` (after building tui, SDK bundle + declarations, CLI) | `package hygiene check: OK (@omnicode/cli (publint), @hilbras/omnicode-sdk (publint, attw), @hilbras/omnicode-tui (publint, attw))` — and the CLI build in front of it passed with `build:dts` in check mode, so the API-report tripwire does not obstruct the release path |
 | release path re-run on the current tree | all green: SDK `build` 11 files/10.35 MB (11.7 s) and `build:dts` `API Extractor completed successfully`, TUI `build` (8.5 s), CLI `build` with `Web assets OK: …/dist-web (747 entries, synced from code-app)` and the native prebuild copy, then `package hygiene check: OK` for CLI, SDK, and TUI. So the commands CI's `package-hygiene` job walks work, and the root `pnpm build` now runs too (decision 2) |
 
+**Owner decisions executed (2026-11-17, final).**
+- **`apps/omnicode-mobile.old`: preserved, not deleted.** Only reproducible build output
+  was removed (`build/`, `.dart_tool/`, `.idea/`, `android/.gradle/`, `*.iml`) — 1.1 GB →
+  1.2 MB — while `lib/`, `test/`, `pubspec.*`, `analysis_options.yaml`, `assets/`,
+  `android/` and the READMEs stay. `docs/en/architecture/mobile-old-inventory.md` now
+  documents the **terminal-over-WebSocket** implementation (protocol v2, bearer
+  subprotocol, attach ack's `replayed` count, reattach-on-handshake, the channel and
+  controller surfaces) and evaluates the port into the Expo app with the verification
+  bar: attach, type, resize, survive a socket drop, close — in the app, not only in unit
+  tests. Deletion remains prohibited until that port lands or is explicitly abandoned.
+- **`plugins/` marketplace: audited, nothing imported.** Seven entries, per-entry source,
+  author, licence, dependencies, security, maintenance, compatibility and a
+  recommendation, in `docs/en/architecture/plugin-marketplace-audit.md`. Findings: the
+  vendored `omnicode-datasource` has **no licence file and no plugin manifest** → HOLD;
+  `omnicode-webbridge` and `omnicode-telegram` point at directories that **do not exist**
+  → REJECT as shipped; the four curated entries verify their licences (superpowers MIT;
+  vercel-plugin Apache-2.0; modern-web-guidance Apache-2.0 code + CC-BY-4.0 content;
+  cloudbase MIT) but are HOLD on OmniCode compatibility and permissions — and three of
+  them default telemetry on, while Vercel's MCP is read+write and CloudBase controls a
+  cloud account. The audit also fixes the rules: first-party code only under
+  `plugins/official/`, third-party entries stay references, permissions are mandatory for
+  executable surfaces, and an unverifiable licence or source is HOLD/REJECT.
+
 **Verification after the owner decisions (2026-11-17).** The branch is committed in 11
 logical commits and the working tree matches HEAD except two intentionally untracked
 directories (`apps/omnicode-mobile.old/`, awaiting the owner's deletion call, and

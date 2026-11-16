@@ -1,58 +1,87 @@
-# `apps/omnicode-mobile.old` — inventory and recovery assessment
+# `apps/omnicode-mobile.old` — inventory, preserved assets and terminal migration
 
-Status: retired app, **untracked**, kept only until the owner decides. Nothing here has
-been deleted. This note exists so the decision can be made from facts rather than from
-the directory name.
+Status: preserved in place. **Deletion is prohibited** until the terminal capability is
+migrated into `apps/omnicode-mobile` and verified, or an explicit decision abandons it.
+Only reproducible build output has been removed (details below). Nothing in the source
+tree was touched.
 
 ## What it is
 
 A Flutter (Dart 3.11 / Flutter ≥3.41) remote-control client for an OmniCode daemon —
-the same role `apps/omnicode-mobile` (Expo/React Native) plays today. Its own README is
-explicit: it is a client only, never runs the agent, has no local PTY, no SSH, no model
-call; everything comes from the daemon over REST and WebSocket.
+the role `apps/omnicode-mobile` (Expo/React Native) plays today. Its README is explicit:
+it is a client only, never runs the agent, has no local PTY, no SSH, no model call;
+everything comes from the daemon over REST and WebSocket.
 
-- **Source:** 24 files under `lib/` (280 KB), one test file, an Android host project
-  (8.7 MB).
-- **Bulk:** ~1.1 GB total — the rest is Flutter build output (`build/`, `.dart_tool/`,
-  `android/.gradle`, `.idea/`), all reproducible from `pubspec.yaml`.
-- **Tracking:** `git ls-files apps/omnicode-mobile.old` is empty; the directory is not in
-  the repository's history at all.
-- **State per its own README:** analyzer clean under strict casts/inference/raw types,
-  dependencies resolved and pinned in `pubspec.lock`, and **no real tests** ("compiles,
-  not yet daemon-verified").
+- **Source:** 23 files under `lib/` (~280 KB), one test file, an Android host project.
+- **Tracking:** `git ls-files apps/omnicode-mobile.old` is empty — never committed.
+- **State per its README:** analyzer clean, dependencies pinned in `pubspec.lock`, and
+  **no real tests** ("compiles, not yet daemon-verified").
 
-## What is worth recovering
+## Build output reclaimed (reproducible, deleted)
 
-| Area | Files | Why it matters |
-|---|---|---|
-| Terminal over WebSocket | `lib/src/ws/{ws_protocol,ws_client,terminal_channel}.dart`, `lib/src/terminal/terminal_controller.dart` | A working xterm 4.0 integration that drives a live interactive PTY through the daemon. **The current Expo app has no terminal or WebSocket support at all** (no `terminal`/`WebSocket` reference under `apps/omnicode-mobile/src`), so this is the one capability with no replacement. |
-| Daemon REST client | `lib/src/api/{api_client,envelope,sessions_api,chat_api,workspaces_api}.dart` | A second, independent reading of the daemon contract — useful as a cross-check when the client contract changes. |
-| Connect + settings flow | `lib/src/ui/connect_screen.dart`, `lib/src/config/{server_config,settings_store}.dart` | Server URL pairing and secure-storage usage (`flutter_secure_storage`). |
-| Design tokens | `lib/src/theme/{omni_palette,omni_theme,omni_widgets}.dart` | The palette/widget vocabulary; `appendices/`-free, self-contained. |
-| Screens | `lib/src/ui/{sessions,chat,terminal,library,history}_screen.dart` | Interaction sketches for chat + terminal in one flow. |
+`build/` (955 MB), `.dart_tool/` (121 MB), `.idea/`, `android/.gradle/` (8.4 MB) and
+`omnicode_mobile.iml` — 1.1 GB down to **1.2 MB**, all of it regenerable with
+`flutter pub get && flutter build`. Preserved: `lib/`, `test/`, `pubspec.yaml`,
+`pubspec.lock`, `analysis_options.yaml`, `assets/`, `android/` (minus Gradle caches),
+`README.md`, `AGENTS.md`.
 
-What is **not** worth recovering: `build/`, `.dart_tool/`, `.idea/`, `android/.gradle`,
-`omnicode_mobile.iml` — build output and editor state, reproducible and disposable.
+## Terminal over WebSocket — the one capability with no counterpart
 
-## Recommendation
+`apps/omnicode-mobile` has no terminal or WebSocket code. This client does, and it is
+small enough to port:
 
-Do not delete yet. The terminal-over-WebSocket client is the only capability in this
-directory that has no counterpart in the shipped Expo app, and porting it is a feature
-decision, not a cleanup:
+**Protocol** (`lib/src/ws/ws_protocol.dart`) — protocol version **2**, bearer token as a
+WebSocket subprotocol `omnicode.bearer.<token>` (never a query parameter), 30 s heartbeat.
+Client frames: `client_hello`, `subscribe_v2`/`unsubscribe_v2`, `abort`, `pong`, and the
+terminal set `terminal_attach`, `terminal_detach`, `terminal_input`, `terminal_resize`,
+`terminal_close`. Server frames: `server_hello`, `ack`, `ping`, `resync_required`,
+`error`, `terminal_output`, `terminal_exit`. Resync reasons: `buffer_overflow`,
+`session_recreated`, `epoch_changed`.
 
-1. **Port the terminal channel** into `apps/omnicode-mobile` (Expo/React Native) using
-   the Dart files above as the behavioural reference: protocol frames, controller state,
-   reconnect handling. Then the Flutter directory has no unique content.
-2. **Or** keep the Flutter app as a buildable reference and delete it only when a
-   decision is made that mobile terminals are out of scope.
+**Channel** (`lib/src/ws/terminal_channel.dart`) — `attach()` returns the daemon's
+`replayed` frame count (the attach ack carries it, which is how the client can tell a
+fresh attach from a resumed one), `reattach()` re-attaches after every handshake,
+`detach()`, `sendInput(data)`, `resize({cols, rows})`, `close()`, `dispose()`. Output and
+exit frames are filtered by `terminalId`, so several terminals can share one socket.
 
-Either way, the ~1.1 GB of build output can be reclaimed immediately without touching
-source or the tracked tree — that is a separate, safe cleanup if the owner wants it.
+**Controller** (`lib/src/terminal/terminal_controller.dart`) — xterm 4.0 integration:
+`attach()`, `reconnect()`, `closeTerminal()`, `onUserInput(data)`,
+`updateLayout(maxWidth, maxHeight)` which derives the grid and sends
+`terminal_resize`, plus `_onOutput`, `_onExit`, `_onConnectionState` and a status line.
 
-## Decision required
+**REST client** (`lib/src/api/*`), **connect/settings** (`connect_screen.dart`,
+`server_config.dart`, `settings_store.dart` with `flutter_secure_storage`) and **design
+tokens** (`omni_palette.dart`, `omni_theme.dart`) are secondary but useful cross-checks.
 
-**Awaiting the owner's confirmation before any deletion.** If the answer is "delete",
-the safe order is: reclaim build output first, keep `lib/`, `test/`, `pubspec.*`,
-`README.md`, `AGENTS.md` and `android/app` until the terminal port lands (or until a
-decision says it will not), and only then remove the directory. Nothing in this
-repository references `apps/omnicode-mobile.old`, and no guard or test depends on it.
+## Migration into the Expo app — evaluation
+
+Feasible, and the Dart code is a specification rather than something to translate
+line-for-line:
+
+1. **Transport:** the Expo app opens one WebSocket with the bearer subprotocol and
+   implements `client_hello` → `server_hello`, `subscribe_v2`, heartbeat and
+   `resync_required` handling — the same frames the Flutter client uses. Server code
+   already serves protocol v2; nothing daemon-side needs to change.
+2. **Terminal surface:** `terminal_attach` → ack with `replayed`; stream
+   `terminal_output`/`terminal_exit` filtered by `terminalId`; send `terminal_input`,
+   `terminal_resize` (on layout change), `terminal_detach`, `terminal_close`. Reattach on
+   reconnect, which is the one behaviour easy to get wrong and the Dart channel shows the
+   shape.
+3. **Rendering:** React Native has no DOM; a WebView-hosted xterm.js (the usual choice for
+   RN terminals) or a native canvas renderer. The Flutter widget's layout maths
+   (cols/rows from pixel size and font metrics) is the part worth reusing.
+4. **Verification:** the port is done only when a real daemon session can attach, type,
+   resize, be reattached after a socket drop, and close — exercised in the app, not only
+   in unit tests. `docs/en/architecture/client-surfaces.md` is the contract the port must
+   follow (daemon client, identity, secure credential storage).
+
+Until that port lands and is verified, the Flutter directory stays as the reference
+implementation. Deleting it earlier would delete the only working specification of the
+terminal protocol from a client's point of view.
+
+## Decision required (unchanged)
+
+Deletion stays prohibited. If the terminal port is later abandoned by explicit decision,
+the safe order is: keep `lib/src/ws/*` and `lib/src/terminal/*` as documentation, then
+remove the directory. Nothing in the repository references it and no guard or test
+depends on it.
