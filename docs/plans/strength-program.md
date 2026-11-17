@@ -2006,11 +2006,12 @@ code; it changes what the program claims.
   now fails when a key referenced by any consumer package resolves in neither bundle
   — 541 keys across 5 consumers, currently clean.
 - **T5.3 web surfaces — the plan's inline claim is stale and incomplete.** It says
-  `apps/omnicode-web` is "2 pages, 0 tests": the directory has **zero tracked files**
-  (`git ls-files apps/omnicode-web` → 0) and it does have a test file
-  (`test/routes.test.ts`), but that test is a stub asserting the component is a
-  function, and the app is absent from the root `vitest.config.ts` project list — so
-  those tests never run in the root graph, silently. The surface that actually ships is
+  `apps/omnicode-web` is "2 pages, 0 tests"; there are **17 tracked files** and two test
+  files. Re-checked on this tree: the app **is** in the root `vitest.config.ts` project
+  list (`vitest.config.ts:11`) and its suites run and pass —
+  `test/pagination.test.ts` (6 tests) and `test/routes.test.ts` (1 test), 7/7, 1.18 s.
+  `routes.test.ts` is still a stub asserting the component is a function, so the coverage
+  is thin, but the tests are not silently skipped. The surface that actually ships is
   a third one: `apps/omnicode-cli/dist-web` (746 tracked files, served by
   `packages/server/src/start.ts:590`), built out of tree —
   `apps/omnicode-cli/scripts/check-web-assets.mjs:3` says the web UI lives in another
