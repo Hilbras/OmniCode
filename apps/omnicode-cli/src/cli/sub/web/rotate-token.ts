@@ -35,8 +35,10 @@ export function registerRotateTokenCommand(server: Command): void {
         // Re-print the access links with the new token so the user can
         // reconnect immediately. When a server is running its bind host/port
         // come from the instance registry; otherwise there is nothing to
-        // connect to yet.
-        const instance = await getLiveServerInstance();
+        // connect to yet. The registry is scoped to the same home the token
+        // was written to: its default directory is resolved once at module
+        // load, so an overridden home would otherwise read the wrong registry.
+        const instance = await getLiveServerInstance(getDataDir());
         if (instance !== undefined) {
           for (const { label, url: href } of accessUrlLines(instance.host, instance.port, token)) {
             // De-emphasize the `#token=…` fragment so the host/port stands out.

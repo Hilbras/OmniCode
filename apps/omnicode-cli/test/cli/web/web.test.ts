@@ -1101,7 +1101,6 @@ describe('`omnicode web rotate-token`', () => {
   });
 
   it('writes a new token to server.token and prints it', async () => {
-    const { registerWebCommand } = await import('#/cli/sub/web');
     const program = new Command('omnicode').exitOverride();
     registerWebCommand(program);
     let stdout = '';
@@ -1120,7 +1119,6 @@ describe('`omnicode web rotate-token`', () => {
   });
 
   it('re-prints the access links with the new token when a server is running', async () => {
-    const { registerWebCommand } = await import('#/cli/sub/web');
     const { mkdirSync, writeFileSync: writeSync } = await import('node:fs');
     // Fake a live instance-registry entry pointing at this (alive) process so
     // getLiveServerInstance() finds the running server and the command can
