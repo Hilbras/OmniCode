@@ -2048,6 +2048,11 @@ code; it changes what the program claims.
   session state — so an "installed" agent would land where nothing reads it. Without
   `--apply` the command still only reports, and re-running is idempotent; 14 tests now,
   including apply/force/skip and the unsafe-name case.
+  MCP half landed too: `--apply` merges `config.mcpServers` into `<home>/mcp.json` — the
+  user layer `resolveMcpJsonPaths` reads — with `0600` and an atomic temp+rename, `--force`
+  to replace an existing entry, every other key in that file preserved, and a file that
+  does not parse refused rather than overwritten. Env values are written where the loader
+  needs them but never echoed: the report lists server names only. 17 tests now.
 
 ## Verifying the program
 

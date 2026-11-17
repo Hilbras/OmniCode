@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -11,7 +19,7 @@ import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { registerImportCommand, type ImportCommandDeps } from '#/cli/sub/import';
-import { applyImportedSkills } from '#/cli/sub/import-apply';
+import { applyImportedMcpServers, applyImportedSkills } from '#/cli/sub/import-apply';
 
 interface Captured {
   stdout: string;
@@ -31,6 +39,7 @@ function harness(overrides: Partial<ImportCommandDeps> = {}): {
     homeDir: () => '/home/tester',
     targetHomeDir: () => '/home/target',
     apply: applyImportedSkills,
+    applyMcp: applyImportedMcpServers,
     write: (chunk) => {
       captured.stdout += chunk;
     },
@@ -324,5 +333,101 @@ describe('`omnicode import --apply`', () => {
     expect(captured.exitCode).toBe(1);
     expect(captured.stdout).toContain('they do not combine');
     expect(existsSync(join(home, 'skills'))).toBe(false);
+  });
+});
+
+describe('`omnicode import --apply` — MCP servers', () => {
+  let workspace: string;
+  let home: string;
+  let sourceRoot: string;
+
+  const githubServer = {
+    command: 'npx',
+    args: ['-y', 'server-github'],
+    env: { GITHUB_TOKEN: 'ghp_super_secret' },
+    sourcePath: '.mcp.json',
+  };
+
+  beforeEach(() => {
+    workspace = mkdtempSync(join(tmpdir(), 'omnicode-import-mcp-'));
+    home = join(workspace, 'home');
+    sourceRoot = join(workspace, 'claude');
+    mkdirSync(home, { recursive: true });
+    mkdirSync(sourceRoot, { recursive: true });
+  });
+
+  afterEach(() => {
+    if (workspace !== undefined) rmSync(workspace, { recursive: true, force: true });
+  });
+
+  function mcpHarness(): { deps: ImportCommandDeps; captured: Captured } {
+    return harness({
+      detect: async () => ['claude-code'],
+      read: async () =>
+        bundle({
+          skills: [],
+          agents: [],
+          config: {
+            source: 'claude-code',
+            settings: {},
+            mcpServers: { github: githubServer },
+            sourcePath: '.',
+          },
+        }),
+      targetHomeDir: () => home,
+    });
+  }
+
+  it('writes the server into mcp.json with owner-only permissions', async () => {
+    const { deps, captured } = mcpHarness();
+
+    await run(deps, [sourceRoot, '--apply']);
+
+    const file = join(home, 'mcp.json');
+    expect(existsSync(file)).toBe(true);
+    const parsed = JSON.parse(readFileSync(file, 'utf8')) as {
+      mcpServers: Record<string, { command: string; env: Record<string, string> }>;
+    };
+    expect(parsed.mcpServers['github']?.command).toBe('npx');
+    expect(parsed.mcpServers['github']?.env).toEqual({ GITHUB_TOKEN: 'ghp_super_secret' });
+    expect(statSync(file).mode & 0o777).toBe(0o600);
+    expect(captured.stdout).toContain('Configured 1 MCP server(s)');
+    expect(captured.stdout).not.toContain('ghp_super_secret');
+  });
+
+  it('keeps other keys in an existing mcp.json and skips a configured server', async () => {
+    writeFileSync(
+      join(home, 'mcp.json'),
+      JSON.stringify({ other: true, mcpServers: { github: { command: 'old' } } }),
+    );
+    const { deps, captured } = mcpHarness();
+
+    await run(deps, [sourceRoot, '--apply']);
+
+    const parsed = JSON.parse(readFileSync(join(home, 'mcp.json'), 'utf8')) as {
+      other: boolean;
+      mcpServers: Record<string, { command: string }>;
+    };
+    expect(parsed.other).toBe(true);
+    expect(parsed.mcpServers['github']?.command).toBe('old');
+    expect(captured.stdout).toContain('already configured');
+
+    const forced = mcpHarness();
+    await run(forced.deps, [sourceRoot, '--apply', '--force']);
+    const after = JSON.parse(readFileSync(join(home, 'mcp.json'), 'utf8')) as {
+      mcpServers: Record<string, { command: string }>;
+    };
+    expect(after.mcpServers['github']?.command).toBe('npx');
+  });
+
+  it('refuses to overwrite an mcp.json it cannot parse', async () => {
+    writeFileSync(join(home, 'mcp.json'), '{ not json');
+    const { deps, captured } = mcpHarness();
+
+    await run(deps, [sourceRoot, '--apply']);
+
+    expect(captured.exitCode).toBe(1);
+    expect(captured.stdout).toContain('refusing to overwrite it');
+    expect(readFileSync(join(home, 'mcp.json'), 'utf8')).toBe('{ not json');
   });
 });

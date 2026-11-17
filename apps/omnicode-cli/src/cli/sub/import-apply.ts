@@ -10,7 +10,7 @@
  */
 
 import { existsSync } from 'node:fs';
-import { copyFile, mkdir, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { dirname, join, relative as relativePath, sep } from 'node:path';
 
 import type { ImportBundle, ImportedSkill } from '@hilbras/omnicode-migration';
@@ -126,4 +126,91 @@ export function renderApplyReport(result: ApplySkillsResult, homeDir: string): s
   }
   for (const note of result.notes) lines.push(`  note: ${note}`);
   return `${lines.join('\n')}\n`;
+}
+
+export interface AppliedMcpServers {
+  readonly added: readonly string[];
+  readonly skipped: readonly { readonly name: string; readonly reason: string }[];
+  readonly path: string;
+}
+
+export interface McpServerFile {
+  readonly [key: string]: unknown;
+  mcpServers?: Record<string, unknown>;
+}
+
+export function toMcpServerConfig(server: {
+  readonly command?: string;
+  readonly args?: readonly string[];
+  readonly url?: string;
+  readonly env?: Readonly<Record<string, string>>;
+}): Record<string, unknown> {
+  const config: Record<string, unknown> = {};
+  if (server.command !== undefined) config['command'] = server.command;
+  if (server.args !== undefined) config['args'] = server.args;
+  if (server.url !== undefined) config['url'] = server.url;
+  if (server.env !== undefined) config['env'] = server.env;
+  return config;
+}
+
+export async function applyImportedMcpServers(
+  bundle: ImportBundle,
+  options: ApplySkillsOptions,
+): Promise<AppliedMcpServers> {
+  const path = join(options.homeDir, 'mcp.json');
+  const added: string[] = [];
+  const skipped: { name: string; reason: string }[] = [];
+  const servers = bundle.config.mcpServers ?? {};
+
+  let document: McpServerFile = {};
+  if (existsSync(path)) {
+    const text = await readFile(path, 'utf8');
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      throw new Error(`${path} is not valid JSON; refusing to overwrite it`);
+    }
+    if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
+      throw new Error(`${path} is not a JSON object; refusing to overwrite it`);
+    }
+    document = parsed as McpServerFile;
+  }
+
+  const existing = document.mcpServers ?? {};
+  const merged: Record<string, unknown> = { ...existing };
+  for (const [name, server] of Object.entries(servers)) {
+    if (!isSafeSkillName(name)) {
+      skipped.push({ name, reason: 'name is not a plain server name' });
+      continue;
+    }
+    if (existing[name] !== undefined && !options.force) {
+      skipped.push({ name, reason: 'already configured (pass --force to replace)' });
+      continue;
+    }
+    merged[name] = toMcpServerConfig(server);
+    added.push(name);
+  }
+
+  if (added.length > 0) {
+    await mkdir(options.homeDir, { recursive: true });
+    const next = JSON.stringify({ ...document, mcpServers: merged }, null, 2);
+    const temporary = `${path}.tmp`;
+    await writeFile(temporary, `${next}\n`, { encoding: 'utf8', mode: 0o600 });
+    await rename(temporary, path);
+  }
+
+  return { added, skipped, path };
+}
+
+export function renderMcpReport(result: AppliedMcpServers): string {
+  const lines: string[] = [];
+  if (result.added.length > 0) {
+    lines.push(`Configured ${String(result.added.length)} MCP server(s) in ${result.path}:`);
+    for (const name of result.added) lines.push(`  + ${name}`);
+  }
+  for (const entry of result.skipped) {
+    lines.push(`  - ${entry.name}: ${entry.reason}`);
+  }
+  return lines.length === 0 ? '' : `${lines.join('\n')}\n`;
 }

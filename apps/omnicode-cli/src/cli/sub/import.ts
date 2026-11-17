@@ -19,7 +19,12 @@ import {
 } from '@hilbras/omnicode-migration';
 import { Command } from 'commander';
 
-import { applyImportedSkills, renderApplyReport } from './import-apply';
+import {
+  applyImportedMcpServers,
+  applyImportedSkills,
+  renderApplyReport,
+  renderMcpReport,
+} from './import-apply';
 import { getDataDir } from '#/utils/paths';
 
 export const IMPORT_SOURCES: readonly ImportedSource[] = ['claude-code', 'codex', 'qwen'];
@@ -38,6 +43,7 @@ export interface ImportCommandDeps {
   readonly homeDir: () => string;
   readonly targetHomeDir: () => string;
   readonly apply: typeof applyImportedSkills;
+  readonly applyMcp: typeof applyImportedMcpServers;
   readonly write: (chunk: string) => void;
   readonly setExitCode: (code: number) => void;
 }
@@ -49,6 +55,7 @@ function defaultDeps(): ImportCommandDeps {
     homeDir: homedir,
     targetHomeDir: getDataDir,
     apply: applyImportedSkills,
+    applyMcp: applyImportedMcpServers,
     write: (chunk) => {
       process.stdout.write(chunk);
     },
@@ -173,6 +180,9 @@ export function registerImportCommand(
         try {
           const result = await deps.apply(bundle, { homeDir: targetHome, force: options.force === true });
           deps.write(renderApplyReport(result, targetHome));
+          const mcp = await deps.applyMcp(bundle, { homeDir: targetHome, force: options.force === true });
+          const mcpReport = renderMcpReport(mcp);
+          if (mcpReport !== '') deps.write(mcpReport);
           if (bundle.agents.length > 0) {
             deps.write(
               `Found ${String(bundle.agents.length)} agent file(s); this runtime builds agents from ` +
@@ -181,7 +191,7 @@ export function registerImportCommand(
           }
         } catch (error) {
           deps.write(
-            `Could not install skills into ${targetHome}: ${error instanceof Error ? error.message : String(error)}\n`,
+            `Could not install into ${targetHome}: ${error instanceof Error ? error.message : String(error)}\n`,
           );
           deps.setExitCode(1);
         }
