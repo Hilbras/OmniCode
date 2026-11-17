@@ -116,6 +116,13 @@ measurement each one produced:
   Turbo no-op. Files: root `package.json`, `.oxlintrc.json` (kept but dead),
   `turbo.json` lint task, per-package `lint` scripts.
   Verify: `pnpm lint` runs oxlint and fails on a planted type error.
+  Enforced now, not just defined: the gate was green by script but nothing ran it —
+  `.github/workflows/ci.yml` had no lint job at all and `scripts/preflight.mjs` had no
+  lint step, so a red tree (four findings, including two of my own files) survived every
+  CI job and every local gate I had run. CI now has a `lint` job (five steps, same
+  install/Node setup as `guards`, 15-minute timeout) and `preflight` runs `pnpm lint`
+  third, before the typechecks (`preflight: dry run (23 steps)` lists it). The root guide's
+  definition of done names it, and `scripts/AGENTS.md` says CI runs it as its own job.
 
 - **T0.3 Fix broken `build:dts`.** `@microsoft/api-extractor` is absent from
   `pnpm-lock.yaml`, so the SDK ships no `.d.ts`. Files: root `package.json`,

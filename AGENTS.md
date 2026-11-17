@@ -475,6 +475,7 @@ For a normal code change:
 
 ```bash
 pnpm check:guards
+pnpm lint
 pnpm --filter <affected-package> typecheck
 pnpm --filter <affected-package> test
 ```

@@ -136,7 +136,8 @@ Non-goals:
 - `pnpm check:guards` runs workspace + architecture + deps-consistency + docs-claims +
   agent-docs + generated-freshness + tests + typecheck-coverage + skills together. This
   is the default pre-handoff guard command.
-- `preflight.mjs` — local delivery gate. Runs the workspace check, guards,
+- `preflight.mjs` — local delivery gate. Runs the workspace check, guards, the
+  type-aware lint gate (`pnpm lint`, which CI runs as its own job),
   typechecks for engine, memory, channels, Tools, Kaos, API, and the CLI, then targeted
   permission-policy, memory-lifecycle, channels, API-connectivity, Tools, engine-team, and Kaos-sandbox tests,
   and finally the eval gate

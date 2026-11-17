@@ -35,6 +35,7 @@ for (const option of options) {
 const steps = [
   { name: 'workspace', args: ['check:workspace'] },
   { name: 'guards', args: ['check:guards'] },
+  { name: 'lint', args: ['lint'] },
 ];
 
 if (!skipTypecheck) {
