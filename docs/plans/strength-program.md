@@ -2329,3 +2329,29 @@ still red or unscoped is named in the entries above.
 OOMs. A gated suite that is not enabled reports as skipped, not failed — the MCP
 conformance and PTY suites only assert anything with their env flag set, which is
 why the flag is part of the command above.
+
+### Uncached whole-graph run (2026-11-18)
+
+Every earlier aggregate above was partly a cache replay, so the totals in them were
+assembled from a mix of fresh and replayed task output. This run forced every task to
+execute:
+
+| | |
+|---|---|
+| Command | `pnpm turbo run test --concurrency=1 --force` |
+| Tasks | **36 successful, 36 total** |
+| Cache | **0 cached, 36 total** — nothing replayed |
+| Exit | **0** |
+| Wall clock | 25 m 46.7 s |
+| Test files | **1 290 passed** |
+| Tests | **22 496 passed**, **55 skipped**, **0 failed** |
+
+The skips are the gated suites (MCP conformance, PTY e2e, the platform-specific
+clipboard cases): they report as skipped without their env flag, which is the
+behaviour the note above describes rather than a hole.
+
+Two fixes landed on the way to this run and are the reason it is green rather than
+red: the memory store's reopen race (`eca7378`, base fails 3 of 6 in
+`features-integration/test/memory/agentMemory.test.ts`, now 6 of 6 in three
+consecutive runs) and the Linux clipboard window (`405936d`, base flakes 1 in 3
+isolated runs, now 16 of 16).
