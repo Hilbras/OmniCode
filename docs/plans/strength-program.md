@@ -1176,7 +1176,8 @@ claimed here.
   Still open for T2.1's second half: nothing *writes* an allow rule back to the
   policy file, so a session approval does not survive into the next session or
   another agent — append-to-policy is the remaining piece, and it needs a
-  decision about mutating a user-owned approval file automatically.
+  decision about mutating a user-owned approval file automatically (decision 12
+  in the owner table).
 - **T2.2 Granular approval axes** and a single documented
   approval → sandbox → retry-on-denial orchestrator with approval caching.
   Files: `engine/src/agent/permissionPolicy/`, `os/sandbox/`.
@@ -2099,13 +2100,14 @@ restart.
 | 2 | **T5.10** — desktop app: build it or drop it | `esbuild-dev` scripts removed, stub addressed; no desktop shell exists | A desktop target, or a recorded "no" |
 | 3 | **T5.10** — plugin marketplace: adopt the catalog or keep it reference-only | Full audit at `docs/en/architecture/plugin-marketplace-audit.md`, nothing imported; manifests now enforce `permissions` + `engines.omnicode` | Importing verified entries into `plugins/official/` |
 | 4 | **T5.2** — CLI copy: English-only, or new CLI bundles | Bundle parity + usage-coverage gates in `packages/app-i18n` (zero drift today) | The must-translate allowlist and its CI stats check |
-| 5 | **T5.3** — the three web surfaces: which one ships | In-tree React app wired into the test graph (7 tests, pagination logic extracted) | Retiring or promoting a surface |
+| 5 | **T5.3** — the three web surfaces: which one ships | In-tree React app wired into the test graph (11 tests; pagination logic plus a real route-table test) | Retiring or promoting a surface |
 | 6 | **T5.5** — inspector renderer: build it or leave panels unbuilt | Transport proven end to end (`xstateInspection` → debug WS → asserted streaming) | A loopback renderer |
 | 7 | **T5.3 mobile** — does the phone talk to providers directly, and over which client | Copy and guide corrections; 15 tests green | The real device loop |
 | 8 | **T5.8** — docs site: publish the generated pages, or keep `docs/` internal | `scripts/build-docs.mjs` + `pnpm docs:check` wired into `check:guards`; 11 pages build | Publishing the site |
 | 9 | **T1.3** — package naming: CLI's README/CHANGELOG say `@hilbras/omnicode`, manifest and `docs/release.md` say `@omnicode/cli` | The inconsistency is recorded, not papered over | One rename or one doc fix |
 | 10 | **T2.2b** — approval axes for sandbox-denial retry | Nothing; widening them touches published SDK/server surfaces | A sandbox-denial classification and the retry |
 | 11 | **T1.1** — wire vocabulary: is `human/llm` or the API contract tables the one source | JSON Schema rendered for 148 procedures + 31 events, drift-gated in CI (`pnpm check:generated`) | Generated TypeScript declarations for `SDK`/`ACP`/`server` from that same source |
+| 12 | **T2.1b** — append-to-policy: may an approval write a rule into the user's own policy file | The prompt/history ordering bug is fixed, so a session approval is reused instead of re-asked | Persisting an approval past the session; the config write path already exists |
 
 **T4 items are not on this list on purpose.** T4.1 (input-queue producer), T4.3
 (workflow tool), T4.5b (curator lifecycle), T4.6 (session search harvester) and T4.7
