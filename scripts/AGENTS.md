@@ -85,11 +85,20 @@ Non-goals:
   `@hilbras/omnicode-*` imports, enforces the leaf/`rpc`/`engine`/`core`/
   `client-contract`/`sdk` rules, confines `features-integration` to `engine`,
   `tools`, `addons`, `memory` and `base`, forbids imports of `server`, restricts
-  `acp` to `api` and forbids `acp` → `api`, and rejects import cycles. Run
+  `acp` to `api` and forbids `acp` → `api`, and rejects import cycles. It reads both
+  quote styles and every TS source extension (`.ts`, `.tsx`, `.mts`, `.cts`): the
+  patterns used to accept only `'` and the walk used to skip everything but `.ts`, so
+  `import type { X } from "@hilbras/omnicode-engine"` in a leaf and the same line in a
+  `.mts` or `.cts` file both left it green. All three were proven by adding exactly that
+  line to `packages/transcript/src` (and `packages/Kaos/src` for the dynamic form) and
+  watching `leaf packages must not import other kernel packages` fire. Run
   `pnpm check:architecture`.
 - `check-no-comments.mjs` — bans comments, JSDoc, and tooling directives in
   `packages/core`, `packages/server`, and `packages/transcript` under
-  `src`, `test`, and `scripts`. Outside those packages, comment only non-obvious
+  `src`, `test`, and `scripts`. It scans `.ts`, `.tsx`, `.mts`, `.cts` and `.mjs`; the
+  `.cts` case was missing, so a comment in one was invisible (proven with a
+  `.cts` probe file, which now reports `comments are not allowed in this package`).
+  Outside those packages, comment only non-obvious
   constraints. Run `pnpm check:architecture`.
 - `check-agents-docs.mjs` — verifies the canonical root `AGENTS.md`, its
   compatibility pointers, all referenced paths, and rejects stale `Kernel`

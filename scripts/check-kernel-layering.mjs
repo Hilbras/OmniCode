@@ -20,6 +20,10 @@ const LEAVES = new Set([
 
 const FEATURES_INTEGRATION_DEPS = new Set(['engine', 'tools', 'addons', 'memory', 'base']);
 
+// Every TypeScript source form, not just `.ts`: the walk used to skip `.tsx`, `.mts` and
+// `.cts`, so an import written in any of those was never checked against these rules.
+const TS_SOURCE_EXTENSIONS = ['.ts', '.tsx', '.mts', '.cts'];
+
 const RULES = [
   {
     name: 'leaf packages must not import other kernel packages',
@@ -92,8 +96,7 @@ function packageDirs() {
   return out;
 }
 
-function walk(dir, files = []) {
-  let entries;
+function walk(dir, files = []) {  let entries;
   try {
     entries = readdirSync(dir, { withFileTypes: true });
   } catch {
@@ -103,7 +106,9 @@ function walk(dir, files = []) {
     if (entry.name === 'node_modules') continue;
     const full = join(dir, entry.name);
     if (entry.isDirectory()) walk(full, files);
-    else if (entry.name.endsWith('.ts')) files.push(full);
+    else if (TS_SOURCE_EXTENSIONS.some((extension) => entry.name.endsWith(extension))) {
+      files.push(full);
+    }
   }
   return files;
 }
@@ -113,23 +118,28 @@ if (packages.size === 0) {
   console.error(`kernel layering: no packages found under ${relative(ROOT, PACKAGES_DIR) || PACKAGES_DIR}`);
   process.exit(1);
 }
-const KERNEL_PACKAGE = '@hilbras\\/omnicode-([a-z0-9-]+)(?:\\/[^\']*)?';
+const KERNEL_PACKAGE = '@hilbras\\/omnicode-([a-z0-9-]+)(?:\\/[^\'"]*)?';
+// Both quote styles, because a guard that only reads `'` is not a guard: importing
+// `"@hilbras/omnicode-engine"` from a leaf kept this script green (proven on
+// `packages/transcript`), and nothing in the repo forbids the double quote.
+const QUOTED = `(['"])(?:${KERNEL_PACKAGE})\\1`;
 const STATIC_FORMS = [
-  new RegExp(`(?:import|export)\\s+[^;]*?from\\s+'(?:${KERNEL_PACKAGE})'`, 'g'),
-  new RegExp(`import\\s+'(?:${KERNEL_PACKAGE})'`, 'g'),
+  new RegExp(`(?:import|export)\\s+[^;]*?from\\s+${QUOTED}`, 'g'),
+  new RegExp(`import\\s+${QUOTED}`, 'g'),
 ];
-const DYNAMIC_FORMS = [new RegExp(`import\\(\\s*'(?:${KERNEL_PACKAGE})'\\s*\\)`, 'g')];
+const DYNAMIC_FORMS = [new RegExp(`import\\(\\s*${QUOTED}\\s*\\)`, 'g')];
 
 function kernelImportsOf(text) {
   const found = new Map();
+  // `QUOTED` puts the quote in group 1 and the package in group 2.
   for (const pattern of STATIC_FORMS) {
     for (const match of text.matchAll(pattern)) {
-      if (match[1] !== undefined) found.set(match[1], false);
+      if (match[2] !== undefined) found.set(match[2], false);
     }
   }
   for (const pattern of DYNAMIC_FORMS) {
     for (const match of text.matchAll(pattern)) {
-      if (match[1] !== undefined && !found.has(match[1])) found.set(match[1], true);
+      if (match[2] !== undefined && !found.has(match[2])) found.set(match[2], true);
     }
   }
   return found;
