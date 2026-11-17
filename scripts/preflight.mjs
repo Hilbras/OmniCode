@@ -75,7 +75,7 @@ if (!skipTests) {
     },
     {
       name: 'test:bash-sandbox',
-      args: ['--filter', '@hilbras/omnicode-engine', 'exec', 'vitest', 'run', 'test/os/backends/node-local/tools/bash.test.ts'],
+      args: ['--filter', '@hilbras/omnicode-features-integration', 'exec', 'vitest', 'run', 'test/os/backends/node-local/tools/bash.test.ts'],
     },
     {
       name: 'test:engine-resilience',
