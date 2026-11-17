@@ -100,7 +100,8 @@ describe('`omnicode import` wiring', () => {
     expect(captured.stdout).toContain('skills:   1');
     expect(captured.stdout).toContain('agent names: reviewer');
     expect(captured.stdout).toContain('skill names: deploy');
-    expect(captured.stdout).toContain('Preview only: nothing was written');
+    expect(captured.stdout).toContain('Nothing was written');
+    expect(captured.stdout).toContain('Re-run with --apply');
   });
 
   it('uses --source when the caller names the tool, skipping detection', async () => {

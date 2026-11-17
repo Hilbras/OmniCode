@@ -33,6 +33,7 @@ export default defineConfig({
   deps: {
     onlyBundle: false,
   },
+  noExternal: [/^@hilbras\//, /^@omnicode\/cli-(ui|commands)(\/|$)/],
   outputOptions: {
     codeSplitting: false,
     entryFileNames: 'main.mjs',

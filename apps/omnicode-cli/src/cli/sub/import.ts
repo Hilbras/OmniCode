@@ -92,8 +92,15 @@ export function renderImportPreview(root: string, bundle: ImportBundle): string 
     }
   }
   lines.push('');
-  lines.push('Preview only: nothing was written. Installing these needs a target layout');
-  lines.push('(where agents and skills land, and what an overwrite means) before it can copy.');
+  lines.push('Nothing was written. Re-run with --apply to install the skills into');
+  lines.push('<home>/skills and merge the MCP servers into <home>/mcp.json (add --force to');
+  lines.push('replace entries that already exist).');
+  if (bundle.agents.length > 0) {
+    lines.push(
+      `Agent files are reported only: this runtime builds agents from profiles and ` +
+        `session state, so there is no user agent directory to install them into.`,
+    );
+  }
   return `${lines.join('\n')}\n`;
 }
 
