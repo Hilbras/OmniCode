@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -8,9 +8,10 @@ import {
   type ImportBundle,
 } from '@hilbras/omnicode-migration';
 import { Command } from 'commander';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 
 import { registerImportCommand, type ImportCommandDeps } from '#/cli/sub/import';
+import { applyImportedSkills } from '#/cli/sub/import-apply';
 
 interface Captured {
   stdout: string;
@@ -28,6 +29,8 @@ function harness(overrides: Partial<ImportCommandDeps> = {}): {
       throw new Error('read should not be called');
     },
     homeDir: () => '/home/tester',
+    targetHomeDir: () => '/home/target',
+    apply: applyImportedSkills,
     write: (chunk) => {
       captured.stdout += chunk;
     },
@@ -71,7 +74,7 @@ describe('`omnicode import` wiring', () => {
     expect(command).toBeDefined();
     expect(command?.registeredArguments.map((argument) => argument.required)).toEqual([false]);
     const flags = command?.options.map((option) => option.long);
-    expect(flags).toEqual(['--source', '--json']);
+    expect(flags).toEqual(['--source', '--json', '--apply', '--force']);
   });
 
   it('previews the detected source and never claims to install anything', async () => {
@@ -216,5 +219,110 @@ describe('`omnicode import` against a real Claude Code layout', () => {
     expect(captured.stdout).toContain('skills:   1');
     expect(captured.stdout).toContain('agent names: reviewer');
     expect(captured.stdout).toContain('skill names: deploy');
+  });
+});
+
+describe('`omnicode import --apply`', () => {
+  let workspace: string;
+  let home: string;
+  let sourceRoot: string;
+
+  beforeEach(() => {
+    workspace = mkdtempSync(join(tmpdir(), 'omnicode-import-apply-'));
+    home = join(workspace, 'home');
+    sourceRoot = join(workspace, 'claude');
+    mkdirSync(join(sourceRoot, 'skills', 'deploy'), { recursive: true });
+    mkdirSync(home, { recursive: true });
+    writeFileSync(
+      join(sourceRoot, 'skills', 'deploy', 'SKILL.md'),
+      '---\nname: deploy\ndescription: Ships it\n---\nRun the deploy checklist.\n',
+    );
+    writeFileSync(join(sourceRoot, 'skills', 'deploy', 'steps.md'), 'Step one.\n');
+    mkdirSync(join(sourceRoot, 'agents'), { recursive: true });
+    writeFileSync(
+      join(sourceRoot, 'agents', 'reviewer.md'),
+      '---\nname: reviewer\n---\nReview the diff.\n',
+    );
+  });
+
+  afterEach(() => {
+    if (workspace !== undefined) rmSync(workspace, { recursive: true, force: true });
+  });
+
+  function applyHarness(): { deps: ImportCommandDeps; captured: Captured } {
+    return harness({
+      detect: detectImportSources,
+      read: readImportBundle,
+      targetHomeDir: () => home,
+    });
+  }
+
+  it('writes the skill and its extra files into the home the runtime loads', async () => {
+    const { deps, captured } = applyHarness();
+
+    await run(deps, [sourceRoot, '--source', 'claude-code', '--apply']);
+
+    expect(captured.exitCode).toBe(0);
+    const skillFile = join(home, 'skills', 'deploy', 'SKILL.md');
+    expect(existsSync(skillFile)).toBe(true);
+    const written = readFileSync(skillFile, 'utf8');
+    expect(written).toContain('name: "deploy"');
+    expect(written).toContain('description: "Ships it"');
+    expect(written).toContain('Run the deploy checklist.');
+    expect(readFileSync(join(home, 'skills', 'deploy', 'steps.md'), 'utf8')).toBe('Step one.\n');
+    expect(captured.stdout).toContain('Installed 1 skill(s)');
+  });
+
+  it('leaves an existing skill alone unless --force is passed', async () => {
+    const first = applyHarness();
+    await run(first.deps, [sourceRoot, '--source', 'claude-code', '--apply']);
+
+    writeFileSync(join(home, 'skills', 'deploy', 'SKILL.md'), 'locally edited\n');
+    const second = applyHarness();
+    await run(second.deps, [sourceRoot, '--source', 'claude-code', '--apply']);
+    expect(readFileSync(join(home, 'skills', 'deploy', 'SKILL.md'), 'utf8')).toBe('locally edited\n');
+    expect(second.captured.stdout).toContain('already installed');
+
+    const third = applyHarness();
+    await run(third.deps, [sourceRoot, '--source', 'claude-code', '--apply', '--force']);
+    expect(readFileSync(join(home, 'skills', 'deploy', 'SKILL.md'), 'utf8')).toContain(
+      'Run the deploy checklist.',
+    );
+  });
+
+  it('refuses a skill name that is not a plain directory name', async () => {
+    const { deps, captured } = harness({
+      detect: async () => ['claude-code'],
+      read: async () =>
+        bundle({
+          skills: [{ name: '../escape', body: 'x', sourcePath: 'skills/escape/SKILL.md' }],
+        }),
+      targetHomeDir: () => home,
+    });
+
+    await run(deps, [sourceRoot, '--apply']);
+
+    expect(captured.exitCode).toBe(0);
+    expect(captured.stdout).toContain('name is not a plain directory name');
+    expect(existsSync(join(workspace, 'escape'))).toBe(false);
+  });
+
+  it('reports agent files as uninstallable instead of writing them somewhere invented', async () => {
+    const { deps, captured } = applyHarness();
+
+    await run(deps, [sourceRoot, '--source', 'claude-code', '--apply']);
+
+    expect(captured.stdout).toContain('agent file(s)');
+    expect(captured.stdout).toContain('no user agent directory');
+  });
+
+  it('rejects --apply together with --json', async () => {
+    const { deps, captured } = applyHarness();
+
+    await run(deps, [sourceRoot, '--source', 'claude-code', '--apply', '--json']);
+
+    expect(captured.exitCode).toBe(1);
+    expect(captured.stdout).toContain('they do not combine');
+    expect(existsSync(join(home, 'skills'))).toBe(false);
   });
 });

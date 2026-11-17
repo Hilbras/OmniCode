@@ -2038,6 +2038,16 @@ code; it changes what the program claims.
   item still owes. Detection refuses to guess when two layouts match and names them.
   Nine command tests cover it, including one that reads a real Claude Code directory
   through the real adapters (`apps/omnicode-cli/test/cli/import.test.ts`).
+  Install half landed: `--apply` writes each skill into `<home>/skills/<name>/` — the
+  directory `userFileSkillSource` already discovers — and `--force` replaces an existing
+  one (`src/cli/sub/import-apply.ts`). It writes `SKILL.md` with the frontmatter the
+  loader parses, copies the skill's auxiliary files beside it (rejecting any path that
+  escapes the skill directory), and refuses a skill name that is not a plain directory
+  name. Agent files are reported as uninstallable rather than written somewhere
+  invented: no user agent directory exists — the runtime builds agents from profiles and
+  session state — so an "installed" agent would land where nothing reads it. Without
+  `--apply` the command still only reports, and re-running is idempotent; 14 tests now,
+  including apply/force/skip and the unsafe-name case.
 
 ## Verifying the program
 

@@ -19,6 +19,9 @@ import {
 } from '@hilbras/omnicode-migration';
 import { Command } from 'commander';
 
+import { applyImportedSkills, renderApplyReport } from './import-apply';
+import { getDataDir } from '#/utils/paths';
+
 export const IMPORT_SOURCES: readonly ImportedSource[] = ['claude-code', 'codex', 'qwen'];
 
 const SOURCE_LABELS: Readonly<Record<ImportedSource, string>> = {
@@ -33,6 +36,8 @@ export interface ImportCommandDeps {
   readonly detect: (root: string) => Promise<readonly ImportedSource[]>;
   readonly read: (source: ImportedSource, root: string) => Promise<ImportBundle>;
   readonly homeDir: () => string;
+  readonly targetHomeDir: () => string;
+  readonly apply: typeof applyImportedSkills;
   readonly write: (chunk: string) => void;
   readonly setExitCode: (code: number) => void;
 }
@@ -42,6 +47,8 @@ function defaultDeps(): ImportCommandDeps {
     detect: detectImportSources,
     read: readImportBundle,
     homeDir: homedir,
+    targetHomeDir: getDataDir,
+    apply: applyImportedSkills,
     write: (chunk) => {
       process.stdout.write(chunk);
     },
@@ -107,7 +114,18 @@ export function registerImportCommand(
     .argument('[root]', 'install directory to read; defaults to your home directory')
     .option('--source <source>', `one of ${IMPORT_SOURCES.join(', ')} (auto-detected when omitted)`)
     .option('--json', 'print the parsed bundle as JSON (MCP env values are redacted)')
-    .action(async (rootArgument: string | undefined, options: { source?: string; json?: boolean }) => {
+    .option('--apply', 'install the skills into this home instead of only reporting them')
+    .option('--force', 'with --apply, replace a skill directory that already exists')
+    .action(
+      async (
+        rootArgument: string | undefined,
+        options: { source?: string; json?: boolean; apply?: boolean; force?: boolean },
+      ) => {
+        if (options.apply === true && options.json === true) {
+          deps.write('Choose one of --json (report) or --apply (install); they do not combine.\n');
+          deps.setExitCode(1);
+          return;
+        }
       const root = resolve(rootArgument ?? deps.homeDir());
       let source: ImportedSource;
       if (options.source !== undefined) {
@@ -147,6 +165,26 @@ export function registerImportCommand(
       } catch (error) {
         deps.write(`Could not read ${source} at ${root}: ${error instanceof Error ? error.message : String(error)}\n`);
         deps.setExitCode(1);
+        return;
+      }
+
+      if (options.apply === true) {
+        const targetHome = deps.targetHomeDir();
+        try {
+          const result = await deps.apply(bundle, { homeDir: targetHome, force: options.force === true });
+          deps.write(renderApplyReport(result, targetHome));
+          if (bundle.agents.length > 0) {
+            deps.write(
+              `Found ${String(bundle.agents.length)} agent file(s); this runtime builds agents from ` +
+                'profiles and session state, so there is no user agent directory to install them into.\n',
+            );
+          }
+        } catch (error) {
+          deps.write(
+            `Could not install skills into ${targetHome}: ${error instanceof Error ? error.message : String(error)}\n`,
+          );
+          deps.setExitCode(1);
+        }
         return;
       }
 
