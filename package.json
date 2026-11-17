@@ -20,6 +20,7 @@
     "check:tests": "node scripts/check-test-reachability.mjs",
     "check:typecheck": "node scripts/check-typecheck-coverage.mjs",
     "check:package": "node scripts/check-package-hygiene.mjs",
+    "check:cli-artifact": "node scripts/check-cli-artifact.mjs",
     "check:deps": "node scripts/check-deps-consistency.mjs",
     "check:skills": "node --test \".agents/skills/*/*.test.cjs\"",
     "check:guards": "pnpm check:workspace && pnpm check:architecture && pnpm check:deps && pnpm check:docs-claims && pnpm check:agent-docs && pnpm docs:check && pnpm check:generated && pnpm check:tests && pnpm check:typecheck && pnpm check:skills",

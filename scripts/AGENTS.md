@@ -113,6 +113,18 @@ Non-goals:
   published with npm". It builds nothing, so run it after the packages are
   built; it is not part of `pnpm check:guards` for that reason. Run
   `pnpm check:package`.
+- `check-cli-artifact.mjs` — the other half of measuring what ships, and the only
+  check that runs the CLI binary. It reads
+  `apps/omnicode-cli/dist/main.mjs` and fails when a bare import of a workspace
+  package (`@hilbras/*`, `@omnicode/cli-ui`, `@omnicode/cli-commands`) survives
+  bundling — that is what made the artifact resolve the **private** SDK's
+  TypeScript source at runtime and die on
+  `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` — and when `node dist/main.mjs --version`
+  does not exit 0 with the version in the CLI's own `package.json`. Verified in
+  both directions: removing `noExternal` from `apps/omnicode-cli/tsdown.config.ts`
+  makes it exit 1 naming the four leaked specifiers. It builds nothing, so it
+  runs in CI's `package-hygiene` job after the CLI build, not in `check:guards`.
+  Run `pnpm check:cli-artifact`.
 - The SDK's committed API report (`packages/SDK/etc/omnicode-sdk.api.md`) is gated
   the same way: `pnpm --filter @hilbras/omnicode-sdk build:dts` runs API Extractor
   in check mode and fails when the report drifts from `src/index.ts`. It is not a

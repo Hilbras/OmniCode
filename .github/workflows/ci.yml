@@ -209,6 +209,13 @@ jobs:
       - name: Check package hygiene
         run: pnpm check:package
 
+      - name: Smoke-test the CLI artifact
+        # Unit tests run src through Vitest aliases; only this exercises what
+        # ships. It fails when a workspace package is left external (the bundle
+        # then resolves private source at runtime) or when the binary does not
+        # start and report its own version.
+        run: pnpm check:cli-artifact
+
   eval-gate:
     name: Eval gate
     runs-on: ubuntu-latest
