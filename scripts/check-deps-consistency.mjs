@@ -21,7 +21,7 @@ function workspaceDirs() {
   const yaml = readFileSync(join(root, 'pnpm-workspace.yaml'), 'utf8').split('\n');
   let inPackages = false;
   for (const line of yaml) {
-    if (/^packages:/.test(line)) {
+    if (line.startsWith('packages:')) {
       inPackages = true;
       continue;
     }
@@ -52,7 +52,7 @@ function workspaceDirs() {
       if (existsSync(join(root, rel, 'package.json'))) dirs.add(rel);
     }
   }
-  return [...dirs].sort();
+  return [...dirs].sort((a, b) => a.localeCompare(b));
 }
 
 function lockfileImporters() {

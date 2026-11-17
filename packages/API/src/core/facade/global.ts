@@ -38,10 +38,7 @@ import type {
   PluginUpdateStatus,
   ReloadSummary,
 } from '@hilbras/omnicode-engine/app/plugin/types';
-import type {
-  SessionListQuery,
-  SessionSummary,
-} from '@hilbras/omnicode-engine/app/sessionIndex/sessionIndex';
+import type { SessionSummary } from '@hilbras/omnicode-engine/app/sessionIndex/sessionIndex';
 import type { AuthStatus } from '@hilbras/omnicode-engine/app/auth/auth';
 import type { CapabilityStatus } from '@hilbras/omnicode-engine/app/capability/types';
 import type {

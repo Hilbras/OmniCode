@@ -2106,6 +2106,7 @@ entries carry the fail-on-base evidence they recorded at the time.
 | `pnpm build --concurrency=1` (before the fix) | exit 1 — Turbo `Cyclic dependency detected` in about a second: `@hilbras/omnicode-api` ↔ `@hilbras/omnicode-acp` and `@hilbras/app-client` ↔ `@hilbras/app-composer`. The full-graph build was unrunnable; see the T0 defects entry and decisions 1–2 |
 | `pnpm build --concurrency=1` (after decisions 1–2) | exit 0 — `Tasks: 23 successful, 23 total` (19 cached, 4 executed), no cyclic-dependency error. The server build also needed its stale `apps/omnicode/…` import repointed to `apps/omnicode-cli/…` |
 | `pnpm lint` | exit 0 in 2 m 15 s — `check-no-comments: OK (283 files)`, `kernel layering: OK (22 packages, no cycles)`, `oxlint baseline check: OK (91 frozen findings, 0 new)`. Before this pass it exited 1 on four new findings and thirteen stale ledger entries |
+| `pnpm lint` (after the import command and the dependency guard) | exit 0 — `check-no-comments: OK (283 files)`, `kernel layering: OK (24 packages, no cycles)`, `oxlint baseline check: OK (70 frozen findings, 0 new)`. The gate was red: two of my own files carried `sort()` without a comparator and a regex-prefix test, `scripts/build-docs.mjs` had the same sort, and `packages/API/src/core/facade/global.ts` imported `SessionListQuery` without using it. All four fixed; the ledger regenerated as a pure shrink, 91 → 70 |
 | `node scripts/gen-oxlint-baseline.mjs` | ledger 104 → 91 findings, 0 additions (verified as a pure removal before writing) |
 | `pnpm check:generated` (after the `scalarText` change in `packages/API/scripts/gen-api-reference.mts`) | exit 0 — all seven artifacts fresh, so the generated API reference is byte-identical and the type-aware fix changed no output |
 | workspace script audit | 188 scripts across 39 manifests; every local file reference, `pnpm run` / `--filter` target, and `turbo run` task resolves except the API package's five `smoke*` / `stress:kosong-config` / `typecheck:examples` scripts (missing `tsconfig.examples.json` and `examples/`, already disclosed in `packages/API/AGENTS.md`) and `apps/omnicode-vis:start` (needs `server/dist/server.mjs`, which its `build` produces) |
@@ -2230,7 +2231,7 @@ wired, 0 documented as unwired**; `pnpm check:typecheck` → **39 wired, 0 docum
 `features-integration` → **47 files / 1 689 tests, exit 0**; `engine` → **426 files,
 6 849 passed + 4 skipped tests, exit 0**; `app-client` → **1036 tests, exit 0**;
 `app-composer` → 354 tests; `app-markdown` → 277 tests; `server` → **78 files,
-1 451 tests, exit 0**; `pnpm lint` → 91 frozen findings, 0 new. Everything else that is
+1 451 tests, exit 0**; `pnpm lint` → 70 frozen findings, 0 new. Everything else that is
 still red or unscoped is named in the entries above.
 
 `pnpm test` needs `--concurrency=1` on this machine: four-way Turbo parallelism

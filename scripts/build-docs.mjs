@@ -56,7 +56,7 @@ function collect() {
     if (statSync(full).isDirectory()) files.push(...walk(full));
     else files.push(full);
   }
-  return [...new Set(files)].sort();
+  return [...new Set(files)].sort((a, b) => a.localeCompare(b));
 }
 
 const files = collect();
