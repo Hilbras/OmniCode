@@ -46,6 +46,7 @@ try {
   await run('tsc', tscBinPath, ['-p', 'tsconfig.dts.json']);
   await writeProviderClientShim();
   await rewriteWorkspaceSpecifiers();
+  await assertNoUnrewrittenWorkspaceSpecifiers();
   // Default is api-extractor's check mode: it fails when the committed API report
   // in `etc/` no longer matches the built surface. `--local` rewrites the report,
   // which is what an intentional API change needs.
@@ -55,6 +56,28 @@ try {
   await run('api-extractor', apiExtractorBinPath, updateReport ? ['run', '--local'] : ['run']);
 } finally {
   await rm(tempDir, { recursive: true, force: true });
+}
+
+// A workspace package missing from `workspacePackages` above is not rewritten, and
+// api-extractor then fails with `ae-wrong-input-file-type … expects to analyze
+// compiler outputs with the .d.ts file extension` — a message about file types for a
+// problem that is a stale package list (proven by removing `Kaos` from the map). Check
+// the rewritten tree directly so the failure names the package and the fix.
+async function assertNoUnrewrittenWorkspaceSpecifiers() {
+  const leftovers = new Set();
+  for (const file of await findDtsFiles(dtsRoot)) {
+    const text = await readFile(file, 'utf8');
+    for (const match of text.matchAll(/["'](@hilbras\/[@\w.-]+)["']/g)) {
+      leftovers.add(match[1]);
+    }
+  }
+
+  if (leftovers.size > 0) {
+    throw new Error(
+      `workspace specifiers survived the rewrite: ${[...leftovers].sort((a, b) => a.localeCompare(b)).join(', ')}. ` +
+        'Add each package to `workspacePackages` (the name → directory map) in this script.',
+    );
+  }
 }
 
 function packageBinPath(packageName, binPath) {

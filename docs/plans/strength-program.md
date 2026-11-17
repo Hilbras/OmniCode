@@ -73,7 +73,14 @@ tree rather than against the entries above:
   with no change to the result, which is how we know they suppressed nothing. Bite
   proven by adding an override for a nonexistent package.
 - **T0.3** `build:dts` runs `scripts/build-dts.mjs`, emits `dist/index.d.mts`, and now
-  also validates the committed API report (T5.8c).
+  also validates the committed API report (T5.8c). Re-run on this tree: exit 0 in 36 s,
+  `API Extractor completed successfully`, `packages/SDK/dist/index.d.mts` 256 340 bytes
+  with 802 declaration statements and no bare `@hilbras/` import in the rollup. The
+  build also asserts that no workspace specifier survives the rewrite pass, because a
+  package missing from the script's `workspacePackages` map otherwise fails with
+  api-extractor's misleading `ae-wrong-input-file-type … expects .d.ts`; proven by
+  deleting `Kaos` from the map, which now reports
+  `workspace specifiers survived the rewrite: @hilbras/omnicode-kaos. Add each package to `workspacePackages` …`.
 - **T0.4** `scripts/check-nix-workspace.mjs` no longer exists; `scripts/omnicode-dev.mjs:26`
   resolves `apps/omnicode-cli`; the CLI's `test`/`e2e` scripts call `build:cli`, which the
   root defines; `packages/engine/package.json` carries no `Kernel/` path. Re-verified with
