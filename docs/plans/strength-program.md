@@ -81,7 +81,9 @@ tree rather than against the entries above:
 - **T0.5** the guides no longer contradict code: only `packages/memory/AGENTS.md:371`
   states the default, and it matches `memoryFlag.default === true`
   (`packages/memory/src/feature/flag.ts:24`). The root guide and `packages/README.md`
-  no longer claim memory sits behind the flag.
+  no longer claim memory sits behind the flag. The guides can no longer drift on what
+  they tell you to run, either: `check-agents-docs.mjs` now fails when any `AGENTS.md`
+  names a `pnpm <script>` that no `package.json` defines.
 - **T0.6** the `full-suite` job is defined (`.github/workflows/ci.yml:121`) and the only
   local adjustment its command needs is `--concurrency=1` (four-way Turbo parallelism
   OOMs on this machine), which is an environment limit, not a defect in the job.

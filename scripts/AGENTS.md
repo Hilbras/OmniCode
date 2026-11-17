@@ -93,7 +93,13 @@ Non-goals:
   constraints. Run `pnpm check:architecture`.
 - `check-agents-docs.mjs` — verifies the canonical root `AGENTS.md`, its
   compatibility pointers, all referenced paths, and rejects stale `Kernel`
-  directory references in every `AGENTS.md`. Run `pnpm check:agent-docs`.
+  directory references in every `AGENTS.md`. It also fails when a guide tells the
+  reader to run a root or owning-package script that no `package.json` defines —
+  root scripts for any guide, plus the guide's own package scripts, so a package
+  guide naming its own `bench` script is fine while citing a gate that was never
+  added fails with
+  ``<guide> tells the reader to run `pnpm <script>`, which no package.json defines``.
+  Run `pnpm check:agent-docs`.
 - `check-docs-claims.mjs` — rejects stale CI, flake, and E2E coverage claims when
   the corresponding files or tests are absent. Run `pnpm check:docs-claims`.
 - `check-oxlint-baseline.mjs` — runs `oxlint --type-aware` and fails on any

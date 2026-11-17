@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { dirname, join, relative } from 'node:path';
 
 const ROOT = process.cwd();
 const ROOT_GUIDE = join(ROOT, 'AGENTS.md');
@@ -50,6 +50,40 @@ for (const token of paths) {
   if (path.includes('<') || path.includes('*')) continue;
   if (path === 'apps/omnicode') continue;
   if (!existsSync(join(ROOT, path))) failures.push(`root AGENTS.md references missing path: ${path}`);
+}
+
+// A guide that tells an agent to run `pnpm <script>` must name a script that exists,
+// either at the root or — for a package guide — in the package that owns the guide.
+// `packages/minidb/AGENTS.md` naming `bench:open` is correct as long as minidb defines
+// it; a root-level name that no package.json defines is a command that fails when
+// someone follows it.
+const PNPM_BUILTINS = new Set([
+  'add', 'install', 'pack', 'publish', 'exec', 'dlx', 'run', 'remove', 'update', 'why',
+  'list', 'outdated', 'patch', 'prune', 'link', 'unlink', 'import', 'rebuild', 'store',
+  'root', 'bin', 'env', 'config', 'setup', 'deploy', 'audit', 'licenses', 'dedupe',
+  'fetch', 'doctor', 'test', 'typecheck', 'build', 'lint',
+]);
+const rootScripts = new Set(Object.keys(JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8')).scripts));
+
+for (const guide of findAgentGuides(ROOT)) {
+  const source = readFileSync(guide, 'utf8');
+  const ownScripts = new Set();
+  for (let dir = dirname(guide); dir.startsWith(ROOT); dir = dirname(dir)) {
+    const manifest = join(dir, 'package.json');
+    if (existsSync(manifest)) {
+      for (const name of Object.keys(JSON.parse(readFileSync(manifest, 'utf8')).scripts ?? {})) {
+        ownScripts.add(name);
+      }
+      break;
+    }
+    if (dir === ROOT) break;
+  }
+  for (const match of source.matchAll(/`pnpm (?:run )?([a-z][a-z0-9:_-]*)/g)) {
+    const script = match[1];
+    if (PNPM_BUILTINS.has(script)) continue;
+    if (rootScripts.has(script) || ownScripts.has(script)) continue;
+    failures.push(`${relative(ROOT, guide)} tells the reader to run \`pnpm ${script}\`, which no package.json defines`);
+  }
 }
 
 if (failures.length > 0) {

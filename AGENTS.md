@@ -336,15 +336,27 @@ pnpm --filter @omnicode/cli typecheck
 pnpm --filter @omnicode/cli exec vitest run test/tui/path/to/file.test.ts
 ```
 
-Guards:
+Guards — `pnpm check:guards` runs all of these; run one directly while iterating:
 
 ```bash
 pnpm check:workspace
 pnpm check:architecture
 pnpm check:deps
+pnpm check:docs-claims
 pnpm check:agent-docs
-pnpm check:guards
+pnpm docs:check
+pnpm check:generated
+pnpm check:tests
+pnpm check:command-paths
+pnpm check:typecheck
+pnpm check:skills
 ```
+
+`pnpm check:package` and `pnpm check:cli-artifact` are not in that chain: both need
+a build first, so CI runs them in its `package-hygiene` job.
+
+The local delivery gate is `pnpm preflight` (install check, guards, lint, seven
+typechecks, eight targeted suites, eval gate — 23 steps).
 
 Known command gaps:
 
@@ -371,8 +383,10 @@ Known command gaps:
   build edge to them. The earlier `api` ↔ `acp` and `app-client` ↔ `app-composer`
   cycles are also gone (API owns the ACP loader; ACP consumes
   `@hilbras/omnicode-client-contract`, and the dead `app-composer` devDependency
-  was removed). CI still does not run `pnpm build`; its jobs use targeted builds:
-  `pnpm build:cli`, `pnpm --filter <pkg> build`, and the SDK's `build:dts`.
+  was removed). CI runs a full workspace build only in the `cross-platform` workflow
+  (`pnpm -r --if-present build`, on Linux, macOS, and Windows); `ci.yml` keeps
+  targeted builds — `pnpm build:cli`, `pnpm --filter <pkg> build`, and the SDK's
+  `build:dts`.
 
 ## Testing rules
 
