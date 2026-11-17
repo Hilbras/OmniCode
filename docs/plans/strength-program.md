@@ -847,6 +847,18 @@ because the app was not in the root Vitest project list. Landed:
   `packages/API/test/session-runtime-helpers.ts` defaulted to 1 000 ms while its
   callers wait for `turn.ended`; a loaded machine made it flake. Default is
   15 000 ms, which stays under the 20 s package `testTimeout`.
+- **The Linux clipboard suite measured the wrong window, and failed under load.**
+  `packages/tui/test/fixtures/clipboard-reader.cjs` started its 10 ms sampling timer
+  *before* `require()`ing the native `.node` addon, so a synchronous `dlopen` on a loaded
+  host consumed the first 200 ms and the run reported `0 ticks` while the clipboard
+  worked. Reproduced at 1 failure in 3 isolated runs on this machine, and the wall-clock
+  bounds in `native-clipboard-linux.test.ts` (`< 3500 ms` against a 2 s internal deadline)
+  failed the same way for process-spawn time. The timer now opens after the addon loads
+  and covers only the read, the floor is derived from the elapsed window, and the bound
+  is `READ_TIMEOUT_MS` (a shared constant) instead of three magic numbers. Sensitivity is
+  unchanged: a 500 ms synchronous busy-loop still fails with
+  `1 ticks in 502ms`. Verified 3/3 green under 16 competing busy loops, where both the
+  unfixed file and a first, too-loose attempt failed.
 - **Typo sweep.** `~/.omnicode-v-v` appeared in CLI comments and the headless
   migration log line; corrected.
 - **Two surface snapshots were stale against shipped work.** The server route

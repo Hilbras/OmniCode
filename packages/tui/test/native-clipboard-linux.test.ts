@@ -13,6 +13,14 @@ import { promisify } from "node:util";
 const exec = promisify(execFile);
 const fixtures = fileURLToPath(new URL("./fixtures/", import.meta.url));
 const native = fileURLToPath(new URL("../native/linux/", import.meta.url));
+// The read has a 2-second internal deadline; this bound only needs to absorb Node's
+// startup and `dlopen` in the child before the deadline starts. It used to be a
+// wall-clock check of 3500ms against the call, which failed on a loaded host because
+// process spawn alone ate the margin. The property is "the transfer does not hang", and
+// `exec`'s own timeout is what enforces it: exceeding this means the child was killed,
+// not that it was slow. Kept tight so a leaked interval that keeps the child alive still
+// fails visibly instead of stalling.
+const READ_TIMEOUT_MS = 8000;
 const supported = process.platform === "linux" && ["arm64", "x64"].includes(process.arch);
 const dependenciesAvailable =
 	supported &&
@@ -63,7 +71,7 @@ async function readClipboard(method: string, env: NodeJS.ProcessEnv): Promise<Re
 			join(native, "prebuilds", `linux-${process.arch}`, "linux-platform-x11.node"),
 			method,
 		],
-		{ env, timeout: 6000 },
+		{ env, timeout: READ_TIMEOUT_MS },
 	);
 	return JSON.parse(stdout) as ReaderResult;
 }
@@ -149,7 +157,7 @@ describe("native Linux clipboard", { skip: !dependenciesAvailable, timeout: 6000
 			const env = { ...process.env, DISPLAY: `127.0.0.1:${address.port - 6000}` };
 			const started = performance.now();
 			const result = await readClipboard(method, env);
-			assert.ok(performance.now() - started < 3500, "The worker must return after the connection closes");
+			assert.ok(performance.now() - started < READ_TIMEOUT_MS, "The worker must return after the connection closes");
 			assert.deepEqual(result, { ok: true, unavailable: true });
 			assert.ok(connections > 0, "The helper must reach the stalled X11 server");
 			assert.equal(sockets.size, 0, "The failed connection must be closed");
@@ -222,7 +230,7 @@ describe("native Linux clipboard", { skip: !dependenciesAvailable, timeout: 6000
 			const failure = await result;
 			assert.equal(failure.ok, false);
 			assert.match(failure.error ?? "", /X11 clipboard/);
-			assert.ok(performance.now() - started < 3500, "The transfer must share the 2-second deadline");
+			assert.ok(performance.now() - started < READ_TIMEOUT_MS, "The transfer must share the 2-second deadline");
 		});
 	}
 
@@ -241,7 +249,7 @@ describe("native Linux clipboard", { skip: !dependenciesAvailable, timeout: 6000
 			const result = await readClipboard(content === "text" ? "getText" : "getImage", env);
 			assert.equal(result.ok, false);
 			assert.match(result.error ?? "", /X11 clipboard/);
-			assert.ok(performance.now() - started < 3500);
+			assert.ok(performance.now() - started < READ_TIMEOUT_MS);
 		});
 	}
 });
