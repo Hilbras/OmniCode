@@ -2095,6 +2095,7 @@ restart.
 | 8 | **T5.8** — docs site: publish the generated pages, or keep `docs/` internal | `scripts/build-docs.mjs` + `pnpm docs:check` wired into `check:guards`; 11 pages build | Publishing the site |
 | 9 | **T1.3** — package naming: CLI's README/CHANGELOG say `@hilbras/omnicode`, manifest and `docs/release.md` say `@omnicode/cli` | The inconsistency is recorded, not papered over | One rename or one doc fix |
 | 10 | **T2.2b** — approval axes for sandbox-denial retry | Nothing; widening them touches published SDK/server surfaces | A sandbox-denial classification and the retry |
+| 11 | **T1.1** — wire vocabulary: is `human/llm` or the API contract tables the one source | JSON Schema rendered for 148 procedures + 31 events, drift-gated in CI (`pnpm check:generated`) | Generated TypeScript declarations for `SDK`/`ACP`/`server` from that same source |
 
 **T4 items are not on this list on purpose.** T4.1 (input-queue producer), T4.3
 (workflow tool), T4.5b (curator lifecycle), T4.6 (session search harvester) and T4.7
