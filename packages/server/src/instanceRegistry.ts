@@ -7,9 +7,6 @@ import { ulid } from 'ulid';
 
 export const HEARTBEAT_INTERVAL_MS = 15_000;
 
-export const DEFAULT_SERVER_DIR = join(resolveOmnicodeHome(), 'server');
-export const DEFAULT_SERVER_INSTANCES_DIR = join(DEFAULT_SERVER_DIR, 'instances');
-
 export interface ServerInstanceInfo {
   readonly serverId: string;
   readonly pid: number;
@@ -188,7 +185,7 @@ async function listLiveInternal(instancesDir: string): Promise<readonly ServerIn
 }
 
 export function createInstanceRegistry(options: InstanceRegistryOptions = {}): IInstanceRegistry {
-  const instancesDir = options.instancesDir ?? DEFAULT_SERVER_INSTANCES_DIR;
+  const instancesDir = options.instancesDir ?? resolveServerInstancesDir();
   const now = options.now ?? Date.now;
   const heartbeatIntervalMs = options.heartbeatIntervalMs ?? HEARTBEAT_INTERVAL_MS;
 
@@ -264,9 +261,7 @@ export function createInstanceRegistry(options: InstanceRegistryOptions = {}): I
 }
 
 export function resolveServerInstancesDir(homeDir?: string): string {
-  return homeDir === undefined
-    ? DEFAULT_SERVER_INSTANCES_DIR
-    : join(homeDir, 'server', 'instances');
+  return join(homeDir ?? resolveOmnicodeHome(), 'server', 'instances');
 }
 
 export async function listLiveServerInstances(

@@ -2,12 +2,13 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   createInstanceRegistry,
   getLiveServerInstance,
   listLiveServerInstances,
+  resolveServerInstancesDir,
   type ServerInstanceInfo,
 } from '../src/instanceRegistry';
 import { type RunningServer, startServer } from '../src/start';
@@ -65,6 +66,40 @@ const baseInfo = {
   port: 58627,
   startedAt: 1000,
 };
+
+describe('resolveServerInstancesDir — default home', () => {
+  it('follows the home set now, not the home resolved when the module loaded', () => {
+    try {
+      vi.stubEnv('OMNICODE_V_HOME', join(tmpDir, 'home-a'));
+      expect(resolveServerInstancesDir()).toBe(join(tmpDir, 'home-a', 'server', 'instances'));
+      vi.stubEnv('OMNICODE_V_HOME', join(tmpDir, 'home-b'));
+      expect(resolveServerInstancesDir()).toBe(join(tmpDir, 'home-b', 'server', 'instances'));
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('lets an explicit home win over the environment', () => {
+    try {
+      vi.stubEnv('OMNICODE_V_HOME', join(tmpDir, 'env-home'));
+      expect(resolveServerInstancesDir(join(tmpDir, 'explicit'))).toBe(
+        join(tmpDir, 'explicit', 'server', 'instances'),
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it('accepts the pre-rename OMNICODE_HOME when the current name is absent', () => {
+    try {
+      vi.stubEnv('OMNICODE_V_HOME', undefined);
+      vi.stubEnv('OMNICODE_HOME', join(tmpDir, 'legacy-home'));
+      expect(resolveServerInstancesDir()).toBe(join(tmpDir, 'legacy-home', 'server', 'instances'));
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+});
 
 describe('createInstanceRegistry — register / release', () => {
   it('writes a <serverId>.json file and release removes it', async () => {

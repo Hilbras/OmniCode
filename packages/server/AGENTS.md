@@ -90,6 +90,13 @@ pnpm --filter @hilbras/omnicode-server test:bench
   `PORT_RETRY_LIMIT`. Do not hardcode 58627 in tests.
 - `apiSurface.snapshot.test.ts` fails on any route addition/removal. Update it
   deliberately; never hand-edit generated OpenAPI output.
+- Home-dependent paths resolve at call time, never at import time.
+  `resolveServerInstancesDir()` and `createInstanceRegistry()` call
+  `resolveOmnicodeHome()` when they run; an import-time `const` froze the home
+  before a custom `OMNICODE_V_HOME`/`OMNICODE_HOME` applied, which is how
+  `omnicode web rotate-token` wrote a token into one home and read another
+  home's instance registry, printing no access links. Do not cache
+  `resolveOmnicodeHome()` in a module-level constant.
 
 ## 7. What must not be added here
 
