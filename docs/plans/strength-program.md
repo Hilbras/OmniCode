@@ -1746,6 +1746,14 @@ unless the item needs one.
 - **T5.5 Recover the inspector UI** over the existing debug WS route
   (`server/src/transport/ws/debug/`).
 - **T5.6 Recover release automation**: OIDC trusted publishing, SBOM, digest.
+  Landed earlier (changesets, `release.yml`, env-scoped secrets, provenance). This turn
+  closed the part that made the automation publish an unusable artifact: the built CLI
+  kept every workspace package external, so `node dist/main.mjs` died on
+  `packages/SDK/src/auth.ts` (`ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`) and a published CLI
+  would import the **private** `@hilbras/omnicode-sdk` at runtime. tsdown now inlines
+  `@hilbras/*` and `@omnicode/cli-ui` / `@omnicode/cli-commands`; the artifact is a 20 MB
+  self-contained `dist/main.mjs`, `--version`/`--help`/`import --apply` all run from it,
+  and publint stays green. Evidence in the re-run log.
 - **T5.7 Recover the skill library** (`.agents/skills`: security-audit validators,
   write-tui) and the dev-agent docs.
   Surveyed: this tree had **no project skill directory at all** (no `.agents/skills`,
@@ -2154,6 +2162,7 @@ entries carry the fail-on-base evidence they recorded at the time.
 | `pnpm --filter @hilbras/omnicode-server exec vitest run test/instanceRegistry.test.ts` | 3 new cases pass; **2 fail against the old module-level constant** (fail-on-base evidence for the call-time home fix) |
 | `pnpm test --concurrency=1` (after the import command, 25 commits) | exit 0 — `Tasks: 36 successful, 36 total`, 33 min 04 s, **22 538 tests: 22 483 passed, 55 skipped, 0 failed**, 1 289 test files. The CLI suite runs 4 438 tests with the package timeout now at 30 s instead of Vitest's 5 s default: 13 of its own tests take over 5 s on a healthy host, up to 17.2 s, so the 5 s bound failed them under any load |
 | `apps/omnicode-cli` import command | `vitest run test/cli/import.test.ts` 17 passed (preview, JSON redaction, skills apply/force/skip, unsafe name, MCP merge with `0600` and conflict handling, unparseable-file refusal); `typecheck` exit 0 |
+| built CLI artifact, end to end | before the bundling fix: `node dist/main.mjs --version` failed with `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` in `packages/SDK/src/auth.ts` (workspace packages stayed external and resolved to source). After: `--version` → `1.4.30`, `--help` → full command list, `import <fixture>` → counts and warnings, `import <fixture> --apply` → writes `<home>/skills/deploy/SKILL.md` with the loader's frontmatter; 20 MB self-contained bundle; `publint` → All good |
 
 **Owner decisions executed (2026-11-17, final).**
 - **`apps/omnicode-mobile.old`: preserved, not deleted.** Only reproducible build output
