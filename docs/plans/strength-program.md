@@ -680,9 +680,9 @@ because the app was not in the root Vitest project list. Landed:
     (0 diagnostics) scripts, a 20 s `testTimeout` with the measured 9 s case named, and its
     guide's "tests fail with `Icon ... not found`" and "no clean `vue-tsc` run" claims are
     replaced by what the package actually does.
-    Net effect on the reachability guard: **1332 test files wired, 1 documented as
-    unwired** — only `apps/omnicode-web/test/routes.test.ts`, which waits on the T5.3
-    decision.
+    Net effect on the reachability guard: **1342 test files wired, 0 documented as
+    unwired** — the last entry, `apps/omnicode-web/test/routes.test.ts`, no longer
+    needed an exemption once it stopped being a stub (see the T5.3 entry).
   Net effect on the reachability guard: **1252 → 1279 test files wired**, exceptions
   **4 → 2**. The same install also made `app-composer`'s type-check cheap to wire:
   `vue-tsc` as a devDependency, a `tsconfig.json` following `app-markdown`'s shape (root
@@ -786,14 +786,14 @@ because the app was not in the root Vitest project list. Landed:
   subject — it exercises the preset's own `customCollections.omnicode` path instead of
   a third-party collection. That package also gained the `typecheck` and `test`
   scripts it never had, so its 2 cases and its `src` + `test` type-check now run.
-  `apps/omnicode-web/test/routes.test.ts` stays in the shrink-only exception list with
-  its reason (the app's fate is T5.3's decision); deleting or wiring it makes the guard
-  fail as a stale exception.
+  `apps/omnicode-web/test/routes.test.ts` used to be the last shrink-only exception,
+  held there because it was a stub that asserted nothing; it is now a real route-table
+  test and the exception is gone (see the T5.3 entry).
   Verified both branches: a planted `packages/app-markdown/test/orphan-probe.test.ts`
   fails with `no Vitest project reaches it`, moving an exempted test aside fails with
   `stale exception in this guard`, and the restored tree reports the count below. After
-  the vite-preset fix the guard reports **1332 wired, 1 documented** — the exception
-  list shrinking is the point; the one that remains is blocked on T5.3, not on effort.
+  the vite-preset fix the guard reports **1342 wired, 0 documented** — the exception
+  list is now empty.
 
 - **Engine home disagreed with the CLI home.**
   `resolveOmnicodeHome` read only `OMNICODE_V_HOME` and defaulted to
@@ -2021,9 +2021,19 @@ code; it changes what the program claims.
   `apps/omnicode-web` is "2 pages, 0 tests"; there are **17 tracked files** and two test
   files. Re-checked on this tree: the app **is** in the root `vitest.config.ts` project
   list (`vitest.config.ts:11`) and its suites run and pass —
-  `test/pagination.test.ts` (6 tests) and `test/routes.test.ts` (1 test), 7/7, 1.18 s.
-  `routes.test.ts` is still a stub asserting the component is a function, so the coverage
-  is thin, but the tests are not silently skipped. The surface that actually ships is
+  `test/pagination.test.ts` (6 tests) and `test/routes.test.ts` (5 tests), 11/11, 1.1 s.
+  `routes.test.ts` was a stub asserting only that `App` is a function — the same
+  lying-gate class T0 exists to remove — and is now a real test of the route table.
+  `App` was reworked to export `routes: RouteObject[]` and render it through
+  `useRoutes`, so the table has one definition instead of living inside JSX where no
+  test could reach it. The five cases pin what would silently break: `/` mounts
+  `HomePage`, `/sessions/:id` mounts `SessionPage`, the param `SessionPage`
+  destructures is literally `id`, an unknown path matches nothing, and `/sessions`
+  without an id does not match. Proved the test bites by renaming the route to
+  `session/:id` — two cases go red — then restored. Runs in `environment: 'node'`
+  because `matchRoutes` needs no DOM; a full `<App/>` render would, since `Shell`
+  calls `localStorage` and `window.matchMedia` during render.
+  The surface that actually ships is
   a third one: `apps/omnicode-cli/dist-web` (746 tracked files, served by
   `packages/server/src/start.ts:590`), built out of tree —
   `apps/omnicode-cli/scripts/check-web-assets.mjs:3` says the web UI lives in another
