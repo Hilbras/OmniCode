@@ -97,6 +97,14 @@ function includePatterns(configPath) {
   return patterns.length > 0 ? patterns : DEFAULT_INCLUDE;
 }
 
+// `passWithNoTests: true` makes Vitest exit 0 when it matched nothing, which is how a
+// suite reports green while running zero tests. Only the package that deliberately
+// declares `include: []` may keep it, and that package must run `node --test` instead —
+// both halves are checked, so the flag cannot spread and the exception cannot rot.
+const PASS_WITH_NO_TESTS_ALLOWED = {
+  'packages/tui/vitest.config.ts': 'its suite runs through `node --test`, so the Vitest project is empty on purpose',
+};
+
 // Which files each package's own runner would pick up.
 const coveredByPackage = new Map();
 for (const file of TEST_GLOBS.flatMap((pattern) => globSync(pattern, { cwd: ROOT }))) {
@@ -172,6 +180,40 @@ for (const exception of KNOWN_UNWIRED) {
 for (const exception of KNOWN_UNWIRED) {
   console.log(`known unwired suite: ${exception.file ?? `${exception.prefix}*`}\n  why: ${exception.reason}`);
 }
+
+const contradicting = [];
+for (const dir of PACKAGE_DIRS) {
+  const config = findConfig(dir);
+  if (config === null) continue;
+  const text = readFileSync(join(ROOT, config), 'utf8');
+  const allowsEmpty = /passWithNoTests:\s*true/.test(text);
+  if (!allowsEmpty) continue;
+  const allowed = PASS_WITH_NO_TESTS_ALLOWED[config];
+  if (allowed === undefined) {
+    contradicting.push(
+      `${config} sets \`passWithNoTests: true\`, so it reports green while running nothing — remove the flag or add it to PASS_WITH_NO_TESTS_ALLOWED with a reason`,
+    );
+    continue;
+  }
+  const testScript = packageScripts(dir).test;
+  if (typeof testScript !== 'string' || !/\bnode\b.*\s--test\b/.test(testScript)) {
+    contradicting.push(
+      `${config} is allowed to set \`passWithNoTests: true\` because ${dir} runs \`node --test\`, but its test script is ${JSON.stringify(testScript ?? '')}`,
+    );
+  }
+}
+for (const config of Object.keys(PASS_WITH_NO_TESTS_ALLOWED)) {
+  if (!existsSync(join(ROOT, config))) {
+    contradicting.push(`stale passWithNoTests exception: ${config} does not exist`);
+  }
+}
+
+if (contradicting.length > 0) {
+  console.error('test reachability check: FAILED');
+  for (const failure of contradicting) console.error(`- ${failure}`);
+  process.exit(1);
+}
+
 console.log(`test reachability: ${wired} test files run by a package script`);
 
 if (failures.length > 0) {

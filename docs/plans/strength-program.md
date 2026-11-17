@@ -58,7 +58,12 @@ tree rather than against the entries above:
 
 - **T0.1** only `packages/tui/vitest.config.ts` keeps `passWithNoTests`, together with
   `include: []` and the in-file comment that its suite is `node --test`; every other
-  Vitest project has a non-empty include.
+  Vitest project has a non-empty include. The claim is now a guard rather than a
+  measurement: `check-test-reachability.mjs` fails when any other Vitest config sets
+  the flag, and fails when `tui` keeps the exemption without a `node --test` test
+  script. Both directions were proven by hand (flag added to `packages/llm`, then
+  `tui`'s test script switched to `vitest run`), and both restored to
+  `test reachability check: OK (1341 wired, 0 documented as unwired)`.
 - **T0.2** `pnpm lint` is a real script — `check-no-comments && check-kernel-layering &&
   check-oxlint-baseline`, the last running `oxlint --type-aware` against a shrink-only
   baseline — not the old Turbo no-op.
@@ -67,7 +72,7 @@ tree rather than against the entries above:
 - **T0.4** `scripts/check-nix-workspace.mjs` no longer exists; `scripts/omnicode-dev.mjs:26`
   resolves `apps/omnicode-cli`; the CLI's `test`/`e2e` scripts call `build:cli`, which the
   root defines; `packages/engine/package.json` carries no `Kernel/` path. Re-verified with
-  the item's own command: `pnpm preflight` exits 0 with `preflight: OK (22 steps)`.
+  the item's own command: `pnpm preflight` exits 0 with `preflight: OK (23 steps)`.
 - **T0.5** the guides no longer contradict code: only `packages/memory/AGENTS.md:371`
   states the default, and it matches `memoryFlag.default === true`
   (`packages/memory/src/feature/flag.ts:24`). The root guide and `packages/README.md`

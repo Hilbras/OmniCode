@@ -47,6 +47,17 @@ Non-goals:
   with a reason each, matched by path or prefix; an entry that matches nothing fails
   the guard, so a fix cannot leave a stale exception. Costs a few seconds. Run
   `pnpm check:tests`.
+  The same guard owns the `passWithNoTests` half of T0.1. That flag makes Vitest exit 0
+  after matching nothing, which is a suite reporting green while running zero tests; a
+  Vitest config that sets it must appear in `PASS_WITH_NO_TESTS_ALLOWED`, and the only
+  entry (`packages/tui/vitest.config.ts`, `include: []` on purpose) additionally has to
+  keep a `node --test` test script — so the exception cannot spread to a config that
+  would really be skipping tests, and it fails when `tui` stops being the `node --test`
+  package. Both directions were proven by hand: adding the flag to
+  `packages/llm/vitest.config.ts` fails with
+  ``packages/llm/vitest.config.ts sets `passWithNoTests: true`, so it reports green while running nothing``,
+  and switching `packages/tui`'s test script to `vitest run` fails with
+  `... is allowed to set `passWithNoTests: true` because packages/tui runs `node --test`, but its test script is "vitest run"`.
 - `check-typecheck-coverage.mjs` — the same class of hole one gate over: every
   workspace package with `src/` must have a `typecheck` script, because
   `pnpm typecheck` is `turbo run typecheck` and runs only the packages that declare
