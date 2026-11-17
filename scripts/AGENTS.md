@@ -110,7 +110,18 @@ Non-goals:
   ``<guide> tells the reader to run `pnpm <script>`, which no package.json defines``.
   Run `pnpm check:agent-docs`.
 - `check-docs-claims.mjs` — rejects stale CI, flake, and E2E coverage claims when
-  the corresponding files or tests are absent. Run `pnpm check:docs-claims`.
+  the corresponding files or tests are absent. Each claim is checked in **every**
+  translation: the `memory_manage` coverage claim used to be read from
+  `docs/en/quality/e2e-test-plan.md` only, so a stale Chinese mirror passed — proven by
+  moving `packages/memory/test/memoryManage.test.ts` aside, which now reports both the
+  English and the `docs/zh` copy. The flake check now runs in both directions: when
+  `flake.nix` is absent it rejects `packages/README.md` claiming a `flake.nix`
+  workspace, and when `flake.nix` is present it rejects the three guides that assert
+  there is none (`AGENTS.md`, `packages/memory/AGENTS.md`, `docs/release.md`) — proven
+  by dropping an empty `flake.nix` in, which names all three. Both phrasings the guides
+  use ("no `flake.nix` in this tree", "has no `flake.nix`") are matched, because
+  matching one sentence and not the idea is how the release guide stayed invisible.
+  Run `pnpm check:docs-claims`.
 - `check-oxlint-baseline.mjs` — runs `oxlint --type-aware` and fails on any
   finding not present in `scripts/oxlint-baseline.json` (frozen pre-existing
   debt). The baseline is shrink-only: the check also fails when a fix makes the
