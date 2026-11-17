@@ -99,8 +99,15 @@ Non-goals:
 - `check-oxlint-baseline.mjs` — runs `oxlint --type-aware` and fails on any
   finding not present in `scripts/oxlint-baseline.json` (frozen pre-existing
   debt). The baseline is shrink-only: the check also fails when a fix makes the
-  stored entries stale, which is the signal to regenerate. Run as part of
-  `pnpm lint`.
+  stored entries stale, which is the signal to regenerate. It also fails when an
+  `overrides[].files` entry in `.oxlintrc.json` anchors on a path that does not
+  exist, because such an entry silences nothing today and starts applying silently
+  the moment someone creates that path. That found eleven dead relaxations:
+  `.oxlintrc.json` named `packages/omnicode-minidb`, `-server`, and `-llm` while the
+  directories are `minidb`, `server`, and `llm`. All eleven were removed; `pnpm lint`
+  is unchanged at `70 frozen findings, 0 new`, which is the proof they suppressed
+  nothing. Bite proven by adding an override for `packages/omnicode-nope/src`.
+  Run as part of `pnpm lint`.
 - `build-docs.mjs` — renders the reader-facing documents to `docs-site/` with `marked`
   (already the workspace's renderer; no site framework) and, in `--check` mode, validates
   them: relative links resolve and every `docs/zh/<path>` has its `docs/en/<path>` source.

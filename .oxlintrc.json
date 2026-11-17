@@ -96,40 +96,6 @@
       }
     },
     {
-      // The worker closures: these modules (and everything
-      // packages/omnicode-minidb/src/worker/ and
-      // packages/omnicode-server/src/search/worker/ pull in) are loaded by a bare
-      // node:worker_threads Worker under Node's native type stripping with
-      // `execArgv: ['--experimental-transform-types']`, which requires
-      // explicit `.ts` import specifiers (the strip loader does not remap
-      // `.js` -> `.ts`). Keep the exception scoped to exactly those closures.
-      "files": [
-        "packages/omnicode-minidb/src/worker/**/*.ts",
-        "packages/omnicode-minidb/src/codec.ts",
-        "packages/omnicode-minidb/src/crc32.ts",
-        "packages/omnicode-minidb/src/trigram.ts",
-        "packages/omnicode-minidb/src/text-postings.ts",
-        "packages/omnicode-minidb/src/text-index/tokenize.ts",
-        "packages/omnicode-minidb/src/gen-codec.ts",
-        "packages/omnicode-server/src/search/worker/**/*.ts",
-        "packages/omnicode-server/src/search/indexCore.ts",
-        "packages/omnicode-server/src/search/match.ts"
-      ],
-      "rules": {
-        "import/extensions": "off"
-      }
-    },
-    {
-      "files": ["packages/omnicode-llm/src/providers/**/*.ts"],
-      "rules": {
-        "typescript/no-unsafe-argument": "off",
-        "typescript/no-unsafe-assignment": "off",
-        "typescript/no-unsafe-call": "off",
-        "typescript/no-unsafe-member-access": "off",
-        "typescript/no-unsafe-return": "off"
-      }
-    },
-    {
       "files": [
         "**/*.test.ts",
         "**/*.test.tsx",

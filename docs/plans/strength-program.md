@@ -66,7 +66,12 @@ tree rather than against the entries above:
   `test reachability check: OK (1341 wired, 0 documented as unwired)`.
 - **T0.2** `pnpm lint` is a real script — `check-no-comments && check-kernel-layering &&
   check-oxlint-baseline`, the last running `oxlint --type-aware` against a shrink-only
-  baseline — not the old Turbo no-op.
+  baseline — not the old Turbo no-op. The baseline check also fails when an
+  `overrides[].files` entry in `.oxlintrc.json` anchors on a path that is not in the
+  tree; that found eleven dead rule relaxations spelled `packages/omnicode-minidb`,
+  `-server`, `-llm` (the directories are `minidb`, `server`, `llm`). They were removed
+  with no change to the result, which is how we know they suppressed nothing. Bite
+  proven by adding an override for a nonexistent package.
 - **T0.3** `build:dts` runs `scripts/build-dts.mjs`, emits `dist/index.d.mts`, and now
   also validates the committed API report (T5.8c).
 - **T0.4** `scripts/check-nix-workspace.mjs` no longer exists; `scripts/omnicode-dev.mjs:26`
