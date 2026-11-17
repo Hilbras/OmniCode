@@ -2075,6 +2075,33 @@ code; it changes what the program claims.
   `apps/omnicode-mobile.old`), T5.10 desktop/plugin/marketplace, and the docs-site build
   in T5.8 (adding a generator dependency is the owner's call, not a side effect of this
   program).
+
+## Decisions the owner still owes
+
+Consolidated from the evidence pass above, so the program's true remainder is one list
+rather than a claim spread over 2 300 lines. Each entry says what was already done
+without the decision, so the decision buys a bounded piece of work rather than a
+restart.
+
+| # | Decision | Landed without it | What the decision unblocks |
+|---|---|---|---|
+| 1 | **T5.9** — `apps/omnicode-mobile.old`: commit it, or certify it disposable | Inventory + terminal-over-WebSocket analysis in `docs/en/architecture/mobile-old-inventory.md`; the directory is untouched and untracked | Deletion, or a first commit. Nothing in the tree references it, so either is safe once you choose |
+| 2 | **T5.10** — desktop app: build it or drop it | `esbuild-dev` scripts removed, stub addressed; no desktop shell exists | A desktop target, or a recorded "no" |
+| 3 | **T5.10** — plugin marketplace: adopt the catalog or keep it reference-only | Full audit at `docs/en/architecture/plugin-marketplace-audit.md`, nothing imported; manifests now enforce `permissions` + `engines.omnicode` | Importing verified entries into `plugins/official/` |
+| 4 | **T5.2** — CLI copy: English-only, or new CLI bundles | Bundle parity + usage-coverage gates in `packages/app-i18n` (zero drift today) | The must-translate allowlist and its CI stats check |
+| 5 | **T5.3** — the three web surfaces: which one ships | In-tree React app wired into the test graph (7 tests, pagination logic extracted) | Retiring or promoting a surface |
+| 6 | **T5.5** — inspector renderer: build it or leave panels unbuilt | Transport proven end to end (`xstateInspection` → debug WS → asserted streaming) | A loopback renderer |
+| 7 | **T5.3 mobile** — does the phone talk to providers directly, and over which client | Copy and guide corrections; 15 tests green | The real device loop |
+| 8 | **T5.8** — docs site: publish the generated pages, or keep `docs/` internal | `scripts/build-docs.mjs` + `pnpm docs:check` wired into `check:guards`; 11 pages build | Publishing the site |
+| 9 | **T1.3** — package naming: CLI's README/CHANGELOG say `@hilbras/omnicode`, manifest and `docs/release.md` say `@omnicode/cli` | The inconsistency is recorded, not papered over | One rename or one doc fix |
+| 10 | **T2.2b** — approval axes for sandbox-denial retry | Nothing; widening them touches published SDK/server surfaces | A sandbox-denial classification and the retry |
+
+**T4 items are not on this list on purpose.** T4.1 (input-queue producer), T4.3
+(workflow tool), T4.5b (curator lifecycle), T4.6 (session search harvester) and T4.7
+(elicitation transport) are missing features, not ambiguous calls: the evidence pass
+found the seam built and the producer absent in each case, and the plan records what
+building it costs. They stay open work under T4, gated on scope rather than on a
+decision from you.
 - **T5.1 foreign-tool importers — built, not yet surfaced by the CLI.** The earlier
   measurement here was correct at the time: nothing in `packages/migration/src` or
   `apps/omnicode-cli/src/migration/` mentioned Claude, Codex, or Qwen, and no archive
