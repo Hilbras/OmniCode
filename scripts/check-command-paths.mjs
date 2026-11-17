@@ -8,16 +8,18 @@
  * test moved to `features-integration` — so preflight failed with
  * `No test files found` instead of testing anything.
  *
- * This scans every workspace `package.json` script and the step list in
- * `scripts/preflight.mjs`, resolves each `--filter` to a package directory, and
- * fails when a named test path is not there.
+ * This scans every workspace `package.json` script, the step list in
+ * `scripts/preflight.mjs`, and every `run:` line in `.github/workflows/`, resolves
+ * each `--filter` to a package directory, and fails when a named test path or
+ * directory is not there. CI carried the same stale `engine` filter for the moved
+ * bash test, which would have failed the workflow on its first run.
  */
 
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = import.meta.dirname.replace(/[\\/]scripts$/, '');
-const TEST_PATH = /(?:^|[\s'"])((?:test|src)\/[\w./-]+\.(?:test|e2e|integration)\.tsx?)(?=$|[\s'"])/g;
+const PATH_TOKEN = /(?:^|[\s'"])((?:test|src)\/[\w./-]+)(?=$|[\s'"])/g;
 
 function workspaceDirs() {
   const dirs = new Set();
@@ -46,7 +48,7 @@ const problems = [];
 const checked = [];
 
 function checkCommand(where, command, dir) {
-  for (const match of command.matchAll(TEST_PATH)) {
+  for (const match of command.matchAll(PATH_TOKEN)) {
     const path = match[1];
     checked.push(path);
     if (!existsSync(join(root, dir, path))) {
@@ -81,6 +83,29 @@ if (existsSync(preflightPath)) {
       continue;
     }
     checkCommand(`preflight step "${stepName}"`, args.join(' '), dir);
+  }
+}
+
+const workflowsDir = join(root, '.github', 'workflows');
+if (existsSync(workflowsDir)) {
+  for (const file of readdirSync(workflowsDir).sort((a, b) => a.localeCompare(b))) {
+    if (!file.endsWith('.yml') && !file.endsWith('.yaml')) continue;
+    const source = readFileSync(join(workflowsDir, file), 'utf8');
+    for (const match of source.matchAll(/-\s*name:\s*(.+)\n([\s\S]*?)(?=\n\s*-\s*name:|\n\s*jobs:|\s*$)/g)) {
+      const [, stepName, body] = match;
+      for (const run of body.matchAll(/^\s*run:\s*(.+)$/gm)) {
+        const command = run[1];
+        const filterAt = command.indexOf('--filter ');
+        const filter =
+          filterAt >= 0 ? command.slice(filterAt + '--filter '.length).split(/\s+/)[0] : undefined;
+        const dir = filter === undefined ? '.' : byName.get(filter);
+        if (dir === undefined) {
+          problems.push(`${file} step "${stepName.trim()}": --filter ${String(filter)} is not a workspace package`);
+          continue;
+        }
+        checkCommand(`${file} step "${stepName.trim()}"`, command, dir);
+      }
+    }
   }
 }
 

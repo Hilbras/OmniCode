@@ -126,7 +126,7 @@ jobs:
         run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/features/externalHooks/runner.test.ts test/app/plugin/manager.test.ts test/app/plugin/source.test.ts test/mcpCore/command-policy.test.ts test/mcpCore/client-stdio.test.ts test/app/sessionManager/sessionLease.test.ts src/human/test/interaction/persistence.test.ts
 
       - name: Test Bash sandbox
-        run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/os/backends/node-local/tools/bash.test.ts
+        run: pnpm --filter @hilbras/omnicode-features-integration exec vitest run test/os/backends/node-local/tools/bash.test.ts
 
       - name: Test channels
         run: pnpm --filter @hilbras/omnicode-channels test

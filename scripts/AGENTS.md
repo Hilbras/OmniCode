@@ -18,16 +18,20 @@ Non-goals:
   every root Vitest project path, and fails when one resolves to zero packages,
   files, or testable TypeScript sources. This is what stops a suite from going
   green while running nothing. Run `pnpm check:workspace`.
-- `check-command-paths.mjs` — every workspace `package.json` script and every
-  `scripts/preflight.mjs` step names the test path it runs, and a moved test leaves
-  that path pointing at nothing. Preflight asked the engine for
+- `check-command-paths.mjs` — every workspace `package.json` script, every
+  `scripts/preflight.mjs` step, and every `run:` line in `.github/workflows/` names the
+  test path or test directory it runs, and a moved test leaves that path pointing at
+  nothing. Preflight asked the engine for
   `test/os/backends/node-local/tools/bash.test.ts` long after the test moved to
   `features-integration`, so it failed with `No test files found` instead of testing
-  anything. The guard resolves each `--filter` to its package directory and fails when
-  a named path is not there; the bite was proven by restoring that exact stale filter
-  (`preflight step "test:bash-sandbox": names ... which is not in packages/engine`).
-  It checks 40 packages and 26 distinct test paths today, costs a fraction of a
-  second, and is part of `pnpm check:guards`. Run `pnpm check:command-paths`.
+  anything — and `ci.yml`'s "Test Bash sandbox" step carried the same stale filter, so
+  the workflow would have failed the same way on its first run. The guard resolves each
+  `--filter` to its package directory and fails when a named path is not there, naming
+  the workflow step it came from; both bites were proven by restoring that exact stale
+  filter (`preflight step "test:bash-sandbox": names ... which is not in packages/engine`
+  and `ci.yml step "Test Bash sandbox": ...`). It checks 40 packages and 35 distinct
+  paths today, costs a fraction of a second, and is part of `pnpm check:guards`. Run
+  `pnpm check:command-paths`.
 - `check-test-reachability.mjs` — the reverse direction of the above: every test
   file in the workspace must be run by something. Reachable means its workspace
   package has a `test` script (`pnpm test` is `turbo run test`; nothing invokes a root
