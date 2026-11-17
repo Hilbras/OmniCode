@@ -72,4 +72,23 @@ if (reported !== version) {
   process.exit(1);
 }
 
+// These groups pull the heaviest packages (ACP host, server, vis, TUI). They
+// loaded lazily before the bundle inlined them, so they are the paths a future
+// bundling change breaks first.
+const SMOKE_GROUPS = ['acp', 'web', 'vis'];
+for (const group of SMOKE_GROUPS) {
+  const help = spawnSync(process.execPath, [entry, group, '--help'], {
+    encoding: 'utf8',
+    timeout: 120_000,
+  });
+  const head = (help.stdout ?? '').trim().split('\n')[0] ?? '';
+  if (help.status !== 0 || !head.startsWith(`Usage: omnicode ${group}`)) {
+    process.stderr.write(
+      `CLI artifact check: FAILED — \`omnicode ${group} --help\` exited ${String(help.status)} with "${head}".\n`,
+    );
+    if (help.stderr !== undefined && help.stderr !== '') process.stderr.write(help.stderr);
+    process.exit(1);
+  }
+}
+
 process.stdout.write(`CLI artifact check: OK (self-contained bundle, reports ${version})\n`);

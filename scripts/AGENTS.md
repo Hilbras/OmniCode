@@ -114,17 +114,22 @@ Non-goals:
   built; it is not part of `pnpm check:guards` for that reason. Run
   `pnpm check:package`.
 - `check-cli-artifact.mjs` — the other half of measuring what ships, and the only
-  check that runs the CLI binary. It reads
-  `apps/omnicode-cli/dist/main.mjs` and fails when a bare import of a workspace
-  package (`@hilbras/*`, `@omnicode/cli-ui`, `@omnicode/cli-commands`) survives
+  check that runs the CLI binary. Four things, all against
+  `apps/omnicode-cli/dist/main.mjs`: a bare import of a workspace package
+  (`@hilbras/*`, `@omnicode/cli-ui`, `@omnicode/cli-commands`) must not survive
   bundling — that is what made the artifact resolve the **private** SDK's
-  TypeScript source at runtime and die on
-  `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX` — and when `node dist/main.mjs --version`
-  does not exit 0 with the version in the CLI's own `package.json`. Verified in
-  both directions: removing `noExternal` from `apps/omnicode-cli/tsdown.config.ts`
-  makes it exit 1 naming the four leaked specifiers. It builds nothing, so it
-  runs in CI's `package-hygiene` job after the CLI build, not in `check:guards`.
-  Run `pnpm check:cli-artifact`.
+  TypeScript source at runtime and die on `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`;
+  `node dist/main.mjs --version` must exit 0 with the version in the CLI's own
+  `package.json`; and `--help` must work for `acp`, `web`, and `vis`, the groups
+  that pull the heaviest packages and used to load lazily, so they are what a
+  bundling change breaks first. Static `import … from`, `export … from`, dynamic
+  `import()`, and side-effect `import "…"` are all scanned. Verified in both
+  directions: removing `noExternal` from `apps/omnicode-cli/tsdown.config.ts`
+  makes it exit 1 naming the four leaked specifiers, and unregistering `acp`
+  makes it exit 1 with `omnicode acp --help` exited 0 with
+  "Usage: omnicode [options] [command]". It builds nothing, so it runs in CI's
+  `package-hygiene` job after the CLI build, not in `check:guards`. Run
+  `pnpm check:cli-artifact`.
 - The SDK's committed API report (`packages/SDK/etc/omnicode-sdk.api.md`) is gated
   the same way: `pnpm --filter @hilbras/omnicode-sdk build:dts` runs API Extractor
   in check mode and fails when the report drifts from `src/index.ts`. It is not a
