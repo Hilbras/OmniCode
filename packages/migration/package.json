@@ -30,7 +30,7 @@
     "smol-toml": "^1.6.1",
     "tar": "^7.5.22",
     "yauzl": "^3.3.0",
-    "zod": "^4.3.6"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@hilbras/omnicode-transcript": "workspace:^",

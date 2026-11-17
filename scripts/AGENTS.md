@@ -46,6 +46,16 @@ Non-goals:
   and still exists for a future decision: wiring a package without removing its entry
   fails the guard, and so does an exception whose directory vanished. Costs well under a
   second. Run `pnpm check:typecheck`.
+- `check-deps-consistency.mjs` — four dependency rules a lockfile cannot enforce on its
+  own: every workspace package that declares a dependency has a `pnpm-lock.yaml`
+  importer (the absence is exactly what `ERR_PNPM_OUTDATED_LOCKFILE` reports at install
+  time), workspace dependencies use the `workspace:` protocol, a declared workspace
+  dependency is imported somewhere inside the package, and one external package is not
+  declared with two different specifiers across manifests. Deliberate divergences live
+  in `deps-consistency-allowlist.json`, one reason each, and the list is shrink-only: an
+  entry that stops diverging fails the guard. A package with no dependencies at all is
+  exempt from the importer rule because pnpm omits its importer. Costs a few seconds.
+  Run `pnpm check:deps`.
 - `check-kernel-layering.mjs` — parses static and dynamic
   `@hilbras/omnicode-*` imports, enforces the leaf/`rpc`/`engine`/`core`/
   `client-contract`/`sdk` rules, confines `features-integration` to `engine`,
@@ -123,9 +133,9 @@ Non-goals:
 - `gen-oxlint-baseline.mjs` — regenerates the baseline after fixing findings.
   Only run it when the intent of the change is "the baseline shrinks"; never run
   it to make a new violation pass.
-- `pnpm check:guards` runs workspace + architecture + docs-claims + agent-docs +
-  generated-freshness + tests + typecheck-coverage + skills together. This is the
-  default pre-handoff guard command.
+- `pnpm check:guards` runs workspace + architecture + deps-consistency + docs-claims +
+  agent-docs + generated-freshness + tests + typecheck-coverage + skills together. This
+  is the default pre-handoff guard command.
 - `preflight.mjs` — local delivery gate. Runs the workspace check, guards,
   typechecks for engine, memory, channels, Tools, Kaos, API, and the CLI, then targeted
   permission-policy, memory-lifecycle, channels, API-connectivity, Tools, engine-team, and Kaos-sandbox tests,

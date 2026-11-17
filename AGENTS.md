@@ -341,6 +341,7 @@ Guards:
 ```bash
 pnpm check:workspace
 pnpm check:architecture
+pnpm check:deps
 pnpm check:agent-docs
 pnpm check:guards
 ```

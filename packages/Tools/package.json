@@ -25,7 +25,7 @@
     "@hilbras/omnicode-kaos": "workspace:^",
     "pathe": "^2.0.3",
     "yauzl": "^3.3.0",
-    "zod": "^4.3.6"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@types/yauzl": "^2.10.3"

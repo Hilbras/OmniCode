@@ -1,0 +1,5 @@
+{
+  "typescript": "apps/omnicode-mobile tracks the TypeScript range its Expo SDK expects (~6.0.3); the other ten packages pin 6.0.2 exactly. Collapses when the workspace takes a TypeScript patch bump.",
+  "react": "apps/omnicode-mobile pins 19.3.0 because Expo's SDK validates exact React versions; apps/omnicode-web and apps/omnicode-vis/web follow ^19.1.0.",
+  "react-dom": "Same reason as react: apps/omnicode-mobile pins the exact 19.3.0 that pairs with its React pin, the two web apps use ^19.1.0."
+}
