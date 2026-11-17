@@ -128,6 +128,10 @@ export class MemoryService extends Disposable implements IMemoryService {
       this.closed = true;
     }));
     if (deps.ownsStore === true) {
+      // Fire-and-forget by contract: `dispose()` is synchronous. The ordering that
+      // matters — a reopen must not race this close for the directory's lock — is
+      // guaranteed by `LazyMemoryStore`, which reserves the directory slot
+      // synchronously before it awaits an open it may still be holding.
       this._register(toDisposable(() => {
         void this.store.close();
       }));

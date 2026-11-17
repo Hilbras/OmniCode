@@ -201,6 +201,7 @@ export class Scope implements IDisposable {
   private readonly _ledger: Ledger;
   private _ledgerEntry: LedgerEntry | undefined;
   private _disposed = false;
+  private _disposePromise: Promise<void> | undefined;
 
   private constructor(
     readonly id: string,
@@ -291,22 +292,30 @@ export class Scope implements IDisposable {
     return { id: this.id, kind: this.kind, accessor: this.accessor, dispose: () => this.dispose() };
   }
 
-  dispose(): void {
-    if (this._disposed) {
-      return;
-    }
+  /** Awaitable teardown. `dispose()` must stay synchronous (it is an
+   *  `IDisposable`), but teardown can be async — a store closing its
+   *  exclusive on-disk lock is. Callers that go on to open the same resource
+   *  again (a test harness starting the next scope, a restart in place) must
+   *  await this; otherwise the next open sees the previous holder's lock and
+   *  degrades to read-only. */
+  disposeAsync(): Promise<void> {
+    if (this._disposePromise !== undefined) return this._disposePromise;
+    if (this._disposed) return Promise.resolve();
     this._disposed = true;
 
     this._ledgerEntry?.release();
     this._ledgerEntry = undefined;
-    try {
-      void this._ledger.teardown('scope-close');
-    } finally {
-      this.children.clear();
-      if (this._parent) {
-        this._parent.children.delete(this.id);
-      }
+    const teardown = this._ledger.teardown('scope-close');
+    this._disposePromise = Promise.resolve(teardown).then(() => undefined);
+    this.children.clear();
+    if (this._parent) {
+      this._parent.children.delete(this.id);
     }
+    return this._disposePromise;
+  }
+
+  dispose(): void {
+    void this.disposeAsync();
   }
 }
 

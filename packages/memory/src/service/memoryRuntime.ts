@@ -10,6 +10,7 @@ import { MemoryError, MemoryErrors } from '#/contracts/errors';
 import { MEMORY_SECTION, type MemoryConfig } from '#/feature/configSection';
 import { MEMORY_FLAG_ID } from '#/feature/flag';
 import { MiniDbMemoryStore } from '#/storage/miniDbMemoryStore';
+import { withDirectorySlot } from '#/storage/directorySlot';
 import type {
   MemoryStoreOp,
   MemoryStorePort,
@@ -53,8 +54,11 @@ export function resolveMemorySettings(
 
 export class LazyMemoryStore implements MemoryStorePort {
   private opening: Promise<MemoryStorePort> | undefined;
+  private closed = false;
+  private closing: Promise<void> | undefined;
 
   constructor(
+    private readonly dir: string,
     private readonly open: () => Promise<MemoryStorePort>,
     private readonly enabled: () => boolean,
   ) {}
@@ -83,17 +87,32 @@ export class LazyMemoryStore implements MemoryStorePort {
     return (await this.db()).textIndexState();
   }
 
-  async close(): Promise<void> {
-    const store = await this.opening?.catch(() => undefined);
+  close(): Promise<void> {
+    // The latch and the slot reservation both happen before the first await. A
+    // dispose can land while the open is still in flight, in which case the
+    // close has to wait for that open before it can release the on-disk lock.
+    // Reserving only after that wait let the next scope's open take the slot
+    // first, find the lock still held, and degrade to read-only — after which
+    // every capture in that scope returned `failed`.
+    this.closed = true;
+    const pending = this.opening;
     this.opening = undefined;
-    await store?.close();
+    if (pending === undefined) return Promise.resolve();
+    this.closing ??= withDirectorySlot(this.dir, async () => {
+      const store = await pending.catch(() => undefined);
+      await store?.close();
+    });
+    return this.closing;
   }
 
   private async db(): Promise<MemoryStorePort> {
+    if (this.closed) {
+      throw new MemoryError(MemoryErrors.codes.STORAGE_UNAVAILABLE, 'memory store is closed');
+    }
     if (!this.enabled()) {
       throw new MemoryError(MemoryErrors.codes.STORAGE_UNAVAILABLE, 'memory is disabled');
     }
-    this.opening ??= this.open();
+    this.opening ??= withDirectorySlot(this.dir, () => this.open());
     return this.opening;
   }
 }
@@ -123,6 +142,7 @@ export function createMemoryRuntime(deps: MemoryRuntimeDeps, now: () => number =
   };
   return {
     store: new LazyMemoryStore(
+      dir,
       () =>
         MiniDbMemoryStore.open({
           dir,

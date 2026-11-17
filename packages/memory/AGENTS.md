@@ -14,7 +14,7 @@ step and no `dist`, matching `packages/Addons` and `packages/Tools`.
 | `src/contracts/` | public types: records, trust, scopes, retrieval statuses, `IMemoryService` |
 | `src/trust/trustPolicy.ts` | pure trust + tier-admission rules; no I/O, no clock, no model |
 | `src/security/` | secret redaction (wraps core) and instruction-like-content detection |
-| `src/storage/` | the `MemoryStorePort` seam, an in-memory store, and the minidb store |
+| `src/storage/` | the `MemoryStorePort` seam, an in-memory store, the minidb store, and the per-directory slot that serialises store open/close |
 | `src/layers/` | deterministic extractors for preferences, phrases and explicit auto-capture requests |
 | `src/retrieval/` | normalize → scope → sensitivity ceiling → lexical → gates → rank (importance/confidence/recency/pinned) → relation expansion → dedup/superseded suppression → budget → explanation; `relevanceSelector.ts` provides the deterministic term-overlap selector used by callers and tests |
 | `src/service/` | the `IMemoryService` implementation, record factory, runtime wiring, maintenance scheduler, evidence watcher |
@@ -426,6 +426,7 @@ is no `flake.nix` in this tree; do not add one for a package. Run
 | `packages/memory/test/injection.test.ts` | reminder injection, auto-capture and deduplication |
 | `tool.test.ts` | the `memory_search` contract, schema, approval rule and access counting; `memory_save` trust ceiling, idempotency and scopes; `memory_forget` visibility and invalidation; the user control surface (list, show, confirm, forget, export, cross-scope refusal) |
 | `concurrency.test.ts` | two openers on one store: the second reads, its writes fail loudly, the lock comes back |
+| `lazyStore.test.ts` | the lazy store's lifecycle contract: a close is final, a close waits out an in-flight open, and a close keeps its place ahead of the next open on the same directory |
 | `process.test.ts` | a real second OS process holding the lock, via `test/fixtures/hold-store.mts` |
 | `scale.test.ts` | 400 memories, on both the in-memory store and real minidb, including a reopen |
 | `evaluation.test.ts` | measured ranking quality and injection cost against the labelled corpus, morphological recall, the no-match guarantee, and the real-world cases: contradictions, stale citations, cross-project isolation |
@@ -453,7 +454,11 @@ is no `flake.nix` in this tree; do not add one for a package. Run
   `memory.storage_write_failed` and `capture` returns `failed`, and
   `diagnostics().readOnly` reports why. Proven both in-process
   (`concurrency.test.ts`) and across two real operating-system processes
-  (`process.test.ts`).
+  (`process.test.ts`). That degradation is for *another process*. Within one
+  process, successive scopes on the same directory must not degrade: a scope can
+  be torn down while its store is still opening, and `LazyMemoryStore` reserves
+  the directory slot synchronously before it awaits that open, so the close
+  cannot be overtaken by the next scope's open. `lazyStore.test.ts` pins it.
 - `list()` and `listAll()` read pointer values, so a scope-filtered list cannot
   include a tier whose identifying id the caller did not pass.
 - Secret redaction is pattern-based. It is not a DLP product; assume it misses

@@ -2100,7 +2100,7 @@ export class AgentTestContext {
       disposable.dispose();
     }
     await this.closeWire();
-    this.root.dispose();
+    await this.root.disposeAsync();
   }
 
   async dispose(): Promise<void> {
