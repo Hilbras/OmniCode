@@ -84,16 +84,25 @@ tree rather than against the entries above:
 - **T0.4** `scripts/check-nix-workspace.mjs` no longer exists; `scripts/omnicode-dev.mjs:26`
   resolves `apps/omnicode-cli`; the CLI's `test`/`e2e` scripts call `build:cli`, which the
   root defines; `packages/engine/package.json` carries no `Kernel/` path. Re-verified with
-  the item's own command: `pnpm preflight` exits 0 with `preflight: OK (23 steps)`.
+  the item's own command: `pnpm preflight` exits 0 (`preflight: OK`, now 17 steps).
+  That gate also no longer stops at a hand-picked typecheck subset: its typecheck step is
+  `pnpm typecheck`, the same command the CI `full-suite` job runs (`39 successful, 39
+  total`), so a type error in `transcript`, `minidb`, `SDK`, `server`, `ACP`, or the web
+  app fails preflight instead of waiting for CI. Bite proven by appending
+  `const probe: number = "x"` to `packages/transcript/src/index.ts`: the subset missed it,
+  the full graph exits 2 with `Failed: @hilbras/omnicode-transcript#typecheck` (38/39).
 - **T0.5** the guides no longer contradict code: only `packages/memory/AGENTS.md:371`
   states the default, and it matches `memoryFlag.default === true`
   (`packages/memory/src/feature/flag.ts:24`). The root guide and `packages/README.md`
   no longer claim memory sits behind the flag. The guides can no longer drift on what
   they tell you to run, either: `check-agents-docs.mjs` now fails when any `AGENTS.md`
   names a `pnpm <script>` that no `package.json` defines.
-- **T0.6** the `full-suite` job is defined (`.github/workflows/ci.yml:121`) and the only
+- **T0.6** the `full-suite` job is defined (`.github/workflows/ci.yml:145`) and the only
   local adjustment its command needs is `--concurrency=1` (four-way Turbo parallelism
-  OOMs on this machine), which is an environment limit, not a defect in the job.
+  OOMs on this machine), which is an environment limit, not a defect in the job. Both of
+  its steps were run on this tree: `pnpm typecheck` → **exit 0, `Tasks: 39 successful,
+  39 total`, 0 cached, 561 s**; `pnpm test --concurrency=1` → 36/36 tasks, 22 538 tests,
+  0 failed.
 
 Re-verified item by item on the current tree (not against the entries above), with the
 measurement each one produced:
@@ -140,7 +149,7 @@ measurement each one produced:
   lint step, so a red tree (four findings, including two of my own files) survived every
   CI job and every local gate I had run. CI now has a `lint` job (five steps, same
   install/Node setup as `guards`, 15-minute timeout) and `preflight` runs `pnpm lint`
-  third, before the typechecks (`preflight: dry run (23 steps)` lists it). The root guide's
+  third, before the typechecks (`preflight: dry run (17 steps)` lists it). The root guide's
   definition of done names it, and `scripts/AGENTS.md` says CI runs it as its own job.
 
 - **T0.3 Fix broken `build:dts`.** `@microsoft/api-extractor` is absent from
@@ -2186,7 +2195,7 @@ entries carry the fail-on-base evidence they recorded at the time.
 | `pnpm check:cli-artifact` (new gate) | `OK (self-contained bundle, reports 1.4.30)`. Bite proven twice: removing `noExternal` and rebuilding makes it exit 1 naming `@hilbras/omnicode-sdk`, `@hilbras/omnicode-sdk/engine-interop`, `@omnicode/cli-ui/theme/colors`, `@omnicode/cli-ui/theme/theme`; unregistering `acp` and rebuilding makes it exit 1 with `omnicode acp --help` exited 0 with "Usage: omnicode [options] [command]"; both restored to OK. It also smoke-tests `--help` for `acp`, `web`, and `vis`, the groups that pull the heaviest packages. Wired into CI's `package-hygiene` job after the CLI build, because it needs the artifact |
 | `pnpm check:command-paths` (new gate) | `OK (40 packages, 35 test paths resolve)`. Written after `pnpm preflight` failed at step 13 with `No test files found`: it asked `@hilbras/omnicode-engine` for `test/os/backends/node-local/tools/bash.test.ts`, which moved to `features-integration` when the cycle-breaking work landed. `ci.yml`'s "Test Bash sandbox" step carried the identical stale filter, so the workflow would have failed on its first run; both are fixed. The guard resolves every `--filter` to a package directory in workspace scripts, preflight steps, and workflow `run:` lines, and fails when a named test path or directory is not there; bites proven by restoring that stale filter in each file (`preflight step "test:bash-sandbox": names ... which is not in packages/engine` and `ci.yml step "Test Bash sandbox": ...`). The fixed CI step was then run: 55 of 55 tests pass. Inside `pnpm check:guards` |
 | `pnpm check:guards` (final, 11 steps) | exit 0 in **77 s** while the box was quiet: workspace globs (4 patterns, 6 Vitest projects, 2 754 source files), kernel layering (24 packages, no cycles), check-no-comments (283 files), dependency consistency (40 packages, 37 lockfile importers, 0 unused internal deps, 3 allowlisted specifier divergences), docs claims, agent docs (71 paths), docs links, generated artifacts (7), test reachability (1 341 wired, 0 unwired), command paths (40 packages, 26 paths), typecheck coverage (39 wired, 0 untypechecked) |
-| `pnpm preflight` (new local delivery gate, end to end) | **exit 0 — `preflight: OK (23 steps)`, 417 s**, on the quiet host: install check, guards, lint, seven typechecks, eight targeted suites, the eval gate. This is the first complete green run of the gate: the previous attempt died at step 13 of 23 because of the stale `test:bash-sandbox` path |
+| `pnpm preflight` (new local delivery gate, end to end) | **exit 0 — `preflight: OK`, 417 s**, on the quiet host: install check, guards, lint, a whole-graph typecheck, fourteen targeted suites, the eval gate. This is the first complete green run of the gate: the previous attempt died at step 13 of 23 because of the stale `test:bash-sandbox` path. Step count is now 17 — the seven-package typecheck subset became one `pnpm typecheck` step |
 
 **Owner decisions executed (2026-11-17, final).**
 - **`apps/omnicode-mobile.old`: preserved, not deleted.** Only reproducible build output
@@ -2267,7 +2276,8 @@ and intermediate numbers are history, not the total): `pnpm test --concurrency=1
 **36/36 tasks, exit 0** (the run recorded above); `pnpm check:tests` → **1340 test files
 wired, 0 documented as unwired**; `pnpm check:typecheck` → **39 wired, 0 documented**;
 `pnpm check:guards` → exit 0, **all 11 steps** (incl. `check:command-paths`);
-`pnpm preflight` → **exit 0, 23/23 steps in 417 s**; `pnpm build --concurrency=1` → **23/23 tasks,
+`pnpm preflight` → **exit 0, 23/23 steps in 417 s** (the step count dropped to **17** when
+its seven-package typecheck subset became one whole-graph `pnpm typecheck` step); `pnpm build --concurrency=1` → **23/23 tasks,
 45 s**; `pnpm --filter @omnicode/cli typecheck` → exit 0, 340 s;
 `features-integration` → **47 files / 1 689 tests, exit 0**; `engine` → **426 files,
 6 849 passed + 4 skipped tests, exit 0**; `app-client` → **1036 tests, exit 0**;

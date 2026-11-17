@@ -355,8 +355,11 @@ pnpm check:skills
 `pnpm check:package` and `pnpm check:cli-artifact` are not in that chain: both need
 a build first, so CI runs them in its `package-hygiene` job.
 
-The local delivery gate is `pnpm preflight` (install check, guards, lint, seven
-typechecks, eight targeted suites, eval gate — 23 steps).
+The local delivery gate is `pnpm preflight` (install check, guards, lint, a full-graph
+typecheck, fourteen targeted suites, eval gate — 17 steps). Its typecheck step is
+`pnpm typecheck`, the same command the CI `full-suite` job runs, so a type error in any
+package fails preflight too; the old hand-picked seven-package list left `transcript`,
+`minidb`, `SDK`, `server`, `ACP`, and the web app to CI alone.
 
 Known command gaps:
 

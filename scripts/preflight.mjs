@@ -39,15 +39,10 @@ const steps = [
 ];
 
 if (!skipTypecheck) {
-  steps.push(
-    { name: 'typecheck:engine', args: ['--filter', '@hilbras/omnicode-engine', 'typecheck'] },
-    { name: 'typecheck:memory', args: ['--filter', '@hilbras/omnicode-memory', 'typecheck'] },
-    { name: 'typecheck:channels', args: ['--filter', '@hilbras/omnicode-channels', 'typecheck'] },
-    { name: 'typecheck:tools', args: ['--filter', '@hilbras/omnicode-tools', 'typecheck'] },
-    { name: 'typecheck:kaos', args: ['--filter', '@hilbras/omnicode-kaos', 'typecheck'] },
-    { name: 'typecheck:api', args: ['--filter', '@hilbras/omnicode-api', 'typecheck'] },
-    { name: 'typecheck:cli', args: ['--filter', '@omnicode/cli', 'typecheck'] },
-  );
+  // The whole graph, not a hand-picked subset: the CI `full-suite` job runs
+  // `pnpm typecheck`, so a type error in any package outside this list passed
+  // preflight and failed CI. Turbo caches per package, so a warm run is one step.
+  steps.push({ name: 'typecheck', args: ['typecheck'] });
 }
 
 if (!skipTests) {

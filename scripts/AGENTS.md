@@ -193,8 +193,13 @@ Non-goals:
   is the default pre-handoff guard command.
 - `preflight.mjs` — local delivery gate. Runs the workspace check, guards, the
   type-aware lint gate (`pnpm lint`, which CI runs as its own job),
-  typechecks for engine, memory, channels, Tools, Kaos, API, and the CLI, then targeted
-  permission-policy, memory-lifecycle, channels, API-connectivity, Tools, engine-team, and Kaos-sandbox tests,
+  a whole-graph `pnpm typecheck` (the same command the CI `full-suite` job runs, so a
+  type error anywhere fails here too — a seven-package subset used to leave
+  `transcript`, `minidb`, `SDK`, `server`, `ACP`, and the web app to CI, proven by
+  appending `const probe: number = "x"` to `packages/transcript/src/index.ts`, which
+  the subset missed and the full graph rejects with
+  `Failed: @hilbras/omnicode-transcript#typecheck`), then targeted
+  permission-policy, memory-lifecycle, bash-sandbox, engine-resilience, security-hardening, channels, API-connectivity, Tools, engine-team, and Kaos-sandbox tests,
   and finally the eval gate
   (`pnpm --filter @hilbras/omnicode-engine exec tsx scripts/run-eval-gate.mts`),
   which is the same command the CI `eval-gate` job runs, so a failing eval suite
