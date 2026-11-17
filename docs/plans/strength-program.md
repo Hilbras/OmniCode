@@ -2136,37 +2136,54 @@ directories (`apps/omnicode-mobile.old/`, awaiting the owner's deletion call, an
   4 skipped; features-integration 47 / 1689; app-client 53 / 1036; app-composer 354;
   app-markdown 277; app-core 831; migration 34 files / 323; SDK 75; auth 376 +1 skipped;
   Kaos 504 +22 skipped; server 78 files; llm 52 files; minidb 45 files; …).
-**The aggregate `pnpm test --concurrency=1` could not be completed.** Two attempts were
-stopped for the same external reason: an unrelated `hilbras-kernel` QEMU VM holds ~66 %
-of one core and the box runs at load 9–24 on 4 cores. The second attempt was measured
-rather than estimated — **21 tests in about six minutes** at load 17.75, which projects
-to tens of hours and would also risk contention-induced failures in timing-sensitive
-suites. Nothing was adjusted to make it "pass". The command is sound (it ran 32/32 and
-34 tasks green earlier in this program); it simply needs an idle machine, and that is
-the one verification this branch still owes.
+**The aggregate `pnpm test --concurrency=1` passes.** Run locally on the committed tree:
+**exit 0, `Tasks: 36 successful, 36 total`, 33 min 53 s, 22 518 tests — 22 463 passed,
+55 skipped, 0 failed — across 1 288 test files in 30 packages.** It is a local run, not a
+CI run.
 
-**A note on the aggregate run.** The full `pnpm test --concurrency=1` graph was
-re-run with every wired suite in it; it was stopped after ~15 minutes with **zero
-failures** across the tasks that completed — CLI (269 files), server (78), `app-core` (63),
-`minidb` (45), `migration` (28), `memory` (27), `SDK` (13), `vis-web` (6), `addons` (3),
-`transcript` (2), `remote` (1), `web` (1), plus `app-ui`, `llm`, `app-composer`,
-`app-markdown`, `vis-server`, `kaos` — leaving only engine's ~8 500-test suite unfinished,
-which had already passed in the previous full graph apart from the flaky memory test fixed
-here. The stop was not a test failure: the machine was at **load 11–13** from two
-`qemu-system-x86_64` VMs belonging to other work, and throughput had fallen to ~13 tests
-per minute. Every task in the graph is therefore green either in that partial run or
-through `turbo run test --filter=<pkg>`; the aggregate count itself is the one number
-still owed, and the command to produce it is `pnpm test --concurrency=1` on an idle
-machine.
+Getting there took four attempts, and each failure was repaired rather than papered
+over. None was a product defect except the last:
+
+1. **`server` image compression, 1 case.** The four compression tests built a
+   3600×1800 (6.5 MP) PNG and pushed it through jimp, which is pure JS: 4438 ms measured
+   for decode+resize+encode alone against a 15 s cap, 11 178 ms for the case. Fixture is
+   now 2400×1200 — still wider than `MAX_IMAGE_EDGE_PX` (2000), still compresses to the
+   same 2000×1000 — and the four cases carry an explicit 60 s bound: 11 178 ms → 5409 ms.
+2. **`features-integration` subagent timeout, 1 case.** It proves the 2-hour default by
+   advancing fake timers 2 hours; 20 753 ms against a 30 s cap. The cost is an artifact of
+   advancing fake time (production fires one timer), so the bound is 60 s.
+3. **`app-composer` could not start.** The cycle-breaking change had removed its
+   `@hilbras/app-client` devDependency as dead weight; `vitest.config.ts` used
+   `import.meta.resolve` on that package to find the icon collection, so the suite died
+   with `ERR_MODULE_NOT_FOUND`. It now resolves `../app-client/src/icons/omnicode` by
+   path — same collection, no package edge back into the cycle.
+4. **`cli` `web rotate-token`, 2 cases, and a real bug behind them.** With an overridden
+   home the command wrote the token to `getDataDir()` but read the instance registry from
+   `DEFAULT_SERVER_INSTANCES_DIR`, which `instanceRegistry.ts` freezes at module load — so
+   it printed no access links. The tests masked it by re-importing `#/cli/sub/web` inside
+   each test body, which re-initialised that module graph after the temp home was set;
+   that re-import also cost 5–6.5 s against Vitest's 5 s default. The lookup now passes
+   `getDataDir()`, the redundant imports are gone, and the file went from 12 s with two
+   timeouts to 66 of 66 in 82 ms. Removing the import first reproduced the assertion
+   failure on the old code, which is the fail-on-base evidence for that fix.
+
+Contention, for the record: the box was shared with a 24-hour `hilbras-kernel` QEMU soak
+run and a `cargo build --release` from another project. The soak is protected by a
+self-healing guardian that relaunches it, so stopping it would only have destroyed another
+session's validation; both trees were deprioritised to `nice 19` and the suite ran at
+normal priority instead.
 
 **Current state at the latest run of each command** (the rows above are chronological,
-and intermediate numbers are history, not the total): `pnpm check:tests` → **1332 test
-files wired, 1 documented** (the T5.3 web app); `pnpm check:typecheck` → **39 wired, 0
-documented**; `pnpm build --concurrency=1` → **23/23 tasks**;
+and intermediate numbers are history, not the total): `pnpm test --concurrency=1` →
+**36/36 tasks, exit 0** (the run recorded above); `pnpm check:tests` → **1340 test files
+wired, 0 documented as unwired**; `pnpm check:typecheck` → **39 wired, 0 documented**;
+`pnpm check:guards` → exit 0, all 9 steps; `pnpm build --concurrency=1` → **23/23 tasks,
+45 s**; `pnpm --filter @omnicode/cli typecheck` → exit 0, 340 s;
 `features-integration` → **47 files / 1 689 tests, exit 0**; `engine` → **426 files,
-6 835 passed + 4 skipped tests, exit 0**; `app-client` → **1036 tests, exit 0**;
-`app-composer` → 354 tests; `app-markdown` → 277 tests; `pnpm lint` → 91 frozen findings,
-0 new. Everything else that is still red or unscoped is named in the entries above.
+6 849 passed + 4 skipped tests, exit 0**; `app-client` → **1036 tests, exit 0**;
+`app-composer` → 354 tests; `app-markdown` → 277 tests; `server` → **78 files,
+1 451 tests, exit 0**; `pnpm lint` → 91 frozen findings, 0 new. Everything else that is
+still red or unscoped is named in the entries above.
 
 `pnpm test` needs `--concurrency=1` on this machine: four-way Turbo parallelism
 OOMs. A gated suite that is not enabled reports as skipped, not failed — the MCP
