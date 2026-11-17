@@ -10,6 +10,7 @@ import { registerAuthCommand } from './sub/auth';
 import { registerDoctorCommand } from './sub/doctor';
 import { registerExportCommand } from './sub/export';
 import { registerForkCommand } from './sub/fork';
+import { registerImportCommand } from './sub/import';
 import { registerInstallDesktopCommand } from './sub/install-desktop';
 import { registerLoginCommand } from './sub/login';
 import { registerMcpCommand } from './sub/mcp';
@@ -132,6 +133,7 @@ export function createProgram(
     .option('--plan', 'Start in plan mode.', false);
 
   registerExportCommand(program);
+  registerImportCommand(program);
   registerForkCommand(program);
   registerProviderCommand(program);
   registerMcpCommand(program);

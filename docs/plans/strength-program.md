@@ -2029,6 +2029,15 @@ code; it changes what the program claims.
   unchanged: `src/steps/{config,mcp,user-history,skills,plans}.ts` copy that tree. What
   remains is a product surface decision — whether and how the CLI offers a foreign-tool
   import command — not missing importer code.
+  Surfaced: `omnicode import [root] [--source claude-code|codex|qwen] [--json]`
+  (`apps/omnicode-cli/src/cli/sub/import.ts`) runs the adapters over an install and
+  reports what it found — agent and skill counts and names, MCP server count, and the
+  parse warnings — with `--json` for a machine-readable bundle whose MCP `env` values are
+  redacted. It is deliberately **preview-only**: nothing writes into the home, because
+  where agents and skills land, and what an overwrite means, is the layout decision this
+  item still owes. Detection refuses to guess when two layouts match and names them.
+  Nine command tests cover it, including one that reads a real Claude Code directory
+  through the real adapters (`apps/omnicode-cli/test/cli/import.test.ts`).
 
 ## Verifying the program
 
