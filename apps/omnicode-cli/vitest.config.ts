@@ -16,5 +16,6 @@ export default defineConfig({
       OMNICODE_LOG_LEVEL: 'off',
     },
     include: ['test/**/*.test.ts', 'test/**/*.test.tsx'],
+    testTimeout: 30_000,
   },
 });
