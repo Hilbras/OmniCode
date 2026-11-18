@@ -174,7 +174,7 @@ behavior (W1 and W2 do; W3 is build-time).
 - [x] W3.1–W3.4 generator, artifact, guard, conformance.
 - [x] W2.1–W2.4 harvester, composition, CLI wiring, tests.
 - [x] W4.1–W4.2 advisory lifecycle proof.
-- [ ] Final: `pnpm preflight`, `check:guards`, `lint`, `check:audit`, commits.
+- [x] Final: `pnpm preflight` **exit 0** (17/17, typecheck 39/39), `check:guards` exit 0, `lint` exit 0, `check:audit` exit 0, five commits.
 
 ---
 
@@ -188,3 +188,15 @@ behavior (W1 and W2 do; W3 is build-time).
 | W3 | `packages/client-contract/scripts/gen-wire-types.mjs` → `src/generated/wireTypes.ts` (2 521 lines); `gen:wire-types --check` added to `check:generated` | `check:generated` fresh (8 artifacts); planting a type fails `--check`, restoring passes |
 | W3 note | Name-based assignability was not added: the contract tables are zod and the hand-written SDK types do not share names. The generated-artifact drift guard is the enforcement point instead of a second, weaker list. | documented here |
 | W4 | `check:audit` rejects an allowlist entry that no longer matches | bogus entry → `allowlist entries no longer needed: left-pad-nonexistent`; restored → OK |
+
+Final gate on the committed tree:
+
+| Command | Result |
+|---|---|
+| `pnpm preflight` | **exit 0** — 17/17 steps; typecheck 39/39 |
+| `pnpm check:guards` | **exit 0** — 8 generated artifacts fresh |
+| `pnpm lint` | **exit 0** — 70 frozen, 0 new |
+| `pnpm check:audit` | **exit 0** — 7 advisories, `picomatch` allowlisted |
+| `git status --porcelain` | empty |
+
+Commits: `e734ddb` (redaction), `71fbe9f` (local search), `35705d1` (wire types).
