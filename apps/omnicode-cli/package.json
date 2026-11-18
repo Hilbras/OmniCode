@@ -1,6 +1,6 @@
 {
   "name": "@hilbras/omnicode",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Flexible OmniCode CLI/TUI",
   "license": "MIT",
   "author": "Hilbras",
@@ -109,15 +109,15 @@
     "smol-toml": "^1.6.1",
     "tsx": "^4.21.0",
     "yazl": "^3.3.1",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "@hilbras/omnicode-sdk": "workspace:^",
+    "@omnicode/cli-commands": "workspace:*",
+    "@omnicode/cli-ui": "workspace:*"
   },
   "engines": {
     "node": ">=22.19.0"
   },
   "dependencies": {
-    "@hilbras/omnicode-sdk": "workspace:^",
-    "@omnicode/cli-commands": "workspace:*",
-    "@omnicode/cli-ui": "workspace:*",
     "ajv": "^8.18.0",
     "qrcode": "^1.5.4",
     "ws": "^8.18.0"

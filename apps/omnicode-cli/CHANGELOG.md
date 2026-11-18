@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.5.2
+
+### Patch Changes
+
+- Fix the published manifest: the bundled workspace packages are dev-only, so `@hilbras/omnicode-sdk`, `@omnicode/cli-commands`, and `@omnicode/cli-ui` are no longer listed as runtime dependencies. 1.5.1 could not be installed because npm tried to resolve those private packages.
+
 ## 1.5.1
 
 ### Patch Changes

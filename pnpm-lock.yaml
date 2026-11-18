@@ -227,15 +227,6 @@ importers:
 
   apps/omnicode-cli:
     dependencies:
-      '@hilbras/omnicode-sdk':
-        specifier: workspace:^
-        version: link:../../packages/SDK
-      '@omnicode/cli-commands':
-        specifier: workspace:*
-        version: link:../../packages/cli-commands
-      '@omnicode/cli-ui':
-        specifier: workspace:*
-        version: link:../../packages/cli-ui
       ajv:
         specifier: ^8.18.0
         version: 8.20.0
@@ -261,6 +252,9 @@ importers:
       '@hilbras/omnicode-remote':
         specifier: workspace:^
         version: link:../../packages/remote
+      '@hilbras/omnicode-sdk':
+        specifier: workspace:^
+        version: link:../../packages/SDK
       '@hilbras/omnicode-server':
         specifier: workspace:^
         version: link:../../packages/server
@@ -276,6 +270,12 @@ importers:
       '@hilbras/omnicode-vis-web':
         specifier: workspace:*
         version: link:../omnicode-vis/web
+      '@omnicode/cli-commands':
+        specifier: workspace:*
+        version: link:../../packages/cli-commands
+      '@omnicode/cli-ui':
+        specifier: workspace:*
+        version: link:../../packages/cli-ui
       '@types/qrcode':
         specifier: ^1.5.6
         version: 1.5.6
