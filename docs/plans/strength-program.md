@@ -2381,3 +2381,30 @@ red: the memory store's reopen race (`eca7378`, base fails 3 of 6 in
 `features-integration/test/memory/agentMemory.test.ts`, now 6 of 6 in three
 consecutive runs) and the Linux clipboard window (`405936d`, base flakes 1 in 3
 isolated runs, now 16 of 16).
+
+## Decisions taken (2026-11-18, deep-scan pass)
+
+The twelve rows in "Decisions the owner still owes" were settled against the
+deep-scan evidence. Where the decision was "build it", the work landed; where it
+was "record a no", the no is below and the corresponding seam is no longer read
+as a shipped feature.
+
+| # | Decision | Consequence |
+|---|---|---|
+| 1 | **T5.9 mobile.old: commit, do not delete** | The Flutter app is tracked as the reference implementation for the terminal-protocol port; `docs/en/architecture/mobile-old-inventory.md` already prohibits deletion until that port is verified. |
+| 2 | **Desktop app: no** | No shell is added. Inspector panels stay deferred; the loopback transport remains the supported inspector path. |
+| 3 | **Plugin marketplace: keep reference-only** | `plugins/marketplace.json` is tracked because the CLI dev/build scripts read it. Third-party code stays unvendored; the audit in `docs/en/architecture/plugin-marketplace-audit.md` remains the admission gate (the in-tree `omnicode-datasource` stays on HOLD). |
+| 4 | **CLI copy: English-only** | No must-translate allowlist for terminal copy. `app-i18n` keeps its bundle-parity and usage gates for the web surfaces. |
+| 5 | **Web surfaces: `dist-web` ships** | The in-tree `apps/omnicode-web` remains a test-covered surface; the shipped bundle is the one synced from `code-app` into `apps/omnicode-cli/dist-web`. |
+| 6 | **Inspector renderer: not built** | The debug-WS transport stays proven and unused by a UI; no renderer is added in this program. |
+| 7 | **Mobile loop: preview, not shipped** | `apps/omnicode-mobile` stays labeled PREVIEW; finishing the loop is a separate product effort with its own provider-client decision. |
+| 8 | **Docs site: internal** | `docs-site/` stays generated and gitignored; no publishing pipeline is added. |
+| 9 | **Package naming: recorded, not renamed** | `@omnicode/cli` remains the manifest name; the older `@hilbras/omnicode` spelling stays a documented inconsistency rather than a risky rename. |
+| 10 | **Sandbox-denial retry: no** | No retry-outside-sandbox path is added; a runtime refusal cannot be classified safely today, and a model-initiated retry would weaken the boundary. |
+| 11 | **Wire vocabulary: API contract tables** | `client-contract`'s zod tables remain the client source; generated TS for SDK/ACP/server is deferred rather than duplicated from `human/llm`. |
+| 12 | **Append-to-policy: no automatic write** | Approvals stay session-scoped. `PermissionRulesAdd` remains an in-memory API; nothing writes the user's policy file automatically. |
+
+Two items are deliberately still open because they are features rather than
+decisions: a local session-search harvester (the server adapter is the only
+source today) and generated client TypeScript from `wire-contract.json`. Both
+need their own scoped plan; neither is claimed as done here.

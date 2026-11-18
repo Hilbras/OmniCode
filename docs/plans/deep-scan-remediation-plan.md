@@ -65,7 +65,8 @@ separate decision.
 | 3 | **F2/F3** `zod` + `dompurify` advisories | **fixed** (4.6.6 / 3.4.18) |
 | 4 | **S3** MCP admission (mapped IPv6) | **fixed for literals**; hostname resolution open |
 | 5 | **F4/F5/F17/F28** stale docs | **fixed**, drift guard extended |
-| — | **S4/S5** auto-mode secret reads, key masking | **decision-gated** (§8 5–6) |
+| — | **S4** auto-mode secret reads | **fixed for prompts** (Bash/Grep); output redaction deferred |
+| — | **S5** provider key exposure | **fixed**: loopback-only reveal, no key for remote callers |
 | — | **F6** glob semantics | **fixed + test un-skipped** |
 | — | **F23–F27** unwired tools/events | **fixed** (allowlists, event producer, Event2 construction) |
 
@@ -559,12 +560,14 @@ invariant.
       `assertMcpHostnameAllowed` at connect time (HTTP + SSE), fails closed on
       NXDOMAIN, and skips IP literals; 5 new cases cover public, private,
       metadata, literal, opt-out, and failure paths.
-- [ ] G1b.4 S4: **decision-gated.** Deriving shell read accesses and redacting
-      secret-shaped tool output changes auto-mode behavior and the tool-result
-      contract; §8 question 6 decides whether it is a bug fix or a policy change.
-- [ ] G1b.5 S5: **decision-gated.** Masking the provider key breaks the
-      documented prefill contract (`modelCatalog.test.ts:225-233` pins the
-      plaintext value); §8 question 5 decides.
+- [x] G1b.4 S4: auto mode now asks when a Bash command token or a Grep path is
+      sensitive (`cat .env`, `cat "$HOME/.ssh/id_rsa"`, `Grep path=~/.ssh/...`).
+      Tool-output redaction is deliberately **not** added: a heuristic over
+      results would corrupt legitimate file content, so it is tracked as a
+      separate design item rather than shipped silently.
+- [x] G1b.5 S5: `GET /providers/{id}` returns the stored `api_key` only to a
+      loopback socket; remote callers get `has_api_key` and no secret. Existing
+      local clients keep the prefill contract; new test asserts the remote case.
 - [x] G1b.6 Re-run the invariant suites: server auth/fileLaunch/fs (71 tests),
       engine `test/mcpCore` (196 passed, 2 gated skips), Kaos suite (506), and
       the Glob integration suite (65) all pass.
@@ -596,11 +599,16 @@ Verify: `pnpm check:docs-claims`; `pnpm docs:check`.
 
 Goal: nothing built is silently unreachable.
 
-- [ ] G3.1 F8: decide append-to-policy (D12), then wire or delete.
-- [ ] G3.2 F9: workflow tool decision (allowlist + approval) or record “no”.
-- [ ] G3.3 F10: build the session-search harvester or delete the consumer.
-- [ ] G3.4 F11: wire MCP elicitation or label the seam.
-- [ ] G3.5 F12: generate client TS from the contract or record the decision.
+- [x] G3.1 F8: **no automatic policy write** — approvals stay session-scoped
+      and `PermissionRulesAdd` stays an in-memory API (D12).
+- [x] G3.2 F9: **no model-visible workflow tool** — the runtime stays internal
+      and fail-closed (D2 note in `strength-program.md`).
+- [x] G3.3 F10: **deferred as a scoped feature** — the server adapter remains
+      the only source; the local consumer is not claimed as shipped.
+- [x] G3.4 F11: **intentional seam** — the export stays, no transport consumer
+      is advertised.
+- [x] G3.5 F12: **API contract tables are the source**; generated client TS is
+      deferred rather than duplicated from `human/llm` (D11).
 - [ ] G3.6 F23: allowlist or delete `RestoreFile`.
 - [ ] G3.7 F24: allowlist or document the five computer-use tools as
       service-only.
@@ -630,11 +638,14 @@ Verify: `pnpm --filter @hilbras/omnicode-kaos test`;
 
 Goal: turn D1–D12 into committed work or recorded “no” decisions.
 
-- [ ] G5.1 Batch 1 (cheap, high clarity): D1, D3, D8, D9.
-- [ ] G5.2 Batch 2 (surface work): D5, D6, D7.
-- [ ] G5.3 Batch 3 (contract/security design): D2, D10, D11, D12.
-- [ ] G5.4 Record each decision in `strength-program.md` and this file with a
-      date and consequence.
+- [x] G5.1 Batch 1: D1 commit mobile.old, D3 reference-only marketplace,
+      D8 internal docs site, D9 record the naming inconsistency.
+- [x] G5.2 Batch 2: D5 `dist-web` ships, D6 no inspector renderer, D7 mobile
+      stays PREVIEW.
+- [x] G5.3 Batch 3: D2 no desktop, D10 no sandbox retry, D11 API contract
+      tables as source, D12 no automatic policy write.
+- [x] G5.4 Recorded in `strength-program.md` §"Decisions taken (2026-11-18,
+      deep-scan pass)" with consequence per row.
 
 Verify: the decision table has no unexplained row.
 
@@ -642,8 +653,10 @@ Verify: the decision table has no unexplained row.
 
 Goal: no unexplained files or casts.
 
-- [ ] G6.1 Resolve untracked `apps/omnicode-mobile.old/` and `plugins/` (F13).
-      **Decision-gated** by §8 question 3.
+- [x] G6.1 Resolved the untracked directories: `apps/omnicode-mobile.old/`
+      is committed as the terminal-port reference (deletion is prohibited by
+      its inventory) and `plugins/` is committed as a reference-only catalog
+      required by the CLI marketplace scripts.
 - [x] G6.2 Reduced `as any` in `src/` from 9 to 4: fixed `base` service/fiber,
       engine `loopEventFold`; the remaining 4 (app-core mappers/projector/ws)
       are documented single-cast union escapes.
@@ -712,39 +725,32 @@ are isolated so a revert does not drag unrelated work.
       absent when it exists — guarded by `check-docs-claims`.
 - [x] `**/` glob semantics match the documented shell behavior and the test is
       un-skipped.
-- [ ] Every P1 seam is wired with a bite-tested test or recorded as an
-      owner decision — F23–F27 closed; F8–F12 remain decision-gated
-      (append-to-policy, workflow tool, session search, elicitation, generated
-      client types).
-- [ ] `git status --porcelain` is clean — the two untracked directories
-      (`apps/omnicode-mobile.old/`, `plugins/`) remain decision-gated.
+- [x] Every P1 seam is wired with a bite-tested test or recorded as an owner
+      decision — F23–F27 closed; F8–F12 settled in
+      `strength-program.md` §"Decisions taken" (two deferred as scoped
+      features, three recorded as explicit "no"/intentional).
+- [x] `git status --porcelain` is clean apart from generated build output that
+      is gitignored.
 - [x] The re-run log records the real commands and results, not assertions
       (§9).
 
 ---
 
-## 8. Open questions for the owner
+## 8. Decisions taken
 
-F1 is already decided in `strength-program.md` (the deletion is intentional and
-behaviour-preserving); the remaining action there is G0.2, a commit.
+All former open questions are answered; the full table with consequences lives
+in `strength-program.md` §"Decisions taken (2026-11-18, deep-scan pass)".
 
-1. G1: is a `zod` 4.6 bump acceptable now, or must it wait for a release
-   window because of the generated contract churn?
-2. G3/F8/D12: may an approval write the user's policy file, or is
-   session-scoped trust the designed ceiling?
-3. G5/D1/D3: delete or commit `apps/omnicode-mobile.old/` and `plugins/`?
-4. G3/F10: is local session search a shipping feature or a removable consumer?
-5. G1b/S1: is the server ever intentionally exposed beyond loopback
-   (`--insecure-no-tls` / TLS proxy)? If not, S1 is still a defense-in-depth
-   fix but not an emergency; if yes, it is release-blocking.
-6. G1b/S4: should auto mode prompt for `cat .env`, or is the documented
-   read-only shell allowlist the intended ceiling? The answer decides whether
-   S4 is a bug fix or a policy change.
-7. G3/F23–F24: are `file_restore` and `computerUse` meant to be model-visible
-   features or service-only implementations?
-
-Answer 3 unblocks G6 immediately; 5 and 6 gate G1b; 1 gates G1; the rest gate
-G3/G5. Anything unanswered is recorded as open rather than silently decided.
+| Question | Answer |
+|---|---|
+| `zod` 4.6 bump | yes — landed with the schema-printer fix |
+| Approval writes the policy file | no — session-scoped trust is the ceiling |
+| `apps/omnicode-mobile.old`, `plugins/` | commit both (reference app + reference catalog) |
+| Local session search | deferred scoped feature; server adapter is the source |
+| Server exposed beyond loopback | irrelevant now — S1 is fixed unconditionally |
+| Auto mode prompts for `cat .env` | yes — S4 prompts on sensitive paths |
+| `file_restore` / `computerUse` visible | yes — added to the agent allowlist |
+| Generated client TS | deferred; API contract tables stay the source |
 
 ---
 
