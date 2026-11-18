@@ -239,6 +239,7 @@ constraints and decisions; do not narrate the diff.
 |---|---|
 | `apps/omnicode-cli` | CLI + TUI. Entry, commands, controllers, components, reverse-RPC. |
 | `apps/omnicode-mobile` | Expo/RN on-device agent app. BYOK chat UI, Hilbras design system. |
+| `apps/omnicode-inspect` | Read-only inspector over the loopback `/api/v1/debug` service channels: services, DI graph, events, transcript, search, model catalog. |
 | `apps/omnicode-vis/server` | Hono visualisation daemon. |
 | `apps/omnicode-vis/web` | React 19 + Vite visualisation app. |
 | `apps/omnicode-web` | React 19 + Vite client app; first-class client over `app-core`'s daemon API (in the root Vitest graph). |

@@ -47,6 +47,7 @@ CI runs the same command serially.
 |---|---|
 | `packages/*` | Kernel packages (`base`, `auth`, `Kaos`, `llm`, `minidb`, `tui`, …), the engine, tools, memory, the SDK/API/ACP surfaces, and the app-* UI packages |
 | `apps/omnicode-cli` | The CLI and its terminal UI — the published surface |
+| `apps/omnicode-inspect` | Read-only inspector over the loopback debug service channels |
 | `apps/omnicode-vis` | Read-only visualisation daemon and web app over on-disk session artifacts |
 | `apps/omnicode-mobile` | Expo/React Native app; the agent loop is still a preview (see its `README.md`) |
 | `scripts/` | Repository guards, generators, and the preflight runner (`scripts/AGENTS.md`) |

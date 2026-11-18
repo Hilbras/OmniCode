@@ -35,7 +35,8 @@
     "release:gate": "node scripts/preflight.mjs",
     "docs:build": "node scripts/build-docs.mjs",
     "docs:check": "node scripts/build-docs.mjs --check",
-    "check:hooks": "node scripts/check-hook-events.mjs"
+    "check:hooks": "node scripts/check-hook-events.mjs",
+    "dev:inspect": "pnpm --filter @hilbras/omnicode-inspect dev"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",

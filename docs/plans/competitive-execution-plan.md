@@ -102,7 +102,8 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P1.5 `--json-schema` + stream-json input + exit codes.
 - [x] P1.6 coverage script + post-publish check.
 - [x] P2.6 hook emission audit (guard added).
-- [ ] P2.1–P2.5.
+- [x] P2.2 inspector UI (ported, 109 tests).
+- [ ] P2.1, P2.3, P2.4, P2.5.
 - [ ] P3.1–P3.5.
 
 ## 6. Definition of done
@@ -162,3 +163,20 @@ being emitted. `scripts/check-hook-events.mjs` (`pnpm check:hooks`) parses
 `HOOK_EVENT_TYPES` and fails when any event string does not appear in engine
 source. It runs inside `pnpm check:guards`. Verified: `hook event check: OK
 (20 events, all emitted)`.
+
+### P2.2 execution detail
+
+`apps/omnicode-inspect` is restored from the old tree as a working Vite/React
+app over the existing loopback `/api/v1/debug` service channels. It needed no
+protocol changes: the debug routes, transcript WS, search, and DI/ledger
+services it imports all still exist under the current engine paths.
+
+- 86 source files, 9 test files, **109 tests passing**; typecheck clean.
+- Added `apps/omnicode-inspect/vitest.config.ts`, the root Vitest project entry,
+  and `pnpm dev:inspect`.
+- Discovery now resolves `OMNICODE_V_HOME`, then legacy `OMNICODE_HOME`, then
+  `~/.omnicode-v`, matching the CLI's home rules.
+- Registered in the root `AGENTS.md` and `README.md` project maps.
+
+Run it with `pnpm dev:inspect`, point it at a server started with
+`--debug-endpoints` on loopback.
