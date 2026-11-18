@@ -63,15 +63,19 @@ separate decision.
 | 1 | **S1** absolute-form auth bypass (`middleware/auth.ts`) | **fixed + tested** (base returned 200, now 401) |
 | 2 | **S2** Windows `cmd` injection in `fileLaunch.ts` | **fixed + tested** (argv + PowerShell) |
 | 3 | **F2/F3** `zod` + `dompurify` advisories | **fixed** (4.6.6 / 3.4.18) |
-| 4 | **S3** MCP admission (mapped IPv6) | **fixed for literals**; hostname resolution open |
+| 4 | **S3** MCP admission (mapped IPv6 + hostnames) | **fixed**: literal classification and connect-time DNS check |
 | 5 | **F4/F5/F17/F28** stale docs | **fixed**, drift guard extended |
 | — | **S4** auto-mode secret reads | **fixed for prompts** (Bash/Grep); output redaction deferred |
 | — | **S5** provider key exposure | **fixed**: loopback-only reveal, no key for remote callers |
 | — | **F6** glob semantics | **fixed + test un-skipped** |
 | — | **F23–F27** unwired tools/events | **fixed** (allowlists, event producer, Event2 construction) |
 
-Remaining open work is decision-gated (D1–D12, S4/S5, hostname resolution) or
-needs a published `picomatch` fix.
+Every item in this pass is closed. Three things remain outside it, by explicit
+decision rather than omission: tool-output secret **redaction** (a heuristic there
+would corrupt legitimate file content), a **local session-search harvester** (the
+server adapter is the only source today), and **generated client TypeScript**
+(the API contract tables stay the source). The only external blocker is a
+published `picomatch` fix; its advisory is allowlisted with that reason.
 
 ---
 
