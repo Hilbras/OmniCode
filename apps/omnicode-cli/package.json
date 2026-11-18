@@ -30,7 +30,8 @@
     "native",
     "CHANGELOG.md",
     "LICENSE",
-    "README.md"
+    "README.md",
+    "skills"
   ],
   "type": "module",
   "imports": {

@@ -6,6 +6,9 @@
  */
 
 
+import { existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
 import {
   createOmnicodeHarness,
   flushDiagnosticLogs,
@@ -197,7 +200,17 @@ export function main(): void {
     });
 }
 
+export function installBundledSkills(moduleUrl: string = import.meta.url): string | undefined {
+  const configured = process.env['OMNICODE_BUNDLED_SKILLS_DIR'];
+  if (configured !== undefined && configured !== '') return configured;
+  const directory = fileURLToPath(new URL('../skills', moduleUrl));
+  if (!existsSync(directory)) return undefined;
+  process.env['OMNICODE_BUNDLED_SKILLS_DIR'] = directory;
+  return directory;
+}
+
 function bootstrap(): void {
+  installBundledSkills();
   // Route all outbound fetch through HTTP_PROXY/HTTPS_PROXY (honoring NO_PROXY)
   // before any client is constructed. No-op when no proxy variable is set; an
   // invalid proxy URL is reported and ignored rather than aborting startup.

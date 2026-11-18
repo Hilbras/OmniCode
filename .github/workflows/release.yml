@@ -65,6 +65,7 @@ jobs:
             echo "::warning::NPM_TOKEN is not set on the release environment — publishing will fail; the version PR can still be created."
           fi
       - uses: changesets/action@v1
+        id: changesets
         with:
           version: pnpm release:version
           publish: pnpm release
@@ -75,3 +76,13 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Verify the published version
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          expected=$(node -p "require('./apps/omnicode-cli/package.json').version")
+          published=$(npm view @omnicode/cli dist-tags.latest)
+          if [ "$published" != "$expected" ]; then
+            echo "::error::npm reports @omnicode/cli@$published but the workspace is at $expected"
+            exit 1
+          fi
+          echo "verified @omnicode/cli@$published"

@@ -149,6 +149,7 @@
     "docs/smoke-archive/",
     "packages/omnicode-tui/",
     "apps/omnicode-desktop/resources/skills/",
+    "apps/omnicode-cli/skills/",
     "*.generated.ts"
   ]
 }

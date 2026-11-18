@@ -8,6 +8,7 @@
     "lint": "node scripts/check-no-comments.mjs && node scripts/check-kernel-layering.mjs && node scripts/check-oxlint-baseline.mjs",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
+    "test:coverage": "vitest run --coverage",
     "dev:server": "pnpm --filter @omnicode/cli dev:server",
     "dev:cli": "pnpm --filter @omnicode/cli dev",
     "build:cli": "pnpm --filter @omnicode/cli build",
