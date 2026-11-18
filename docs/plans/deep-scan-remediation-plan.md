@@ -789,6 +789,15 @@ Final gate after all changes:
 | `pnpm check:audit` | **exit 0** — 7 advisories, `picomatch` allowlisted |
 | engine / server / API / Kaos / base typecheck | **exit 0** |
 | server auth+fileLaunch+fs | 71 passed |
-| engine mcpCore | 196 passed, 2 gated skips |
+| engine mcpCore | 196 passed, 2 gated skips (now 201 with the hostname cases) |
 | Kaos | 506 passed, 21 platform skips |
 | Glob integration | 65 passed |
+
+Committed as:
+
+- `7793a47 fix(security): close auth, launcher, and MCP admission bypasses`
+- `e333925 chore(deps): bump zod and dompurify and gate the audit`
+- `70ee734 fix: wire the dead seams, fix globstar, and make the docs true`
+
+After the commits, `git status --porcelain` lists only
+`apps/omnicode-mobile.old/` and `plugins/`, both decision-gated (§8 Q3).
