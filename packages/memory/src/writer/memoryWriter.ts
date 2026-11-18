@@ -24,7 +24,7 @@ export type MemoryWriterOperation = MemoryWriterSaveOperation | MemoryWriterForg
 export interface MemoryWriterTurn {
   readonly userMessage: string;
   readonly assistantMessage?: string;
-  readonly profile: readonly { readonly subject: string; readonly content: string }[];
+  readonly profile?: readonly { readonly subject: string; readonly content: string }[];
 }
 
 export type WriterRejectionReason =
@@ -62,19 +62,12 @@ const saveSchema = z.object({
   category: z.enum(['fact', 'preference']).optional(),
 });
 
-const forgetSchema = z.object({
-  op: z.literal('forget'),
-  subject: z.string(),
-  quote: z.string().optional(),
-});
-
-const responseSchema = z.object({
-  operations: z.array(z.union([saveSchema, forgetSchema, z.object({ op: z.literal('none') })])),
-});
-
-const bareArraySchema = z.array(
-  z.union([saveSchema, forgetSchema, z.object({ op: z.literal('none') })]),
-);
+function operationsOf(parsed: unknown): unknown[] | undefined {
+  if (Array.isArray(parsed)) return parsed;
+  if (typeof parsed !== 'object' || parsed === null) return undefined;
+  const operations = (parsed as { readonly operations?: unknown }).operations;
+  return Array.isArray(operations) ? operations : undefined;
+}
 
 function compact(value: string): string {
   return value.replaceAll(/\s+/g, ' ').trim();
@@ -98,15 +91,8 @@ export function validateWriterOperations(
   turn: MemoryWriterTurn,
   parsed: unknown,
 ): WriterValidation {
-  let operations: unknown[];
-  const object = responseSchema.safeParse(parsed);
-  if (object.success) {
-    operations = object.data.operations;
-  } else {
-    const bare = bareArraySchema.safeParse(parsed);
-    if (!bare.success) return { accepted: [], forget: [], rejected: [] };
-    operations = bare.data;
-  }
+  const operations = operationsOf(parsed);
+  if (operations === undefined) return { accepted: [], forget: [], rejected: [] };
 
   const accepted: MemoryWriterSaveOperation[] = [];
   const forget: MemoryWriterForgetOperation[] = [];

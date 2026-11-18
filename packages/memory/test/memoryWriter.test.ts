@@ -15,6 +15,7 @@ import {
   type MemoryWriterTurn,
 } from '#/writer/memoryWriter';
 import { AgentMemoryWriterService } from '#/writer/memoryWriterService';
+import { isMemoryOptOut } from '#/writer/memoryOptOut';
 
 import { createHarness, REPO_A } from './helpers';
 
@@ -175,4 +176,33 @@ describe('AgentMemoryWriterService', () => {
     await service.handleTurnEnded('cancelled');
     expect(request).not.toHaveBeenCalled();
   });
+
+  it('skips the writer when the turn opts out', async () => {
+    const { service, request } = compose({
+      userMessage: 'my name is Hassan, do not remember this',
+    });
+    await service.handleTurnEnded('completed');
+    expect(request).not.toHaveBeenCalled();
+  });
+});
+
+describe('memory opt-out', () => {
+  it.each([
+    'do not remember this',
+    "don't save this",
+    'off the record',
+    'forget this turn',
+    'keep this out of memory',
+    'no memory of this',
+  ])('recognises %j', (phrase) => {
+    expect(isMemoryOptOut(phrase)).toBe(true);
+  });
+
+  it.each(['forget my name', 'remember that I use pnpm', 'my name is Hassan'])(
+    'does not treat %j as opt-out',
+    (phrase) => {
+      expect(isMemoryOptOut(phrase)).toBe(false);
+    },
+  );
+
 });

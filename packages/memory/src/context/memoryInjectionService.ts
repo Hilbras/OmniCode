@@ -30,6 +30,7 @@ import {
 } from '#/feature/flag';
 import { extractAutoCaptureStatements } from '#/layers/autoCapture';
 import { extractProfileStatements } from '#/layers/profile';
+import { isMemoryOptOut } from '#/writer/memoryOptOut';
 import { MemorySaved } from '#/context/memoryEvents';
 import { extractPhrases } from '#/layers/phrases';
 import { extractPreferences, preferenceSubject } from '#/layers/preferences';
@@ -259,6 +260,7 @@ export class AgentMemoryInjectionService extends Service implements IMemoryInjec
       if (!context.isNewTurn) return undefined;
       const prompt = this.context.lastUserPrompt();
       if (prompt === undefined || prompt.length === 0) return undefined;
+      if (isMemoryOptOut(prompt)) return undefined;
       const statements = extractAutoCaptureStatements(prompt);
       for (const statement of statements) {
         const scope =
@@ -297,6 +299,7 @@ export class AgentMemoryInjectionService extends Service implements IMemoryInjec
   private async capturePreferences(): Promise<void> {
     const prompt = this.context.lastUserPrompt();
     if (prompt === undefined || prompt.length === 0) return;
+    if (isMemoryOptOut(prompt)) return;
     const prefs = extractPreferences(prompt);
     if (prefs.length === 0) return;
     const globalScope: MemoryScope = { tier: 'global' };
@@ -357,6 +360,7 @@ export class AgentMemoryInjectionService extends Service implements IMemoryInjec
   private async captureProfile(): Promise<void> {
     const prompt = this.context.lastUserPrompt();
     if (prompt === undefined || prompt.length === 0) return;
+    if (isMemoryOptOut(prompt)) return;
     const existing = await this.memory.list({
       scopes: ['global'],
       tiers: ['working', 'distilled'],

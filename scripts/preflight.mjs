@@ -66,6 +66,9 @@ if (!skipTests) {
         'test/injection.test.ts',
         'test/memoryManage.test.ts',
         'test/reranker.test.ts',
+        'test/profile.test.ts',
+        'test/memoryWriter.test.ts',
+        'test/writerCorpus.test.ts',
       ],
     },
     {

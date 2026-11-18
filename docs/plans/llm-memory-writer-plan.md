@@ -151,3 +151,30 @@ One flake, recorded rather than hidden: the first preflight run failed in
 because the observed completion order was `call-2, call-3` instead of
 `call-3, call-2`. The file passes 3/3 in isolation and the full gate passes on
 the next run; no memory, writer, or engine code is involved.
+
+---
+
+## 8. CI-gated corpus and turn-level opt-out
+
+**Corpus.** `packages/memory/test/fixtures/writerCorpus.ts` holds **50 turns**
+covering saves (name, address, location, timezone, language, occupation,
+employer, preferences, tools, notes, project facts), skips (chit-chat, one-off
+tasks, code questions, transient state), rejections (paraphrased/missing quote,
+secret, instruction-shaped, invalid subject, empty/oversized content, duplicate,
+unsupported op, junk response), updates (name, location, occupation, two
+preferences), quoting edge cases (whitespace, punctuation, apostrophe,
+non-Latin), mixed batches, and opt-outs. `test/writerCorpus.test.ts` runs it and
+is wired into both the CI memory step and `preflight`'s `test:memory-lifecycle`.
+
+**Opt-out.** `src/writer/memoryOptOut.ts` recognises `don't remember this`,
+`off the record`, `forget this turn`, `keep this out of memory`,
+`no memory of this`, and the equivalent `do not …` forms. It skips the writer
+**and** the deterministic profile/preference/auto-capture providers, so a turn
+marked off the record writes nothing. `forget my name` is deliberately not an
+opt-out: it is a forget request the writer can act on.
+
+Verification: memory suite **378 passed**, including the 50 corpus cases,
+opt-out unit matrix, and the injection opt-out test.
+
+Final gate after the corpus and opt-out: `pnpm preflight` **exit 0** (17/17,
+typecheck 39/39), `check:guards` exit 0, `lint` exit 0, `check:audit` exit 0.

@@ -20,6 +20,7 @@ import {
   type MemoryWriterSaveOperation,
   type MemoryWriterTurn,
 } from '#/writer/memoryWriter';
+import { isMemoryOptOut } from '#/writer/memoryOptOut';
 
 const WRITER_TIMEOUT_MS = 15_000;
 const MAX_TURN_CHARS = 4_000;
@@ -74,6 +75,7 @@ export class AgentMemoryWriterService extends Disposable implements IMemoryWrite
 
     const userMessage = this.context.lastUserPrompt();
     if (userMessage === undefined || userMessage.trim().length < MIN_USER_CHARS) return;
+    if (isMemoryOptOut(userMessage)) return;
     const assistantMessage = this.lastAssistantMessage();
     if (assistantMessage === undefined) return;
 
@@ -198,7 +200,7 @@ export class AgentMemoryWriterService extends Disposable implements IMemoryWrite
 function writerMessage(turn: MemoryWriterTurn): Message {
   return createUserMessage(
     [
-      `Current profile:\n${turn.profile.map((entry) => `- ${entry.subject}: ${entry.content}`).join('\n') || '(empty)'}`,
+      `Current profile:\n${(turn.profile ?? []).map((entry) => `- ${entry.subject}: ${entry.content}`).join('\n') || '(empty)'}`,
       `User message:\n${turn.userMessage}`,
       `Assistant reply:\n${turn.assistantMessage ?? ''}`,
     ].join('\n\n'),

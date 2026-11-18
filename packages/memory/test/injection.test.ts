@@ -380,3 +380,14 @@ describe('user profile memory', () => {
     expect(await provider?.({ ...freshTurn, isNewTurn: false })).toBeUndefined();
   });
 });
+
+describe('memory opt-out in profile capture', () => {
+  it('does not capture a profile fact when the turn opts out', async () => {
+    const promptRef = { value: 'my name is Hassan, do not remember this' };
+    const { harness, registrations } = compose({ profile: true, promptRef });
+    const provider = registrations.find((entry) => entry.variant === 'memory_profile')?.provider;
+    await provider?.(freshTurn);
+    const records = await harness.service.list({ scopes: ['global'] });
+    expect(records).toEqual([]);
+  });
+});

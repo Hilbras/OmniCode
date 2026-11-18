@@ -403,7 +403,11 @@ them. Nothing in core depends on memory, so there is nothing to activate there.
   512 output tokens, times out after 15 s, and is skipped for turns shorter than
   12 characters or when the memory flag is off. This is the lane that generalises
   beyond the deterministic pattern list; the pattern captures remain the
-  zero-cost fallback.
+  zero-cost fallback. A turn-level opt-out (`don't remember this`,
+  `off the record`, `forget this turn`, `keep this out of memory`, …) skips both
+  the writer and the deterministic profile/preference/auto-capture providers.
+  `test/writerCorpus.test.ts` is the 50-turn expectation corpus (save, reject,
+  update, opt-out) and runs in CI and preflight.
 - Config `[memory]`: `enabled`, `dir`, `maxContentChars`, `workingTtlMs`,
   `workingGraceMs`, `injectCanonical`, `reviewMaxAttempts`, `reviewBackoffMs`,
   `maxQueuedReviews`. Env: `OMNICODE_MEMORY_ENABLED`, `OMNICODE_MEMORY_DIR`,
