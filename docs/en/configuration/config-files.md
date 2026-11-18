@@ -588,6 +588,23 @@ enabled = true
 autoMode = true
 ```
 
+
+## `egress`
+
+Opt-in loopback egress allowlist. When enabled, Omnicode starts a local HTTP/CONNECT proxy on a random loopback port and passes it to `Bash` as `HTTP_PROXY`/`HTTPS_PROXY`, so a shell command can only reach the hosts listed here. It denies private and link-local destinations unless `allowPrivate` is set. It does **not** substitute credentials; a child process still needs the real secret for an allowed host.
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `enabled` | `boolean` | `false` | Start the proxy |
+| `allow` | `string[]` | `[]` | Allowed `host` or `host:port` entries; `*.example.com` matches subdomains. An empty list refuses every request |
+| `allowPrivate` | `boolean` | `false` | Permit private, loopback, and link-local destinations |
+
+```toml
+[egress]
+enabled = true
+allow = ["api.example.com", "*.example.org:443"]
+```
+
 ## `tui.toml`
 
 Alongside `config.toml`, the CLI keeps terminal-UI and client preferences in a companion `tui.toml` in the same directory (`~/.omnicode-v/tui.toml`, or `$OMNICODE_V_HOME/tui.toml` when overridden). It is created with defaults on first run, and the interactive commands `/config`, `/theme`, and `/editor` write to it for you, so you rarely need to edit it by hand. If the file is malformed, the CLI falls back to defaults and shows a notice instead of failing to start.

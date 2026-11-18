@@ -587,6 +587,23 @@ enabled = true
 autoMode = true
 ```
 
+
+## `egress`
+
+可选的本地出站白名单。启用后，Omnicode 会在随机回环端口启动本地 HTTP/CONNECT 代理，并作为 `HTTP_PROXY`/`HTTPS_PROXY` 传给 `Bash`，使 shell 命令只能访问这里列出的主机。除非设置 `allowPrivate`，否则拒绝私有和链路本地地址。它**不会**替换凭据；子进程访问允许的主机时仍需要真实密钥。
+
+| 字段 | 类型 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| `enabled` | `boolean` | `false` | 启动代理 |
+| `allow` | `string[]` | `[]` | 允许的 `host` 或 `host:port`；`*.example.com` 匹配子域。空列表拒绝所有请求 |
+| `allowPrivate` | `boolean` | `false` | 允许私有、回环和链路本地目标 |
+
+```toml
+[egress]
+enabled = true
+allow = ["api.example.com", "*.example.org:443"]
+```
+
 ## `tui.toml`
 
 除了 `config.toml`，CLI 还在同一目录下用一份配套的 `tui.toml` 保存终端界面与客户端偏好（`~/.omnicode-v/tui.toml`，或覆盖后的 `$OMNICODE_V_HOME/tui.toml`）。它在首次运行时以默认值创建，交互式命令 `/config`、`/theme`、`/editor` 会自动写入，通常无需手动编辑。文件格式有误时，CLI 会回退到默认值并给出提示，而不是启动失败。

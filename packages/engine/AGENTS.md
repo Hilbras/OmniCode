@@ -146,6 +146,10 @@ or host-specific code, a second DI facade, direct provider SDK calls outside
 
 `src/workspace/writeLock.ts` owns the per-workspace write lock: `acquireWorkspaceWriteLock` / `withWorkspaceWriteLock` queue by canonical root inside the process and hold a lock file under `<OMNICODE_HOME|~/.omnicode>/locks` (override `OMNICODE_WRITE_LOCK_DIR`). Waiters time out with `WorkspaceLockTimeoutError` (owner pid and lock path in the message); only a lock whose owner pid is gone is reclaimed, via atomic bid rename. Tool writes into the workspace go through it; do not add a second lock implementation.
 
+## Egress allowlist
+
+`src/app/egress/egressProxy.ts` is an opt-in loopback HTTP/CONNECT proxy (config `[egress]`). It enforces a host/port allowlist, denies private/loopback/link-local unless `allowPrivate` is set, logs host names only, and exposes itself to the Bash tool through `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY`. It does not substitute credentials; child processes still hold the real secret for an allowed host. Default off.
+
 ## Shell snapshot
 
 `src/app/shellSnapshot/shellSnapshot.ts` is an **opt-in** alias snapshot:

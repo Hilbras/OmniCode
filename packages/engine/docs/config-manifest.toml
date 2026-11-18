@@ -8,7 +8,7 @@
 # commented "# field: type" lines describe the remaining schema fields.
 # Values resolve as: default -> config.toml -> env overlay -> memory.
 
-# Index (34 sections · 2 overlay(s))
+# Index (35 sections · 2 overlay(s))
 #   background               src/agent/task/configSection.ts
 #   builtinProductSkills     src/features/skill/catalog/configSection.ts
 #   compaction               src/agent/fullCompaction/configSection.ts
@@ -17,6 +17,7 @@
 #   defaultPermissionMode    src/agent/permissionMode/configSection.ts
 #   defaultPlanMode          src/features/plan/configSection.ts
 #   disabledSkills           src/features/skill/catalog/configSection.ts
+#   egress                   src/app/egress/egressProxy.ts
 #   execPolicy               src/agent/permissionPolicy/execPolicy/configSection.ts
 #   experimental             src/app/flag/flag.ts
 #   extraAgentDirs           src/workspace/workspaceAgentProfileLoader/configSection.ts
@@ -165,6 +166,17 @@ default_plan_mode = false
 # ##########################################################################
 
 disabled_skills = []
+
+# ##########################################################################
+# egress
+#   owner: src/app/egress/egressProxy.ts
+#   scope: core
+# ##########################################################################
+
+[egress]
+# enabled: boolean
+# allow: string[]
+# allow_private: boolean
 
 # ##########################################################################
 # execPolicy (config.toml: exec_policy)

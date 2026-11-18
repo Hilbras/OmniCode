@@ -112,7 +112,8 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P3.1 guardian reviewer auto-mode slice.
 - [x] P3.2 workflow tool (read-only DAG over the existing runtime).
 - [x] P3.3 shell snapshot (opt-in aliases).
-- [ ] P3.4 credential broker (own program).
+- [x] P3.4a egress allowlist proxy (opt-in).
+- [ ] P3.4b credential substitution (needs a trusted MITM CA).
 - [x] P3.5 product surfaces: no desktop/Telegram change in this program.
 
 ## 6. Definition of done
@@ -319,3 +320,21 @@ per-destination authorization, request substitution, and a trust story for its
 CA. Shipping a partial version that gives children dummy credentials without a
 working substitution path would break every authenticated tool call. It is
 recorded as its own scoped program rather than half-built here.
+
+### P3.4a execution detail
+
+`[egress]` (default off) starts a loopback HTTP/CONNECT proxy on a random port
+and passes it to the Bash tool as `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY` with
+loopback in `NO_PROXY`:
+
+- `allow` takes `host` / `host:port` entries; `*.example.com` matches
+  subdomains; an empty list refuses everything.
+- Private, loopback, and link-local destinations are denied unless
+  `allowPrivate` is set (the MCP endpoint classifier is reused).
+- Denials log the host only — never URLs, headers, or tokens.
+- It is a control, not a broker: a child still holds the real credential for an
+  allowed host. Credential substitution needs a trusted MITM CA and is recorded
+  as P3.4b rather than half-built.
+
+Tests: rule parsing/matching, private/loopback denial, an allowed HTTP forward,
+a denied host, and a refused CONNECT (4 tests).
