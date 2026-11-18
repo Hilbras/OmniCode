@@ -99,6 +99,7 @@ export class AgentReviewerLaneService extends Service implements IAgentReviewerL
       samples: this.resolved.samples,
       maxPromptChars: this.resolved.maxPromptChars,
       maxReviews: DEFAULT_MAX_REVIEWS,
+      allowAutoMode: this.resolved.autoMode,
     });
     this.laneImpl = lane;
     approval.setReviewerLane(lane);

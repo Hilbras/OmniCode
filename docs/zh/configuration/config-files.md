@@ -566,6 +566,27 @@ pattern = "WebFetch(domain:example.com)"
 MCP server 的声明配置写在 `~/.omnicode-v/mcp.json` 或项目内 `.omnicode/mcp.json` 中，不在 `config.toml` 里。交互式配置入口是 `/mcp-config`，详见 [Model Context Protocol](../customization/mcp.md)。
 :::
 
+
+## `reviewer`
+
+自动审查器是为本会打断用户的审批提供的可选第二意见。默认关闭，且只能把 `ask` 解析为结果；`allow`/`deny` 决策和必须人工确认的请求永远不会交给它。它的范围仅限本地文件读取、写入与 diff——shell、网络、凭据和受保护路径仍然由人决定。
+
+| 字段 | 类型 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| `enabled` | `boolean` | `false` | 安装审查器 |
+| `model` | `string` | 智能体模型 | 审查器模型别名 |
+| `timeoutMs` | `number` | `20000` | 审查超时 |
+| `samples` | `number` | `1` | 每次审查的采样数（1–3，需一致同意） |
+| `maxPromptChars` | `number` | 内置 | 发送给审查器的载荷字符上限 |
+| `maxOutputTokens` | `number` | `512` | 审查器输出上限 |
+| `autoMode` | `boolean` | `false` | 同时裁决 `auto-mode-classifier` 的同类本地请求；shell/网络请求仍会转交用户 |
+
+```toml
+[reviewer]
+enabled = true
+autoMode = true
+```
+
 ## `tui.toml`
 
 除了 `config.toml`，CLI 还在同一目录下用一份配套的 `tui.toml` 保存终端界面与客户端偏好（`~/.omnicode-v/tui.toml`，或覆盖后的 `$OMNICODE_V_HOME/tui.toml`）。它在首次运行时以默认值创建，交互式命令 `/config`、`/theme`、`/editor` 会自动写入，通常无需手动编辑。文件格式有误时，CLI 会回退到默认值并给出提示，而不是启动失败。

@@ -57,6 +57,8 @@ export interface LlmReviewerLaneOptions {
   readonly maxSamples?: number;
   /** Reviews per session used to derive the default sample budget. */
   readonly maxReviews?: number;
+  /** Adjudicate auto-mode classifier asks for in-scope local surfaces. */
+  readonly allowAutoMode?: boolean;
 }
 
 function positiveInteger(value: number | undefined, fallback: number): number {
@@ -65,6 +67,7 @@ function positiveInteger(value: number | undefined, fallback: number): number {
 
 export class LlmReviewerLane implements ReviewerLane {
   readonly timeoutMs: number;
+  readonly allowAutoMode: boolean;
   readonly modelAlias: string | undefined;
   private readonly model: ReviewerModel;
   private readonly samples: number;
@@ -75,6 +78,7 @@ export class LlmReviewerLane implements ReviewerLane {
   constructor(options: LlmReviewerLaneOptions) {
     this.model = options.model;
     this.modelAlias = options.modelAlias;
+    this.allowAutoMode = options.allowAutoMode === true;
     this.timeoutMs = positiveInteger(options.timeoutMs, DEFAULT_REVIEWER_TIMEOUT_MS);
     this.samples = normalizeReviewerSamples(options.samples);
     this.maxPromptChars = options.maxPromptChars;

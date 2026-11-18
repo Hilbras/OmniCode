@@ -436,6 +436,7 @@ timeout_ms = 20000
 samples = 1
 max_prompt_chars = 4000
 max_output_tokens = 512
+auto_mode = false
 
 # ##########################################################################
 # secondaryModel (config.toml: secondary_model)

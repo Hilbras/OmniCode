@@ -664,3 +664,37 @@ describe('reviewerModelFromRequester', () => {
     ).rejects.toThrow('provider down');
   });
 });
+describe('auto-mode reviewer admission', () => {
+  it('reviews an auto-mode ask when the lane opts in', async () => {
+    const outcome = await admitReviewer({
+      ...base,
+      policyName: 'auto-mode-classifier',
+      decision: 'ask',
+      lane: { ...lane({ kind: 'approve', note: 'local write' }), allowAutoMode: true },
+    });
+    expect(outcome).toEqual({ kind: 'approve', note: 'local write' });
+  });
+
+  it('defers an auto-mode ask without the opt-in', async () => {
+    const outcome = await admitReviewer({
+      ...base,
+      policyName: 'auto-mode-classifier',
+      decision: 'ask',
+      lane: lane({ kind: 'approve' }),
+    });
+    expect(outcome.kind).toBe('defer');
+    if (outcome.kind === 'defer') expect(outcome.why).toContain('not reviewable');
+  });
+
+  it('still refuses a shell ask with the opt-in', async () => {
+    const outcome = await admitReviewer({
+      ...base,
+      policyName: 'auto-mode-classifier',
+      decision: 'ask',
+      request: { ...request, display: { kind: 'command', command: 'rm -rf /' } },
+      lane: { ...lane({ kind: 'approve' }), allowAutoMode: true },
+    });
+    expect(outcome.kind).toBe('defer');
+    if (outcome.kind === 'defer') expect(outcome.why).toContain('outside reviewer scope');
+  });
+});

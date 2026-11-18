@@ -109,7 +109,8 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P2.1 persisted approval rule + canonicalization.
 
 **Phase 2 complete.**
-- [ ] P3.1–P3.5.
+- [x] P3.1 guardian reviewer auto-mode slice.
+- [ ] P3.2–P3.5.
 
 ## 6. Definition of done
 
@@ -256,3 +257,15 @@ user manual's permission table and examples document the syntax in EN and ZH.
 Note: the full `test/tui` suite was run once and failed after ~15 minutes; the
 approval-specific files pass, and the failure was not reproduced in the
 targeted suites. It is recorded as an unverified full-suite result, not a claim.
+
+### P3.1 execution detail
+
+The reviewer lane was already built and wired (feature, service, sampling,
+guard, scope classifier) but only admitted `fallback-ask`. `reviewer.autoMode`
+(default `false`) now also admits `auto-mode-classifier` asks for the same
+in-scope local read/write/diff surfaces. Shell, network, credential, and
+human-required asks still defer; a rejected or unclear review still prompts the
+user.
+
+Tests: reviewer suite 45 passing, including auto-mode opt-in, no opt-in, and a
+shell ask that still defers. Documented in the EN/ZH configuration reference.

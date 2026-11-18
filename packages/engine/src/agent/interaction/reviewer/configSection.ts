@@ -39,6 +39,8 @@ export interface ReviewerSectionConfig {
   readonly samples?: number;
   readonly maxPromptChars?: number;
   readonly maxOutputTokens?: number;
+  /** Let the reviewer adjudicate auto-mode asks for in-scope local surfaces. */
+  readonly autoMode?: boolean;
 }
 
 export interface ResolvedReviewerConfig {
@@ -48,6 +50,7 @@ export interface ResolvedReviewerConfig {
   readonly samples: number;
   readonly maxPromptChars: number;
   readonly maxOutputTokens: number;
+  readonly autoMode: boolean;
 }
 
 export const DEFAULT_REVIEWER_MAX_OUTPUT_TOKENS = 512;
@@ -60,6 +63,7 @@ export const ReviewerSectionSchema: ConfigSchema<ReviewerSectionConfig> = z
     samples: z.number().int().min(1).max(MAX_REVIEWER_SAMPLES).optional(),
     maxPromptChars: z.number().int().min(1).optional(),
     maxOutputTokens: z.number().int().min(1).optional(),
+    autoMode: z.boolean().optional(),
   })
   .strict();
 
@@ -70,6 +74,7 @@ export const DEFAULT_REVIEWER_CONFIG: ResolvedReviewerConfig = {
   samples: 1,
   maxPromptChars: DEFAULT_REVIEWER_PROMPT_CHARS,
   maxOutputTokens: DEFAULT_REVIEWER_MAX_OUTPUT_TOKENS,
+  autoMode: false,
 };
 
 export function resolveReviewerConfig(
@@ -82,6 +87,7 @@ export function resolveReviewerConfig(
     samples: config?.samples ?? DEFAULT_REVIEWER_CONFIG.samples,
     maxPromptChars: config?.maxPromptChars ?? DEFAULT_REVIEWER_CONFIG.maxPromptChars,
     maxOutputTokens: config?.maxOutputTokens ?? DEFAULT_REVIEWER_CONFIG.maxOutputTokens,
+    autoMode: config?.autoMode ?? DEFAULT_REVIEWER_CONFIG.autoMode,
   };
 }
 

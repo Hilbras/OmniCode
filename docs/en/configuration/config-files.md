@@ -567,6 +567,27 @@ pattern = "WebFetch(domain:example.com)"
 MCP server declarations are configured in `~/.omnicode-v/mcp.json` or the project-local `.omnicode/mcp.json`, not in `config.toml`. The interactive configuration entry point is `/mcp-config`; see [Model Context Protocol](../customization/mcp.md).
 :::
 
+
+## `reviewer`
+
+The automated reviewer is an opt-in second opinion for approvals that would otherwise prompt. It is disabled by default and only ever resolves an `ask`; `allow`/`deny` decisions and human-required asks are never reviewed. Its scope is local file reads, writes, and diffs — shell, network, credential, and protected-path asks stay human.
+
+| Field | Type | Default | Description |
+| --- | --- | --- | --- |
+| `enabled` | `boolean` | `false` | Install the reviewer lane |
+| `model` | `string` | agent model | Reviewer model alias |
+| `timeoutMs` | `number` | `20000` | Review deadline |
+| `samples` | `number` | `1` | Samples per review (1–3, unanimity required) |
+| `maxPromptChars` | `number` | built-in | Payload characters sent to the reviewer |
+| `maxOutputTokens` | `number` | `512` | Reviewer output cap |
+| `autoMode` | `boolean` | `false` | Also adjudicate `auto-mode-classifier` asks for the same local surfaces; shell/network asks still defer |
+
+```toml
+[reviewer]
+enabled = true
+autoMode = true
+```
+
 ## `tui.toml`
 
 Alongside `config.toml`, the CLI keeps terminal-UI and client preferences in a companion `tui.toml` in the same directory (`~/.omnicode-v/tui.toml`, or `$OMNICODE_V_HOME/tui.toml` when overridden). It is created with defaults on first run, and the interactive commands `/config`, `/theme`, and `/editor` write to it for you, so you rarely need to edit it by hand. If the file is malformed, the CLI falls back to defaults and shows a notice instead of failing to start.

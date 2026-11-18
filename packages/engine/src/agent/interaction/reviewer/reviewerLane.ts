@@ -49,6 +49,12 @@ export interface ReviewerAnswer {
 export interface ReviewerLane {
   /** Deadline the lane asks the admission path to enforce, when it has one. */
   readonly timeoutMs?: number;
+  /**
+   * When true, the lane may adjudicate `auto-mode-classifier` asks for the
+   * surfaces `reviewerScope` already admits (local reads/writes/diffs). Shell,
+   * network, credential, and human-required asks still defer.
+   */
+  readonly allowAutoMode?: boolean;
   review(request: ReviewerRequest, signal: AbortSignal): Promise<ReviewerAnswer>;
 }
 
@@ -150,9 +156,13 @@ export function requiresHumanDecision(
 export function reviewerOutOfScope(
   request: ReviewerRequest,
   policyName: string,
+  allowAutoMode = false,
 ): { readonly why: string } | undefined {
   const askKind = request.askKind ?? 'tool';
-  if (askKind === 'tool' && !REVIEWABLE_POLICY_ORIGINS.has(policyName)) {
+  const reviewableOrigin =
+    REVIEWABLE_POLICY_ORIGINS.has(policyName) ||
+    (allowAutoMode && policyName === 'auto-mode-classifier');
+  if (askKind === 'tool' && !reviewableOrigin) {
     return { why: `policy ${policyName} is not reviewable` };
   }
   const scope = classifyReviewAsk(askKind, request.display);
@@ -169,7 +179,7 @@ export async function admitReviewer(input: ReviewerAdmissionInput): Promise<Revi
   }
   const lane = input.lane;
   if (lane === undefined) return { kind: 'defer', why: 'no reviewer configured' };
-  const outOfScope = reviewerOutOfScope(input.request, input.policyName);
+  const outOfScope = reviewerOutOfScope(input.request, input.policyName, lane.allowAutoMode === true);
   if (outOfScope !== undefined) {
     return { kind: 'defer', why: `outside reviewer scope: ${outOfScope.why}` };
   }
