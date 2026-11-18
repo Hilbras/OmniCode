@@ -99,7 +99,7 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P1.2 read cache + stale-write refusal + tests.
 - [x] P1.3 bundled skills + boot wiring + test.
 - [x] P1.4 plugin payloads + validation.
-- [ ] P1.5 `--json-schema` + stream-json input + exit codes.
+- [x] P1.5 `--json-schema` + stream-json input + exit codes.
 - [x] P1.6 coverage script + post-publish check.
 - [ ] P2.1–P2.6.
 - [ ] P3.1–P3.5.
@@ -132,6 +132,17 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 | P1.4 | datasource manifest gained `$schema`/`author`/`license`/`permissions.mcpServers` + LICENSE; webbridge payload and the Telegram plugin/videos were restored from the old tree | catalog test **2/2**, every in-tree source resolves and validates |
 | P1.6 | root `test:coverage`; `release.yml` asserts `npm view @omnicode/cli dist-tags.latest` equals the workspace version after a publish | script present; workflow step added |
 
-**Still open in Phase 1:** P1.5 (`--json-schema` + `--input-format stream-json`).
-It needs a JSON-Schema validator and a stdin prompt-part reader; it is the next
-slice, not a silently dropped item.
+P1.5 landed as the last Phase 1 item: `--json-schema` validates the final answer with ajv (draft-07 and 2020-12), and `--input-format text|stream-json` reads the prompt from stdin. Verified end to end with the configured model: a schema-constrained run printed `{"name":"Hassan"}` and a stream-json stdin run printed `ok`.
+
+### P1.5 execution detail
+
+- `apps/omnicode-cli/src/cli/stream-input.ts` reads plain text or JSONL prompt
+  parts; malformed lines and empty input fail with a clear error.
+- `apps/omnicode-cli/src/cli/json-schema.ts` loads a schema and validates the
+  final assistant text with ajv; fenced JSON is accepted, non-JSON is rejected
+  with "the final answer is not valid JSON".
+- The schema is appended to the prompt as an explicit instruction; without it a
+  model has no reason to answer in JSON.
+- Tests: stream-input 5, json-schema 6, option conflicts 4.
+- CLI end-to-end: `--json-schema` → `{"name":"Hassan"}` exit 0; stream-json
+  stdin → `ok` exit 0.

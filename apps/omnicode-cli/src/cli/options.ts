@@ -1,5 +1,6 @@
 export type UIMode = 'shell' | 'print';
 export type PromptOutputFormat = 'text' | 'stream-json';
+export type PromptInputFormat = 'text' | 'stream-json';
 
 /** Environment variable that sets the default `-p` output format (flag wins). */
 export const OUTPUT_FORMAT_ENV = 'OMNICODE_MODEL_OUTPUT_FORMAT';
@@ -19,11 +20,11 @@ function isOutputFormat(value: string): value is PromptOutputFormat {
  * fast via `OptionConflictError`.
  */
 export function resolveOutputFormat(
-  opts: Pick<CLIOptions, 'prompt' | 'outputFormat'>,
+  opts: Pick<CLIOptions, 'prompt' | 'outputFormat' | 'inputFormat'>,
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): PromptOutputFormat {
   if (opts.outputFormat !== undefined) return opts.outputFormat;
-  if (opts.prompt === undefined) return 'text';
+  if (opts.prompt === undefined && opts.inputFormat === undefined) return 'text';
   const raw = (env[OUTPUT_FORMAT_ENV] ?? '').trim();
   if (raw.length === 0) return 'text';
   if (!isOutputFormat(raw)) {
@@ -42,6 +43,8 @@ export interface CLIOptions {
   plan: boolean;
   model: string | undefined;
   outputFormat: PromptOutputFormat | undefined;
+  inputFormat?: PromptInputFormat;
+  jsonSchema?: string;
   prompt: string | undefined;
   skillsDirs: string[];
   agent: string | undefined;
@@ -66,9 +69,18 @@ export function validateOptions(
   env: Readonly<Record<string, string | undefined>> = process.env,
 ): ValidatedOptions {
   const prompt = opts.prompt;
-  const promptMode = prompt !== undefined;
-  if (promptMode && prompt.trim().length === 0) {
+  const promptMode = prompt !== undefined || opts.inputFormat !== undefined;
+  if (prompt !== undefined && prompt.trim().length === 0) {
     throw new OptionConflictError('Prompt cannot be empty.');
+  }
+  if (opts.jsonSchema !== undefined && opts.jsonSchema.trim().length === 0) {
+    throw new OptionConflictError('JSON schema path cannot be empty.');
+  }
+  if (opts.jsonSchema !== undefined && !promptMode) {
+    throw new OptionConflictError('--json-schema requires prompt mode (-p).');
+  }
+  if (opts.inputFormat !== undefined && opts.prompt !== undefined) {
+    throw new OptionConflictError('Cannot combine --input-format with -p.');
   }
   if (opts.model !== undefined && opts.model.trim().length === 0) {
     throw new OptionConflictError('Model cannot be empty.');

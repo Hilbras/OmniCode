@@ -630,12 +630,34 @@ describe('CLI options parsing', () => {
         '--config-file=x',
         '--quiet',
         '--final-message-only',
-        '--input-format=text',
         '--mcp-config={}',
         '--mcp-config-file=/',
       ]) {
         expect(() => parse([arg])).toThrow();
       }
     });
+  });
+});
+
+describe('--json-schema and --input-format', () => {
+  it('parses a schema alongside a prompt', () => {
+    const opts = parse(['-p', 'hello', '--json-schema', 'schema.json']);
+    expect(opts.jsonSchema).toBe('schema.json');
+    expect(validateOptions(opts).uiMode).toBe('print');
+  });
+
+  it('requires prompt mode for --json-schema', () => {
+    const opts = parse(['--json-schema', 'schema.json']);
+    expect(() => validateOptions(opts)).toThrow('--json-schema requires prompt mode');
+  });
+
+  it('treats --input-format as prompt mode', () => {
+    const opts = parse(['--input-format', 'stream-json']);
+    expect(validateOptions(opts).uiMode).toBe('print');
+  });
+
+  it('rejects --input-format together with -p', () => {
+    const opts = parse(['-p', 'hello', '--input-format', 'stream-json']);
+    expect(() => validateOptions(opts)).toThrow('Cannot combine --input-format with -p');
   });
 });

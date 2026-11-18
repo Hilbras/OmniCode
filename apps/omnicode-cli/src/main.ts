@@ -34,6 +34,7 @@ import { startupTrace } from './utils/startup-trace';
 import type { CLIOptions } from './cli/options';
 import { OptionConflictError, validateOptions } from './cli/options';
 import { runPrompt } from './cli/run-prompt';
+import { readStreamJsonPrompt, readTextPrompt } from './cli/stream-input';
 import { runShell } from './cli/run-shell';
 import { formatStartupError } from './cli/startup-error';
 import { runPluginNodeEntry } from './cli/sub/plugin-run-node';
@@ -72,6 +73,11 @@ export async function handleMainCommand(
   startupTrace('main:enter');
   try {
     validated = validateOptions(opts);
+    if (opts.inputFormat === 'stream-json') {
+      opts.prompt = await readStreamJsonPrompt(process.stdin);
+    } else if (opts.inputFormat === 'text') {
+      opts.prompt = await readTextPrompt(process.stdin);
+    }
   } catch (error) {
     if (error instanceof OptionConflictError) {
       process.stderr.write(`error: ${error.message}\n`);

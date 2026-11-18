@@ -56,6 +56,34 @@ On first launch, run `/login` inside Omnicode CLI and choose either Omnicode OAu
 Take a look at this project and explain the main directories.
 ```
 
+## Headless and scripting
+
+Run one prompt and print the answer:
+
+```sh
+omnicode -p "Explain the main directories of this project."
+```
+
+Machine-readable output, and a prompt read from stdin:
+
+```sh
+omnicode -p "List the changed files." --output-format stream-json
+
+printf '%s\n' '{"type":"user","text":"Reply with exactly: ok"}' \
+  | omnicode --input-format stream-json
+```
+
+Validate the final answer against a JSON Schema:
+
+```sh
+omnicode -p "Extract the name from: my name is Hassan." --json-schema name.schema.json
+# {"name":"Hassan"}
+```
+
+The CLI appends the schema to the prompt and exits non-zero when the answer is
+not JSON or does not conform. Exit codes: `0` success, `1` failure (including a
+schema or prompt error).
+
 ## Key Features
 
 - **Single-binary distribution.** Install with one command — no Node.js setup, no PATH gymnastics, no global module conflicts.

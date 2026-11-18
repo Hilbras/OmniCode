@@ -87,6 +87,18 @@ export function createProgram(
     )
     .addOption(
       new Option(
+        '--input-format <format>',
+        'Read the prompt from stdin as text or newline-delimited JSON (stream-json).',
+      ).choices(['text', 'stream-json']),
+    )
+    .addOption(
+      new Option(
+        '--json-schema <path>',
+        'Validate the final answer against a JSON Schema file (prompt mode).',
+      ),
+    )
+    .addOption(
+      new Option(
         '--skills-dir <dir>',
         'Load skills from this directory instead of auto-discovered user and project directories. Can be repeated.',
       )
@@ -196,6 +208,8 @@ export function createProgram(
       plan: raw['plan'] as boolean,
       model: raw['model'] as string | undefined,
       outputFormat: raw['outputFormat'] as CLIOptions['outputFormat'],
+      inputFormat: raw['inputFormat'] as CLIOptions['inputFormat'],
+      jsonSchema: raw['jsonSchema'] as string | undefined,
       prompt: raw['prompt'] as string | undefined,
       skillsDirs: raw['skillsDir'] as string[],
       agent: raw['agent'] as string | undefined,

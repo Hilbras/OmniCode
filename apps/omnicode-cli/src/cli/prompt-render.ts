@@ -62,6 +62,7 @@ export interface PromptTurnWriter {
   writeRetrying(event: RetryingEventLike): void;
   flushAssistant(): void;
   discardAssistant(): void;
+  getAssistantText(): string;
   finish(): void;
 }
 
@@ -101,6 +102,7 @@ interface PromptJsonRetryMetaMessage {
 export class PromptTranscriptWriter implements PromptTurnWriter {
   private readonly assistantWriter: PromptBlockWriter;
   private readonly thinkingWriter: PromptBlockWriter;
+  private assistantText = '';
 
   constructor(stdout: PromptOutput, stderr: PromptOutput) {
     this.assistantWriter = new PromptBlockWriter(stdout);
@@ -109,6 +111,7 @@ export class PromptTranscriptWriter implements PromptTurnWriter {
 
   writeAssistantDelta(delta: string): void {
     this.thinkingWriter.finish();
+    this.assistantText += delta;
     this.assistantWriter.write(delta);
   }
 
@@ -138,7 +141,13 @@ export class PromptTranscriptWriter implements PromptTurnWriter {
     this.assistantWriter.finish();
   }
 
-  discardAssistant(): void {}
+  discardAssistant(): void {
+    this.assistantText = '';
+  }
+
+  getAssistantText(): string {
+    return this.assistantText;
+  }
 
   finish(): void {
     this.thinkingWriter.finish();
@@ -148,6 +157,7 @@ export class PromptTranscriptWriter implements PromptTurnWriter {
 
 export class PromptJsonWriter implements PromptTurnWriter {
   private assistantText = '';
+  private lastAssistantText = '';
   private readonly toolCalls: PromptJsonToolCall[] = [];
 
   constructor(private readonly stdout: PromptOutput) {}
@@ -224,8 +234,13 @@ export class PromptJsonWriter implements PromptTurnWriter {
     this.writeJsonLine(message);
   }
 
+  getAssistantText(): string {
+    return this.assistantText.length > 0 ? this.assistantText : this.lastAssistantText;
+  }
+
   flushAssistant(): void {
     if (this.assistantText.length === 0 && this.toolCalls.length === 0) return;
+    if (this.assistantText.length > 0) this.lastAssistantText = this.assistantText;
     const message: PromptJsonAssistantMessage = {
       role: 'assistant',
       content: this.assistantText.length > 0 ? this.assistantText : undefined,

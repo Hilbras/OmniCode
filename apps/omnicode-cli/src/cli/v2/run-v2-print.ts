@@ -76,6 +76,7 @@ import type {
   TurnEnded,
   TurnStepRetrying,
 } from '@hilbras/omnicode-sdk/engine-interop';
+import { loadJsonSchema, validateJsonOutput } from '../json-schema';
 import {
   loadMcpServersDetailed,
   resolveMcpJsonPaths,
@@ -147,6 +148,8 @@ export async function runV2Print(
   const stderr = io.stderr ?? process.stderr;
   const promptProcess = io.process ?? process;
   const outputFormat = resolveOutputFormat(opts);
+  const jsonSchema =
+    opts.jsonSchema === undefined ? undefined : await loadJsonSchema(opts.jsonSchema);
   const workDir = process.cwd();
 
   writeExperimentalVersion(version, outputFormat, stdout, stderr);
@@ -327,6 +330,7 @@ export async function runV2Print(
         outputFormat,
         stdout,
         stderr,
+        jsonSchema,
       );
     }
     writeResumeHint(resolved.session.id, outputFormat, stdout, stderr);
@@ -550,6 +554,7 @@ async function runNativeTurn(
   outputFormat: PromptOutputFormat,
   stdout: PromptOutput,
   stderr: PromptOutput,
+  jsonSchema: Record<string, unknown> | undefined,
 ): Promise<void> {
   const writer: PromptTurnWriter =
     outputFormat === 'stream-json'
@@ -568,8 +573,12 @@ async function runNativeTurn(
   });
   try {
     const loop = agent.accessor.get(IAgentLoopService);
+    const promptText =
+      jsonSchema === undefined
+        ? prompt
+        : `${prompt}\n\nRespond with a single JSON value that conforms to this JSON Schema. Do not wrap it in prose or code fences.\n${JSON.stringify(jsonSchema)}`;
     const { id } = loop.submit({
-      message: { role: 'user', content: [{ type: 'text', text: prompt }] },
+      message: { role: 'user', content: [{ type: 'text', text: promptText }] },
       meta: { origin: { kind: 'user' }, tracked: true },
     });
     const handle = loop.promptHandle(id)!;
@@ -592,6 +601,13 @@ async function runNativeTurn(
     // final message.
     writer.flushAssistant();
     if (result.type === 'completed') {
+      if (jsonSchema !== undefined) {
+        const validation = validateJsonOutput(jsonSchema, writer.getAssistantText());
+        if (!validation.ok) {
+          writer.finish();
+          throw new Error(`Output does not match --json-schema: ${validation.error}`);
+        }
+      }
       const skipTurnId = turn.id;
       if (skipTurnId === undefined) {
         throw new Error('Prompt turn ended before it started');
@@ -669,7 +685,7 @@ async function runNativeGoal(
     }
   });
   try {
-    await runNativeTurn(app, session, agent, goal.objective, outputFormat, stdout, stderr);
+    await runNativeTurn(app, session, agent, goal.objective, outputFormat, stdout, stderr, undefined);
   } finally {
     subscription.dispose();
     const snapshot = completedSnapshot ?? goalService.getGoal().goal;

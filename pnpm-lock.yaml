@@ -236,6 +236,9 @@ importers:
       '@omnicode/cli-ui':
         specifier: workspace:*
         version: link:../../packages/cli-ui
+      ajv:
+        specifier: ^8.18.0
+        version: 8.20.0
       qrcode:
         specifier: ^1.5.4
         version: 1.5.4
