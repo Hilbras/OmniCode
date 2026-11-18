@@ -146,6 +146,17 @@ or host-specific code, a second DI facade, direct provider SDK calls outside
 
 `src/workspace/writeLock.ts` owns the per-workspace write lock: `acquireWorkspaceWriteLock` / `withWorkspaceWriteLock` queue by canonical root inside the process and hold a lock file under `<OMNICODE_HOME|~/.omnicode>/locks` (override `OMNICODE_WRITE_LOCK_DIR`). Waiters time out with `WorkspaceLockTimeoutError` (owner pid and lock path in the message); only a lock whose owner pid is gone is reclaimed, via atomic bid rename. Tool writes into the workspace go through it; do not add a second lock implementation.
 
+## Tool-output redaction
+
+`src/tool/toolResultRedaction.ts` marks known credential shapes in every normalized
+tool result before it reaches the provider or `wire.jsonl`: PEM private-key blocks,
+AWS access-key ids, `sk-…` keys, GitHub/Slack/GitLab tokens, JWT triples, and long
+`Bearer` values. It is deliberately high-confidence only — generic assignments,
+hashes, and short fixtures such as `sk-test` are left untouched, and a test scans
+non-test engine source to prove ordinary code does not match. Set
+`OMNICODE_TOOL_OUTPUT_REDACTION=0` to disable it when a tool legitimately returns
+one of those shapes (for example a credential-rotation script's own output).
+
 ## Permission policy
 
 Auto mode now uses `AutoModeClassifierPermissionPolicyService` (`auto-mode-classifier`) instead of blanket auto-approval. Denial tracking state resets on mode change. Dangerous-command and ask-user-question-deny policies remain ahead of the classifier.

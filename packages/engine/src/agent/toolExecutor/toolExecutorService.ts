@@ -39,6 +39,7 @@ import {
   type ToolResultSpill,
   type ToolUpdate,
 } from '#/tool/toolContract';
+import { redactToolOutput } from '#/tool/toolResultRedaction';
 import type { ToolInputDisplay } from '#/tool/toolInputDisplay';
 import type { ContentPart, ToolCall } from '#human/llm/message';
 
@@ -918,7 +919,7 @@ function normalizeToolResult(result: ExecutableToolResult): ToolResult {
     spill?: ToolResultSpill;
     spillExempt?: true;
   } = {
-    output,
+    output: redactToolOutput(output),
     stopTurn: result.stopTurn,
     spill: result.spill,
     spillExempt: result.spillExempt,
