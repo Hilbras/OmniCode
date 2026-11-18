@@ -391,6 +391,19 @@ them. Nothing in core depends on memory, so there is nothing to activate there.
   `user_correction` and supersedes the earlier value; unverified, confidential,
   and secret records are never injected. Set
   `OMNICODE_EXPERIMENTAL_MEMORY_PROFILE=0` to disable the lane.
+- Flag: `OMNICODE_EXPERIMENTAL_MEMORY_WRITER`, id `memory_writer`, **default
+  on**. After a completed turn, `AgentMemoryWriterService` asks the agent's model
+  what is worth remembering and receives structured operations
+  (`save` / `forget` / `none`). A save is stored only when its `quote` is a
+  verbatim substring of the user message — that quote is the provenance, and the
+  record is written as `origin: 'user'` / `user_statement` (or `user_correction`
+  when the subject already has a trusted value). Proposals without a quote, with
+  secrets, with instruction-shaped content, an invalid subject, or an unsupported
+  shape are rejected and logged by reason. The call is `isolated: true`, capped at
+  512 output tokens, times out after 15 s, and is skipped for turns shorter than
+  12 characters or when the memory flag is off. This is the lane that generalises
+  beyond the deterministic pattern list; the pattern captures remain the
+  zero-cost fallback.
 - Config `[memory]`: `enabled`, `dir`, `maxContentChars`, `workingTtlMs`,
   `workingGraceMs`, `injectCanonical`, `reviewMaxAttempts`, `reviewBackoffMs`,
   `maxQueuedReviews`. Env: `OMNICODE_MEMORY_ENABLED`, `OMNICODE_MEMORY_DIR`,

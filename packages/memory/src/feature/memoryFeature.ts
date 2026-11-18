@@ -15,6 +15,7 @@ import { AppMemoryService } from '#/service/appMemoryService';
 import { IMemorySearchTool, MemorySearchTool } from '#/tool/memorySearchTool';
 import { IMemoryForgetTool, IMemorySaveTool, MemoryForgetTool, MemorySaveTool } from '#/tool/memoryWriteTools';
 import { IMemoryManageTool, MemoryManageTool } from '#/tool/memoryManageTool';
+import { AgentMemoryWriterService, IMemoryWriterService } from '#/writer/memoryWriterService';
 
 import { MEMORY_FLAG_ID } from './flag';
 
@@ -33,6 +34,9 @@ export class MemoryFeature extends Feature {
       activation: ScopeActivation.OnScopeCreated,
     });
     this.contributeAgentService(IMemoryCompactionCapture, AgentMemoryCompactionCapture, {
+      activation: ScopeActivation.OnScopeCreated,
+    });
+    this.contributeAgentService(IMemoryWriterService, AgentMemoryWriterService, {
       activation: ScopeActivation.OnScopeCreated,
     });
     this.contributeTool(IMemorySearchTool, MemorySearchTool, {

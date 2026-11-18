@@ -18,6 +18,9 @@ export const MEMORY_PHRASES_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY_PHRASES';
 export const MEMORY_PROFILE_FLAG_ID = 'memory_profile';
 export const MEMORY_PROFILE_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY_PROFILE';
 
+export const MEMORY_WRITER_FLAG_ID = 'memory_writer';
+export const MEMORY_WRITER_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY_WRITER';
+
 export const memoryFlag: FlagDefinitionInput = {
   id: MEMORY_FLAG_ID,
   title: 'Memory',
@@ -71,5 +74,16 @@ export const memoryProfileFlag: FlagDefinitionInput = {
 registerFlagDefinition(memoryFlag);
 registerFlagDefinition(memoryPreferencesFlag);
 registerFlagDefinition(memoryAutoCaptureFlag);
+export const memoryWriterFlag: FlagDefinitionInput = {
+  id: MEMORY_WRITER_FLAG_ID,
+  title: 'Memory writer',
+  description:
+    'After a turn, ask the model what is worth remembering, and store only proposals anchored to a verbatim quote from the user.',
+  env: MEMORY_WRITER_FLAG_ENV,
+  default: true,
+  surface: 'both',
+};
+
 registerFlagDefinition(memoryPhrasesFlag);
 registerFlagDefinition(memoryProfileFlag);
+registerFlagDefinition(memoryWriterFlag);

@@ -8,6 +8,8 @@ import type { MemoryRecallEvent } from '@hilbras/omnicode-engine/app/telemetry/e
 import { ITelemetryService } from '@hilbras/omnicode-engine/app/telemetry/telemetry';
 
 import type { MemorySearchQuery } from '#/contracts/memoryContract';
+import type { ContextMessage } from '@hilbras/omnicode-engine/agent/contextMemory/types';
+
 import type { MemoryScope, MemoryScopeTier } from '#/contracts/memoryTypes';
 import type { RetrievalResult } from '#/contracts/retrieval';
 import { IMemoryService } from '#/contracts/memoryContract';
@@ -21,6 +23,7 @@ export interface IAgentMemoryContextService {
   projectId(): Promise<string | undefined>;
   projectRoot(): string | undefined;
   lastUserPrompt(): string | undefined;
+  getHistory(): readonly ContextMessage[];
   sessionId(): string;
   workspaceId(): string;
   scopeFor(tier: MemoryWriteScopeTier, channelId?: string): Promise<MemoryScope | undefined>;
@@ -109,6 +112,10 @@ export class AgentMemoryContextService extends Service implements IAgentMemoryCo
     if (projectId === undefined) return undefined;
     if (tier === 'repository') return { tier, workspaceId: this.session.workspaceId, projectId };
     return { tier, workspaceId: this.session.workspaceId, projectId, sessionId: this.session.sessionId };
+  }
+
+  getHistory(): readonly ContextMessage[] {
+    return this.context.get();
   }
 
   lastUserPrompt(): string | undefined {
