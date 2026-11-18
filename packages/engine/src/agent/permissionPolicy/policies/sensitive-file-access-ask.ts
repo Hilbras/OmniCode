@@ -1,6 +1,8 @@
 import type { PermissionPolicy, PermissionPolicyResult } from '#/agent/permissionPolicy/types';
 import type { ResolvedToolExecutionHookContext } from '#/agent/toolExecutor/toolHooks';
+import { IBashParserService } from '#/app/bashParser/bashParser';
 import { isSensitiveFile } from '#/tool/path-access';
+import { extractShellOperations } from '#/tool/shellSemantics';
 
 import { fileAccesses } from './path-utils';
 
@@ -27,12 +29,25 @@ function commandTouchesSensitivePath(command: string): boolean {
 export class SensitiveFileAccessAskPermissionPolicyService implements PermissionPolicy {
   readonly name = 'sensitive-file-access-ask';
 
+  constructor(@IBashParserService private readonly bashParser: IBashParserService) {}
+
   evaluate(context: ResolvedToolExecutionHookContext): PermissionPolicyResult | undefined {
     const access = fileAccesses(context).find((fileAccess) => isSensitiveFile(fileAccess.path));
     if (access !== undefined) return { kind: 'ask' };
     if (context.toolCall.name === 'Bash') {
       const command = commandText(context.args);
-      if (command !== undefined && commandTouchesSensitivePath(command)) return { kind: 'ask' };
+      if (command !== undefined) {
+        const display = context.execution.display;
+        const cwd = display?.kind === 'command' ? display.cwd : undefined;
+        const operations = extractShellOperations(command, this.bashParser, cwd);
+        const touchesSensitive = operations.some(
+          (operation) =>
+            (operation.path !== undefined && isSensitiveFile(operation.path)) ||
+            (operation.resolvedPath !== undefined && isSensitiveFile(operation.resolvedPath)),
+        );
+        if (touchesSensitive) return { kind: 'ask' };
+        if (commandTouchesSensitivePath(command)) return { kind: 'ask' };
+      }
     }
     if (context.toolCall.name === 'Grep') {
       const path = pathArgument(context.args);

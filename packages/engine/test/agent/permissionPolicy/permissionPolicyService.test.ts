@@ -908,6 +908,45 @@ describe('AgentPermissionPolicyService git cwd write approval', () => {
     });
   });
 
+  it.each([
+    ['echo secret > .env', 'redirect write'],
+    ['cp notes.txt .env', 'copy destination'],
+    ['sed -i s/a/b/ .env', 'in-place edit'],
+    ['curl --output=.env https://example.com', 'curl output'],
+    ['dd if=/dev/zero of=.env', 'dd output'],
+  ])('asks when a shell command writes a sensitive file: %s', async (command) => {
+    mode = 'auto';
+    setUserRequest('update the environment file');
+    await expect(
+      evaluate({
+        toolName: 'Bash',
+        args: { command },
+        accesses: [],
+      }),
+    ).resolves.toMatchObject({
+      policyName: 'sensitive-file-access-ask',
+      result: { kind: 'ask' },
+    });
+  });
+
+  it('does not ask for a shell command that reads an ordinary file or fetches a URL', async () => {
+    mode = 'auto';
+    setUserRequest('show me the readme and fetch a page');
+    const readme = await evaluate({
+      toolName: 'Bash',
+      args: { command: 'cat README.md' },
+      accesses: [],
+    });
+    expect(readme?.policyName).not.toBe('sensitive-file-access-ask');
+
+    const fetch = await evaluate({
+      toolName: 'Bash',
+      args: { command: 'curl https://example.com' },
+      accesses: [],
+    });
+    expect(fetch?.policyName).not.toBe('sensitive-file-access-ask');
+  });
+
   it('asks before Grep searches a sensitive path', async () => {
     mode = 'auto';
     setUserRequest('search my keys');
