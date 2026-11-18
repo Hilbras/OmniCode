@@ -104,7 +104,8 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P2.6 hook emission audit (guard added).
 - [x] P2.2 inspector UI (ported, 109 tests).
 - [x] P2.3 user manual + docs navigation (60 pages restored, grouped search index).
-- [ ] P2.1, P2.4, P2.5.
+- [x] P2.5 terminal visual regression (PTY → xterm grid snapshot).
+- [ ] P2.1, P2.4.
 - [ ] P3.1–P3.5.
 
 ## 6. Definition of done
@@ -199,3 +200,18 @@ Run it with `pnpm dev:inspect`, point it at a server started with
   filter box; `docs:check` validates links and zh→en parity.
 
 Verification: `pnpm docs:check` OK (74 markdown files, 0 problems).
+
+### P2.5 execution detail
+
+The PTY e2e now mirrors the real terminal output into an `@xterm/headless`
+screen (100x30) and snapshots the settled grid:
+
+- `test/e2e/__snapshots__/tui-trust-grid.txt` — the workspace trust gate, with
+  the temp home, repo path, version, URL, git counts, and Node warning noise
+  normalized out. Stable across repeated runs.
+- The ready screen is asserted by layout markers (`No session yet`, the box
+  border, `Version: <version>`) rather than a second file snapshot, because its
+  git/context counters are environment-dependent.
+- Added `@xterm/headless` to the CLI devDependencies.
+
+Run with `OMNICODE_E2E=1`. This is opt-in like the rest of the PTY suite.

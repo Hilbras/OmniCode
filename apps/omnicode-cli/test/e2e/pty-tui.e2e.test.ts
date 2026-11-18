@@ -24,8 +24,10 @@ import { join } from 'pathe';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import type { IPty } from 'node-pty';
+import xterm from '@xterm/headless';
 
 const require = createRequire(import.meta.url);
+const XtermTerminal = xterm.Terminal;
 
 const ENABLED = process.env['OMNICODE_E2E'] === '1';
 const APP_ROOT = join(import.meta.dirname, '..', '..');
@@ -40,7 +42,16 @@ const EXIT_TIMEOUT_MS = 30_000;
 const homes: string[] = [];
 const terminals: IPty[] = [];
 
-function spawnCli(): { terminal: IPty; output: () => string; exited: Promise<number | null> } {
+interface VisualGrid {
+  grid(): Promise<string[]>;
+}
+
+function spawnCli(): {
+  terminal: IPty;
+  output: () => string;
+  exited: Promise<number | null>;
+  visual: VisualGrid;
+} {
   const home = mkdtempSync(join(tmpdir(), 'omnicode-pty-'));
   homes.push(home);
   const { spawn } = require('node-pty') as typeof import('node-pty');
@@ -68,15 +79,44 @@ function spawnCli(): { terminal: IPty; output: () => string; exited: Promise<num
   );
   terminals.push(terminal);
   let captured = '';
+  const screen = new XtermTerminal({ cols: 100, rows: 30, disableStdin: true, allowProposedApi: true });
   terminal.onData((data) => {
     captured += data;
+    screen.write(data);
   });
   const exited = new Promise<number | null>((resolve) => {
     terminal.onExit(({ exitCode }) => {
       resolve(exitCode);
     });
   });
-  return { terminal, output: () => captured, exited };
+  const visual: VisualGrid = {
+    async grid(): Promise<string[]> {
+      await new Promise<void>((resolve) => screen.write('', () => resolve()));
+      const lines: string[] = [];
+      for (let y = 0; y < 30; y += 1) {
+        lines.push(screen.buffer.active.getLine(y)?.translateToString(true) ?? '');
+      }
+      while (lines.length > 0 && lines.at(-1) === '') lines.pop();
+      return lines;
+    },
+  };
+  return { terminal, output: () => captured, exited, visual };
+}
+
+function normalizeGrid(lines: readonly string[], home: string): string[] {
+  const noise = /^\(node:\d+\)|^Hooks\(\)`|^\(Use `node --trace-deprecation/;
+  return lines
+    .filter((line) => !noise.test(line.trim()))
+    .map((line) =>
+      line
+        .replaceAll(home, '<home>')
+        .replaceAll(REPO_ROOT, '<repo>')
+        .replaceAll(APP_ROOT, '<app>')
+        .replace(/Version:\s+\d+\.\d+\.\d+/g, 'Version: <version>')
+        .replace(/http:\/\/127\.0\.0\.1:\d+/g, '<url>')
+        .replace(/\[\+\d+ -\d+\]/g, '[<git>]')
+        .replace(/\/tmp\/[^\s]+/g, '<tmp>'),
+    );
 }
 
 /** Strip ANSI so assertions can look for UI text instead of escape codes. */
@@ -125,12 +165,16 @@ afterEach(() => {
 
 describe.skipIf(!ENABLED)('interactive TUI over a PTY', () => {
   it('renders the trust gate, then the TUI, and exits on /exit', async () => {
-    const { terminal, output, exited } = spawnCli();
+    const { terminal, output, exited, visual } = spawnCli();
 
     expect(
       await waitForOutput(output, TRUST_PROMPT, BOOT_TIMEOUT_MS),
       `the CLI never drew the workspace trust gate; output was:\n${plain(output()).slice(-1500)}`,
     ).toBe(true);
+
+    expect(normalizeGrid(await visual.grid(), homes.at(-1) ?? '')).toMatchFileSnapshot(
+      './__snapshots__/tui-trust-grid.txt',
+    );
 
     terminal.write('\r');
 
@@ -139,6 +183,11 @@ describe.skipIf(!ENABLED)('interactive TUI over a PTY', () => {
       `the TUI never became ready after trusting the workspace; output was:\n${plain(output()).slice(-1500)}`,
     ).toBe(true);
     expect(plain(output())).toContain('Version:');
+
+    const readyGrid = normalizeGrid(await visual.grid(), homes.at(-1) ?? '').join('\n');
+    expect(readyGrid).toContain('No session yet');
+    expect(readyGrid).toContain('╭');
+    expect(readyGrid).toContain('Version: <version>');
 
     terminal.write('/exit\r');
     expect(await waitForExit(exited, EXIT_TIMEOUT_MS)).toBe(0);
