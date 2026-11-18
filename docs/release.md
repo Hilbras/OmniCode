@@ -71,10 +71,10 @@ The policy is pinned in `.changeset/config.json`:
 2. On `main`, `changeset version` consumes accumulated changesets: it bumps the
    listed packages, updates `workspace:^` ranges, and appends to each package's
    `CHANGELOG.md`. The result is committed as a "Version Packages" commit.
-3. Publishing `@omnicode/cli` is currently a manual step for the release owner.
-   The publish workflow is deliberately not written yet: npm trusted publishing
-   (OIDC) needs registry-side configuration, and no publish token belongs in
-   this repository.
+3. Publishing is CI-driven: merging the “Version Packages” PR makes
+   `changesets/action` run `pnpm release`, which publishes `@omnicode/cli` and
+   creates the GitHub Release. A local `pnpm publish` is not the supported path
+   (provenance requires CI); see “Automation” above.
 
 ## Release gates
 
@@ -89,7 +89,6 @@ publish pipelines.
 The items below need external infrastructure or credentials that do not exist
 yet; see `docs/plans/deep-parity-plan.md` section 5.3 for the tracked reasons:
 
-- OIDC trusted publishing and a publish workflow.
 - SBOM and digest workflows for release artifacts.
 - A Nix closure check (this tree has no `flake.nix`; `scripts/AGENTS.md`
   documents the legacy `check-nix-workspace.mjs` and says not to add a flake

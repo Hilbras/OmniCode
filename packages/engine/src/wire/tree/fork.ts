@@ -1,3 +1,4 @@
+import { ContextUndo } from '#/agent/contextMemory/contextEvents';
 import {
   isPromptOwnedInjection,
   isUndoAnchor,
@@ -165,7 +166,10 @@ export function buildUndoSwitchRecords(input: {
       legacyUndoLine: edgeLine + 1,
       time,
     },
-    legacyUndo: { type: 'context.undo', agentId, count: turns, time },
+    legacyUndo: new ContextUndo(
+      ContextUndo.schema.parse({ agentId, count: turns }),
+      time,
+    ).serialize() as WireRecord,
     undone: { type: 'context.undone', agentId, turns, fromTurnId, time },
   };
 }

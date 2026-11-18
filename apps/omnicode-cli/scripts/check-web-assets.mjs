@@ -1,10 +1,10 @@
 // Verify the prebuilt web bundle is present before packaging.
 //
-// apps/omnicode-web no longer exists in this repo: the web UI is developed in the
-// code-app repo (apps/web) and the built bundle is synced here and committed
-// at apps/omnicode/dist-web (gitignored, force-added). This script replaces
-// the old copy-from-source step — it only checks that the committed bundle is
-// in place, so a packaging run never silently ships a CLI without the web UI.
+// The shipped web UI is built in the code-app repo (apps/web) and its bundle is
+// synced into apps/omnicode-cli/dist-web and committed (746 files, ~37 MB). The
+// in-tree apps/omnicode-web is a separate React surface. This script cannot
+// regenerate the bundle; it only checks that the committed copy is in place, so
+// a packaging run never silently ships a CLI without the web UI.
 
 import { readdir, stat } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';

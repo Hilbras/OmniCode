@@ -66,6 +66,7 @@ import {
 import { ISessionToolPolicy } from '#/session/sessionToolPolicy/sessionToolPolicy';
 import { ISessionWorkspaceInfo } from '#/session/workspaceInfo/workspaceInfo';
 import { IEventDispatcher } from '#/state/eventDispatcher';
+import { Forked } from '#/session/agentLifecycle/forked';
 import { AGENT_WIRE_RECORD_KEY, createWireMetadataRecord, type WireRecord } from '#/wire/record';
 import { repairWireJournal } from '#/wire/repair';
 import { flattenChain } from '#/wire/tree/index';
@@ -880,7 +881,7 @@ function createSessionId(): string {
 }
 
 function forkedRecord(agentId: string): WireRecord {
-  return { type: 'forked', agentId, time: Date.now() };
+  return new Forked(Forked.schema.parse({ agentId })).serialize() as WireRecord;
 }
 
 function forkCustomMetadata(

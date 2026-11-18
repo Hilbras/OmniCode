@@ -278,8 +278,9 @@ function bind(bound: BoundFold, state: readonly ContextMessage[]): readonly Cont
 }
 
 function keyOf(state: readonly ContextMessage[]): readonly ContextMessage[] {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (isDraft(state) ? original(state as any) : state) as readonly ContextMessage[];
+  return (
+    isDraft(state) ? original(state as Parameters<typeof original>[0]) : state
+  ) as readonly ContextMessage[];
 }
 
 function createImmutableFoldSink(initial: readonly ContextMessage[]): ImmutableFoldSink {

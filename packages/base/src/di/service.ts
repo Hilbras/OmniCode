@@ -42,7 +42,7 @@ export abstract class Service extends Disposable implements Fiber, UnitInternals
       this.__unitBuffer = null;
       this.config = undefined;
     }
-    this.name = (this.constructor as any).name || 'anonymous';
+    this.name = (this.constructor as { readonly name?: string }).name ?? 'anonymous';
   }
 
   provide<T>(

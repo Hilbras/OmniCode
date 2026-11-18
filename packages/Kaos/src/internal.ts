@@ -189,9 +189,20 @@ export function globPatternToRegex(pattern: string, caseSensitive: boolean): Reg
     const ch = pattern[i];
     if (ch === undefined) break;
     switch (ch) {
-      case '*':
-        regex += '[^/]*';
+      case '*': {
+        if (pattern[i + 1] === '*') {
+          if (pattern[i + 2] === '/') {
+            regex += '(?:[^/]+/)*';
+            i += 2;
+          } else {
+            regex += '.*';
+            i += 1;
+          }
+        } else {
+          regex += '[^/]*';
+        }
         break;
+      }
       case '?':
         regex += '[^/]';
         break;

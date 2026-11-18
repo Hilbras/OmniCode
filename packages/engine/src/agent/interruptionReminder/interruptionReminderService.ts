@@ -9,9 +9,14 @@ import { TurnEnded } from '#/agent/loop/turnOps';
 import { IAgentReminderService } from '#/features/reminder/reminderService';
 import { IAgentStateService } from '#/agent/state/agentState';
 import { IEventBus } from '#/app/event/eventBus';
+import { IEventDispatcher } from '#/state/eventDispatcher';
 
 import { IAgentInterruptionReminderService } from './interruptionReminder';
-import { INTERRUPTION_REMINDER_VARIANT, interruptionReminderKey } from './interruptionReminderOps';
+import {
+  INTERRUPTION_REMINDER_VARIANT,
+  InterruptionReminderRecorded,
+  interruptionReminderKey,
+} from './interruptionReminderOps';
 
 const INTERRUPTION_REMINDER = [
   'The previous turn was interrupted by the user before completion;',
@@ -30,6 +35,7 @@ export class AgentInterruptionReminderService
     @IAgentContextMemoryService private readonly context: IAgentContextMemoryService,
     @IAgentReminderService private readonly reminder: IAgentReminderService,
     @IAgentStateService agentState: IAgentStateService,
+    @IEventDispatcher private readonly dispatcher: IEventDispatcher,
   ) {
     super();
     agentState.contributeState(interruptionReminderKey);
@@ -43,6 +49,9 @@ export class AgentInterruptionReminderService
           variant: INTERRUPTION_REMINDER_VARIANT,
           ownerPromptId: history.findLast(isUndoAnchor)?.id,
         });
+        void this.dispatcher.dispatch(
+          new InterruptionReminderRecorded({ agentId: event.agentId, turnId: event.turnId }),
+        );
       }),
     );
   }

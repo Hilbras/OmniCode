@@ -190,7 +190,7 @@ export function bindServiceUnit(
   if (buffer === null) {
     return;
   }
-  const ctor = (instance as any).constructor as ServiceClassRecipe;
+  const ctor = instance.constructor as unknown as ServiceClassRecipe;
   const runtime = new FiberRuntime(
     frame.host,
     instance.unitBook,

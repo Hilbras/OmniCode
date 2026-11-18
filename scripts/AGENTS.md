@@ -159,6 +159,11 @@ Non-goals:
   (`packages/engine/docs/contract-types.sha256`, one `sha256  path` line per
   emitted file) rather than the files themselves; a drift report names the
   changed declarations. Run `pnpm check:generated`.
+  Run **one** guard instance at a time: `gen:contract-types` writes and then
+  clears `packages/engine/.contract-types-tmp`, so two overlapping runs read
+  each other's partial output and report false drift (observed as
+  `987 removed`). An interrupted run also leaves child generators alive; kill
+  them before re-running.
 - `check-package-hygiene.mjs` — for every workspace package that declares
   `publishConfig`, runs `publint`, and — when that package's
   `publishConfig.exports` ships declarations — packs it with `pnpm pack` and runs
