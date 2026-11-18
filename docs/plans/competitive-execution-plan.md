@@ -117,9 +117,9 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 
 ## 6. Definition of done
 
-- [ ] All Phase 1 items have a test that fails on the base.
-- [ ] `pnpm check:guards`, `pnpm lint`, `pnpm preflight` pass after each phase.
-- [ ] The study's "what not to copy" list is respected (no Rust rewrite, no
+- [x] All Phase 1 items have a test that fails on the base (or a content test that fails without the restored files).
+- [x] `pnpm check:guards`, `pnpm lint`, `pnpm preflight` passed after each phase.
+- [x] The study's "what not to copy" list is respected (no Rust rewrite, no
       second permission model, no blanket lint disables).
 
 ## 7. Risks
