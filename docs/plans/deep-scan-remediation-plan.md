@@ -665,8 +665,10 @@ Goal: no unexplained files or casts.
       `apps/omnicode-cli/scripts/check-web-assets.mjs` (F17).
 - [x] G6.5 Fixed the `pnpm bench:open` reference in
       `packages/minidb/AGENTS.md` (F28).
-- [ ] G6.6 Attach F29 to D5: record the `dist-web` provenance or add a version
-      stamp. **Decision-gated** by D5.
+- [x] G6.6 F29 attached to D5: `docs/release.md` now records that the published
+      CLI embeds the `code-app`-built `dist-web` bundle (746 files, ~37 MB),
+      cannot regenerate it here, and names the sync command and the two checks
+      that guard it.
 - [x] G6.7 Re-checked `pnpm check:package` and `pnpm check:cli-artifact` after
       building TUI, SDK (bundle + `build:dts`), and the CLI:
       `package hygiene check: OK` (publint + attw) and
@@ -775,6 +777,10 @@ Every line is a local run on this tree, not a CI result.
 | F26 | `InterruptionReminderRecorded` now dispatched on user-cancelled turns | `interruptionReminderService.test.ts` 2/2 |
 | F27 | `Forked` / `ContextUndo` serialized through their Event2 classes with schema parse | `fork-records.test.ts` 2/2 |
 | F14 | `as any` in `src/` 9 → 4 (remaining four are documented union escapes) | `rg` count |
+| S4 | auto mode asks when a Bash command token or a Grep path is sensitive | `test/agent/permissionPolicy` 194/194 (4 new cases: `.env`, quoted `~/.ssh`, Grep path, ordinary file) |
+| S5 | provider detail reveals `api_key` only to a loopback socket | `modelCatalog.test.ts` 13/13, including a remote-address case |
+| F13 | mobile.old + plugins committed per their inventories | `git status` clean |
+| F8–F12 | decisions recorded in `strength-program.md` | §8 table |
 | F15 | concurrency warning added to `scripts/AGENTS.md` | — |
 | F17 | `check-web-assets.mjs` comment corrected | — |
 | F28 | `packages/minidb/AGENTS.md` uses the filtered command | — |
@@ -787,7 +793,7 @@ Final gate after all changes:
 
 | Command | Result |
 |---|---|
-| `pnpm preflight` | **exit 0** — 17/17 steps; typecheck 39/39 tasks, eval gate 3/3 |
+| `pnpm preflight` | **exit 0**, re-run on the finished tree — 17/17 steps; typecheck 39/39 tasks, eval gate 3/3 |
 | `pnpm check:package` | **exit 0** — `OK (@omnicode/cli (publint), SDK (publint, attw), TUI (publint, attw))` |
 | `pnpm check:cli-artifact` | **exit 0** — `OK (self-contained bundle, reports 1.4.30)` |
 | `pnpm check:guards` | **exit 0** — all 11 steps, including generated freshness |
@@ -804,6 +810,9 @@ Committed as:
 - `7793a47 fix(security): close auth, launcher, and MCP admission bypasses`
 - `e333925 chore(deps): bump zod and dompurify and gate the audit`
 - `70ee734 fix: wire the dead seams, fix globstar, and make the docs true`
+- `cd0cf72 chore: track the mobile reference app and the plugin catalog`
+- `2b826fa fix(security): ask for sensitive shell reads and hide remote provider keys`
+- `adb12d6 docs(plan): settle the remaining decisions and record the evidence`
 
 After the commits, `git status --porcelain` lists only
 `apps/omnicode-mobile.old/` and `plugins/`, both decision-gated (§8 Q3).

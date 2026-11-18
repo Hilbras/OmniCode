@@ -11,6 +11,15 @@ Scope: versioning policy for the workspace; release flow and tooling for
 and stays in the workspace; their versions exist so `workspace:^` ranges between
 packages stay coherent when the CLI is published.
 
+The published CLI embeds a **vendored web bundle** at
+`apps/omnicode-cli/dist-web` (746 files, ~37 MB). It is built in the separate
+`code-app` repository (`apps/web`) and synced into this checkout; it cannot be
+regenerated here. `apps/omnicode-cli/scripts/check-web-assets.mjs` verifies the
+bundle is present before packaging, and `pnpm check:cli-artifact` verifies the
+bundled CLI starts and reports its version. When the bundle changes, re-run the
+`code-app` sync (`OMNICODE_REPO=<this checkout> pnpm run sync:web`) and commit
+`dist-web` together with the source change that produced it.
+
 Two of them nevertheless declare a packed publish surface:
 `@hilbras/omnicode-sdk` and `@hilbras/omnicode-tui` set
 `publishConfig.access: "public"` and a `publishConfig.exports` override that repoints
