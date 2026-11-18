@@ -687,7 +687,7 @@ Tasks:
 - Host composition: `apps/omnicode-cli/src/cli/telemetry.ts` gains `configureCliOtlpTelemetry()` — the endpoint is read from `OMNICODE_OTLP_ENDPOINT` at the host boundary (must parse as http/https; a malformed value logs a warning and stays off), the bearer token from `OMNICODE_OTLP_TOKEN` re-read per send, and the interval from `OMNICODE_OTLP_FLUSH_INTERVAL_MS` (default 30s). Three hosts configure it: the TUI shell (`run-shell.ts`), the headless v2 print runner, and the upgrade command path in `main.ts` — the processes that run turns. Every `shutdownTelemetry()` exit path in the CLI (run-shell, run-v2-print, main, `sub/export.ts`, `sub/fork.ts`, `sub/web/run.ts` ×2) now pairs `shutdownOtlpRuntime()`, which is a no-op where nothing configured the runtime. No endpoint configured means OTLP stays off entirely.
 - Tests: `apps/omnicode-cli/test/cli/telemetry.test.ts` extends the CLI telemetry suite with the OTLP wiring: off without an endpoint, service name plus per-send endpoint/token resolvers, interval override and junk rejection, and malformed/non-http endpoint refusal. `test/cli/main.test.ts` mocks gained the new exports.
 - Review hardening (5.2): `flushOtlpRuntime` now drains each signal's batch before its send and restores it on failure — a failed metrics send no longer discards an accepted traces flush (and vice versa) — skips overlapping flushes (the in-flight flush owns the drained batches; a second would double-post), and caps buffered points per metric name at `maxBufferedPointsPerMetric` (default 2000, oldest dropped and counted) so a permanently failing endpoint cannot grow the buffer. Regression tests: `packages/telemetry/test/otlpRuntime.test.ts` (per-signal retention across flushes, overlap skip with a pending send, failing-endpoint bound) and `packages/telemetry/test/otlp.test.ts` (per-name points cap with oldest-drop counts, restore-ahead-of-later-points ordering and cap).
-- Validation (5.2, review round): telemetry typecheck + full suite 116 tests pass (6 files); engine typecheck clean; `packages/engine` vitest `test/app/telemetry` 64 tests pass; `pnpm check:guards` green; `@omnicode/cli` typecheck clean.
+- Validation (5.2, review round): telemetry typecheck + full suite 116 tests pass (6 files); engine typecheck clean; `packages/engine` vitest `test/app/telemetry` 64 tests pass; `pnpm check:guards` green; `@hilbras/omnicode` typecheck clean.
 - Still open in 5.2: spans are event-projected (one span per finished fact, not a connected trace tree — no parent/child trace ids beyond the existing `trace_id` ambient field); MCP stdio/external-hook/worktree child sandboxes (`packages/engine/src/os/sandbox/childSandbox.ts`) do not emit `sandbox_decision` — only the Bash sandbox seam does; and the OTLP exporter buffers gauges only (no histograms/counters, so metric aggregation happens downstream). The `packages/engine` → `@hilbras/omnicode-telemetry` lockfile entry already exists in the working tree's `pnpm-lock.yaml` (under the packages/engine importer, uncommitted as part of the mobile work in this tree); committing that lockfile update alongside `packages/engine/package.json` resolves `--frozen-lockfile`.
 
 ### 5.3 Release/product surfaces
@@ -718,7 +718,7 @@ Feasible-local scope only. Files changed: `.changeset/config.json`,
 `.github/PULL_REQUEST_TEMPLATE.md`, `docs/release.md`, `docs/AGENTS.md`,
 `packages/engine/AGENTS.md`. No workflows were modified.
 
-- Changesets: `.changeset/config.json` pins the policy — `@omnicode/cli` is the
+- Changesets: `.changeset/config.json` pins the policy — `@hilbras/omnicode` is the
   only published package (`access: public`, matching its `publishConfig`); the
   private `@hilbras/*` packages are versioned with changelog entries
   (`privatePackages.version: true`) but never published or tagged (`tag: false`)
@@ -732,7 +732,7 @@ Feasible-local scope only. Files changed: `.changeset/config.json`,
   `package.json`, the known command gaps from `AGENTS.md` (no-op root `lint`,
   broken CLI `test`/`e2e` scripts, `tui` on `node --test`), testing rules, and
   PR expectations mirroring the `AGENTS.md` review rules.
-- `SECURITY.md`: supported surface is the latest `@omnicode/cli` release plus
+- `SECURITY.md`: supported surface is the latest `@hilbras/omnicode` release plus
   the default branch tip (private packages are never published, so fixes ship
   from `main` only), private reporting via GitHub private vulnerability
   reporting, the repo's trust boundaries as reporting scope, and coordinated

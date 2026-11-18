@@ -1,5 +1,39 @@
 # @hilbras/omnicode
 
+## 1.5.1
+
+### Patch Changes
+
+- Republish the 1.5.0 changes as 1.5.1. npm retained an unpublished staged `1.5.0` record from the first publish attempt, which blocks publishing that exact version; no code changed.
+
+## 1.5.0
+
+### Minor Changes
+
+- cbf1b9a: Add `omnicode import` for moving in from another coding agent. It reads a Claude Code, Codex, or Qwen Code install and reports the agents, skills, and MCP servers it finds, together with every parse warning and the file it came from; `--json` prints the same as a machine-readable bundle with MCP env values redacted. With `--apply` it installs the skills into `<home>/skills` (the directory the runtime already loads) and merges the MCP servers into `<home>/mcp.json` with `0600` permissions, keeping existing entries unless `--force` and refusing to overwrite a file it cannot parse. Agent files are reported but not written: this runtime builds agents from profiles and session state, so there is no user agents directory to install them into.
+- be44336: Add a structured headless contract. `-p` can now be validated against a JSON Schema with `--json-schema <path>` (the schema is appended to the prompt and a non-conforming or non-JSON answer exits non-zero), and the prompt can be read from stdin with `--input-format text|stream-json` (newline-delimited objects with `text` or `content` parts). `--output-format stream-json` continues to carry the event stream; exit codes are documented in the CLI README.
+- d12e957: Use `~/.omnicode` as the data home and `OMNICODE_HOME` as the environment variable. An existing `~/.omnicode-v` home is migrated on first run, and `OMNICODE_V_HOME` is still accepted as a deprecated alias.
+
+### Patch Changes
+
+- 0192ac7: Ask for approval in auto mode for every tool that is not classified as safe, including tools you registered yourself, and stop silently approving `WebSearch`, `FetchURL`, `Agent`, and `AgentSwarm`. Approve once and the same action is remembered for the session, or pre-approve a tool with an allow rule under `[[permission.rules]]` in `config.toml`.
+- 0192ac7: Remember your answer when you approve the manual confirmation that auto mode falls back to after repeatedly blocking a tool call. Previously that approval was dropped, so the same action asked again every time; now it is trusted for the session.
+- 7793a47: Harden the local server and file matching. An absolute-form request target (`GET http://host/api/v1/...`) no longer skips bearer authentication; opening or revealing a file on Windows now goes through an argument array instead of `cmd /c start`, so a workspace filename containing `&` cannot run a second command; MCP endpoints written as IPv4-mapped IPv6 (`::ffff:10.0.0.1`), unspecified, ULA, or link-local addresses are refused unless `allowPrivateNetwork` is set; and `**/name` now matches `name`, `a/name`, and `a/b/name` in the Glob tool and SSH glob expansion.
+- 0192ac7: Stop re-prompting for a shell command your exec policy marks as prompting once you approve it for the session: the session approval now satisfies the rule for that exact command instead of asking again on every repeat. `forbidden` rules are unchanged.
+- 0192ac7: Say "No matches found" when a search matches nothing instead of "No non-sensitive matches found", which implied files had been filtered out when none were. The filtered wording now appears only when something really was filtered, alongside the line that names the filtered files and how many.
+- 0192ac7: Run hook commands as an argument list instead of through a shell, and block the matched tool when a hook cannot be parsed or spawned. A hook that relies on shell syntax (pipes, redirection, `&&`) must set `shell: true`; a hook that fails to start now blocks the tool call instead of being ignored.
+- e792ab7: Remember durable facts the assistant notices, not only the ones a fixed pattern matches. After a completed turn the agent asks its model what is worth keeping, and stores only proposals whose quote is copied verbatim from your message — so an inferred or hallucinated fact can never be presented as truth. A later statement on the same subject replaces the earlier value. The extractor is opt-out with `OMNICODE_EXPERIMENTAL_MEMORY_WRITER=0`; rejected proposals (no quote, secret, instruction-shaped, invalid subject) are logged with a reason.
+- 0192ac7: Explain when to save a memory: the memory tools now state what qualifies as a durable fact worth keeping, and the system prompt documents the same rule, so the agent stops saving greetings and one-off chatter.
+- b322483: Finish the memory writer before `-p` and TUI exit. The post-turn memory call is now tracked as auxiliary work, and print mode plus the TUI wait for it (bounded at 15 s / 5 s) before disposing the agent, so a fact stated in a one-shot prompt is persisted and the staged memory is available to the next run. A writer proposal that matches a fact the deterministic lane already stored is skipped instead of creating a conflicting duplicate.
+- 0192ac7: Report the provider's content-safety rejection as a filtered response instead of a generic API error, and stop retrying it: the turn now stops with `provider.filtered` and the screening message.
+- 71fbe9f: Mark known credential shapes in tool output before it reaches the provider or the session log, and make `SearchSessions` work without a running daemon. PEM private keys, AWS access-key ids, `sk-…` keys, GitHub/Slack/GitLab tokens, JWTs, and long `Bearer` values are replaced with `[redacted:<kind>]`; ordinary code, hashes, and short fixtures are untouched, and `OMNICODE_TOOL_OUTPUT_REDACTION=0` disables the marking. Local session search now reads the on-disk `wire.jsonl` files, so the tool returns matches in a CLI-only run instead of reporting that the server is required.
+- 0192ac7: Explain a refused command when `OMNICODE_SANDBOX_MODE=required` and no sandbox backend can be used: the error now says the command will not run, that retrying cannot help, and what to change, instead of only the internal reason.
+- 2b826fa: Ask before reading credentials in auto mode, and stop returning a stored provider key to remote callers. A `Bash` command whose arguments name a sensitive path (`.env`, `~/.ssh/id_rsa`, `.npmrc`, …) and a `Grep` whose `path` is sensitive now take the same approval as the equivalent `Read`. `GET /api/v1/providers/{id}` reveals the stored `api_key` only to a loopback client; remote callers receive `has_api_key` and no secret.
+- ae24317: Close the Telegram pairing bypass: media albums and inline buttons from unpaired chats can no longer drive a session. Webhook mode now works behind the server's bearer auth, requires a webhook secret compared in constant time, and bot tokens are redacted from surfaced errors.
+- 0192ac7: Store the Telegram bot token encrypted at rest instead of in plain text; the connector keeps working and an existing plain-text token is migrated the next time settings are read.
+- 0192ac7: Fix the theme picker selecting the opposite palette: the Dark option now applies the dark theme and Light the light one.
+- 9bc7c27: Know the user's name without being told to search memory. Explicit profile statements — `my name is …`, `call me …`, `I live in …`, `my timezone is …` — are captured as trusted `user_statement` facts and injected into every turn as a `Known about the user` block. A later statement about the same subject supersedes the earlier one; unverified, confidential, and secret records are never injected. Disable the lane with `OMNICODE_EXPERIMENTAL_MEMORY_PROFILE=0`.
+
 ## 1.4.1
 
 ### Patch Changes

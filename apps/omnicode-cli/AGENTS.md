@@ -89,7 +89,7 @@ Booting takes tens of seconds, so the suite is gated and waits for output
 markers instead of sleeping.
 
 ```bash
-OMNICODE_E2E=1 pnpm --filter @omnicode/cli exec vitest run test/e2e/pty-tui.e2e.test.ts
+OMNICODE_E2E=1 pnpm --filter @hilbras/omnicode exec vitest run test/e2e/pty-tui.e2e.test.ts
 ```
 
 ## Embedded vis web asset
@@ -97,12 +97,12 @@ OMNICODE_E2E=1 pnpm --filter @omnicode/cli exec vitest run test/e2e/pty-tui.e2e.
 `src/generated/vis-web-asset.ts` is generated, never edited: it holds the gzipped,
 base64-encoded single-file build of `apps/omnicode-vis/web`, which the CLI serves for
 its web surface. `scripts/build-vis-asset.mjs` is the owner, wired as the package
-`prebuild`, so `pnpm --filter @omnicode/cli build` refreshes it first. The script
+`prebuild`, so `pnpm --filter @hilbras/omnicode build` refreshes it first. The script
 runs `VIS_SINGLEFILE=1 vite build` in the vis web package, reads the resulting
 `apps/omnicode-vis/web/dist-single/index.html` (an untracked intermediate, ignored on
 purpose), and writes the encoded asset.
 
-It also takes `--check` (`pnpm --filter @omnicode/cli gen:vis-asset -- --check`):
+It also takes `--check` (`pnpm --filter @hilbras/omnicode gen:vis-asset -- --check`):
 it builds as usual, compares the encoding against the committed module, and exits
 non-zero without writing when they differ. That is what `pnpm check:generated` runs,
 so a vis-web change that nobody re-encoded fails the guard instead of shipping a CLI

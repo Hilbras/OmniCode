@@ -18,8 +18,8 @@ implemented; this plan covers the next six upgrades.
 
 - All six phases below are implemented.
 - `pnpm --filter @hilbras/omnicode-engine typecheck` passes.
-- `pnpm --filter @omnicode/cli typecheck` passes.
-- `pnpm --filter @omnicode/cli build` passes.
+- `pnpm --filter @hilbras/omnicode typecheck` passes.
+- `pnpm --filter @hilbras/omnicode build` passes.
 - Telegram tests pass without network access.
 - Each phase has focused tests using the fake Bot API.
 

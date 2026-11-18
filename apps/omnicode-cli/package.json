@@ -1,6 +1,6 @@
 {
-  "name": "@omnicode/cli",
-  "version": "1.4.30",
+  "name": "@hilbras/omnicode",
+  "version": "1.5.1",
   "description": "Flexible OmniCode CLI/TUI",
   "license": "MIT",
   "author": "Hilbras",
@@ -22,7 +22,7 @@
     "tui"
   ],
   "bin": {
-    "omnicode-cli": "dist/main.mjs"
+    "omnicode": "dist/main.mjs"
   },
   "files": [
     "dist",

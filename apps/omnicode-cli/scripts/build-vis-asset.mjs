@@ -64,8 +64,8 @@ if (process.argv.includes('--check')) {
   } else {
     console.error(
       current === ''
-        ? '[build-vis-asset] src/generated/vis-web-asset.ts is missing — regenerate with pnpm --filter @omnicode/cli prebuild'
-        : '[build-vis-asset] src/generated/vis-web-asset.ts is stale — the committed asset no longer matches a fresh build; regenerate with pnpm --filter @omnicode/cli prebuild',
+        ? '[build-vis-asset] src/generated/vis-web-asset.ts is missing — regenerate with pnpm --filter @hilbras/omnicode prebuild'
+        : '[build-vis-asset] src/generated/vis-web-asset.ts is stale — the committed asset no longer matches a fresh build; regenerate with pnpm --filter @hilbras/omnicode prebuild',
     );
     process.exitCode = 1;
   }

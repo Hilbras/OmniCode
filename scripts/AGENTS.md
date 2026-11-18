@@ -147,7 +147,7 @@ Non-goals:
   (`gen:config-manifest`, `gen:wire-manifest`, `gen:state-manifest`,
   `gen:contract-types` in `@hilbras/omnicode-engine`, `gen:wire-contract` and
   `gen:api-reference` in `@hilbras/omnicode-api`, `gen:vis-asset` in
-  `@omnicode/cli`) and fails when an on-disk artifact no longer matches what its
+  `@hilbras/omnicode`) and fails when an on-disk artifact no longer matches what its
   generator produces. Seven artifacts today: the three engine manifests, the engine
   contract-types digest, the API wire contract JSON, the generated API reference at
   `packages/API/docs/wire-contract.md`, and the CLI's embedded vis web asset

@@ -483,10 +483,10 @@ needs splits three ways, and only one third is API's:
   source path — a `devDependency` on API would re-create the build edge. The guard now
   enforces `acp must not import api` (`scripts/check-kernel-layering.mjs`).
   Verified: `pnpm --filter @hilbras/omnicode-client-contract typecheck`, the same for
-  `...-api`, `...-acp`, and `@omnicode/cli` all exit 0; ACP **15 files / 151 tests**
+  `...-api`, `...-acp`, and `@hilbras/omnicode` all exit 0; ACP **15 files / 151 tests**
   green; API **14 passed + 6 skipped files, 279 passed + 24 skipped tests** (the skips
   are the pre-existing gated e2e lanes); `@hilbras/omnicode-api build` and
-  `@hilbras/omnicode-acp build` both succeed on their own, and `@omnicode/cli build`
+  `@hilbras/omnicode-acp build` both succeed on their own, and `@hilbras/omnicode build`
   is green; `pnpm check:architecture` reports `23 packages, no cycles` and
   `pnpm check:guards` exits 0. `turbo run build --dry` no longer lists
   `api#build ↔ acp#build`. The other two cycles were still present at that point —
@@ -535,7 +535,7 @@ version`. So the documented command could not have worked. Landed:
   for provenance — nothing in the tree; the workflow warns instead of failing when
   `NPM_TOKEN` is absent so the version PR still opens, and publish then fails with the
   registry's own error. Concurrency is serialized per ref.
-- `@omnicode/cli` publishes with `provenance: true` now; `docs/release.md` documents the
+- `@hilbras/omnicode` publishes with `provenance: true` now; `docs/release.md` documents the
   secrets table, the flow, and settles the old SDK/TUI contradiction: **the CLI is the
   only published package; SDK and TUI stay private and are held to their declared packed
   surface by `pnpm check:package`** (which is why their `publishConfig` stays).
@@ -1071,7 +1071,7 @@ claimed here.
   dependency-consistency check (`sherif` or equivalent) at the root.
   Landed: `scripts/check-package-hygiene.mjs` (`pnpm check:package`) runs
   `publint` over every workspace package that declares `publishConfig` —
-  `@omnicode/cli`, `@hilbras/omnicode-sdk`, `@hilbras/omnicode-tui`. The CI
+  `@hilbras/omnicode`, `@hilbras/omnicode-sdk`, `@hilbras/omnicode-tui`. The CI
   `package-hygiene` job builds those three surfaces and then runs it. It is
   deliberately not part of `pnpm check:guards`: publint packs each package, so it
   can only run once `dist` exists.
@@ -1085,7 +1085,7 @@ claimed here.
     `dist/index.mjs` was never produced — while `publishConfig.exports` pointed
     at it. Both fixed; the build now emits the bundle and `build:dts` the
     declarations (in that order — tsdown runs `clean: true`).
-  - `@omnicode/cli`'s `imports` map used a fallback array for
+  - `@hilbras/omnicode`'s `imports` map used a fallback array for
     `#/generated/vis-web-asset`, which publint flags (array semantics differ
     between tools). Now `types` → the committed `.d.ts` stub and `default` → the
     build-generated `.ts`; `tsc` passes with the generated file present and
@@ -1147,9 +1147,9 @@ claimed here.
   the check reports fresh — stable across three consecutive runs, including from a
   deleted `dist-single/`, with byte-identical HTML (md5 `ac669acf…`). Verified both
   directions: appending a line to the generated module makes
-  `pnpm --filter @omnicode/cli gen:vis-asset -- --check` exit 1 with
+  `pnpm --filter @hilbras/omnicode gen:vis-asset -- --check` exit 1 with
   `src/generated/vis-web-asset.ts is stale — the committed asset no longer matches a
-  fresh build; regenerate with pnpm --filter @omnicode/cli prebuild`, and the clean
+  fresh build; regenerate with pnpm --filter @hilbras/omnicode prebuild`, and the clean
   tree passes with all seven artifacts fresh.
 
 ## T2 — Safe autonomy (best-in-class)
@@ -1956,8 +1956,8 @@ unless the item needs one.
     `sync-changelog` and `write-tui` name in the notes they now carry (see T5.7).
   - Also visible while checking: the CLI's own README and `CHANGELOG.md` title
     themselves `@hilbras/omnicode`, `apps/omnicode-cli/package.json` says
-    `@omnicode/cli`, and `docs/release.md` says the published package is
-    `@omnicode/cli`. That naming inconsistency is recorded in T1.3 and still needs
+    `@hilbras/omnicode`, and `docs/release.md` says the published package is
+    `@hilbras/omnicode`. That naming inconsistency is recorded in T1.3 and still needs
     the owner's call; it is a docs-truth issue, not something to resolve by
     picking one silently.
 - **T5.9 Delete cruft**: `apps/omnicode-mobile.old`, resolved in the same commit as
@@ -2117,7 +2117,7 @@ restart.
 | 6 | **T5.5** — inspector renderer: build it or leave panels unbuilt | Transport proven end to end (`xstateInspection` → debug WS → asserted streaming) | A loopback renderer |
 | 7 | **T5.3 mobile** — does the phone talk to providers directly, and over which client | Copy and guide corrections; 15 tests green | The real device loop |
 | 8 | **T5.8** — docs site: publish the generated pages, or keep `docs/` internal | `scripts/build-docs.mjs` + `pnpm docs:check` wired into `check:guards`; 11 pages build | Publishing the site |
-| 9 | **T1.3** — package naming: CLI's README/CHANGELOG say `@hilbras/omnicode`, manifest and `docs/release.md` say `@omnicode/cli` | The inconsistency is recorded, not papered over | One rename or one doc fix |
+| 9 | **T1.3** — package naming: CLI's README/CHANGELOG say `@hilbras/omnicode`, manifest and `docs/release.md` say `@hilbras/omnicode` | The inconsistency is recorded, not papered over | One rename or one doc fix |
 | 10 | **T2.2b** — approval axes for sandbox-denial retry | Nothing; widening them touches published SDK/server surfaces | A sandbox-denial classification and the retry |
 | 11 | **T1.1** — wire vocabulary: is `human/llm` or the API contract tables the one source | JSON Schema rendered for 148 procedures + 31 events, drift-gated in CI (`pnpm check:generated`) | Generated TypeScript declarations for `SDK`/`ACP`/`server` from that same source |
 | 12 | **T2.1b** — append-to-policy: may an approval write a rule into the user's own policy file | The prompt/history ordering bug is fixed, so a session approval is reused instead of re-asked | Persisting an approval past the session; the config write path already exists |
@@ -2222,7 +2222,7 @@ entries carry the fail-on-base evidence they recorded at the time.
 | T0.1 acceptance bite, re-proven | hiding `packages/base/test` → `pnpm --filter @hilbras/omnicode-base exec vitest run` exits **1** with `No test files found, exiting with code 1`; restored → exit 0, `1 file / 4 tests`. A matching-nothing include fails loudly |
 | T0.3 / T0.4 / T0.5 re-checks | `packages/SDK/dist/index.d.mts` present after `build:dts`; `check-nix-workspace.mjs` absent; `omnicode-dev.mjs` resolves `apps/omnicode-cli`; `engine/package.json` has no `Kernel/`; flag default `true` in `flag.ts` matching `memory/AGENTS.md:371` and `packages/README.md:15`; `full-suite` at `ci.yml:121` running `pnpm test --concurrency=1` |
 | `pnpm --filter @hilbras/omnicode-vis build` | exit 0 — server `tsdown` 8.4 s, web `vite` 137 modules (`dist/index.html` + assets), `copy-web-dist` → `server/dist/public`; `server/dist/server.mjs` now exists, so the earlier "missing file" audit hit was only an unbuilt artifact |
-| `OMNICODE_E2E=1 pnpm --filter @omnicode/cli exec vitest run test/e2e/local-logging-export.e2e.test.ts` | exit 0 — 1 passed in 7.5 s; this suite was previously only *skipped*, never run |
+| `OMNICODE_E2E=1 pnpm --filter @hilbras/omnicode exec vitest run test/e2e/local-logging-export.e2e.test.ts` | exit 0 — 1 passed in 7.5 s; this suite was previously only *skipped*, never run |
 | `pnpm --filter @hilbras/omnicode-engine exec vitest run test/index.test.ts` | exit 0 — 16 passed after deleting the empty `describe.skip('agent replay range build', () => {})`; engine typecheck exit 0 |
 | T5.1 state measurement | zero Claude/Codex/Qwen references in `packages/migration/src` and `apps/omnicode-cli/src/migration/`; no archive extractor in migration, the CLI, or Kaos; `steps/skills.ts` copies the legacy tree. The item's foreign-tool importers do not exist, so it is an unscoped feature rather than an unwired seam |
 | `pnpm add -D @iconify-json/ri@1.2.10 @iconify-json/tabler` (app-client, app-composer, app-markdown) | lockfile updated; `+2` packages installed |
@@ -2249,7 +2249,7 @@ entries carry the fail-on-base evidence they recorded at the time.
 | `pnpm check:tests` after the two wirings | `1279 test files run by a package script`, **2** documented as unwired (was 1252 / 4) |
 | `ci.yml` command audit | 21 `pnpm --filter` commands; every package, script, and `vitest run <path>` target resolves. No guard added: a missing path makes Vitest fail loudly, so the failure is not silent |
 | `AGENTS.md` "unwired" claim audit | every remaining claim of the form "no `test` script / excluded on purpose / never runs" verified against the tree — `core` (no suite, none invented), `rpc` (no test dir, config, or script), `llm` (`type-safety-negative.ts`, a deliberately ill-typed fixture), `app-markdown` (icons blocker), `Kaos` ("never runs real sandboxing tools", matching its 22 skipped tests). The two false ones found earlier (`app-markdown`'s `test/` exclusion, `app-core`'s "34 pre-existing errors, suite not wired") are corrected |
-| `pnpm check:package` (after building tui, SDK bundle + declarations, CLI) | `package hygiene check: OK (@omnicode/cli (publint), @hilbras/omnicode-sdk (publint, attw), @hilbras/omnicode-tui (publint, attw))` — and the CLI build in front of it passed with `build:dts` in check mode, so the API-report tripwire does not obstruct the release path |
+| `pnpm check:package` (after building tui, SDK bundle + declarations, CLI) | `package hygiene check: OK (@hilbras/omnicode (publint), @hilbras/omnicode-sdk (publint, attw), @hilbras/omnicode-tui (publint, attw))` — and the CLI build in front of it passed with `build:dts` in check mode, so the API-report tripwire does not obstruct the release path |
 | release path re-run on the current tree | all green: SDK `build` 11 files/10.35 MB (11.7 s) and `build:dts` `API Extractor completed successfully`, TUI `build` (8.5 s), CLI `build` with `Web assets OK: …/dist-web (747 entries, synced from code-app)` and the native prebuild copy, then `package hygiene check: OK` for CLI, SDK, and TUI. So the commands CI's `package-hygiene` job walks work, and the root `pnpm build` now runs too (decision 2) |
 | `pnpm test --concurrency=1` (the aggregate run the program owed) | exit 0 — `Tasks: 36 successful, 36 total`, 33 min 53 s, **22 518 tests: 22 463 passed, 55 skipped, 0 failed**, 1 288 test files, 30 packages. Four attempts, four repaired defects, none of them a relaxed limit: server image fixtures (11 178 → 5 409 ms), the two-hour fake-timer subagent case (20 753 ms, now bounded), app-composer's icon collection resolved by path after the cycle fix, and `rotate-token` reading the wrong home's registry |
 | `pnpm check:deps` (new, inside `pnpm check:guards`) | `OK (40 packages, 37 lockfile importers, 0 unused internal deps, 3 specifier divergences — 3 allowlisted)`. First run found six `zod` manifests spelling `^4.3.6` where seven used the catalog, and one `vue-tsc` at `~3.2.9`; both consolidated. Bite proven by planting `zod` back into `packages/minidb` → exit 1 naming the divergence and the missing importer |
@@ -2344,7 +2344,7 @@ wired, 0 documented as unwired**; `pnpm check:typecheck` → **39 wired, 0 docum
 `pnpm check:guards` → exit 0, **all 11 steps** (incl. `check:command-paths`);
 `pnpm preflight` → **exit 0, 23/23 steps in 417 s** (the step count dropped to **17** when
 its seven-package typecheck subset became one whole-graph `pnpm typecheck` step); `pnpm build --concurrency=1` → **23/23 tasks,
-45 s**; `pnpm --filter @omnicode/cli typecheck` → exit 0, 340 s;
+45 s**; `pnpm --filter @hilbras/omnicode typecheck` → exit 0, 340 s;
 `features-integration` → **47 files / 1 689 tests, exit 0**; `engine` → **426 files,
 6 849 passed + 4 skipped tests, exit 0**; `app-client` → **1036 tests, exit 0**;
 `app-composer` → 354 tests; `app-markdown` → 277 tests; `server` → **78 files,
@@ -2399,7 +2399,7 @@ as a shipped feature.
 | 6 | **Inspector renderer: not built** | The debug-WS transport stays proven and unused by a UI; no renderer is added in this program. |
 | 7 | **Mobile loop: preview, not shipped** | `apps/omnicode-mobile` stays labeled PREVIEW; finishing the loop is a separate product effort with its own provider-client decision. |
 | 8 | **Docs site: internal** | `docs-site/` stays generated and gitignored; no publishing pipeline is added. |
-| 9 | **Package naming: recorded, not renamed** | `@omnicode/cli` remains the manifest name; the older `@hilbras/omnicode` spelling stays a documented inconsistency rather than a risky rename. |
+| 9 | **Package naming: recorded, not renamed** | `@hilbras/omnicode` remains the manifest name; the older `@hilbras/omnicode` spelling stays a documented inconsistency rather than a risky rename. |
 | 10 | **Sandbox-denial retry: no** | No retry-outside-sandbox path is added; a runtime refusal cannot be classified safely today, and a model-initiated retry would weaken the boundary. |
 | 11 | **Wire vocabulary: API contract tables** | `client-contract`'s zod tables remain the client source; generated TS for SDK/ACP/server is deferred rather than duplicated from `human/llm`. |
 | 12 | **Append-to-policy: no automatic write** | Approvals stay session-scoped. `PermissionRulesAdd` remains an in-memory API; nothing writes the user's policy file automatically. |

@@ -100,7 +100,7 @@ pnpm check:guards
 node scripts/preflight.mjs --dry-run
 pnpm --filter @hilbras/omnicode-engine typecheck
 pnpm --filter @hilbras/omnicode-memory typecheck
-pnpm --filter @omnicode/cli typecheck
+pnpm --filter @hilbras/omnicode typecheck
 pnpm --filter @hilbras/omnicode-engine exec vitest run test/agent/permissionPolicy
 pnpm --filter @hilbras/omnicode-memory exec vitest run test/evaluation.test.ts test/dreamConsolidation.test.ts test/relevanceSelector.test.ts
 ```

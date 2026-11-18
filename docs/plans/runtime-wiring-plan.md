@@ -218,7 +218,7 @@ Acceptance:
 - Tools: `pnpm --filter @hilbras/omnicode-tools typecheck` and tests.
 - Kaos: `pnpm --filter @hilbras/omnicode-kaos typecheck` and tests.
 - API: `pnpm --filter @hilbras/omnicode-api typecheck` and connectivity test.
-- CLI: `pnpm --filter @omnicode/cli typecheck`.
+- CLI: `pnpm --filter @hilbras/omnicode typecheck`.
 - Preflight: `node scripts/preflight.mjs`.
 - Guards: `pnpm check:guards`.
 - Lockfile: `pnpm install --frozen-lockfile --offline`.

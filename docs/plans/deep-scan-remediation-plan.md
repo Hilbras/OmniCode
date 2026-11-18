@@ -197,8 +197,8 @@ Ordered by blast radius. `NEW` = not present in `strength-program.md`.
 
 **F5. `docs/release.md` contradicts itself and `release.yml`.** `NEW`
 - Evidence: the “Automation” section describes `release.yml` + `release-gate.yml`
-  publishing `@omnicode/cli`; “Release flow” item 3 says “Publishing
-  `@omnicode/cli` is currently a manual step … The publish workflow is
+  publishing `@hilbras/omnicode`; “Release flow” item 3 says “Publishing
+  `@hilbras/omnicode` is currently a manual step … The publish workflow is
   deliberately not written yet”. Both files exist and the workflow calls
   `pnpm release`.
 - Impact: an operator cannot tell whether a merge to `main` publishes.
@@ -448,7 +448,7 @@ from `strength-program.md` “Decisions the owner still owes”:
 | D6 | Inspector renderer — build or leave unbuilt | Transport proven; no renderer |
 | D7 | Mobile loop — direct-to-provider or proxy, and which client | Labeled PREVIEW in README, settings, guide |
 | D8 | Docs site — publish or keep internal | `build-docs.mjs` + `docs:check` wired into guards |
-| D9 | Package naming — `@hilbras/omnicode` vs `@omnicode/cli` | Documented inconsistency |
+| D9 | Package naming — `@hilbras/omnicode` vs `@hilbras/omnicode` | Documented inconsistency |
 | D10 | Sandbox-denial retry — widen approval axes? | Needs a runtime-refusal classification that does not exist |
 | D11 | Wire vocabulary source — `human/llm` or API contract tables? | JSON Schema is generated; TS declarations are not |
 | D12 | Append-to-policy — may an approval write the user policy file? | See F8 |
@@ -798,7 +798,7 @@ Final gate after all changes:
 | Command | Result |
 |---|---|
 | `pnpm preflight` | **exit 0**, re-run on the finished tree — 17/17 steps; typecheck 39/39 tasks, eval gate 3/3 |
-| `pnpm check:package` | **exit 0** — `OK (@omnicode/cli (publint), SDK (publint, attw), TUI (publint, attw))` |
+| `pnpm check:package` | **exit 0** — `OK (@hilbras/omnicode (publint), SDK (publint, attw), TUI (publint, attw))` |
 | `pnpm check:cli-artifact` | **exit 0** — `OK (self-contained bundle, reports 1.4.30)` |
 | `pnpm check:guards` | **exit 0** — all 11 steps, including generated freshness |
 | `pnpm lint` | **exit 0** — 70 frozen findings, 0 new |

@@ -2,7 +2,7 @@
 
 ## Supported versions
 
-The published artifact is `@omnicode/cli` (npm). Only the latest release
+The published artifact is `@hilbras/omnicode` (npm). Only the latest release
 receives security fixes; fixes land on the default branch and ship in the next
 release, and there are no backports to older release lines. The workspace
 packages under `packages/` are private and never published — vulnerabilities in

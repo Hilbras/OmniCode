@@ -3,7 +3,7 @@
 This workspace uses [changesets](https://github.com/changesets/changesets) for
 versioning. The policy is pinned in `config.json`:
 
-- `@omnicode/cli` is the only published package (`access: "public"`, matching
+- `@hilbras/omnicode` is the only published package (`access: "public"`, matching
   its `publishConfig`).
 - The private `@hilbras/*` packages are versioned and get changelog entries
   (`privatePackages.version: true`) but are never published or tagged

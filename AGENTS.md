@@ -174,7 +174,7 @@ never tracked). The client wire contract lives in
 tables in `packages/client-contract/src/contract/`; its readable index
 `packages/API/docs/wire-contract.md` comes from `gen:api-reference`. The CLI's
 embedded web asset `apps/omnicode-cli/src/generated/vis-web-asset.ts` comes from
-`pnpm --filter @omnicode/cli gen:vis-asset` (also the `prebuild` step), which runs
+`pnpm --filter @hilbras/omnicode gen:vis-asset` (also the `prebuild` step), which runs
 the vis web single-file build and encodes the result.
 
 Do not hand-edit generated files. A state/manifest generator that prints
@@ -333,8 +333,8 @@ Targeted package checks — preferred while iterating:
 pnpm --filter @hilbras/omnicode-engine typecheck
 pnpm --filter @hilbras/omnicode-engine test
 pnpm --filter @hilbras/omnicode-memory test
-pnpm --filter @omnicode/cli typecheck
-pnpm --filter @omnicode/cli exec vitest run test/tui/path/to/file.test.ts
+pnpm --filter @hilbras/omnicode typecheck
+pnpm --filter @hilbras/omnicode exec vitest run test/tui/path/to/file.test.ts
 ```
 
 Guards — `pnpm check:guards` runs all of these; run one directly while iterating:
@@ -375,7 +375,7 @@ Known command gaps:
   through its own script — the last full-graph run reported CLI `4 421 passed |
   3 skipped`. To iterate without that build, run Vitest directly:
   ```bash
-  pnpm --filter @omnicode/cli exec vitest run test/...
+  pnpm --filter @hilbras/omnicode exec vitest run test/...
   ```
 - `pnpm test` runs the root Turbo graph; prefer targeted package tests unless you are
   validating the whole graph.
@@ -501,8 +501,8 @@ pnpm --filter <affected-package> test
 For a CLI/TUI change, also:
 
 ```bash
-pnpm --filter @omnicode/cli typecheck
-pnpm --filter @omnicode/cli build
+pnpm --filter @hilbras/omnicode typecheck
+pnpm --filter @hilbras/omnicode build
 ```
 
 For a memory change:

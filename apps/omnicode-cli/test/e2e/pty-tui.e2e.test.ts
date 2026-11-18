@@ -8,7 +8,7 @@
  *
  * Gated, because booting the CLI takes tens of seconds and needs a pty:
  *
- *   OMNICODE_E2E=1 pnpm --filter @omnicode/cli exec vitest run test/e2e/pty-tui.e2e.test.ts
+ *   OMNICODE_E2E=1 pnpm --filter @hilbras/omnicode exec vitest run test/e2e/pty-tui.e2e.test.ts
  *
  * It cannot run the built bundle in this workspace: `node dist/main.mjs` fails
  * with `ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX`, because workspace packages export

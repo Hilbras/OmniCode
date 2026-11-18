@@ -142,7 +142,7 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 | P1.2 | `AgentFileReadCacheService` records read/write stats and vetoes a write with `FILE_CHANGED_SINCE_READ` when the file changed after the read; never-read files stay allowed | new suite **4/4** (unchanged, changed, never-read, executor veto) |
 | P1.3 | 48 product skills copied into `apps/omnicode-cli/skills`; `installBundledSkills()` sets `OMNICODE_BUNDLED_SKILLS_DIR` at boot; `skills` added to the package files | CLI test **3/3** (count, env wiring, explicit override) |
 | P1.4 | datasource manifest gained `$schema`/`author`/`license`/`permissions.mcpServers` + LICENSE; webbridge payload and the Telegram plugin/videos were restored from the old tree | catalog test **2/2**, every in-tree source resolves and validates |
-| P1.6 | root `test:coverage`; `release.yml` asserts `npm view @omnicode/cli dist-tags.latest` equals the workspace version after a publish | script present; workflow step added |
+| P1.6 | root `test:coverage`; `release.yml` asserts `npm view @hilbras/omnicode dist-tags.latest` equals the workspace version after a publish | script present; workflow step added |
 
 P1.5 landed as the last Phase 1 item: `--json-schema` validates the final answer with ajv (draft-07 and 2020-12), and `--input-format text|stream-json` reads the prompt from stdin. Verified end to end with the configured model: a schema-constrained run printed `{"name":"Hassan"}` and a stream-json stdin run printed `ok`.
 

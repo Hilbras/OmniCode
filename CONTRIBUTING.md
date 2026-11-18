@@ -47,7 +47,7 @@ Command notes — these are real commands, not gaps:
   baseline in `scripts/oxlint-baseline.json`.
 - `apps/omnicode-cli` `test` and `e2e` build the CLI first (`pnpm -w run
   build:cli`) and then run Vitest. To iterate without the build, run Vitest
-  directly: `pnpm --filter @omnicode/cli exec vitest run test/...`.
+  directly: `pnpm --filter @hilbras/omnicode exec vitest run test/...`.
 - `packages/tui` uses `node --test`, not Vitest, and is outside the root Vitest
   run. `packages/tui/vitest.config.ts` keeps `passWithNoTests` with an empty
   include for exactly that reason; no other package may.

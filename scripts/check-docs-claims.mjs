@@ -61,7 +61,7 @@ if (existsSync('.github/workflows/release.yml') && existsSync('docs/release.md')
   const release = read('docs/release.md');
   for (const phrase of [
     'publish workflow is deliberately not written yet',
-    'Publishing `@omnicode/cli` is currently a manual step',
+    'Publishing `@hilbras/omnicode` is currently a manual step',
   ]) {
     if (release.includes(phrase)) {
       failures.push(`docs/release.md claims publishing is manual while release.yml exists (${phrase})`);

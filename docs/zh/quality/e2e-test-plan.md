@@ -22,8 +22,8 @@ pnpm --filter @hilbras/omnicode-memory exec vitest run test/evaluation.test.ts t
 CLI 端到端测试有环境门禁，不属于默认运行：
 
 ```bash
-OMNICODE_E2E=1 pnpm --filter @omnicode/cli exec vitest run test/e2e
-OMNICODE_E2E_REAL=1 pnpm --filter @omnicode/cli exec vitest run test/e2e/real-llm-smoke.e2e.test.ts
+OMNICODE_E2E=1 pnpm --filter @hilbras/omnicode exec vitest run test/e2e
+OMNICODE_E2E_REAL=1 pnpm --filter @hilbras/omnicode exec vitest run test/e2e/real-llm-smoke.e2e.test.ts
 ```
 
 Provider 测试使用录制的 HTTP cassette。录制需显式开启 `OMNICODE_CASSETTE_RECORD=1`，不得在 CI 中开启。

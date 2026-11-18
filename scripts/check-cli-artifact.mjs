@@ -12,7 +12,7 @@
  *   1. no bare import of a workspace package remains in the bundle;
  *   2. the binary starts and reports the version in its own package.json.
  *
- * Run after `pnpm --filter @omnicode/cli build`.
+ * Run after `pnpm --filter @hilbras/omnicode build`.
  */
 
 import { spawnSync } from 'node:child_process';
@@ -25,7 +25,7 @@ const entry = join(cliRoot, 'dist', 'main.mjs');
 
 if (!existsSync(entry)) {
   process.stderr.write(
-    `CLI artifact check: FAILED — ${entry} is missing. Build it first:\n  pnpm --filter @omnicode/cli build\n`,
+    `CLI artifact check: FAILED — ${entry} is missing. Build it first:\n  pnpm --filter @hilbras/omnicode build\n`,
   );
   process.exit(1);
 }

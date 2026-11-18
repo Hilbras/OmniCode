@@ -3,7 +3,7 @@ import { existsSync } from 'node:fs';
 
 const ENGINE = '@hilbras/omnicode-engine';
 const API = '@hilbras/omnicode-api';
-const CLI = '@omnicode/cli';
+const CLI = '@hilbras/omnicode';
 
 const GENERATED = [
   { package: ENGINE, artifact: 'packages/engine/docs/config-manifest.toml', script: 'gen:config-manifest' },

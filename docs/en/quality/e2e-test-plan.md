@@ -22,8 +22,8 @@ pnpm --filter @hilbras/omnicode-memory exec vitest run test/evaluation.test.ts t
 CLI end-to-end tests are gated and are not part of the default run:
 
 ```bash
-OMNICODE_E2E=1 pnpm --filter @omnicode/cli exec vitest run test/e2e
-OMNICODE_E2E_REAL=1 pnpm --filter @omnicode/cli exec vitest run test/e2e/real-llm-smoke.e2e.test.ts
+OMNICODE_E2E=1 pnpm --filter @hilbras/omnicode exec vitest run test/e2e
+OMNICODE_E2E_REAL=1 pnpm --filter @hilbras/omnicode exec vitest run test/e2e/real-llm-smoke.e2e.test.ts
 ```
 
 Provider tests use recorded HTTP cassettes. Recording is opt-in with `OMNICODE_CASSETTE_RECORD=1` and must not be enabled in CI.

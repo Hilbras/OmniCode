@@ -22,7 +22,7 @@ body:
     id: version
     attributes:
       label: Version or commit
-      description: The @omnicode/cli version you installed, or the commit if running from source.
+      description: The @hilbras/omnicode version you installed, or the commit if running from source.
     validations:
       required: true
   - type: dropdown

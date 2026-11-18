@@ -342,7 +342,7 @@ Validation: `pnpm check:guards`, engine/memory/CLI/Tools/Kaos/channels typecheck
 - Agent docs: `pnpm check:agent-docs`
 - Engine: `pnpm --filter @hilbras/omnicode-engine typecheck` and test
 - Memory: `pnpm --filter @hilbras/omnicode-memory test`
-- CLI: `pnpm --filter @omnicode/cli typecheck` and build
+- CLI: `pnpm --filter @hilbras/omnicode typecheck` and build
 - TUI: `pnpm --filter @hilbras/omnicode-tui` node tests
 
 ## Definition of done

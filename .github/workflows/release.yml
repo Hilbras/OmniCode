@@ -3,7 +3,7 @@ name: Release
 # Two-phase release, gated on the same checks a human runs before shipping:
 #   1. `verify` reuses `release-gate.yml` (guards, typecheck, build, test).
 #   2. `release` runs changesets: it opens/updates the "Version Packages" PR, and
-#      once that PR merges it publishes `@omnicode/cli` and creates the GitHub
+#      once that PR merges it publishes `@hilbras/omnicode` and creates the GitHub
 #      Release. A publish therefore cannot happen while the gate is red.
 #
 # Secrets (never in the repository):
@@ -80,9 +80,9 @@ jobs:
         if: steps.changesets.outputs.published == 'true'
         run: |
           expected=$(node -p "require('./apps/omnicode-cli/package.json').version")
-          published=$(npm view @omnicode/cli dist-tags.latest)
+          published=$(npm view @hilbras/omnicode dist-tags.latest)
           if [ "$published" != "$expected" ]; then
-            echo "::error::npm reports @omnicode/cli@$published but the workspace is at $expected"
+            echo "::error::npm reports @hilbras/omnicode@$published but the workspace is at $expected"
             exit 1
           fi
-          echo "verified @omnicode/cli@$published"
+          echo "verified @hilbras/omnicode@$published"

@@ -404,7 +404,7 @@ Validation: `node scripts/preflight.mjs` passed 19/19, `pnpm check:guards` passe
 - `pnpm --filter @hilbras/omnicode-channels typecheck` and tests
 - `pnpm --filter @hilbras/omnicode-kaos typecheck` and tests
 - `pnpm --filter @hilbras/omnicode-api typecheck` and connectivity test
-- `pnpm --filter @omnicode/cli typecheck`
+- `pnpm --filter @hilbras/omnicode typecheck`
 - `node scripts/preflight.mjs`
 - `pnpm install --frozen-lockfile --offline`
 

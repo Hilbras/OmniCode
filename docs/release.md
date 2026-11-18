@@ -2,11 +2,11 @@
 
 Status: active
 Scope: versioning policy for the workspace; release flow and tooling for
-`@omnicode/cli`. Does not change any package's runtime behavior.
+`@hilbras/omnicode`. Does not change any package's runtime behavior.
 
 ## What is published
 
-`@omnicode/cli` is the only package in the documented publish flow
+`@hilbras/omnicode` is the only package in the documented publish flow
 (`publishConfig.access` is `public`). Every package under `packages/` is private
 and stays in the workspace; their versions exist so `workspace:^` ranges between
 packages stay coherent when the CLI is published.
@@ -34,7 +34,7 @@ resolvable — the top-level `exports` point at `src/`, which `files` deliberate
 excludes. `pnpm publish`/`pnpm pack` apply the override; `npm publish`/`npm pack`
 ignore it, so an npm publish would ship a manifest whose entry point is not in the
 tarball at all. `pnpm check:package` verifies the pnpm path by packing and running
-`attw` on the tarball. `@omnicode/cli` now publishes with `provenance: true`, so a
+`attw` on the tarball. `@hilbras/omnicode` now publishes with `provenance: true`, so a
 local `pnpm publish` is expected to fail: provenance is only available from CI with an
 OIDC token.
 
@@ -81,7 +81,7 @@ The policy is pinned in `.changeset/config.json`:
    listed packages, updates `workspace:^` ranges, and appends to each package's
    `CHANGELOG.md`. The result is committed as a "Version Packages" commit.
 3. Publishing is CI-driven: merging the “Version Packages” PR makes
-   `changesets/action` run `pnpm release`, which publishes `@omnicode/cli` and
+   `changesets/action` run `pnpm release`, which publishes `@hilbras/omnicode` and
    creates the GitHub Release. A local `pnpm publish` is not the supported path
    (provenance requires CI); see “Automation” above.
 

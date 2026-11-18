@@ -20,8 +20,8 @@ Baseline already implemented:
 - All phases below implemented.
 - `pnpm --filter @hilbras/omnicode-memory test` passes.
 - `pnpm --filter @hilbras/omnicode-engine typecheck` passes.
-- `pnpm --filter @omnicode/cli typecheck` passes.
-- `pnpm --filter @omnicode/cli build` passes.
+- `pnpm --filter @hilbras/omnicode typecheck` passes.
+- `pnpm --filter @hilbras/omnicode build` passes.
 - No new retrieval result is returned without provenance and trust.
 
 ## Phase 1 — Result dedup and superseded suppression

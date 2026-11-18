@@ -110,7 +110,7 @@ jobs:
         run: pnpm --filter @hilbras/omnicode-api typecheck
 
       - name: Typecheck CLI
-        run: pnpm --filter @omnicode/cli typecheck
+        run: pnpm --filter @hilbras/omnicode typecheck
 
       - name: Test permission policy
         run: pnpm --filter @hilbras/omnicode-engine exec vitest run test/agent/permissionPolicy
@@ -209,7 +209,7 @@ jobs:
           pnpm --filter @hilbras/omnicode-tui build
           pnpm --filter @hilbras/omnicode-sdk build
           pnpm --filter @hilbras/omnicode-sdk build:dts
-          pnpm --filter @omnicode/cli build
+          pnpm --filter @hilbras/omnicode build
 
       - name: Check package hygiene
         run: pnpm check:package

@@ -21,7 +21,7 @@ not green, and a CI run only counts if it actually ran.
 
 - [ ] `pnpm check:guards`
 - [ ] Affected package typecheck and tests (name the commands and results)
-- [ ] CLI/TUI change: `pnpm --filter @omnicode/cli typecheck` and build
+- [ ] CLI/TUI change: `pnpm --filter @hilbras/omnicode typecheck` and build
 - [ ] Memory change: `pnpm --filter @hilbras/omnicode-memory test` and engine typecheck
 - [ ] Package-graph change: `pnpm check:workspace` and `pnpm check:architecture`
 - [ ] Bug fix or behavior change has a test that fails on the base and passes on the fix
