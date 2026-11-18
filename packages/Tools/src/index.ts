@@ -72,3 +72,5 @@ export * from './patch/patchPath';
 export * from './patch/patchStream';
 
 export * from './patch/patchTool';
+export * from '#/workflow/workflow';
+import '#/workflow/workflowTool';

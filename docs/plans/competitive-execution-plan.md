@@ -110,7 +110,8 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 
 **Phase 2 complete.**
 - [x] P3.1 guardian reviewer auto-mode slice.
-- [ ] P3.2–P3.5.
+- [x] P3.2 workflow tool (read-only DAG over the existing runtime).
+- [ ] P3.3–P3.5.
 
 ## 6. Definition of done
 
@@ -269,3 +270,22 @@ user.
 
 Tests: reviewer suite 45 passing, including auto-mode opt-in, no opt-in, and a
 shell ask that still defers. Documented in the EN/ZH configuration reference.
+
+### P3.2 execution detail
+
+`Workflow` (in `packages/Tools/src/workflow/`) exposes the existing
+`WorkflowRunner` to the model:
+
+- Input is a validated DAG: `{ id, steps: [{ id, tool, args, dependsOn? }] }`;
+  cycles and unknown dependencies are rejected before anything runs.
+- Only read-only tools are allowed (`READ_ONLY_TOOL_NAMES`); any other step is
+  refused by the runner's fail-closed allowlist and the executor is never called.
+- Every allowed step still runs through `IAgentToolExecutorService.execute`, so
+  the normal permission chain and approvals apply; the workflow is not a bypass.
+- Up to three steps run concurrently; the result summarizes ok/failed/refused
+  steps and their output.
+- Added to the `agent` and `coder` profiles, documented in the EN/ZH tool
+  reference and the engine workflow guide.
+
+Tests: 3 (ordered run through the executor, disallowed Bash refused, cycle
+rejected).

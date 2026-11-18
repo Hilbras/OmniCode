@@ -95,6 +95,7 @@ Plan 模式是一种受约束的工作状态：进入后 `Write` 与 `Edit` 只�
 | `AskUserQuestion` | 自动放行 | 向用户提问以获取结构化输入 |
 | `NotifyUser` | 自动放行 | 在轮次进行中向用户展示一条简短的进展更新 |
 | `Skill` | 自动放行 | 调用已注册的 inline Skill |
+| `Workflow` | 需要审批 | 运行按依赖排序的只读工具工作流 |
 
 **`Agent`** 将子任务委托给 subagent 执行。必填参数：`prompt`（完整任务描述）和 `description`（3–5 个词的简短说明）。可选参数：`subagent_type`（默认 `coder`）、`resume`（恢复已有 Agent 的 ID，与 `subagent_type` 互斥）、`run_in_background`（默认 false）和 `model`（在配置 [subagent 模型池](../configuration/config-files.md#subagent-模型池) 后可用——`[secondary_model.models]` 表或仅一行 `default_model`：池中别名，或 `"primary"` 表示调用方自己运行的模型；resume 时无效）。未传入时 subagent 绑定池的 `default_model`；未配置模型池时，subagent 一律继承调用方模型。Agent 任务默认 2 小时超时，可通过 `config.toml` 的 `[subagent] timeout_ms`（`0` = 无超时，或 `OMNICODE_SUBAGENT_TIMEOUT_MS` 环境变量）配置，且在 print 模式（`omnicode -p`）下默认无超时。前台模式下父 Agent 等待 subagent 完成再继续；后台模式立即返回任务 ID，完成时通过合成 User 消息自动回到 main agent。多个前台 `Agent` 调用在同一步运行时，TUI 会合并展示，并为每个 subagent 显示运行、等待、完成或失败状态以及已耗时长。subagent 体系细节见 [Agent 与 subagent](../customization/agents.md)。
 
@@ -111,6 +112,9 @@ Plan 模式是一种受约束的工作状态：进入后 `Write` 与 `Edit` 只�
 整个功能都是默认关闭的实验特性。请在创建 TUI 会话前，通过 `OMNICODE_EXPERIMENTAL_NOTIFY_USER=1`、`config.toml` 中的 `[experimental] notify_user = true` 或 `/experiments` 启用。关闭状态下创建的会话不会提供该工具，也不会包含相关提示词指导。
 
 已有会话的通知工具可用性和提示词保持不变，重新打开会话后也一样。关闭功能会隐藏面板并停用翻页快捷键；已有的 `NotifyUser` 调用仍正常结束，并返回更新未展示的说明。重新开启后，已具有该工具的会话恢复展示；如果会话是在关闭状态下创建的，需要新建会话才能使用 Updates。在 `/experiments` 中仅修改这个开关不会重载会话。
+
+
+**`Workflow`** 运行一个声明式的只读工具 DAG：`{ id, steps: [{ id, tool, args, dependsOn? }] }`。依赖决定顺序，最多三个步骤并行，只允许只读工具（`Read`、`Grep`、`Glob`、`ReadMediaFile`、`TaskList`、`TaskOutput`、`CronList`、`Lsp`、`WorktreeList`、`TaskBoardList`、`TeamList`、`memory_search`）。指定其他工具的步骤会在运行前被拒绝，每个步骤仍然经过正常的权限检查。适合并行展开独立读取，而不必为每次调用消耗一轮模型。
 
 **`Skill`** 允许 Agent 主动调用已注册的 inline 类型 Skill。接受 `skill`（Skill 名称）和可选的 `args`（附加参数文本）。只有 `type = "inline"` 的 Skill 能通过此工具调用；`disableModelInvocation: true` 的 Skill 会被拒绝。嵌套调用深度上限 3 层。Skill 体系细节见 [Agent Skills](../customization/skills.md)。
 

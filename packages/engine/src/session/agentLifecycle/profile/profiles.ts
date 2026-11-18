@@ -69,6 +69,7 @@ const AGENT_TOOLS = [
   'ArtifactRecord',
   'SourceRecord',
   'Team',
+  'Workflow',
 ] as const;
 
 const CODER_TOOLS = [
@@ -117,6 +118,7 @@ const CODER_TOOLS = [
   'ArtifactRecord',
   'SourceRecord',
   'Team',
+  'Workflow',
 ] as const;
 
 const EXPLORE_TOOLS = [

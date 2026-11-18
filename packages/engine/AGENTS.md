@@ -166,7 +166,7 @@ Permission rule arguments accept typed specifiers: `command:` matches the Bash c
 
 ## Workflow runtime
 
-`src/agents/runtime/workflow/` is a pure step-graph runtime, exported through the package entry. `script.ts` parses the declarative script (inert JSON args via `z.json()`, acyclic deps); `runner.ts` executes it through a host-injected `WorkflowStepExecutor` seam with an explicit `maxConcurrentSteps` window, a fail-closed host-provided tool allowlist, and an optional `WorkflowTokenBudget` seam (satisfied by `agent/team/workflowBudget`'s ledger); `journal.ts` owns the seq-contiguous journal, replay, checkpoints, pure stall detection, and fingerprint-checked resume. The runtime never spawns processes, resolves command names, or touches the filesystem itself; no model-visible tool wraps it yet. Tests: `test/agents/workflow/`.
+`src/agents/runtime/workflow/` is a pure step-graph runtime, exported through the package entry. `script.ts` parses the declarative script (inert JSON args via `z.json()`, acyclic deps); `runner.ts` executes it through a host-injected `WorkflowStepExecutor` seam with an explicit `maxConcurrentSteps` window, a fail-closed host-provided tool allowlist, and an optional `WorkflowTokenBudget` seam (satisfied by `agent/team/workflowBudget`'s ledger); `journal.ts` owns the seq-contiguous journal, replay, checkpoints, pure stall detection, and fingerprint-checked resume. The runtime never spawns processes, resolves command names, or touches the filesystem itself. The `Workflow` tool in `packages/Tools` exposes it with a read-only tool allowlist; each step still runs through the normal permission chain, so a workflow cannot approve anything the agent could not. Tests: `test/agents/workflow/`.
 
 ## Skill curator
 
