@@ -878,6 +878,62 @@ describe('AgentPermissionPolicyService git cwd write approval', () => {
     });
   });
 
+  it('asks before Bash reads a sensitive file in auto mode', async () => {
+    mode = 'auto';
+    setUserRequest('show me the environment');
+    await expect(
+      evaluate({
+        toolName: 'Bash',
+        args: { command: 'cat .env' },
+        accesses: [],
+      }),
+    ).resolves.toMatchObject({
+      policyName: 'sensitive-file-access-ask',
+      result: { kind: 'ask' },
+    });
+  });
+
+  it('asks before Bash reads a quoted sensitive path', async () => {
+    mode = 'auto';
+    setUserRequest('show me the key');
+    await expect(
+      evaluate({
+        toolName: 'Bash',
+        args: { command: 'cat "$HOME/.ssh/id_rsa"' },
+        accesses: [],
+      }),
+    ).resolves.toMatchObject({
+      policyName: 'sensitive-file-access-ask',
+      result: { kind: 'ask' },
+    });
+  });
+
+  it('asks before Grep searches a sensitive path', async () => {
+    mode = 'auto';
+    setUserRequest('search my keys');
+    await expect(
+      evaluate({
+        toolName: 'Grep',
+        args: { pattern: 'PRIVATE', path: '~/.ssh/id_ed25519' },
+        accesses: ToolAccesses.searchTree(join(workspaceDir, '.ssh')),
+      }),
+    ).resolves.toMatchObject({
+      policyName: 'sensitive-file-access-ask',
+      result: { kind: 'ask' },
+    });
+  });
+
+  it('does not ask when Bash reads an ordinary file', async () => {
+    mode = 'auto';
+    setUserRequest('show me the readme');
+    const result = await evaluate({
+      toolName: 'Bash',
+      args: { command: 'cat README.md' },
+      accesses: [],
+    });
+    expect(result?.policyName).not.toBe('sensitive-file-access-ask');
+  });
+
   it('asks for workspace writes in auto mode when the user did not ask for an edit', async () => {
     mode = 'auto';
     setUserRequest('what does this repository do?');

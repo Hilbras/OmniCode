@@ -233,6 +233,20 @@ describe('server-v2 /api/v1 model/provider catalog', () => {
     expect(noKey.body.data).not.toHaveProperty('api_key');
   });
 
+  it('hides the stored api_key from a non-loopback caller', async () => {
+    await boot(CATALOG_TOML);
+    const res = await (active as RunningServer).app.inject({
+      method: 'GET',
+      url: '/api/v1/providers/omnicode',
+      headers: { authorization: `Bearer ${(active as RunningServer).authTokenService.getToken()}` },
+      remoteAddress: '10.0.0.5',
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as { data: Record<string, unknown> };
+    expect(body.data).not.toHaveProperty('api_key');
+    expect(body.data['has_api_key']).toBe(true);
+  });
+
   it('sets the global default model and reflects it in /config', async () => {
     await boot(CATALOG_TOML);
     const { body } = await postJson<unknown>('/api/v1/models/turbo:set_default', {});

@@ -616,7 +616,7 @@ export function registerModelCatalogRoutes(app: ModelCatalogRouteHost, core: Sco
         [ErrorCode.PROVIDER_NOT_FOUND]: {},
       },
       description:
-        'Get a configured provider by ID. Unlike the list route, the response reveals the stored `api_key` when one is set, so local clients can prefill an edit form.',
+        'Get a configured provider by ID. The stored `api_key` is revealed only to loopback clients so a local edit form can prefill it; non-loopback callers receive `has_api_key` and no secret.',
       tags: ['providers'],
     },
     async (req, reply) => {
@@ -626,12 +626,11 @@ export function registerModelCatalogRoutes(app: ModelCatalogRouteHost, core: Sco
         const config = await loadConfig(core);
         const stored = config.inspect<ProvidersSection>(PROVIDERS_SECTION).userValue?.[provider_id];
         const apiKey = stored?.apiKey;
-        reply.send(
-          okEnvelope(
-            apiKey !== undefined && apiKey !== '' ? { ...provider, api_key: apiKey } : provider,
-            req.id,
-          ),
-        );
+        const remoteAddress = (req as unknown as { readonly socket?: { readonly remoteAddress?: string } })
+          .socket?.remoteAddress;
+        const reveal =
+          isLoopbackAddress(remoteAddress) && apiKey !== undefined && apiKey !== '';
+        reply.send(okEnvelope(reveal ? { ...provider, api_key: apiKey } : provider, req.id));
       } catch (error) {
         if (sendMappedError(reply, req.id, error)) return;
         throw error;
@@ -915,4 +914,10 @@ async function importCatalogProviderAction(ctx: ProviderCollectionActionCtx): Pr
 
 async function importRegistryProviderAction(ctx: ProviderCollectionActionCtx): Promise<void> {
   await enqueueProviderWrite(() => handleImportRegistry(ctx.req, ctx.reply, ctx.core));
+}
+
+function isLoopbackAddress(address: string | undefined): boolean {
+  if (address === undefined) return false;
+  const value = address.startsWith('::ffff:') ? address.slice(7) : address;
+  return value === '::1' || value.startsWith('127.');
 }
