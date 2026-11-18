@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 
 import { checkMcpEndpoint, isPrivateHost } from '#/mcpCore/endpoint-policy';
-import { createMcpRedirectGuardFetch } from '#/mcpCore/remote-guard';
+import {
+  assertMcpHostnameAllowed,
+  createMcpRedirectGuardFetch,
+  type McpLookupAll,
+} from '#/mcpCore/remote-guard';
 
 describe('checkMcpEndpoint', () => {
   it('accepts an https endpoint on a public host', () => {
@@ -48,6 +52,26 @@ describe('checkMcpEndpoint', () => {
     }
   });
 
+  it('rejects IPv4-mapped IPv6 and unspecified addresses', () => {
+    for (const url of [
+      'https://[::ffff:10.0.0.5]/mcp',
+      'https://[::ffff:169.254.169.254]/mcp',
+      'https://[::ffff:192.168.1.1]/mcp',
+      'https://[::]/mcp',
+      'https://[fc00::1]/mcp',
+      'https://[fe80::abcd]/mcp',
+      'https://0.0.0.0/mcp',
+    ]) {
+      const check = checkMcpEndpoint(url);
+      expect(check.ok).toBe(false);
+      if (!check.ok) expect(check.reason).toContain('allowPrivateNetwork');
+    }
+  });
+
+  it('still accepts an IPv4-mapped loopback address', () => {
+    expect(checkMcpEndpoint('https://[::ffff:127.0.0.1]/mcp').ok).toBe(true);
+  });
+
   it('allows a private destination only when the server opts in', () => {
     const check = checkMcpEndpoint('https://10.0.0.5/mcp', { allowPrivateNetwork: true });
     expect(check.ok).toBe(true);
@@ -69,6 +93,67 @@ describe('isPrivateHost', () => {
     expect(isPrivateHost('10.1.2.3')).toBe(true);
     expect(isPrivateHost('169.254.169.254')).toBe(true);
     expect(isPrivateHost('[fd00::1]')).toBe(true);
+    expect(isPrivateHost('[::ffff:10.1.2.3]')).toBe(true);
+    expect(isPrivateHost('[::ffff:a9fe:a9fe]')).toBe(true);
+    expect(isPrivateHost('0.0.0.0')).toBe(true);
+    expect(isPrivateHost('::')).toBe(true);
+  });
+});
+
+describe('assertMcpHostnameAllowed', () => {
+  const lookupTo =
+    (...addresses: string[]): McpLookupAll =>
+    async () =>
+      addresses.map((address) => ({ address }));
+
+  it('accepts a hostname that resolves to a public address', async () => {
+    await expect(
+      assertMcpHostnameAllowed(
+        new URL('https://mcp.example.com/mcp'),
+        {},
+        lookupTo('93.184.216.34'),
+      ),
+    ).resolves.toBeUndefined();
+  });
+
+  it('rejects a hostname that resolves to a private address', async () => {
+    await expect(
+      assertMcpHostnameAllowed(new URL('https://mcp.example.com'), {}, lookupTo('10.0.0.5')),
+    ).rejects.toThrow(/private or link-local/);
+  });
+
+  it('rejects a hostname that resolves to the metadata endpoint', async () => {
+    await expect(
+      assertMcpHostnameAllowed(
+        new URL('https://metadata.example.com'),
+        {},
+        lookupTo('169.254.169.254'),
+      ),
+    ).rejects.toThrow(/169\.254\.169\.254/);
+  });
+
+  it('skips resolution for an IP literal and when private access is allowed', async () => {
+    let calls = 0;
+    const lookupAll: McpLookupAll = async () => {
+      calls += 1;
+      return [{ address: '10.0.0.5' }];
+    };
+    await assertMcpHostnameAllowed(new URL('https://10.0.0.5/mcp'), {}, lookupAll);
+    await assertMcpHostnameAllowed(
+      new URL('https://mcp.example.com'),
+      { allowPrivateNetwork: true },
+      lookupAll,
+    );
+    expect(calls).toBe(0);
+  });
+
+  it('fails closed when the hostname does not resolve', async () => {
+    const failing: McpLookupAll = async () => {
+      throw new Error('ENOTFOUND');
+    };
+    await expect(
+      assertMcpHostnameAllowed(new URL('https://mcp.example.com'), {}, failing),
+    ).rejects.toThrow(/did not resolve/);
   });
 });
 

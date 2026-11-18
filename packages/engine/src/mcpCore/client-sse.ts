@@ -18,7 +18,11 @@ import {
 } from './client-shared';
 import type { McpServerSseConfig } from './config-schema';
 import { createMcpOAuthFetch } from './oauth/provider';
-import { assertMcpEndpointAllowed, createMcpRedirectGuardFetch } from './remote-guard';
+import {
+  assertMcpEndpointAllowed,
+  assertMcpHostnameAllowed,
+  createMcpRedirectGuardFetch,
+} from './remote-guard';
 import type { MCPClient, MCPToolDefinition, MCPToolResult } from './types';
 
 export interface SseMcpClientOptions {
@@ -45,6 +49,8 @@ export class SseMcpClient implements MCPClient {
   private pendingUnexpectedClose: UnexpectedCloseReason | undefined;
   private unexpectedCloseFired = false;
   private toolsChangedListener: (() => void) | undefined;
+  private readonly endpoint: URL;
+  private readonly allowPrivateNetwork: boolean | undefined;
 
   constructor(config: McpServerSseConfig, options: SseMcpClientOptions = {}) {
     const envLookup = options.envLookup ?? ((name) => process.env[name]);
@@ -53,6 +59,8 @@ export class SseMcpClient implements MCPClient {
       allowPrivateNetwork: config.allowPrivateNetwork,
     });
 
+    this.endpoint = endpoint;
+    this.allowPrivateNetwork = config.allowPrivateNetwork;
     this.transport = new SSEClientTransport(endpoint, {
       requestInit: headers !== undefined ? { headers } : undefined,
       fetch: createMcpRedirectGuardFetch(
@@ -74,6 +82,9 @@ export class SseMcpClient implements MCPClient {
       throw new Error2(ErrorCodes.MCP_STARTUP_FAILED, 'MCP SSE client is closed');
     }
     if (this.started) return;
+    await assertMcpHostnameAllowed(this.endpoint, {
+      allowPrivateNetwork: this.allowPrivateNetwork,
+    });
     this.started = true;
     this.installTransportHooks();
     try {

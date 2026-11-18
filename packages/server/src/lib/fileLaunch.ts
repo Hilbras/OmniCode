@@ -1,11 +1,10 @@
-import { spawn, spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { accessSync, constants, existsSync } from 'node:fs';
 import path from 'node:path';
 
 export interface LaunchCommand {
   readonly command: string;
   readonly args: readonly string[];
-  readonly shell?: boolean;
   readonly windowsVerbatimArguments?: boolean;
 }
 
@@ -17,20 +16,21 @@ export function openFileCommandFor(
 ): LaunchCommand {
   const editor = resolveEditorCommand(env);
   if (editor !== undefined) {
-    const target =
-      supportsLineTarget(editor) && line !== undefined ? `${absolutePath}:${line}` : absolutePath;
-    return {
-      command: `${editor} ${quoteShellArg(target, platform)}`,
-      args: [],
-      shell: true,
-    };
+    const [editorCommand, ...editorArgs] = splitCommandLine(editor);
+    if (editorCommand !== undefined) {
+      const target =
+        supportsLineTarget(editorCommand) && line !== undefined
+          ? `${absolutePath}:${line}`
+          : absolutePath;
+      return launchCommandFor(editorCommand, [...editorArgs, target], platform);
+    }
   }
 
   switch (platform) {
     case 'darwin':
       return { command: 'open', args: [absolutePath] };
     case 'win32':
-      return { command: 'cmd', args: ['/c', 'start', '""', absolutePath] };
+      return powershellCommand(`Invoke-Item -LiteralPath ${psLiteral(absolutePath)}`);
     default:
       return { command: 'xdg-open', args: [absolutePath] };
   }
@@ -114,21 +114,27 @@ function isOpenInAppAvailable(appId: OpenInAppId, platform: NodeJS.Platform): bo
 }
 
 function commandExists(command: string, platform: NodeJS.Platform): boolean {
-  try {
-    if (platform === 'win32') {
-      const result = spawnSync('cmd', ['/c', 'where', command], {
-        stdio: 'ignore',
-      });
-      return result.status === 0;
+  const pathValue = process.env['PATH'];
+  if (pathValue === undefined || pathValue.length === 0) return false;
+  const extensions =
+    platform === 'win32'
+      ? (process.env['PATHEXT'] ?? '.COM;.EXE;.BAT;.CMD').split(';').filter((ext) => ext.length > 0)
+      : [''];
+  for (const directory of pathValue.split(path.delimiter)) {
+    if (directory.length === 0 || !path.isAbsolute(directory)) continue;
+    for (const extension of extensions) {
+      try {
+        accessSync(
+          path.join(directory, `${command}${extension}`),
+          platform === 'win32' ? constants.F_OK : constants.X_OK,
+        );
+        return true;
+      } catch {
+        continue;
+      }
     }
-    const result = spawnSync('command', ['-v', command], {
-      stdio: 'ignore',
-      shell: true,
-    });
-    return result.status === 0;
-  } catch {
-    return false;
   }
+  return false;
 }
 
 function openInVsCodeLike(
@@ -138,12 +144,64 @@ function openInVsCodeLike(
   platform: NodeJS.Platform,
 ): LaunchCommand {
   const target = line !== undefined ? `${absolutePath}:${line}` : absolutePath;
-  const flag = line !== undefined ? '-g ' : '';
+  const args = line !== undefined ? ['-g', target] : [target];
+  return launchCommandFor(binary, args, platform);
+}
+
+function launchCommandFor(
+  command: string,
+  args: readonly string[],
+  platform: NodeJS.Platform,
+): LaunchCommand {
+  if (platform !== 'win32') return { command, args };
+  return powershellCommand(psCall(command, args));
+}
+
+function psLiteral(value: string): string {
+  return `'${value.replaceAll("'", "''")}'`;
+}
+
+function psCall(command: string, args: readonly string[]): string {
+  return ['&', psLiteral(command), ...args.map((arg) => psLiteral(arg))].join(' ');
+}
+
+function powershellCommand(script: string): LaunchCommand {
   return {
-    command: `${binary} ${flag}${quoteShellArg(target, platform)}`,
-    args: [],
-    shell: true,
+    command: 'powershell.exe',
+    args: [
+      '-NoProfile',
+      '-NonInteractive',
+      '-EncodedCommand',
+      Buffer.from(script, 'utf16le').toString('base64'),
+    ],
   };
+}
+
+export function splitCommandLine(value: string): string[] {
+  const parts: string[] = [];
+  let current = '';
+  let quote: '"' | "'" | undefined;
+  for (const char of value) {
+    if (quote !== undefined) {
+      if (char === quote) quote = undefined;
+      else current += char;
+      continue;
+    }
+    if (char === '"' || char === "'") {
+      quote = char;
+      continue;
+    }
+    if (/\s/.test(char)) {
+      if (current.length > 0) {
+        parts.push(current);
+        current = '';
+      }
+      continue;
+    }
+    current += char;
+  }
+  if (current.length > 0) parts.push(current);
+  return parts;
 }
 
 function openInFinder(
@@ -189,7 +247,6 @@ export async function launchDetached(cmd: LaunchCommand): Promise<void> {
     const child = spawn(cmd.command, cmd.args, {
       detached: true,
       stdio: 'ignore',
-      shell: cmd.shell,
       windowsVerbatimArguments: cmd.windowsVerbatimArguments,
     });
     child.once('error', (err) => {
@@ -215,16 +272,10 @@ function resolveEditorCommand(env: Record<string, string | undefined>): string |
 }
 
 function supportsLineTarget(command: string): boolean {
-  const first = command.trim().split(/\s+/)[0] ?? '';
-  return /(?:^|\/)(code|cursor|windsurf)(?:\.cmd|\.exe)?$/i.test(first);
+  return /(?:^|[\\/])(code|cursor|windsurf)(?:\.cmd|\.exe)?$/i.test(command);
 }
 
 function explorerSelectArg(absolutePath: string): string {
   const trimmed = absolutePath.replace(/\\+$/, '');
   return `/select,"${trimmed}"`;
-}
-
-function quoteShellArg(value: string, platform: NodeJS.Platform): string {
-  if (platform === 'win32') return `"${value.replaceAll('"', '\\"')}"`;
-  return `'${value.replaceAll("'", "'\\''")}'`;
 }

@@ -1,8 +1,51 @@
 import { describe, expect, it } from 'vitest';
 
-import { openInAppCommandFor, revealFileCommandFor } from '../src/lib/fileLaunch';
+import {
+  type LaunchCommand,
+  openFileCommandFor,
+  openInAppCommandFor,
+  revealFileCommandFor,
+} from '../src/lib/fileLaunch';
+
+function decodePowerShell(cmd: LaunchCommand): string {
+  const encoded = cmd.args[cmd.args.length - 1] ?? '';
+  return Buffer.from(encoded, 'base64').toString('utf16le');
+}
 
 describe('fileLaunch', () => {
+  describe('win32 launch uses argv, not cmd', () => {
+    it('opens a file through PowerShell with a literal path', () => {
+      const cmd = openFileCommandFor('C:\\ws\\a&b.txt', undefined, {}, 'win32');
+      expect(cmd.command).toBe('powershell.exe');
+      expect(decodePowerShell(cmd)).toBe("Invoke-Item -LiteralPath 'C:\\ws\\a&b.txt'");
+      expect('shell' in cmd).toBe(false);
+    });
+
+    it('keeps an editor path with spaces as one argv token', () => {
+      const cmd = openFileCommandFor(
+        'C:\\ws\\x y.txt',
+        7,
+        { OMNICODE_EDITOR: '"C:\\Program Files\\Code\\code.exe"' },
+        'win32',
+      );
+      expect(cmd.command).toBe('powershell.exe');
+      expect(decodePowerShell(cmd)).toBe(
+        "& 'C:\\Program Files\\Code\\code.exe' 'C:\\ws\\x y.txt:7'",
+      );
+    });
+
+    it('opens VS Code with -g through PowerShell', () => {
+      const cmd = openInAppCommandFor('vscode', 'C:\\ws\\a&b.ts', { line: 3 }, 'win32');
+      expect(cmd.command).toBe('powershell.exe');
+      expect(decodePowerShell(cmd)).toBe("& 'code' '-g' 'C:\\ws\\a&b.ts:3'");
+    });
+
+    it('passes editor arguments as argv on POSIX', () => {
+      const cmd = openFileCommandFor('/ws/a b.txt', 2, { EDITOR: 'code --wait' }, 'linux');
+      expect(cmd).toEqual({ command: 'code', args: ['--wait', '/ws/a b.txt:2'] });
+    });
+  });
+
   describe('win32 explorer /select, quoting', () => {
     it('revealFileCommandFor quotes only the path and uses verbatim arguments', () => {
       const cmd = revealFileCommandFor('C:\\some dir\\sub\\file.txt', 'win32');

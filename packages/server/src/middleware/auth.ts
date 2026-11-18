@@ -21,9 +21,15 @@ export interface AuthHookOptions {
 }
 
 function decodeRequestPath(rawUrl: string): string | null {
-  const path = rawUrl.split('?', 1)[0] ?? rawUrl;
+  if (rawUrl.startsWith('//')) return null;
+  let pathname: string;
   try {
-    return decodeURIComponent(path);
+    pathname = new URL(rawUrl, 'http://localhost').pathname;
+  } catch {
+    return null;
+  }
+  try {
+    return decodeURIComponent(pathname);
   } catch {
     return null;
   }

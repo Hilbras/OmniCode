@@ -562,8 +562,8 @@ describe('McpConnectionManager', () => {
 
   it.each([
     ['stdio', stdioConfig()],
-    ['http', { transport: 'http' as const, url: 'https://example.test/mcp' }],
-    ['sse', { transport: 'sse' as const, url: 'https://example.test/sse' }],
+    ['http', { transport: 'http' as const, url: 'https://127.0.0.1/mcp' }],
+    ['sse', { transport: 'sse' as const, url: 'https://127.0.0.1/sse' }],
   ])(
     'forwards the resolved default startup timeout above the SDK default over %s',
     async (_transport, config) => {
@@ -592,8 +592,8 @@ describe('McpConnectionManager', () => {
 
   it.each([
     ['stdio', stdioConfig()],
-    ['http', { transport: 'http' as const, url: 'https://example.test/mcp' }],
-    ['sse', { transport: 'sse' as const, url: 'https://example.test/sse' }],
+    ['http', { transport: 'http' as const, url: 'https://127.0.0.1/mcp' }],
+    ['sse', { transport: 'sse' as const, url: 'https://127.0.0.1/sse' }],
   ])(
     'forwards per-server startupTimeoutMs above the SDK default over %s',
     async (_transport, config) => {

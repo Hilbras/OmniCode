@@ -18,7 +18,11 @@ import {
 } from './client-shared';
 import type { McpServerHttpConfig } from './config-schema';
 import { createMcpOAuthFetch } from './oauth/provider';
-import { assertMcpEndpointAllowed, createMcpRedirectGuardFetch } from './remote-guard';
+import {
+  assertMcpEndpointAllowed,
+  assertMcpHostnameAllowed,
+  createMcpRedirectGuardFetch,
+} from './remote-guard';
 import type { MCPClient, MCPToolDefinition, MCPToolResult } from './types';
 
 export interface HttpMcpClientOptions {
@@ -44,6 +48,8 @@ export class HttpMcpClient implements MCPClient {
   private lastTransportError: Error | undefined;
   private pendingUnexpectedClose: UnexpectedCloseReason | undefined;
   private unexpectedCloseFired = false;
+  private readonly endpoint: URL;
+  private readonly allowPrivateNetwork: boolean | undefined;
   private toolsChangedListener: (() => void) | undefined;
 
   constructor(config: McpServerHttpConfig, options: HttpMcpClientOptions = {}) {
@@ -53,6 +59,8 @@ export class HttpMcpClient implements MCPClient {
       allowPrivateNetwork: config.allowPrivateNetwork,
     });
 
+    this.endpoint = endpoint;
+    this.allowPrivateNetwork = config.allowPrivateNetwork;
     this.transport = new StreamableHTTPClientTransport(endpoint, {
       requestInit: headers !== undefined ? { headers } : undefined,
       fetch: createMcpRedirectGuardFetch(
@@ -74,6 +82,9 @@ export class HttpMcpClient implements MCPClient {
       throw new Error2(ErrorCodes.MCP_STARTUP_FAILED, 'MCP HTTP client is closed');
     }
     if (this.started) return;
+    await assertMcpHostnameAllowed(this.endpoint, {
+      allowPrivateNetwork: this.allowPrivateNetwork,
+    });
     this.started = true;
     this.installTransportHooks();
     try {

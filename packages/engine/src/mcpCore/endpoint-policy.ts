@@ -17,6 +17,7 @@ function isPrivateIpv4(hostname: string): boolean {
   const b = parts[1];
   if (a === undefined || b === undefined) return false;
   if (a === 127) return false;
+  if (a === 0) return true;
   if (a === 10) return true;
   if (a === 172) return b >= 16 && b <= 31;
   if (a === 192) return b === 168;
@@ -25,17 +26,68 @@ function isPrivateIpv4(hostname: string): boolean {
   return false;
 }
 
+function ipv6Words(hostname: string): number[] | undefined {
+  let value = hostname.toLowerCase();
+  if (value.startsWith('[') && value.endsWith(']')) value = value.slice(1, -1);
+  const zone = value.indexOf('%');
+  if (zone !== -1) value = value.slice(0, zone);
+  if (value.includes('.')) {
+    const lastColon = value.lastIndexOf(':');
+    if (lastColon === -1) return undefined;
+    const octets = value
+      .slice(lastColon + 1)
+      .split('.')
+      .map((part) => Number.parseInt(part, 10));
+    if (
+      octets.length !== 4 ||
+      octets.some((octet) => !Number.isInteger(octet) || octet < 0 || octet > 255)
+    ) {
+      return undefined;
+    }
+    const high = ((octets[0]! << 8) | octets[1]!).toString(16);
+    const low = ((octets[2]! << 8) | octets[3]!).toString(16);
+    value = `${value.slice(0, lastColon + 1)}${high}:${low}`;
+  }
+  const halves = value.split('::');
+  if (halves.length > 2) return undefined;
+  const head = halves[0] === undefined || halves[0] === '' ? [] : halves[0].split(':');
+  const tail =
+    halves.length === 2 ? (halves[1] === undefined || halves[1] === '' ? [] : halves[1].split(':')) : [];
+  if (halves.length === 2 && 8 - head.length - tail.length < 1) return undefined;
+  if (halves.length === 1 && head.length !== 8) return undefined;
+  const missing = Math.max(8 - head.length - tail.length, 0);
+  const words = [...head, ...Array<string>(missing).fill('0'), ...tail].map((part) =>
+    Number.parseInt(part, 16),
+  );
+  if (words.length !== 8) return undefined;
+  if (words.some((word) => !Number.isInteger(word) || word < 0 || word > 0xffff)) return undefined;
+  return words;
+}
+
 function isPrivateIpv6(hostname: string): boolean {
-  const host =
-    hostname.startsWith('[') && hostname.endsWith(']') ? hostname.slice(1, -1) : hostname;
-  const lower = host.toLowerCase();
-  if (lower === '::' || lower === '::1') return true;
-  const head = lower.split(':')[0] ?? '';
-  if (head === '') return false;
-  const group = Number.parseInt(head, 16);
-  if (Number.isNaN(group)) return false;
-  if ((group & 0xfe00) === 0xfc00) return true;
-  return (group & 0xffc0) === 0xfe80;
+  const words = ipv6Words(hostname);
+  if (words === undefined) return false;
+  if (words.every((word) => word === 0)) return true;
+  const isLoopback = words.slice(0, 7).every((word) => word === 0) && words[7] === 1;
+  if (isLoopback) return false;
+  const mapped =
+    words[0] === 0 &&
+    words[1] === 0 &&
+    words[2] === 0 &&
+    words[3] === 0 &&
+    words[4] === 0 &&
+    words[5] === 0xffff;
+  if (mapped) {
+    const a = (words[6]! >> 8) & 0xff;
+    const b = words[6]! & 0xff;
+    const c = (words[7]! >> 8) & 0xff;
+    const d = words[7]! & 0xff;
+    if (a === 127) return false;
+    return isPrivateIpv4(`${String(a)}.${String(b)}.${String(c)}.${String(d)}`);
+  }
+  const first = words[0]!;
+  if ((first & 0xfe00) === 0xfc00) return true;
+  return (first & 0xffc0) === 0xfe80;
 }
 
 export function isLoopbackHost(hostname: string): boolean {

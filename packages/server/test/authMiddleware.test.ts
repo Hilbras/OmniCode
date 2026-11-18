@@ -1,4 +1,5 @@
 import { mkdtemp, rm } from 'node:fs/promises';
+import { createConnection } from 'node:net';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -6,6 +7,20 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { type RunningServer, startServer } from '../src/start';
 import { TEST_HOST_IDENTITY } from './helpers/hostIdentity';
+
+function rawHttpRequest(port: number, request: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const socket = createConnection({ host: '127.0.0.1', port });
+    let data = '';
+    socket.setEncoding('utf8');
+    socket.on('data', (chunk: string) => {
+      data += chunk;
+    });
+    socket.on('end', () => resolve(data));
+    socket.on('error', reject);
+    socket.on('connect', () => socket.write(request));
+  });
+}
 
 describe('server-v2 /api/v1 bearer auth', () => {
   let server: RunningServer | undefined;
@@ -65,5 +80,15 @@ describe('server-v2 /api/v1 bearer auth', () => {
   it('requires auth for /openapi.json', async () => {
     const res = await server!.app.inject({ method: 'GET', url: '/openapi.json' });
     expect(res.statusCode).toBe(401);
+  });
+
+  it('does not let an absolute-form request target bypass auth', async () => {
+    const port = server!.port;
+    const response = await rawHttpRequest(
+      port,
+      `GET http://127.0.0.1:${String(port)}/api/v1/auth HTTP/1.1\r\nHost: 127.0.0.1:${String(port)}\r\nConnection: close\r\n\r\n`,
+    );
+    const statusLine = response.split('\r\n', 1)[0] ?? '';
+    expect(statusLine).toBe('HTTP/1.1 401 Unauthorized');
   });
 });
