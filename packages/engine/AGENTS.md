@@ -161,6 +161,8 @@ one of those shapes (for example a credential-rotation script's own output).
 
 Auto mode now uses `AutoModeClassifierPermissionPolicyService` (`auto-mode-classifier`) instead of blanket auto-approval. Denial tracking state resets on mode change. Dangerous-command and ask-user-question-deny policies remain ahead of the classifier.
 
+Permission rule arguments accept typed specifiers: `command:` matches the Bash command glob, `path:` matches declared file accesses (and is also tried as `**/pattern` so a relative pattern reaches an absolute workspace path), `domain:` matches the host of a URL argument, and `literal:` uses the tool's own matcher. An unsuffixed argument keeps the previous tool-specific behavior, so existing `Bash(rm -rf*)` rules are unchanged.
+
 
 ## Workflow runtime
 

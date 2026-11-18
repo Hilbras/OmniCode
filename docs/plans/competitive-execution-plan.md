@@ -105,7 +105,8 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P2.2 inspector UI (ported, 109 tests).
 - [x] P2.3 user manual + docs navigation (60 pages restored, grouped search index).
 - [x] P2.5 terminal visual regression (PTY → xterm grid snapshot).
-- [ ] P2.1, P2.4.
+- [x] P2.4 typed permission rules (command/path/domain/literal).
+- [ ] P2.1.
 - [ ] P3.1–P3.5.
 
 ## 6. Definition of done
@@ -215,3 +216,19 @@ screen (100x30) and snapshots the settled grid:
 - Added `@xterm/headless` to the CLI devDependencies.
 
 Run with `OMNICODE_E2E=1`. This is opt-in like the rest of the PTY suite.
+
+### P2.4 execution detail
+
+`PermissionRule.pattern` arguments now accept four specifiers, parsed in
+`matchesRule.ts`:
+
+| Specifier | Matches |
+|---|---|
+| `command:` | the Bash command string as a glob |
+| `path:` | any declared file access path (also tried as `**/pattern`) |
+| `domain:` | the host of any `http(s)` URL in the tool arguments |
+| `literal:` | the tool's own `matchesRule` (and the default for an unsuffixed argument) |
+
+Existing rules keep their behavior. Tests cover parsing, command/path/domain
+matches and misses, wildcard tools, and the literal fallback (11 tests). The
+user manual's permission table and examples document the syntax in EN and ZH.

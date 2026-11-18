@@ -548,6 +548,18 @@ pattern = "Bash(rm -rf*)"
 [[permission.rules]]
 decision = "ask"
 pattern = "Bash"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(command:git status*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Edit(path:src/**)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "WebFetch(domain:example.com)"
 ```
 
 ::: tip

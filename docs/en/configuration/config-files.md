@@ -528,7 +528,7 @@ You can also set `dangerous_command_guard = false` under `[permission]` to turn 
 | --- | --- | --- | --- |
 | `decision` | `string` | Yes | Action on match: `allow` (permit immediately), `deny` (reject immediately), `ask` (prompt each time) |
 | `scope` | `string` | No | Rule scope: `turn-override`, `session-runtime`, `project`, `user`; defaults to `user` |
-| `pattern` | `string` | Yes | Match pattern in the form `ToolName` or `ToolName(arg-pattern)`, e.g. `Read` or `Bash(rm -rf*)` |
+| `pattern` | `string` | Yes | Match pattern in the form `ToolName` or `ToolName(arg-pattern)`, e.g. `Read` or `Bash(rm -rf*)`. The argument may carry a typed specifier: `command:` matches the Bash command, `path:` matches declared file accesses, `domain:` matches the host of a URL argument, and `literal:` uses the tool's own matcher (the default for an unsuffixed argument) |
 | `reason` | `string` | No | Rule description for debugging and auditing |
 
 Built-in tool names are listed in [Built-in tools](../reference/tools.md). Most built-in tools that accept rule arguments define their own matching subject, such as `Bash(command-pattern)` or `Read(path-pattern)`. `AgentSwarm`, MCP tools, and custom tools can only be matched by tool name; argument patterns are not supported for them.
@@ -549,6 +549,18 @@ pattern = "Bash(rm -rf*)"
 [[permission.rules]]
 decision = "ask"
 pattern = "Bash"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Bash(command:git status*)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "Edit(path:src/**)"
+
+[[permission.rules]]
+decision = "allow"
+pattern = "WebFetch(domain:example.com)"
 ```
 
 ::: tip

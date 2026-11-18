@@ -45,6 +45,8 @@ function firstMatchingRule(
       rule,
       toolName: context.toolCall.name,
       execution: context.execution,
+      args: context.args,
+      accesses: context.execution.accesses,
     });
     if (match !== undefined) return match;
   }
