@@ -36,6 +36,8 @@ function compose(options: {
   readonly prompt?: string;
   readonly store?: MemoryStorePort;
   readonly autoCapture?: boolean;
+  readonly profile?: boolean;
+  readonly promptRef?: { value?: string };
 }) {
   const harness = createHarness(options.store === undefined ? {} : { store: options.store });
   const registrations: Registration[] = [];
@@ -47,7 +49,7 @@ function compose(options: {
   } as unknown as IAgentReminderService;
 
   const context = {
-    lastUserPrompt: () => options.prompt,
+    lastUserPrompt: () => options.promptRef?.value ?? options.prompt,
     projectId: async () => REPO_A,
     scopeFor: async (tier: 'repository' | 'session' | 'global' | 'workspace') =>
       tier === 'repository'
@@ -61,6 +63,7 @@ function compose(options: {
     enabled: options.enabled ?? true,
     injectCanonical: options.injectCanonical ?? true,
     capture: harness.service.capture.bind(harness.service),
+    list: harness.service.list.bind(harness.service),
     noteAccess: harness.service.noteAccess.bind(harness.service),
     restoreTaskState: (input: MemoryTaskStateInput) => harness.service.restoreTaskState(input),
   } as unknown as IMemoryService;
@@ -72,7 +75,9 @@ function compose(options: {
   } as never;
 
   const flags = {
-    enabled: (id: string) => options.autoCapture === true && id === 'memory_auto_capture',
+    enabled: (id: string) =>
+      (options.autoCapture === true && id === 'memory_auto_capture') ||
+      (options.profile === true && id === 'memory_profile'),
     registry: {} as never,
     snapshot: () => ({}),
     enabledIds: () => [] as never,
@@ -309,5 +314,69 @@ describe('automatic memory injection', () => {
     const injected = await registrations[0]?.provider(freshTurn);
     expect(injected?.content).toContain('Search budget reached');
     expect(injected?.disclosure.truncated).toBe(true);
+  });
+});
+describe('user profile memory', () => {
+  it('registers the profile provider only when its flag is on', () => {
+    const off = compose({});
+    expect(off.registrations.map((entry) => entry.variant)).not.toContain('memory_profile');
+    const on = compose({ profile: true });
+    expect(on.registrations.map((entry) => entry.variant)).toContain('memory_profile');
+  });
+
+  it('captures a stated name and injects it on the next turn without a search', async () => {
+    const promptRef = { value: 'my name is Hassan' };
+    const { registrations } = compose({ profile: true, promptRef });
+    const provider = registrations.find((entry) => entry.variant === 'memory_profile')?.provider;
+
+    const first = await provider?.(freshTurn);
+    expect(first?.content).toContain('my name is Hassan');
+
+    promptRef.value = 'do you know my name?';
+    const next = await provider?.({ ...freshTurn, isNewTurn: false });
+    expect(next?.content).toContain('my name is Hassan');
+    expect(next?.disclosure.variant).toBe('memory_profile');
+  });
+
+  it('replaces the value when the user states a new name', async () => {
+    const promptRef = { value: 'my name is Hassan' };
+    const { registrations } = compose({ profile: true, promptRef });
+    const provider = registrations.find((entry) => entry.variant === 'memory_profile')?.provider;
+
+    await provider?.(freshTurn);
+    promptRef.value = 'call me Sam';
+    await provider?.(freshTurn);
+    promptRef.value = 'what is my name?';
+    const next = await provider?.({ ...freshTurn, isNewTurn: false });
+
+    expect(next?.content).toContain('my name is Sam');
+    expect(next?.content).not.toContain('Hassan');
+  });
+
+  it('never injects a model-authored or secret record', async () => {
+    const { harness, registrations } = compose({ profile: true });
+    await harness.service.capture({
+      content: 'my name is Imposter',
+      tier: 'distilled',
+      category: 'fact',
+      sourceType: 'agent_observation',
+      origin: 'model',
+      scope: globalScope(),
+      subject: 'profile.name',
+    });
+    const provider = registrations.find((entry) => entry.variant === 'memory_profile')?.provider;
+    expect(await provider?.(freshTurn)).toBeUndefined();
+
+    await harness.service.capture({
+      content: 'my name is Secret',
+      tier: 'distilled',
+      category: 'fact',
+      sourceType: 'user_statement',
+      origin: 'user',
+      scope: globalScope(),
+      subject: 'profile.timezone',
+      sensitivity: 'secret',
+    });
+    expect(await provider?.({ ...freshTurn, isNewTurn: false })).toBeUndefined();
   });
 });

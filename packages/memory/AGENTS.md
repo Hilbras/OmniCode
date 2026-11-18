@@ -380,6 +380,17 @@ them. Nothing in core depends on memory, so there is nothing to activate there.
   `keep in mind ...`, `my convention is ...`) and stores them as trusted
   `user_statement` memories. Facts go to the repository scope; preferences go
   to global scope. Normal conversation is not captured.
+- Flag: `OMNICODE_EXPERIMENTAL_MEMORY_PROFILE`, id `memory_profile`, **default
+  on**. Captures explicit profile statements — `my name is …`, `call me …`,
+  `I live in …`, `my timezone is …` — as trusted `user_statement` facts in the
+  global scope under `profile.name` / `profile.location` / `profile.timezone`,
+  then injects up to six trusted profile entries into every turn as a
+  `Known about the user` block. It runs without a `memory_search` call and
+  without prompt-relevance filtering, because the profile is small and always
+  useful. A later statement about the same subject is captured as a
+  `user_correction` and supersedes the earlier value; unverified, confidential,
+  and secret records are never injected. Set
+  `OMNICODE_EXPERIMENTAL_MEMORY_PROFILE=0` to disable the lane.
 - Config `[memory]`: `enabled`, `dir`, `maxContentChars`, `workingTtlMs`,
   `workingGraceMs`, `injectCanonical`, `reviewMaxAttempts`, `reviewBackoffMs`,
   `maxQueuedReviews`. Env: `OMNICODE_MEMORY_ENABLED`, `OMNICODE_MEMORY_DIR`,
@@ -396,7 +407,9 @@ them. Nothing in core depends on memory, so there is nothing to activate there.
   `memory_forget` only invalidates (never deletes) a record whose scope is
   visible to the current session (`isScopeVisible`).
 - Reminder variants `memory_canonical` (canonical tier only, minimum trust
-  `trusted`, auto-inject budget) and `memory_task_restore` (once per session).
+  `trusted`, auto-inject budget), `memory_task_restore` (once per session), and
+  `memory_profile` (trusted `profile.*` facts, no relevance filter, six-entry
+  cap).
 
 ## Adding a package under packages/
 

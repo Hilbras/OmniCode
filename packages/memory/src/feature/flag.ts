@@ -15,6 +15,9 @@ export const MEMORY_AUTO_CAPTURE_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY_AUTO_C
 export const MEMORY_PHRASES_FLAG_ID = 'memory_phrases';
 export const MEMORY_PHRASES_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY_PHRASES';
 
+export const MEMORY_PROFILE_FLAG_ID = 'memory_profile';
+export const MEMORY_PROFILE_FLAG_ENV = 'OMNICODE_EXPERIMENTAL_MEMORY_PROFILE';
+
 export const memoryFlag: FlagDefinitionInput = {
   id: MEMORY_FLAG_ID,
   title: 'Memory',
@@ -55,7 +58,18 @@ export const memoryPhrasesFlag: FlagDefinitionInput = {
   surface: 'both',
 };
 
+export const memoryProfileFlag: FlagDefinitionInput = {
+  id: MEMORY_PROFILE_FLAG_ID,
+  title: 'Memory profile',
+  description:
+    'Capture explicit user profile statements (name, preferred address, location, timezone) as trusted context and inject them into every turn.',
+  env: MEMORY_PROFILE_FLAG_ENV,
+  default: true,
+  surface: 'both',
+};
+
 registerFlagDefinition(memoryFlag);
 registerFlagDefinition(memoryPreferencesFlag);
 registerFlagDefinition(memoryAutoCaptureFlag);
 registerFlagDefinition(memoryPhrasesFlag);
+registerFlagDefinition(memoryProfileFlag);
