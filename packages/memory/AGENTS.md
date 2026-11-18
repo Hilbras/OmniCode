@@ -407,7 +407,15 @@ them. Nothing in core depends on memory, so there is nothing to activate there.
   `off the record`, `forget this turn`, `keep this out of memory`, …) skips both
   the writer and the deterministic profile/preference/auto-capture providers.
   `test/writerCorpus.test.ts` is the 50-turn expectation corpus (save, reject,
-  update, opt-out) and runs in CI and preflight.
+  update, opt-out) and runs in CI and preflight. A proposal whose subject already
+  has a trusted record with the same fact (60% token overlap after stopwords) is
+  skipped, so the writer and the deterministic lane do not create a conflicting
+  duplicate. The writer registers its promise with
+  `trackAuxiliaryWork()`; `-p` and the TUI call `flushAuxiliaryWork()` before
+  disposing the agent, so a one-shot prompt does not exit before the write.
+  The CLI resolves its data home from `OMNICODE_V_HOME` (it sets it from
+  `~/.omnicode-v` and ignores `OMNICODE_HOME`), which matters when testing
+  against an isolated home.
 - Config `[memory]`: `enabled`, `dir`, `maxContentChars`, `workingTtlMs`,
   `workingGraceMs`, `injectCanonical`, `reviewMaxAttempts`, `reviewBackoffMs`,
   `maxQueuedReviews`. Env: `OMNICODE_MEMORY_ENABLED`, `OMNICODE_MEMORY_DIR`,

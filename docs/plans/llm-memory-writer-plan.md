@@ -178,3 +178,32 @@ opt-out unit matrix, and the injection opt-out test.
 
 Final gate after the corpus and opt-out: `pnpm preflight` **exit 0** (17/17,
 typecheck 39/39), `check:guards` exit 0, `lint` exit 0, `check:audit` exit 0.
+
+---
+
+## 9. CLI end-to-end (2026-11-18)
+
+Run against the configured model in an isolated home (`OMNICODE_V_HOME=.tmp/mem-clean`):
+
+| Prompt | Observed |
+|---|---|
+| `my name is Hassan` | assistant greeted Hassan; `profile.name` "my name is Hassan" stored as `trusted` / `user_statement` |
+| `what is my name?` (new process) | injected `Known about the user … my name is Hassan`; answered "Your name is Hassan." |
+
+The first attempt used `OMNICODE_HOME`, which the CLI ignores: `ensureHome` sets
+`OMNICODE_V_HOME` to `~/.omnicode-v`, so that run touched the real store. The
+clean run used `OMNICODE_V_HOME` and started from an empty memory directory.
+
+Two fixes came out of the run:
+
+- **Exit flush:** the writer is tracked as auxiliary work; `-p` waits up to 15 s
+  and the TUI up to 5 s before disposing the agent. Without it, the process could
+  exit before the write.
+- **Duplicate suppression:** the deterministic lane and the writer both captured
+  the name, producing two `profile.name` records and a `conflicting` flag. The
+  writer now skips a save whose subject already has a trusted record with the
+  same fact (60% token overlap after stopwords). Re-running the clean flow leaves
+  exactly one record and no conflict.
+
+Unit coverage: `test/app/auxiliaryWork.test.ts` (wait + empty flush) and the
+writer suite's duplicate test.

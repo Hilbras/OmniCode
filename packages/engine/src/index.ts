@@ -6,6 +6,7 @@ export * from '@hilbras/omnicode-base/di/instantiationService';
 export * from '@hilbras/omnicode-base/di/lifecycle';
 export * from '@hilbras/omnicode-base/di/scope';
 export * from './app/scopes';
+export * from './app/auxiliaryWork';
 export * from '@hilbras/omnicode-base/di/serviceCollection';
 export * from '@hilbras/omnicode-base/di/cascadeEngine';
 export * from '@hilbras/omnicode-base/di/dependencyGraph';

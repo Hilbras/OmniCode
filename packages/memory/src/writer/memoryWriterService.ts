@@ -7,6 +7,7 @@ import { TurnEnded } from '@hilbras/omnicode-engine/agent/loop/turnOps';
 import { IEventBus } from '@hilbras/omnicode-engine/app/event/eventBus';
 import { IFlagService } from '@hilbras/omnicode-engine/app/flag/flag';
 import { IEventDispatcher } from '@hilbras/omnicode-engine/state/eventDispatcher';
+import { trackAuxiliaryWork } from '@hilbras/omnicode-engine/app/auxiliaryWork';
 import { createUserMessage, type Message } from '@hilbras/omnicode-engine/llm-adapter/contract/message';
 
 import { IAgentMemoryContextService } from '#/context/agentMemoryContextService';
@@ -64,7 +65,11 @@ export class AgentMemoryWriterService extends Disposable implements IMemoryWrite
   ) {
     super();
     this.log = log.child({ memory: 'writer' });
-    this._register(eventBus.subscribe(TurnEnded, (event) => void this.handleTurnEnded(event.reason)));
+    this._register(
+      eventBus.subscribe(TurnEnded, (event) => {
+        trackAuxiliaryWork(this.handleTurnEnded(event.reason));
+      }),
+    );
   }
 
   async handleTurnEnded(reason: TurnEnded['reason']): Promise<void> {
@@ -156,9 +161,14 @@ export class AgentMemoryWriterService extends Disposable implements IMemoryWrite
       lifecycle: ['active'],
       limit: 50,
     });
-    const correction = existing.some(
-      (record) => record.subject === operation.subject && TRUST_RANK[record.trust] >= TRUST_RANK.trusted,
+    const trustedSameSubject = existing.filter(
+      (record) =>
+        record.subject === operation.subject && TRUST_RANK[record.trust] >= TRUST_RANK.trusted,
     );
+    if (trustedSameSubject.some((record) => isSameFact(record.content, operation.content))) {
+      return;
+    }
+    const correction = trustedSameSubject.length > 0;
     const scope: MemoryScope = operation.subject.startsWith('profile.')
       ? { tier: 'global' }
       : ((await this.context.scopeFor('repository')) ?? { tier: 'global' });
@@ -205,6 +215,39 @@ function writerMessage(turn: MemoryWriterTurn): Message {
       `Assistant reply:\n${turn.assistantMessage ?? ''}`,
     ].join('\n\n'),
   );
+}
+
+const FACT_STOPWORDS: ReadonlySet<string> = new Set([
+  'a',
+  'an',
+  'the',
+  'is',
+  'are',
+  'my',
+  'your',
+  'user',
+  'users',
+  'i',
+  'am',
+]);
+
+function factTokens(value: string): ReadonlySet<string> {
+  return new Set(
+    value
+      .toLowerCase()
+      .replaceAll(/[^a-z0-9\s]/g, ' ')
+      .split(/\s+/)
+      .filter((token) => token.length > 0 && !FACT_STOPWORDS.has(token)),
+  );
+}
+
+function isSameFact(left: string, right: string): boolean {
+  const a = factTokens(left);
+  const b = factTokens(right);
+  if (a.size === 0 || b.size === 0) return false;
+  let shared = 0;
+  for (const token of a) if (b.has(token)) shared += 1;
+  return shared / Math.max(a.size, b.size) >= 0.6;
 }
 
 function textOf(message: Message): string {

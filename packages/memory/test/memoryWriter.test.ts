@@ -17,7 +17,7 @@ import {
 import { AgentMemoryWriterService } from '#/writer/memoryWriterService';
 import { isMemoryOptOut } from '#/writer/memoryOptOut';
 
-import { createHarness, REPO_A } from './helpers';
+import { createHarness, globalScope, REPO_A } from './helpers';
 
 const SAVE_NAME = {
   operations: [
@@ -183,6 +183,37 @@ describe('AgentMemoryWriterService', () => {
     });
     await service.handleTurnEnded('completed');
     expect(request).not.toHaveBeenCalled();
+  });
+
+  it('does not duplicate a fact the deterministic lane already stored', async () => {
+    const { harness, service } = compose({
+      userMessage: 'my name is Hassan',
+      response: {
+        operations: [
+          {
+            op: 'save',
+            subject: 'profile.name',
+            content: "The user's name is Hassan.",
+            quote: 'my name is Hassan',
+          },
+        ],
+      },
+    });
+    await harness.service.capture({
+      content: 'my name is Hassan',
+      tier: 'distilled',
+      category: 'fact',
+      sourceType: 'user_statement',
+      origin: 'user',
+      scope: globalScope(),
+      subject: 'profile.name',
+    });
+
+    await service.handleTurnEnded('completed');
+
+    const records = await harness.service.list({ scopes: ['global'] });
+    expect(records).toHaveLength(1);
+    expect(records[0]?.content).toBe('my name is Hassan');
   });
 });
 

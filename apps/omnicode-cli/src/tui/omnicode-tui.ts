@@ -4,6 +4,7 @@ import { unlink } from 'node:fs/promises';
 import { join } from 'node:path';
 
 import { effectiveModelAlias, log } from '@hilbras/omnicode-api';
+import { flushAuxiliaryWork } from '@hilbras/omnicode-sdk/core-interop';
 import type {
   ApprovalRequest,
   ApprovalResponse,
@@ -1105,6 +1106,7 @@ export class OmnicodeTUI {
     this.isShuttingDown = true;
     this.unregisterSignalHandlers();
     this.aborted = true;
+    await flushAuxiliaryWork(5000);
     // A Ctrl+C during shutdown means "don't wait for slow hooks": skip the
     // remaining graceful close and get out immediately. Captured at the UI
     // input-listener level so it works no matter which component holds focus

@@ -46,6 +46,7 @@ import {
   bootstrap,
   createCloudAppender,
   ensureMainAgent,
+  flushAuxiliaryWork,
   resumeSessionById,
   logSeed,
   parseAgentFileText,
@@ -637,6 +638,7 @@ async function runNativeTurn(
     writer.finish();
     throw error instanceof Error ? error : new Error(String(error));
   } finally {
+    await flushAuxiliaryWork();
     subscription.dispose();
   }
 }
