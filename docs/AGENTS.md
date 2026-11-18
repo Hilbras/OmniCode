@@ -2,8 +2,8 @@
 
 ## Role
 
-Repository-level architecture notes, upgrade plans, and design decisions that
-span packages. Current contents are sparse and plan-oriented:
+Repository-level documentation: the bilingual user manual, architecture notes,
+quality plans, and design decisions that span packages. Contents:
 
 - `memory-upgrade-plan.md` — memory package upgrade scope and phases
 - `telegram-upgrade-plan.md` — original Telegram connector plan
@@ -18,9 +18,16 @@ span packages. Current contents are sparse and plan-oriented:
   workstream status, English as source of truth
 - `en/quality/` and `zh/quality/` — bilingual E2E test plan and memory recall
   evaluation baseline, English as source of truth
+- `en/{guides,configuration,reference,customization}/` and their `zh/` mirrors —
+  the user manual: install, sessions, interaction, memory, providers, config,
+  slash commands, keyboard, tools, server API, ACP, agents, skills, hooks, MCP,
+  plugins, themes. English is the source of truth; every `zh/` page needs its
+  `en/` source.
+- `en/index.md` / `zh/index.md` — manual landing pages, not generated.
 
-These are working plans and internal design notes, not published user
-documentation or generated API reference.
+The manual is user documentation; the plans, architecture notes, and `AGENTS.md`
+files are working notes. The CLI README stays the short product entry point; the
+manual expands it rather than duplicating it.
 
 Rendering and checking: `pnpm docs:build` renders the reader-facing documents
 (`README.md`, `CONTRIBUTING.md`, `docs/en`, `docs/zh`, `docs/release.md`, the CLI README,
@@ -31,7 +38,7 @@ relative link must resolve, and every `docs/zh/<path>` needs its `docs/en/<path>
 
 Non-goals:
 
-- no CLI/TUI usage guide; product docs live with the CLI app and its README
+- no duplicate of the CLI README; the manual is the long form
 - no per-package implementation detail; use the nearest `AGENTS.md` or package
   README
 - no generated manifests or reference tables that an owning script must produce

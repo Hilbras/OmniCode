@@ -103,7 +103,8 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P1.6 coverage script + post-publish check.
 - [x] P2.6 hook emission audit (guard added).
 - [x] P2.2 inspector UI (ported, 109 tests).
-- [ ] P2.1, P2.3, P2.4, P2.5.
+- [x] P2.3 user manual + docs navigation (60 pages restored, grouped search index).
+- [ ] P2.1, P2.4, P2.5.
 - [ ] P3.1–P3.5.
 
 ## 6. Definition of done
@@ -180,3 +181,21 @@ services it imports all still exist under the current engine paths.
 
 Run it with `pnpm dev:inspect`, point it at a server started with
 `--debug-endpoints` on loopback.
+
+### P2.3 execution detail
+
+- Restored the old user manual into `docs/en` and `docs/zh`: `guides/`,
+  `configuration/`, `reference/`, `customization/` (60 pages total, 33 EN + 27
+  existing/added ZH) plus a real landing page in each language.
+- Restored the referenced `docs/media/` images.
+- Updated the copied pages from the pre-rename home and names: `~/.omnicode` →
+  `~/.omnicode-v`, `OMNICODE_HOME` → `OMNICODE_V_HOME`, `kap-server` →
+  `Omnicode server`, `Kernel/` → `packages/`. Project-level `.omnicode/`
+  directories were left alone.
+- Added the new headless flags (`--input-format`, `--json-schema`) to the EN/ZH
+  CLI reference and corrected its conflict rules.
+- Replaced the VitePress frontmatter-only landing pages with real indexes.
+- The generated docs site now groups pages by directory and has a client-side
+  filter box; `docs:check` validates links and zh→en parity.
+
+Verification: `pnpm docs:check` OK (74 markdown files, 0 problems).

@@ -92,10 +92,10 @@ for (const file of files) {
   }
 }
 
-function page(title, body, depth) {
+function page(title, body, depth, lang = 'en') {
   const prefix = '../'.repeat(depth);
   return `<!doctype html>
-<html lang="en">
+<html lang="${lang}">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${title}</title>
@@ -127,16 +127,29 @@ if (!CHECK_ONLY) {
     mkdirSync(dirname(outPath), { recursive: true });
     const depth = posix.normalize(rel(file)).split('/').length - 1;
     const html = marked.parse(readFileSync(file, 'utf8'), { async: false });
-    writeFileSync(outPath, page(rel(file), html, depth));
+    writeFileSync(outPath, page(rel(file), html, depth, rel(file).startsWith('docs/zh/') ? 'zh' : 'en'));
     written += 1;
   }
-  const nav = files
-    .map((f) => `    <li><a href="${rel(f).replace(/\.md$/, '.html')}">${rel(f)}</a></li>`)
+  const groups = new Map();
+  for (const file of files) {
+    const r = rel(file);
+    const slash = r.lastIndexOf('/');
+    const group = slash === -1 ? '.' : r.slice(0, slash);
+    const entry = groups.get(group) ?? [];
+    entry.push(r);
+    groups.set(group, entry);
+  }
+  const sections = [...groups.entries()]
+    .sort(([left], [right]) => left.localeCompare(right))
+    .map(([group, entries]) => {
+      const items = entries
+        .map((r) => `      <li><a href="${r.replace(/\.md$/, '.html')}">${r}</a></li>`)
+        .join('\n');
+      return `<section data-group="${group}">\n  <h2>${group}</h2>\n  <ul>\n${items}\n  </ul>\n</section>`;
+    })
     .join('\n');
-  writeFileSync(
-    join(OUT, 'index.html'),
-    page('OmniCode docs', `<ul>\n${nav}\n</ul>`, 0),
-  );
+  const body = `<input id="filter" type="search" placeholder="Filter documentation…" aria-label="Filter documentation">\n<div id="groups">\n${sections}\n</div>\n<script>\nconst input = document.getElementById('filter');\ninput.addEventListener('input', () => {\n  const q = input.value.trim().toLowerCase();\n  for (const section of document.querySelectorAll('#groups section')) {\n    let visible = 0;\n    for (const li of section.querySelectorAll('li')) {\n      const match = q === '' || li.textContent.toLowerCase().includes(q);\n      li.hidden = !match;\n      if (match) visible += 1;\n    }\n    section.hidden = visible === 0;\n  }\n});\n</script>`;
+  writeFileSync(join(OUT, 'index.html'), page('OmniCode docs', body, 0));
 }
 
 console.log(`docs: ${files.length} markdown file(s), ${written} page(s) written to docs-site/`);
