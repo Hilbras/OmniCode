@@ -5,7 +5,7 @@ packages:
   - "packages/*"
 
 catalog:
-  zod: 4.3.6
+  zod: 4.6.6
 
 minimumReleaseAgeExclude:
   - '@anthropic-ai/sdk@1.7.0'
@@ -23,4 +23,5 @@ allowBuilds:
   tree-sitter-bash: true
 
 overrides:
-  zod: 4.3.6
+  zod: 4.6.6
+  dompurify: 3.4.18

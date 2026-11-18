@@ -63,6 +63,11 @@ export function describeType(
     const subs = s[combiner];
     if (Array.isArray(subs)) return subs.map((sub) => describeType(sub, quoteString)).join(' | ');
   }
+  if (Array.isArray(s.type)) {
+    return s.type
+      .map((member) => (typeof member === 'string' ? member : 'any'))
+      .join(' | ');
+  }
   if (s.type === 'array') return `${describeType(s.items, quoteString)}[]`;
   if (s.type === 'object') {
     if (isRecord(s.properties)) return 'object';

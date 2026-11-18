@@ -6,7 +6,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -44,7 +46,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": null
       }
@@ -55,7 +60,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -90,7 +97,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -108,7 +118,9 @@
             {
               "type": "number"
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": null
       }
@@ -119,7 +131,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -182,7 +196,10 @@
                 "auto"
               ]
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       }
@@ -197,7 +214,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": null
       },
@@ -206,7 +225,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": null
       },
@@ -215,7 +236,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": null
       },
@@ -224,7 +247,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -262,7 +287,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -274,7 +301,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -290,7 +319,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -318,7 +350,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       }
@@ -425,7 +460,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -526,7 +564,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       }
@@ -537,7 +578,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -579,7 +622,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -608,7 +654,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -639,7 +688,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -664,7 +716,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -713,7 +768,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -850,7 +908,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -896,7 +957,9 @@
             {
               "type": "number"
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -917,13 +980,9 @@
                     "type": "number"
                   },
                   "exitCode": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "number",
+                      "null"
                     ]
                   },
                   "taskId": {
@@ -950,13 +1009,9 @@
                     "type": "number"
                   },
                   "endedAt": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "number",
+                      "null"
                     ]
                   },
                   "stopReason": {
@@ -1025,13 +1080,9 @@
                     "type": "number"
                   },
                   "endedAt": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "number",
+                      "null"
                     ]
                   },
                   "stopReason": {
@@ -1091,13 +1142,9 @@
                     "type": "number"
                   },
                   "endedAt": {
-                    "anyOf": [
-                      {
-                        "type": "number"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "number",
+                      "null"
                     ]
                   },
                   "stopReason": {
@@ -1137,7 +1184,10 @@
             {
               "type": "number"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1156,7 +1206,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": null
       },
@@ -1169,7 +1222,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       }
@@ -1180,7 +1236,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1194,7 +1252,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1293,7 +1353,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": null
       },
@@ -1302,7 +1364,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1331,7 +1395,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1343,7 +1409,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1355,7 +1423,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1367,7 +1437,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1399,7 +1471,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1411,7 +1485,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1423,7 +1499,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1435,7 +1513,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1447,7 +1527,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1459,7 +1541,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1471,7 +1555,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1483,7 +1569,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1501,7 +1589,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1614,7 +1705,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1723,7 +1817,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1837,7 +1933,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1876,7 +1974,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema"
@@ -1887,7 +1988,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1907,7 +2010,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -1926,7 +2032,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": null
       },
@@ -1947,7 +2055,10 @@
                 "memory"
               ]
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 3
         },
         "output": null
       },
@@ -1971,7 +2082,10 @@
                 "memory"
               ]
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": null
       },
@@ -1992,7 +2106,10 @@
                 "memory"
               ]
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 3
         },
         "output": null
       }
@@ -2017,7 +2134,9 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2114,7 +2233,10 @@
               "type": "string",
               "minLength": 1
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -2128,7 +2250,10 @@
               "type": "string",
               "minLength": 1
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2209,7 +2334,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 3,
+          "maxItems": 3
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2260,7 +2388,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2272,7 +2403,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2291,7 +2424,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -2300,7 +2436,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2366,7 +2504,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2386,7 +2526,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2420,7 +2562,10 @@
               "type": "string",
               "minLength": 1
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2522,7 +2667,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2569,7 +2716,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2633,7 +2782,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2694,7 +2845,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -2963,7 +3116,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3306,7 +3462,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3367,7 +3526,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -3395,7 +3557,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -3419,7 +3584,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -3762,7 +3930,9 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4118,7 +4288,9 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4165,7 +4337,9 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4467,7 +4641,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -4810,7 +4987,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": null
       },
@@ -4834,7 +5014,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5129,7 +5312,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5391,7 +5577,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5727,7 +5916,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 3
         },
         "chunk": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5752,7 +5944,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5805,7 +6000,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5855,7 +6052,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5915,7 +6114,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -5981,7 +6183,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -5994,7 +6199,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -6003,7 +6211,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6316,7 +6526,10 @@
               },
               "additionalProperties": {}
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
         },
         "output": null
       }
@@ -6346,7 +6559,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6433,7 +6649,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6469,7 +6687,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": null
       },
@@ -6482,7 +6702,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6508,7 +6730,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6597,7 +6821,9 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6680,7 +6906,9 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6706,7 +6934,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -6803,7 +7033,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7421,7 +7654,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7538,7 +7774,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7578,7 +7816,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7698,7 +7938,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7762,7 +8004,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -7788,7 +8033,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -7818,7 +8066,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       }
@@ -7846,7 +8097,9 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -7924,7 +8177,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -7937,7 +8193,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -7946,7 +8205,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8167,7 +8428,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
         },
         "output": null
       }
@@ -8178,7 +8442,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8253,7 +8519,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
         },
         "output": null
       },
@@ -8262,7 +8531,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8325,7 +8596,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8341,7 +8615,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -8381,7 +8658,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8466,7 +8746,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8487,7 +8770,9 @@
                 "user_tool"
               ]
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8513,13 +8798,9 @@
                   "type": "string"
                 },
                 "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "number"
-                    }
+                  "type": [
+                    "string",
+                    "number"
                   ]
                 }
               },
@@ -8548,7 +8829,10 @@
               "type": "string"
             },
             {}
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
         },
         "output": null
       }
@@ -8563,7 +8847,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -8576,7 +8863,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -8824,7 +9114,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8875,7 +9168,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -8939,13 +9235,9 @@
                     ]
                   },
                   "parentAgentId": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "string",
+                      "null"
                     ]
                   },
                   "forkedFrom": {
@@ -9001,7 +9293,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -9039,7 +9334,10 @@
               ],
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9103,13 +9401,9 @@
                     ]
                   },
                   "parentAgentId": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "string",
+                      "null"
                     ]
                   },
                   "forkedFrom": {
@@ -9394,7 +9688,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": null
       },
@@ -9636,7 +9933,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": null
       }
@@ -9647,7 +9947,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -9711,13 +10013,9 @@
                     ]
                   },
                   "parentAgentId": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "type": "null"
-                      }
+                    "type": [
+                      "string",
+                      "null"
                     ]
                   },
                   "forkedFrom": {
@@ -9788,13 +10086,9 @@
                   ]
                 },
                 "parentAgentId": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "null"
-                    }
+                  "type": [
+                    "string",
+                    "null"
                   ]
                 },
                 "forkedFrom": {
@@ -9815,7 +10109,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
         },
         "output": null
       },
@@ -9828,7 +10125,10 @@
             {
               "type": "boolean"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -9841,7 +10141,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -9906,13 +10209,9 @@
                         ]
                       },
                       "parentAgentId": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "type": "null"
-                          }
+                        "type": [
+                          "string",
+                          "null"
                         ]
                       },
                       "forkedFrom": {
@@ -9952,7 +10251,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       }
@@ -10025,7 +10327,10 @@
                 }
               ]
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
         },
         "output": null
       },
@@ -10038,7 +10343,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -10047,7 +10355,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -10128,7 +10438,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -10209,7 +10521,9 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": null
       }
@@ -10225,7 +10539,9 @@
               "type": "string",
               "minLength": 1
             }
-          ]
+          ],
+          "items": false,
+          "maxItems": 1
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -10300,7 +10616,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -10325,7 +10643,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -10392,7 +10712,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 2
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -10433,7 +10756,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -10446,7 +10772,10 @@
             {
               "type": "string"
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 1,
+          "maxItems": 1
         },
         "output": null
       },
@@ -10455,7 +10784,9 @@
         "input": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
           "type": "array",
-          "prefixItems": []
+          "prefixItems": [],
+          "items": false,
+          "maxItems": 0
         },
         "output": {
           "$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -10508,7 +10839,10 @@
               },
               "additionalProperties": false
             }
-          ]
+          ],
+          "items": false,
+          "minItems": 2,
+          "maxItems": 2
         },
         "output": null
       }
@@ -10849,13 +11183,9 @@
                   "type": "string"
                 },
                 "additionalProperties": {
-                  "anyOf": [
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "number"
-                    }
+                  "type": [
+                    "string",
+                    "number"
                   ]
                 }
               },

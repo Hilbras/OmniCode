@@ -1,0 +1,6 @@
+[
+  {
+    "module": "picomatch",
+    "reason": "ReDoS reachable only from build/test glob tooling (tsdown, vitest, changesets, Expo metro). No patched version was published as of 2026-11-18; remove this entry when one ships."
+  }
+]

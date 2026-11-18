@@ -39,6 +39,11 @@ jobs:
       - name: Run guards
         run: pnpm check:guards
 
+      - name: Audit dependencies
+        # Registry-dependent, so it runs in CI rather than in `check:guards`;
+        # the allowlist is shrink-only and documents every accepted advisory.
+        run: pnpm check:audit
+
   lint:
     name: Lint
     runs-on: ubuntu-latest
