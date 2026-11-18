@@ -101,7 +101,8 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P1.4 plugin payloads + validation.
 - [x] P1.5 `--json-schema` + stream-json input + exit codes.
 - [x] P1.6 coverage script + post-publish check.
-- [ ] P2.1–P2.6.
+- [x] P2.6 hook emission audit (guard added).
+- [ ] P2.1–P2.5.
 - [ ] P3.1–P3.5.
 
 ## 6. Definition of done
@@ -146,3 +147,18 @@ P1.5 landed as the last Phase 1 item: `--json-schema` validates the final answer
 - Tests: stream-input 5, json-schema 6, option conflicts 4.
 - CLI end-to-end: `--json-schema` → `{"name":"Hassan"}` exit 0; stream-json
   stdin → `ok` exit 0.
+
+### P2.6 execution detail
+
+All 20 declared hook events already have a production emitter:
+`PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`,
+`PermissionResult`, `UserPromptSubmit`, `UserPromptQueued`, `TurnStarted`,
+`Stop`, `StopFailure`, `Interrupt`, `SessionStart`, `SessionEnd`,
+`SessionHeartbeat`, `SubagentStart`, `SubagentStop`, `TaskStarted`,
+`PreCompact`, `PostCompact`, `Notification`.
+
+The gap was that nothing stopped a future event from being declared without
+being emitted. `scripts/check-hook-events.mjs` (`pnpm check:hooks`) parses
+`HOOK_EVENT_TYPES` and fails when any event string does not appear in engine
+source. It runs inside `pnpm check:guards`. Verified: `hook event check: OK
+(20 events, all emitted)`.

@@ -32,6 +32,10 @@ Non-goals:
   and `ci.yml step "Test Bash sandbox": ...`). It checks 40 packages and 35 distinct
   paths today, costs a fraction of a second, and is part of `pnpm check:guards`. Run
   `pnpm check:command-paths`.
+- `check-hook-events.mjs` — every event declared in
+  `packages/engine/src/features/externalHooks/internal/types.ts` must appear in
+  engine source, so an event cannot be added to the public hook list without an
+  emitter. Run `pnpm check:hooks`; it is part of `pnpm check:guards`.
 - `check-test-reachability.mjs` — the reverse direction of the above: every test
   file in the workspace must be run by something. Reachable means its workspace
   package has a `test` script (`pnpm test` is `turbo run test`; nothing invokes a root

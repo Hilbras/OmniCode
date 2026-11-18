@@ -26,7 +26,7 @@
     "check:deps": "node scripts/check-deps-consistency.mjs",
     "check:audit": "node scripts/check-audit.mjs",
     "check:skills": "node --test \".agents/skills/*/*.test.cjs\"",
-    "check:guards": "pnpm check:workspace && pnpm check:architecture && pnpm check:deps && pnpm check:docs-claims && pnpm check:agent-docs && pnpm docs:check && pnpm check:generated && pnpm check:tests && pnpm check:command-paths && pnpm check:typecheck && pnpm check:skills",
+    "check:guards": "pnpm check:workspace && pnpm check:architecture && pnpm check:deps && pnpm check:docs-claims && pnpm check:agent-docs && pnpm docs:check && pnpm check:generated && pnpm check:tests && pnpm check:command-paths && pnpm check:hooks && pnpm check:typecheck && pnpm check:skills",
     "preflight": "node scripts/preflight.mjs",
     "check:docs-claims": "node scripts/check-docs-claims.mjs",
     "postinstall": "node scripts/patch-api-extractor.mjs",
@@ -34,7 +34,8 @@
     "release": "changeset publish",
     "release:gate": "node scripts/preflight.mjs",
     "docs:build": "node scripts/build-docs.mjs",
-    "docs:check": "node scripts/build-docs.mjs --check"
+    "docs:check": "node scripts/build-docs.mjs --check",
+    "check:hooks": "node scripts/check-hook-events.mjs"
   },
   "devDependencies": {
     "@arethetypeswrong/cli": "^0.18.5",
