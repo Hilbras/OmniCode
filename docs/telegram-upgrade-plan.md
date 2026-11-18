@@ -24,7 +24,7 @@ Goal: turn the current Telegram connector from config/status-only into a product
 
 ## Data model
 
-`~/.omnicode-v/telegram.json`:
+`~/.omnicode/telegram.json`:
 
 ```json
 {
@@ -50,7 +50,7 @@ Goal: turn the current Telegram connector from config/status-only into a product
 }
 ```
 
-`~/.omnicode-v/telegram-state.json`:
+`~/.omnicode/telegram-state.json`:
 
 ```json
 {

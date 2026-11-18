@@ -20,7 +20,7 @@ Omnicode CLI supports three MCP server connection methods:
 
 MCP server configuration is written in `mcp.json`, at two levels:
 
-- **User level**: `~/.omnicode-v/mcp.json` (or `$OMNICODE_V_HOME/mcp.json`), shared across projects
+- **User level**: `~/.omnicode/mcp.json` (or `$OMNICODE_HOME/mcp.json`), shared across projects
 - **Project level**: `.omnicode/mcp.json` in the working directory, effective only for the current repository
 
 Entries with the same name: the project-level entry takes precedence and overrides the user-level entry.

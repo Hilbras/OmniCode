@@ -1,4 +1,4 @@
-# Contributing to OmniCode-V
+# Contributing to OmniCode
 
 The canonical development rules live in [`AGENTS.md`](AGENTS.md). This file is
 the human-oriented entry point; where the two could drift, `AGENTS.md` and the

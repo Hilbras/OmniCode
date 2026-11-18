@@ -66,11 +66,11 @@ interface ServerLockDisk {
   host_version?: string;
 }
 
-/** Home resolution per request: `OMNICODE_V_HOME`, legacy `OMNICODE_HOME`, else `~/.omnicode-v`. */
+/** Home resolution per request: `OMNICODE_HOME`, legacy `OMNICODE_V_HOME`, else `~/.omnicode`. */
 export function resolveOmnicodeHomeDir(env: NodeJS.ProcessEnv = process.env): string {
-  const fromEnv = env['OMNICODE_V_HOME'] ?? env['OMNICODE_HOME'];
+  const fromEnv = env['OMNICODE_HOME'] ?? env['OMNICODE_V_HOME'];
   if (fromEnv !== undefined && fromEnv.length > 0) return fromEnv;
-  return join(homedir(), '.omnicode-v');
+  return join(homedir(), '.omnicode');
 }
 
 /** `process.kill(pid, 0)` probe — same semantics as the server's registry:

@@ -63,33 +63,33 @@ describe('BootstrapService (scoped)', () => {
 });
 
 describe('resolveBootstrapOptions', () => {
-  it('prefers explicit homeDir, then OMNICODE_V_HOME, then OMNICODE_HOME, then osHomeDir', () => {
+  it('prefers explicit homeDir, then OMNICODE_HOME, then the pre-rename OMNICODE_V_HOME, then osHomeDir', () => {
     expect(
       resolveBootstrapOptions({
         homeDir: '/a',
         osHomeDir: '/b',
-        env: { OMNICODE_V_HOME: '/v' },
+        env: { OMNICODE_HOME: '/v' },
         clientIdentity: stubClientIdentity,
       }).homeDir,
     ).toBe('/a');
     expect(
       resolveBootstrapOptions({
         osHomeDir: '/b',
-        env: { OMNICODE_V_HOME: '/v', OMNICODE_HOME: '/c' },
+        env: { OMNICODE_HOME: '/v', OMNICODE_V_HOME: '/c' },
         clientIdentity: stubClientIdentity,
       }).homeDir,
     ).toBe('/v');
     expect(
       resolveBootstrapOptions({
         osHomeDir: '/b',
-        env: { OMNICODE_HOME: '/c' },
+        env: { OMNICODE_V_HOME: '/c' },
         clientIdentity: stubClientIdentity,
       }).homeDir,
     ).toBe('/c');
     expect(
       resolveBootstrapOptions({ osHomeDir: '/b', env: {}, clientIdentity: stubClientIdentity })
         .homeDir,
-    ).toBe('/b/.omnicode-v');
+    ).toBe('/b/.omnicode');
   });
 
   it('passes through an explicit clientIdentity', () => {

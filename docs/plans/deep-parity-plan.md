@@ -1,7 +1,7 @@
 # Deep Parity Plan
 
 Status: active  
-Owner: OmniCode-V  
+Owner: OmniCode  
 Scope: close the next-layer gaps found against Codex, qwen-code, and the reference OmniCode. Preserve permission-mode labels and existing trust boundaries.
 
 ## Phase 0: Security and runtime composition

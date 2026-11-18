@@ -1,4 +1,4 @@
-# OmniCode-V
+# OmniCode
 
 Read `AGENTS.md` at the repository root, then the nearest `AGENTS.md`.
 

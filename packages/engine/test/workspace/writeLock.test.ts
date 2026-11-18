@@ -125,14 +125,17 @@ describe('workspace write lock', () => {
 });
 
 describe('default workspace lock directory', () => {
-  it('resolves the product home, honours the renamed env var first, and keeps the explicit override', () => {
-    expect(defaultWorkspaceLockDir({})).toBe(join(homedir(), '.omnicode-v', 'locks'));
+  it('resolves the product home, honors OMNICODE_HOME first, accepts the pre-rename var, and keeps the explicit override', () => {
+    expect(defaultWorkspaceLockDir({})).toBe(join(homedir(), '.omnicode', 'locks'));
     expect(defaultWorkspaceLockDir({ OMNICODE_HOME: '/legacy-home' })).toBe(
       join('/legacy-home', 'locks'),
     );
     expect(
-      defaultWorkspaceLockDir({ OMNICODE_V_HOME: '/v-home', OMNICODE_HOME: '/legacy-home' }),
+      defaultWorkspaceLockDir({ OMNICODE_HOME: '/v-home', OMNICODE_V_HOME: '/legacy-home' }),
     ).toBe(join('/v-home', 'locks'));
+    expect(defaultWorkspaceLockDir({ OMNICODE_V_HOME: '/older-home' })).toBe(
+      join('/older-home', 'locks'),
+    );
     expect(defaultWorkspaceLockDir({ OMNICODE_WRITE_LOCK_DIR: '/explicit-locks' })).toBe(
       '/explicit-locks',
     );

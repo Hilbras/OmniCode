@@ -118,7 +118,7 @@ export function promptFeedbackAttachment(
 export function promptApiKey(
   host: SlashCommandHost,
   platformName: string,
-  subtitleLines: readonly string[] = ['Your key will be saved to ~/.omnicode-v/config.toml'],
+  subtitleLines: readonly string[] = ['Your key will be saved to ~/.omnicode/config.toml'],
 ): Promise<string | undefined> {
   return new Promise((resolve) => {
     const dialog = new ApiKeyInputDialogComponent(

@@ -1,4 +1,4 @@
-# OmniCode-V
+# OmniCode
 
 Monorepo for the OmniCode agent runtime and its surfaces. Kernel packages provide
 the engine, tool, permission, session, and provider layers; the CLI and the

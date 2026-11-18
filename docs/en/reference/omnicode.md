@@ -178,7 +178,7 @@ omnicode web --no-open       # don't open the browser
 omnicode web --port 58628    # pick a specific bind port
 ```
 
-Multiple instances can share one home directory: each registers itself under `~/.omnicode-v/server/instances/`, and a busy port is retried with `port + 1` (58628, 58629, …).
+Multiple instances can share one home directory: each registers itself under `~/.omnicode/server/instances/`, and a busy port is retried with `port + 1` (58628, 58629, …).
 
 | Option | Description |
 | --- | --- |
@@ -203,11 +203,11 @@ The `omnicode server` command tree is deprecated: any `omnicode server …` invo
 
 #### `omnicode server kill`
 
-Deprecated — only stops a server started by a version before 0.28.0. Those versions could leave a background server behind, recorded in the legacy single-instance lock at `~/.omnicode-v/server/lock`; the command first tries `POST /api/v1/shutdown` for a graceful exit, then signals the recorded pid with SIGTERM, escalating to SIGKILL when needed, and removes the lock file once the process is confirmed dead. Servers started by `omnicode web` run in the foreground — stop them with `Ctrl+C` instead.
+Deprecated — only stops a server started by a version before 0.28.0. Those versions could leave a background server behind, recorded in the legacy single-instance lock at `~/.omnicode/server/lock`; the command first tries `POST /api/v1/shutdown` for a graceful exit, then signals the recorded pid with SIGTERM, escalating to SIGKILL when needed, and removes the lock file once the process is confirmed dead. Servers started by `omnicode web` run in the foreground — stop them with `Ctrl+C` instead.
 
 #### `omnicode web rotate-token`
 
-Generate a new persistent bearer token (written to `~/.omnicode-v/server.token`); the previous token stops working immediately. The token is shared by the whole home directory, so every running instance picks the new one up on its next auth check — no restart needed.
+Generate a new persistent bearer token (written to `~/.omnicode/server.token`); the previous token stops working immediately. The token is shared by the whole home directory, so every running instance picks the new one up on its next auth check — no restart needed.
 
 ### `omnicode app`
 
@@ -234,7 +234,7 @@ This subcommand has no flags. The former name, `omnicode install-app`, still wor
 
 ### `omnicode doctor`
 
-Validate `config.toml` and `tui.toml` without starting the TUI or modifying either file. By default, the command checks the files under `OMNICODE_V_HOME` (or `~/.omnicode-v` when the environment variable is unset). Missing default files are reported as skipped because built-in defaults can apply.
+Validate `config.toml` and `tui.toml` without starting the TUI or modifying either file. By default, the command checks the files under `OMNICODE_HOME` (or `~/.omnicode` when the environment variable is unset). Missing default files are reported as skipped because built-in defaults can apply.
 
 ```sh
 omnicode doctor
@@ -274,7 +274,7 @@ omnicode export [sessionId] [options]
 | `--yes` | `-y` | Skip the confirmation prompt for the default session and export directly |
 | `--no-include-global-log` | | Do not include the global diagnostic log. Included by default |
 
-The export contains all files in the target session directory. The global diagnostic log (`~/.omnicode-v/logs/omnicode.log`) is included by default because it may contain events from other sessions or projects; add `--no-include-global-log` if you do not want to share it.
+The export contains all files in the target session directory. The global diagnostic log (`~/.omnicode/logs/omnicode.log`) is included by default because it may contain events from other sessions or projects; add `--no-include-global-log` if you do not want to share it.
 
 ```sh
 # Export the most recent session in the current directory, skipping confirmation

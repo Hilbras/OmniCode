@@ -1,4 +1,4 @@
-# OmniCode-V 架构与工作流
+# OmniCode 架构与工作流
 
 状态：active  
 范围：仓库级架构，以及 `docs/plans/qwen-parity-improvement-plan.md` 中七个工作流的实现状态。  

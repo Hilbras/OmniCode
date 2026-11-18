@@ -12,15 +12,17 @@ Omnicode CLI 通过环境变量控制少数运行时行为：迁移数据目录�
 
 ## 核心路径
 
-### `OMNICODE_V_HOME`
+### `OMNICODE_HOME`
 
-覆盖数据根目录，默认 `~/.omnicode-v`。设置后，配置文件、会话、日志、OAuth 凭据等全部数据都落到新路径下：
+覆盖数据根目录，默认 `~/.omnicode`。设置后，配置文件、会话、日志、OAuth 凭据等全部数据都落到新路径下：
 
 ```sh
-export OMNICODE_V_HOME="/path/to/custom/omnicode"
+export OMNICODE_HOME="/path/to/custom/omnicode"
 ```
 
-> 确保目录可写。多个 `omnicode` 实例共用同一个 `OMNICODE_V_HOME` 会共享配置和凭证。
+> 确保目录可写。多个 `omnicode` 实例共用同一个 `OMNICODE_HOME` 会共享配置和凭证。
+>
+> `OMNICODE_V_HOME` 仍作为已弃用的别名被读取，以便旧环境继续工作；新环境请使用 `OMNICODE_HOME`。
 
 数据目录的完整结构见[数据路径](./data-locations.md)。
 
@@ -238,7 +240,7 @@ Omnicode 会遵循标准代理环境变量，让所有出网流量（模型 API 
 ### `OMNICODE_SHELL_SNAPSHOT`
 
 为智能体 shell 命令启用的可选别名快照。设为 `1` 时，Omnicode 在启动时运行一次你的
-shell（`alias -p`），只把 `alias` 行写入 `$OMNICODE_V_HOME/shell-snapshot.sh`
+shell（`alias -p`），只把 `alias` 行写入 `$OMNICODE_HOME/shell-snapshot.sh`
 （权限 `0600`），并作为 `BASH_ENV` 传入，使非交互式 `Bash` 调用能看到你的别名。
 函数、环境变量和其他 rc 文件副作用不会被捕获。捕获失败或为空时该功能不生效。
 默认关闭。
@@ -250,5 +252,5 @@ export OMNICODE_SHELL_SNAPSHOT=1
 ## 下一步
 
 - [配置覆盖](./overrides.md) — 环境变量、CLI 选项、配置文件的优先级关系
-- [数据路径](./data-locations.md) — `OMNICODE_V_HOME` 影响的完整目录结构
+- [数据路径](./data-locations.md) — `OMNICODE_HOME` 影响的完整目录结构
 - [平台与模型](./providers.md) — 各供应商类型的完整接入示例

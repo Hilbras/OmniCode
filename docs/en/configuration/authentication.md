@@ -27,7 +27,7 @@ The full priority rules, including project-level overrides, are in [Config overr
 
 An inline `api_key` is written into `config.toml`, the same file that holds your models and permission settings. The CLI creates it with owner-only permissions (`0600`) inside a `0700` directory, so on a shared machine other users cannot read it — but the value is still plain text, and it travels with every backup of that file.
 
-OAuth tokens are stored separately, as one JSON file per provider under `credentials/` in the data root, also `0600`. The default data root is `~/.omnicode-v`, or whatever `OMNICODE_V_HOME` points at. [Data locations](./data-locations.md#directory-layout) maps the full directory tree.
+OAuth tokens are stored separately, as one JSON file per provider under `credentials/` in the data root, also `0600`. The default data root is `~/.omnicode`, or whatever `OMNICODE_HOME` points at. [Data locations](./data-locations.md#directory-layout) maps the full directory tree.
 
 If you would rather keep a key out of the config file entirely, give the provider an `api_key_env` instead and put the value in your shell profile or a secret manager. That is the recommended shape for shared machines and for CI.
 

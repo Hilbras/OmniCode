@@ -1,4 +1,4 @@
-# OmniCode-V
+# OmniCode
 
 This file is a compatibility pointer. The canonical agent guide is
 [`AGENTS.md`](./AGENTS.md).

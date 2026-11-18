@@ -29,7 +29,7 @@ Session-level coarse status is the one exception to no-push: `src/activity/` hol
 
 ## Dev server
 
-The Vite dev server proxies `/api` to a running server (`OMNICODE_SERVER_URL`, default `http://127.0.0.1:58627`) and exposes `GET /__inspect/servers` (`vite/serverDiscovery.ts`), which scans the local server instance registry (`$OMNICODE_V_HOME` (or `OMNICODE_HOME`, else `~/.omnicode-v`)/server/instances + legacy `lock`) and the home token so the app can zero-config auto-connect and switch servers from the header dropdown at runtime.
+The Vite dev server proxies `/api` to a running server (`OMNICODE_SERVER_URL`, default `http://127.0.0.1:58627`) and exposes `GET /__inspect/servers` (`vite/serverDiscovery.ts`), which scans the local server instance registry (`$OMNICODE_HOME` (or `OMNICODE_V_HOME`, else `~/.omnicode`)/server/instances + legacy `lock`) and the home token so the app can zero-config auto-connect and switch servers from the header dropdown at runtime.
 
 ## Chat view
 

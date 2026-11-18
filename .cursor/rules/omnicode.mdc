@@ -1,5 +1,5 @@
 ---
-description: OmniCode-V repository rules
+description: OmniCode repository rules
 alwaysApply: true
 ---
 Read `AGENTS.md` at the repository root, then the nearest `AGENTS.md` in the

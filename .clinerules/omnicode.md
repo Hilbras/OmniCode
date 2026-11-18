@@ -1,4 +1,4 @@
-# OmniCode-V
+# OmniCode
 
 Canonical instructions: `AGENTS.md` at the repository root.
 

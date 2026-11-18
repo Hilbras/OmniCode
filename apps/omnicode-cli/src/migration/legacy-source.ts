@@ -11,8 +11,8 @@ export function resolveLegacySourceHome(
   home: string,
   cwd: string,
 ): LegacySourceResolution {
-  const defaultHome = join(home, '.omnicode-v-legacy');
-  const shareDir = env['OMNICODE_V_SHARE_DIR'];
+  const defaultHome = join(home, '.omnicode-legacy');
+  const shareDir = env['OMNICODE_SHARE_DIR'] ?? env['OMNICODE_V_SHARE_DIR'];
   if (shareDir === undefined || shareDir.trim() === '') {
     return { sourceHome: defaultHome, origin: 'default' };
   }

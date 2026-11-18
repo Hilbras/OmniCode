@@ -30,7 +30,7 @@ Omnicode CLI 可以使用内置配色，也可以使用自定义 JSON 主题文�
 
 ## 使用 custom-theme skill
 
-你不需要手写 JSON。运行内置的 `/custom-theme [附加文本]` skill 进入自定义主题流程：它会帮你选颜色，把文件写到 `~/.omnicode-v/themes/`，校验十六进制色值，并告诉你如何应用。
+你不需要手写 JSON。运行内置的 `/custom-theme [附加文本]` skill 进入自定义主题流程：它会帮你选颜色，把文件写到 `~/.omnicode/themes/`，校验十六进制色值，并告诉你如何应用。
 
 调用示例：
 
@@ -44,8 +44,8 @@ Omnicode CLI 可以使用内置配色，也可以使用自定义 JSON 主题文�
 
 在主题目录下新建一个 `.json` 文件即可。主题目录是：
 
-- `~/.omnicode-v/themes/`
-- 如果设置了 `OMNICODE_V_HOME` 环境变量，则是 `$OMNICODE_V_HOME/themes/`
+- `~/.omnicode/themes/`
+- 如果设置了 `OMNICODE_HOME` 环境变量，则是 `$OMNICODE_HOME/themes/`
 
 目录不存在就自己建一个。文件名就是主题名：`ember.json` 会在 `/theme` 里显示为 `Custom: ember`。
 
@@ -88,7 +88,7 @@ Omnicode CLI 可以使用内置配色，也可以使用自定义 JSON 主题文�
 2. **[`tui.toml`](../configuration/config-files.md#tuitoml)**：把 `theme` 设成你的主题名：
 
    ```toml
-   # ~/.omnicode-v/tui.toml
+   # ~/.omnicode/tui.toml
    theme = "ember"
    ```
 

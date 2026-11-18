@@ -18,7 +18,7 @@
 OMNICODE_EXPERIMENTAL_MEMORY=0 omnicode
 ```
 
-或在 `$OMNICODE_V_HOME/config.toml` 中关闭：
+或在 `$OMNICODE_HOME/config.toml` 中关闭：
 
 ```toml
 [experimental]
@@ -31,7 +31,7 @@ memory = false
 [memory]
 # 第二个开关，默认开启。它和实验开关必须同时打开。
 enabled = true
-# 存储位置，默认 $OMNICODE_V_HOME/memory。
+# 存储位置，默认 $OMNICODE_HOME/memory。
 dir = "/absolute/path/to/memory"
 # 单条记忆超过这个长度会被拒绝。
 maxContentChars = 4000
@@ -84,7 +84,7 @@ Agent 永远不能自己提升信任等级。它可以保存记忆，但在你�
 
 ## 记忆存放在哪里
 
-存储默认位于 `$OMNICODE_V_HOME/memory/`；可以用 `[memory]` 段的 `dir` 或 `OMNICODE_MEMORY_DIR` 改变位置。同一时间只允许一个进程写入。第二个 Omnicode 实例打开同一个存储时可以正常读取，但会拒绝写入，而不是写坏数据。
+存储默认位于 `$OMNICODE_HOME/memory/`；可以用 `[memory]` 段的 `dir` 或 `OMNICODE_MEMORY_DIR` 改变位置。同一时间只允许一个进程写入。第二个 Omnicode 实例打开同一个存储时可以正常读取，但会拒绝写入，而不是写坏数据。
 
 ## 记忆不做什么
 

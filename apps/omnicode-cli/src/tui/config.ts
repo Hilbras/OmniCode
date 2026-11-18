@@ -16,7 +16,7 @@ import type { MermaidRenderMode } from '#/tui/utils/markdown-options';
 import { getDataDir } from '#/utils/paths';
 
 export const INVALID_TUI_CONFIG_MESSAGE =
-  'Invalid TUI config in ~/.omnicode-v/tui.toml; using defaults.';
+  'Invalid TUI config in ~/.omnicode/tui.toml; using defaults.';
 
 function legacyFullscreenEnvMode(): TuiMode | undefined {
   return process.env['OMNICODE_TUI_FULL_SCREEN'] === '1' ? 'fullscreen' : undefined;
@@ -326,11 +326,11 @@ export function renderTuiConfig(config: TuiConfig): string {
 # items = ${JSON.stringify([...STATUS_LINE_ITEMS])}
 # Or render your own: a command whose first stdout line replaces footer line 1.
 # It receives a JSON snapshot (model, cwd, git, usage, mode) on stdin.
-# command = "~/.omnicode-v/statusline.sh"
+# command = "~/.omnicode/statusline.sh"
 `;
-  return `# ~/.omnicode-v/tui.toml
+  return `# ~/.omnicode/tui.toml
 # Client preferences for omnicode.
-# Agent/runtime settings stay in ~/.omnicode-v/config.toml.
+# Agent/runtime settings stay in ~/.omnicode/config.toml.
 
 theme = "${escapeTomlBasicString(config.theme)}" # "auto" | "dark" | "light" | custom theme name
 ${tuiModeLine}

@@ -331,7 +331,7 @@ async function handleProviderEditKey(
     `Replaces the key currently saved for "${label}".`,
     viaRegistry
       ? 'The registry that declares its models is fetched with the new key.'
-      : 'Your key will be saved to ~/.omnicode-v/config.toml',
+      : 'Your key will be saved to ~/.omnicode/config.toml',
   ]);
   if (apiKey === undefined) {
     reopenProviderManager(host);
@@ -514,7 +514,7 @@ async function handleBuiltinProviderAdd(host: SlashCommandHost, providerId: stri
     ...(builtin.keyHint === undefined ? [] : [`Keys look like ${builtin.keyHint}…`]),
     alreadyConfigured
       ? `Replaces the key currently saved for "${builtin.id}".`
-      : 'Your key will be saved to ~/.omnicode-v/config.toml',
+      : 'Your key will be saved to ~/.omnicode/config.toml',
   ]);
   if (apiKey === undefined) return;
 

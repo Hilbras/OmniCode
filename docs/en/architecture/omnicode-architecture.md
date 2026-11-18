@@ -1,4 +1,4 @@
-# OmniCode-V architecture and workstreams
+# OmniCode architecture and workstreams
 
 Status: active  
 Scope: repository-wide architecture plus the implementation status of the seven workstreams in `docs/plans/qwen-parity-improvement-plan.md`.  

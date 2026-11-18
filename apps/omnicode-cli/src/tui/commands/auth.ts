@@ -127,7 +127,7 @@ async function handleOpenPlatformLogin(
     consoleHost.length > 0 ? `Omnicode Platform (${consoleHost})` : 'Omnicode Platform';
   const subtitleLines = [
     `${'base_url'.padEnd(12)}${platform.baseUrl}`,
-    `${'saved to'.padEnd(12)}~/.omnicode-v/config.toml`,
+    `${'saved to'.padEnd(12)}~/.omnicode/config.toml`,
   ];
   const apiKey = await promptApiKey(host, platformName, subtitleLines);
   if (apiKey === undefined) return;

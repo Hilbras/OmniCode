@@ -1,7 +1,7 @@
 # Production Hardening Plan
 
 Status: complete  
-Owner: OmniCode-V  
+Owner: OmniCode  
 Scope: implement the 20 next-layer improvements identified against qwen-code and the reference OmniCode, without changing permission-mode labels.
 
 ## Non-goals

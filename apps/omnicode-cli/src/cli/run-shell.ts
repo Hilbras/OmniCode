@@ -101,7 +101,7 @@ export async function runShell(
   const sourceIsTarget = sameLegacyPath(legacySource.sourceHome, harness.homeDir);
   if (sourceIsTarget) {
     process.stderr.write(
-      `  OMNICODE_V_SHARE_DIR (${legacySource.sourceHome}) points at this CLI's own home; legacy migration is disabled.\n`,
+      `  OMNICODE_SHARE_DIR (${legacySource.sourceHome}) points at this CLI's own home; legacy migration is disabled.\n`,
     );
   }
   const migrationPlan = sourceIsTarget

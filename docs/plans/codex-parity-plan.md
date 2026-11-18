@@ -1,7 +1,7 @@
 # Codex Parity Plan
 
 Status: complete  
-Owner: OmniCode-V  
+Owner: OmniCode  
 Scope: implement the next-layer improvements identified from the Codex study, keeping permission-mode labels and all existing trust boundaries intact.
 
 ## Constraints

@@ -54,7 +54,7 @@ Network requests only go through `github.com` redirects and `codeload.github.com
 ### Notes
 
 - Plugin changes apply after `/reload` or in new sessions. After installing, enabling/disabling, or removing a plugin, run `/reload` or `/new`; the current session will not update.
-- Local installations are copied to `$OMNICODE_V_HOME/plugins/managed/<id>/`, and the CLI always runs from this managed copy. Editing the original source directory after installation has no effect; you must reinstall.
+- Local installations are copied to `$OMNICODE_HOME/plugins/managed/<id>/`, and the CLI always runs from this managed copy. Editing the original source directory after installation has no effect; you must reinstall.
 - Removing a plugin only deletes the installation record; the managed copy and original source files remain on disk.
 - Plugins are currently installed per-user and apply to all projects; project-level installation scope is not yet supported.
 
@@ -479,7 +479,7 @@ Plugin hooks reuse the same mechanism as global hooks. See [Hooks](./hooks.md) f
 
 - A plugin's hooks are active only while the plugin is **enabled**; disabling the plugin stops its hooks.
 - Each hook runs with its working directory set to the plugin root, so `command` can use `./` paths inside the plugin.
-- The hook process receives two extra environment variables: `OMNICODE_V_HOME` and `OMNICODE_PLUGIN_ROOT` (the plugin root directory).
+- The hook process receives two extra environment variables: `OMNICODE_HOME` and `OMNICODE_PLUGIN_ROOT` (the plugin root directory).
 
 Installing a plugin never runs its hooks by itself. They only fire when their matching event occurs while the plugin is enabled.
 

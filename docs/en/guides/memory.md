@@ -18,7 +18,7 @@ Memory is on unless you turn it off. Turn it off for one run:
 OMNICODE_EXPERIMENTAL_MEMORY=0 omnicode
 ```
 
-Or turn it off in `$OMNICODE_V_HOME/config.toml`:
+Or turn it off in `$OMNICODE_HOME/config.toml`:
 
 ```toml
 [experimental]
@@ -31,7 +31,7 @@ The environment variable wins over the config file, so `OMNICODE_EXPERIMENTAL_ME
 [memory]
 # A second switch, on by default. Both this and the flag must be on.
 enabled = true
-# Where the store lives. Defaults to $OMNICODE_V_HOME/memory.
+# Where the store lives. Defaults to $OMNICODE_HOME/memory.
 dir = "/absolute/path/to/memory"
 # Reject a single memory longer than this.
 maxContentChars = 4000
@@ -84,7 +84,7 @@ The web UI reads the same data through `/api/v1/memory`; see [Server API](../ref
 
 ## Where memories live
 
-The store lives in `$OMNICODE_V_HOME/memory/` by default; set `dir` in the `[memory]` section or `OMNICODE_MEMORY_DIR` to move it. One process writes at a time. If a second Omnicode instance opens the same store, it reads normally and refuses writes instead of corrupting them.
+The store lives in `$OMNICODE_HOME/memory/` by default; set `dir` in the `[memory]` section or `OMNICODE_MEMORY_DIR` to move it. One process writes at a time. If a second Omnicode instance opens the same store, it reads normally and refuses writes instead of corrupting them.
 
 ## What memory does not do
 

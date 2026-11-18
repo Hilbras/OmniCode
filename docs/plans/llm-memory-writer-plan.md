@@ -183,7 +183,7 @@ typecheck 39/39), `check:guards` exit 0, `lint` exit 0, `check:audit` exit 0.
 
 ## 9. CLI end-to-end (2026-11-18)
 
-Run against the configured model in an isolated home (`OMNICODE_V_HOME=.tmp/mem-clean`):
+Run against the configured model in an isolated home (`OMNICODE_HOME=.tmp/mem-clean`):
 
 | Prompt | Observed |
 |---|---|
@@ -191,8 +191,8 @@ Run against the configured model in an isolated home (`OMNICODE_V_HOME=.tmp/mem-
 | `what is my name?` (new process) | injected `Known about the user … my name is Hassan`; answered "Your name is Hassan." |
 
 The first attempt used `OMNICODE_HOME`, which the CLI ignores: `ensureHome` sets
-`OMNICODE_V_HOME` to `~/.omnicode-v`, so that run touched the real store. The
-clean run used `OMNICODE_V_HOME` and started from an empty memory directory.
+`OMNICODE_HOME` to `~/.omnicode`, so that run touched the real store. The
+clean run used `OMNICODE_HOME` and started from an empty memory directory.
 
 Two fixes came out of the run:
 

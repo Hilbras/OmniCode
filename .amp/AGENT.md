@@ -1,4 +1,4 @@
-# OmniCode-V
+# OmniCode
 
 Canonical agent guide: [`../AGENTS.md`](../AGENTS.md).
 

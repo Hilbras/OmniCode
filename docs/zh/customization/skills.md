@@ -87,10 +87,10 @@ arguments:
 Omnicode CLI 按作用域分四档扫描，越具体的作用域优先级越高：**Project > User > Extra > Built-in**。
 
 **用户级**（对所有项目生效）：
-- `$OMNICODE_V_HOME/skills/`（默认：`~/.omnicode-v/skills/`）
+- `$OMNICODE_HOME/skills/`（默认：`~/.omnicode/skills/`）
 - `~/.agents/skills/`
 
-Omnicode 专属用户级 Skill 目录会随 `OMNICODE_V_HOME` 移动，隔离数据根时也会隔离 Omnicode 专属 Skills。通用 `~/.agents/skills/` 目录仍放在真实 OS home 下，以便跨工具共享。
+Omnicode 专属用户级 Skill 目录会随 `OMNICODE_HOME` 移动，隔离数据根时也会隔离 Omnicode 专属 Skills。通用 `~/.agents/skills/` 目录仍放在真实 OS home 下，以便跨工具共享。
 
 **项目级**（项目根 = 工作目录向上最近的含 `.git` 的目录）：
 - `.omnicode/skills/`
@@ -143,7 +143,7 @@ arguments:
    - 值得肯定的地方
 ```
 
-将文件保存为 `$OMNICODE_V_HOME/skills/review-pr/SKILL.md`，未设置 `OMNICODE_V_HOME` 时为 `~/.omnicode-v/skills/review-pr/SKILL.md`。检查清单放在同目录的 `references/checklist.md`。重开会话后即可调用，例如 `/skill:review-pr #1234`，其中的参数会展开到 `$pr_ref`。
+将文件保存为 `$OMNICODE_HOME/skills/review-pr/SKILL.md`，未设置 `OMNICODE_HOME` 时为 `~/.omnicode/skills/review-pr/SKILL.md`。检查清单放在同目录的 `references/checklist.md`。重开会话后即可调用，例如 `/skill:review-pr #1234`，其中的参数会展开到 `$pr_ref`。
 
 ## 下一步
 

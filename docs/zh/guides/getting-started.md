@@ -93,7 +93,7 @@ omnicode -c
 需要退出登录时，输入 `/logout` 清除当前凭证。
 
 ::: tip 使用其他 AI 供应商
-如果你想接入 Anthropic、OpenAI、Google 等其他供应商，需要直接编辑 `~/.omnicode-v/config.toml` 配置 API 密钥，详见[平台与模型](../configuration/providers.md)。配置项完整说明见[配置文件](../configuration/config-files.md)、[环境变量](../configuration/env-vars.md)和[配置覆盖](../configuration/overrides.md)。
+如果你想接入 Anthropic、OpenAI、Google 等其他供应商，需要直接编辑 `~/.omnicode/config.toml` 配置 API 密钥，详见[平台与模型](../configuration/providers.md)。配置项完整说明见[配置文件](../configuration/config-files.md)、[环境变量](../configuration/env-vars.md)和[配置覆盖](../configuration/overrides.md)。
 :::
 
 ## 第一个对话
@@ -146,7 +146,7 @@ Omnicode CLI 会规划步骤、修改代码、运行测试，并在每一步告�
 
 ## 数据存放在哪里
 
-Omnicode CLI 的本地数据默认保存在 `~/.omnicode-v/` 下，包含配置文件、会话记录、日志和更新缓存。如需迁移到别处，通过 `OMNICODE_V_HOME` 环境变量指定新路径。完整说明见[数据路径](../configuration/data-locations.md)和[环境变量](../configuration/env-vars.md)。
+Omnicode CLI 的本地数据默认保存在 `~/.omnicode/` 下，包含配置文件、会话记录、日志和更新缓存。如需迁移到别处，通过 `OMNICODE_HOME` 环境变量指定新路径。完整说明见[数据路径](../configuration/data-locations.md)和[环境变量](../configuration/env-vars.md)。
 
 ## 升级与卸载
 

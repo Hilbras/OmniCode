@@ -1,4 +1,4 @@
-# OmniCode-V — Agent Guide
+# OmniCode — Agent Guide
 
 Hot path only. Read the nearest `AGENTS.md` for package detail before editing.
 Deep architecture belongs in package guides and `docs/`, not here.

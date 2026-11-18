@@ -47,8 +47,8 @@ export const HEADLESS_STDIO_DRAIN_TIMEOUT_MS = 10000;
 export const NPM_PACKAGE_NAME = '@hilbras/omnicode';
 
 // App-owned data paths. SDK/core runtime config is intentionally not routed here.
-export const OMNICODE_HOME_ENV = 'OMNICODE_V_HOME';
-export const OMNICODE_DATA_DIR_NAME = '.omnicode-v';
+export const OMNICODE_HOME_ENV = 'OMNICODE_HOME';
+export const OMNICODE_DATA_DIR_NAME = '.omnicode';
 export const OMNICODE_LOG_DIR_NAME = 'logs';
 export const OMNICODE_CACHE_DIR_NAME = 'cache';
 export const OMNICODE_UPDATE_DIR_NAME = 'updates';

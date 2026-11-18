@@ -19,7 +19,7 @@ export { loadCustomTheme, loadCustomThemeMerged, listCustomThemes } from './cust
  * `'auto'` defers to terminal background detection at startup.
  * `'dark'` / `'light'` are explicit built-in overrides.
  * Any other string is treated as a custom theme name looked up in
- * `~/.omnicode-v/themes/<name>.json`.
+ * `~/.omnicode/themes/<name>.json`.
  */
 export type BuiltInTheme = 'dark' | 'light' | 'auto';
 export type ThemeName = BuiltInTheme | (string & {});
@@ -37,7 +37,7 @@ export function isThemeName(_value: string): _value is ThemeName {
  *
  * - `'auto'` triggers terminal background detection.
  * - `'dark'` / `'light'` return the built-in palette.
- * - Any other string loads a custom theme from `~/.omnicode-v/themes/`;
+ * - Any other string loads a custom theme from `~/.omnicode/themes/`;
  *   missing / invalid files fall back to dark palette.
  */
 export async function getColorPalette(theme: ThemeName): Promise<ColorPalette> {

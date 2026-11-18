@@ -1,4 +1,4 @@
-# OmniCode-V
+# OmniCode
 
 @AGENTS.md
 

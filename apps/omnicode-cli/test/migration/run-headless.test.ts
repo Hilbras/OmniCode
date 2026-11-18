@@ -27,7 +27,7 @@ afterEach(async () => {
 });
 
 function sourceHome(): string {
-  return join(home, '.omnicode-v-legacy');
+  return join(home, '.omnicode-legacy');
 }
 
 async function writeLegacyConfig(): Promise<void> {
@@ -133,7 +133,7 @@ describe('runHeadlessMigrate', () => {
     ).rejects.toThrow();
   });
 
-  it('honors OMNICODE_V_SHARE_DIR as the source and keeps skills on the default home', async () => {
+  it('honors OMNICODE_SHARE_DIR as the source and keeps skills on the default home', async () => {
     const shareDir = join(home, 'share');
     await mkdir(join(shareDir), { recursive: true });
     await writeFile(join(shareDir, 'config.toml'), 'default_thinking = true\n', 'utf-8');
@@ -141,11 +141,11 @@ describe('runHeadlessMigrate', () => {
     await writeFile(join(sourceHome(), 'skills', 'mine', 'SKILL.md'), '# skill', 'utf-8');
     const code = await runHeadlessMigrate(
       { configOnly: false },
-      { env: { OMNICODE_V_SHARE_DIR: shareDir }, userHome: home, targetHome: target, write },
+      { env: { OMNICODE_SHARE_DIR: shareDir }, userHome: home, targetHome: target, write },
     );
     expect(code).toBe(MIGRATE_HEADLESS_EXIT.success);
     const out = lines.join('\n');
-    expect(out).toContain(`source: ${shareDir} (OMNICODE_V_SHARE_DIR)`);
+    expect(out).toContain(`source: ${shareDir} (OMNICODE_SHARE_DIR)`);
     expect(out).toContain('skills: copied=1');
     const report = JSON.parse(await readFile(join(target, 'migration-report.json'), 'utf-8'));
     expect(report.summary.config.migrated).toBe(true);

@@ -74,9 +74,9 @@ describe('omnicode acp', () => {
     expect(exitSpy).toHaveBeenCalledWith(0);
   });
 
-  it('forwards OMNICODE_V_HOME to terminalAuthEnv and homeDir when set', async () => {
-    const previous = process.env['OMNICODE_V_HOME'];
-    process.env['OMNICODE_V_HOME'] = '/tmp/omnicode-debug';
+  it('forwards OMNICODE_HOME to terminalAuthEnv and homeDir when set', async () => {
+    const previous = process.env['OMNICODE_HOME'];
+    process.env['OMNICODE_HOME'] = '/tmp/omnicode-debug';
     try {
       const program = new Command('omnicode').exitOverride();
       registerAcpCommand(program);
@@ -87,21 +87,21 @@ describe('omnicode acp', () => {
       expect(optsArg).toEqual(
         expect.objectContaining({
           homeDir: '/tmp/omnicode-debug',
-          terminalAuthEnv: { OMNICODE_V_HOME: '/tmp/omnicode-debug' },
+          terminalAuthEnv: { OMNICODE_HOME: '/tmp/omnicode-debug' },
         }),
       );
     } finally {
       if (previous === undefined) {
-        delete process.env['OMNICODE_V_HOME'];
+        delete process.env['OMNICODE_HOME'];
       } else {
-        process.env['OMNICODE_V_HOME'] = previous;
+        process.env['OMNICODE_HOME'] = previous;
       }
     }
   });
 
-  it('omits terminalAuthEnv when OMNICODE_V_HOME is unset', async () => {
-    const previous = process.env['OMNICODE_V_HOME'];
-    delete process.env['OMNICODE_V_HOME'];
+  it('omits terminalAuthEnv when OMNICODE_HOME is unset', async () => {
+    const previous = process.env['OMNICODE_HOME'];
+    delete process.env['OMNICODE_HOME'];
     try {
       const program = new Command('omnicode').exitOverride();
       registerAcpCommand(program);
@@ -112,7 +112,7 @@ describe('omnicode acp', () => {
       expect(optsArg.terminalAuthEnv).toBeUndefined();
     } finally {
       if (previous !== undefined) {
-        process.env['OMNICODE_V_HOME'] = previous;
+        process.env['OMNICODE_HOME'] = previous;
       }
     }
   });

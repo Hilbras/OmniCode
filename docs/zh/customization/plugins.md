@@ -54,7 +54,7 @@ Plugins 把可复用的 Omnicode CLI 能力打包成可安装单元：可以添�
 ### 注意事项
 
 - 安装、启用/禁用、移除 plugin 后，当前会话不会更新，运行 `/reload` 或 `/new` 后生效。
-- 本地安装会被拷贝到 `$OMNICODE_V_HOME/plugins/managed/<id>/`，CLI 始终从这份托管副本运行。安装后编辑原始源目录不会生效，需重新安装。
+- 本地安装会被拷贝到 `$OMNICODE_HOME/plugins/managed/<id>/`，CLI 始终从这份托管副本运行。安装后编辑原始源目录不会生效，需重新安装。
 - 移除 plugin 只会删除安装记录，托管副本和原始源文件仍保留在磁盘上。
 - Plugin 目前按用户安装，对所有项目生效，暂不支持项目级安装范围。
 
@@ -478,7 +478,7 @@ plugin hooks 复用与全局 hooks 相同的机制。事件列表、stdin JSON �
 
 - plugin 的 hooks 仅在 plugin **启用**期间生效；禁用 plugin 后其 hooks 停止运行。
 - 每条 hook 的工作目录为 plugin 根目录，`command` 可以使用 plugin 内的 `./` 路径。
-- hook 进程会额外收到两个环境变量：`OMNICODE_V_HOME` 和 `OMNICODE_PLUGIN_ROOT`（plugin 根目录）。
+- hook 进程会额外收到两个环境变量：`OMNICODE_HOME` 和 `OMNICODE_PLUGIN_ROOT`（plugin 根目录）。
 
 仅安装 plugin 本身不会运行其 hooks；它们只在 plugin 启用期间、匹配的事件触发时运行。
 

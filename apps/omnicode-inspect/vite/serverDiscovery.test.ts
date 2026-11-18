@@ -130,9 +130,11 @@ describe('discoverLocalServers', () => {
 });
 
 describe('resolveOmnicodeHomeDir', () => {
-  it('honors OMNICODE_V_HOME then OMNICODE_HOME, else falls back to ~/.omnicode-v', () => {
-    expect(resolveOmnicodeHomeDir({ OMNICODE_V_HOME: '/tmp/vh', OMNICODE_HOME: '/tmp/kh' })).toBe('/tmp/vh');
-    expect(resolveOmnicodeHomeDir({ OMNICODE_HOME: '/tmp/kh' })).toBe('/tmp/kh');
-    expect(resolveOmnicodeHomeDir({})).toBe(join(process.env['HOME'] ?? '', '.omnicode-v'));
+  it('honors OMNICODE_HOME, then the pre-rename OMNICODE_V_HOME, else falls back to ~/.omnicode', () => {
+    expect(
+      resolveOmnicodeHomeDir({ OMNICODE_HOME: '/tmp/vh', OMNICODE_V_HOME: '/tmp/kh' }),
+    ).toBe('/tmp/vh');
+    expect(resolveOmnicodeHomeDir({ OMNICODE_V_HOME: '/tmp/kh' })).toBe('/tmp/kh');
+    expect(resolveOmnicodeHomeDir({})).toBe(join(process.env['HOME'] ?? '', '.omnicode'));
   });
 });

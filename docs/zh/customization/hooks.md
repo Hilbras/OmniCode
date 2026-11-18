@@ -28,7 +28,7 @@ Hooks（钩子）是一种自动触发机制：你预先告诉 Omnicode CLI"每�
 下面这条 hook 会在每次后台任务完成时，在终端标题栏闪一下通知（macOS 需要安装 `terminal-notifier`）：
 
 ```toml
-# 写在 ~/.omnicode-v/config.toml 里
+# 写在 ~/.omnicode/config.toml 里
 [[hooks]]
 event = "Notification"           # 触发时机：后台任务状态变化时
 matcher = "task\\.completed"     # 只关心"已完成"的通知
@@ -39,7 +39,7 @@ command = "terminal-notifier -title Omnicode -message 'Task done'"
 
 ## 配置
 
-所有 hook 规则写在 `~/.omnicode-v/config.toml` 的 `[[hooks]]` 数组里：
+所有 hook 规则写在 `~/.omnicode/config.toml` 的 `[[hooks]]` 数组里：
 
 | 字段 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- |
@@ -153,7 +153,7 @@ Hook 命令的工作目录默认是当前会话的项目目录；用 `cwd` 字�
 [[hooks]]
 event = "PreToolUse"
 matcher = "Bash"
-command = "node ~/.omnicode-v/hooks/block-dangerous-bash.mjs"
+command = "node ~/.omnicode/hooks/block-dangerous-bash.mjs"
 timeout = 5
 ```
 

@@ -37,7 +37,7 @@ let dir: string;
 
 beforeEach(() => {
   dir = mkdtempSync(join(tmpdir(), 'omnicode-update-install-lock-'));
-  process.env['OMNICODE_V_HOME'] = dir;
+  process.env['OMNICODE_HOME'] = dir;
   fsMocks.linkError = null;
 });
 

@@ -178,7 +178,7 @@ omnicode web --no-open       # 不打开浏览器
 omnicode web --port 58628    # 指定绑定端口
 ```
 
-同一 home 目录下可以同时运行多个实例：每个实例注册到 `~/.omnicode-v/server/instances/`，端口被占用时自动 +1 重试（58628、58629……）。
+同一 home 目录下可以同时运行多个实例：每个实例注册到 `~/.omnicode/server/instances/`，端口被占用时自动 +1 重试（58628、58629……）。
 
 | 选项 | 说明 |
 | --- | --- |
@@ -203,11 +203,11 @@ omnicode web --port 58628    # 指定绑定端口
 
 #### `omnicode server kill`
 
-已废弃——仅用于停止 0.28.0 之前的 Omnicode 版本启动的服务。那些版本可能在后台遗留服务进程，记录在 legacy 单实例锁文件 `~/.omnicode-v/server/lock` 中；该命令先请求 `POST /api/v1/shutdown` 优雅退出，再对锁中记录的 pid 发 SIGTERM、必要时升级为 SIGKILL，并在确认进程退出后删除锁文件。`omnicode web` 启动的服务在前台运行，直接用 `Ctrl+C` 停止即可。
+已废弃——仅用于停止 0.28.0 之前的 Omnicode 版本启动的服务。那些版本可能在后台遗留服务进程，记录在 legacy 单实例锁文件 `~/.omnicode/server/lock` 中；该命令先请求 `POST /api/v1/shutdown` 优雅退出，再对锁中记录的 pid 发 SIGTERM、必要时升级为 SIGKILL，并在确认进程退出后删除锁文件。`omnicode web` 启动的服务在前台运行，直接用 `Ctrl+C` 停止即可。
 
 #### `omnicode web rotate-token`
 
-生成新的持久化 bearer token（写入 `~/.omnicode-v/server.token`），旧 token 立即失效。token 是整个 home 目录共享的，所有运行中的实例会在下一次鉴权校验时自动换用新 token，无需重启。
+生成新的持久化 bearer token（写入 `~/.omnicode/server.token`），旧 token 立即失效。token 是整个 home 目录共享的，所有运行中的实例会在下一次鉴权校验时自动换用新 token，无需重启。
 
 ### `omnicode app`
 
@@ -234,7 +234,7 @@ omnicode install-desktop
 
 ### `omnicode doctor`
 
-校验 `config.toml` 和 `tui.toml`，不会启动 TUI，也不会修改任一文件。默认检查 `OMNICODE_V_HOME` 下的文件；未设置该环境变量时检查 `~/.omnicode-v`。默认路径缺失时会显示为跳过，因为内置默认值仍可生效。
+校验 `config.toml` 和 `tui.toml`，不会启动 TUI，也不会修改任一文件。默认检查 `OMNICODE_HOME` 下的文件；未设置该环境变量时检查 `~/.omnicode`。默认路径缺失时会显示为跳过，因为内置默认值仍可生效。
 
 ```sh
 omnicode doctor
@@ -274,7 +274,7 @@ omnicode export [sessionId] [options]
 | `--yes` | `-y` | 跳过默认会话的确认提示，直接导出 |
 | `--no-include-global-log` | | 不打包全局诊断日志。默认包含 |
 
-导出包含目标会话目录内的所有文件。全局诊断日志（`~/.omnicode-v/logs/omnicode.log`）默认包含，因为它可能含有其他会话或项目的事件；不想分享时加 `--no-include-global-log`。
+导出包含目标会话目录内的所有文件。全局诊断日志（`~/.omnicode/logs/omnicode.log`）默认包含，因为它可能含有其他会话或项目的事件；不想分享时加 `--no-include-global-log`。
 
 ```sh
 # 导出当前工作目录最近一次会话，跳过确认

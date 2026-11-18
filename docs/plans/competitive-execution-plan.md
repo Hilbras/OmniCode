@@ -14,7 +14,7 @@ Reference: `competitive-study-2026-11-18.md`.
 
 **Objective.** Close the concrete gaps where Codex, qwen-code, or the old tree
 are stronger, without weakening this tree's advantages (trust-gated memory,
-gate honesty, kernel layering). By the end, OmniCode-V should match the
+gate honesty, kernel layering). By the end, OmniCode should match the
 references on shell safety, edit safety, headless integration, skills content,
 approvals, debugging, and docs, and exceed them on trust and auditability.
 
@@ -184,8 +184,8 @@ services it imports all still exist under the current engine paths.
 - 86 source files, 9 test files, **109 tests passing**; typecheck clean.
 - Added `apps/omnicode-inspect/vitest.config.ts`, the root Vitest project entry,
   and `pnpm dev:inspect`.
-- Discovery now resolves `OMNICODE_V_HOME`, then legacy `OMNICODE_HOME`, then
-  `~/.omnicode-v`, matching the CLI's home rules.
+- Discovery now resolves `OMNICODE_HOME`, then the pre-rename
+  `OMNICODE_V_HOME`, then `~/.omnicode`, matching the CLI's home rules.
 - Registered in the root `AGENTS.md` and `README.md` project maps.
 
 Run it with `pnpm dev:inspect`, point it at a server started with
@@ -197,10 +197,9 @@ Run it with `pnpm dev:inspect`, point it at a server started with
   `configuration/`, `reference/`, `customization/` (60 pages total, 33 EN + 27
   existing/added ZH) plus a real landing page in each language.
 - Restored the referenced `docs/media/` images.
-- Updated the copied pages from the pre-rename home and names: `~/.omnicode` →
-  `~/.omnicode-v`, `OMNICODE_HOME` → `OMNICODE_V_HOME`, `kap-server` →
-  `Omnicode server`, `Kernel/` → `packages/`. Project-level `.omnicode/`
-  directories were left alone.
+- Updated the copied pages to the current home and names: `~/.omnicode`,
+  `OMNICODE_HOME`, `Omnicode server`, and `packages/`. Project-level
+  `.omnicode/` directories were left alone.
 - Added the new headless flags (`--input-format`, `--json-schema`) to the EN/ZH
   CLI reference and corrected its conflict rules.
 - Replaced the VitePress frontmatter-only landing pages with real indexes.

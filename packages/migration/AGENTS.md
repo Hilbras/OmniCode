@@ -13,8 +13,8 @@ and imports config, MCP, user history, skills, plans, and sessions.
 - It does not migrate OAuth credentials; `/login` re-establishes auth.
 - It does not run the agent, import provider wires, or export back to legacy.
 
-The source is caller-supplied. The CLI defaults to `~/.omnicode-v-legacy`
-(`apps/omnicode-cli/src/migration/legacy-source.ts`) or `OMNICODE_V_SHARE_DIR`;
+The source is caller-supplied. The CLI defaults to `~/.omnicode-legacy`
+(`apps/omnicode-cli/src/migration/legacy-source.ts`) or `OMNICODE_SHARE_DIR`;
 the target is the current Omnicode home. The package description's old-path
 wording is stale.
 

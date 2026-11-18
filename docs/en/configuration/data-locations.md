@@ -1,32 +1,32 @@
 # Data locations
 
-Omnicode CLI stores the config file, session history, login credentials, diagnostic logs, and other runtime data under `~/.omnicode-v/`. This page helps you understand where each type of data lives, what it is for, and how to clean up or relocate it when needed.
+Omnicode CLI stores the config file, session history, login credentials, diagnostic logs, and other runtime data under `~/.omnicode/`. This page helps you understand where each type of data lives, what it is for, and how to clean up or relocate it when needed.
 
 ## Data root directory
 
-The default data root is `~/.omnicode-v/`. The actual path varies by platform:
+The default data root is `~/.omnicode/`. The actual path varies by platform:
 
 - macOS: `/Users/<name>/.omnicode`
 - Linux: `/home/<name>/.omnicode`
 - Windows: `C:\Users\<name>\.omnicode`
 
-If you need to move the data directory elsewhere (for example, to isolate configs for different projects with independent environments), set `OMNICODE_V_HOME`:
+If you need to move the data directory elsewhere (for example, to isolate configs for different projects with independent environments), set `OMNICODE_HOME`:
 
 ```sh
-export OMNICODE_V_HOME="$HOME/.config/omnicode"
+export OMNICODE_HOME="$HOME/.config/omnicode"
 ```
 
-Once set, **all** Omnicode data lands under the new path: config, sessions, logs, OAuth credentials, Omnicode-specific user Skills, global `AGENTS.md`, and more. For the full reference on `OMNICODE_V_HOME`, see [Environment variables](./env-vars.md).
+Once set, **all** Omnicode data lands under the new path: config, sessions, logs, OAuth credentials, Omnicode-specific user Skills, global `AGENTS.md`, and more. For the full reference on `OMNICODE_HOME`, see [Environment variables](./env-vars.md).
 
 ::: tip Note
 
-**Generic `.agents` resources** stay under the real OS home so they can be shared across tools. For example, user-level generic Skills remain at `~/.agents/skills/`, while Omnicode-specific user Skills move with `OMNICODE_V_HOME` as `$OMNICODE_V_HOME/skills/`.
+**Generic `.agents` resources** stay under the real OS home so they can be shared across tools. For example, user-level generic Skills remain at `~/.agents/skills/`, while Omnicode-specific user Skills move with `OMNICODE_HOME` as `$OMNICODE_HOME/skills/`.
 :::
 
 ## Directory layout
 
 ```
-$OMNICODE_V_HOME  (default: ~/.omnicode)
+$OMNICODE_HOME  (default: ~/.omnicode)
 ├── config.toml             # User configuration
 ├── tui.toml                # Terminal UI preferences (including auto-update toggle)
 ├── AGENTS.md               # Global Omnicode-specific agent instructions (optional)
@@ -62,9 +62,9 @@ Each top-level file under the data root serves a specific purpose; most are mana
 
 - **`config.toml`**: the main runtime configuration file, storing user-level settings such as providers, models, and loop control. See [Configuration files](./config-files.md).
 - **`tui.toml`**: terminal UI client preferences, including `[upgrade].auto_install` (auto-update, on by default). You can disable it in `/settings` or by manually setting `auto_install = false`.
-- **`AGENTS.md`**: global Omnicode-specific agent instructions. This file moves with `OMNICODE_V_HOME`; generic cross-tool instructions can still live under `~/.agents/AGENTS.md`.
+- **`AGENTS.md`**: global Omnicode-specific agent instructions. This file moves with `OMNICODE_HOME`; generic cross-tool instructions can still live under `~/.agents/AGENTS.md`.
 - **`mcp.json`**: user-level MCP server declarations, merged with the project-local `.omnicode/mcp.json` on startup. See [MCP](../customization/mcp.md).
-- **`skills/`**: Omnicode-specific user-level Skills. This directory moves with `OMNICODE_V_HOME`; generic cross-tool Skills can still live under `~/.agents/skills/`. See [Agent Skills](../customization/skills.md).
+- **`skills/`**: Omnicode-specific user-level Skills. This directory moves with `OMNICODE_HOME`; generic cross-tool Skills can still live under `~/.agents/skills/`. See [Agent Skills](../customization/skills.md).
 - **`plugins/installed.json`**: records installed plugins, each plugin's enabled state, and MCP server capability state changes made via `/plugins` or `/plugins mcp disable|enable`. Files installed from local paths or zip URLs are copied to `plugins/managed/<id>/`. See [Plugins](../customization/plugins.md).
 - **`credentials/`**: OAuth credential directory, with permissions `0o700` (directory) / `0o600` (files), readable and writable only by the current user. Managed provider credentials are stored as `credentials/<name>.json`; MCP server credentials are stored under `credentials/mcp/`. Credentials are written using an atomic flow (tmp → fsync → rename) to prevent corruption.
 
@@ -102,25 +102,25 @@ Terminal input history is saved separately per working directory, at `user-histo
 
 ## Clearing data
 
-Deleting the data root directory (`~/.omnicode-v/` or the path set by `OMNICODE_V_HOME`) removes all runtime data. To clear only part of the data:
+Deleting the data root directory (`~/.omnicode/` or the path set by `OMNICODE_HOME`) removes all runtime data. To clear only part of the data:
 
 | Goal | Action |
 | --- | --- |
-| Reset configuration | Delete `~/.omnicode-v/config.toml` |
-| Reset terminal UI preferences | Delete `~/.omnicode-v/tui.toml` |
-| Clear all sessions | Delete `~/.omnicode-v/sessions/` and `session_index.jsonl` |
-| Clear diagnostic logs | Delete `~/.omnicode-v/logs/` |
-| Clear input history | Delete `~/.omnicode-v/user-history/` |
-| Reset update state | Delete `~/.omnicode-v/updates/latest.json` |
-| Force re-download of managed `rg` and `fd` | Delete `~/.omnicode-v/bin/` |
+| Reset configuration | Delete `~/.omnicode/config.toml` |
+| Reset terminal UI preferences | Delete `~/.omnicode/tui.toml` |
+| Clear all sessions | Delete `~/.omnicode/sessions/` and `session_index.jsonl` |
+| Clear diagnostic logs | Delete `~/.omnicode/logs/` |
+| Clear input history | Delete `~/.omnicode/user-history/` |
+| Reset update state | Delete `~/.omnicode/updates/latest.json` |
+| Force re-download of managed `rg` and `fd` | Delete `~/.omnicode/bin/` |
 | Clear provider OAuth login state | Run `/logout`, or delete the corresponding `credentials/<name>.json` |
 | Clear MCP server OAuth login state | Delete `credentials/mcp/` (`/logout` does not clear MCP credentials) |
-| Remove user-level MCP declarations | Delete `$OMNICODE_V_HOME/mcp.json` (default `~/.omnicode-v/mcp.json`) |
-| Clear global Omnicode-specific agent instructions | Delete `$OMNICODE_V_HOME/AGENTS.md` (default `~/.omnicode-v/AGENTS.md`) |
-| Clear plugin install records | Delete `$OMNICODE_V_HOME/plugins/` (local plugin source directories are not affected) |
-| Clear Omnicode-specific user-level Skills | Delete `$OMNICODE_V_HOME/skills/` (default `~/.omnicode-v/skills/`) |
+| Remove user-level MCP declarations | Delete `$OMNICODE_HOME/mcp.json` (default `~/.omnicode/mcp.json`) |
+| Clear global Omnicode-specific agent instructions | Delete `$OMNICODE_HOME/AGENTS.md` (default `~/.omnicode/AGENTS.md`) |
+| Clear plugin install records | Delete `$OMNICODE_HOME/plugins/` (local plugin source directories are not affected) |
+| Clear Omnicode-specific user-level Skills | Delete `$OMNICODE_HOME/skills/` (default `~/.omnicode/skills/`) |
 
 ## Next steps
 
 - [Configuration files](./config-files.md) — full reference for `config.toml` fields
-- [Environment variables](./env-vars.md) — detailed usage of `OMNICODE_V_HOME` and related path variables
+- [Environment variables](./env-vars.md) — detailed usage of `OMNICODE_HOME` and related path variables

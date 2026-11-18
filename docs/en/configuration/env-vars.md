@@ -12,15 +12,17 @@ For background, see [Config overrides: provider credentials](./overrides.md#prov
 
 ## Core paths
 
-### `OMNICODE_V_HOME`
+### `OMNICODE_HOME`
 
-Overrides the data root directory; the default is `~/.omnicode-v`. Once set, the config file, sessions, logs, OAuth credentials, and all other data land under the new path:
+Overrides the data root directory; the default is `~/.omnicode`. Once set, the config file, sessions, logs, OAuth credentials, and all other data land under the new path:
 
 ```sh
-export OMNICODE_V_HOME="/path/to/custom/omnicode"
+export OMNICODE_HOME="/path/to/custom/omnicode"
 ```
 
-> Make sure the directory is writable. Multiple `omnicode` instances sharing the same `OMNICODE_V_HOME` will share config and credential files.
+> Make sure the directory is writable. Multiple `omnicode` instances sharing the same `OMNICODE_HOME` will share config and credential files.
+>
+> `OMNICODE_V_HOME` is still read as a deprecated alias so existing environments keep working; new setups should use `OMNICODE_HOME`.
 
 For the complete data directory structure, see [Data locations](./data-locations.md).
 
@@ -239,7 +241,7 @@ Stdio MCP servers that run as Node child processes honor `HTTP_PROXY` / `HTTPS_P
 
 Opt-in alias snapshot for agent shell commands. When set to `1`, Omnicode runs
 your shell once at startup (`alias -p`), writes only the `alias` lines to
-`$OMNICODE_V_HOME/shell-snapshot.sh` (mode `0600`), and passes it as
+`$OMNICODE_HOME/shell-snapshot.sh` (mode `0600`), and passes it as
 `BASH_ENV`, so non-interactive `Bash` calls see your aliases. Functions,
 environment variables, and other rc-file side effects are not captured. A
 failed or empty capture leaves the feature inert. Default off.
@@ -251,5 +253,5 @@ export OMNICODE_SHELL_SNAPSHOT=1
 ## Next steps
 
 - [Config overrides](./overrides.md) — how environment variables, CLI options, and the config file interact by priority
-- [Data locations](./data-locations.md) — directory structure affected by `OMNICODE_V_HOME`
+- [Data locations](./data-locations.md) — directory structure affected by `OMNICODE_HOME`
 - [Providers and models](./providers.md) — full connection examples per provider type

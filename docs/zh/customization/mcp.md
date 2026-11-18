@@ -20,7 +20,7 @@ Omnicode CLI 支持三种 MCP server 接入方式：
 
 MCP server 配置写在 `mcp.json` 中，分两层：
 
-- **用户级**：`~/.omnicode-v/mcp.json`（或 `$OMNICODE_V_HOME/mcp.json`），跨项目共享
+- **用户级**：`~/.omnicode/mcp.json`（或 `$OMNICODE_HOME/mcp.json`），跨项目共享
 - **项目级**：工作目录下的 `.omnicode/mcp.json`，只对当前仓库生效
 
 同名条目以项目级为准，覆盖用户级。

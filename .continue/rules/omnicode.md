@@ -1,5 +1,5 @@
 ---
-name: OmniCode-V repository rules
+name: OmniCode repository rules
 alwaysApply: true
 ---
 Read `AGENTS.md` at the repository root, then the nearest package or app

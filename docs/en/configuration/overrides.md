@@ -12,7 +12,7 @@ This distinction matters: many users run `export OMNICODE_API_KEY=xxx` in the sh
 
 Environment variables fall into three categories by function and cannot be collapsed into a single linear priority order:
 
-1. **Locating the config file**: `OMNICODE_V_HOME` sets the data root directory, making the config file path `$OMNICODE_V_HOME/config.toml`. This step runs before all other resolution and is not a fallback for individual parameters.
+1. **Locating the config file**: `OMNICODE_HOME` sets the data root directory, making the config file path `$OMNICODE_HOME/config.toml`. This step runs before all other resolution and is not a fallback for individual parameters.
 2. **Runtime switches**: A small set of variables like `OMNICODE_DISABLE_TELEMETRY` directly shut down the corresponding subsystem. Even if `config.toml` has `telemetry = true`, a truthy value for this variable disables telemetry. The semantics are "additionally disable", not "ordinary override".
 3. **Runtime endpoints and diagnostics**: Variables like `OMNICODE_OAUTH_HOST`, `OMNICODE_BASE_URL`, and `OMNICODE_LOG_LEVEL` are read when the OAuth or logging subsystems initialize. For the full list, see [Environment variables](./env-vars.md).
 
@@ -21,7 +21,7 @@ Environment variables fall into three categories by function and cannot be colla
 For ordinary runtime parameters such as model alias, Plan mode, permission mode, and Skills directories, priority from highest to lowest is:
 
 1. **Command-line options** (`-m`, `--plan`, `--yolo`, etc.): apply only to the current startup
-2. **User config file** (`~/.omnicode-v/config.toml`): stores long-term preferences
+2. **User config file** (`~/.omnicode/config.toml`): stores long-term preferences
 
 A small number of environment variables explicitly override specific config file fields. For example, `OMNICODE_BACKGROUND_KEEP_ALIVE_ON_EXIT` has higher priority than `[background].keep_alive_on_exit`. These exceptions are noted in [Environment variables](./env-vars.md) and in the relevant field descriptions in [Configuration files](./config-files.md).
 
@@ -29,7 +29,7 @@ A small number of environment variables explicitly override specific config file
 **Ordinary runtime parameters do not fall back to shell environment variables.** Provider `api_key` / `base_url` are read only from `config.toml` (including the `[providers.<name>.env]` sub-table) and do not fall back to `export`-ed shell variables. The only exceptions are the `OMNICODE_MODEL_*` family and a provider's `api_key_env` field, two explicit channels that *do* read credentials from the shell; see [Define a model from environment variables](./env-vars.md#define-a-model-from-environment-variables-omnicode_model_) and [Provider credentials](#provider-credentials).
 :::
 
-The CLI currently reads a single user-level config file and has no project-level config file mechanism. To isolate config between different projects, point `OMNICODE_V_HOME` at different data directories; see [Common scenarios](#common-scenarios) below.
+The CLI currently reads a single user-level config file and has no project-level config file mechanism. To isolate config between different projects, point `OMNICODE_HOME` at different data directories; see [Common scenarios](#common-scenarios) below.
 
 ## Provider credentials
 
@@ -84,7 +84,7 @@ Mutual exclusion rules (startup fails if violated):
 **Isolated test environment**: use a separate data directory to avoid polluting the main config and sessions:
 
 ```sh
-OMNICODE_V_HOME="$PWD/.omnicode-sandbox" omnicode
+OMNICODE_HOME="$PWD/.omnicode-sandbox" omnicode
 ```
 
 **One-off test key**: since provider credentials are read only from the config file, write a test key into the `env` sub-table:
@@ -109,4 +109,4 @@ omnicode --plan
 ## Next steps
 
 - [Configuration files](./config-files.md) — complete reference for all configurable fields
-- [Environment variables](./env-vars.md) — full list and description of `OMNICODE_V_HOME` and related variables
+- [Environment variables](./env-vars.md) — full list and description of `OMNICODE_HOME` and related variables

@@ -194,7 +194,7 @@ describe('maybeRelaunchWithStagedNativeUpdate', () => {
     exePath = join(workDir, 'bin', 'omnicode');
     await mkdir(join(workDir, 'bin'), { recursive: true });
     await writeFile(exePath, 'old-binary');
-    vi.stubEnv('OMNICODE_V_HOME', homeDir);
+    vi.stubEnv('OMNICODE_HOME', homeDir);
     fsMocks.renameBlocker = null;
     fsMocks.linkError = null;
   });

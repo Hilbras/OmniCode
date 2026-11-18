@@ -17,7 +17,7 @@ Omnicode CLI 已完成重大版本升级，底层从 Python/uv 迁移至 Node.js
 
 迁移有两种方式。
 
-装好 omnicode 之后**第一次运行 `omnicode`** 时，它会自动检测 `~/.omnicode-v/` 下是否存在 omnicode-cli 的数据。一旦检测到，就会弹出迁移提示，你可以选择立即迁移、稍后再说，或不再提示。
+装好 omnicode 之后**第一次运行 `omnicode`** 时，它会自动检测 `~/.omnicode-legacy/` 下是否存在 omnicode-cli 的数据（可用 `OMNICODE_SHARE_DIR` 指定其他来源）。一旦检测到，就会弹出迁移提示，你可以选择立即迁移、稍后再说，或不再提示。
 
 你也可以**随时手动运行**：
 
@@ -34,7 +34,7 @@ omnicode migrate
 **不会被迁移的内容**：OAuth 登录凭证和 MCP 服务的授权都不会被复制，迁移后需要在 omnicode 里重新执行 `/login` 和重新授权 MCP 服务。omnicode-cli 的插件也不在迁移范围内。
 
 ::: tip 提示
-迁移**不会改动或删除** `~/.omnicode-v/` 下的任何旧数据。omnicode-cli 仍可照常使用，两者互不影响。迁移也可以重复运行，已经迁移过的会话不会被重复导入。
+迁移**不会改动或删除** `~/.omnicode-legacy/` 下的任何旧数据。omnicode-cli 仍可照常使用，两者互不影响。迁移也可以重复运行，已经迁移过的会话不会被重复导入。
 :::
 
 迁移完成后，从 omnicode-cli 导入的会话会带上 `[imported]` 标记，方便你与新建的会话区分。

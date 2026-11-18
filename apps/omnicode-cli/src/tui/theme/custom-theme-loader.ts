@@ -1,5 +1,5 @@
 /**
- * Custom theme loader — reads JSON files from `~/.omnicode-v/themes/`.
+ * Custom theme loader — reads JSON files from `~/.omnicode/themes/`.
  */
 
 import { readdirSync } from 'node:fs';

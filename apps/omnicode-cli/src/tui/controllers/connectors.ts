@@ -384,7 +384,7 @@ async function saveTelegramToken(token: string): Promise<void> {
 }
 
 function telegramConfigPath(): string {
-  const home = process.env['OMNICODE_V_HOME'] ?? join(homedir(), '.omnicode-v');
+  const home = process.env['OMNICODE_HOME'] ?? join(homedir(), '.omnicode');
   return join(home, 'telegram.json');
 }
 
@@ -414,7 +414,6 @@ function findLogoPath(): string {
   const candidates = [
     resolve(process.cwd(), 'public/icon.png'),
     resolve(process.cwd(), '../../public/icon.png'),
-    '/home/gin/work/Hilbras/OmniCode-V/public/icon.png',
   ];
   for (const candidate of candidates) {
     if (existsSync(candidate)) return candidate;

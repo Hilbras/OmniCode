@@ -28,7 +28,7 @@ Precisely because of fail-open, Hooks are suitable for alerts and lightweight in
 The following hook flashes a notification in the terminal title bar each time a background task completes (macOS requires `terminal-notifier` to be installed):
 
 ```toml
-# Written in ~/.omnicode-v/config.toml
+# Written in ~/.omnicode/config.toml
 [[hooks]]
 event = "Notification"           # Trigger: when a background task status changes
 matcher = "task\\.completed"     # Only care about "completed" notifications
@@ -39,7 +39,7 @@ Save the config, start a new session, and a notification will appear the next ti
 
 ## Configuration
 
-All hook rules are written in the `[[hooks]]` array in `~/.omnicode-v/config.toml`, where each entry is one rule:
+All hook rules are written in the `[[hooks]]` array in `~/.omnicode/config.toml`, where each entry is one rule:
 
 | Field | Type | Required | Description |
 | --- | --- | --- | --- |
@@ -153,7 +153,7 @@ The following hook checks the command content before the Agent calls the `Bash` 
 [[hooks]]
 event = "PreToolUse"
 matcher = "Bash"
-command = "node ~/.omnicode-v/hooks/block-dangerous-bash.mjs"
+command = "node ~/.omnicode/hooks/block-dangerous-bash.mjs"
 timeout = 5
 ```
 

@@ -87,10 +87,10 @@ Positional arguments support single and double quoting, so in `/skill:commit "fi
 Omnicode CLI scans four tiers by scope; more specific scopes take higher priority: **Project > User > Extra > Built-in**
 
 **User level** (applies to all projects):
-- `$OMNICODE_V_HOME/skills/` (default: `~/.omnicode-v/skills/`)
+- `$OMNICODE_HOME/skills/` (default: `~/.omnicode/skills/`)
 - `~/.agents/skills/`
 
-The Omnicode-specific user Skill directory moves with `OMNICODE_V_HOME`, so isolated data roots also get isolated Omnicode-specific Skills. The generic `~/.agents/skills/` directory stays under the real OS home so it can be shared across tools.
+The Omnicode-specific user Skill directory moves with `OMNICODE_HOME`, so isolated data roots also get isolated Omnicode-specific Skills. The generic `~/.agents/skills/` directory stays under the real OS home so it can be shared across tools.
 
 **Project level** (project root = the nearest directory containing `.git`, searching upward from the working directory):
 - `.omnicode/skills/`
@@ -143,7 +143,7 @@ Please review the PR the user specified: $pr_ref
    - Noteworthy positives
 ```
 
-Save this as `$OMNICODE_V_HOME/skills/review-pr/SKILL.md` (or `~/.omnicode-v/skills/review-pr/SKILL.md` when `OMNICODE_V_HOME` is unset), place the checklist at `references/checklist.md` in the same directory, and after starting a new session you can invoke it with `/skill:review-pr #1234`, where `#1234` is expanded into `$pr_ref`.
+Save this as `$OMNICODE_HOME/skills/review-pr/SKILL.md` (or `~/.omnicode/skills/review-pr/SKILL.md` when `OMNICODE_HOME` is unset), place the checklist at `references/checklist.md` in the same directory, and after starting a new session you can invoke it with `/skill:review-pr #1234`, where `#1234` is expanded into `$pr_ref`.
 
 ## Next steps
 

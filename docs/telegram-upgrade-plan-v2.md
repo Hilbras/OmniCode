@@ -319,7 +319,7 @@ Open, deliberately not changed here:
   third poller (its Telegram adapter is send-only) but shares the same token
   env var, so it can send as the bot while another process receives.
 - **The plugin's standalone default home is stale** (`~/.omnicode` vs the
-  product's `~/.omnicode-v`) and its README says to run it directly. It only
+  product's `~/.omnicode`) and its README says to run it directly. It only
   works when the plugin host injects `OMNICODE_HOME`. It also cannot read a
   token saved by the TUI (encrypted, no plaintext `botToken`).
 - **Group chats share one allowlist entry.** Adding a group id lets every member

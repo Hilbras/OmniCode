@@ -56,10 +56,10 @@ Beyond the three built-in sub-agents, you can define your own agents as Markdown
 Omnicode CLI discovers agent files by scope; more specific scopes take higher priority: **Explicit (`--agent-file`) > Project > Extra > User > Plugin > Built-in**. When two files define the same `name`, the higher-priority scope wins. Each directory is scanned recursively for `.md` files.
 
 **User level** (applies to all projects):
-- `$OMNICODE_V_HOME/agents/` (default: `~/.omnicode-v/agents/`)
+- `$OMNICODE_HOME/agents/` (default: `~/.omnicode/agents/`)
 - `~/.agents/agents/`
 
-The Omnicode-specific user agent directory moves with `OMNICODE_V_HOME`, while the generic `~/.agents/agents/` directory stays under the real OS home so it can be shared across tools.
+The Omnicode-specific user agent directory moves with `OMNICODE_HOME`, while the generic `~/.agents/agents/` directory stays under the real OS home so it can be shared across tools.
 
 **Project level** (project root = the nearest directory containing `.git`, searching upward from the working directory):
 - `.omnicode/agents/`
@@ -75,7 +75,7 @@ extra_agent_dirs = ["~/team-agents", ".agents/team-agents"]
 
 **Built-in agents** are distributed with the CLI and have the lowest priority. A directory-discovered file does not override a same-name built-in Agent unless its frontmatter declares `override: true`. A file loaded through `--agent-file` is treated as explicit launch intent, may override a same-name built-in Agent, outranks every directory scope, and applies to the current launch only.
 
-Separately, `$OMNICODE_V_HOME/SYSTEM.md` permanently overrides the default main agent's system prompt; it is not part of agent-file discovery. Its precedence interactions are covered in the [SYSTEM.md section](#overriding-the-main-agents-system-prompt-with-systemmd).
+Separately, `$OMNICODE_HOME/SYSTEM.md` permanently overrides the default main agent's system prompt; it is not part of agent-file discovery. Its precedence interactions are covered in the [SYSTEM.md section](#overriding-the-main-agents-system-prompt-with-systemmd).
 
 ::: warning Trust model
 Agent files are prompt configuration, and project-level files come from the repository itself, including repositories you have just cloned and do not trust yet. A project-scoped file can take over a built-in agent entirely: naming it `agent.md` with `override: true` replaces the **default main agent's whole system prompt**, and `coder.md` with `override: true` replaces the default sub-agent type. Unlike `AGENTS.md` content, which is injected into the prompt as reference data, an override file *is* the system prompt, and a file without a `tools` list keeps every tool. Review `.omnicode/agents/` and `.agents/agents/` in unfamiliar repositories with the same caution you would apply to scripts, before running Omnicode inside them.
@@ -155,7 +155,7 @@ For main-agent customization, reference `${base_prompt}` in the body so the envi
 
 ### Overriding the main agent's system prompt with SYSTEM.md
 
-To override the main agent's system prompt permanently, without passing `--agent` or `--agent-file` on every launch, write a `$OMNICODE_V_HOME/SYSTEM.md` file (default: `~/.omnicode-v/SYSTEM.md`; it moves with `OMNICODE_V_HOME`). While the file exists and is non-empty, it fully replaces the built-in default main agent's system prompt (and only the prompt: the description, tool set, and sub-agent delegation allowlist are inherited from the built-in defaults). SYSTEM.md takes effect in every launch mode, including interactive TUI sessions.
+To override the main agent's system prompt permanently, without passing `--agent` or `--agent-file` on every launch, write a `$OMNICODE_HOME/SYSTEM.md` file (default: `~/.omnicode/SYSTEM.md`; it moves with `OMNICODE_HOME`). While the file exists and is non-empty, it fully replaces the built-in default main agent's system prompt (and only the prompt: the description, tool set, and sub-agent delegation allowlist are inherited from the built-in defaults). SYSTEM.md takes effect in every launch mode, including interactive TUI sessions.
 
 SYSTEM.md is a plain Markdown body; no frontmatter is required or read. A missing or empty file has no effect, and a read failure falls back to the built-in prompt with a warning.
 
@@ -194,7 +194,7 @@ ${plugin_sections}
 
 ## Instruction Files
 
-Global Omnicode-specific instructions can live at `$OMNICODE_V_HOME/AGENTS.md` (default: `~/.omnicode-v/AGENTS.md`). When you relocate the data root with `OMNICODE_V_HOME`, this global instruction file moves with it. Generic cross-tool instructions can still live under `~/.agents/AGENTS.md` in the real OS home, and project-level instructions remain under the project tree, for example `.omnicode/AGENTS.md` or `AGENTS.md`.
+Global Omnicode-specific instructions can live at `$OMNICODE_HOME/AGENTS.md` (default: `~/.omnicode/AGENTS.md`). When you relocate the data root with `OMNICODE_HOME`, this global instruction file moves with it. Generic cross-tool instructions can still live under `~/.agents/AGENTS.md` in the real OS home, and project-level instructions remain under the project tree, for example `.omnicode/AGENTS.md` or `AGENTS.md`.
 
 ## Storage Location in the Session Directory
 

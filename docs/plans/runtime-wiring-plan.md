@@ -1,7 +1,7 @@
 # Runtime Wiring Plan
 
 Status: complete  
-Owner: OmniCode-V  
+Owner: OmniCode  
 Scope: wire the seven-workstream additions into real runtime paths without turning every feature into an agent tool. Preserve trust, sensitivity, legal-hold, permission, and sandbox boundaries.
 
 ## Integration model

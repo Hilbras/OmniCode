@@ -2,8 +2,8 @@
 
 Status: complete — all seven workstreams implemented; targeted validation green.
 Last updated: 2026-11-11  
-Owner: OmniCode-V  
-Scope: implement the seven workstreams needed to make OmniCode-V stronger than qwen-code while preserving its trust-gated kernel, strict typing, and guard discipline.
+Owner: OmniCode  
+Scope: implement the seven workstreams needed to make OmniCode stronger than qwen-code while preserving its trust-gated kernel, strict typing, and guard discipline.
 
 ## Baseline
 

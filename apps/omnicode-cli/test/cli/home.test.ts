@@ -1,4 +1,12 @@
-import { existsSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -33,9 +41,9 @@ describe('ensureHome', () => {
     writeFileSync(join(dir, 'logs', 'cli.log'), 'noise\n');
   }
 
-  it('respects an explicit OMNICODE_V_HOME and never migrates into it', () => {
+  it('respects an explicit OMNICODE_HOME and never migrates into it', () => {
     writeHomeLayout();
-    env['OMNICODE_V_HOME'] = join(root, 'custom-home');
+    env['OMNICODE_HOME'] = join(root, 'custom-home');
 
     const outcome = ensureHome(env, root);
 
@@ -55,8 +63,17 @@ describe('ensureHome', () => {
       defaultApplied: true,
       migrated: false,
     });
-    expect(env['OMNICODE_V_HOME']).toBe(home());
     expect(env['OMNICODE_HOME']).toBe(home());
+  });
+
+  it('honors the pre-rename OMNICODE_V_HOME when OMNICODE_HOME is unset', () => {
+    const legacy = join(root, 'legacy-env-home');
+    env['OMNICODE_V_HOME'] = legacy;
+
+    const outcome = ensureHome(env, root);
+
+    expect(outcome).toEqual({ home: legacy, defaultApplied: false, migrated: false });
+    expect(env['OMNICODE_HOME']).toBe(legacy);
   });
 
   it('never touches an existing data home', () => {
@@ -85,12 +102,23 @@ describe('ensureHome', () => {
     expect(readdirSync(root).filter((entry) => entry.includes('migrating'))).toEqual([]);
   });
 
-  it('names no legacy home distinct from the data home itself', () => {
-    expect(LEGACY_HOME_DIRNAMES).toEqual([]);
+  it('migrates the pre-rename ~/.omnicode-v home on first run', () => {
+    const legacy = join(root, '.omnicode-v');
+    writeHomeLayout(legacy);
+    expect(LEGACY_HOME_DIRNAMES).toEqual(['.omnicode-v']);
 
     const outcome = ensureHome(env, root);
 
-    expect(outcome.migrated).toBe(false);
-    expect(outcome.legacyHome).toBeUndefined();
+    expect(outcome).toEqual({
+      home: home(),
+      defaultApplied: true,
+      migrated: true,
+      legacyHome: legacy,
+    });
+    expect(readFileSync(join(home(), 'config.toml'), 'utf8')).toBe('default_model = "k2"\n');
+    expect(existsSync(join(home(), 'sessions', 'sess_1.jsonl'))).toBe(true);
+    expect(existsSync(join(home(), 'cache'))).toBe(false);
+    expect(existsSync(join(home(), 'logs'))).toBe(false);
+    expect(readdirSync(root).filter((entry) => entry.includes('migrating'))).toEqual([]);
   });
 });

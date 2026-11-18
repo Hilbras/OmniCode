@@ -50,7 +50,7 @@ Each account currently supports up to about **3 devices**.
 Remote Control is a foreground process; how you stop it depends on whether you can find the terminal that started it:
 
 - **The terminal is still there**: press `Ctrl+C` in that terminal (or just close the window) — the device immediately goes offline from the remote list
-- **Can't find the terminal**: the single-instance lock file `~/.omnicode-v/server/rc.json` records the process pid and the link in use (the error from starting a second instance prints both as well) — run `kill <pid>`
+- **Can't find the terminal**: the single-instance lock file `~/.omnicode/server/rc.json` records the process pid and the link in use (the error from starting a second instance prints both as well) — run `kill <pid>`
 - **The process already died** (power loss, crash, …): the stale lock file is cleaned up automatically on the next start — nothing to delete by hand
 
 To start a fresh instance, stop the old one in any of the ways above and run `omnicode rc` again — there is no dedicated restart command. The device ID is derived from the machine's data directory, so the device and its access URL stay the same. The web-side device management and revocation UI is subject to the final release.

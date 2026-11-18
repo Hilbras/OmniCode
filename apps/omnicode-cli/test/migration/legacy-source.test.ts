@@ -6,40 +6,46 @@ const HOME = '/home/user';
 const CWD = '/work/project';
 
 describe('resolveLegacySourceHome', () => {
-  it('defaults to ~/.omnicode when OMNICODE_V_SHARE_DIR is unset', () => {
+  it('defaults to ~/.omnicode-legacy when OMNICODE_SHARE_DIR is unset', () => {
     const r = resolveLegacySourceHome({}, HOME, CWD);
-    expect(r).toEqual({ sourceHome: join(HOME, '.omnicode-v-legacy'), origin: 'default' });
+    expect(r).toEqual({ sourceHome: join(HOME, '.omnicode-legacy'), origin: 'default' });
   });
 
-  it('defaults to ~/.omnicode when OMNICODE_V_SHARE_DIR is empty or blank', () => {
-    expect(resolveLegacySourceHome({ OMNICODE_V_SHARE_DIR: '' }, HOME, CWD).origin).toBe('default');
-    expect(resolveLegacySourceHome({ OMNICODE_V_SHARE_DIR: '   ' }, HOME, CWD).origin).toBe('default');
+  it('accepts the pre-rename OMNICODE_V_SHARE_DIR when OMNICODE_SHARE_DIR is unset', () => {
+    const r = resolveLegacySourceHome({ OMNICODE_V_SHARE_DIR: '/data/legacy' }, HOME, CWD);
+    expect(r.sourceHome).toBe('/data/legacy');
+    expect(r.origin).toBe('share-dir');
   });
 
-  it('uses an absolute OMNICODE_V_SHARE_DIR verbatim', () => {
-    const r = resolveLegacySourceHome({ OMNICODE_V_SHARE_DIR: '/data/omnicode' }, HOME, CWD);
+  it('defaults to ~/.omnicode-legacy when OMNICODE_SHARE_DIR is empty or blank', () => {
+    expect(resolveLegacySourceHome({ OMNICODE_SHARE_DIR: '' }, HOME, CWD).origin).toBe('default');
+    expect(resolveLegacySourceHome({ OMNICODE_SHARE_DIR: '   ' }, HOME, CWD).origin).toBe('default');
+  });
+
+  it('uses an absolute OMNICODE_SHARE_DIR verbatim', () => {
+    const r = resolveLegacySourceHome({ OMNICODE_SHARE_DIR: '/data/omnicode' }, HOME, CWD);
     expect(r.sourceHome).toBe('/data/omnicode');
     expect(r.origin).toBe('share-dir');
   });
 
-  it('resolves a relative OMNICODE_V_SHARE_DIR against the process CWD (old-CLI rule)', () => {
-    const r = resolveLegacySourceHome({ OMNICODE_V_SHARE_DIR: 'relative/omnicode' }, HOME, CWD);
+  it('resolves a relative OMNICODE_SHARE_DIR against the process CWD (old-CLI rule)', () => {
+    const r = resolveLegacySourceHome({ OMNICODE_SHARE_DIR: 'relative/omnicode' }, HOME, CWD);
     expect(r.sourceHome).toBe(join(CWD, 'relative', 'omnicode'));
     expect(r.origin).toBe('share-dir');
   });
 
-  it('does not expand ~ in OMNICODE_V_SHARE_DIR (old-CLI rule)', () => {
-    const r = resolveLegacySourceHome({ OMNICODE_V_SHARE_DIR: '~/custom' }, HOME, CWD);
+  it('does not expand ~ in OMNICODE_SHARE_DIR (old-CLI rule)', () => {
+    const r = resolveLegacySourceHome({ OMNICODE_SHARE_DIR: '~/custom' }, HOME, CWD);
     expect(r.sourceHome).toBe(join(CWD, '~/custom'));
   });
 
-  it('resolves skills from ~/.omnicode when the share dir is redirected', () => {
-    const r = resolveLegacySourceHome({ OMNICODE_V_SHARE_DIR: '/data/omnicode' }, HOME, CWD);
-    expect(r.skillsSourceHome).toBe(join(HOME, '.omnicode-v-legacy'));
+  it('resolves skills from ~/.omnicode-legacy when the share dir is redirected', () => {
+    const r = resolveLegacySourceHome({ OMNICODE_SHARE_DIR: '/data/omnicode' }, HOME, CWD);
+    expect(r.skillsSourceHome).toBe(join(HOME, '.omnicode-legacy'));
   });
 
-  it('keeps a single source when OMNICODE_V_SHARE_DIR points at ~/.omnicode itself', () => {
-    const r = resolveLegacySourceHome({ OMNICODE_V_SHARE_DIR: join(HOME, '.omnicode-v-legacy') }, HOME, CWD);
+  it('keeps a single source when OMNICODE_SHARE_DIR points at ~/.omnicode-legacy itself', () => {
+    const r = resolveLegacySourceHome({ OMNICODE_SHARE_DIR: join(HOME, '.omnicode-legacy') }, HOME, CWD);
     expect(r.skillsSourceHome).toBeUndefined();
   });
 });

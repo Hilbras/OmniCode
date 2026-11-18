@@ -16,7 +16,7 @@ export interface DetectPendingInput {
   readonly targetHome: string;
   readonly skillsSourceHome?: string;
   /**
-   * omnicode-cli keeps plan files at `~/.omnicode-v/plans` regardless of OMNICODE_SHARE_DIR,
+   * omnicode-cli keeps plan files at `~/.omnicode/plans` regardless of OMNICODE_SHARE_DIR,
    * so detection reads them from the user's home by default. Injectable for
    * isolated tests.
    */

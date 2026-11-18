@@ -4,10 +4,10 @@ Omnicode CLI 把每次对话持久化为一个「会话」，保留消息历史�
 
 ## 会话存储
 
-所有会话保存在 `$OMNICODE_V_HOME/sessions/` 下（默认 `~/.omnicode-v/sessions/`），按工作目录分组存放：
+所有会话保存在 `$OMNICODE_HOME/sessions/` 下（默认 `~/.omnicode/sessions/`），按工作目录分组存放：
 
 ```text
-~/.omnicode-v/
+~/.omnicode/
 ├── config.toml
 ├── session_index.jsonl
 └── sessions/
@@ -103,7 +103,7 @@ omnicode export <sessionId>
 omnicode export <sessionId> -o ~/Desktop/my-session.zip
 ```
 
-导出包含会话目录下的所有文件，包括诊断日志。全局诊断日志（`~/.omnicode-v/logs/omnicode.log`）默认也会打包；如不需要，加 `--no-include-global-log` 排除。
+导出包含会话目录下的所有文件，包括诊断日志。全局诊断日志（`~/.omnicode/logs/omnicode.log`）默认也会打包；如不需要，加 `--no-include-global-log` 排除。
 
 也可以在 TUI 内导出，无需离开交互界面：
 

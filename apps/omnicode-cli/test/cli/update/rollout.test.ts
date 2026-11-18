@@ -293,7 +293,7 @@ describe('resolveUpdateDeviceId', () => {
 
   beforeEach(() => {
     dir = mkdtempSync(join(tmpdir(), 'omnicode-rollout-device-id-'));
-    process.env['OMNICODE_V_HOME'] = dir;
+    process.env['OMNICODE_HOME'] = dir;
   });
 
   afterEach(() => {

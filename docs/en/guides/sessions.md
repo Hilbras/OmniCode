@@ -4,10 +4,10 @@ Omnicode CLI persists every conversation as a "session" — storing message hist
 
 ## Session storage
 
-All sessions are saved under `$OMNICODE_V_HOME/sessions/` (default: `~/.omnicode-v/sessions/`), grouped by working directory:
+All sessions are saved under `$OMNICODE_HOME/sessions/` (default: `~/.omnicode/sessions/`), grouped by working directory:
 
 ```text
-~/.omnicode-v/
+~/.omnicode/
 ├── config.toml
 ├── session_index.jsonl
 └── sessions/
@@ -103,7 +103,7 @@ Omitting `sessionId` exports the most recent session in the current directory (w
 omnicode export <sessionId> -o ~/Desktop/my-session.zip
 ```
 
-The export includes all files in the session directory, including diagnostic logs. The global diagnostic log (`~/.omnicode-v/logs/omnicode.log`) is also bundled by default; add `--no-include-global-log` to exclude it.
+The export includes all files in the session directory, including diagnostic logs. The global diagnostic log (`~/.omnicode/logs/omnicode.log`) is also bundled by default; add `--no-include-global-log` to exclude it.
 
 You can also export from inside the TUI without leaving the interactive session:
 

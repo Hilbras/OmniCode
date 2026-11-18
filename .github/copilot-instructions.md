@@ -1,4 +1,4 @@
-# OmniCode-V
+# OmniCode
 
 Read `AGENTS.md` at the repository root and the nearest package or app
 `AGENTS.md` before changing code.

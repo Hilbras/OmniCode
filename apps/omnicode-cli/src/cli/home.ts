@@ -10,8 +10,8 @@ import {
 import { homedir } from 'node:os';
 import { dirname, join } from 'node:path';
 
-export const HOME_DIRNAME = '.omnicode-v';
-export const LEGACY_HOME_DIRNAMES: readonly string[] = [];
+export const HOME_DIRNAME = '.omnicode';
+export const LEGACY_HOME_DIRNAMES: readonly string[] = ['.omnicode-v'];
 export const MIGRATION_MARKER_FILENAME = 'migrated-from-omnicode-v.json';
 
 // Regenerable state that is not worth carrying over: the launcher bits, the
@@ -22,7 +22,7 @@ const MIGRATION_SKIPPED_ENTRIES = new Set(['bin', 'cache', 'logs', 'updates']);
 export interface HomeOutcome {
   /** The data home the CLI must use from this point on. */
   readonly home: string;
-  /** True when the home was resolved from an explicit OMNICODE_V_HOME. */
+  /** True when the home was resolved from an explicit OMNICODE_HOME. */
   readonly defaultApplied: boolean;
   /** True when a legacy home was copied into the fresh data home. */
   readonly migrated: boolean;
@@ -33,8 +33,8 @@ export interface HomeOutcome {
 }
 
 /**
- * Point the CLI at its data home. `OMNICODE_V_HOME` always wins; otherwise the
- * default is `~/.omnicode-v`, and on the very first run the user data from the
+ * Point the CLI at its data home. `OMNICODE_HOME` always wins; otherwise the
+ * default is `~/.omnicode`, and on the very first run the user data from the
  * newest legacy home is copied in so existing sessions and config follow.
  * Legacy homes are never modified or removed.
  */
@@ -42,13 +42,18 @@ export function ensureHome(
   env: NodeJS.ProcessEnv = process.env,
   osHomeDir: string = homedir(),
 ): HomeOutcome {
-  const configured = env['OMNICODE_V_HOME'];
+  const configured = env['OMNICODE_HOME'];
   if (configured !== undefined && configured !== '') {
     return { home: configured, defaultApplied: false, migrated: false };
   }
 
+  const legacyConfigured = env['OMNICODE_V_HOME'];
+  if (legacyConfigured !== undefined && legacyConfigured !== '') {
+    env['OMNICODE_HOME'] = legacyConfigured;
+    return { home: legacyConfigured, defaultApplied: false, migrated: false };
+  }
+
   const home = join(osHomeDir, HOME_DIRNAME);
-  env['OMNICODE_V_HOME'] = home;
   env['OMNICODE_HOME'] = home;
   if (existsSync(home)) return { home, defaultApplied: true, migrated: false };
 

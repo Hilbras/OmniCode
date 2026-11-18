@@ -1,7 +1,7 @@
 # Competitive Hardening Plan
 
 Status: complete  
-Owner: OmniCode-V  
+Owner: OmniCode  
 Scope: close the gaps found against qwen-code and the reference OmniCode, without changing the existing permission-mode labels.
 
 ## Non-goals

@@ -1,7 +1,7 @@
 # Strength Program
 
 Status: active
-Owner: OmniCode-V
+Owner: OmniCode
 Scope: turn the four-project competitive study (Codex CLI, qwen-code, the old
 OmniCode tree, and this tree's own inventory) into verified strengths. Touches
 guards, CI, tests, release tooling, the engine's unwired seams, and the product
@@ -811,9 +811,9 @@ because the app was not in the root Vitest project list. Landed:
 - **Engine home disagreed with the CLI home.**
   `resolveOmnicodeHome` read only `OMNICODE_V_HOME` and defaulted to
   `~/.omnicode-v`, while auth, ACP, SDK, plugins, and the workspace write lock
-  still read `OMNICODE_HOME`. The engine now honours `OMNICODE_V_HOME` first and
-  `OMNICODE_HOME` second (`packages/engine/src/app/bootstrap/bootstrap.ts`), and
-  `defaultWorkspaceLockDir` resolves `<OMNICODE_V_HOME|OMNICODE_HOME|~/.omnicode-v>/locks`
+  still read `OMNICODE_HOME`. The engine now honours `OMNICODE_HOME` first and
+  `OMNICODE_V_HOME` second (`packages/engine/src/app/bootstrap/bootstrap.ts`), and
+  `defaultWorkspaceLockDir` resolves `<OMNICODE_HOME|OMNICODE_V_HOME|~/.omnicode>/locks`
   instead of `~/.omnicode/locks` (test added in
   `packages/engine/test/workspace/writeLock.test.ts`). The auth/API default-home
   split (`packages/auth/src/{region,toolkit}.ts`,
@@ -872,7 +872,7 @@ because the app was not in the root Vitest project list. Landed:
   unchanged: a 500 ms synchronous busy-loop still fails with
   `1 ticks in 502ms`. Verified 3/3 green under 16 competing busy loops, where both the
   unfixed file and a first, too-loose attempt failed.
-- **Typo sweep.** `~/.omnicode-v-v` appeared in CLI comments and the headless
+- **Typo sweep.** `~/.omnicode-v` appeared in CLI comments and the headless
   migration log line; corrected.
 - **Two surface snapshots were stale against shipped work.** The server route
   table gained `GET /api/v1/connectors/telegram/health` and

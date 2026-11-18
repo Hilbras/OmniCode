@@ -17,7 +17,7 @@ If you are migrating from the legacy version, follow the steps below — a singl
 
 There are two ways to migrate.
 
-The **first time you run `omnicode`** after installing omnicode, it automatically checks whether omnicode-cli data exists under `~/.omnicode-v/`. If it finds any, a migration prompt appears, and you can choose to migrate now, do it later, or never be asked again.
+The **first time you run `omnicode`** after installing omnicode, it automatically checks whether omnicode-cli data exists under `~/.omnicode-legacy/` (override the source with `OMNICODE_SHARE_DIR`). If it finds any, a migration prompt appears, and you can choose to migrate now, do it later, or never be asked again.
 
 You can also **run it manually at any time**:
 
@@ -34,7 +34,7 @@ You can choose whether to migrate chat sessions as well. If you don't need the h
 **What does not get migrated**: OAuth login credentials and MCP service authorizations are not copied, so you will need to run `/login` again and re-authorize MCP servers after migrating. omnicode-cli plugins are also out of scope.
 
 ::: tip
-Migration **never modifies or deletes** any of the old data under `~/.omnicode-v/`. omnicode-cli keeps working as before, and the two do not interfere with each other. Migration can also be run repeatedly — sessions that have already been migrated are not imported again.
+Migration **never modifies or deletes** any of the old data under `~/.omnicode-legacy/`. omnicode-cli keeps working as before, and the two do not interfere with each other. Migration can also be run repeatedly — sessions that have already been migrated are not imported again.
 :::
 
 After migration, sessions imported from omnicode-cli are tagged with `[imported]` in the session picker so you can tell them apart from new ones.

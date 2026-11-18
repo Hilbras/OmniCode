@@ -98,7 +98,7 @@ pnpm --filter @hilbras/omnicode-server test:bench
 - Home-dependent paths resolve at call time, never at import time.
   `resolveServerInstancesDir()` and `createInstanceRegistry()` call
   `resolveOmnicodeHome()` when they run; an import-time `const` froze the home
-  before a custom `OMNICODE_V_HOME`/`OMNICODE_HOME` applied, which is how
+  before a custom `OMNICODE_HOME`/`OMNICODE_V_HOME` applied, which is how
   `omnicode web rotate-token` wrote a token into one home and read another
   home's instance registry, printing no access links. Do not cache
   `resolveOmnicodeHome()` in a module-level constant.

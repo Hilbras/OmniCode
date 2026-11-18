@@ -35,10 +35,10 @@ import {
 /**
  * Return the root data directory for Omnicode.
  *
- * Priority: `OMNICODE_V_HOME` env var > `~/.omnicode-v`.
+ * Priority: `OMNICODE_HOME` env var > `~/.omnicode`.
  */
 export function getDataDir(): string {
-  const envDir = process.env[OMNICODE_HOME_ENV];
+  const envDir = process.env[OMNICODE_HOME_ENV] ?? process.env['OMNICODE_V_HOME'];
   if (envDir) {
     return envDir;
   }
@@ -123,7 +123,7 @@ export function getUpdateDismissedStateFile(): string {
 /**
  * Return the native staged-update directory: `<exe dir>/.staging/`.
  *
- * Anchored on the running executable (not `~/.omnicode-v/bin`) because the
+ * Anchored on the running executable (not `~/.omnicode/bin`) because the
  * Windows installer honors `OMNICODE_INSTALL_DIR`, and the swap's atomic renames
  * require the staged binary to sit on the same volume as the exe.
  */

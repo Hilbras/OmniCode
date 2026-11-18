@@ -228,15 +228,15 @@ async function runHandleUpgradeCommand(yes = false): Promise<number> {
 }
 
 describe('main entry command handling', () => {
-  const savedOmnicodeHome = process.env['OMNICODE_V_HOME'];
+  const savedOmnicodeHome = process.env['OMNICODE_HOME'];
   const sandboxHome = mkdtempSync(join(tmpdir(), 'omnicode-main-test-'));
 
   afterEach(() => {
     vi.clearAllMocks();
     if (savedOmnicodeHome === undefined) {
-      delete process.env['OMNICODE_V_HOME'];
+      delete process.env['OMNICODE_HOME'];
     } else {
-      process.env['OMNICODE_V_HOME'] = savedOmnicodeHome;
+      process.env['OMNICODE_HOME'] = savedOmnicodeHome;
     }
   });
 
@@ -248,7 +248,7 @@ describe('main entry command handling', () => {
     vi.clearAllMocks();
     // main() resolves the fork's isolated data home; pin it away from the
     // developer's real ~/.omnicode so a test run can never migrate it.
-    process.env['OMNICODE_V_HOME'] = sandboxHome;
+    process.env['OMNICODE_HOME'] = sandboxHome;
     mocks.harness.ensureConfigFile.mockResolvedValue(undefined);
     mocks.harness.getConfig.mockResolvedValue({
       defaultModel: 'omnicode-k2',

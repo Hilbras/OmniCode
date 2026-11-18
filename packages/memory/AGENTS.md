@@ -413,8 +413,8 @@ them. Nothing in core depends on memory, so there is nothing to activate there.
   duplicate. The writer registers its promise with
   `trackAuxiliaryWork()`; `-p` and the TUI call `flushAuxiliaryWork()` before
   disposing the agent, so a one-shot prompt does not exit before the write.
-  The CLI resolves its data home from `OMNICODE_V_HOME` (it sets it from
-  `~/.omnicode-v` and ignores `OMNICODE_HOME`), which matters when testing
+  The CLI resolves its data home from `OMNICODE_HOME` (it sets it from
+  `~/.omnicode` and ignores `OMNICODE_HOME`), which matters when testing
   against an isolated home.
 - Config `[memory]`: `enabled`, `dir`, `maxContentChars`, `workingTtlMs`,
   `workingGraceMs`, `injectCanonical`, `reviewMaxAttempts`, `reviewBackoffMs`,

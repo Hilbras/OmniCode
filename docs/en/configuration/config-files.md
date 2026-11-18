@@ -1,16 +1,16 @@
 # Configuration files
 
-Omnicode CLI writes all long-term preferences into TOML (plain-text configuration) files under `~/.omnicode-v/`: runtime settings live in `config.toml`, and terminal-UI preferences live in a companion `tui.toml`.
+Omnicode CLI writes all long-term preferences into TOML (plain-text configuration) files under `~/.omnicode/`: runtime settings live in `config.toml`, and terminal-UI preferences live in a companion `tui.toml`.
 
 ## Config file location
 
-The CLI reads configuration from `~/.omnicode-v/config.toml`, created automatically on first run. To relocate the data directory, override it with the `OMNICODE_V_HOME` environment variable:
+The CLI reads configuration from `~/.omnicode/config.toml`, created automatically on first run. To relocate the data directory, override it with the `OMNICODE_HOME` environment variable:
 
 ```sh
-export OMNICODE_V_HOME=/path/to/omnicode-home
+export OMNICODE_HOME=/path/to/omnicode-home
 ```
 
-The config file path then becomes `$OMNICODE_V_HOME/config.toml`. Regardless of where the directory lives, the file name is always `config.toml`.
+The config file path then becomes `$OMNICODE_HOME/config.toml`. Regardless of where the directory lives, the file name is always `config.toml`.
 
 ::: tip
 TOML field names always use snake_case, for example `default_model` and `max_context_size`. If a key contains `.`, you must quote it (for example `[models."gpt-4.1"]`); otherwise TOML treats `.` as a nested table separator.
@@ -85,7 +85,7 @@ pattern = "Bash(rm -rf*)"
 [[hooks]]
 event = "PreToolUse"
 matcher = "Bash"
-command = "node ~/.omnicode-v/hooks/check-bash.mjs"
+command = "node ~/.omnicode/hooks/check-bash.mjs"
 timeout = 5
 ```
 
@@ -564,7 +564,7 @@ pattern = "WebFetch(domain:example.com)"
 ```
 
 ::: tip
-MCP server declarations are configured in `~/.omnicode-v/mcp.json` or the project-local `.omnicode/mcp.json`, not in `config.toml`. The interactive configuration entry point is `/mcp-config`; see [Model Context Protocol](../customization/mcp.md).
+MCP server declarations are configured in `~/.omnicode/mcp.json` or the project-local `.omnicode/mcp.json`, not in `config.toml`. The interactive configuration entry point is `/mcp-config`; see [Model Context Protocol](../customization/mcp.md).
 :::
 
 
@@ -614,7 +614,7 @@ With `mitm = true`, a host that has a credential entry is terminated locally and
 the configured header is replaced with the real secret before the request is
 forwarded. The child sees only the placeholder, and the real value stays in the
 parent process. The CA is generated on first start at
-`$OMNICODE_V_HOME/egress/ca.crt`; Bash gets `NODE_EXTRA_CA_CERTS`,
+`$OMNICODE_HOME/egress/ca.crt`; Bash gets `NODE_EXTRA_CA_CERTS`,
 `CURL_CA_BUNDLE`, `GIT_SSL_CAINFO`, `SSL_CERT_FILE`, and
 `REQUESTS_CA_BUNDLE` pointing at it. Other tools need the CA installed
 manually. Hosts without a credential are tunneled unmodified.
@@ -642,7 +642,7 @@ design — review before enabling it in an environment that forbids MITM.
 
 ## `tui.toml`
 
-Alongside `config.toml`, the CLI keeps terminal-UI and client preferences in a companion `tui.toml` in the same directory (`~/.omnicode-v/tui.toml`, or `$OMNICODE_V_HOME/tui.toml` when overridden). It is created with defaults on first run, and the interactive commands `/config`, `/theme`, and `/editor` write to it for you, so you rarely need to edit it by hand. If the file is malformed, the CLI falls back to defaults and shows a notice instead of failing to start.
+Alongside `config.toml`, the CLI keeps terminal-UI and client preferences in a companion `tui.toml` in the same directory (`~/.omnicode/tui.toml`, or `$OMNICODE_HOME/tui.toml` when overridden). It is created with defaults on first run, and the interactive commands `/config`, `/theme`, and `/editor` write to it for you, so you rarely need to edit it by hand. If the file is malformed, the CLI falls back to defaults and shows a notice instead of failing to start.
 
 | Field | Type | Default | Description |
 | --- | --- | --- | --- |
@@ -667,7 +667,7 @@ Model, cwd, git branch, permission mode, plan mode, context usage, session id, v
 </details>
 
 ```toml
-# ~/.omnicode-v/tui.toml
+# ~/.omnicode/tui.toml
 theme = "auto" # "auto" | "dark" | "light" | custom theme name
 tui_mode = "regular" # "regular" | "fullscreen" ("fullscreen" is experimental)
 render_latex = true # false keeps LaTeX math in messages as raw source
@@ -687,14 +687,14 @@ auto_install = true
 
 # [status_line]
 # items = ["mode", "goal", "model", "tasks", "cwd", "git", "tips"]
-# command = "~/.omnicode-v/statusline.sh"
+# command = "~/.omnicode/statusline.sh"
 ```
 
 Changes apply on the next start, or immediately with `/reload-tui` (which reloads only `tui.toml`); `/reload` reloads both `config.toml` and `tui.toml`.
 
 ## Project-local configuration
 
-In addition to the user-level files under `~/.omnicode-v`, Omnicode reads a project-local configuration file at `<project-root>/.omnicode/local.toml`. It holds settings that are specific to one project checkout and typically should not be shared with teammates.
+In addition to the user-level files under `~/.omnicode`, Omnicode reads a project-local configuration file at `<project-root>/.omnicode/local.toml`. It holds settings that are specific to one project checkout and typically should not be shared with teammates.
 
 The file is created automatically when you add an extra workspace directory with [`/add-dir`](../reference/slash-commands.md) and choose to remember it for the project. You rarely need to edit it by hand.
 
@@ -721,4 +721,4 @@ This matches the rule for project-level MCP servers: the workspace trust prompt 
 
 - [Providers and models](./providers.md) — connection examples for each provider type (Omnicode, Claude, OpenAI, Gemini)
 - [Config overrides](./overrides.md) — priority rules for CLI options, config file, and environment variables
-- [Environment variables](./env-vars.md) — complete list of runtime variables like `OMNICODE_V_HOME`
+- [Environment variables](./env-vars.md) — complete list of runtime variables like `OMNICODE_HOME`

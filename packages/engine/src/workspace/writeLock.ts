@@ -44,7 +44,7 @@ export interface WorkspaceWriteLockOptions {
   readonly timeoutMs?: number;
   /** Retry interval while another owner holds the lock. Default 50ms. */
   readonly pollMs?: number;
-  /** Directory holding lock files. Defaults to `<OMNICODE_V_HOME|OMNICODE_HOME|~/.omnicode-v>/locks`. */
+  /** Directory holding lock files. Defaults to `<OMNICODE_HOME|OMNICODE_V_HOME|~/.omnicode>/locks`. */
   readonly lockDir?: string;
   /** Lock file name override; defaults to a hash of the canonical root. */
   readonly lockFileName?: string;
@@ -95,8 +95,8 @@ export async function canonicalWorkspaceRoot(workspaceRoot: string): Promise<str
 export function defaultWorkspaceLockDir(env: NodeJS.ProcessEnv = process.env): string {
   const configured = env['OMNICODE_WRITE_LOCK_DIR']?.trim();
   if (configured !== undefined && configured.length > 0) return configured;
-  const home = (env['OMNICODE_V_HOME'] ?? env['OMNICODE_HOME'])?.trim();
-  return join(home !== undefined && home.length > 0 ? home : join(homedir(), '.omnicode-v'), 'locks');
+  const home = (env['OMNICODE_HOME'] ?? env['OMNICODE_V_HOME'])?.trim();
+  return join(home !== undefined && home.length > 0 ? home : join(homedir(), '.omnicode'), 'locks');
 }
 
 /** Path of the lock guarding `workspaceRoot`; the canonical root is hashed so symlinks collide. */

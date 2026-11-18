@@ -16,6 +16,7 @@ import {
 const originalEnv = { ...process.env };
 
 beforeEach(() => {
+  delete process.env['OMNICODE_HOME'];
   delete process.env['OMNICODE_V_HOME'];
 });
 
@@ -24,50 +25,55 @@ afterEach(() => {
 });
 
 describe('getDataDir', () => {
-  it('returns ~/.omnicode-v when OMNICODE_V_HOME is not set', () => {
-    expect(getDataDir()).toBe(join(homedir(), '.omnicode-v'));
+  it('returns ~/.omnicode when OMNICODE_HOME is not set', () => {
+    expect(getDataDir()).toBe(join(homedir(), '.omnicode'));
   });
 
-  it('returns OMNICODE_V_HOME when set', () => {
-    process.env['OMNICODE_V_HOME'] = '/tmp/omnicode-test-data';
+  it('returns OMNICODE_HOME when set', () => {
+    process.env['OMNICODE_HOME'] = '/tmp/omnicode-test-data';
     expect(getDataDir()).toBe('/tmp/omnicode-test-data');
   });
 
-  it('returns OMNICODE_V_HOME even if it is a relative path', () => {
-    process.env['OMNICODE_V_HOME'] = 'relative/path';
+  it('returns OMNICODE_HOME even if it is a relative path', () => {
+    process.env['OMNICODE_HOME'] = 'relative/path';
     expect(getDataDir()).toBe('relative/path');
+  });
+
+  it('accepts the pre-rename OMNICODE_V_HOME when OMNICODE_HOME is unset', () => {
+    process.env['OMNICODE_V_HOME'] = '/tmp/legacy-data';
+    expect(getDataDir()).toBe('/tmp/legacy-data');
   });
 });
 
 describe('getLogDir', () => {
   it('returns <dataDir>/logs', () => {
-    expect(getLogDir()).toBe(join(homedir(), '.omnicode-v', 'logs'));
+    expect(getLogDir()).toBe(join(homedir(), '.omnicode', 'logs'));
   });
 
-  it('respects OMNICODE_V_HOME', () => {
-    process.env['OMNICODE_V_HOME'] = '/z';
+  it('respects OMNICODE_HOME', () => {
+    process.env['OMNICODE_HOME'] = '/z';
     expect(getLogDir()).toBe(join('/z', 'logs'));
   });
 });
 
 describe('getBinDir', () => {
   it('returns <dataDir>/bin', () => {
-    expect(getBinDir()).toBe(join(homedir(), '.omnicode-v', 'bin'));
+    expect(getBinDir()).toBe(join(homedir(), '.omnicode', 'bin'));
   });
 
-  it('respects OMNICODE_V_HOME', () => {
-    process.env['OMNICODE_V_HOME'] = '/custom-bin-home';
+  it('respects OMNICODE_HOME', () => {
+    process.env['OMNICODE_HOME'] = '/custom-bin-home';
     expect(getBinDir()).toBe(join('/custom-bin-home', 'bin'));
   });
 });
 
 describe('getUpdateStateFile', () => {
   it('returns <dataDir>/updates/latest.json', () => {
-    expect(getUpdateStateFile()).toBe(join(homedir(), '.omnicode-v', 'updates', 'latest.json'));
+    expect(getUpdateStateFile()).toBe(join(homedir(), '.omnicode', 'updates', 'latest.json'));
   });
 
-  it('respects OMNICODE_V_HOME', () => {
-    process.env['OMNICODE_V_HOME'] = '/updates-home';
+  it('respects OMNICODE_HOME', () => {
+    process.env['OMNICODE_HOME'] = '/updates-home';
     expect(getUpdateStateFile()).toBe(join('/updates-home', 'updates', 'latest.json'));
   });
 });
@@ -75,12 +81,12 @@ describe('getUpdateStateFile', () => {
 describe('getUpdateInstallStateFile', () => {
   it('returns <dataDir>/updates/install.json', () => {
     expect(getUpdateInstallStateFile()).toBe(
-      join(homedir(), '.omnicode-v', 'updates', 'install.json'),
+      join(homedir(), '.omnicode', 'updates', 'install.json'),
     );
   });
 
-  it('respects OMNICODE_V_HOME', () => {
-    process.env['OMNICODE_V_HOME'] = '/updates-home';
+  it('respects OMNICODE_HOME', () => {
+    process.env['OMNICODE_HOME'] = '/updates-home';
     expect(getUpdateInstallStateFile()).toBe(join('/updates-home', 'updates', 'install.json'));
   });
 });
@@ -90,12 +96,12 @@ describe('getInputHistoryFile', () => {
     const workDir = '/home/user/project';
     const hash = createHash('md5').update(workDir, 'utf-8').digest('hex');
     expect(getInputHistoryFile(workDir)).toBe(
-      join(homedir(), '.omnicode-v', 'user-history', `${hash}.jsonl`),
+      join(homedir(), '.omnicode', 'user-history', `${hash}.jsonl`),
     );
   });
 
-  it('respects OMNICODE_V_HOME', () => {
-    process.env['OMNICODE_V_HOME'] = '/custom/data';
+  it('respects OMNICODE_HOME', () => {
+    process.env['OMNICODE_HOME'] = '/custom/data';
     const hash = createHash('md5').update('/proj', 'utf-8').digest('hex');
     expect(getInputHistoryFile('/proj')).toBe(
       join('/custom/data', 'user-history', `${hash}.jsonl`),

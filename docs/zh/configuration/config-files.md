@@ -1,16 +1,16 @@
 # 配置文件
 
-Omnicode CLI 的长期偏好都写在 `~/.omnicode-v/` 下的 TOML 文件里：运行时设置放 `config.toml`，终端界面偏好放配套的 `tui.toml`。
+Omnicode CLI 的长期偏好都写在 `~/.omnicode/` 下的 TOML 文件里：运行时设置放 `config.toml`，终端界面偏好放配套的 `tui.toml`。
 
 ## 配置文件位置
 
-CLI 从 `~/.omnicode-v/config.toml` 读取配置，首次运行时自动创建。如需把数据目录迁移到别处，可用 `OMNICODE_V_HOME` 环境变量覆盖：
+CLI 从 `~/.omnicode/config.toml` 读取配置，首次运行时自动创建。如需把数据目录迁移到别处，可用 `OMNICODE_HOME` 环境变量覆盖：
 
 ```sh
-export OMNICODE_V_HOME=/path/to/omnicode-home
+export OMNICODE_HOME=/path/to/omnicode-home
 ```
 
-此时配置文件路径变为 `$OMNICODE_V_HOME/config.toml`。无论目录在哪里，文件名固定是 `config.toml`。
+此时配置文件路径变为 `$OMNICODE_HOME/config.toml`。无论目录在哪里，文件名固定是 `config.toml`。
 
 ::: tip
 TOML 字段名一律用下划线（snake_case），如 `default_model`、`max_context_size`。字段名里若含 `.`，需用引号包住，例如 `[models."gpt-4.1"]`；否则 TOML 会把 `.` 解释为嵌套表分隔符。
@@ -85,7 +85,7 @@ pattern = "Bash(rm -rf*)"
 [[hooks]]
 event = "PreToolUse"
 matcher = "Bash"
-command = "node ~/.omnicode-v/hooks/check-bash.mjs"
+command = "node ~/.omnicode/hooks/check-bash.mjs"
 timeout = 5
 ```
 
@@ -563,7 +563,7 @@ pattern = "WebFetch(domain:example.com)"
 ```
 
 ::: tip
-MCP server 的声明配置写在 `~/.omnicode-v/mcp.json` 或项目内 `.omnicode/mcp.json` 中，不在 `config.toml` 里。交互式配置入口是 `/mcp-config`，详见 [Model Context Protocol](../customization/mcp.md)。
+MCP server 的声明配置写在 `~/.omnicode/mcp.json` 或项目内 `.omnicode/mcp.json` 中，不在 `config.toml` 里。交互式配置入口是 `/mcp-config`，详见 [Model Context Protocol](../customization/mcp.md)。
 :::
 
 
@@ -609,7 +609,7 @@ allow = ["api.example.com", "*.example.org:443"]
 
 ### 凭据替换
 
-设置 `mitm = true` 后，带凭据条目的主机会在本地终止 TLS，并在转发前把配置的请求头替换为真实密钥。子进程只能看到占位符，真实值保留在父进程中。CA 在首次启动时生成于 `$OMNICODE_V_HOME/egress/ca.crt`；Bash 会获得指向它的 `NODE_EXTRA_CA_CERTS`、`CURL_CA_BUNDLE`、`GIT_SSL_CAINFO`、`SSL_CERT_FILE` 和 `REQUESTS_CA_BUNDLE`。其他工具需要手动安装该 CA。没有凭据条目的主机按原样隧道转发。
+设置 `mitm = true` 后，带凭据条目的主机会在本地终止 TLS，并在转发前把配置的请求头替换为真实密钥。子进程只能看到占位符，真实值保留在父进程中。CA 在首次启动时生成于 `$OMNICODE_HOME/egress/ca.crt`；Bash 会获得指向它的 `NODE_EXTRA_CA_CERTS`、`CURL_CA_BUNDLE`、`GIT_SSL_CAINFO`、`SSL_CERT_FILE` 和 `REQUESTS_CA_BUNDLE`。其他工具需要手动安装该 CA。没有凭据条目的主机按原样隧道转发。
 
 ```toml
 [egress]
@@ -632,7 +632,7 @@ omnicode -p "call the API"   # 子进程看到的是 EXAMPLE_API_KEY=omnicode-br
 
 ## `tui.toml`
 
-除了 `config.toml`，CLI 还在同一目录下用一份配套的 `tui.toml` 保存终端界面与客户端偏好（`~/.omnicode-v/tui.toml`，或覆盖后的 `$OMNICODE_V_HOME/tui.toml`）。它在首次运行时以默认值创建，交互式命令 `/config`、`/theme`、`/editor` 会自动写入，通常无需手动编辑。文件格式有误时，CLI 会回退到默认值并给出提示，而不是启动失败。
+除了 `config.toml`，CLI 还在同一目录下用一份配套的 `tui.toml` 保存终端界面与客户端偏好（`~/.omnicode/tui.toml`，或覆盖后的 `$OMNICODE_HOME/tui.toml`）。它在首次运行时以默认值创建，交互式命令 `/config`、`/theme`、`/editor` 会自动写入，通常无需手动编辑。文件格式有误时，CLI 会回退到默认值并给出提示，而不是启动失败。
 
 | 字段 | 类型 | 默认值 | 说明 |
 | --- | --- | --- | --- |
@@ -657,7 +657,7 @@ model、cwd、git 分支、permission 模式、plan 模式、上下文用量、s
 </details>
 
 ```toml
-# ~/.omnicode-v/tui.toml
+# ~/.omnicode/tui.toml
 theme = "auto" # "auto" | "dark" | "light" | 自定义主题名
 tui_mode = "regular" # "regular" | "fullscreen"（"fullscreen" 为实验性）
 render_latex = true # false 表示消息中的 LaTeX 公式保留原始源码
@@ -677,14 +677,14 @@ auto_install = true
 
 # [status_line]
 # items = ["mode", "goal", "model", "tasks", "cwd", "git", "tips"]
-# command = "~/.omnicode-v/statusline.sh"
+# command = "~/.omnicode/statusline.sh"
 ```
 
 修改在下次启动时生效，或用 `/reload-tui` 立即生效（只重载 `tui.toml`）；`/reload` 会同时重载 `config.toml` 和 `tui.toml`。
 
 ## 项目级本地配置
 
-除了 `~/.omnicode-v` 下的用户级文件，Omnicode 还会读取位于 `<项目根目录>/.omnicode/local.toml` 的项目级本地配置文件。它保存的是与某一个项目检出相关、通常不应与队友共享的设置。
+除了 `~/.omnicode` 下的用户级文件，Omnicode 还会读取位于 `<项目根目录>/.omnicode/local.toml` 的项目级本地配置文件。它保存的是与某一个项目检出相关、通常不应与队友共享的设置。
 
 该文件会在你通过 [`/add-dir`](../reference/slash-commands.md) 添加额外工作目录并选择记入项目时自动创建，通常无需手动编辑。
 
@@ -711,4 +711,4 @@ additional_dir = ["/absolute/path/to/shared"]
 
 - [平台与模型](./providers.md) — 各供应商类型（Omnicode、Claude、OpenAI、Gemini）的接入示例
 - [配置覆盖](./overrides.md) — CLI 选项、配置文件、环境变量的优先级规则
-- [环境变量](./env-vars.md) — `OMNICODE_V_HOME` 等运行时变量的完整列表
+- [环境变量](./env-vars.md) — `OMNICODE_HOME` 等运行时变量的完整列表

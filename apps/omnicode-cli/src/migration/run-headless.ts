@@ -54,9 +54,9 @@ export async function runHeadlessMigrate(
   };
 
   const source = resolveLegacySourceHome(resolved.env, resolved.userHome, resolved.cwd);
-  log(`source: ${source.sourceHome} (${source.origin === 'share-dir' ? 'OMNICODE_V_SHARE_DIR' : 'default ~/.omnicode-v-legacy'})`);
+  log(`source: ${source.sourceHome} (${source.origin === 'share-dir' ? 'OMNICODE_SHARE_DIR' : 'default ~/.omnicode-legacy'})`);
   if (source.skillsSourceHome !== undefined) {
-    log(`skills source: ${source.skillsSourceHome} (omnicode-cli skills are not relocated by OMNICODE_V_SHARE_DIR)`);
+    log(`skills source: ${source.skillsSourceHome} (omnicode-cli skills are not relocated by OMNICODE_SHARE_DIR)`);
   }
   log(`target: ${resolved.targetHome}`);
 

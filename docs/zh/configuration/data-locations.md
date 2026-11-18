@@ -1,32 +1,32 @@
 # 数据路径
 
-Omnicode CLI 把配置文件、会话历史、登录凭据、诊断日志等运行时数据集中存放在 `~/.omnicode-v/` 下。本页帮你搞清楚每类数据在哪里、用来做什么，以及需要时怎么清理或搬迁。
+Omnicode CLI 把配置文件、会话历史、登录凭据、诊断日志等运行时数据集中存放在 `~/.omnicode/` 下。本页帮你搞清楚每类数据在哪里、用来做什么，以及需要时怎么清理或搬迁。
 
 ## 数据根目录
 
-默认数据根是 `~/.omnicode-v/`，在不同平台的实际路径：
+默认数据根是 `~/.omnicode/`，在不同平台的实际路径：
 
 - macOS：`/Users/<name>/.omnicode`
 - Linux：`/home/<name>/.omnicode`
 - Windows：`C:\Users\<name>\.omnicode`
 
-如果你需要把数据目录挪到别处（比如用多个独立环境隔离不同项目的配置），设置 `OMNICODE_V_HOME` 即可：
+如果你需要把数据目录挪到别处（比如用多个独立环境隔离不同项目的配置），设置 `OMNICODE_HOME` 即可：
 
 ```sh
-export OMNICODE_V_HOME="$HOME/.config/omnicode"
+export OMNICODE_HOME="$HOME/.config/omnicode"
 ```
 
-设置后，配置、会话、日志、OAuth 凭据、Omnicode 专属用户级 Skills、全局 `AGENTS.md` 等 **Omnicode 数据**都会落到新路径下。`OMNICODE_V_HOME` 的完整说明见[环境变量](./env-vars.md)。
+设置后，配置、会话、日志、OAuth 凭据、Omnicode 专属用户级 Skills、全局 `AGENTS.md` 等 **Omnicode 数据**都会落到新路径下。`OMNICODE_HOME` 的完整说明见[环境变量](./env-vars.md)。
 
 ::: tip 提示
 
-**通用 `.agents` 资源**仍放在真实 OS home 下，以便跨工具共享。例如，用户级通用 Skills 仍位于 `~/.agents/skills/`，而 Omnicode 专属用户级 Skills 会随 `OMNICODE_V_HOME` 移动到 `$OMNICODE_V_HOME/skills/`。
+**通用 `.agents` 资源**仍放在真实 OS home 下，以便跨工具共享。例如，用户级通用 Skills 仍位于 `~/.agents/skills/`，而 Omnicode 专属用户级 Skills 会随 `OMNICODE_HOME` 移动到 `$OMNICODE_HOME/skills/`。
 :::
 
 ## 目录结构
 
 ```
-$OMNICODE_V_HOME  （默认 ~/.omnicode）
+$OMNICODE_HOME  （默认 ~/.omnicode）
 ├── config.toml             # 用户配置
 ├── tui.toml                # 终端界面偏好（含自动更新开关）
 ├── AGENTS.md               # 全局 Omnicode 专属 Agent 指令（可选）
@@ -62,9 +62,9 @@ $OMNICODE_V_HOME  （默认 ~/.omnicode）
 
 - **`config.toml`**：主运行时配置，存放供应商、模型、循环控制等用户级设置。详见[配置文件](./config-files.md)。
 - **`tui.toml`**：终端界面客户端偏好，包括自动更新开关 `[upgrade].auto_install`（默认开启）。可在 `/settings` 关闭，或手动设为 `auto_install = false`。
-- **`AGENTS.md`**：全局 Omnicode 专属 Agent 指令。该文件会随 `OMNICODE_V_HOME` 移动；跨工具通用指令仍可放在 `~/.agents/AGENTS.md`。
+- **`AGENTS.md`**：全局 Omnicode 专属 Agent 指令。该文件会随 `OMNICODE_HOME` 移动；跨工具通用指令仍可放在 `~/.agents/AGENTS.md`。
 - **`mcp.json`**：用户级 MCP server 声明，启动时与项目内的 `.omnicode/mcp.json` 合并加载。详见 [MCP](../customization/mcp.md)。
-- **`skills/`**：Omnicode 专属用户级 Skills。该目录会随 `OMNICODE_V_HOME` 移动；跨工具通用 Skills 仍可放在 `~/.agents/skills/`。详见 [Agent Skills](../customization/skills.md)。
+- **`skills/`**：Omnicode 专属用户级 Skills。该目录会随 `OMNICODE_HOME` 移动；跨工具通用 Skills 仍可放在 `~/.agents/skills/`。详见 [Agent Skills](../customization/skills.md)。
 - **`plugins/installed.json`**：记录已安装的 plugin、每个 plugin 的启用状态，以及通过 `/plugins` 或 `/plugins mcp disable|enable` 修改的 MCP server 能力状态。本地路径和 zip URL 安装的文件会复制到 `plugins/managed/<id>/`。详见 [Plugins](../customization/plugins.md)。
 - **`credentials/`**：OAuth 凭据目录，权限 `0o700`（目录）/ `0o600`（文件），仅当前用户可读写。托管供应商凭据存为 `credentials/<name>.json`，MCP server 凭据存在 `credentials/mcp/` 子目录下。凭据写入使用原子流程（tmp → fsync → rename）防止写损。
 
@@ -102,25 +102,25 @@ $OMNICODE_V_HOME  （默认 ~/.omnicode）
 
 ## 清理数据
 
-删除数据根目录（`~/.omnicode-v/` 或 `OMNICODE_V_HOME` 指定路径）可清除所有运行时数据。只需清理部分内容时：
+删除数据根目录（`~/.omnicode/` 或 `OMNICODE_HOME` 指定路径）可清除所有运行时数据。只需清理部分内容时：
 
 | 需求 | 操作 |
 | --- | --- |
-| 重置配置 | 删除 `~/.omnicode-v/config.toml` |
-| 重置终端界面偏好 | 删除 `~/.omnicode-v/tui.toml` |
-| 清理所有会话 | 删除 `~/.omnicode-v/sessions/` 和 `session_index.jsonl` |
-| 清理诊断日志 | 删除 `~/.omnicode-v/logs/` |
-| 清理输入历史 | 删除 `~/.omnicode-v/user-history/` |
-| 重置更新状态 | 删除 `~/.omnicode-v/updates/latest.json` |
-| 强制重新下载托管 `rg` 和 `fd` | 删除 `~/.omnicode-v/bin/` |
+| 重置配置 | 删除 `~/.omnicode/config.toml` |
+| 重置终端界面偏好 | 删除 `~/.omnicode/tui.toml` |
+| 清理所有会话 | 删除 `~/.omnicode/sessions/` 和 `session_index.jsonl` |
+| 清理诊断日志 | 删除 `~/.omnicode/logs/` |
+| 清理输入历史 | 删除 `~/.omnicode/user-history/` |
+| 重置更新状态 | 删除 `~/.omnicode/updates/latest.json` |
+| 强制重新下载托管 `rg` 和 `fd` | 删除 `~/.omnicode/bin/` |
 | 清除供应商 OAuth 登录态 | 运行 `/logout`，或删除对应的 `credentials/<name>.json` |
 | 清除 MCP server OAuth 登录态 | 删除 `credentials/mcp/`（`/logout` 不会清理 MCP 凭据） |
-| 移除用户级 MCP 声明 | 删除 `$OMNICODE_V_HOME/mcp.json`（默认为 `~/.omnicode-v/mcp.json`） |
-| 清理全局 Omnicode 专属 Agent 指令 | 删除 `$OMNICODE_V_HOME/AGENTS.md`（默认为 `~/.omnicode-v/AGENTS.md`） |
-| 清理 plugin 安装记录 | 删除 `$OMNICODE_V_HOME/plugins/`（本地 plugin 源码不受影响） |
-| 清空 Omnicode 专属用户级 Skills | 删除 `$OMNICODE_V_HOME/skills/`（默认为 `~/.omnicode-v/skills/`） |
+| 移除用户级 MCP 声明 | 删除 `$OMNICODE_HOME/mcp.json`（默认为 `~/.omnicode/mcp.json`） |
+| 清理全局 Omnicode 专属 Agent 指令 | 删除 `$OMNICODE_HOME/AGENTS.md`（默认为 `~/.omnicode/AGENTS.md`） |
+| 清理 plugin 安装记录 | 删除 `$OMNICODE_HOME/plugins/`（本地 plugin 源码不受影响） |
+| 清空 Omnicode 专属用户级 Skills | 删除 `$OMNICODE_HOME/skills/`（默认为 `~/.omnicode/skills/`） |
 
 ## 下一步
 
 - [配置文件](./config-files.md) — `config.toml` 各字段的完整说明
-- [环境变量](./env-vars.md) — `OMNICODE_V_HOME` 等路径变量的详细用法
+- [环境变量](./env-vars.md) — `OMNICODE_HOME` 等路径变量的详细用法
