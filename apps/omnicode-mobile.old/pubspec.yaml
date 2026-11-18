@@ -1,0 +1,43 @@
+name: omnicode_mobile
+description: Remote control client for an Omnicode daemon. Thin client only; it never runs the agent.
+publish_to: none
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.0
+  flutter: ">=3.41.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_secure_storage: ^11.0.0
+  flutter_svg: ^2.3.4
+  http: ^1.6.0
+  material_ui: ^1.11.0
+  provider: ^6.1.5
+  shared_preferences: ^2.5.6
+  web_socket_channel: ^3.0.3
+  xterm: ^4.0.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ">=0.13.0 <1.0.0"
+  vector_graphics: ^1.3.1
+
+flutter_launcher_icons:
+  android: true
+  image_path: "assets/icon.png"
+  adaptive_icon_background: "#0d0b08"
+  adaptive_icon_foreground: "assets/icon_adaptive_foreground.png"
+
+flutter:
+  uses-material-design: true
+
+  # No fonts: block on purpose. Geist is the house face but the .ttf files are
+  # not in this tree, and declaring a family without binaries breaks the build.
+  # See "Design system" in README.md for the block to add once they are dropped
+  # into assets/fonts/, then flip OmniFont.activeSans / activeMono.
+  assets:
+    - assets/icon.svg
