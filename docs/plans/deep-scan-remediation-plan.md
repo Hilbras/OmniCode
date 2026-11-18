@@ -609,14 +609,14 @@ Goal: nothing built is silently unreachable.
       is advertised.
 - [x] G3.5 F12: **API contract tables are the source**; generated client TS is
       deferred rather than duplicated from `human/llm` (D11).
-- [ ] G3.6 F23: allowlist or delete `RestoreFile`.
-- [ ] G3.7 F24: allowlist or document the five computer-use tools as
-      service-only.
+- [x] G3.6 F23: `RestoreFile` added to the `agent` and `coder` allowlists.
+- [x] G3.7 F24: all five computer-use tools added to the `agent` allowlist.
 - [x] G3.8 F25: verified `Feature.contributeConfig()` is wired through the
       `ConfigSectionContribution` collection; no change needed (claim withdrawn).
-- [ ] G3.9 F26: emit `InterruptionReminderRecorded` or delete the event/state
-      and regenerate the wire manifest.
-- [ ] G3.10 F27: construct `Forked` / `ContextUndo` through their classes.
+- [x] G3.9 F26: `InterruptionReminderRecorded` is dispatched on a
+      user-cancelled turn; 2 tests pin it.
+- [x] G3.10 F27: `Forked` / `ContextUndo` serialize through their Event2
+      classes with schema parsing; 2 tests pin it.
 
 Verify: each item ships a test that fails on the base; no item lands as
 “registered but unreachable”; `pnpm check:generated` stays fresh after any
