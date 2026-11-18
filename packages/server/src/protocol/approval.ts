@@ -5,7 +5,7 @@ import { isoDateTimeSchema } from '@hilbras/omnicode-base/utils/isoDateTime';
 export const approvalDecisionSchema = z.enum(['approved', 'rejected', 'cancelled']);
 export type ApprovalDecision = z.infer<typeof approvalDecisionSchema>;
 
-export const approvalScopeSchema = z.enum(['session']);
+export const approvalScopeSchema = z.enum(['session', 'always']);
 export type ApprovalScope = z.infer<typeof approvalScopeSchema>;
 
 export const approvalRequestSchema = z.object({

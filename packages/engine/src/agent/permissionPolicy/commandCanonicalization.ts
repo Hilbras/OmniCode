@@ -11,6 +11,30 @@ const SAFE_ENV_PREFIX = /^(?:CI|NODE_ENV|NO_COLOR|FORCE_COLOR|TERM|LANG|LC_[A-Za
 const SHELL_META = /[|&;<>()`$]/u;
 const SHELLS = new Set(['bash', 'sh', 'zsh', 'dash', '/bin/bash', '/bin/sh', '/bin/zsh', '/usr/bin/bash', '/usr/bin/sh']);
 
+/**
+ * Canonical argv for a simple command, or `undefined` when the command is
+ * opaque (metacharacters, unbalanced quotes, or empty). Shell wrappers such as
+ * `bash -lc` are unwrapped, so the returned tokens are what an exec-policy
+ * prefix should contain.
+ */
+export function canonicalCommandTokens(command: string): string[] | undefined {
+  const trimmed = command.trim();
+  if (trimmed.length === 0) return undefined;
+  const tokens = tokenize(trimmed);
+  if (tokens === undefined || SHELL_META.test(trimmed)) return undefined;
+  let index = 0;
+  while (index < tokens.length && SAFE_ENV_PREFIX.test(tokens[index]!)) index += 1;
+  const remaining = tokens.slice(index);
+  if (
+    remaining.length >= 3 &&
+    SHELLS.has(remaining[0]!) &&
+    (remaining[1] === '-c' || remaining[1] === '-lc')
+  ) {
+    return canonicalCommandTokens(remaining.slice(2).join(' '));
+  }
+  return remaining.length > 0 ? remaining : undefined;
+}
+
 export function canonicalizeCommand(command: string): CanonicalCommand {
   const trimmed = command.trim();
   if (trimmed.length === 0) return { canonical: '', kind: 'opaque' };

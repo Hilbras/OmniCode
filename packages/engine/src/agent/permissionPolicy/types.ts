@@ -16,7 +16,7 @@ export interface ApprovalRequest {
 
 export interface ApprovalResponse {
   decision: 'approved' | 'rejected' | 'cancelled';
-  scope?: 'session';
+  scope?: 'session' | 'always';
   feedback?: string;
   selectedLabel?: string;
 }

@@ -158,10 +158,10 @@ function inferFileOp(toolName: string): 'read' | 'write' | 'edit' | 'glob' | 'gr
 }
 
 export function adaptPanelResponse(response: ApprovalPanelResponse): ApprovalResponse {
-  if (response.response === 'approved_for_session') {
+  if (response.response === 'approved_for_session' || response.response === 'approved_for_always') {
     return {
       decision: 'approved',
-      scope: 'session',
+      scope: response.response === 'approved_for_always' ? 'always' : 'session',
       feedback: response.feedback,
       selectedLabel: response.selected_label,
     };
@@ -354,7 +354,14 @@ function adaptChoices(toolName: string, display: ToolInputDisplay): ApprovalPane
     return adaptGoalStartChoices(display);
   }
 
-  return DEFAULT_APPROVAL_CHOICES.map((choice) => cloneChoice(choice));
+  const choices = DEFAULT_APPROVAL_CHOICES.map((choice) => cloneChoice(choice));
+  if (toolName === 'Bash') {
+    choices.splice(2, 0, {
+      label: 'Approve always (save rule)',
+      response: 'approved_for_always',
+    });
+  }
+  return choices;
 }
 
 function adaptGoalStartChoices(

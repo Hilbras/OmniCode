@@ -8505,7 +8505,10 @@
                 },
                 "scope": {
                   "type": "string",
-                  "const": "session"
+                  "enum": [
+                    "session",
+                    "always"
+                  ]
                 },
                 "feedback": {
                   "type": "string"

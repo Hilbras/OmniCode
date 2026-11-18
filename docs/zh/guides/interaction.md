@@ -58,6 +58,7 @@ Agent 调用会产生副作用的工具（修改文件、执行命令等）时�
 - **确认**：方向键选择后 `Enter`，或按 `1`/`2`/`3` 数字键直接选择
 - **拒绝**：`Esc`、`Ctrl-C`、`Ctrl-D`
 - **会话内放行**：选「Approve for this session」，本次会话内同类调用不再询问
+- **始终放行（保存规则）**（仅限 Bash）：把允许前缀规则追加到 `[execPolicy] path` 指定的 exec-policy 文件，后续会话不再询问该命令。该文件必须存在；缺失或不可读时，本次审批仍然生效，但规则不会保存
 - **永久规则**：在[配置文件](../configuration/config-files.md#permission)预置 allow / deny 规则
 
 "Ask When Needed" 模式下的普通工具调用、Plan 模式下对计划文件的写入，不触发审批。

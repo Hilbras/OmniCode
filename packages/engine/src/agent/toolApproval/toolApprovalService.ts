@@ -60,7 +60,7 @@ export interface PermissionApprovalRequested extends PermissionApprovalRequested
 
 export interface PermissionApprovalResolvedPayload extends PermissionApprovalRequestedPayload {
   readonly decision: 'approved' | 'rejected' | 'cancelled' | 'error';
-  readonly scope?: 'session';
+  readonly scope?: 'session' | 'always';
   readonly feedback?: string;
   readonly selectedLabel?: string;
   readonly error?: string;
@@ -252,7 +252,8 @@ export class AgentToolApprovalService extends Service implements IAgentToolAppro
     }
 
     const sessionApprovalRule =
-      response.decision === 'approved' && response.scope === 'session'
+      response.decision === 'approved' &&
+      (response.scope === 'session' || response.scope === 'always')
         ? context.execution.approvalRule
         : undefined;
     void this.dispatcher.dispatch(
@@ -276,8 +277,8 @@ export class AgentToolApprovalService extends Service implements IAgentToolAppro
       tool_name: name,
       permission_mode: this.modeService.mode,
       result:
-        response.decision === 'approved' && response.scope === 'session'
-          ? 'approved_for_session'
+        response.decision === 'approved' && response.scope !== undefined
+          ? `approved_for_${response.scope}`
           : response.decision,
       approval_surface: display.kind,
       duration_ms: Date.now() - startedAt,

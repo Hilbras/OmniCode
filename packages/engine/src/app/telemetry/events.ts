@@ -225,7 +225,13 @@ interface PermissionApprovalResultEvent {
   policy_name: string | null;
   tool_name: string;
   permission_mode: TelemetryPermissionMode;
-  result: 'error' | 'approved_for_session' | 'approved' | 'rejected' | 'cancelled';
+  result:
+    | 'error'
+    | 'approved_for_session'
+    | 'approved_for_always'
+    | 'approved'
+    | 'rejected'
+    | 'cancelled';
   approval_surface: string;
   duration_ms: number;
   session_cache_written: boolean;

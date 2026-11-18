@@ -24,7 +24,7 @@ export const approvalRequestSchema = z.object({
 
 export const approvalResponseSchema = z.object({
   decision: z.enum(['approved', 'rejected', 'cancelled']),
-  scope: z.literal('session').optional(),
+  scope: z.enum(['session', 'always']).optional(),
   feedback: z.string().optional(),
   selectedLabel: z.string().optional(),
 });

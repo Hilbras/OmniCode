@@ -58,6 +58,7 @@ When the agent calls a tool that has side effects — modifying files, running c
 - **Approve**: select with the arrow keys and press `Enter`, or press `1` / `2` / `3` to choose directly
 - **Reject**: `Esc`, `Ctrl-C`, or `Ctrl-D`
 - **Approve for this session**: auto-approves the same kind of call for the rest of the session
+- **Approve always (save rule)** (Bash only): appends an allow prefix rule to the exec-policy file named by `[execPolicy] path`, so the command is not asked about again in future sessions. It requires that file; if it is missing or unreadable, the approval still applies to this session but the rule is not saved
 - **Permanent rules**: add allow / deny entries in [Configuration files](../configuration/config-files.md#permission)
 
 Approvals are not triggered for regular tool calls in Ask When Needed mode, nor for writes to plan files in Plan mode.

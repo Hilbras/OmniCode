@@ -740,7 +740,7 @@ export class SessionReplayRenderer {
     const parts: string[] = [];
     switch (result.decision) {
       case 'approved':
-        parts.push(result.scope === 'session' ? 'Approved for session' : 'Approved');
+        parts.push(result.scope === 'always' ? 'Approved and saved rule' : result.scope === 'session' ? 'Approved for session' : 'Approved');
         break;
       case 'rejected':
         parts.push('Rejected');

@@ -3260,7 +3260,7 @@ export class OmnicodeTUI {
     const parts: string[] = [];
     switch (response.decision) {
       case 'approved':
-        parts.push(response.scope === 'session' ? 'Approved for session' : 'Approved');
+        parts.push(response.scope === 'always' ? 'Approved and saved rule' : response.scope === 'session' ? 'Approved for session' : 'Approved');
         break;
       case 'rejected':
         parts.push('Rejected');

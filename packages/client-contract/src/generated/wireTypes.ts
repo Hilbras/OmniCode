@@ -1750,7 +1750,7 @@ export type SessionActivityViewStateOutput = {
 
 export type SessionApprovalServiceDecideInput = readonly [string, {
   decision: "approved" | "rejected" | "cancelled";
-  scope?: "session";
+  scope?: "session" | "always";
   feedback?: string;
   selectedLabel?: string;
 }];

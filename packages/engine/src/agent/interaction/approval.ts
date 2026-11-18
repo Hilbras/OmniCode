@@ -15,7 +15,7 @@ export interface ApprovalRequest {
 
 export interface ApprovalResponse {
   readonly decision: ApprovalDecision;
-  readonly scope?: 'session';
+  readonly scope?: 'session' | 'always';
   readonly feedback?: string;
   readonly selectedLabel?: string;
 }

@@ -736,6 +736,8 @@ export * from '#/agent/permissionPolicy/permissionPolicy';
 export * from '#/agent/permissionPolicy/permissionPolicyService';
 export * from '#/agent/permissionPolicy/types';
 import '#/agent/permissionPolicy/execPolicy/configSection';
+export * from '#/agent/permissionPolicy/execPolicy/execPolicyWriter';
+export * from '#/agent/permissionPolicy/execPolicy/execPolicyPersistenceService';
 import '#/agent/permissionRules/configSection';
 export * from '#/agent/permissionRules/permissionRules';
 export * from '#/agent/permissionRules/matchesRule';

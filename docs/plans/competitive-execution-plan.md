@@ -106,7 +106,9 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P2.3 user manual + docs navigation (60 pages restored, grouped search index).
 - [x] P2.5 terminal visual regression (PTY → xterm grid snapshot).
 - [x] P2.4 typed permission rules (command/path/domain/literal).
-- [ ] P2.1.
+- [x] P2.1 persisted approval rule + canonicalization.
+
+**Phase 2 complete.**
 - [ ] P3.1–P3.5.
 
 ## 6. Definition of done
@@ -232,3 +234,25 @@ Run with `OMNICODE_E2E=1`. This is opt-in like the rest of the PTY suite.
 Existing rules keep their behavior. Tests cover parsing, command/path/domain
 matches and misses, wildcard tools, and the literal fallback (11 tests). The
 user manual's permission table and examples document the syntax in EN and ZH.
+
+### P2.1 execution detail
+
+- `ApprovalResponse.scope` and the client/server approval contracts accept
+  `'always'` alongside `'session'`; the CLI approval dialog offers
+  **Approve always (save rule)** for `Bash`.
+- `ExecPolicyWriterService` canonicalizes the command (unwrapping `bash -lc`)
+  and appends an allow prefix rule to the file named by `[execPolicy] path`,
+  validating the resulting policy with `loadExecPolicy` before writing. A
+  duplicate prefix is a no-op; an opaque command or missing policy path is
+  refused with a reason.
+- `ExecPolicyPersistenceService` (agent scope) listens for
+  `PermissionApprovalResolved` with `scope === 'always'` and a command display,
+  so the tool-approval path stays unchanged.
+- The rule applies to new sessions (the running agent's loaded policy is not
+  hot-reloaded), which is stated in the dialog/docs.
+- Tests: writer 7 (append, shell wrapper, duplicate, opaque, no path,
+  persistence on/off).
+
+Note: the full `test/tui` suite was run once and failed after ~15 minutes; the
+approval-specific files pass, and the failure was not reproduced in the
+targeted suites. It is recorded as an unverified full-suite result, not a claim.
