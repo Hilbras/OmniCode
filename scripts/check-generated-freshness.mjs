@@ -13,6 +13,11 @@ const GENERATED = [
   { package: API, artifact: 'packages/API/docs/wire-contract.json', script: 'gen:wire-contract' },
   { package: API, artifact: 'packages/API/docs/wire-contract.md', script: 'gen:api-reference' },
   {
+    package: '@hilbras/omnicode-client-contract',
+    artifact: 'packages/client-contract/src/generated/wireTypes.ts',
+    script: 'gen:wire-types',
+  },
+  {
     package: CLI,
     artifact: 'apps/omnicode-cli/src/generated/vis-web-asset.ts',
     script: 'gen:vis-asset',
