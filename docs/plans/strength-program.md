@@ -91,6 +91,19 @@ tree rather than against the entries above:
   app fails preflight instead of waiting for CI. Bite proven by appending
   `const probe: number = "x"` to `packages/transcript/src/index.ts`: the subset missed it,
   the full graph exits 2 with `Failed: @hilbras/omnicode-transcript#typecheck` (38/39).
+  One piece of genuinely dead wiring survived that pass and is now removed:
+  `agent/permissionPolicy/policies/auto-mode-approve.ts` exported
+  `AutoModeApprovePermissionPolicyService`, whose `evaluate()` returned a blanket
+  `approve` whenever the mode was `auto`. It had **no importer anywhere** — not the
+  chain in `permissionPolicyService.ts`, not a test, not a barrel — because
+  `AutoModeClassifierPermissionPolicyService` took its slot when auto mode became
+  classifier-driven. Deleting it changes no behaviour: the chain tests already pin
+  that auto mode resolves read-only commands to `auto-mode-classifier` (approve) and
+  mutating ones to `auto-mode-classifier` (ask), so re-introducing a blanket
+  auto-approve ahead of the classifier fails them. Regenerating
+  `contract-types.sha256` removed exactly one line
+  (`agent/permissionPolicy/policies/auto-mode-approve.d.ts`); `pnpm check:generated`
+  went red until regenerated and is green after, which is the drift gate working.
 - **T0.5** the guides no longer contradict code: only `packages/memory/AGENTS.md:371`
   states the default, and it matches `memoryFlag.default === true`
   (`packages/memory/src/feature/flag.ts:24`). The root guide and `packages/README.md`
