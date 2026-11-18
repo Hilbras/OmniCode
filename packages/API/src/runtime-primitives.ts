@@ -1,3 +1,19 @@
+import {
+  ISessionSearchService,
+  LifecycleScope,
+  overrideScopedService,
+  ScopeActivation,
+} from '@hilbras/omnicode-core';
+import { FileSessionSearchService } from '@hilbras/omnicode-engine/features/sessionSearch/fileSessionSearch';
+
+overrideScopedService(
+  LifecycleScope.App,
+  ISessionSearchService,
+  FileSessionSearchService,
+  ScopeActivation.OnDemand,
+  'sessionSearchLocal',
+);
+
 export {
   InMemorySessionSearchSource,
   LocalSessionSearchService,
