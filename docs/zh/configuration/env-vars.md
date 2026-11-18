@@ -235,6 +235,18 @@ Omnicode 会遵循标准代理环境变量，让所有出网流量（模型 API 
 
 以 Node 子进程运行的 stdio MCP 服务，在其 Node 版本支持 `NODE_USE_ENV_PROXY` 时（Node ≥ 22.21 或 ≥ 24.5）会自动遵循 `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY`；SOCKS 代理仅作用于 Omnicode 自身的流量。
 
+### `OMNICODE_SHELL_SNAPSHOT`
+
+为智能体 shell 命令启用的可选别名快照。设为 `1` 时，Omnicode 在启动时运行一次你的
+shell（`alias -p`），只把 `alias` 行写入 `$OMNICODE_V_HOME/shell-snapshot.sh`
+（权限 `0600`），并作为 `BASH_ENV` 传入，使非交互式 `Bash` 调用能看到你的别名。
+函数、环境变量和其他 rc 文件副作用不会被捕获。捕获失败或为空时该功能不生效。
+默认关闭。
+
+```sh
+export OMNICODE_SHELL_SNAPSHOT=1
+```
+
 ## 下一步
 
 - [配置覆盖](./overrides.md) — 环境变量、CLI 选项、配置文件的优先级关系

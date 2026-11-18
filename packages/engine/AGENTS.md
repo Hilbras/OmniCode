@@ -146,6 +146,16 @@ or host-specific code, a second DI facade, direct provider SDK calls outside
 
 `src/workspace/writeLock.ts` owns the per-workspace write lock: `acquireWorkspaceWriteLock` / `withWorkspaceWriteLock` queue by canonical root inside the process and hold a lock file under `<OMNICODE_HOME|~/.omnicode>/locks` (override `OMNICODE_WRITE_LOCK_DIR`). Waiters time out with `WorkspaceLockTimeoutError` (owner pid and lock path in the message); only a lock whose owner pid is gone is reclaimed, via atomic bid rename. Tool writes into the workspace go through it; do not add a second lock implementation.
 
+## Shell snapshot
+
+`src/app/shellSnapshot/shellSnapshot.ts` is an **opt-in** alias snapshot:
+`OMNICODE_SHELL_SNAPSHOT=1` runs the user's shell once (`alias -p`, 3 s cap),
+writes only matching `alias` lines to `<home>/shell-snapshot.sh` (0600), and the
+Bash tool passes it as `BASH_ENV` so non-interactive agent shells see the user's
+aliases. Functions, environment variables, and rc-file side effects are
+**not** captured; the snapshot contains aliases only. A failed capture is
+logged and leaves the feature inert. Default off.
+
 ## Tool-output redaction
 
 `src/tool/toolResultRedaction.ts` marks known credential shapes in every normalized

@@ -1,6 +1,7 @@
 import { IAgentTaskService } from '@hilbras/omnicode-engine/agent/task/task';
 import { resolveAgentTaskConfig } from '@hilbras/omnicode-engine/agent/task/configSection';
 import { execPolicyAllowedHostsFromMetadata } from '@hilbras/omnicode-engine/agent/permissionPolicy/execPolicy/execPolicy';
+import { shellSnapshotEnv } from '@hilbras/omnicode-engine/app/shellSnapshot/shellSnapshot';
 import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
 import type { HostEnvironmentInfo } from '@hilbras/omnicode-engine/os/interface/hostEnvironment';
 import type { IHostProcess, IHostProcessService } from '@hilbras/omnicode-engine/os/interface/hostProcess';
@@ -178,6 +179,7 @@ export class BashTool implements IBashTool {
       TERM: 'dumb',
       GIT_TERMINAL_PROMPT: process.env['GIT_TERMINAL_PROMPT'] ?? '0',
       SHELL: env.shellPath,
+      ...shellSnapshotEnv(),
     };
 
     const writeAllowlist = sandboxWriteAllowlist();

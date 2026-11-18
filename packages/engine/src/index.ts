@@ -7,6 +7,7 @@ export * from '@hilbras/omnicode-base/di/lifecycle';
 export * from '@hilbras/omnicode-base/di/scope';
 export * from './app/scopes';
 export * from './app/auxiliaryWork';
+export * from './app/shellSnapshot/shellSnapshot';
 export * from '#/agent/fileReadCache/fileReadCache';
 export * from '#/agent/fileReadCache/fileReadCacheService';
 export * from '@hilbras/omnicode-base/di/serviceCollection';

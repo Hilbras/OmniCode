@@ -235,6 +235,19 @@ The proxy is applied only when one of these variables is set; otherwise connecti
 
 Stdio MCP servers that run as Node child processes honor `HTTP_PROXY` / `HTTPS_PROXY` / `NO_PROXY` automatically when the child's Node version supports `NODE_USE_ENV_PROXY` (Node ≥ 22.21 or ≥ 24.5); SOCKS proxying applies to Omnicode's own traffic only.
 
+### `OMNICODE_SHELL_SNAPSHOT`
+
+Opt-in alias snapshot for agent shell commands. When set to `1`, Omnicode runs
+your shell once at startup (`alias -p`), writes only the `alias` lines to
+`$OMNICODE_V_HOME/shell-snapshot.sh` (mode `0600`), and passes it as
+`BASH_ENV`, so non-interactive `Bash` calls see your aliases. Functions,
+environment variables, and other rc-file side effects are not captured. A
+failed or empty capture leaves the feature inert. Default off.
+
+```sh
+export OMNICODE_SHELL_SNAPSHOT=1
+```
+
 ## Next steps
 
 - [Config overrides](./overrides.md) — how environment variables, CLI options, and the config file interact by priority

@@ -111,7 +111,9 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 **Phase 2 complete.**
 - [x] P3.1 guardian reviewer auto-mode slice.
 - [x] P3.2 workflow tool (read-only DAG over the existing runtime).
-- [ ] P3.3–P3.5.
+- [x] P3.3 shell snapshot (opt-in aliases).
+- [ ] P3.4 credential broker (own program).
+- [x] P3.5 product surfaces: no desktop/Telegram change in this program.
 
 ## 6. Definition of done
 
@@ -289,3 +291,31 @@ shell ask that still defers. Documented in the EN/ZH configuration reference.
 
 Tests: 3 (ordered run through the executor, disallowed Bash refused, cycle
 rejected).
+
+### P3.3 execution detail
+
+Opt-in alias snapshot (`OMNICODE_SHELL_SNAPSHOT=1`):
+
+- At App scope creation, run the user's shell once with `alias -p` (3 s cap),
+  keep only `alias` lines, write `<home>/shell-snapshot.sh` at mode `0600`, and
+  expose it as `BASH_ENV` to the Bash tool.
+- Functions, env vars, and other rc side effects are deliberately not captured;
+  an empty or failed capture leaves the feature inert.
+- Default off because it changes how agent shells resolve commands.
+- Tests: alias parser (keeps aliases, drops functions/env/blank lines) and the
+  empty env default.
+- Documented in the engine guide and the EN/ZH environment-variable reference.
+
+### P3.5 decision
+
+No desktop shell and no Telegram bot expansion in this program. Both remain
+product decisions recorded in `strength-program.md`; the inspector, web
+surfaces, and CLI remain the supported surfaces.
+
+### P3.4 — why it is not in this pass
+
+A credential broker is not a wiring change: it needs a local MITM/egress proxy,
+per-destination authorization, request substitution, and a trust story for its
+CA. Shipping a partial version that gives children dummy credentials without a
+working substitution path would break every authenticated tool call. It is
+recorded as its own scoped program rather than half-built here.
