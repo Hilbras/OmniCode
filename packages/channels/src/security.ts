@@ -36,7 +36,9 @@ export function verifyWebhookSignature(input: WebhookSignatureInput): WebhookVer
   if (received === undefined || received.length !== expected.length) {
     return { ok: false, reason: 'invalid_signature' };
   }
-  return { ok: timingSafeEqual(expected, received), ...(timingSafeEqual(expected, received) ? {} : { reason: 'invalid_signature' as const }) };
+  return timingSafeEqual(expected, received)
+    ? { ok: true }
+    : { ok: false, reason: 'invalid_signature' };
 }
 
 export function verifySlackSignature(input: WebhookSignatureInput): WebhookVerification {
@@ -150,11 +152,16 @@ export interface ProviderWebhookInput {
 }
 
 export function verifyProviderWebhook(input: ProviderWebhookInput): WebhookVerification {
+  if (input.secret.length === 0) {
+    return { ok: false, reason: 'missing_secret' };
+  }
   switch (input.kind) {
-    case 'telegram':
-      return input.headers['x-telegram-bot-api-secret-token'] === input.secret
-        ? { ok: true }
-        : { ok: false, reason: 'invalid_signature' };
+    case 'telegram': {
+      const received = input.headers['x-telegram-bot-api-secret-token'];
+      return received === undefined || received.length === 0
+        ? { ok: false, reason: 'invalid_signature' }
+        : safeStringEqual(input.secret, received);
+    }
     case 'slack':
       return verifySlackSignature({
         secret: input.secret,

@@ -161,4 +161,66 @@ describe('server-v2 /api/v1/connectors', () => {
     expect(body.code).toBe(0);
     expect(telegramStatusResponseSchema.parse(body.data).telegram.state).toBe('not-configured');
   });
+
+  it('stores webhook mode, its URL, and its secret', async () => {
+    const body = await saveTelegram({
+      botToken: BOT_TOKEN,
+      mode: 'webhook',
+      webhookUrl: 'https://example.com/telegram',
+      webhookSecret: 's3cret',
+    });
+
+    expect(body.code).toBe(0);
+    const telegram = telegramStatusResponseSchema.parse(body.data).telegram;
+    expect(telegram.mode).toBe('webhook');
+    expect(telegram.webhook_url).toBe('https://example.com/telegram');
+
+    const written = JSON.parse(
+      await readFile(join(home as string, 'telegram.json'), 'utf8'),
+    ) as Record<string, unknown>;
+    expect(written['mode']).toBe('webhook');
+    expect(written['webhookSecret']).toBe('s3cret');
+  });
+
+  it('accepts a webhook without a bearer token only with the configured secret', async () => {
+    await saveTelegram({
+      botToken: BOT_TOKEN,
+      mode: 'webhook',
+      webhookUrl: 'https://example.com/telegram',
+      webhookSecret: 's3cret',
+    });
+
+    const post = async (secret?: string): Promise<Envelope<unknown>> => {
+      const res = await fetch(`${base}/api/v1/connectors/telegram/webhook`, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          ...(secret === undefined ? {} : { 'x-telegram-bot-api-secret-token': secret }),
+        },
+        body: JSON.stringify({ update_id: 1 }),
+      });
+      return (await res.json()) as Envelope<unknown>;
+    };
+
+    expect((await post('wrong')).code).toBe(ErrorCode.VALIDATION_FAILED);
+    expect((await post()).code).toBe(ErrorCode.VALIDATION_FAILED);
+    expect((await post('s3cret')).code).toBe(0);
+    expect((await getTelegram()).last_update_at).toBeTypeOf('number');
+  });
+
+  it('rejects webhook posts while the connector is in polling mode', async () => {
+    await saveTelegram({ botToken: BOT_TOKEN, webhookSecret: 's3cret' });
+
+    const res = await fetch(`${base}/api/v1/connectors/telegram/webhook`, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-telegram-bot-api-secret-token': 's3cret',
+      },
+      body: JSON.stringify({ update_id: 1 }),
+    });
+    const body = (await res.json()) as Envelope<unknown>;
+
+    expect(body.code).toBe(ErrorCode.VALIDATION_FAILED);
+  });
 });

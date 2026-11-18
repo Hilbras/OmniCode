@@ -90,6 +90,11 @@ pnpm --filter @hilbras/omnicode-server test:bench
   `PORT_RETRY_LIMIT`. Do not hardcode 58627 in tests.
 - `apiSurface.snapshot.test.ts` fails on any route addition/removal. Update it
   deliberately; never hand-edit generated OpenAPI output.
+- `POST /api/v1/connectors/telegram/webhook` is the only unauthenticated
+  `/api/v1` POST: Telegram cannot send a bearer token. It is safe only because
+  `TelegramConnectorService.handleWebhookUpdate` requires `mode = 'webhook'`, a
+  configured `webhookSecret`, and a constant-time secret match. Do not add
+  another auth bypass without an equivalent in-handler verifier.
 - Home-dependent paths resolve at call time, never at import time.
   `resolveServerInstancesDir()` and `createInstanceRegistry()` call
   `resolveOmnicodeHome()` when they run; an import-time `const` froze the home

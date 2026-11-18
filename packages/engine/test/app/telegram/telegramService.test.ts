@@ -4,7 +4,7 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TelegramConnectorService } from '#/app/telegram/telegramService';
+import { TelegramConnectorService, redactTelegramSecrets } from '#/app/telegram/telegramService';
 import type { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import type { ISessionManager } from '#/app/sessionManager/sessionManager';
 import type { IWorkspaceService } from '#/app/workspace/workspace';
@@ -210,5 +210,14 @@ describe('TelegramConnectorService probe', () => {
     } finally {
       vi.unstubAllGlobals();
     }
+  });
+
+  it('redacts bot tokens from surfaced error text', () => {
+    const url = 'request to https://api.telegram.org/bot123456:ABC-DEF/getMe failed';
+    const bare = '123456789:AAHdqTcvCH1vGWJxfSeofSAs0K5PALDsaw';
+
+    expect(redactTelegramSecrets(url)).not.toContain('ABC-DEF');
+    expect(redactTelegramSecrets(url)).toContain('/bot[redacted]/getMe');
+    expect(redactTelegramSecrets(bare)).toBe('[redacted]');
   });
 });

@@ -271,3 +271,56 @@ Make the connector safe to run continuously and in server deployments.
 - Plan review and questions are stateful; stale callback state must be cleaned.
 - Webhook mode changes the server surface; keep polling the default.
 - Long Markdown chunking is easy to get wrong; test with code fences and tables.
+
+## Audit follow-up (2026-11-18)
+
+Fixed:
+
+- **Webhook mode was unreachable.** The update route lives under `/api/v1`, and
+  the bearer hook rejected Telegram's callback before the connector saw it. The
+  exact `POST /api/v1/connectors/telegram/webhook` path is now exempt, and the
+  connector itself requires `mode = 'webhook'` plus a configured secret.
+- **Secret checks are constant-time** (`timingSafeEqual`), and an empty or
+  missing secret now rejects instead of accepting every caller.
+- **The PUT route dropped `mode`, `webhookUrl`, and `webhookSecret`** even though
+  the request schema accepted them; all five settings are persisted now.
+- **Webhook start requires a secret** instead of registering a webhook without
+  one.
+- **Bot tokens are redacted** from error text surfaced in `status.error`,
+  `lastError`, and chat error replies (`/bot<token>/` and bare token shapes).
+- **A media album bypassed pairing.** Albums were buffered before the allowlist
+  check, and `flushMediaGroup` never re-checked it, so any chat could send two
+  photos and drive the newest session. Albums from unpaired chats are now
+  refused at update time and re-checked before the prompt runs.
+- **Inline buttons bypassed pairing.** `handleCallbackQuery` now checks the
+  allowlist before switching sessions or applying model/permission buttons.
+- **Webhook updates are deduplicated and counted.** A repeated `update_id` is
+  acknowledged once, and webhook mode now updates `lastUpdateAt` and the
+  update/message metrics like polling does.
+- `packages/channels` Telegram verification now rejects an empty secret and
+  compares with `timingSafeEqual`.
+
+Tests: engine 57 (7 new), server connectors 9 (3 new), channels 26 (1 new).
+
+Open, deliberately not changed here:
+
+- **Three Telegram entry points** coexist: the engine connector
+  (`/connectors` + TUI), `packages/channels`' Telegram adapter, and the
+  `omnicode-telegram` plugin bridge. They have different config formats
+  (encrypted vs plaintext `botToken`), different command sets, and different
+  auth models. Pick one before documenting Telegram as a single product.
+- **`packages/channels` Telegram is outbound-only.** The adapter sends messages
+  and `handleUpdate` is never wired to an inbound server or poller, so enabling
+  it in `channels.json` produces a bot that never receives. The plugin bridge or
+  the engine connector is the real inbound path.
+- **Two pollers conflict.** The `omnicode-telegram` plugin bridge and the engine
+  connector both long-poll, so running both against one token makes Telegram
+  answer one with `409 Conflict`. The CLI's `channels.json` runtime is not a
+  third poller (its Telegram adapter is send-only) but shares the same token
+  env var, so it can send as the bot while another process receives.
+- **The plugin's standalone default home is stale** (`~/.omnicode` vs the
+  product's `~/.omnicode-v`) and its README says to run it directly. It only
+  works when the plugin host injects `OMNICODE_HOME`. It also cannot read a
+  token saved by the TUI (encrypted, no plaintext `botToken`).
+- **Group chats share one allowlist entry.** Adding a group id lets every member
+  drive the agent, including `/permission yolo`; there is no per-user check.

@@ -147,6 +147,14 @@ describe('channel security', () => {
     expect(
       verifyProviderWebhook({ kind: 'telegram', secret: 'telegram-secret', rawBody: '{}', headers: {} }),
     ).toMatchObject({ ok: false, reason: 'invalid_signature' });
+    expect(
+      verifyProviderWebhook({
+        kind: 'telegram',
+        secret: '',
+        rawBody: '{}',
+        headers: { 'x-telegram-bot-api-secret-token': '' },
+      }),
+    ).toEqual({ ok: false, reason: 'missing_secret' });
   });
 
   it('verifies WeChat SHA1 signatures', () => {

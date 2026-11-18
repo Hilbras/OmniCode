@@ -1,4 +1,10 @@
-import { createCipheriv, createDecipheriv, randomBytes, randomUUID } from 'node:crypto';
+import {
+  createCipheriv,
+  createDecipheriv,
+  randomBytes,
+  randomUUID,
+  timingSafeEqual,
+} from 'node:crypto';
 import { appendFile, mkdir, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import { Readable } from 'node:stream';
@@ -373,9 +379,13 @@ export class TelegramConnectorService implements ITelegramConnectorService {
         if (webhookUrl === undefined || webhookUrl.trim() === '') {
           throw new Error('Telegram webhook URL is not configured.');
         }
+        const webhookSecret = readString(config?.['webhookSecret']);
+        if (webhookSecret === undefined || webhookSecret.length === 0) {
+          throw new Error('Telegram webhook mode requires a webhook secret.');
+        }
         await callTelegramApi(token, 'setWebhook', {
           url: webhookUrl,
-          secret_token: readString(config?.['webhookSecret']),
+          secret_token: webhookSecret,
         });
         await this.audit('bot.start', { mode });
         return this.status();
@@ -417,12 +427,33 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     const config = await this.readSecureConfig();
     const token = await this.tokenFor(config);
     if (token === '') return false;
+    if (readString(config?.['mode']) !== 'webhook') return false;
     const expected = readString(config?.['webhookSecret']);
-    if (expected !== undefined && expected.length > 0 && secret !== expected) return false;
+    if (expected === undefined || expected.length === 0) return false;
+    if (!secretsMatch(expected, secret)) return false;
     const record = asRecord(update);
-    if (typeof record['update_id'] !== 'number') return false;
+    const updateId = record['update_id'];
+    if (typeof updateId !== 'number') return false;
+    if (this.seenUpdateIds.has(updateId)) return true;
+    await this.bumpMetric('updates');
+    if (record['message'] !== undefined || record['callback_query'] !== undefined) {
+      await this.bumpMetric('messages');
+    }
     await this.handleUpdate(token, record as unknown as TelegramUpdate);
+    this.rememberUpdate(updateId);
+    await writeTelegramState(this.statePath, {
+      lastUpdateAt: Date.now(),
+      lastError: undefined,
+    });
     return true;
+  }
+
+  private rememberUpdate(updateId: number): void {
+    this.seenUpdateIds.add(updateId);
+    if (this.seenUpdateIds.size > 2_000) {
+      const oldest = this.seenUpdateIds.values().next().value;
+      if (oldest !== undefined) this.seenUpdateIds.delete(oldest);
+    }
   }
 
   async addAllowedChat(chatId: number): Promise<TelegramConnectorStatus> {
@@ -580,6 +611,7 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     readonly messages: NonNullable<TelegramUpdate['message']>[];
   }): Promise<void> {
     try {
+      if (!(await this.isAllowed(group.chatId))) return;
       const binding = await this.sessionForChat(group.chatId);
       const attachments: ContentPart[] = [];
       for (const message of group.messages) {
@@ -1199,6 +1231,10 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     const [kind, id, action, questionIndex, optionIndex] = data.split(':');
     const chatId = callback.message?.chat.id;
     if (chatId === undefined) return;
+    if (!(await this.isAllowed(chatId))) {
+      await answerCallbackQuery(token, callback.id, 'This chat is not paired');
+      return;
+    }
     if (kind === 's' && id !== undefined) {
       const session = this.sessions.get(id);
       if (session === undefined) {
@@ -1507,11 +1543,7 @@ export class TelegramConnectorService implements ITelegramConnectorService {
           lastUpdateId = update.update_id;
           offset = update.update_id + 1;
           if (this.seenUpdateIds.has(update.update_id)) continue;
-          this.seenUpdateIds.add(update.update_id);
-          if (this.seenUpdateIds.size > 2_000) {
-            const oldest = this.seenUpdateIds.values().next().value;
-            if (oldest !== undefined) this.seenUpdateIds.delete(oldest);
-          }
+          this.rememberUpdate(update.update_id);
           await this.bumpMetric('updates');
           if (update.message !== undefined || update.callback_query !== undefined) {
             await this.bumpMetric('messages');
@@ -1570,6 +1602,14 @@ export class TelegramConnectorService implements ITelegramConnectorService {
       return;
     }
     if (message.media_group_id !== undefined) {
+      if (!(await this.isAllowed(message.chat.id))) {
+        await sendMessage(
+          token,
+          message.chat.id,
+          'This chat is not paired. Use the code from /connectors.',
+        );
+        return;
+      }
       this.bufferMediaGroup(token, message);
       return;
     }
@@ -2040,7 +2080,7 @@ async function probeBot(token: string): Promise<TelegramProbe> {
       signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
     });
   } catch (error) {
-    return { error: error instanceof Error ? error.message : String(error) };
+    return { error: redactTelegramSecrets(error instanceof Error ? error.message : String(error)) };
   }
   let payload: unknown;
   try {
@@ -2657,7 +2697,22 @@ async function finishProgress(
 }
 
 function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+  return redactTelegramSecrets(error instanceof Error ? error.message : String(error));
+}
+
+export function redactTelegramSecrets(value: string): string {
+  return value
+    .replaceAll(/\/bot\d+:[A-Za-z0-9_-]+/g, '/bot[redacted]')
+    .replaceAll(/\b\d{6,}:[A-Za-z0-9_-]{20,}\b/g, '[redacted]');
+}
+
+function secretsMatch(expected: string, candidate: string | undefined): boolean {
+  if (candidate === undefined) return false;
+  const expectedBytes = Buffer.from(expected, 'utf8');
+  const candidateBytes = Buffer.from(candidate, 'utf8');
+  return (
+    expectedBytes.length === candidateBytes.length && timingSafeEqual(expectedBytes, candidateBytes)
+  );
 }
 
 registerScopedService(

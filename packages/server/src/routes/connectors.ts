@@ -136,12 +136,18 @@ export function registerConnectorsRoutes(app: ConnectorsRouteHost, core: Scope):
       operationId: 'saveTelegramConnector',
     },
     async (req, reply) => {
-      const { botToken, allowedChatIds } = req.body;
-      if (botToken === undefined && allowedChatIds === undefined) {
+      const { botToken, allowedChatIds, mode, webhookUrl, webhookSecret } = req.body;
+      if (
+        botToken === undefined &&
+        allowedChatIds === undefined &&
+        mode === undefined &&
+        webhookUrl === undefined &&
+        webhookSecret === undefined
+      ) {
         reply.send(
           errEnvelope(
             ErrorCode.VALIDATION_FAILED,
-            'Provide a bot token or at least one allowed chat id',
+            'Provide at least one Telegram setting to update',
             req.id,
           ),
         );
@@ -149,7 +155,7 @@ export function registerConnectorsRoutes(app: ConnectorsRouteHost, core: Scope):
       }
       const status = await core.accessor
         .get(ITelegramConnectorService)
-        .saveSettings({ botToken, allowedChatIds });
+        .saveSettings({ botToken, allowedChatIds, mode, webhookUrl, webhookSecret });
       reply.send(okEnvelope({ telegram: toWireTelegram(status) }, req.id));
     },
   );

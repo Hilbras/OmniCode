@@ -67,6 +67,7 @@ class FakeTelegramApi {
   readonly chatActions: string[] = [];
   readonly reactions: string[] = [];
   readonly deletedMessages: number[] = [];
+  readonly answers: string[] = [];
   failSendMessageTimes = 0;
   sendMessageAttempts = 0;
   readonly offsets: number[] = [];
@@ -145,6 +146,7 @@ class FakeTelegramApi {
       return jsonResponse({ ok: true, result: true });
     }
     if (method === 'answerCallbackQuery') {
+      this.answers.push(String(body['text'] ?? ''));
       return jsonResponse({ ok: true, result: true });
     }
     return jsonResponse({ ok: false, description: `unexpected method ${method}` });
@@ -966,6 +968,115 @@ describe('Telegram connector end-to-end', () => {
       allowedChatIds?: number[];
     };
     expect(config.allowedChatIds).toContain(CHAT_ID);
+    expect((await service.status()).lastUpdateAt).toBeTypeOf('number');
+  });
+
+  it('processes a duplicate webhook update once', async () => {
+    await pair();
+    await service.saveSettings({
+      botToken: TOKEN,
+      mode: 'webhook',
+      webhookUrl: 'https://example.com/telegram',
+      webhookSecret: 's3cret',
+    });
+
+    const update = {
+      update_id: 77,
+      message: { message_id: 1, chat: { id: CHAT_ID }, text: '/help' },
+    };
+    await service.handleWebhookUpdate(update, 's3cret');
+    await service.handleWebhookUpdate(update, 's3cret');
+
+    const helpReplies = api.sent.filter((entry) =>
+      entry.text.startsWith('OmniCode Telegram:'),
+    );
+    expect(helpReplies).toHaveLength(1);
+  });
+
+  it('refuses webhook updates when the connector is not in webhook mode', async () => {
+    await pair();
+
+    const accepted = await service.handleWebhookUpdate({ update_id: 1 }, 's3cret');
+
+    expect(accepted).toBe(false);
+  });
+
+  it('refuses webhook updates when no webhook secret is configured', async () => {
+    await pair();
+    await service.saveSettings({
+      botToken: TOKEN,
+      mode: 'webhook',
+      webhookUrl: 'https://example.com/telegram',
+    });
+
+    const withValue = await service.handleWebhookUpdate({ update_id: 1 }, 'anything');
+    const withoutValue = await service.handleWebhookUpdate({ update_id: 2 }, undefined);
+
+    expect(withValue).toBe(false);
+    expect(withoutValue).toBe(false);
+  });
+
+  it('refuses to start webhook mode without a secret', async () => {
+    await pair();
+    await service.saveSettings({
+      botToken: TOKEN,
+      mode: 'webhook',
+      webhookUrl: 'https://example.com/telegram',
+    });
+
+    await expect(service.start()).rejects.toThrow(/webhook secret/i);
+  });
+
+  it('refuses a media album from a chat that is not paired', async () => {
+    await pair();
+    const stranger = 424242;
+    api.push([
+      {
+        update_id: 1,
+        message: {
+          message_id: 1,
+          chat: { id: stranger },
+          media_group_id: 'album-1',
+          photo: [{ file_id: 'photo-a', file_size: 3 }],
+        },
+      },
+      {
+        update_id: 2,
+        message: {
+          message_id: 2,
+          chat: { id: stranger },
+          media_group_id: 'album-1',
+          photo: [{ file_id: 'photo-b', file_size: 3 }],
+        },
+      },
+    ]);
+    await service.start();
+
+    await waitFor(
+      () => api.sent.filter((entry) => entry.text.includes('not paired')).length >= 2,
+    );
+
+    expect(lastSubmit).toBeUndefined();
+    expect(await service.listBindings()).toEqual({});
+  });
+
+  it('ignores an inline button press from a chat that is not paired', async () => {
+    await pair();
+    api.push([
+      {
+        update_id: 1,
+        callback_query: {
+          id: 'callback-1',
+          data: 's:session-1',
+          message: { message_id: 1, chat: { id: 424242 } },
+        },
+      },
+    ]);
+    await service.start();
+
+    await waitFor(() => api.answers.includes('This chat is not paired'));
+
+    expect(await service.listBindings()).toEqual({});
   });
 
   it('delivers a pending question without the agent event bus', async () => {

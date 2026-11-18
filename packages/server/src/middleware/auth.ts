@@ -46,6 +46,9 @@ function defaultIsBypassed(req: FastifyRequest): boolean {
   if (req.method === 'GET' && path === '/api/v1/healthz') {
     return true;
   }
+  if (req.method === 'POST' && path === '/api/v1/connectors/telegram/webhook') {
+    return true;
+  }
   const isApi = path.startsWith('/api/');
   const isMeta = path === '/openapi.json' || path === '/asyncapi.json';
   return !isApi && !isMeta;
