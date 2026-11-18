@@ -113,7 +113,7 @@ approvals, debugging, and docs, and exceed them on trust and auditability.
 - [x] P3.2 workflow tool (read-only DAG over the existing runtime).
 - [x] P3.3 shell snapshot (opt-in aliases).
 - [x] P3.4a egress allowlist proxy (opt-in).
-- [ ] P3.4b credential substitution (needs a trusted MITM CA).
+- [x] P3.4b credential substitution (local CA, opt-in MITM).
 - [x] P3.5 product surfaces: no desktop/Telegram change in this program.
 
 ## 6. Definition of done
@@ -338,3 +338,20 @@ loopback in `NO_PROXY`:
 
 Tests: rule parsing/matching, private/loopback denial, an allowed HTTP forward,
 a denied host, and a refused CONNECT (4 tests).
+
+### P3.4b execution detail
+
+Credential substitution is implemented behind `[egress] mitm = true`:
+
+- A local CA is generated on first use under `<home>/egress` (`ca.crt`/`ca.key`,
+  `0600`); per-host leaves are signed in memory with an IP/DNS SAN.
+- A CONNECT to an allowed host with a credential is terminated locally (a
+  `TLSSocket` over the client socket), the request is forwarded over TLS, and
+  the configured header is replaced with the real value read from the parent
+  env. Other allowed hosts are tunneled untouched.
+- Children receive the placeholder for `valueEnv` plus CA trust vars
+  (`NODE_EXTRA_CA_CERTS`, `CURL_CA_BUNDLE`, `GIT_SSL_CAINFO`, `SSL_CERT_FILE`,
+  `REQUESTS_CA_BUNDLE`); the real secret never enters the child env.
+- Denials and proxy logs carry the host only.
+- Tests: HTTP header substitution with placeholder/real separation, and a full
+  HTTPS MITM round-trip where the target sees the real header (6 egress tests).

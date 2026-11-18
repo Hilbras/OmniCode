@@ -597,12 +597,38 @@ autoMode = true
 | `enabled` | `boolean` | `false` | 启动代理 |
 | `allow` | `string[]` | `[]` | 允许的 `host` 或 `host:port`；`*.example.com` 匹配子域。空列表拒绝所有请求 |
 | `allowPrivate` | `boolean` | `false` | 允许私有、回环和链路本地目标 |
+| `mitm` | `boolean` | `false` | 对带凭据条目的主机终止 TLS 并替换请求头 |
+| `credentials.<name>` | table | — | `host`、`header`（默认 `authorization`），以及 `valueEnv`（从父进程环境读取）或 `value`；`placeholder` 默认 `omnicode-broker` |
 
 ```toml
 [egress]
 enabled = true
 allow = ["api.example.com", "*.example.org:443"]
 ```
+
+
+### 凭据替换
+
+设置 `mitm = true` 后，带凭据条目的主机会在本地终止 TLS，并在转发前把配置的请求头替换为真实密钥。子进程只能看到占位符，真实值保留在父进程中。CA 在首次启动时生成于 `$OMNICODE_V_HOME/egress/ca.crt`；Bash 会获得指向它的 `NODE_EXTRA_CA_CERTS`、`CURL_CA_BUNDLE`、`GIT_SSL_CAINFO`、`SSL_CERT_FILE` 和 `REQUESTS_CA_BUNDLE`。其他工具需要手动安装该 CA。没有凭据条目的主机按原样隧道转发。
+
+```toml
+[egress]
+enabled = true
+mitm = true
+allow = ["api.example.com"]
+
+[egress.credentials.example]
+host = "api.example.com"
+header = "authorization"
+valueEnv = "EXAMPLE_API_KEY"
+```
+
+```sh
+export EXAMPLE_API_KEY="sk-real"
+omnicode -p "call the API"   # 子进程看到的是 EXAMPLE_API_KEY=omnicode-broker
+```
+
+真实密钥在请求时从父进程环境读取，绝不写入日志；拒绝时只记录主机名。这是有意的 TLS 拦截，在不允许 MITM 的环境中启用前请先评估。
 
 ## `tui.toml`
 

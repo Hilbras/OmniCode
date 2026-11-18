@@ -148,7 +148,7 @@ or host-specific code, a second DI facade, direct provider SDK calls outside
 
 ## Egress allowlist
 
-`src/app/egress/egressProxy.ts` is an opt-in loopback HTTP/CONNECT proxy (config `[egress]`). It enforces a host/port allowlist, denies private/loopback/link-local unless `allowPrivate` is set, logs host names only, and exposes itself to the Bash tool through `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY`. It does not substitute credentials; child processes still hold the real secret for an allowed host. Default off.
+`src/app/egress/egressProxy.ts` is an opt-in loopback HTTP/CONNECT proxy (config `[egress]`). It enforces a host/port allowlist, denies private/loopback/link-local unless `allowPrivate` is set, logs host names only, and exposes itself to the Bash tool through `HTTP_PROXY`/`HTTPS_PROXY`/`ALL_PROXY`. With `mitm = true` and a `[egress.credentials.*]` entry, an allowed host is terminated locally with a CA generated under `<home>/egress`, the configured header is replaced with the real value from the parent env, and the child only ever sees a placeholder; trust vars (`NODE_EXTRA_CA_CERTS`, `CURL_CA_BUNDLE`, …) point at that CA. Default off.
 
 ## Shell snapshot
 

@@ -177,6 +177,8 @@ disabled_skills = []
 # enabled: boolean
 # allow: string[]
 # allow_private: boolean
+# mitm: boolean
+# credentials: record<string, object>
 
 # ##########################################################################
 # execPolicy (config.toml: exec_policy)

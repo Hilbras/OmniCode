@@ -598,12 +598,47 @@ Opt-in loopback egress allowlist. When enabled, Omnicode starts a local HTTP/CON
 | `enabled` | `boolean` | `false` | Start the proxy |
 | `allow` | `string[]` | `[]` | Allowed `host` or `host:port` entries; `*.example.com` matches subdomains. An empty list refuses every request |
 | `allowPrivate` | `boolean` | `false` | Permit private, loopback, and link-local destinations |
+| `mitm` | `boolean` | `false` | Terminate TLS for hosts with a credential entry and substitute the header |
+| `credentials.<name>` | table | — | `host`, `header` (default `authorization`), and either `valueEnv` (read from the parent env) or `value`; `placeholder` defaults to `omnicode-broker` |
 
 ```toml
 [egress]
 enabled = true
 allow = ["api.example.com", "*.example.org:443"]
 ```
+
+
+### Credential substitution
+
+With `mitm = true`, a host that has a credential entry is terminated locally and
+the configured header is replaced with the real secret before the request is
+forwarded. The child sees only the placeholder, and the real value stays in the
+parent process. The CA is generated on first start at
+`$OMNICODE_V_HOME/egress/ca.crt`; Bash gets `NODE_EXTRA_CA_CERTS`,
+`CURL_CA_BUNDLE`, `GIT_SSL_CAINFO`, `SSL_CERT_FILE`, and
+`REQUESTS_CA_BUNDLE` pointing at it. Other tools need the CA installed
+manually. Hosts without a credential are tunneled unmodified.
+
+```toml
+[egress]
+enabled = true
+mitm = true
+allow = ["api.example.com"]
+
+[egress.credentials.example]
+host = "api.example.com"
+header = "authorization"
+valueEnv = "EXAMPLE_API_KEY"
+```
+
+```sh
+export EXAMPLE_API_KEY="sk-real"
+omnicode -p "call the API"   # the child sees EXAMPLE_API_KEY=omnicode-broker
+```
+
+The real secret is read from the parent environment at request time and is
+never written to logs; denials log the host only. This is TLS interception by
+design — review before enabling it in an environment that forbids MITM.
 
 ## `tui.toml`
 
