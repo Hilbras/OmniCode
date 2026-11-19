@@ -196,7 +196,6 @@ import {
   closeSessionById,
   followSessionLifecycles,
   getLiveSessionById,
-  isError2,
   programForSession,
   resumeSessionById,
   sessionDirOf,
@@ -242,12 +241,7 @@ import { RegistryImportError } from '@hilbras/omnicode-sdk/rpc-exports';
 import { OmnicodeAuthFacade } from '@hilbras/omnicode-sdk/rpc-exports';
 import { ensureConfigFile, HookDefSchema } from '@hilbras/omnicode-sdk/rpc-exports';
 import type { AgentContextData } from '@hilbras/omnicode-sdk/rpc-exports';
-import {
-  ErrorCodes,
-  isOmnicodeErrorCode,
-  OmnicodeError,
-  type OmnicodeErrorCode,
-} from '@hilbras/omnicode-sdk/rpc-exports';
+import { ErrorCodes, OmnicodeError } from '@hilbras/omnicode-sdk/rpc-exports';
 import type { ExperimentalFeatureState } from '@hilbras/omnicode-sdk/rpc-exports';
 import { OmnicodeHarness } from '@hilbras/omnicode-sdk/rpc-exports';
 import type { BeginGlobalMcpServerAuthResult } from '@hilbras/omnicode-sdk/rpc-exports';
@@ -388,6 +382,7 @@ import type {
   MemoryListRpcInput,
 } from '@hilbras/omnicode-sdk/rpc-exports';
 import { RPCError } from '@hilbras/omnicode-rpc/errors';
+import { normalizeRequiredWorkDir, restateEngineError } from './requestHandlerHelpers';
 import type { ImportCustomRegistryOptions, ImportCustomRegistryResult } from './core/facade/global';
 import type { AgentHandle, Klient } from './core/klient';
 import { createKlient } from './transports/memory';
@@ -3105,35 +3100,6 @@ export function createOmnicodeHarness(options: OmnicodeHarnessOptions): Omnicode
 }
 
 /** v1's `requiredWorkDir`: reject blank and normalize to the canonical spelling. */
-function normalizeRequiredWorkDir(operation: string, workDir: string): string {
-  if (typeof workDir !== 'string' || workDir.trim() === '') {
-    throw new OmnicodeError(ErrorCodes.REQUEST_WORK_DIR_REQUIRED, `${operation} requires workDir`);
-  }
-  return normalizeWorkDir(workDir);
-}
-
-/**
- * Restate an engine `Error2` in the SDK's public error shape (`OmnicodeError`,
- * what `isOmnicodeError` branches on) so the delegated management plane throws
- * the same class the v1 client throws for the same failure. Non-Error2
- * failures (DI resolution bugs, aborts) pass through untouched.
- *
- * An engine code this build's registry does not declare (a newer engine than
- * the pinned SDK) restates as `internal` — stamping the unknown code would
- * mint a `OmnicodeError` that `toOmnicodeErrorPayload` cannot serialize (its
- * `OMNICODE_ERROR_INFO` lookup throws on undeclared codes).
- */
-function restateEngineError(error: unknown): unknown {
-  if (!isError2(error)) return error;
-  const code: OmnicodeErrorCode = isOmnicodeErrorCode(error.code)
-    ? error.code
-    : ErrorCodes.INTERNAL;
-  return new OmnicodeError(code, error.message, {
-    details: error.details as Record<string, unknown> | undefined,
-    cause: error.cause,
-  });
-}
-
 /**
  * v1's `toManagedServerInfo` over the engine's managed view: flatten the
  * config to the top level (mutable entries carry the full values, read-only
