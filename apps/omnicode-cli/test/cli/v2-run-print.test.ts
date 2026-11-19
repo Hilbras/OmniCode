@@ -155,7 +155,7 @@ function opts(overrides: Record<string, unknown> = {}) {
   } as const;
 }
 
-function makeFakeHarness() {
+function makeFakeHarness(assistantText = 'hello world') {
   // Native event listeners registered on the main agent's IEventBus; the turn
   // emits a streaming assistant delta before completing.
   const eventListeners = new Set<(event: Event2<any>) => void>();
@@ -194,7 +194,7 @@ function makeFakeHarness() {
         submit: vi.fn(() => {
           // Emit a native assistant delta on the main agent bus, then complete.
           for (const listener of [...eventListeners]) {
-            listener({ type: 'assistant.delta', turnId: 1, delta: 'hello world' } as unknown as Event2<any>);
+            listener({ type: 'assistant.delta', turnId: 1, delta: assistantText } as unknown as Event2<any>);
           }
           return { id: 'p1' };
         }),
@@ -358,6 +358,19 @@ describe('runV2Print', () => {
     expect(stderr.write).toHaveBeenNthCalledWith(1, 'omnicode version 1.2.3-test\n');
     expect(stdout.text()).toContain('hello world');
     expect(app.dispose).toHaveBeenCalled();
+  });
+
+  it('fails a headless turn that ends by asking the user for input', async () => {
+    const stdout = writer();
+    const stderr = writer();
+    const { app } = makeFakeHarness('I updated the config. What should I do next?');
+
+    mocks.bootstrap.mockReturnValue({ app });
+    mocks.ensureMainAgent.mockResolvedValue({ agentId: 'main', generation: 1 });
+
+    await expect(runV2Print(opts() as never, '1.2.3-test', { stdout, stderr })).rejects.toThrow(
+      /Headless run ended while asking the user for input/,
+    );
   });
 
   it('passes explicit skill dirs from --skillsDir into bootstrap args', async () => {

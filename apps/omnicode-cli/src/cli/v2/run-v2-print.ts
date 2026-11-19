@@ -99,6 +99,7 @@ import {
 } from '#/constant/app';
 import { currentOmnicodeProfile } from '#/utils/region';
 
+import { assertNotAwaitingUser } from '../headless-awaiting-user';
 import {
   formatGoalSummaryText,
   goalExitCode,
@@ -601,6 +602,9 @@ async function runNativeTurn(
     // final message.
     writer.flushAssistant();
     if (result.type === 'completed') {
+      // A headless turn that closes on a request for user input has no one to
+      // answer it: fail loudly instead of printing the question and exiting 0.
+      assertNotAwaitingUser(writer.getAssistantText());
       if (jsonSchema !== undefined) {
         const validation = validateJsonOutput(jsonSchema, writer.getAssistantText());
         if (!validation.ok) {
