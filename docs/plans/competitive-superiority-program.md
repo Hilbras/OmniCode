@@ -67,12 +67,20 @@ reference has.
       (159/159 Tools suite excluding the two pre-existing offline-ripgrep
       files, which fail identically on base); typecheck, layering,
       workspace, and contract-types freshness all green.
-- [ ] S1.2 **Escalation-on-truncation.** `max_tokens` step end → retry with a
-      raised output ceiling and a continuation that keeps accumulated text.
-      Reference: qwen `tokenLimits.ts` (`ESCALATED_MAX_TOKENS`).
-      Integration: `agent/llmRequesterService` + turn retry policy.
-      Verify: a turn-test asserting the second request carries the escalated
-      cap and the accumulated prefix.
+- [x] S1.2 **Escalation-on-truncation.** Landed 2026-11-19 as truncation
+      continuation: a turn whose last step ends `truncated` with no tool calls
+      continues once (the partial text stays in history; the model finishes),
+      with an observable `output-escalation` warning. An optional cap raise
+      (`escalateTurnOutput`) applies only with genuine headroom and never past a
+      user-set `maxCompletionTokens` cap; the default budget already equals the
+      model limit, so the continuation is the value. The old immediate-end
+      contract is preserved under `OMNICODE_OUTPUT_ESCALATION=0` (the legacy
+      max-tokens test now pins that path). Reference: qwen `tokenLimits.ts`.
+      Verify: 3 integration tests through the real loop (fail on base with
+      `[1]` steps vs `[1, 2]`); 6 requester + 10 pure tests; engine loop/
+      requester suites green; features-integration agent suites 607/609 (the
+      2 failures are the pre-existing offline-ripgrep Glob tests, proven to
+      fail on the clean base).
 - [ ] S1.3 **Microcompaction refinements.** Evicting a tool result disarms
       the matching `fileReadCache` entry; evicted memory bodies are
       re-fetchable with a pointer; age-gap trigger beside the token trigger.
