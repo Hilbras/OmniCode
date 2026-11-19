@@ -1314,6 +1314,84 @@ describe('Agent loop', () => {
     });
     await loop.settled();
   });
+
+  describe('intent-ack stall guard', () => {
+    it('continues when the model ends a step with a progress note instead of a tool call', async () => {
+      profile.update({ activeToolNames: [] });
+      ctx.mockNextResponse({
+        type: 'text',
+        text: "I've updated the config. Next I'll run the tests.",
+      });
+      ctx.mockNextResponse({ type: 'text', text: 'All done — tests pass. Task complete.' });
+
+      await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Fix the config and verify it.' }] });
+      const result = await ctx.untilTurnEnd();
+
+      expect(ctx.llmCalls).toHaveLength(2);
+      expect(JSON.stringify(result)).toContain('"turn.ended"');
+      const inputs = ctx.llmInputs().inputs.map((input) => JSON.stringify(input));
+      expect(inputs.at(-1)).toContain(
+        'Continue the task now: take the next concrete step with a tool',
+      );
+    });
+
+    it('caps the nudges at two', async () => {
+      profile.update({ activeToolNames: [] });
+      for (let index = 0; index < 4; index += 1) {
+        ctx.mockNextResponse({ type: 'text', text: 'Done with this step. Next I will continue.' });
+      }
+
+      await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Do the work.' }] });
+      await ctx.untilTurnEnd();
+
+      // one initial request + at most two nudged continuations
+      expect(ctx.llmCalls).toHaveLength(3);
+    });
+
+    it('respects the OMNICODE_STALL_GUARD=0 kill switch', async () => {
+      profile.update({ activeToolNames: [] });
+      ctx.mockNextResponse({ type: 'text', text: "I've updated the config. Next I'll run the tests." });
+      vi.stubEnv('OMNICODE_STALL_GUARD', '0');
+      try {
+        await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Fix the config.' }] });
+        await ctx.untilTurnEnd();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+      expect(ctx.llmCalls).toHaveLength(1);
+    });
+
+    it('nudges verification after a file write with no read-back', async () => {
+      const writeTool: ExecutableTool = {
+        name: 'WriteOnly',
+        description: 'Write a file.',
+        parameters: { type: 'object', properties: {}, additionalProperties: false },
+        resolveExecution: () => ({
+          approvalRule: 'WriteOnly',
+          accesses: [{ kind: 'file', operation: 'write', path: 'a.ts' }],
+          execute: async () => ({ output: 'written' }),
+        }),
+      };
+      profile.update({ activeToolNames: ['WriteOnly'] });
+      ctx.get(IAgentToolRegistryService).register(writeTool);
+      await ctx.rpc.setPermission({ mode: 'yolo' });
+      ctx.mockNextResponse({
+        type: 'function',
+        id: 'write-1',
+        name: 'WriteOnly',
+        arguments: '{}',
+      });
+      ctx.mockNextResponse({ type: 'text', text: 'The file is written. All done.' });
+      ctx.mockNextResponse({ type: 'text', text: 'The file is written. Verified.' });
+
+      await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Update the file.' }] });
+      await ctx.untilTurnEnd();
+
+      expect(ctx.llmCalls).toHaveLength(3);
+      const inputs = ctx.llmInputs().inputs.map((input) => JSON.stringify(input));
+      expect(inputs.at(-1)).toContain('You changed files this turn but have not verified the result');
+    });
+  });
 });
 
 describe('turn telemetry', () => {

@@ -27,6 +27,12 @@ import {
   OUTPUT_ESCALATION_WARNING_CODE,
   shouldContinueTruncatedTurn,
 } from './outputEscalation';
+import {
+  isStallGuardEnabled,
+  shouldNudgeStalledTurn,
+  STALL_NUDGE_TEXT,
+  VERIFICATION_NUDGE_TEXT,
+} from './stallGuard';
 import { AgentErrorEvent } from '#/agent/mcp/mcpEvents';
 import { gateImageFormatParts } from '#/agent/media/image-compress';
 import { daemonFileRefFromPart } from '#/agent/media/mediaRef';
@@ -193,6 +199,22 @@ export class AgentLoopService extends Disposable implements IAgentLoopService {
         await next();
       },
     );
+    this.toolExecutor.hooks.onDidExecuteTool.register('verification-gate', async (ctx, next) => {
+      const turn = this.active;
+      if (turn !== undefined && ctx.outcome === 'executed' && ctx.result.isError !== true) {
+        const accesses = ctx.accesses ?? [];
+        if (accesses.some((access) => access.kind === 'file' && (access.operation === 'write' || access.operation === 'readwrite'))) {
+          turn.wroteFiles = true;
+          turn.verifiedAfterWrite = false;
+        } else if (
+          turn.wroteFiles &&
+          accesses.some((access) => access.kind === 'file' && (access.operation === 'read' || access.operation === 'search'))
+        ) {
+          turn.verifiedAfterWrite = true;
+        }
+      }
+      await next();
+    });
   }
 
   private get lastRequestTraceId(): string | undefined {
@@ -1212,6 +1234,11 @@ export class AgentLoopService extends Disposable implements IAgentLoopService {
       afterChain: Promise.resolve(),
       partials: [],
       forceContentPartBoundary: false,
+      lastFinalText: '',
+      stallNudges: 0,
+      wroteFiles: false,
+      verifiedAfterWrite: false,
+      verificationNudged: false,
       readyResolved: false,
       mode: undefined,
       providerType: undefined,
@@ -1532,6 +1559,10 @@ export class AgentLoopService extends Disposable implements IAgentLoopService {
         this.lastRequestTraceId = this.activeRequestTrace?.traceId;
         const toolCalls = event.entry.message.toolCalls;
         if (toolCalls.length === 0) {
+          turn.lastFinalText = event.entry.message.content
+            .filter((part): part is { type: 'text'; text: string } => part.type === 'text')
+            .map((part) => part.text)
+            .join('\n');
           const finishReason = step.providerFinishReason ?? 'completed';
           this.endOrInterruptMachineStep(
             turn,
@@ -2039,6 +2070,29 @@ export class AgentLoopService extends Disposable implements IAgentLoopService {
       this.machineEngine().notify(createUserEntry(EMPTY_MACHINE_PROMPT));
       return;
     }
+    if (
+      outcome.outcome === 'done' &&
+      shouldNudgeStalledTurn({
+        text: turn.lastFinalText,
+        nudgesUsed: turn.stallNudges,
+        enabled: isStallGuardEnabled(),
+        unverifiedWrites: turn.wroteFiles && !turn.verifiedAfterWrite && !turn.verificationNudged,
+      })
+    ) {
+      turn.stallNudges += 1;
+      const verification =
+        turn.wroteFiles && !turn.verifiedAfterWrite && !turn.verificationNudged;
+      if (verification) turn.verificationNudged = true;
+      const nudgeText = verification ? VERIFICATION_NUDGE_TEXT : STALL_NUDGE_TEXT;
+      this.notify({
+        message: {
+          role: 'user',
+          content: [{ type: 'text', text: nudgeText }],
+          toolCalls: [],
+        },
+      });
+      return;
+    }
     await this.endTurn(turn, this.machineCompletedResult(turn));
   }
 
@@ -2379,6 +2433,12 @@ interface ActiveTurn {
   afterChain: Promise<void>;
   partials: ContentPart[];
   forceContentPartBoundary: boolean;
+  /** Final assistant text of the last no-tool step, used by the stall guard. */
+  lastFinalText: string;
+  stallNudges: number;
+  wroteFiles: boolean;
+  verifiedAfterWrite: boolean;
+  verificationNudged: boolean;
   readyResolved: boolean;
   mode: 'agent' | 'plan' | undefined;
   providerType: string | undefined;
