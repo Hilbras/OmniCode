@@ -344,6 +344,7 @@ pnpm check:workspace
 pnpm check:architecture
 pnpm check:deps
 pnpm check:phantom-deps
+pnpm check:safety-ledger
 pnpm check:docs-claims
 pnpm check:agent-docs
 pnpm docs:check

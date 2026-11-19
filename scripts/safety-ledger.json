@@ -1,0 +1,46 @@
+{
+  "pins": {
+    "stallGuardMaxNudges": {
+      "file": "packages/engine/src/agent/loop/stallGuard.ts",
+      "pattern": "DEFAULT_MAX_STALL_NUDGES = (\\d+)",
+      "value": "2",
+      "reason": "WS1.2 bounded intent-ack nudges per turn; raising it weakens the stall guard."
+    },
+    "stopHookContinuationCap": {
+      "file": "packages/engine/src/features/externalHooks/agent/agentExternalHooksService.ts",
+      "pattern": "STOP_HOOK_CONTINUATION_CAP = (\\d+)",
+      "value": "8",
+      "reason": "WS1.6 bound on Stop-hook continuations per turn; unbounded hooks can stall a turn."
+    },
+    "goalNoProgressLimit": {
+      "file": "packages/engine/src/features/goal/goalService.ts",
+      "pattern": "GOAL_NO_PROGRESS_LIMIT = (\\d+)",
+      "value": "3",
+      "reason": "WS1.4 no-progress pause threshold; raising it lets stalled goals spin."
+    },
+    "microcompactionMaxAgeWindow": {
+      "file": "packages/engine/src/agent/contextMemory/microcompaction.ts",
+      "pattern": "DEFAULT_MICROCOMPACTION_MAX_AGE_MS = ([^;]+);",
+      "value": "30 * 60 * 1000",
+      "reason": "WS3.1 default age-gap window; disabling or shrinking it silently changes eviction."
+    },
+    "mcpSseRetryGap": {
+      "file": "scripts/mcp-conformance-baseline.json",
+      "pattern": "\"id\": \"(client-sse-graceful-reconnect)\"",
+      "value": "client-sse-graceful-reconnect",
+      "reason": "WS3.3 known gap; removing it requires reviewed re-baseline, not a silent edit."
+    },
+    "mcpElicitationGap": {
+      "file": "scripts/mcp-conformance-baseline.json",
+      "pattern": "\"id\": \"(client-elicitation-sep1034-general)\"",
+      "value": "client-elicitation-sep1034-general",
+      "reason": "WS3.3 fail-closed elicitation gap; re-baseline only after owner review."
+    },
+    "mcpAuthGap": {
+      "file": "scripts/mcp-conformance-baseline.json",
+      "pattern": "\"id\": \"(prm-pathbased-requested)\"",
+      "value": "prm-pathbased-requested",
+      "reason": "WS3.3 unattended-OAuth harness gap; re-baseline only after owner review."
+    }
+  }
+}
