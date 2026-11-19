@@ -67,6 +67,8 @@ export interface HookResultEvent extends Omit<HookResultPayload, 'agentId'> {
   readonly type: 'hook.result';
 }
 
+export const STOP_HOOK_CONTINUATION_CAP = 8;
+
 export const externalHooksStopHookContinuationUsedKey = defineState<boolean>(
   'externalHooks.stopHookContinuationUsed',
   () => false,
@@ -113,6 +115,8 @@ export class AgentExternalHooksService extends Service implements IAgentExternal
   private withSessionFacts(inputData: Record<string, unknown>): Record<string, unknown> {
     return { sessionTitle: this.sessionTitle, ...inputData };
   }
+
+  private stopHookContinuations = 0;
 
   private get stopHookContinuationUsed(): boolean {
     return this.states.get(externalHooksStopHookContinuationUsedKey);
@@ -251,6 +255,7 @@ export class AgentExternalHooksService extends Service implements IAgentExternal
         }
         const reason = await this.runStop(ctx);
         if (reason !== undefined) {
+          this.stopHookContinuations += 1;
           this.stopHookContinuationUsed = true;
           this.context.append({
             role: 'user',
@@ -386,6 +391,7 @@ export class AgentExternalHooksService extends Service implements IAgentExternal
   }
 
   private notifyTurnEnded(event: TurnEnded): void {
+    this.stopHookContinuations = 0;
     this.stopHookContinuationUsed = false;
     if (event.reason === 'failed' && event.error !== undefined) {
       this.notifyStopFailure(event.error, new AbortController().signal);
@@ -410,7 +416,7 @@ export class AgentExternalHooksService extends Service implements IAgentExternal
 
   private async runStop(ctx: AfterStepContext): Promise<string | undefined> {
     ctx.signal.throwIfAborted();
-    if (this.stopHookContinuationUsed) return undefined;
+    if (this.stopHookContinuations >= STOP_HOOK_CONTINUATION_CAP) return undefined;
 
     const block = await this.runner.triggerBlock('Stop', {
       signal: ctx.signal,

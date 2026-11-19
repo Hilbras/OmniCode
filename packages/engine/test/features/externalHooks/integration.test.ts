@@ -50,7 +50,7 @@ import { IPluginService } from '#/app/plugin/plugin';
 import { ISessionManager } from '#/app/sessionManager/sessionManager';
 import { ITelemetryService } from '#/app/telemetry/telemetry';
 import { IAgentExternalHooksService } from '#/features/externalHooks/agent/agentExternalHooks';
-import { AgentExternalHooksService } from '#/features/externalHooks/agent/agentExternalHooksService';
+import { AgentExternalHooksService, STOP_HOOK_CONTINUATION_CAP } from '#/features/externalHooks/agent/agentExternalHooksService';
 import { IExternalHooksRunnerService } from '#/features/externalHooks/app/externalHooksRunner';
 import { ExternalHooksRunnerService } from '#/features/externalHooks/app/externalHooksRunnerService';
 import {
@@ -359,7 +359,7 @@ describe('IExternalHooksRunnerService integration', () => {
     expect(results[0]?.reason).toContain('tests not written');
   });
 
-  it('limits external Stop hook continuations to once per active turn', async () => {
+  it('limits external Stop hook continuations to the cap per active turn', async () => {
     const disposables = new DisposableStore();
     let ix: TestInstantiationService | undefined;
     try {
@@ -426,8 +426,24 @@ describe('IExternalHooksRunnerService integration', () => {
 
       const second = makeAfterStep(signal);
       await loop.hooks.onDidFinishStep.run(second);
+      expect(loop.snapshot().hasPendingRequests).toBe(true);
+      expect(context.messages.at(-1)).toEqual(
+        expect.objectContaining({
+          role: 'user',
+          content: [{ type: 'text', text: 'continue 2' }],
+          origin: { kind: 'system_trigger', name: 'stop_hook' },
+        }),
+      );
+      expect(loop.drainNextBatch(context)).toBeDefined();
+      // The cap bounds a hook-driven stall: after 8 continuations the turn settles.
+      for (let index = 3; index <= STOP_HOOK_CONTINUATION_CAP; index += 1) {
+        await loop.hooks.onDidFinishStep.run(makeAfterStep(signal));
+        expect(stopInputs).toHaveLength(index);
+        loop.drainNextBatch(context);
+      }
+      await loop.hooks.onDidFinishStep.run(makeAfterStep(signal));
       expect(loop.snapshot().hasPendingRequests).toBe(false);
-      expect(stopInputs).toEqual([{ stopHookActive: false }]);
+      expect(stopInputs).toHaveLength(STOP_HOOK_CONTINUATION_CAP);
 
       eventBus.publish(
         new TurnEnded({
@@ -444,12 +460,11 @@ describe('IExternalHooksRunnerService integration', () => {
       expect(context.messages.at(-1)).toEqual(
         expect.objectContaining({
           role: 'user',
-          content: [{ type: 'text', text: 'continue 2' }],
+          content: [{ type: 'text', text: `continue ${String(STOP_HOOK_CONTINUATION_CAP + 1)}` }],
           origin: { kind: 'system_trigger', name: 'stop_hook' },
         }),
       );
       expect(loop.drainNextBatch(context)).toBeDefined();
-      expect(stopInputs).toEqual([{ stopHookActive: false }, { stopHookActive: false }]);
     } finally {
       ix?.dispose();
       disposables.dispose();
