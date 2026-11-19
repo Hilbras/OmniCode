@@ -5,6 +5,13 @@ export type ToolInputDisplay =
       cwd?: string | undefined;
       description?: string | undefined;
       language?: 'bash' | undefined;
+      /**
+       * Narrowest exec-policy prefix an "always allow" approval would persist
+       * for this command, with the preview form shown in approval UIs.
+       * Undefined when no rule can be derived; the approval then falls back to
+       * the exact-command rule.
+       */
+      suggestedRule?: { readonly prefix: readonly string[]; readonly display: string } | undefined;
     }
   | {
       kind: 'file_io';

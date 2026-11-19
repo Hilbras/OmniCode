@@ -9,6 +9,7 @@ import { IHostFileSystem } from '#/os/interface/hostFileSystem';
 import { EXEC_POLICY_SECTION, type ExecPolicyConfig } from './configSection';
 import { loadExecPolicy, type ExecRuleExample, type ExecRuleSpec } from './execPolicy';
 import { resolveExecPolicyPath } from './execPolicyLoader';
+import type { SuggestedAllowRule } from './ruleSuggestion';
 
 export type ExecPolicyWriteResult =
   | { readonly ok: true; readonly path: string; readonly added: boolean }
@@ -17,7 +18,7 @@ export type ExecPolicyWriteResult =
 export interface IExecPolicyWriterService {
   readonly _serviceBrand: undefined;
 
-  appendAllowPrefix(command: string): Promise<ExecPolicyWriteResult>;
+  appendAllowPrefix(command: string, suggested?: SuggestedAllowRule): Promise<ExecPolicyWriteResult>;
 }
 
 export const IExecPolicyWriterService = createDecorator<IExecPolicyWriterService>(
@@ -32,17 +33,18 @@ interface PolicyFile {
 
 /**
  * Examples pinned onto every persisted rule so the file validates its own
- * intent on every load: the approved command must match, and the same command
- * with a mutated last token must not. The not-match probe is what catches a
- * later hand-broadening of the prefix (for example `git status` widened to
- * `git`) — the loader rejects the file instead of silently allowing more than
- * the user approved.
+ * intent on every load. The match example is the approved command itself — it
+ * must keep matching whatever rule was written. The not-match probe mutates
+ * the last word of the persisted prefix: `git log` → `git logx`. The probe is
+ * what catches a later hand-broadening of the prefix (for example `git log`
+ * widened to `git`) — the loader rejects the file instead of silently allowing
+ * more than the user approved.
  */
-function examplesFor(tokens: readonly string[]): readonly ExecRuleExample[] {
-  const last = tokens[tokens.length - 1] ?? '';
-  const mutated = [...tokens.slice(0, -1), `${last}x`];
+function examplesFor(prefix: readonly string[], approvedCommand: string): readonly ExecRuleExample[] {
+  const last = prefix[prefix.length - 1] ?? '';
+  const mutated = [...prefix.slice(0, -1), `${last}x`];
   return [
-    { command: tokens.join(' '), matches: true },
+    { command: approvedCommand, matches: true },
     { command: mutated.join(' '), matches: false },
   ];
 }
@@ -56,11 +58,16 @@ export class ExecPolicyWriterService implements IExecPolicyWriterService {
     @IHostFileSystem private readonly fs: IHostFileSystem,
   ) {}
 
-  async appendAllowPrefix(command: string): Promise<ExecPolicyWriteResult> {
+  async appendAllowPrefix(command: string, suggested?: SuggestedAllowRule): Promise<ExecPolicyWriteResult> {
     const tokens = canonicalCommandTokens(command);
     if (tokens === undefined) {
       return { ok: false, reason: 'the command is not a simple invocation and cannot become a prefix rule' };
     }
+    // The suggestion is display-sourced data; trust it only as a narrowing of
+    // the approved command. Anything that is not a strict prefix of the
+    // canonical tokens is ignored and the exact command is persisted instead.
+    const rule =
+      suggested !== undefined && isPrefixOf(suggested.prefix, tokens) ? suggested.prefix : tokens;
     const configured = this.config.get<ExecPolicyConfig | undefined>(EXEC_POLICY_SECTION);
     if (configured === undefined || configured.path.length === 0) {
       return { ok: false, reason: 'no exec policy path is configured ([execPolicy] path)' };
@@ -78,13 +85,13 @@ export class ExecPolicyWriterService implements IExecPolicyWriterService {
     if (source.version !== 1 || !Array.isArray(source.rules)) {
       return { ok: false, reason: `the exec policy at ${path} is not a version-1 rules file` };
     }
-    const duplicate = source.rules.some((rule) => {
-      if (rule.decision !== 'allow' || !Array.isArray(rule.prefix)) return false;
-      const prefix = rule.prefix.filter((part): part is string => typeof part === 'string');
+    const duplicate = source.rules.some((candidate) => {
+      if (candidate.decision !== 'allow' || !Array.isArray(candidate.prefix)) return false;
+      const prefix = candidate.prefix.filter((part): part is string => typeof part === 'string');
       return (
-        prefix.length === rule.prefix.length &&
-        prefix.length === tokens.length &&
-        prefix.every((part, index) => part === tokens[index])
+        prefix.length === candidate.prefix.length &&
+        prefix.length === rule.length &&
+        prefix.every((part, index) => part === rule[index])
       );
     });
     if (duplicate) return { ok: true, path, added: false };
@@ -94,10 +101,10 @@ export class ExecPolicyWriterService implements IExecPolicyWriterService {
       rules: [
         ...source.rules,
         {
-          prefix: tokens,
+          prefix: rule,
           decision: 'allow',
           note: 'approved by the user',
-          examples: examplesFor(tokens),
+          examples: examplesFor(rule, command),
         },
       ],
     };
@@ -128,3 +135,11 @@ registerScopedService(
   ScopeActivation.OnDemand,
   'execPolicyWriter',
 );
+
+function isPrefixOf(prefix: readonly string[], tokens: readonly string[]): boolean {
+  return (
+    prefix.length > 0 &&
+    prefix.length <= tokens.length &&
+    prefix.every((part, index) => part === tokens[index])
+  );
+}

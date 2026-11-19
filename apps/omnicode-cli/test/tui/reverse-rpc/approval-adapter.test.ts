@@ -326,4 +326,39 @@ describe('approval adapter', () => {
       selectedLabel: 'Approve for this session',
     });
   });
+
+  it('previews the suggested narrow rule on the Bash always-approve choice', () => {
+    const adapted = adaptApprovalRequest({
+      toolCallId: 'tc-bash',
+      toolName: 'Bash',
+      action: 'run',
+      display: {
+        kind: 'command',
+        command: 'git log -5',
+        suggestedRule: { prefix: ['git', 'log'], display: 'git log *' },
+      },
+    });
+
+    const always = adapted.choices.find((choice) => choice.response === 'approved_for_always');
+    expect(always).toMatchObject({
+      label: 'Approve always (save rule)',
+      description: 'Saves rule: git log *',
+    });
+  });
+
+  it('omits the rule preview when the display carries no suggestion', () => {
+    const adapted = adaptApprovalRequest({
+      toolCallId: 'tc-bash',
+      toolName: 'Bash',
+      action: 'run',
+      display: {
+        kind: 'command',
+        command: 'cat a | grep b',
+      },
+    });
+
+    const always = adapted.choices.find((choice) => choice.response === 'approved_for_always');
+    expect(always).toMatchObject({ label: 'Approve always (save rule)' });
+    expect(always?.description).toBeUndefined();
+  });
 });

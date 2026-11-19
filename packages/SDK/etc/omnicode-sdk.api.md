@@ -204,7 +204,7 @@ export interface ApprovalResponse {
     // (undocumented)
     readonly feedback?: string;
     // (undocumented)
-    readonly scope?: 'session';
+    readonly scope?: 'session' | 'always';
     // (undocumented)
     readonly selectedLabel?: string;
 }
@@ -4319,6 +4319,10 @@ export type ToolInputDisplay = {
     cwd?: string | undefined;
     description?: string | undefined;
     language?: 'bash' | undefined;
+    suggestedRule?: {
+        readonly prefix: readonly string[];
+        readonly display: string;
+    } | undefined;
 } | {
     kind: 'file_io';
     operation: 'read' | 'write' | 'edit' | 'glob' | 'grep';

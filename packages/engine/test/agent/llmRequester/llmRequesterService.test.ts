@@ -1869,6 +1869,12 @@ describe('AgentLLMRequesterService isolated operations', () => {
 });
 
 describe('AgentLLMRequesterService escalateTurnOutput', () => {
+  function escalate(service: IAgentLLMRequesterService, turnId: number): number | undefined {
+    const method = service.escalateTurnOutput;
+    if (method === undefined) throw new Error('escalateTurnOutput is not implemented');
+    return method.call(service, turnId);
+  }
+
   function cappedRequester(
     maxOutputSize: number | undefined,
     capturedParams: { params?: { maxCompletionTokens?: number } }[] = [],
@@ -1910,7 +1916,7 @@ describe('AgentLLMRequesterService escalateTurnOutput', () => {
     );
 
     expect(service.prepareTurnConfig(7)).toBeDefined();
-    const raised = service.escalateTurnOutput(7);
+    const raised = escalate(service, 7);
     expect(raised).toBe(8_000);
 
     await service.request({ source: { type: 'turn', turnId: 7, step: 1 } });
@@ -1923,7 +1929,7 @@ describe('AgentLLMRequesterService escalateTurnOutput', () => {
     });
 
     service.prepareTurnConfig(7);
-    expect(service.escalateTurnOutput(7)).toBeUndefined();
+    expect(escalate(service, 7)).toBeUndefined();
   });
 
   it('returns undefined when the model declares no output limit', () => {
@@ -1932,7 +1938,7 @@ describe('AgentLLMRequesterService escalateTurnOutput', () => {
     });
 
     service.prepareTurnConfig(7);
-    expect(service.escalateTurnOutput(7)).toBeUndefined();
+    expect(escalate(service, 7)).toBeUndefined();
   });
 
   it('never overrides an explicit maxCompletionTokens user cap', async () => {
@@ -1943,7 +1949,7 @@ describe('AgentLLMRequesterService escalateTurnOutput', () => {
     });
 
     service.prepareTurnConfig(7);
-    expect(service.escalateTurnOutput(7)).toBeUndefined();
+    expect(escalate(service, 7)).toBeUndefined();
 
     await service.request({ source: { type: 'turn', turnId: 7, step: 1 } });
     expect(captured[0]?.params?.maxCompletionTokens).toBe(2_000);
@@ -1952,7 +1958,7 @@ describe('AgentLLMRequesterService escalateTurnOutput', () => {
   it('returns undefined for a turn it has no config for', () => {
     const { service } = createService(cappedRequester(8_000), undefined, {});
 
-    expect(service.escalateTurnOutput(41)).toBeUndefined();
+    expect(escalate(service, 41)).toBeUndefined();
   });
 
   it('raises each turn independently', async () => {
@@ -1961,8 +1967,8 @@ describe('AgentLLMRequesterService escalateTurnOutput', () => {
     });
 
     service.prepareTurnConfig(7);
-    expect(service.escalateTurnOutput(7)).toBe(8_000);
+    expect(escalate(service, 7)).toBe(8_000);
     service.prepareTurnConfig(8);
-    expect(service.escalateTurnOutput(8)).toBe(8_000);
+    expect(escalate(service, 8)).toBe(8_000);
   });
 });

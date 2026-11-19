@@ -901,6 +901,10 @@ export interface AgentStateSnapshot {
       cwd?: string;
       description?: string;
       language?: 'bash';
+      suggestedRule?: {
+        readonly prefix: readonly string[];
+        readonly display: string;
+      };
     } | {
       kind: 'file_io';
       operation: 'read' | 'write' | 'edit' | 'glob' | 'grep';

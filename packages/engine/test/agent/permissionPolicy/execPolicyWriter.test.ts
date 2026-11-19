@@ -47,6 +47,60 @@ describe('ExecPolicyWriterService', () => {
     ]);
   });
 
+  it('persists the suggested narrow prefix when one is provided', async () => {
+    const { service, written } = compose({ path: 'exec-policy.json' });
+    await service.appendAllowPrefix('git log -5', { prefix: ['git', 'log'], display: 'git log *' });
+    const policy = JSON.parse(written()) as {
+      rules: { prefix: string[]; examples: { command: string; matches: boolean }[] }[];
+    };
+    expect(policy.rules.at(-1)?.prefix).toEqual(['git', 'log']);
+    expect(policy.rules.at(-1)?.examples).toEqual([
+      { command: 'git log -5', matches: true },
+      { command: 'git logx', matches: false },
+    ]);
+  });
+
+  it('suggested rules validate at load, including the anti-broadening probe', async () => {
+    const { service, written } = compose({ path: 'exec-policy.json' });
+    await service.appendAllowPrefix('git log -5', { prefix: ['git', 'log'], display: 'git log *' });
+    const file = JSON.parse(written()) as Parameters<typeof loadExecPolicy>[0];
+    expect(() => loadExecPolicy(file, 'exec-policy.json')).not.toThrow();
+
+    // A later hand-broadening of the persisted prefix (git log → git) makes
+    // the not-match probe match, so the file fails at load instead of
+    // silently allowing more than the user approved.
+    const broadened = JSON.parse(written()) as { rules: { prefix: string[] }[] };
+    broadened.rules[broadened.rules.length - 1]!.prefix = ['git'];
+    expect(() => loadExecPolicy(broadened, 'exec-policy.json')).toThrow(
+      /matches but is marked not-matching/,
+    );
+  });
+
+  it('treats a later approval under the same rule as a duplicate', async () => {
+    const file = JSON.stringify({
+      version: 1,
+      rules: [{ prefix: ['git', 'log'], decision: 'allow' }],
+    });
+    const { service, written } = compose({ path: 'exec-policy.json', file });
+    const result = await service.appendAllowPrefix('git log --oneline', {
+      prefix: ['git', 'log'],
+      display: 'git log *',
+    });
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.added).toBe(false);
+    expect(written()).toBe('');
+  });
+
+  it('ignores a suggestion that is not a prefix of the approved command', async () => {
+    const { service, written } = compose({ path: 'exec-policy.json' });
+    await service.appendAllowPrefix('git log -5', {
+      prefix: ['rg'],
+      display: 'rg *',
+    });
+    const policy = JSON.parse(written()) as { rules: { prefix: string[] }[] };
+    expect(policy.rules.at(-1)?.prefix).toEqual(['git', 'log', '-5']);
+  });
+
   it('writes examples that survive load-time validation', async () => {
     const { service, written } = compose({ path: 'exec-policy.json' });
     await service.appendAllowPrefix('git status --short');
@@ -139,7 +193,18 @@ describe('ExecPolicyPersistenceService', () => {
       scope: 'always',
       display: { kind: 'command', command: 'git status' },
     });
-    expect(appendAllowPrefix).toHaveBeenCalledWith('git status');
+    expect(appendAllowPrefix).toHaveBeenCalledWith('git status', undefined);
+  });
+
+  it('passes the display-suggested rule to the writer', () => {
+    const { handler, appendAllowPrefix } = compose();
+    const suggestedRule = { prefix: ['git', 'log'], display: 'git log *' };
+    handler()?.({
+      decision: 'approved',
+      scope: 'always',
+      display: { kind: 'command', command: 'git log -5', suggestedRule },
+    });
+    expect(appendAllowPrefix).toHaveBeenCalledWith('git log -5', suggestedRule);
   });
 
   it('ignores session approvals and non-command displays', () => {

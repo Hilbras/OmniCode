@@ -1,6 +1,7 @@
 import { IAgentTaskService } from '@hilbras/omnicode-engine/agent/task/task';
 import { resolveAgentTaskConfig } from '@hilbras/omnicode-engine/agent/task/configSection';
 import { execPolicyAllowedHostsFromMetadata } from '@hilbras/omnicode-engine/agent/permissionPolicy/execPolicy/execPolicy';
+import { suggestAllowRule } from '@hilbras/omnicode-engine/agent/permissionPolicy/execPolicy/ruleSuggestion';
 import { shellSnapshotEnv } from '@hilbras/omnicode-engine/app/shellSnapshot/shellSnapshot';
 import { egressProxyEnv } from '@hilbras/omnicode-engine/app/egress/egressProxy';
 import { IConfigService } from '@hilbras/omnicode-engine/app/config/config';
@@ -151,6 +152,7 @@ export class BashTool implements IBashTool {
         cwd: args.cwd ?? this.ctx.cwd,
         description: args.description,
         language: 'bash',
+        suggestedRule: suggestAllowRule(args.command),
       },
       approvalRule: literalRulePattern(this.name, args.command),
       matchesRule: (ruleArgs) => matchesGlobRuleSubject(ruleArgs, args.command),

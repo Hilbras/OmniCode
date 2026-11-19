@@ -35,14 +35,17 @@ export class ExecPolicyPersistenceService
       eventBus.subscribe(PermissionApprovalResolved, (event) => {
         if (event.decision !== 'approved' || event.scope !== 'always') return;
         if (event.display.kind !== 'command') return;
-        void this.persist(event.display.command);
+        void this.persist(event.display.command, event.display.suggestedRule);
       }),
     );
   }
 
-  private async persist(command: string): Promise<void> {
+  private async persist(
+    command: string,
+    suggested: { readonly prefix: readonly string[]; readonly display: string } | undefined,
+  ): Promise<void> {
     try {
-      const result = await this.writer.appendAllowPrefix(command);
+      const result = await this.writer.appendAllowPrefix(command, suggested);
       if (!result.ok) this.log.info('exec policy rule not persisted', { reason: result.reason });
     } catch (error) {
       this.log.info('exec policy rule not persisted', {

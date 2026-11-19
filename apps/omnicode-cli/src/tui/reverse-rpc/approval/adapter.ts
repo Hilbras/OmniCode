@@ -359,9 +359,20 @@ function adaptChoices(toolName: string, display: ToolInputDisplay): ApprovalPane
     choices.splice(2, 0, {
       label: 'Approve always (save rule)',
       response: 'approved_for_always',
+      description: rulePreviewDescription(display),
     });
   }
   return choices;
+}
+
+/**
+ * What the "always" choice will persist, previewed before the user picks it:
+ * the narrowest exec-policy rule derived from the command. Omitted when no
+ * rule was derived (the exact command is saved instead — no preview to show).
+ */
+function rulePreviewDescription(display: ToolInputDisplay): string | undefined {
+  if (display.kind !== 'command' || display.suggestedRule === undefined) return undefined;
+  return `Saves rule: ${display.suggestedRule.display}`;
 }
 
 function adaptGoalStartChoices(
