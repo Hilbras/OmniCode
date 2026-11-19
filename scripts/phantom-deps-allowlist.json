@@ -1,0 +1,4 @@
+{
+  "~icons": "2026-11-19: Vite virtual module supplied by unplugin-icons through @hilbras/vite-preset; not an npm package. Remove when the icon registry switches to real icon packages.",
+  "vue": "2026-11-19: packages/vite-preset ships a global ambient ~icons type declaration using import('vue') type positions; Vue is supplied by consuming apps, not this preset. Remove when the declaration is scoped per consumer."
+}

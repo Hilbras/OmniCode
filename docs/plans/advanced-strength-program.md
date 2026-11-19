@@ -51,6 +51,10 @@ prompt carries the autonomy directive and the golden is byte-stable.
 
 ### P1 — Clean the house: IN PROGRESS
 
+| Item | Commit | Real evidence |
+|---|---|---|
+| WS2.1 phantom-dependency guard | this commit | `scripts/check-phantom-deps.mjs` + `.d.mts` + shrink-only allowlist; 8 pure/fixture tests green; real bite proven by temporarily undeclaring `pathe` in `packages/base` → 3 phantom imports reported → restored → guard green; wired into `check:guards`; real tree 41 packages / 2677 source files |
+
 _Append each closed item with its commit and fail-on-base evidence as it lands._
 
 ---

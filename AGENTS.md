@@ -343,6 +343,7 @@ Guards — `pnpm check:guards` runs all of these; run one directly while iterati
 pnpm check:workspace
 pnpm check:architecture
 pnpm check:deps
+pnpm check:phantom-deps
 pnpm check:docs-claims
 pnpm check:agent-docs
 pnpm docs:check
