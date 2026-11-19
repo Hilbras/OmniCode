@@ -517,6 +517,22 @@ describe('AgentGoalService', () => {
       expect(goals.getGoal().goal).toBeNull();
     });
 
+    it('injects the anti-restatement judge line into the continuation prompt', async () => {
+      await ctx.restorePersisted();
+      ctx.configure({ tools: [] });
+      ctx.mockNextResponse({ type: 'text', text: 'Made progress on the first slice.' });
+      ctx.mockNextResponse({ type: 'text', text: 'All done — tests pass.' });
+
+      await goals.createGoal({ objective: 'finish the work' });
+      await goals.markBlocked({ reason: 'test setup' });
+      await goals.resumeGoal({ continueIfBlocked: true });
+      await vi.waitFor(() => expect(ctx.llmCalls.length).toBeGreaterThanOrEqual(2));
+
+      const continuationHistory = JSON.stringify(ctx.llmCalls[1]?.history);
+      expect(continuationHistory).toContain('Judge your previous goal turn before acting');
+      expect(continuationHistory).toContain('take a different concrete action now instead of restating status');
+    });
+
     it('pauses a goal after three continuation turns with no evidence', async () => {
       await ctx.restorePersisted();
       ctx.configure({ tools: [] });

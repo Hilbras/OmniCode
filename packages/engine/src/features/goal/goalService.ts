@@ -141,6 +141,10 @@ const GOAL_STALE_TOOL_RESULT =
 
 const GOAL_CONTINUATION_PROMPT = [
   'Continue working toward the active goal.',
+  'Judge your previous goal turn before acting: what new evidence did it produce, and what changed?',
+  'If it made no real progress, take a different concrete action now instead of restating status,',
+  're-running the same check, or describing what you plan to do. Do not greet the user or ask what',
+  'to do next — resume from the last completed action.',
   'Keep the self-audit brief. Do not explore unrelated interpretations once the goal can be',
   'decided. If the objective is simple, already answered, impossible, unsafe, or contradictory,',
   'do not run another goal turn. Explain briefly if useful, then call UpdateGoal with `complete`',
