@@ -1,4 +1,9 @@
-import type { PermissionPolicy, PermissionPolicyResult } from '#/agent/permissionPolicy/types';
+import { isTrustedAnswerAllowed } from '../denyTaxonomy';
+import type {
+  ApprovalResponse,
+  PermissionPolicy,
+  PermissionPolicyResult,
+} from '#/agent/permissionPolicy/types';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import type { ResolvedToolExecutionHookContext } from '#/agent/toolExecutor/toolHooks';
@@ -53,6 +58,7 @@ export class AutoModeClassifierPermissionPolicyService implements PermissionPoli
 
   private denialState = createDenialState();
   private readonly trustedAnswers = new Set<string>();
+  private readonly deniedFingerprints = new Set<string>();
 
   constructor(
     @IAgentPermissionModeService private readonly modeService: IAgentPermissionModeService,
@@ -95,7 +101,10 @@ export class AutoModeClassifierPermissionPolicyService implements PermissionPoli
       return { kind: 'approve', reason: { auto_mode_classifier: 'safe_tool' } };
     }
 
-    if (this.trustedAnswers.has(fingerprint)) {
+    if (
+      this.trustedAnswers.has(fingerprint) &&
+      isTrustedAnswerAllowed({ fingerprint, deniedFingerprints: this.deniedFingerprints })
+    ) {
       this.denialState = recordAllow(this.denialState, fingerprint);
       finish('approve', 'trusted_user_answer');
       return { kind: 'approve', reason: { auto_mode_classifier: 'trusted_user_answer' } };
@@ -135,6 +144,18 @@ export class AutoModeClassifierPermissionPolicyService implements PermissionPoli
     });
   }
 
+  private recordApprovalResponse(fingerprint: string, response: ApprovalResponse): void {
+    if (response.decision === 'rejected') {
+      this.deniedFingerprints.add(fingerprint);
+      this.trustedAnswers.delete(fingerprint);
+      return;
+    }
+    if (
+      response.decision === 'approved' &&
+      isTrustedAnswerAllowed({ fingerprint, deniedFingerprints: this.deniedFingerprints })
+    ) this.trustedAnswers.add(fingerprint);
+  }
+
   /**
    * The one denial-retry code path: every unclassified tool call counts as a
    * block, and once the block thresholds are reached the call is downgraded to
@@ -163,9 +184,10 @@ export class AutoModeClassifierPermissionPolicyService implements PermissionPoli
         kind: 'ask',
         reason: { auto_mode_classifier: category, denial_fallback: fallback.reason },
         resolveApproval: (response) => {
-          if (response.decision !== 'approved') return undefined;
-          this.denialState = recordFallbackApprove(this.denialState);
-          this.trustedAnswers.add(fingerprint);
+          if (response.decision === 'approved') {
+            this.denialState = recordFallbackApprove(this.denialState);
+          }
+          this.recordApprovalResponse(fingerprint, response);
           return undefined;
         },
       };
@@ -176,7 +198,7 @@ export class AutoModeClassifierPermissionPolicyService implements PermissionPoli
       kind: 'ask',
       reason: { auto_mode_classifier: category },
       resolveApproval: (response) => {
-        if (response.decision === 'approved') this.trustedAnswers.add(fingerprint);
+        this.recordApprovalResponse(fingerprint, response);
         return undefined;
       },
     };
@@ -199,7 +221,7 @@ export class AutoModeClassifierPermissionPolicyService implements PermissionPoli
         tool: toolName,
       },
       resolveApproval: (response) => {
-        if (response.decision === 'approved') this.trustedAnswers.add(fingerprint);
+        this.recordApprovalResponse(fingerprint, response);
         return undefined;
       },
     };

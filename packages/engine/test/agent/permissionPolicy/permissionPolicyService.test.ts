@@ -589,6 +589,28 @@ describe('AgentPermissionPolicyService chain', () => {
     });
   });
 
+  it('never promotes a rejected action to a trusted answer (bypass-after-denial)', async () => {
+    mode = 'auto';
+    const input = { toolName: 'Lookup', args: { query: 'rejected then approved' } };
+
+    const first = await evaluate(input);
+    expect(first?.result).toMatchObject({ kind: 'ask' });
+    if (first?.result !== undefined && 'resolveApproval' in first.result) {
+      first.result.resolveApproval?.({ decision: 'rejected' });
+    }
+
+    const second = await evaluate(input);
+    expect(second?.result).toMatchObject({ kind: 'ask' });
+    if (second?.result !== undefined && 'resolveApproval' in second.result) {
+      second.result.resolveApproval?.({ decision: 'approved' });
+    }
+
+    await expect(evaluate(input)).resolves.toMatchObject({
+      policyName: 'auto-mode-classifier',
+      result: { kind: 'ask', reason: { auto_mode_classifier: 'ask' } },
+    });
+  });
+
   it('fails the policy service when the configured exec policy is broken', async () => {
     execPolicyDir = await mkdtemp(join(tmpdir(), 'exec-policy-chain-'));
     await writeFile(
