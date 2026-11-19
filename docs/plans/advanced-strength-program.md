@@ -90,6 +90,8 @@ _Append each closed item with its commit and fail-on-base evidence as it lands._
 |---|---|---|
 | WS4.4 incremental world-state sections | this commit | Changed-fragment injection already existed; added the missing durable lineage: `WorldStateSectionRendered` Event2 + replayable `worldState.baseline` state, restored by the provider on construction and recorded after each render. A restarted process emits no duplicate section and only changed fragments afterward. Fail-on-base: "Cannot find module #/agent/contextProjector/worldStateOps". Suite caught two real defects during development (lost version identity and a mutable-array zod schema), both fixed; context-projector 76/76 |
 
+| WS4.8 rule alias-closure + grant collisions | this commit | `allowClosure` maps an allow rule to the tool family the model can switch to (Edit→Write/ApplyPatch, Bash→Monitor, etc.); `findGrantCollisions` reports where a deny beats a family allow, including MCP-scoped patterns. 7/7 tests, fail-on-base module-not-found; an MCP wildcard parsing defect was caught and fixed during development |
+
 | WS4.6 monitor tool core | this commit | `MonitorRegistry` with clamped interval (250–60 000 ms) and line caps, per-watch buffering with drop counts, and idle-only `<task-notification>` envelopes. 5/5 tests, fail-on-base module-not-found; a clamp expectation was corrected during development |
 
 | WS4.5 unified exec process table | this commit | `ExecProcessTable` with clamped yield times (50–30 000 ms), start-ordered live registry, a `## Live Processes` context section, and `lateDenied()` ids for kill follow-up after a denied network approval. Fail-on-base: module-not-found. 5/5 tests; the suite caught a clamp-vs-truncate expectation during development |
