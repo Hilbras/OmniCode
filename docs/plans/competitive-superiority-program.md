@@ -80,14 +80,15 @@ reference has.
       Integration: `agent/contextMemory/microcompaction.ts` + `fileReadCache/`.
       Verify: eviction test proving a post-eviction Edit re-reads instead of
       trusting a stale fingerprint; age-trigger test.
-- [ ] S1.4 **Rule test vectors.** Every persisted exec-policy allow-rule
-      carries match/not-match examples validated at load; an invalid example
-      fails agent creation.
-      Reference: codex `execpolicy/src/parser.rs` (`validate_match_examples`).
-      Integration: `agent/permissionPolicy/execPolicy/` DSL parser + the
-      approved-command persistence path.
-      Verify: parser test — a rule whose examples contradict its pattern
-      throws at load.
+- [x] S1.4 **Rule test vectors.** The loader half already existed
+      (`loadExecPolicy` rejects examples that contradict their rule or are
+      shadowed, both `matches` directions); the persistence half landed
+      2026-11-19 as `f40086f32`: `appendAllowPrefix` pins a self-test pair on
+      every persisted rule (approved command as `matches: true`, mutated last
+      token as `matches: false`), so a later hand-broadened prefix fails agent
+      creation. Reference: codex `execpolicy/src/parser.rs`.
+      Verify: 4 new writer tests including the hand-broadening regression;
+      permission-policy suite 213/213; typecheck; agent-docs OK.
 - [ ] S1.5 **Narrow-rule suggestions in the approval dialog.** After a Bash
       approval, derive the narrowest `command:` rule from the parsed AST and
       preview it before "always allow" writes it.
