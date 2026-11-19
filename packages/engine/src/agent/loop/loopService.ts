@@ -22,17 +22,10 @@ import { newMessageId } from '#/agent/contextMemory/messageId';
 import { type ContextMessage, type PromptOrigin } from '#/agent/contextMemory/types';
 import { isVacuousContentPart } from '#/agent/contextMemory/vacuousContent';
 import { IAgentLLMRequesterService } from '#/agent/llmRequester/llmRequester';
-import {
-  isOutputEscalationEnabled,
-  OUTPUT_ESCALATION_WARNING_CODE,
-  shouldContinueTruncatedTurn,
-} from './outputEscalation';
-import {
-  isStallGuardEnabled,
-  shouldNudgeStalledTurn,
-  STALL_NUDGE_TEXT,
-  VERIFICATION_NUDGE_TEXT,
-} from './stallGuard';
+import { OUTPUT_ESCALATION_WARNING_CODE } from './outputEscalation';
+import { STALL_NUDGE_TEXT, VERIFICATION_NUDGE_TEXT } from './stallGuard';
+import { planNudgeDrain } from './nudgeReconciliation';
+import { decideTurnSettlement } from './turnSettlement';
 import { AgentErrorEvent } from '#/agent/mcp/mcpEvents';
 import { gateImageFormatParts } from '#/agent/media/image-compress';
 import { daemonFileRefFromPart } from '#/agent/media/mediaRef';
@@ -1299,7 +1292,8 @@ export class AgentLoopService extends Disposable implements IAgentLoopService {
     const engine = this.engine;
     if (engine === undefined) return { live: 0, bypass: false };
     const notificationCount = engine.snapshot().notificationCount;
-    let consumed = this.nudges.length - this.nudgeCursor - notificationCount;
+    const drain = planNudgeDrain(this.nudges.length, this.nudgeCursor, notificationCount);
+    let consumed = drain.count;
     let live = 0;
     let bypass = false;
     while (consumed > 0 && this.nudgeCursor < this.nudges.length) {
@@ -1989,111 +1983,95 @@ export class AgentLoopService extends Disposable implements IAgentLoopService {
     outcome: { readonly outcome: MachineTurnOutcome; readonly error?: unknown },
   ): Promise<void> {
     if (this.active !== turn) return;
-    if (
-      turn.failedStep !== undefined &&
-      turn.abortReason === undefined &&
-      !turn.controller.signal.aborted
-    ) {
-      await this.recoverOrFailMachineRun(turn);
-      return;
-    }
-    if (
-      turn.abortReason !== undefined ||
-      turn.controller.signal.aborted ||
-      outcome.outcome === 'aborted'
-    ) {
-      const reason =
-        turn.abortReason ??
-        (turn.controller.signal.aborted ? turn.controller.signal.reason : undefined) ??
-        abortError('Turn aborted');
-      this.interruptMachineRunForCancel(turn, reason);
-      await this.endTurn(turn, { type: 'cancelled', steps: turn.steps, reason });
-      return;
-    }
-    if (turn.filtered) {
-      await this.endTurn(turn, {
-        type: 'failed',
-        steps: turn.steps,
-        error: new Error2(
-          ErrorCodes.PROVIDER_FILTERED,
-          'Provider safety policy blocked the response.',
-          {
-            name: 'ProviderFilteredError',
-            details: { finishReason: 'filtered' },
+
+    const cancellationReason =
+      turn.abortReason ??
+      (turn.controller.signal.aborted ? turn.controller.signal.reason : undefined);
+    const action = decideTurnSettlement({
+      outcome: outcome.outcome,
+      failedStep: turn.failedStep !== undefined,
+      abortReason: cancellationReason,
+      aborted: turn.controller.signal.aborted,
+      filtered: turn.filtered,
+      failureError: outcome.error,
+      maxStepsError: turn.maxStepsError,
+      stopRequested: turn.stopRequested,
+      toolStopRequested: turn.toolStopRequested,
+      liveNudge: this.hasLiveNudge(),
+      lastStopReason: turn.lastStopReason,
+      outputEscalated: turn.outputEscalated,
+      lastFinalText: turn.lastFinalText,
+      stallNudges: turn.stallNudges,
+      wroteFiles: turn.wroteFiles,
+      verifiedAfterWrite: turn.verifiedAfterWrite,
+      verificationNudged: turn.verificationNudged,
+    });
+
+    switch (action.kind) {
+      case 'recover-failed-step':
+        await this.recoverOrFailMachineRun(turn);
+        return;
+      case 'cancel': {
+        const reason = cancellationReason ?? abortError('Turn aborted');
+        this.interruptMachineRunForCancel(turn, reason);
+        await this.endTurn(turn, { type: 'cancelled', steps: turn.steps, reason });
+        return;
+      }
+      case 'fail-filtered':
+        await this.endTurn(turn, {
+          type: 'failed',
+          steps: turn.steps,
+          error: new Error2(
+            ErrorCodes.PROVIDER_FILTERED,
+            'Provider safety policy blocked the response.',
+            { name: 'ProviderFilteredError', details: { finishReason: 'filtered' } },
+          ),
+        });
+        return;
+      case 'fail-max-steps':
+        await this.endTurn(turn, { type: 'failed', steps: turn.steps, error: action.error });
+        return;
+      case 'fail-outcome': {
+        const error = action.error ?? new Error('Turn failed');
+        this.emitStepInterrupted(turn.id, turn.interruptStep, 'error', toErrorMessage(error));
+        await this.endTurn(turn, { type: 'failed', steps: turn.steps, error });
+        return;
+      }
+      case 'wait-for-nudge':
+        return;
+      case 'complete':
+        await this.endTurn(turn, this.machineCompletedResult(turn));
+        return;
+      case 'escalate-truncation': {
+        turn.outputEscalated = true;
+        const raised = this.llmRequester.escalateTurnOutput?.(turn.id);
+        void this.dispatcher.dispatch(
+          new WarningIssued({
+            agentId: this.scopeContext.agentId,
+            code: OUTPUT_ESCALATION_WARNING_CODE,
+            message:
+              raised !== undefined
+                ? `Model output was truncated by the completion budget; continuing the turn with the budget raised to ${String(raised)} (once per turn).`
+                : 'Model output was truncated by the completion budget; continuing the turn so the model can finish (once per turn).',
+          }),
+        );
+        this.machineEngine().notify(createUserEntry(EMPTY_MACHINE_PROMPT));
+        return;
+      }
+      case 'nudge-stall': {
+        turn.stallNudges += 1;
+        if (action.verification) turn.verificationNudged = true;
+        const nudgeText = action.verification ? VERIFICATION_NUDGE_TEXT : STALL_NUDGE_TEXT;
+        this.notify({
+          message: {
+            role: 'user',
+            content: [{ type: 'text', text: nudgeText }],
+            toolCalls: [],
           },
-        ),
-      });
-      return;
+        });
+        return;
+      }
     }
-    if (turn.maxStepsError !== undefined) {
-      await this.endTurn(turn, { type: 'failed', steps: turn.steps, error: turn.maxStepsError });
-      return;
-    }
-    if (turn.stopRequested) {
-      await this.endTurn(turn, this.machineCompletedResult(turn));
-      return;
-    }
-    if (this.hasLiveNudge()) {
-      return;
-    }
-    if (turn.toolStopRequested) {
-      await this.endTurn(turn, this.machineCompletedResult(turn));
-      return;
-    }
-    if (outcome.outcome === 'failed') {
-      const error = outcome.error ?? new Error('Turn failed');
-      this.emitStepInterrupted(turn.id, turn.interruptStep, 'error', toErrorMessage(error));
-      await this.endTurn(turn, { type: 'failed', steps: turn.steps, error });
-      return;
-    }
-    if (
-      shouldContinueTruncatedTurn({
-        lastStopReason: turn.lastStopReason,
-        continued: turn.outputEscalated,
-        enabled: isOutputEscalationEnabled(),
-        stopRequested: turn.stopRequested,
-        outcome: outcome.outcome,
-      })
-    ) {
-      turn.outputEscalated = true;
-      const raised = this.llmRequester.escalateTurnOutput?.(turn.id);
-      void this.dispatcher.dispatch(
-        new WarningIssued({
-          agentId: this.scopeContext.agentId,
-          code: OUTPUT_ESCALATION_WARNING_CODE,
-          message:
-            raised !== undefined
-              ? `Model output was truncated by the completion budget; continuing the turn with the budget raised to ${String(raised)} (once per turn).`
-              : 'Model output was truncated by the completion budget; continuing the turn so the model can finish (once per turn).',
-        }),
-      );
-      this.machineEngine().notify(createUserEntry(EMPTY_MACHINE_PROMPT));
-      return;
-    }
-    if (
-      outcome.outcome === 'done' &&
-      shouldNudgeStalledTurn({
-        text: turn.lastFinalText,
-        nudgesUsed: turn.stallNudges,
-        enabled: isStallGuardEnabled(),
-        unverifiedWrites: turn.wroteFiles && !turn.verifiedAfterWrite && !turn.verificationNudged,
-      })
-    ) {
-      turn.stallNudges += 1;
-      const verification =
-        turn.wroteFiles && !turn.verifiedAfterWrite && !turn.verificationNudged;
-      if (verification) turn.verificationNudged = true;
-      const nudgeText = verification ? VERIFICATION_NUDGE_TEXT : STALL_NUDGE_TEXT;
-      this.notify({
-        message: {
-          role: 'user',
-          content: [{ type: 'text', text: nudgeText }],
-          toolCalls: [],
-        },
-      });
-      return;
-    }
-    await this.endTurn(turn, this.machineCompletedResult(turn));
   }
 
   private hasLiveNudge(): boolean {

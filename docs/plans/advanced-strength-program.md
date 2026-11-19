@@ -60,6 +60,13 @@ prompt carries the autonomy directive and the golden is byte-stable.
 
 _Append each closed item with its commit and fail-on-base evidence as it lands._
 
+### Architecture — IN PROGRESS
+
+| Item | Status | Real evidence |
+|---|---|---|
+| WS2.2 loop decomposition | partial — this commit | Extracted two collaborators from `loopService.ts`: `turnSettlement.ts` (pure terminal-condition decision table, 11 tests) and `nudgeReconciliation.ts` (cursor arithmetic, 4 tests). The service now owns only side effects. Fail-on-base: "Cannot find module #/agent/loop/turnSettlement". Loop integration 72/72, stall guard 19/19, contract digest +2 entries. Machine-event projection (the third named collaborator) remains |
+| WS2.3 / WS2.4 god-files | open | Not started |
+
 ---
 
 ## 1. Vision and strength thesis
