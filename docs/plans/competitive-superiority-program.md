@@ -53,14 +53,20 @@ reference has.
 
 ## W1 — Quick wins (days each, no product decision)
 
-- [ ] S1.1 **Model-visible budget tools.** `get_context_remaining` and
-      `new_context_window` as read-only feature tools; context-window
-      metadata section beside the world-state section.
-      Reference: codex `core/src/tools/handlers/{get_context_remaining,new_context_window}.rs`.
-      Integration: `packages/engine/src/features/` new feature +
-      profile allowlist + `default-tool-approve`.
-      Verify: feature test proving admission; auto-mode approves read-only;
-      `gen:contract-types` digest regenerated.
+- [x] S1.1 **Model-visible budget tools.** `GetContextRemaining` and
+      `NewContextWindow` landed 2026-11-19 in
+      `packages/Tools/src/features/contextBudget/` (schema + tool + description
+      per tool), registered through the tool seam, admitted to the `agent` and
+      `coder` profiles, and added to `default-tool-approve` (one read-only; the
+      other triggers only the auto-source compaction the engine already runs —
+      turn-aware, per-turn capped). Reference: codex
+      `core/src/tools/handlers/{get_context_remaining,new_context_window}.rs`.
+      The context-window metadata *section* (beside the world-state section) is
+      deferred to S2.4, where sections become durable.
+      Verify: 12 tool tests + 3 extended engine tests green
+      (159/159 Tools suite excluding the two pre-existing offline-ripgrep
+      files, which fail identically on base); typecheck, layering,
+      workspace, and contract-types freshness all green.
 - [ ] S1.2 **Escalation-on-truncation.** `max_tokens` step end → retry with a
       raised output ceiling and a continuation that keeps accumulated text.
       Reference: qwen `tokenLimits.ts` (`ESCALATED_MAX_TOKENS`).
