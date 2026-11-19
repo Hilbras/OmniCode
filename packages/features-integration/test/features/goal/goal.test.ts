@@ -517,6 +517,33 @@ describe('AgentGoalService', () => {
       expect(goals.getGoal().goal).toBeNull();
     });
 
+    it('pauses a goal after three continuation turns with no evidence', async () => {
+      await ctx.restorePersisted();
+      ctx.configure({ tools: [] });
+      for (let index = 0; index < 12; index += 1) {
+        ctx.mockNextResponse({ type: 'text', text: 'Still working on the same step.' });
+      }
+      const pausedReasons: string[] = [];
+      const endedTurnIds: number[] = [];
+      ctx.get(IEventBus).subscribe(GoalUpdated, (event) => {
+        if (event.change?.status === 'paused') pausedReasons.push(String(event.change.reason));
+      });
+      ctx.get(IEventBus).subscribe(TurnEnded, (event) => endedTurnIds.push(event.turnId));
+
+      await goals.createGoal({ objective: 'finish the task' });
+      await goals.markBlocked({ reason: 'test setup' });
+      await goals.resumeGoal({ continueIfBlocked: true });
+      await vi.waitFor(() => {
+        expect(endedTurnIds.length).toBeGreaterThanOrEqual(3);
+      }, { timeout: 10_000 });
+      await vi.waitFor(() => {
+        expect(pausedReasons).toContain('Paused after 3 goal turns with no new evidence');
+      }, { timeout: 10_000 });
+      const snapshot = goals.getGoal().goal;
+      expect(snapshot?.status).toBe('paused');
+      expect(snapshot?.terminalReason).toBe('Paused after 3 goal turns with no new evidence');
+    });
+
     it('pauseOnInterrupt parks active goals and no-ops for stopped goals', async () => {
       await goals.createGoal({ objective: 'work', completionCriterion: 'tests pass' });
       const paused = await goals.pauseOnInterrupt({ reason: 'Paused after interruption' });

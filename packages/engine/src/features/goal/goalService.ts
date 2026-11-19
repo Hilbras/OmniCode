@@ -24,7 +24,7 @@ import {
   type BeforeStepContext,
   type Turn,
 } from '#/agent/loop/loop';
-import { TurnStarted } from '#/agent/loop/turnEvents';
+import { AssistantDelta, TurnStarted } from '#/agent/loop/turnEvents';
 import { TurnEnded } from '#/agent/loop/turnOps';
 import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import type { PermissionMode } from '#/agent/permissionPolicy/types';
@@ -130,6 +130,9 @@ const GOAL_BUDGET_STOP_REMINDER = [
 ].join(' ');
 
 const GOAL_PAUSED_ON_CLOSE = 'Paused after agent closed';
+/** Three quiet continuation turns is a pattern, not a pause for thought (qwen's limit). */
+const GOAL_NO_PROGRESS_LIMIT = 3;
+const GOAL_NO_PROGRESS_REASON = 'Paused after 3 goal turns with no new evidence';
 
 const GOAL_BUDGET_TOOLS_REJECTED_MESSAGE =
   'Goal budget exhausted; tool calls are rejected. Write your final message.';
@@ -203,11 +206,20 @@ interface GoalEffectState {
   readonly countedGoalTurns: Set<number>;
   readonly goalStarterTurns: Set<number>;
   readonly goalOutcomeToolResultTurns: Map<number, string>;
+  /** Turn IDs that produced at least one non-goal, non-error tool result. */
+  readonly evidenceTurns: Set<number>;
   readonly goalOutcomeContinuationTurns: Set<number>;
   readonly budgetGraceTurns: Set<number>;
   readonly pendingContinuationGoals: Map<number, string>;
   readonly goalTurnTargets: Map<number, string>;
   readonly exhaustedTurnBudgetGoals: Map<number, string>;
+  readonly continuationTurns: Set<number>;
+  /** Final assistant text per turn, used to detect a stalled continuation. */
+  readonly turnTexts: Map<number, string>;
+  /** Text of the previous no-evidence continuation turn. */
+  previousIdleText: string | undefined;
+  /** Consecutive goal continuation turns with no evidence-bearing tool result (in-memory, resets on replay). */
+  noProgressStreak: number;
   liveWallClockStartedAt?: number;
   resumeContinuation?: ResumeContinuation;
 }
@@ -538,6 +550,7 @@ function handleTurnLaunched(context: GoalOperationContext, turnId: number, origi
   }
   context.effects.goalTurnTargets.delete(turnId);
   context.effects.exhaustedTurnBudgetGoals.delete(turnId);
+  if (isGoalContinuationOrigin(origin)) context.effects.continuationTurns.add(turnId);
   const pending = context.effects.pendingContinuation;
   if (pending !== undefined && pending.turnId === undefined && isGoalContinuationOrigin(origin)) {
     pending.turnId = turnId;
@@ -711,6 +724,34 @@ async function handleTurnEnded(context: GoalOperationContext,
   const state = context.runtime.getState().goal;
   if (state === null || state.status !== 'active' || state.goalId !== lifecycleGoalId) return;
   if (blockIfBudgetReached(context, state) !== null) return;
+
+  // No-progress streak: only runtime-generated continuation turns count, and
+  // only when they produced no evidence-bearing tool result. User turns and
+  // hand-off turns reset the streak; three idle continuations pause the goal
+  // with an explicit reason rather than spinning forever.
+  const isContinuation = context.effects.continuationTurns.has(turnId);
+  const handOff = context.effects.goalOutcomeContinuationTurns.has(turnId);
+  const finalText = (context.effects.turnTexts.get(turnId) ?? '').trim();
+  context.effects.turnTexts.delete(turnId);
+  // A distinct progress update is real work even without a tool call (e.g. a
+  // chain of "slice N done" reports). Only a *repeat of the same text* is a
+  // stall: the model restating status instead of advancing the goal. Tool
+  // evidence and user/handoff turns both reset the streak.
+  const repeatsIdleText =
+    finalText.length > 0 &&
+    context.effects.previousIdleText !== undefined &&
+    finalText === context.effects.previousIdleText;
+  if (!isContinuation || handOff || context.effects.evidenceTurns.has(turnId) || !repeatsIdleText) {
+    context.effects.noProgressStreak = 0;
+    context.effects.previousIdleText = finalText.length > 0 ? finalText : undefined;
+  } else {
+    context.effects.noProgressStreak += 1;
+    if (context.effects.noProgressStreak >= GOAL_NO_PROGRESS_LIMIT) {
+      await pauseActiveGoal(context, { reason: GOAL_NO_PROGRESS_REASON });
+      return;
+    }
+  }
+
   launchContinuationTurn(context, lifecycleGoalId, stepCapped);
 }
 
@@ -1124,6 +1165,20 @@ function hasStepBudgetRemaining(maxSteps: number | undefined, currentStep: numbe
   return maxSteps === undefined || maxSteps <= 0 || currentStep < maxSteps;
 }
 
+/**
+ * A tool result is evidence when it is a successful non-goal tool call.
+ * Goal/plan self-talk (UpdateGoal/GetGoal/CreateGoal/SetGoalBudget/TodoList)
+ * is deliberately excluded: a goal turn that only reports on itself made no
+ * progress, exactly qwen's `takeGoalTurnToolResults` rule.
+ */
+const GOAL_SELF_TALK_TOOLS = new Set([
+  'UpdateGoal', 'GetGoal', 'CreateGoal', 'SetGoalBudget', 'TodoList', 'TaskList',
+]);
+
+function isEvidenceToolResult(toolName: string, result: ExecutableToolResult): boolean {
+  return result.isError !== true && !GOAL_SELF_TALK_TOOLS.has(toolName);
+}
+
 function isTerminalUpdateGoalResult(
   toolName: string,
   args: unknown,
@@ -1196,6 +1251,10 @@ function createGoalEffectHandlers(runtime: AgentActorContext<GoalRuntimeState>) 
       applyLifecycle(context, state, 'paused', GOAL_PAUSED_ON_CLOSE, 'runtime');
     },
     turnStarted: (event: TurnStarted) => { handleTurnLaunched(context, event.turnId, event.origin); },
+    assistantDelta: (event: AssistantDelta) => {
+      const map = context.effects.turnTexts;
+      map.set(event.turnId, (map.get(event.turnId) ?? '') + event.delta);
+    },
     usageRecorded: (usage: UsageRecordedContext) => {
       if (usage.agent === runtime.agent) handleUsageRecorded(context, usage);
     },
@@ -1237,6 +1296,11 @@ function createGoalEffectHandlers(runtime: AgentActorContext<GoalRuntimeState>) 
         goalId !== undefined &&
         isTerminalUpdateGoalResult(tool.toolCall.name, tool.args, tool.result)
       ) context.effects.goalOutcomeToolResultTurns.set(tool.turnId, goalId);
+      // Evidence = a real tool result, not the goal runtime talking to itself
+      // (qwen's takeGoalTurnToolResults provenance rule).
+      if (goalId !== undefined && isEvidenceToolResult(tool.toolCall.name, tool.result)) {
+        context.effects.evidenceTurns.add(tool.turnId);
+      }
     },
     turnEnded: (event: TurnEnded) => {
       const goalId = goalTurnTarget(context, event.turnId);
@@ -1273,6 +1337,7 @@ const goalEffects = fromCallback(({
     disposables.push(input.runtime.get(IAgentLifecycleService).onWillClose(handlers.closing));
     disposables.push(new GoalInjection(handlers.injection, reminderOf(input.runtime)));
     disposables.push(input.runtime.get(IEventBus).subscribe(TurnStarted, handlers.turnStarted));
+    disposables.push(input.runtime.get(IEventBus).subscribe(AssistantDelta, handlers.assistantDelta));
     disposables.push(input.runtime.get(ISessionUsageService).onDidRecord(handlers.usageRecorded));
     const loop = input.runtime.get(IAgentLoopService);
     disposables.push(loop.hooks.onWillBeginStep.register('goal-count-turn', async (context, next) => {
@@ -1322,11 +1387,16 @@ const goalActorLogic = setup({
       countedGoalTurns: new Set(),
       goalStarterTurns: new Set(),
       goalOutcomeToolResultTurns: new Map(),
+      evidenceTurns: new Set(),
       goalOutcomeContinuationTurns: new Set(),
       budgetGraceTurns: new Set(),
       pendingContinuationGoals: new Map(),
       goalTurnTargets: new Map(),
       exhaustedTurnBudgetGoals: new Map(),
+      continuationTurns: new Set(),
+      turnTexts: new Map(),
+      previousIdleText: undefined,
+      noProgressStreak: 0,
     },
     runtime: input,
   }),
