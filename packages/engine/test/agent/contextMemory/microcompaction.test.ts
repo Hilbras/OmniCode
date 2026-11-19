@@ -38,6 +38,31 @@ describe('microcompaction', () => {
     expect(result.messages).toBe(messages);
   });
 
+  it('evicts a stale result below the token trigger using the live clock (WS3.1)', () => {
+    const messages = [
+      { ...assistant('c1'), id: 'm1' },
+      { ...tool('c1', big(200)), id: 'm2' },
+      user('latest'),
+    ];
+    const base = {
+      triggerTokens: 100_000,
+      targetTokens: 50_000,
+      keepRecentMessages: 0,
+      keepRecentUserMessages: 0,
+      maxMessageAgeMs: 1_000,
+      messageTimes: { m1: 100, m2: 100 },
+      now: 10_000,
+    };
+    const result = microcompactContext(messages, base);
+    expect(result.truncated).toBe(true);
+    expect(result.evictedToolResults).toBeGreaterThan(0);
+
+    const fresh = microcompactContext(messages, { ...base, messageTimes: { m1: 9_900, m2: 9_900 } });
+    expect(fresh.truncated).toBe(false);
+    const disabled = microcompactContext(messages, { ...base, maxMessageAgeMs: 0 });
+    expect(disabled.truncated).toBe(false);
+  });
+
   it('evicts old tool results to the target while preserving user and recent messages', () => {
     const messages = [
       system(),

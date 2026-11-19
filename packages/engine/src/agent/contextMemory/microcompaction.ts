@@ -1,3 +1,4 @@
+import { staleMessageIndices } from './contextMessageTimes';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import type { ContentPart } from '#human/llm/message';
 
@@ -7,6 +8,11 @@ export interface MicrocompactionOptions {
   readonly keepRecentMessages?: number;
   readonly keepRecentUserMessages?: number;
   readonly placeholder?: string;
+  /** Age gap in ms: stale older messages trigger eviction beside the token threshold. */
+  readonly maxMessageAgeMs?: number;
+  /** Per-message wall clock, keyed by message id. */
+  readonly messageTimes?: Readonly<Record<string, number>>;
+  readonly now?: number;
 }
 
 export interface MicrocompactionResult {
@@ -29,7 +35,21 @@ export const DEFAULT_MICROCOMPACTION_TRIGGER_TOKENS = 120_000;
 export const DEFAULT_MICROCOMPACTION_TARGET_TOKENS = 70_000;
 export const DEFAULT_MICROCOMPACTION_KEEP_RECENT = 12;
 export const DEFAULT_MICROCOMPACTION_KEEP_RECENT_USER_MESSAGES = 4;
+export const MICROCOMPACTION_MAX_AGE_ENV_KEY = 'OMNICODE_MICROCOMPACTION_MAX_AGE_MS';
+export const DEFAULT_MICROCOMPACTION_MAX_AGE_MS = 30 * 60 * 1000;
 const DEFAULT_PLACEHOLDER = '[older tool result evicted by microcompaction]';
+
+/** Age-gap trigger window; 0 (or `false`) disables it. Default: 30 minutes. */
+export function resolveMicrocompactionMaxAgeMs(
+  env: NodeJS.ProcessEnv | undefined = process.env,
+): number {
+  const raw = env?.[MICROCOMPACTION_MAX_AGE_ENV_KEY];
+  if (raw === undefined) return DEFAULT_MICROCOMPACTION_MAX_AGE_MS;
+  const normalized = raw.trim().toLowerCase();
+  if (normalized === '0' || normalized === 'false') return 0;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_MICROCOMPACTION_MAX_AGE_MS;
+}
 
 export function microcompactContext(
   messages: readonly ContextMessage[],
@@ -47,7 +67,16 @@ export function microcompactContext(
   );
   const placeholder = options.placeholder ?? DEFAULT_PLACEHOLDER;
   const tokensBefore = estimateContextTokens(messages);
-  if (tokensBefore <= triggerTokens) {
+  const protectedIndices = protectedMessageIndices(messages, keepRecent, keepRecentUserMessages);
+  const stale = staleMessageIndices(
+    messages,
+    options.messageTimes ?? {},
+    options.now ?? Date.now(),
+    options.maxMessageAgeMs ?? 0,
+    keepRecent,
+  ).filter((index) => !protectedIndices.has(index));
+  const staleSet = new Set(stale);
+  if (tokensBefore <= triggerTokens && stale.length === 0) {
     return {
       messages,
       tokensBefore,
@@ -59,7 +88,11 @@ export function microcompactContext(
     };
   }
 
-  const protectedIndices = protectedMessageIndices(messages, keepRecent, keepRecentUserMessages);
+  const evictionOrder = [
+    ...stale,
+    ...messages.map((_message, index) => index).filter((index) => !staleSet.has(index)),
+  ];
+  let stalePending = stale.length;
   // Resolve evicted tool results back to the call that produced them: the
   // placeholder can then carry a refetch hint, and the caller can disarm the
   // file-read cache for Read results the model can no longer see.
@@ -85,7 +118,8 @@ export function microcompactContext(
   let evictedToolResults = 0;
   let replacedMedia = 0;
 
-  for (let index = 0; index < output.length && tokensAfter > targetTokens; index += 1) {
+  for (const index of evictionOrder) {
+    if (tokensAfter <= targetTokens && stalePending === 0) break;
     if (protectedIndices.has(index)) continue;
     const message = output[index]!;
     const messagesPart = evictMessageParts(message, placeholder, toolInfo, evictedReads);
@@ -96,6 +130,7 @@ export function microcompactContext(
     tokensAfter -= delta;
     evictedToolResults += messagesPart.toolResults;
     replacedMedia += messagesPart.media;
+    if (staleSet.has(index)) stalePending -= 1;
   }
 
   return {

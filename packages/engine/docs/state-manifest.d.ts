@@ -27,7 +27,7 @@
 // references become '(circular)', and class instances collapse to a '(ClassName)'
 // marker — the wire shape of an entry is the JSON projection of the type here.
 //
-// Index (App: 0 keys · Workspace: 6 keys · Session: 9 keys · Agent: 73 keys)
+// Index (App: 0 keys · Workspace: 6 keys · Session: 9 keys · Agent: 74 keys)
 //   App
 //   Workspace
 //     workspaceDirs.ephemeralDirs          src/workspace/workspaceDirs/workspaceDirsService.ts
@@ -51,6 +51,7 @@
 //     agentsMdReminder.cwd                            src/agent/agentsMdReminder/agentsMdReminderService.ts
 //     agentsMdReminder.known                          src/agent/agentsMdReminder/agentsMdReminderService.ts
 //     agentsMdReminder.seeded                         src/agent/agentsMdReminder/agentsMdReminderService.ts
+//     context.messageTimes                            src/agent/contextMemory/contextMessageTimes.ts
 //     contextMemory                                   src/agent/contextMemory/contextOps.ts
 //     contextProjector.lastRepairSignature            src/agent/contextProjector/contextProjectorService.ts
 //     externalHooks.stopHookContinuationUsed          src/features/externalHooks/agent/agentExternalHooksService.ts
@@ -748,6 +749,9 @@ export interface AgentStateSnapshot {
   'agentsMdReminder.cwd': string | undefined;
   'agentsMdReminder.known': Set<string>;
   'agentsMdReminder.seeded': boolean;
+  // src/agent/contextMemory/contextMessageTimes.ts
+  // replayable · durable — folds: ContextAppendMessage
+  'context.messageTimes': Readonly<Record<string, number>>;
   // src/agent/contextMemory/contextOps.ts
   // replayable · durable · undoable — folds: ContextAppendMessage, ContextAppendLoopEvent, ContextClear, ContextApplyCompaction
   'contextMemory': (/* ContextMessage — packages/engine/src/agent/contextMemory/types.ts */ /* Message — packages/engine/src/llm-adapter/contract/message.ts */ {

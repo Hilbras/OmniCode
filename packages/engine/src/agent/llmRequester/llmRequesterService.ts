@@ -12,7 +12,11 @@ import {
 } from '@hilbras/omnicode-base/utils/retry';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
-import { microcompactContext } from '#/agent/contextMemory/microcompaction';
+import {
+  microcompactContext,
+  resolveMicrocompactionMaxAgeMs,
+} from '#/agent/contextMemory/microcompaction';
+import { contextMessageTimesKey } from '#/agent/contextMemory/contextMessageTimes';
 import { IAgentFileReadCacheService } from '#/agent/fileReadCache/fileReadCache';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import {
@@ -241,6 +245,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     @IProviderService private readonly providerService?: IProviderService,
 
   ) {
+    this.states.contributeState(contextMessageTimesKey);
     this.states.contributeState(llmRequestTraceKey);
     this.states.contributeState(llmRequesterLastConfigLogSignatureKey);
     this.states.contributeState(llmRequesterTurnConfigsKey);
@@ -1027,7 +1032,10 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     if (overrides.messages !== undefined || overrides.isolated === true) {
       messages = overrides.messages ?? this.context.get();
     } else {
-      const projected = microcompactContext(this.context.get());
+      const projected = microcompactContext(this.context.get(), {
+        maxMessageAgeMs: resolveMicrocompactionMaxAgeMs(),
+        messageTimes: this.states.get(contextMessageTimesKey),
+      });
       messages = projected.messages;
       for (const path of projected.evictedReads) this.fileReadCache.disarm(path);
     }
