@@ -71,6 +71,7 @@ _Append each closed item with its commit and fail-on-base evidence as it lands._
 
 | Item | Status | Real evidence |
 |---|---|---|
+| WS6.1–WS6.3, WS6.6 decisions | decision-record.md commit | Product premises were stale: docs site already evaluated as internal-only (`build-docs.mjs:3-12`); `install-desktop` is a working page pointer, not dangling; no Nix/installers in this repo; no husky/hook, with `pnpm preflight` + CI as the gate. All eight decisions recorded with evidence in `docs/plans/decision-record.md` |
 | WS6.5 safety-ledger guard | this commit | New `check:safety-ledger` pins seven fail-closed constants/gaps (stall cap 2, hook cap 8, goal no-progress 3, microcompaction age window, three MCP known gaps). Drift or a removed declaration fails; removing a pin requires an explicit ledger edit. Fail-on-base: module-not-found. Guard suite 4/4; real tree 7 pins OK |
 
 ### WS3 — Competitive leftovers — IN PROGRESS
@@ -292,15 +293,16 @@ commit message.
 
 ## 6. Decisions owed (owner-gated)
 
-| # | Decision | Default recommendation | Blocks |
+| # | Decision | Status (see [`decision-record.md`](./decision-record.md)) | Blocks |
 |---|---|---|---|
-| D1 | Published docs site or internal-only | publish (bilingual search) | WS6.1 |
-| D2 | Desktop shell restore or remove command | restore small shell; else remove `install-desktop` | WS6.2 |
-| D3 | Nix/installers or distribution decision | restore installers only | WS6.3 |
-| D4 | Stall-guard default on/off | on with cap 2 + env opt-out | WS1.2 |
-| D5 | No-progress cap (3 turns) | 3, matching qwen/Codex | WS1.4 |
-| D6 | Curator lifecycle: expose or close | expose read-only host surface | WS5.3 |
-| D7 | Enable fail-closed MCP elicitation to grow the conformance pass set | keep fail-closed until a reviewed transport caller + default-response policy exists | WS3.3 |
+| D1 | Published docs site or internal-only | internal-only — already evaluated in `build-docs.mjs` (T5.8) | WS6.1 |
+| D2 | Desktop shell restore or remove command | keep `install-desktop` as a working page pointer; no shell in this repo | WS6.2 |
+| D3 | Nix/installers or distribution decision | out of scope; distribution stays with website/registries | WS6.3 |
+| D4 | Stall-guard default on/off | on, cap 2, `OMNICODE_STALL_GUARD=0` opt-out | WS1.2 |
+| D5 | No-progress cap (3 turns) | 3, pinned by the safety ledger | WS1.4 |
+| D6 | Curator lifecycle: expose or close | default recorded (read-only host surface) — not implemented | WS5.3 |
+| D7 | Enable fail-closed MCP elicitation to grow the conformance pass set | keep fail-closed; re-baseline only after owner review | WS3.3 |
+| D8 | Pre-commit enforcement or preflight | `pnpm preflight` + CI replace husky-style hooks | WS6.6 |
 
 ## 7. Definition of done
 
