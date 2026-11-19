@@ -1095,6 +1095,12 @@ importers:
       js-yaml:
         specifier: ^4.1.1
         version: 4.3.2
+      pathe:
+        specifier: ^2.0.3
+        version: 2.0.3
+      socks:
+        specifier: ^2.8.9
+        version: 2.8.10
       undici:
         specifier: ^7.27.1
         version: 7.30.2
