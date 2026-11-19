@@ -14,6 +14,8 @@ import {
 import { createScopedTestHost, createServices, stubPair } from '@hilbras/omnicode-base/di/test';
 import { IAgentMediaResolverService } from '#/agent/media/mediaResolver';
 import { AgentMediaResolverService } from '#/agent/media/mediaResolverService';
+import { IVisionBridgeService } from '#/agent/media/visionBridgeService';
+import { formatVisionNotice } from '#/agent/media/visionBridge';
 import { buildOmnicodeFileUrl } from '#/agent/media/omnicodeFileUrl';
 import { ISessionMediaStore } from '#/agent/media/sessionMediaStore';
 import { IAgentScopeContext, makeAgentScopeContext } from '#/agent/scopeContext/scopeContext';
@@ -232,11 +234,21 @@ afterEach(async () => {
   await rm(sessionDir, { recursive: true, force: true });
 });
 
+function stubVisionBridge(description?: string): IVisionBridgeService {
+  return {
+    _serviceBrand: undefined,
+    configured: description !== undefined,
+    setModel: () => undefined,
+    describe: async () => (description === undefined ? undefined : formatVisionNotice(description)),
+  };
+}
+
 function resolver(
   files: Map<string, { name: string; bytes: Buffer }>,
   sessionDir?: string,
   mediaStore: ISessionMediaStore = stubMediaStore(sessionDir),
   events: Event2[] = [],
+  visionBridge: IVisionBridgeService = stubVisionBridge(),
 ): IAgentMediaResolverService {
   const ix = createServices(disposables, {
     base: [registerStateServices],
@@ -245,6 +257,7 @@ function resolver(
       reg.defineInstance(IBlobStore, blobStore());
       reg.defineInstance(ITelemetryService, telemetry);
       reg.defineInstance(ISessionMediaStore, mediaStore);
+      reg.defineInstance(IVisionBridgeService, visionBridge);
       reg.defineInstance(IEventDispatcher, {
         _serviceBrand: undefined,
         dispatch: async (event: Event2) => {
@@ -714,6 +727,39 @@ describe('AgentMediaResolverService image strategy', () => {
           canonical === undefined ? IMAGE_UNAVAILABLE_TEXT : `<image path="${canonical}"></image>`,
       },
     ]);
+  });
+
+  it('adds an honest vision-bridge notice for media the primary model cannot read (WS3.2)', async () => {
+    const files = new Map([[FILE_ID, { name: 'pic.png', bytes: PNG_BYTES }]]);
+    await plantCanonical(FILE_ID, '.png', PNG_BYTES);
+    const events: Event2[] = [];
+    const message = imageMessage(buildOmnicodeFileUrl(FILE_ID));
+
+    const svc = new AgentMediaResolverService(
+      fileService(files),
+      blobStore(),
+      telemetry,
+      new AgentStateService(),
+      stubMediaStore(sessionDir),
+      {
+        _serviceBrand: undefined,
+        dispatch: async (event: Event2) => {
+          events.push(event);
+        },
+      } as unknown as IEventDispatcher,
+      stubScopeContext,
+      stubVisionBridge('A red square on a blue background.'),
+    );
+    const out = await svc.resolve([message], requester({ imageIn: false }));
+
+    expect(out[0]!.content).toEqual([
+      {
+        type: 'text',
+        text: expect.stringContaining('A red square on a blue background.'),
+      },
+    ]);
+    expect((out[0]!.content[0] as { text: string }).text).toContain('[vision bridge]');
+    expect(events).toEqual([expect.objectContaining({ code: 'vision-bridge' })]);
   });
 
   it('delivers a format inline only when the current model provider accepts it', async () => {
@@ -1398,6 +1444,7 @@ describe('AgentMediaResolverService scoped registration', () => {
         dispatch: async () => {},
       } as unknown as IEventDispatcher),
       stubPair(IAgentScopeContext, makeAgentScopeContext({ agentId: 'main', agentScope: '' })),
+      stubPair(IVisionBridgeService, stubVisionBridge()),
     ]);
   }
 

@@ -71,6 +71,8 @@ _Append each closed item with its commit and fail-on-base evidence as it lands._
 
 | Item | Status | Real evidence |
 |---|---|---|
+| WS3.2 vision bridge | this commit | `VisionBridge` with a stub-friendly `VisionModel` trait seam and an honest notice ("the primary model did not view the media directly"). Registered session-scoped service installed with no model by default (graceful degradation), wired into `resolveImagePart` when the primary model lacks `image_in`; a configured model yields a labelled notice plus a `vision-bridge` warning event. Fail-on-base: "Cannot find module #/agent/media/visionBridge". Bridge 5/5, media resolver 59/59 |
+
 | WS3.1 age-gap microcompaction | this commit | Prior blocker removed: added a live per-message clock via a replayable `context.messageTimes` state folding `ContextAppendMessage.time`. `microcompactContext` now accepts `maxMessageAgeMs`/`messageTimes` and evicts stale results even below the token trigger; the requester passes the state with a 30-minute default and `OMNICODE_MICROCOMPACTION_MAX_AGE_MS=0` opt-out. Fail-on-base: "Cannot find module #/agent/contextMemory/contextMessageTimes"; tests caught a circular import, an off-by-one staleness boundary, and a fold identity issue — all fixed. Microcompaction 9/9, clock 5/5 |
 
 ### WS4 — Tier 2 seams — IN PROGRESS

@@ -27,6 +27,15 @@ import {
   parseDaemonFileUrl,
 } from './mediaRef';
 import { IAgentMediaResolverService } from './mediaResolver';
+import { IVisionBridgeService } from './visionBridgeService';
+import type { VisionMedia } from './visionBridge';
+
+const NO_VISION_BRIDGE: IVisionBridgeService = {
+  _serviceBrand: undefined,
+  configured: false,
+  setModel: () => undefined,
+  describe: async (_media: VisionMedia | undefined) => undefined,
+};
 import { createVideoUploader } from './registerMediaTools';
 import { ISessionMediaStore } from './sessionMediaStore';
 import {
@@ -81,6 +90,7 @@ export class AgentMediaResolverService implements IAgentMediaResolverService {
     @ISessionMediaStore private readonly mediaStore: ISessionMediaStore,
     @IEventDispatcher private readonly dispatcher: IEventDispatcher,
     @IAgentScopeContext private readonly scopeContext: IAgentScopeContext,
+    @IVisionBridgeService private readonly visionBridge: IVisionBridgeService = NO_VISION_BRIDGE,
   ) {
     this.states.contributeState(mediaResolvedKey);
     this.states.contributeState(mediaBudgetDroppedKey);
@@ -248,7 +258,18 @@ export class AgentMediaResolverService implements IAgentMediaResolverService {
         reason: 'unsupported',
         model: model.name,
       });
-      return degradedImage(await this.displayPath(ref));
+      const path = await this.displayPath(ref);
+      const notice = await this.bridgeUnreadableImage(ref, path, signal);
+      if (notice === undefined) return degradedImage(path);
+      void this.dispatcher.dispatch(
+        new WarningIssued({
+          agentId: this.scopeContext.agentId,
+          code: 'vision-bridge',
+          message: notice,
+        }),
+      );
+      const base = path === undefined ? IMAGE_UNAVAILABLE_TEXT : buildMediaPathTag('image', path);
+      return { type: 'text', text: `${base}\n${notice}` };
     }
     const providerKey = model.providerType ?? model.protocol;
     const uploader = this.imageUploadUnsupported.has(providerKey)
@@ -273,6 +294,27 @@ export class AgentMediaResolverService implements IAgentMediaResolverService {
       return part;
     }
     return this.resolveImageUncached(ref, requester, inlineKey, { uploader, cacheKey }, signal);
+  }
+
+  private async bridgeUnreadableImage(
+    ref: DaemonFileRef,
+    path: string | undefined,
+    signal: AbortSignal | undefined,
+  ): Promise<string | undefined> {
+    if (!this.visionBridge.configured) return undefined;
+    try {
+      const source = await this.readMedia(ref, signal);
+      return await this.visionBridge.describe(
+        {
+          mimeType: detectFileType(source.filename, source.bytes, 'media').mimeType,
+          bytes: source.bytes,
+          ...(path === undefined ? {} : { path }),
+        },
+        signal,
+      );
+    } catch {
+      return undefined;
+    }
   }
 
   private async resolveImageUncached(
