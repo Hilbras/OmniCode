@@ -134,4 +134,4 @@ Skill frontmatter may declare `allowed-tools`/`disallowed-tools`; parser normali
 
 ## Goal verification
 
-`goal/verifier.ts` is the independent completion check: checks name required evidence ids, external checks reject `agent_claim`/model-observed records, run evidence needs an exit code and provenance, and stale evidence is refused. Verdicts are `verified | partial | rejected` — never upgrade partial. Nothing calls it from `goalService` yet.
+`goal/verifier.ts` is the independent completion check: checks name required evidence ids, external checks reject `agent_claim`/model-observed records, run evidence needs an exit code and provenance, and stale evidence is refused. Verdicts are `verified | partial | rejected` — never upgrade partial. Wired through `goal/verificationGate.ts`: `goalService.markComplete` gates every model completion on runtime-observed evidence (`assertModelCompletionVerified`), refusing with `GOAL_NOT_VERIFIED` while the goal stays active; `OMNICODE_GOAL_VERIFIER=0` disables. Design write-up: `docs/en/architecture/goal-verification.md` and `docs/en/architecture/completion-gate.md`.

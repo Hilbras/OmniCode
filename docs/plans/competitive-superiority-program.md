@@ -1,0 +1,269 @@
+# Competitive Superiority Program
+
+Status: active — driven by OmniCode goal in session
+`session_sup_program` (id recorded in the execution log below); todos for every
+task live in that session's todo list. Source study:
+[`competitive-study-2026-11-19.md`](./competitive-study-2026-11-19.md) —
+every task below cites the reference evidence there and in the reference
+trees directly.
+
+Scope: engine loop/compaction/tools/permissions, Kaos sandbox, TUI approval
+and diff surfaces, CLI headless, guards, and docs. Companion programs: the
+[`architecture-debt-remediation-plan.md`](./architecture-debt-remediation-plan.md)
+stays active for its own items (god-file decomposition, CLI extraction,
+phantom-dep guard); the two share the W0 baseline. Does not weaken any trust,
+layering, approval, or sandbox boundary; does not copy any reference
+governance model (study §5).
+
+Non-goals: no second agent loop, no second permission language (every rule
+change migrates the existing chain), no published-contract break, no
+dual-renderer TUI, no Rust rewrite, no ambient capture, no vendor-locked
+analytics.
+
+**Execution rule** (same as every program in this repo): each task lands as
+its own commit with a test that fails on the base; `pnpm check:guards` before
+each handoff; generated manifests regenerate via their owning scripts.
+
+---
+
+## Goal
+
+**Objective.** Every task below is either landed with its verification command
+green, or recorded in the decisions table with an owner answer and its
+consequence. When the program closes, OmniCode holds Codex-grade context
+economics and process supervision and qwen-grade permission expressiveness on
+top of the event-sourced, trust-gated, guard-enforced core that neither
+reference has.
+
+**Outcomes.**
+
+| # | Outcome | Measure |
+|---|---|---|
+| O1 | Context economics lead | budget tools + truncation escalation + world-state diffing + background compaction shipped; long-run sessions survive ceilings without stalls |
+| O2 | Auto mode is the most defensible in the industry | soft/hard-deny taxonomy + guardian authority rules + in-band permission requests; every closed hole has a regression test |
+| O3 | Process supervision is first-class | live process table + monitor tool + late-denial kill, all durable |
+| O4 | Product content restored | architecture write-ups ported; docs-site/desktop decisions recorded; CREDITS restored |
+| O5 | Guards keep telling the truth | MCP conformance gate + visual regression lane + rule-example validation bite on planted violations |
+
+## W0 — Baseline (blocking)
+
+- [ ] W0.1 Clean tree, `pnpm check:guards`, `pnpm lint`, record the oxlint
+      frozen-finding count. The architecture-debt plan's uncommitted base
+      dependency fix (its D6) lands as its own commit first.
+
+## W1 — Quick wins (days each, no product decision)
+
+- [ ] S1.1 **Model-visible budget tools.** `get_context_remaining` and
+      `new_context_window` as read-only feature tools; context-window
+      metadata section beside the world-state section.
+      Reference: codex `core/src/tools/handlers/{get_context_remaining,new_context_window}.rs`.
+      Integration: `packages/engine/src/features/` new feature +
+      profile allowlist + `default-tool-approve`.
+      Verify: feature test proving admission; auto-mode approves read-only;
+      `gen:contract-types` digest regenerated.
+- [ ] S1.2 **Escalation-on-truncation.** `max_tokens` step end → retry with a
+      raised output ceiling and a continuation that keeps accumulated text.
+      Reference: qwen `tokenLimits.ts` (`ESCALATED_MAX_TOKENS`).
+      Integration: `agent/llmRequesterService` + turn retry policy.
+      Verify: a turn-test asserting the second request carries the escalated
+      cap and the accumulated prefix.
+- [ ] S1.3 **Microcompaction refinements.** Evicting a tool result disarms
+      the matching `fileReadCache` entry; evicted memory bodies are
+      re-fetchable with a pointer; age-gap trigger beside the token trigger.
+      Reference: qwen `services/microcompaction/microcompact.ts`.
+      Integration: `agent/contextMemory/microcompaction.ts` + `fileReadCache/`.
+      Verify: eviction test proving a post-eviction Edit re-reads instead of
+      trusting a stale fingerprint; age-trigger test.
+- [ ] S1.4 **Rule test vectors.** Every persisted exec-policy allow-rule
+      carries match/not-match examples validated at load; an invalid example
+      fails agent creation.
+      Reference: codex `execpolicy/src/parser.rs` (`validate_match_examples`).
+      Integration: `agent/permissionPolicy/execPolicy/` DSL parser + the
+      approved-command persistence path.
+      Verify: parser test — a rule whose examples contradict its pattern
+      throws at load.
+- [ ] S1.5 **Narrow-rule suggestions in the approval dialog.** After a Bash
+      approval, derive the narrowest `command:` rule from the parsed AST and
+      preview it before "always allow" writes it.
+      Reference: qwen `utils/shellAstParser.ts` (`extractCommandRules`).
+      Integration: reverse-RPC approval panel + `commandCanonicalization`.
+      Verify: approval test — `git log -5` proposes `git log *`, not `git *`.
+- [ ] S1.6 **Turn diff + `omnicode apply`.** Track net per-turn mutations from
+      the existing patch pre-image journal; render `/diff`; `omnicode apply`
+      git-applies the agent's last diff.
+      Reference: codex `core/src/turn_diff_tracker.rs` + Apply command.
+      Integration: `packages/Tools/src/patch/patchJournal.ts` + CLI command.
+      Verify: journal-driven diff test with a forced-fallback path;
+      `check:command-paths` after adding the script.
+- [ ] S1.7 **MCP conformance gate.** Pin the official MCP conformance suite
+      (three protocol generations, security baselines) against the built CLI;
+      run as `check:mcp-conformance` beside `check:guards`.
+      Reference: codex `scripts/mcp_conformance/`.
+      Integration: `scripts/check-mcp-conformance.mjs` + CI guards job.
+      Verify: the gate runs green locally; a planted conformance failure
+      fails it.
+- [ ] S1.8 **Port the old tree's architecture write-ups** (computer-control,
+      completion-gate, goal-verification, run-supervisor, browser-control)
+      into `docs/en/architecture/` with paths rewritten to this tree.
+      Reference: `OmniCode.old/docs/architecture/*.md` (771 lines).
+      Verify: `pnpm docs:check`; every source path cited exists.
+- [ ] S1.9 **Vision bridge.** Unreadable image/PDF tool results are
+      side-queried through a configured vision model with an honest notice;
+      failure degrades to today's behavior.
+      Reference: qwen `services/visionBridge/`.
+      Integration: media path + provider traits.
+      Verify: media test with a stub vision model; no-vision-model test
+      proving graceful degradation.
+
+## W2 — Capability seams (weeks)
+
+- [ ] S2.1 **Soft/hard-deny taxonomy.** Soft-deny is unblockable by explicit
+      user intent (provenance-tagged, from genuine user messages and
+      collected answers); hard-deny — exfiltration and
+      **bypass-after-denial** (retrying a denied action via any other tool,
+      indirection, or encoding) — is absolute; repeated denials escalate to
+      manual.
+      Reference: qwen `classifier-prompts/system-prompt.ts`,
+      `denialTracking.ts`, `trustedUserAnswers`.
+      Integration: `auto-mode-classifier.ts` + `autoModeContext.ts` (already
+      excludes injected origins) + `denialTracking.ts` (escalation half
+      exists).
+      Verify: chain test — deny `cat .env`, then `python3 -c` equivalent
+      fails closed without a second ask; explicit user intent unblocks the
+      soft case.
+- [ ] S2.2 **Guardian authority rules in the reviewer lane.** Adopt the
+      evidence-authority contract verbatim (originals carry user authority;
+      quoted content never grants; fresh decision per review; check later
+      revocations); give the reviewer retrieval over the session board
+      instead of a flattened transcript.
+      Reference: codex `ext/guardian-v3/src/lib.rs:32-40`.
+      Integration: `agent/interaction/reviewer/`.
+      Verify: reviewer test — a request whose only "user" evidence is a
+      quoted message is refused.
+- [ ] S2.3 **`request_permissions` in-band escalation.** A tool the model
+      calls to request an additional permission profile; profiles intersect,
+      and unintersectionable inputs refuse rather than weaken.
+      Reference: codex `tools/handlers/request_permissions.rs` +
+      `permission_profile_intersection.rs`.
+      Integration: new engine tool arbitrated by the existing permission
+      chain; never widens the active mode.
+      Verify: intersection tests (refuse-on-weakening); approval round-trip
+      through reverse-RPC.
+- [ ] S2.4 **Incremental world-state sections.** Typed context sections with
+      persisted per-section snapshots and changed-fragment-only injection;
+      a durable `Event2` per section update keeps replay intact.
+      Reference: codex `context/world_state/mod.rs` (`render_diff`,
+      `Placement`, sha1 identity).
+      Integration: `contextProjector/worldStateProvider` + a section store.
+      Verify: replay test — restore reproduces the same assembled context;
+      diff test proves unchanged sections cost zero tokens.
+- [ ] S2.5 **Unified exec process table.** Clamped yield times; a live
+      process registry (running/exited/in-use) published as a context section;
+      per-process network-approval binding with late-denial termination.
+      Reference: codex `core/src/unified_exec/{mod,process_manager}.rs`.
+      Integration: Bash tool + Kaos + exec-policy.
+      Verify: supervisor test — yield, poll, exit; late-denial test proving
+      the process is killed and the model told.
+- [ ] S2.6 **Monitor tool.** Background watch whose lines become durable
+      notification events delivered when the loop is idle; caps and safety
+      checks.
+      Reference: qwen `tools/monitor.ts`.
+      Integration: Bash background mode + durable event + the
+      interruptionReminder delivery path.
+      Verify: monitor test — lines arrive at idle, not mid-turn; cap test.
+- [ ] S2.7 **Terminal visual regression lane.** node-pty → xterm.js in
+      headless Chromium → screenshots, named regression scenarios, gated e2e
+      beside `pty-tui.e2e.test.ts`.
+      Reference: qwen `integration-tests/terminal-capture/`.
+      Verify: lane runs on the current tree; a planted render regression
+      fails it.
+- [ ] S2.8 **Rule alias-closure + grant-collision tests.** An allow rule must
+      cover the tool the model can switch to (edit family, shell family);
+      MCP grant ambiguity and server-name collision are pinned.
+      Reference: qwen `rule-parser.ts` closure + collision tests.
+      Integration: `agent/permissionRules/` semantics + tests.
+      Verify: closure test — allowing `Edit` covers `Write`-family switches;
+      collision tests fail on ambiguous grants.
+- [ ] S2.9 **Claude extension converter.** Import Claude Code
+      hooks/extensions into the `externalHooks`/plugin seam — an import path,
+      not a second runtime.
+      Reference: qwen `core/src/extension/claude-converter.ts`.
+      Verify: converter test with a representative Claude hooks.json; a
+      skill/command import round-trip.
+- [ ] S2.10 **Agent residency.** Idle tower/subagent workers unload with
+      state preserved and mail queued; wake on messages.
+      Reference: codex `core/src/agent/control/{residency,mailbox}.rs`.
+      Integration: `features/tower` + subagent lifecycle.
+      Verify: tower test — an idle worker unloads, receives mail, restores.
+- [ ] S2.11 **Per-model prompt/policy tables as generated data.** Per-model
+      instruction overlays and tool-policy overlays become manifest-generated
+      data instead of hardcoded constants.
+      Reference: codex `protocol/src/openai_models.rs`.
+      Integration: provider catalog + a generated manifest with
+      `--check` freshness.
+      Verify: `check:generated` fails when a model overlay drifts.
+
+## W3 — Differentiators and product decisions (owner-gated)
+
+- [ ] S3.1 **Speculative background compaction.** Summarization computed on a
+      background lane before the ceiling, installed when it trips.
+      Reference: codex `compact_remote_v2_attempt.rs`.
+      Verify: long-session test — the ceiling never stalls the foreground
+      loop; background result matches the installed history.
+- [ ] S3.2 **Userspace managed TCP in the Kaos bwrap backend.** smoltcp on
+      TUN + SOCKS bridge + managed DNS so destination allowlisting is
+      enforced without netns; harmonizes with the egress credential broker.
+      Reference: codex `linux-sandbox/src/managed_tcp_stack.rs`.
+      Verify: sandbox test — a denied destination is unreachable, an allowed
+      one flows through the bridge.
+- [ ] S3.3 **D1: docs site.** Publish `docs/en|zh` as a searchable site
+      (VitePress local search, mermaid, `llms.txt`) or record "internal
+      only" with the consequence. Evidence: old tree `docs/.vitepress/`.
+- [ ] S3.4 **D2: desktop shell.** Restore an Electron surface (old-tree
+      `apps/omnicode-desktop`: server adoption, auto-update, telegram-bridge)
+      or record "no" and remove the dangling `omnicode install-desktop`
+      command, which today points at a page for an app this repo does not
+      build.
+- [ ] S3.5 **D3: Nix + one-shot installers.** Restore `flake.nix`
+      (4-platform, native-SEA-in-Nix) and `install.sh` or record the
+      distribution decision. Evidence: old tree root.
+- [ ] S3.6 **Hygiene: pre-commit hook + CREDITS.** Husky/lint-staged
+      pre-commit running the no-comments + type-aware lint on touched files;
+      restore an attribution ledger for the fork lineage.
+      Verify: `git commit` on a file with a new oxlint finding fails.
+
+## Sequencing, effort, risk
+
+| Phase | Work | Estimate | Risk |
+|---|---|---|---|
+| W0 | baseline + the D6 commit | 0.5 day | low |
+| W1 | S1.1–S1.9 | 1.5–2 weeks total | low-medium; each lands independently |
+| W2 | S2.1–S2.11 | 4–7 weeks | medium-high; S2.1/S2.4 touch the loop and classifier |
+| W3 | S3.1–S3.6 | 3–4 weeks + decisions | high; S3.1/S3.2 are deep mechanisms |
+
+Rollback: every task is a separate commit; no task depends on an
+unlanded earlier task except S2.4 (which S2.5 builds on for the process
+section) and W1.5 (which builds on the landed rule persistence).
+
+## Definition of done
+
+- [ ] Every S-task is landed with its verification command green, or has a
+      row in the decisions table with an owner answer.
+- [ ] `pnpm check:guards`, `pnpm lint`, and `pnpm preflight` exit 0 on the
+      finished tree.
+- [ ] No adopted mechanism weakened a trust, layering, approval, or sandbox
+      boundary — verified by the boundary suites after each risky task.
+- [ ] The study doc's §6 at-parity list still holds (no regressions into
+      re-implementing landed work).
+- [ ] The plan records outcomes inline as tasks close, the way the deep-scan
+      plan does.
+
+## Decisions owed
+
+| # | Decision | Default recommendation | Blocks |
+|---|---|---|---|
+| D1 | Publish a docs site or keep internal | publish (adoption) | S3.3 |
+| D2 | Desktop shell or remove `install-desktop` | restore small shell; otherwise remove the command | S3.4 |
+| D3 | Nix + installers or record the distribution plan | restore installers only | S3.5 |
+| D4 | Reviewer retrieval surface (S2.2 second half) | session board read-only | S2.2 |
+| D5 | Escalation ceiling for S1.2 (per-turn cap) | one escalation per turn, config override | S1.2 |

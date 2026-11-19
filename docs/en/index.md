@@ -49,4 +49,9 @@ providers.
 
 - [Architecture](architecture/omnicode-architecture.md)
 - [Client surfaces](architecture/client-surfaces.md)
+- [Computer control](architecture/computer-control.md)
+- [Browser control](architecture/browser-control.md)
+- [Goal verification](architecture/goal-verification.md)
+- [The completion gate](architecture/completion-gate.md)
+- [Supervising an autonomous run](architecture/run-supervisor.md)
 - [Quality and testing](quality/e2e-test-plan.md)
