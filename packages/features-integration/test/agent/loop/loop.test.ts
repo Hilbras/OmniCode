@@ -2666,7 +2666,7 @@ describe('truncation continuation', () => {
     expect(lastInputs).toContain('Hello');
     expect(lastInputs).toContain('partial answer');
 
-    const contextMessages = await truncCtx.rpc.getContext();
+    const contextMessages = await truncCtx.rpc.getContext({});
     const texts = contextMessages.history
       .flatMap((message) => message.content)
       .filter((part) => part.type === 'text')
@@ -2704,11 +2704,13 @@ function entriesOf(snapshot: unknown): readonly SnapshotEntry[] {
 function stepsOf(snapshot: unknown): readonly number[] {
   return entriesOf(snapshot)
     .filter((entry) => entry.event === 'turn.step.started')
-    .map((entry) => (entry.args as { readonly step?: number }).step);
+    .map((entry) => (entry.args as { readonly step?: number }).step)
+    .filter((step): step is number => step !== undefined);
 }
 
 function endedReasonsOf(snapshot: unknown): readonly string[] {
   return entriesOf(snapshot)
     .filter((entry) => entry.event === 'turn.ended')
-    .map((entry) => (entry.args as { readonly reason?: string }).reason);
+    .map((entry) => (entry.args as { readonly reason?: string }).reason)
+    .filter((reason): reason is string => reason !== undefined);
 }
