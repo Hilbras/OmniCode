@@ -97,12 +97,23 @@ reference has.
       creation. Reference: codex `execpolicy/src/parser.rs`.
       Verify: 4 new writer tests including the hand-broadening regression;
       permission-policy suite 213/213; typecheck; agent-docs OK.
-- [ ] S1.5 **Narrow-rule suggestions in the approval dialog.** After a Bash
-      approval, derive the narrowest `command:` rule from the parsed AST and
-      preview it before "always allow" writes it.
-      Reference: qwen `utils/shellAstParser.ts` (`extractCommandRules`).
-      Integration: reverse-RPC approval panel + `commandCanonicalization`.
-      Verify: approval test — `git log -5` proposes `git log *`, not `git *`.
+- [x] S1.5 **Narrow-rule suggestions in the approval dialog.** Landed
+      2026-11-19 as `8df44477f`: `ruleSuggestion.ts` derives the minimum-scope
+      rule (root + known subcommand, arguments wildcarded; subcommand tables
+      for git/npm/pnpm/yarn/docker/cargo/kubectl/gh/go/pip/uv, docker-compose
+      nesting), the Bash tool attaches it to the command display, the approval
+      panel previews it on the always choice ("Saves rule: git log *"), and the
+      writer trusts it only as a strict prefix of the canonical tokens
+      (display-sourced data can narrow, never widen). Example pinning
+      generalizes: the match example is the approved command; the not-match
+      probe mutates the persisted prefix, so hand-broadening a *suggested* rule
+      still fails at load. Contract-types digest, SDK API report (also
+      recording a pre-existing `scope` drift truthfully), and state manifest
+      regenerated. A third D6 phantom (`server`'s `pathe`) landed as its own
+      fix (`72ee04a45`). Reference: qwen `utils/shellAstParser.ts`.
+      Verify: 17 derivation + 5 writer + 2 persistence + 2 adapter tests;
+      permission-policy suite 235/235; loops/bash integration 123/123;
+      guards 11/11; lint 70/0.
 - [ ] S1.6 **Turn diff + `omnicode apply`.** Track net per-turn mutations from
       the existing patch pre-image journal; render `/diff`; `omnicode apply`
       git-applies the agent's last diff.
