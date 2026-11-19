@@ -1,9 +1,9 @@
 # Competitive Superiority Program
 
-Status: active — driven by OmniCode goal in session
-`session_sup_program` (id recorded in the execution log below); todos for every
-task live in that session's todo list. Source study:
-[`competitive-study-2026-11-19.md`](./competitive-study-2026-11-19.md) —
+Status: active — driven by OmniCode goal `23aa8487-4f24-48a3-b866-3ecb716b6ded`
+in session `session_72961235-c88c-487d-b4df-1ee44a9896e4` ("Competitive
+superiority program"); the session's todo list tracks all 27 tasks. Source
+study: [`competitive-study-2026-11-19.md`](./competitive-study-2026-11-19.md) —
 every task below cites the reference evidence there and in the reference
 trees directly.
 
@@ -47,9 +47,9 @@ reference has.
 
 ## W0 — Baseline (blocking)
 
-- [ ] W0.1 Clean tree, `pnpm check:guards`, `pnpm lint`, record the oxlint
-      frozen-finding count. The architecture-debt plan's uncommitted base
-      dependency fix (its D6) lands as its own commit first.
+- [x] W0.1 Baseline recorded 2026-11-19: the D6 dependency fix landed as
+      `f5166a90c`; `pnpm check:guards` exit 0 (all 11 steps, 41 packages);
+      `pnpm lint` exit 0 (70 frozen findings, 0 new).
 
 ## W1 — Quick wins (days each, no product decision)
 
@@ -102,11 +102,15 @@ reference has.
       Integration: `scripts/check-mcp-conformance.mjs` + CI guards job.
       Verify: the gate runs green locally; a planted conformance failure
       fails it.
-- [ ] S1.8 **Port the old tree's architecture write-ups** (computer-control,
-      completion-gate, goal-verification, run-supervisor, browser-control)
-      into `docs/en/architecture/` with paths rewritten to this tree.
-      Reference: `OmniCode.old/docs/architecture/*.md` (771 lines).
-      Verify: `pnpm docs:check`; every source path cited exists.
+- [x] S1.8 **Port the old tree's architecture write-ups** — done 2026-11-19.
+      Five write-ups ported to `docs/en/architecture/` with re-verified
+      current-tree status sections: the completion gate and goal verifier are
+      wired in this tree (`goalService.markComplete` → `assertModelCompletionVerified`
+      → `verificationGate.ts`), the run supervisor drives goal continuation,
+      browser tools remain unwired. The stale engine-guide note and the
+      architecture-debt plan's W4.1 were corrected on the same evidence.
+      Verify: `pnpm docs:check` OK (79 files); `pnpm check:agent-docs` OK
+      (72 paths).
 - [ ] S1.9 **Vision bridge.** Unreadable image/PDF tool results are
       side-queried through a configured vision model with an honest notice;
       failure degrades to today's behavior.
