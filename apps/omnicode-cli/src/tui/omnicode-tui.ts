@@ -114,7 +114,7 @@ import {
   ReplayTurnBoundaryComponent,
   UserMessageComponent,
 } from './components/messages/user-message';
-import { ActivityPaneComponent, type ActivityPaneMode } from './components/panes/activity-pane';
+import { ActivityPaneComponent } from './components/panes/activity-pane';
 import { QueuePaneComponent } from './components/panes/queue-pane';
 import type { TuiConfig } from './config';
 import { MEDIA_INGESTION_SUBMIT_WAIT_MS } from './constant/media';
@@ -157,6 +157,15 @@ import { adaptPanelResponse } from './reverse-rpc/approval/adapter';
 import { ApprovalController } from './reverse-rpc/approval/controller';
 import { createApprovalRequestHandler } from './reverse-rpc/approval/handler';
 import { registerReverseRPCHandlers } from './reverse-rpc/index';
+import {
+  isSteerableQueuedMessage,
+  loadingTipKind,
+  sameStringArrays,
+  toSteerInputItem,
+  waitingSpinnerLabel,
+  type EffectiveActivityPaneMode,
+  type LoadingTipKind,
+} from './controllers/tui-helpers';
 import { QuestionController } from './reverse-rpc/question/controller';
 import { createQuestionAskHandler } from './reverse-rpc/question/handler';
 import type { ApprovalPanelData, QuestionPanelData } from './reverse-rpc/types';
@@ -174,7 +183,6 @@ import {
   type LoginProgressSpinnerHandle,
   type QueuedMessage,
   type SteerInputItem,
-  type StepRetryState,
   type TranscriptEntry,
   type TUIStartupOptions,
   type TUIStartupState,
@@ -259,23 +267,6 @@ export interface OmnicodeTUIStartupInput {
   /** When true, run only the migration screen, then exit (the `omnicode migrate` command). */
   readonly migrateOnly?: boolean;
   readonly telemetryDisabled?: boolean;
-}
-
-type EffectiveActivityPaneMode = ActivityPaneMode | 'idle' | 'session';
-type LoadingTipKind = 'moon' | 'braille';
-
-function loadingTipKind(mode: EffectiveActivityPaneMode): LoadingTipKind | undefined {
-  if (mode === 'waiting' || mode === 'tool') return 'moon';
-  if (mode === 'composing' || mode === 'thinking') return 'braille';
-  return undefined;
-}
-
-function waitingSpinnerLabel(retry: StepRetryState | null): string {
-  return retry === null ? '' : formatStepRetryLabel(retry);
-}
-
-function sameStringArrays(a: readonly string[], b: readonly string[]): boolean {
-  return a.length === b.length && a.every((value, index) => value === b[index]);
 }
 
 type MutableCreateSessionOptions = {
@@ -4641,19 +4632,3 @@ export class OmnicodeTUI {
   }
 }
 
-function isSteerableQueuedMessage(message: QueuedMessage): boolean {
-  return (
-    message.inlineSkillActivations === undefined &&
-    message.mode !== 'bash' &&
-    message.mode !== 'skill'
-  );
-}
-
-function toSteerInputItem(message: QueuedMessage): SteerInputItem {
-  return {
-    text: message.text,
-    parts: message.parts,
-    imageAttachmentIds: message.imageAttachmentIds,
-    videoAttachmentIds: message.videoAttachmentIds,
-  };
-}
