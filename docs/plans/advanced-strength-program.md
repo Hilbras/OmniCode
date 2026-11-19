@@ -71,6 +71,8 @@ _Append each closed item with its commit and fail-on-base evidence as it lands._
 
 | Item | Status | Real evidence |
 |---|---|---|
+| WS3.3 MCP conformance gaps | owner-gated / not changed | `pnpm check:mcp-conformance` output: 4 pass cells (initialize ×2, tools_call ×2), 3 recorded known gaps (sse-retry no-report, elicitation 0/6, auth/metadata 0/5), exit 0. Closing elicitation requires enabling a currently fail-closed server-initiated prompt consumer (`admitElicitation` defaults disabled), and the plan says "re-baseline only after review". No guard weakened; baseline left honest. Needs an owner decision D7 before touching security defaults |
+
 | WS3.2 vision bridge | this commit | `VisionBridge` with a stub-friendly `VisionModel` trait seam and an honest notice ("the primary model did not view the media directly"). Registered session-scoped service installed with no model by default (graceful degradation), wired into `resolveImagePart` when the primary model lacks `image_in`; a configured model yields a labelled notice plus a `vision-bridge` warning event. Fail-on-base: "Cannot find module #/agent/media/visionBridge". Bridge 5/5, media resolver 59/59 |
 
 | WS3.1 age-gap microcompaction | this commit | Prior blocker removed: added a live per-message clock via a replayable `context.messageTimes` state folding `ContextAppendMessage.time`. `microcompactContext` now accepts `maxMessageAgeMs`/`messageTimes` and evicts stale results even below the token trigger; the requester passes the state with a 30-minute default and `OMNICODE_MICROCOMPACTION_MAX_AGE_MS=0` opt-out. Fail-on-base: "Cannot find module #/agent/contextMemory/contextMessageTimes"; tests caught a circular import, an off-by-one staleness boundary, and a fold identity issue — all fixed. Microcompaction 9/9, clock 5/5 |
@@ -292,6 +294,7 @@ commit message.
 | D4 | Stall-guard default on/off | on with cap 2 + env opt-out | WS1.2 |
 | D5 | No-progress cap (3 turns) | 3, matching qwen/Codex | WS1.4 |
 | D6 | Curator lifecycle: expose or close | expose read-only host surface | WS5.3 |
+| D7 | Enable fail-closed MCP elicitation to grow the conformance pass set | keep fail-closed until a reviewed transport caller + default-response policy exists | WS3.3 |
 
 ## 7. Definition of done
 
