@@ -853,6 +853,21 @@ export const WIRE_RENDERERS: RendererMap = {
     }),
   },
 
+  'world_state.section_rendered': {
+    tone: 'meta',
+    label: 'world state',
+    headline: (r) => ({
+      main: (
+        <span className="flex items-center gap-2 min-w-0">
+          <Mono>world_state</Mono>
+          <Dim>
+            {Object.keys(r.baseline).length} keys · v{r.version}
+          </Dim>
+        </span>
+      ),
+    }),
+  },
+
   'full_compaction.begin': {
     tone: 'compaction',
     label: 'compact↻',

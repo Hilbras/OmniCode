@@ -584,6 +584,7 @@ export function projectContext(
       case 'mcp.tools_discovered':
       case 'file_history.checkpoint':
       case 'file_history.tracked':
+      case 'world_state.section_rendered':
         break;
       default: {
         const _exhaustive: never = rec;

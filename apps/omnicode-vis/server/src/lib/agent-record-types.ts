@@ -78,6 +78,7 @@ import type {
 } from '@hilbras/omnicode-engine/agent/contextMemory/contextEvents';
 import type { TurnCancel, TurnEnded, TurnPrompt, TurnSteer } from '@hilbras/omnicode-engine/agent/loop/turnOps';
 import type { TurnStepInterrupted } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
+import type { WorldStateSectionRendered } from '@hilbras/omnicode-engine/agent/contextProjector/worldStateOps';
 import type { TurnStepRetrying } from '@hilbras/omnicode-engine/agent/loop/turnEvents';
 import type { UsageRecord } from '@hilbras/omnicode-engine/agent/usage/usageOps';
 import type {
@@ -228,6 +229,7 @@ export type AgentRecord =
   | WireRecordOf<'turn.step.interrupted', TurnStepInterrupted>
   | WireRecordOf<'turn.step.retrying', TurnStepRetrying>
   | WireRecordOf<'usage.record', UsageRecord>
+  | WireRecordOf<'world_state.section_rendered', WorldStateSectionRendered>
   | ContextUpdateTokenCountRecord
   | MicroCompactionApplyRecord
   | StaleGuardRecordedRecord
