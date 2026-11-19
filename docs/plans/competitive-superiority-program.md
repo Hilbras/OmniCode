@@ -127,13 +127,26 @@ reference has.
       (one with a missing final newline); 6 service tests through the checkpoint
       harness; 10 CLI tests; contract digest + SDK API report regenerated; the
       stale `ApprovalResponse.scope` type test fixed to the truth.
-- [ ] S1.7 **MCP conformance gate.** Pin the official MCP conformance suite
-      (three protocol generations, security baselines) against the built CLI;
-      run as `check:mcp-conformance` beside `check:guards`.
-      Reference: codex `scripts/mcp_conformance/`.
-      Integration: `scripts/check-mcp-conformance.mjs` + CI guards job.
-      Verify: the gate runs green locally; a planted conformance failure
-      fails it.
+- [x] S1.7 **MCP conformance gate.** Landed 2026-11-19 as `92ce869e9`: the
+      official `@modelcontextprotocol/conformance` suite is pinned (0.1.16, root
+      devDependency), driven against the engine's real `HttpMcpClient`/
+      `SseMcpClient` through `packages/engine/scripts/mcp-conformance-client.mts`.
+      Measured reality: `initialize` and `tools_call` **pass at both protocol
+      versions** (2025-06-18, 2025-11-25); `sse-retry` does not terminate
+      (recorded as the expected no-report state — the engine client holds the
+      raw SSE stream); elicitation fails on the known missing consumer
+      (-32601); auth fails with no unattended OAuth in the harness. The
+      baseline (`scripts/mcp-conformance-baseline.json`) is reviewed,
+      shrink-only, keeps known failures visible with reasons, and the gate
+      fails on new failures, missing reports, and suite-version drift.
+      Reference: codex `scripts/mcp_conformance/` (the current suite ships two
+      protocol generations, not codex's older pin's three — recorded honestly).
+      Integration: `scripts/check-mcp-conformance.mjs` + the CI guards job,
+      beside `check:audit` (both deliberately outside `check:guards`).
+      Verify: the gate runs green in ~1 min; a planted skipped tool call fails
+      it naming `tool-add-numbers` in both spec versions; lint 70/0; guards
+      11/11; the mcpCore oauth suite passes isolated (earlier reds were
+      load-flakiness from concurrent runs on this machine).
 - [x] S1.8 **Port the old tree's architecture write-ups** — done 2026-11-19.
       Five write-ups ported to `docs/en/architecture/` with re-verified
       current-tree status sections: the completion gate and goal verifier are
