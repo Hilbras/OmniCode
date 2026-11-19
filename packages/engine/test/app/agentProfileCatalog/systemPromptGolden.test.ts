@@ -61,4 +61,12 @@ describe('rendered system prompt goldens', () => {
     expect(text).toContain('## Connectors');
     expect(text).toContain('Answer in the language the user wrote in.');
   });
+
+  it('directs the model to persist until the user outcome is achieved', () => {
+    const text = profile('agent').renderSystemPrompt(context).text;
+    expect(text).toContain('# Autonomy and persistence');
+    expect(text).toContain('keep working autonomously until the user\u0027s intended outcome is achieved');
+    expect(text).toContain('Do not stop at an intermediate result');
+    expect(text).toContain('a pending, running, or inconclusive check is not completion');
+  });
 });
