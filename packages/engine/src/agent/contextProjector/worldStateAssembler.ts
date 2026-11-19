@@ -1,7 +1,12 @@
 import type { GoalSnapshot } from '#/features/goal/types';
 import type { TodoItem } from '#/features/todo/todoItem';
 
-import { WorldStateTracker, renderWorldState, type WorldState } from './worldState';
+import {
+  WorldStateTracker,
+  renderWorldState,
+  type WorldState,
+  type WorldStateBaseline,
+} from './worldState';
 
 /**
  * Assembles the world-state section the model sees each turn from the state
@@ -54,6 +59,16 @@ export class WorldStateAssembler {
     const render = this.tracker.next(assembleWorldState(input));
     if (render.kind === 'delta' && Object.keys(render.delta).length === 0) return undefined;
     return renderWorldState(render);
+  }
+
+  /** Restore a durable baseline recorded in a previous process (WS4.4). */
+  restoreBaseline(baseline: WorldStateBaseline): void {
+    this.tracker.restore(baseline);
+  }
+
+  /** Baseline to record after a render, or `undefined` before the first one. */
+  currentBaseline(): WorldStateBaseline | undefined {
+    return this.tracker.currentBaseline();
   }
 
   /** Called after compaction so the next turn starts from a full section. */

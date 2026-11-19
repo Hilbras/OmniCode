@@ -27,7 +27,7 @@
 // references become '(circular)', and class instances collapse to a '(ClassName)'
 // marker — the wire shape of an entry is the JSON projection of the type here.
 //
-// Index (App: 0 keys · Workspace: 6 keys · Session: 9 keys · Agent: 72 keys)
+// Index (App: 0 keys · Workspace: 6 keys · Session: 9 keys · Agent: 73 keys)
 //   App
 //   Workspace
 //     workspaceDirs.ephemeralDirs          src/workspace/workspaceDirs/workspaceDirsService.ts
@@ -119,6 +119,7 @@
 //     tower.owner                                     src/features/tower/towerOps.ts
 //     turn                                            src/agent/loop/turnOps.ts
 //     userTool                                        src/agent/userTool/userToolOps.ts
+//     worldState.baseline                             src/agent/contextProjector/worldStateOps.ts
 
 /** App-scope keys registered into IAppStateService. */
 export interface AppStateSnapshot {
@@ -986,6 +987,12 @@ export interface AgentStateSnapshot {
   })[];
   // src/agent/contextProjector/contextProjectorService.ts
   'contextProjector.lastRepairSignature': string | null;
+  // src/agent/contextProjector/worldStateOps.ts
+  // replayable · durable — folds: WorldStateSectionRendered
+  'worldState.baseline': {
+    readonly value: Readonly<Record<string, /* WorldStateValue — packages/engine/src/agent/contextProjector/worldState.ts */ boolean | string | number | readonly string[] | null>>;
+    readonly version: number;
+  } | undefined;
   // src/agent/fullCompaction/compactionOps.ts
   // replayable · durable — folds: FullCompactionBegin, FullCompactionCancel, FullCompactionComplete
   'fullCompaction': /* CompactionState — packages/engine/src/agent/fullCompaction/compactionOps.ts */ {

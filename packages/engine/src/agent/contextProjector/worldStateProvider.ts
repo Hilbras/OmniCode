@@ -7,8 +7,12 @@ import { CompactionCompleted } from '#/agent/fullCompaction/compactionOps';
 import { IAgentGoalService } from '#/features/goal/goalService';
 import { IAgentTodoService } from '#/features/todo/todoService';
 import { IAgentLLMRequesterService } from '#/agent/llmRequester/llmRequester';
+import { IAgentScopeContext } from '#/agent/scopeContext/scopeContext';
+import { IAgentStateService } from '#/agent/state/agentState';
+import { IEventDispatcher } from '#/state/eventDispatcher';
 
 import { WorldStateAssembler } from './worldStateAssembler';
+import { WorldStateSectionRendered, worldStateBaselineKey } from './worldStateOps';
 
 /**
  * Supplies the world-state section for the next request from the agent's real
@@ -41,12 +45,20 @@ export class AgentWorldStateProvider
   private readonly assembler = new WorldStateAssembler();
 
   constructor(
+    @IAgentScopeContext private readonly scopeContext: IAgentScopeContext,
+    @IAgentStateService private readonly states: IAgentStateService,
+    @IEventDispatcher private readonly dispatcher: IEventDispatcher,
     @IAgentGoalService private readonly goals: IAgentGoalService,
     @IAgentTodoService private readonly todos: IAgentTodoService,
     @IEventBus eventBus: IEventBus,
     @IInstantiationService instantiation: IInstantiationService,
   ) {
     super();
+    // The baseline is replayed from a durable event, so a restarted process
+    // resumes the same diff lineage instead of re-rendering the whole section.
+    this.states.contributeState(worldStateBaselineKey);
+    const persisted = this.states.get(worldStateBaselineKey);
+    if (persisted !== undefined) this.assembler.restoreBaseline(persisted);
     // Compaction breaks the rendering lineage: every section after it is full.
     this._register(eventBus.subscribe(CompactionCompleted, () => this.assembler.reset()));
     // Push into the requester lazily: injecting the requester here would cycle.
@@ -60,10 +72,22 @@ export class AgentWorldStateProvider
   }
 
   nextSection(): string | undefined {
-    return this.assembler.next({
+    const before = this.assembler.currentBaseline();
+    const section = this.assembler.next({
       goal: this.goals.getGoal().goal,
       todos: this.todos.get(),
     });
+    const after = this.assembler.currentBaseline();
+    if (after !== undefined && after !== before) {
+      void this.dispatcher.dispatch(
+        new WorldStateSectionRendered({
+          agentId: this.scopeContext.agentId,
+          baseline: after.value,
+          version: after.version,
+        }),
+      );
+    }
+    return section;
   }
 
   resetAfterCompaction(): void {

@@ -24,7 +24,7 @@
 // cross-reducers), blobs (the folding states whose blob codec offloads inline
 // media to blob storage), owner (the source file declaring the class).
 
-// Index (64 record types)
+// Index (65 record types)
 //   config.update                      profile                                               src/agent/profile/profileOps.ts
 //   context.append_loop_event          contextMemory, turn                                   src/agent/contextMemory/contextEvents.ts
 //   context.append_message             contextMemory, plan, task.notificationDelivery        src/agent/contextMemory/contextEvents.ts
@@ -89,6 +89,7 @@
 //   turn.step.interrupted              (none)                                                src/agent/loop/turnEvents.ts
 //   turn.step.retrying                 (none)                                                src/agent/loop/turnEvents.ts
 //   usage.record                       (none)                                                src/agent/usage/usageOps.ts
+//   world_state.section_rendered       (none)                                                src/agent/contextProjector/worldStateOps.ts
 
 /**
  * states: profile
@@ -914,6 +915,17 @@ interface UsageRecordPayload {
   usageScope?: 'session' | 'turn';
 }
 
+/**
+ * states: (none)
+ * owner: src/agent/contextProjector/worldStateOps.ts
+ */
+interface WorldStateSectionRenderedPayload {
+  _name: 'world_state.section_rendered';
+  agentId: string;
+  baseline: Record<string, string | number | boolean | null | string[]>;
+  version: number;
+}
+
 /** Record type → payload sketch. */
 interface WirePayloadMap {
   "config.update": ConfigUpdatePayload;
@@ -980,4 +992,5 @@ interface WirePayloadMap {
   "turn.step.interrupted": TurnStepInterruptedPayload;
   "turn.step.retrying": TurnStepRetryingPayload;
   "usage.record": UsageRecordPayload;
+  "world_state.section_rendered": WorldStateSectionRenderedPayload;
 }

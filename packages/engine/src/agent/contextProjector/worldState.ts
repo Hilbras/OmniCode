@@ -132,6 +132,12 @@ export class WorldStateTracker {
     this.deltasSinceFull = 0;
   }
 
+  /** Restores a persisted baseline with its original version (survives restart). */
+  restore(baseline: WorldStateBaseline): void {
+    this.baseline = baseline;
+    this.deltasSinceFull = 0;
+  }
+
   /** Drops the baseline so the next render is full. Call after compaction. */
   resetBaseline(): void {
     this.baseline = undefined;

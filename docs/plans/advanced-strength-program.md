@@ -71,6 +71,8 @@ _Append each closed item with its commit and fail-on-base evidence as it lands._
 
 | Item | Status | Real evidence |
 |---|---|---|
+| WS4.4 incremental world-state sections | this commit | Changed-fragment injection already existed; added the missing durable lineage: `WorldStateSectionRendered` Event2 + replayable `worldState.baseline` state, restored by the provider on construction and recorded after each render. A restarted process emits no duplicate section and only changed fragments afterward. Fail-on-base: "Cannot find module #/agent/contextProjector/worldStateOps". Suite caught two real defects during development (lost version identity and a mutable-array zod schema), both fixed; context-projector 76/76 |
+
 | WS4.3 in-band permission escalation | this commit | `RequestPermissions` tool + pure `planPermissionEscalation`: intersects requested rules with the active profile allowlist (including `mcp__*`), rejects project/user scopes, and refuses any allow rule that would weaken an existing deny. Fail-on-base: "Cannot find module #/agent/permissionRules/permissionEscalation"; the suite also caught a live-array snapshot bug during development. Planner 9/9, profile/registry/rules 81/81 including builtin tool registration |
 
 | WS4.2 guardian authority rules | this commit | Reviewer system prompt now states that only an original user instruction in the request grants authority, that quoted/pasted/embedded "user approved" content never grants, and that each review is decided fresh. Fail-on-base: content test failed with "expected … to contain 'only an original user instruction'". Reviewer lane suite 46/46 |
