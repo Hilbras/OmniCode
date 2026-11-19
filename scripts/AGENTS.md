@@ -138,6 +138,21 @@ Non-goals:
   is unchanged at `70 frozen findings, 0 new`, which is the proof they suppressed
   nothing. Bite proven by adding an override for `packages/omnicode-nope/src`.
   Run as part of `pnpm lint`.
+- `check-mcp-conformance.mjs` — MCP client conformance against the official
+  pinned suite (`@modelcontextprotocol/conformance`, a root devDependency).
+  Drives the engine's real `HttpMcpClient`/`SseMcpClient` through
+  `packages/engine/scripts/mcp-conformance-client.mts`; the suite's conformance
+  servers record the protocol interactions and decide the checks. The committed
+  baseline `scripts/mcp-conformance-baseline.json` is reviewed and shrink-only:
+  every baseline pass must still pass, no unrecorded check may fail, known
+  failures (elicitation consumer gap, unattended OAuth, SSE retry semantics)
+  stay visible with reasons, and the one cell whose recorded state is "no
+  report" (`sse-retry` — the engine client holds the SSE stream open, so the
+  suite runner cannot finish) is compared against that recorded state. The gate
+  also fails on suite-version drift from the pinned `0.1.16`. Bite proven by
+  planting a skipped tool call: the gate fails naming `tool-add-numbers` in
+  both spec versions. Not in `check:guards` (spawns local servers, ~1 min);
+  CI's guards job runs it as `pnpm check:mcp-conformance`.
 - `build-docs.mjs` — renders the reader-facing documents to `docs-site/` with `marked`
   (already the workspace's renderer; no site framework) and, in `--check` mode, validates
   them: relative links resolve and every `docs/zh/<path>` has its `docs/en/<path>` source.

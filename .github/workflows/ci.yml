@@ -44,6 +44,12 @@ jobs:
         # the allowlist is shrink-only and documents every accepted advisory.
         run: pnpm check:audit
 
+      - name: MCP client conformance
+        # Official pinned suite over the engine MCP client stack; the baseline
+        # is reviewed and shrink-only — known failures stay recorded. Not in
+        # check:guards because each scenario spawns local servers (~1 min).
+        run: pnpm check:mcp-conformance
+
   lint:
     name: Lint
     runs-on: ubuntu-latest

@@ -1,0 +1,68 @@
+{
+  "suite": "@modelcontextprotocol/conformance",
+  "suiteVersion": "0.1.16",
+  "scenarios": [
+    {
+      "name": "initialize",
+      "specVersion": "2025-06-18",
+      "pass": ["mcp-client-initialization"],
+      "fail": []
+    },
+    {
+      "name": "initialize",
+      "specVersion": "2025-11-25",
+      "pass": ["mcp-client-initialization"],
+      "fail": []
+    },
+    {
+      "name": "tools_call",
+      "specVersion": "2025-06-18",
+      "pass": ["tool-add-numbers"],
+      "fail": []
+    },
+    {
+      "name": "tools_call",
+      "specVersion": "2025-11-25",
+      "pass": ["tool-add-numbers"],
+      "fail": []
+    },
+    {
+      "name": "sse-retry",
+      "specVersion": "2025-11-25",
+      "pass": [],
+      "fail": [
+        {
+          "id": "client-sse-graceful-reconnect",
+          "reason": "The engine SSE client does not complete the SEP-1699 retry-reconnect scenario (the raw SSE stream is not re-opened per the retry field). Recorded, not relabeled."
+        }
+      ],
+      "expectNoReport": true,
+      "noReportReason": "The engine client opens the SSE stream and never completes the scenario, so the suite runner cannot finish and writes no checks.json. A completed report for this cell means the engine's SSE behavior changed — review the baseline then."
+    },
+    {
+      "name": "elicitation-sep1034-client-defaults",
+      "specVersion": "2025-11-25",
+      "pass": [],
+      "fail": [
+        { "id": "client-elicitation-sep1034-general", "reason": "No elicitation consumer on the engine MCP client: the server's elicitation/create is answered -32601 Method not found (the known reviewer-elicitation gap)." },
+        { "id": "client-elicitation-sep1034-string-default", "reason": "Same elicitation gap as the general check." },
+        { "id": "client-elicitation-sep1034-integer-default", "reason": "Same elicitation gap as the general check." },
+        { "id": "client-elicitation-sep1034-number-default", "reason": "Same elicitation gap as the general check." },
+        { "id": "client-elicitation-sep1034-enum-default", "reason": "Same elicitation gap as the general check." },
+        { "id": "client-elicitation-sep1034-boolean-default", "reason": "Same elicitation gap as the general check." }
+      ]
+    },
+    {
+      "name": "auth/metadata-default",
+      "specVersion": "2025-11-25",
+      "pass": [],
+      "fail": [
+        { "id": "prm-pathbased-requested", "reason": "The adapter drives no OAuth provider, so no PRM metadata discovery happens after the 401; there is no unattended OAuth flow in the harness yet." },
+        { "id": "authorization-server-metadata", "reason": "Same unattended-OAuth harness gap." },
+        { "id": "client-registration", "reason": "Same unattended-OAuth harness gap." },
+        { "id": "authorization-request", "reason": "Same unattended-OAuth harness gap." },
+        { "id": "token-request", "reason": "Same unattended-OAuth harness gap." }
+      ]
+    }
+  ]
+}
