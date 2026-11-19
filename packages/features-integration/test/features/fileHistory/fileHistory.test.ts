@@ -755,6 +755,137 @@ describe('AgentFileHistoryService', () => {
       expect(turns.map((t) => t.turnId)).toEqual([6, 5, 4, 3, 2]);
     });
   });
+
+describe('AgentFileHistoryService.patch', () => {
+  it('renders a turn patch in git format from the durable checkpoints', async () => {
+    const service = createService();
+    setFile('/ws/a.txt', 'one\ntwo\n');
+
+    startTurn(1);
+    await fireEdit(service, '/ws/a.txt', 1);
+    setFile('/ws/a.txt', 'one\nTWO\n');
+    endTurn(1);
+    startTurn(2);
+    await service.settled();
+
+    const result = await service.patch({ scope: 'turn', turnId: 1 });
+    expect(result.turnId).toBe(1);
+    expect(result.patch.excluded).toEqual([]);
+    expect(result.patch.files).toEqual([
+      { path: 'a.txt', status: 'modified', before: 'one\ntwo\n', after: 'one\nTWO\n' },
+    ]);
+    expect(result.patch.text).toBe(
+      [
+        'diff --git a/a.txt b/a.txt',
+        '--- a/a.txt',
+        '+++ b/a.txt',
+        '@@ -1,2 +1,2 @@',
+        ' one',
+        '-two',
+        '+TWO',
+        '',
+      ].join('\n'),
+    );
+  });
+
+  it('defaults to the latest recorded turn', async () => {
+    const service = createService();
+    setFile('/ws/a.txt', 'v0\n');
+
+    startTurn(1);
+    await fireEdit(service, '/ws/a.txt', 1);
+    setFile('/ws/a.txt', 'v1\n');
+    endTurn(1);
+    startTurn(2);
+    await fireEdit(service, '/ws/a.txt', 2);
+    setFile('/ws/a.txt', 'v2\n');
+    endTurn(2);
+    startTurn(3);
+    await service.settled();
+
+    const result = await service.patch({ scope: 'turn' });
+    expect(result.turnId).toBe(2);
+    expect(result.patch.text).toContain('+v2');
+    expect(result.patch.text).toContain('-v1');
+    expect(result.patch.text).not.toContain('v0');
+  });
+
+  it('covers added and deleted files in one turn patch', async () => {
+    const service = createService();
+    setFile('/ws/gone.txt', 'bye\n');
+
+    startTurn(1);
+    await fireEdit(service, '/ws/gone.txt', 1);
+    await fireEdit(service, '/ws/fresh.txt', 1);
+    files.delete('/ws/gone.txt');
+    setFile('/ws/fresh.txt', 'hello\n');
+    endTurn(1);
+    startTurn(2);
+    await service.settled();
+
+    const result = await service.patch({ scope: 'turn', turnId: 1 });
+    expect(result.patch.excluded).toEqual([]);
+    const byPath = new Map(result.patch.files.map((file) => [file.path, file]));
+    expect(byPath.get('fresh.txt')?.status).toBe('added');
+    expect(byPath.get('gone.txt')?.status).toBe('deleted');
+    expect(result.patch.text).toContain('new file mode 100644');
+    expect(result.patch.text).toContain('deleted file mode 100644');
+  });
+
+  it('reverses a turn patch on request', async () => {
+    const service = createService();
+    setFile('/ws/a.txt', 'one\n');
+
+    startTurn(1);
+    await fireEdit(service, '/ws/a.txt', 1);
+    setFile('/ws/a.txt', 'two\n');
+    endTurn(1);
+    startTurn(2);
+    await service.settled();
+
+    const forward = await service.patch({ scope: 'turn', turnId: 1 });
+    const reverse = await service.patch({ scope: 'turn', turnId: 1, reverse: true });
+    expect(reverse.patch.files).toEqual([
+      { path: 'a.txt', status: 'modified', before: 'two\n', after: 'one\n' },
+    ]);
+    expect(reverse.patch.text).toContain('-two');
+    expect(reverse.patch.text).toContain('+one');
+    expect(reverse.patch.text).not.toEqual(forward.patch.text);
+  });
+
+  it('merges every retained turn per path for the session scope', async () => {
+    const service = createService();
+    setFile('/ws/a.txt', 'v0\n');
+
+    startTurn(1);
+    await fireEdit(service, '/ws/a.txt', 1);
+    setFile('/ws/a.txt', 'v1\n');
+    endTurn(1);
+    startTurn(2);
+    await service.settled();
+
+    startTurn(2);
+    await fireEdit(service, '/ws/b.txt', 2);
+    setFile('/ws/b.txt', 'b0\n');
+    endTurn(2);
+    startTurn(3);
+    await service.settled();
+
+    const result = await service.patch({ scope: 'session' });
+    expect(result.turnId).toBeUndefined();
+    const byPath = new Map(result.patch.files.map((file) => [file.path, file]));
+    expect(byPath.get('a.txt')).toMatchObject({ before: 'v0\n', after: 'v1\n' });
+    expect(byPath.get('b.txt')).toMatchObject({ status: 'added', after: 'b0\n' });
+  });
+
+  it('refuses a turn with no recorded history', async () => {
+    const service = createService();
+    await expect(service.patch({ scope: 'turn', turnId: 404 })).rejects.toThrow(
+      /turn 404 has no recorded file history/,
+    );
+  });
+});
+
 });
 
 describe('file history through real scripted turns', () => {
@@ -1104,3 +1235,5 @@ describe('fileHistoryKey folds at scale', () => {
     expect(continued).toEqual(fresh);
   });
 });
+
+  

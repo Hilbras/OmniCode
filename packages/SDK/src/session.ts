@@ -23,6 +23,8 @@ import type {
   CapabilityStatus,
   CompactOptions,
   CreateGoalInput,
+  FileHistoryPatchResult,
+  FileHistoryPatchScope,
   FileHistoryRestoreResult,
   FileHistoryTurnSummary,
   GetCronTasksResult,
@@ -418,6 +420,27 @@ export class Session {
   async getTurnDiff(options?: { scope?: TurnDiffRenderScope }): Promise<TurnDiffView> {
     this.ensureOpen();
     return this.rpc.getTurnDiff({ sessionId: this.id, scope: options?.scope });
+  }
+
+  /**
+   * Complete, uncapped unified diff over the durable file history — the
+   * format `git apply` accepts. `scope: 'turn'` (default) targets one turn
+   * (`turnId` defaults to the latest recorded turn); `scope: 'session'`
+   * merges every retained turn per path. `reverse` renders the undo patch.
+   * Binary and oversize files are excluded with a reason instead of rendered.
+   */
+  async getFileHistoryPatch(options?: {
+    scope?: FileHistoryPatchScope;
+    turnId?: number;
+    reverse?: boolean;
+  }): Promise<FileHistoryPatchResult> {
+    this.ensureOpen();
+    return this.rpc.getFileHistoryPatch({
+      sessionId: this.id,
+      scope: options?.scope,
+      turnId: options?.turnId,
+      reverse: options?.reverse,
+    });
   }
 
   /** Rewind files to how they were at the start of `turnId`. */

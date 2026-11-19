@@ -217,10 +217,19 @@ export type {
   FileHistoryChange,
   FileHistoryChangeStatus,
   FileHistoryRestoreOutcome,
+  FileHistoryPatchResult,
+  FileHistoryPatchScope,
   FileHistoryRestoreResult,
   FileHistoryRestoreState,
   FileHistoryTurnSummary,
 } from '@hilbras/omnicode-engine/features/fileHistory/fileHistory';
+
+/** Machine-consumable patch artifacts: files, exclusions, and the git-apply text. */
+export type {
+  FileHistoryPatch,
+  FileHistoryPatchExclusion,
+  FileHistoryPatchFile,
+} from '@hilbras/omnicode-engine/features/fileHistory/patchRender';
 
 /** Per-turn and cumulative file diffs rendered for `/diff`, from the engine's turn-diff tracker. */
 export type {

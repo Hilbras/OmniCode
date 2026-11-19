@@ -19,6 +19,7 @@ import { IBlobStore } from '#/persistence/interface/blobStore';
 import { IAgentLifecycleService, MAIN_AGENT_ID } from '#/session/agentLifecycle/agentLifecycle';
 import { ISessionWorkspaceContext } from '#/session/workspaceContext/workspaceContext';
 import { IEventDispatcher } from '#/state/eventDispatcher';
+import { Error2, ErrorCodes } from '#/errors';
 import type { ToolInputDisplay } from '#/tool/toolInputDisplay';
 
 import {
@@ -26,9 +27,12 @@ import {
   FILE_HISTORY_BLOB_PREFIX,
   type FileBackupEntry,
   type FileHistoryChange,
+  type FileHistoryChangeStatus,
   type FileHistoryCheckpointPhase,
   type FileHistoryCheckpointRecord,
   type FileHistoryContent,
+  type FileHistoryPatchResult,
+  type FileHistoryPatchScope,
   type FileHistoryRestoreOptions,
   type FileHistoryRestoreOutcome,
   type FileHistoryRestoreResult,
@@ -43,6 +47,10 @@ import {
   fileHistoryKey,
 } from './fileHistoryOps';
 import { touchFileHistorySession } from './fileHistoryRetention';
+import {
+  renderFileHistoryPatch,
+  type FileHistoryPatchFile,
+} from './patchRender';
 
 export const FILE_HISTORY_MAX_FILE_BYTES = 4 * 1024 * 1024;
 export { FILE_HISTORY_BLOB_PREFIX } from './fileHistory';
@@ -276,6 +284,149 @@ export class AgentFileHistoryService extends Service implements IAgentFileHistor
     return this.enqueueValue(() =>
       this.runRestore(turnId, paths ?? [], options?.force ?? false),
     );
+  }
+
+  patch(input: {
+    readonly scope: FileHistoryPatchScope;
+    readonly turnId?: number;
+    readonly reverse?: boolean;
+  }): Promise<FileHistoryPatchResult> {
+    return this.enqueueValue(() => this.renderPatch(input));
+  }
+
+  private async renderPatch(input: {
+    readonly scope: FileHistoryPatchScope;
+    readonly turnId?: number;
+    readonly reverse?: boolean;
+  }): Promise<FileHistoryPatchResult> {
+    const state = this.history();
+    const reverse = input.reverse === true;
+
+    const targetTurn = this.resolvePatchTurn(state, input.turnId);
+    if (input.scope === 'turn' && targetTurn.start === undefined) {
+      const turnId = input.turnId ?? this.latestRecordedTurn(state);
+      throw new Error2(
+        ErrorCodes.REQUEST_INVALID,
+        `turn ${String(turnId)} has no recorded file history`,
+      );
+    }
+
+    const boundaries = this.patchBoundaries(state, input.scope, targetTurn);
+    const files: FileHistoryPatchFile[] = [];
+
+    for (const path of [...boundaries.keys()].toSorted()) {
+      const boundary = boundaries.get(path)!;
+      const before = await this.patchSide(boundary.before);
+      const after = await this.patchSide(boundary.after);
+      const status = patchStatusOf(before, after);
+      if (status === undefined) continue;
+      if (before.oversize || after.oversize) {
+        files.push({ path, status, oversize: true });
+        continue;
+      }
+      if (before.binary || after.binary) {
+        files.push({ path, status, binary: true });
+        continue;
+      }
+      files.push(
+        reverse
+          ? { path, status: flipStatus(status), before: after.content, after: before.content }
+          : { path, status, before: before.content, after: after.content },
+      );
+    }
+
+    return {
+      scope: input.scope,
+      turnId: input.scope === 'turn' ? targetTurn.turnId : undefined,
+      patch: renderFileHistoryPatch(files),
+    };
+  }
+
+  private resolvePatchTurn(
+    state: FileHistoryState,
+    turnId: number | undefined,
+  ): {
+    readonly turnId?: number;
+    readonly start?: FileHistoryCheckpointRecord;
+    readonly end?: FileHistoryCheckpointRecord;
+  } {
+    if (turnId !== undefined) {
+      const start = state.checkpoints.find(
+        (c) => c.turnId === turnId && checkpointPhaseOf(c) === 'start',
+      );
+      const end = state.checkpoints.find(
+        (c) => c.turnId === turnId && checkpointPhaseOf(c) === 'end',
+      );
+      return { turnId, start, end };
+    }
+    for (let index = state.checkpoints.length - 1; index >= 0; index -= 1) {
+      const record = state.checkpoints[index]!;
+      if (checkpointPhaseOf(record) !== 'start') continue;
+      const end = state.checkpoints.find(
+        (c) => c.turnId === record.turnId && checkpointPhaseOf(c) === 'end',
+      );
+      if (end !== undefined) return { turnId: record.turnId, start: record, end };
+    }
+    return { turnId: this.latestRecordedTurn(state) };
+  }
+
+  private latestRecordedTurn(state: FileHistoryState): number | undefined {
+    const latest = state.checkpoints.findLast((c) => checkpointPhaseOf(c) === 'start');
+    return latest?.turnId;
+  }
+
+  /**
+   * Per-path content boundaries. Turn scope: that turn's start and end
+   * checkpoints. Session scope: the first and last checkpoint that tracks the
+   * path across all recorded turns, merged per path.
+   */
+  private patchBoundaries(
+    state: FileHistoryState,
+    scope: FileHistoryPatchScope,
+    targetTurn: {
+      readonly turnId?: number;
+      readonly start?: FileHistoryCheckpointRecord;
+      readonly end?: FileHistoryCheckpointRecord;
+    },
+  ): Map<string, { before?: FileBackupEntry; after?: FileBackupEntry }> {
+    const boundaries = new Map<string, { before?: FileBackupEntry; after?: FileBackupEntry }>();
+    if (scope === 'turn' && targetTurn.start !== undefined) {
+      const start = targetTurn.start;
+      const end = targetTurn.end;
+      const paths = new Set([...Object.keys(start.entries), ...Object.keys(end?.entries ?? {})]);
+      for (const path of paths) {
+        boundaries.set(path, {
+          before: Object.hasOwn(start.entries, path) ? start.entries[path] : undefined,
+          after: end !== undefined && Object.hasOwn(end.entries, path) ? end.entries[path] : undefined,
+        });
+      }
+      return boundaries;
+    }
+
+    for (const record of state.checkpoints) {
+      for (const [path, entry] of Object.entries(record.entries)) {
+        const existing = boundaries.get(path);
+        if (existing === undefined) {
+          boundaries.set(path, { before: entry });
+        } else if (existing.after === undefined || existing.before === undefined) {
+          boundaries.set(path, { before: existing.before, after: entry });
+        }
+      }
+    }
+    return boundaries;
+  }
+
+  private async patchSide(
+    entry: FileBackupEntry | undefined,
+  ): Promise<Readonly<{ present: boolean; content?: string; binary?: boolean; oversize?: boolean }>> {
+    if (entry === undefined) return { present: false };
+    if (entry.oversize === true) return { present: true, oversize: true };
+    if (entry.key === null) return { present: false };
+    const bytes = await this.blobs.get(this.agentCtx.scope(), entry.key);
+    if (bytes === undefined) return { present: true, binary: true };
+    const content = decodeText(bytes);
+    if (content === undefined) return { present: true, binary: true };
+    return { present: true, content };
   }
 
   private async runRestore(
@@ -894,4 +1045,27 @@ function lcsLength(a: readonly string[], b: readonly string[]): number {
     [previous, current] = [current, previous];
   }
   return previous[b.length]!;
+}
+
+interface PatchSide {
+  readonly present: boolean;
+  readonly content?: string;
+  readonly binary?: boolean;
+  readonly oversize?: boolean;
+}
+
+function patchStatusOf(
+  before: Readonly<PatchSide>,
+  after: Readonly<PatchSide>,
+): FileHistoryChangeStatus | undefined {
+  if (before.present && after.present) return 'modified';
+  if (!before.present && after.present) return 'added';
+  if (before.present && !after.present) return 'deleted';
+  return undefined;
+}
+
+function flipStatus(status: FileHistoryChangeStatus): FileHistoryChangeStatus {
+  if (status === 'added') return 'deleted';
+  if (status === 'deleted') return 'added';
+  return status;
 }

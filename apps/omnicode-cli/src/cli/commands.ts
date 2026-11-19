@@ -6,6 +6,7 @@ import { registerMigrateCommand, type MigrateCommandOptions } from '#/migration/
 import type { CLIOptions } from './options';
 import { registerAcpCommand } from './sub/acp';
 import { registerAppCommand } from './sub/app';
+import { registerApplyCommand } from './sub/apply';
 import { registerAuthCommand } from './sub/auth';
 import { registerDoctorCommand } from './sub/doctor';
 import { registerExportCommand } from './sub/export';
@@ -147,6 +148,7 @@ export function createProgram(
   registerExportCommand(program);
   registerImportCommand(program);
   registerForkCommand(program);
+  registerApplyCommand(program);
   registerProviderCommand(program);
   registerMcpCommand(program);
   registerSessionCommand(program);

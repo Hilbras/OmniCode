@@ -297,6 +297,8 @@ import type {
   ExportSessionInput,
   ExportSessionResult,
   FileHistoryRestoreResult,
+  FileHistoryPatchResult,
+  FileHistoryPatchScope,
   FileHistoryTurnSummary,
   FileMeta,
   ForkSessionInput,
@@ -2226,6 +2228,21 @@ export class SDKRpcClientV2 extends SDKRpcClientBase {
     input: SessionIdRpcInput & { scope?: TurnDiffRenderScope },
   ): Promise<TurnDiffView> {
     return (await this.mainAgentTurnDiff(input.sessionId)).render(input.scope ?? 'latest');
+  }
+
+  override async getFileHistoryPatch(
+    input: SessionIdRpcInput & {
+      scope?: FileHistoryPatchScope;
+      turnId?: number;
+      reverse?: boolean;
+    },
+  ): Promise<FileHistoryPatchResult> {
+    const history = await this.mainAgentFileHistory(input.sessionId);
+    return history.patch({
+      scope: input.scope ?? 'turn',
+      turnId: input.turnId,
+      reverse: input.reverse,
+    });
   }
 
   override async restoreFiles(

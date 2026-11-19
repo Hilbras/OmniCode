@@ -50,6 +50,8 @@ import type {
   ExportSessionResult,
   CreateGoalInput,
   FileHistoryRestoreResult,
+  FileHistoryPatchResult,
+  FileHistoryPatchScope,
   FileHistoryTurnSummary,
   FileMeta,
   ForkSessionInput,
@@ -457,6 +459,14 @@ export abstract class SDKRpcClientBase {
   abstract getTurnDiff(
     input: SessionIdRpcInput & { scope?: TurnDiffRenderScope },
   ): Promise<TurnDiffView>;
+
+  abstract getFileHistoryPatch(
+    input: SessionIdRpcInput & {
+      scope?: FileHistoryPatchScope;
+      turnId?: number;
+      reverse?: boolean;
+    },
+  ): Promise<FileHistoryPatchResult>;
 
   abstract restoreFiles(
     input: SessionIdRpcInput & {

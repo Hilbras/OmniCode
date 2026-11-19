@@ -63,7 +63,7 @@ describe('Event public types', () => {
   });
 
   it('exposes optional session scope on approval responses', () => {
-    expectTypeOf<ApprovalResponse['scope']>().toEqualTypeOf<'session' | undefined>();
+    expectTypeOf<ApprovalResponse['scope']>().toEqualTypeOf<'session' | 'always' | undefined>();
   });
 
   it('covers every event in exhaustive switches', () => {

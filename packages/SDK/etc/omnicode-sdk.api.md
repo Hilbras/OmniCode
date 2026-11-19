@@ -967,6 +967,46 @@ export interface FileHistoryChange {
 export type FileHistoryChangeStatus = 'added' | 'modified' | 'deleted';
 
 // @public (undocumented)
+export interface FileHistoryPatch {
+    readonly excluded: readonly FileHistoryPatchExclusion[];
+    readonly files: readonly FileHistoryPatchFile[];
+    readonly text: string;
+}
+
+// @public (undocumented)
+export interface FileHistoryPatchExclusion {
+    // (undocumented)
+    readonly path: string;
+    // (undocumented)
+    readonly reason: 'binary' | 'oversize' | 'content-unavailable';
+}
+
+// @public
+export interface FileHistoryPatchFile {
+    readonly after?: string | undefined;
+    readonly before?: string | undefined;
+    readonly binary?: boolean | undefined;
+    readonly oversize?: boolean | undefined;
+    // (undocumented)
+    readonly path: string;
+    // (undocumented)
+    readonly status: FileHistoryChangeStatus;
+}
+
+// @public (undocumented)
+export interface FileHistoryPatchResult {
+    // (undocumented)
+    readonly patch: FileHistoryPatch;
+    // (undocumented)
+    readonly scope: FileHistoryPatchScope;
+    // (undocumented)
+    readonly turnId?: number;
+}
+
+// @public
+export type FileHistoryPatchScope = 'turn' | 'session';
+
+// @public (undocumented)
 export interface FileHistoryRestoreOutcome {
     // (undocumented)
     readonly detail?: string;
@@ -3324,6 +3364,12 @@ export abstract class SDKRpcClientBase {
     // (undocumented)
     abstract getExperimentalFeatures(): Promise<readonly ExperimentalFeatureState[]>;
     // (undocumented)
+    abstract getFileHistoryPatch(input: SessionIdRpcInput & {
+        scope?: FileHistoryPatchScope;
+        turnId?: number;
+        reverse?: boolean;
+    }): Promise<FileHistoryPatchResult>;
+    // (undocumented)
     abstract getGitHubStatus(): Promise<GitHubConnectionStatus>;
     // (undocumented)
     abstract getGlobalMcpServer(name: string, options?: {
@@ -3707,6 +3753,11 @@ export class Session {
     // (undocumented)
     getContext(): Promise<AgentContextData>;
     getCronTasks(): Promise<GetCronTasksResult>;
+    getFileHistoryPatch(options?: {
+        scope?: FileHistoryPatchScope;
+        turnId?: number;
+        reverse?: boolean;
+    }): Promise<FileHistoryPatchResult>;
     // (undocumented)
     getGoal(): Promise<GoalToolResult>;
     // (undocumented)
@@ -4718,8 +4769,8 @@ export interface WorkspaceTrustMcpServerInfo {
 // Warnings were encountered during analysis:
 //
 // .tmp-api-extractor/dts/SDK/src/mcp.d.ts:22:5 - (ae-forgotten-export) The symbol "McpRegistryPluginOrigin" needs to be exported by the entry point index.d.ts
-// .tmp-api-extractor/dts/SDK/src/session.d.ts:112:9 - (ae-forgotten-export) The symbol "MemoryControlScope" needs to be exported by the entry point index.d.ts
-// .tmp-api-extractor/dts/SDK/src/session.d.ts:113:9 - (ae-forgotten-export) The symbol "MemoryControlStatus" needs to be exported by the entry point index.d.ts
+// .tmp-api-extractor/dts/SDK/src/session.d.ts:124:9 - (ae-forgotten-export) The symbol "MemoryControlScope" needs to be exported by the entry point index.d.ts
+// .tmp-api-extractor/dts/SDK/src/session.d.ts:125:9 - (ae-forgotten-export) The symbol "MemoryControlStatus" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

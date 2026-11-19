@@ -1,5 +1,7 @@
 import { createDecorator, type ServiceIdentifier } from '@hilbras/omnicode-base/di/instantiation';
 
+import type { FileHistoryPatch } from './patchRender';
+
 export interface FileBackupEntry {
   readonly key: string | null;
   readonly version: number;
@@ -66,6 +68,17 @@ export interface FileHistoryTurnSummary {
   readonly changes: readonly FileHistoryChange[];
 }
 
+/** Scope of a rendered patch: one turn, or every retained turn merged per path. */
+export type FileHistoryPatchScope = 'turn' | 'session';
+
+export interface FileHistoryPatchInput {
+  readonly scope: FileHistoryPatchScope;
+  /** Target turn for `scope: 'turn'`; defaults to the latest recorded turn. */
+  readonly turnId?: number;
+  /** Render the reverse patch (after → before). */
+  readonly reverse?: boolean;
+}
+
 export interface IAgentFileHistoryService {
   readonly _serviceBrand: undefined;
 
@@ -85,9 +98,22 @@ export interface IAgentFileHistoryService {
     paths?: readonly string[],
     options?: FileHistoryRestoreOptions,
   ): Promise<FileHistoryRestoreResult>;
+  /**
+   * Complete, uncapped unified diff over the durable checkpoints — the format
+   * `git apply` accepts. Binary and oversize files are excluded with a reason
+   * rather than rendered partially. An `unavailable` result means the scope
+   * names a turn with no recorded history.
+   */
+  patch(input: FileHistoryPatchInput): Promise<FileHistoryPatchResult>;
 }
 
 export const IAgentFileHistoryService: ServiceIdentifier<IAgentFileHistoryService> =
   createDecorator<IAgentFileHistoryService>('agentFileHistoryService');
 
 export const FILE_HISTORY_BLOB_PREFIX = 'file-history';
+
+export interface FileHistoryPatchResult {
+  readonly scope: FileHistoryPatchScope;
+  readonly turnId?: number;
+  readonly patch: FileHistoryPatch;
+}
