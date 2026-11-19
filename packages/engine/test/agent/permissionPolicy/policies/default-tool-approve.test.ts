@@ -58,6 +58,8 @@ describe('DefaultToolApprovePermissionPolicyService', () => {
     ['GetGoal', {}],
     ['SetGoalBudget', { tokenBudget: 1000 }],
     ['UpdateGoal', { status: 'complete' }],
+    ['GetContextRemaining', {}],
+    ['NewContextWindow', {}],
     ['memory_search', { query: 'deploy target' }],
     ['memory_save', { content: 'the deploy target is staging', category: 'fact' }],
   ] as const)('approves %s', (toolName, args) => {

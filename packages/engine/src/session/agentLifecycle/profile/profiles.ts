@@ -70,6 +70,8 @@ const AGENT_TOOLS = [
   'SourceRecord',
   'Team',
   'Workflow',
+  'GetContextRemaining',
+  'NewContextWindow',
 ] as const;
 
 const CODER_TOOLS = [
@@ -95,6 +97,8 @@ const CODER_TOOLS = [
   'WebSearch',
   'FetchURL',
   'Write',
+  'GetContextRemaining',
+  'NewContextWindow',
   'mcp__*',
   'memory_search',
   'memory_save',

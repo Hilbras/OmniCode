@@ -36,6 +36,8 @@ const DEFAULT_APPROVE_TOOLS = new Set([
   'TeamList',
   'ArtifactRecord',
   'SourceRecord',
+  'GetContextRemaining',
+  'NewContextWindow',
 ]);
 
 export class DefaultToolApprovePermissionPolicyService implements PermissionPolicy {

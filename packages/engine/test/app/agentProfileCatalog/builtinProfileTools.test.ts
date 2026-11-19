@@ -19,6 +19,8 @@ describe('builtin profile tool allowlists', () => {
       'ComputerType',
       'ComputerKey',
       'ComputerApplication',
+      'GetContextRemaining',
+      'NewContextWindow',
     ]) {
       expect(tools).toContain(name);
     }
@@ -27,6 +29,7 @@ describe('builtin profile tool allowlists', () => {
   it('lets the coder subagent restore files but not drive the desktop', () => {
     const tools = toolsOf('coder');
     expect(tools).toContain('RestoreFile');
+    expect(tools).toContain('GetContextRemaining');
     expect(tools).not.toContain('ComputerScreenshot');
   });
 });
