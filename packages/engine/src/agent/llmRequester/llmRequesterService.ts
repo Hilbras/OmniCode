@@ -287,6 +287,27 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     return this.modelCatalog.get(resolved.modelAlias).credentialProvider;
   }
 
+  escalateTurnOutput(turnId: number): number | undefined {
+    const config = this.turnConfigs.get(turnId);
+    if (config === undefined) return undefined;
+    const cap = this.config.get<ModelOverrides>('modelOverrides')?.maxCompletionTokens;
+    if (cap !== undefined) return undefined;
+    let ceiling: number | undefined;
+    try {
+      ceiling = this.modelCatalog.get(config.resolved.modelAlias).maxOutputSize;
+    } catch {
+      return undefined;
+    }
+    if (ceiling === undefined || ceiling <= 0) return undefined;
+    const current = config.resolved.maxOutputSize;
+    if (current !== undefined && current >= ceiling) return undefined;
+    this.turnConfigs.set(turnId, {
+      ...config,
+      resolved: { ...config.resolved, maxOutputSize: ceiling },
+    });
+    return ceiling;
+  }
+
   async request(
     overrides: AgentLLMRequestOverrides = {},
     onPart: AgentLLMRequestPartHandler = noopOnPart,

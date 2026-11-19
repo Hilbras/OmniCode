@@ -232,6 +232,8 @@ function createService(
     readonly modelRecords?: Readonly<Record<string, ModelRecord>>;
     readonly providerService?: Partial<IProviderService>;
     readonly costGate?: Partial<IAgentCostGateService>;
+    readonly modelOverrides?: { readonly maxCompletionTokens?: number };
+    readonly profileMaxOutputSize?: number;
   } = {},
 ) {
   const ix = disposables.add(new TestInstantiationService());
@@ -243,7 +245,7 @@ function createService(
     resolveModelContext: () => ({
       modelAlias: 'm',
       modelCapabilities: capabilities,
-      maxOutputSize: undefined,
+      maxOutputSize: options.profileMaxOutputSize,
       alwaysThinking: undefined,
       thinkingLevel,
       reservedContextSize: undefined,
@@ -280,7 +282,11 @@ function createService(
   const tools = { list: () => [] };
   const config: Partial<IConfigService> = {
     get: ((section: string) =>
-      section === COMPACTION_SECTION ? options.compaction : undefined) as IConfigService['get'],
+      section === COMPACTION_SECTION
+        ? options.compaction
+        : section === 'modelOverrides'
+          ? options.modelOverrides
+          : undefined) as IConfigService['get'],
   };
   const logRecords: { readonly level: string; readonly message: string }[] = [];
   const log = {
@@ -1859,5 +1865,104 @@ describe('AgentLLMRequesterService isolated operations', () => {
 
     await service.request({ source: { type: 'operation', requestKind: 'reviewer-follow-up' } });
     expect(nextSection).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('AgentLLMRequesterService escalateTurnOutput', () => {
+  function cappedRequester(
+    maxOutputSize: number | undefined,
+    capturedParams: { params?: { maxCompletionTokens?: number } }[] = [],
+  ): ModelRequester {
+    const model: Model = {
+      id: 'm',
+      name: 'wire-model',
+      aliases: [],
+      protocol: 'anthropic',
+      baseUrl: 'https://example.test',
+      headers: {},
+      capabilities,
+      maxContextSize: 100_000,
+      maxOutputSize,
+      alwaysThinking: false,
+      providerName: 'p',
+    };
+    return {
+      model,
+      request: async function* (input, _signal, params) {
+        capturedParams.push({ params });
+        yield {
+          type: 'finish',
+          message: { role: 'assistant', content: [{ type: 'text', text: 'ok' }], toolCalls: [] },
+          providerFinishReason: 'completed',
+          rawFinishReason: 'stop',
+          id: 'resp-1',
+        };
+      },
+    };
+  }
+
+  it('raises a turn below the model limit and the next request carries the ceiling', async () => {
+    const captured: { params?: { maxCompletionTokens?: number } }[] = [];
+    const { service } = createService(
+      cappedRequester(8_000, captured),
+      undefined,
+      { profileMaxOutputSize: 1_000 },
+    );
+
+    expect(service.prepareTurnConfig(7)).toBeDefined();
+    const raised = service.escalateTurnOutput(7);
+    expect(raised).toBe(8_000);
+
+    await service.request({ source: { type: 'turn', turnId: 7, step: 1 } });
+    expect(captured[0]?.params?.maxCompletionTokens).toBe(8_000);
+  });
+
+  it('returns undefined when the turn already sits at the model limit', () => {
+    const { service } = createService(cappedRequester(8_000), undefined, {
+      profileMaxOutputSize: 8_000,
+    });
+
+    service.prepareTurnConfig(7);
+    expect(service.escalateTurnOutput(7)).toBeUndefined();
+  });
+
+  it('returns undefined when the model declares no output limit', () => {
+    const { service } = createService(cappedRequester(undefined), undefined, {
+      profileMaxOutputSize: 1_000,
+    });
+
+    service.prepareTurnConfig(7);
+    expect(service.escalateTurnOutput(7)).toBeUndefined();
+  });
+
+  it('never overrides an explicit maxCompletionTokens user cap', async () => {
+    const captured: { params?: { maxCompletionTokens?: number } }[] = [];
+    const { service } = createService(cappedRequester(8_000, captured), undefined, {
+      profileMaxOutputSize: 1_000,
+      modelOverrides: { maxCompletionTokens: 2_000 },
+    });
+
+    service.prepareTurnConfig(7);
+    expect(service.escalateTurnOutput(7)).toBeUndefined();
+
+    await service.request({ source: { type: 'turn', turnId: 7, step: 1 } });
+    expect(captured[0]?.params?.maxCompletionTokens).toBe(2_000);
+  });
+
+  it('returns undefined for a turn it has no config for', () => {
+    const { service } = createService(cappedRequester(8_000), undefined, {});
+
+    expect(service.escalateTurnOutput(41)).toBeUndefined();
+  });
+
+  it('raises each turn independently', async () => {
+    const { service } = createService(cappedRequester(8_000), undefined, {
+      profileMaxOutputSize: 1_000,
+    });
+
+    service.prepareTurnConfig(7);
+    expect(service.escalateTurnOutput(7)).toBe(8_000);
+    service.prepareTurnConfig(8);
+    expect(service.escalateTurnOutput(8)).toBe(8_000);
   });
 });

@@ -22,12 +22,18 @@ import { newMessageId } from '#/agent/contextMemory/messageId';
 import { type ContextMessage, type PromptOrigin } from '#/agent/contextMemory/types';
 import { isVacuousContentPart } from '#/agent/contextMemory/vacuousContent';
 import { IAgentLLMRequesterService } from '#/agent/llmRequester/llmRequester';
+import {
+  isOutputEscalationEnabled,
+  OUTPUT_ESCALATION_WARNING_CODE,
+  shouldContinueTruncatedTurn,
+} from './outputEscalation';
 import { AgentErrorEvent } from '#/agent/mcp/mcpEvents';
 import { gateImageFormatParts } from '#/agent/media/image-compress';
 import { daemonFileRefFromPart } from '#/agent/media/mediaRef';
 import { materializePromptDaemonRefs } from '#/agent/media/promptMediaIntake';
 import { ISessionMediaStore } from '#/agent/media/sessionMediaStore';
 import { IAgentProfileService } from '#/agent/profile/profile';
+import { WarningIssued } from '#/agent/profile/profileOps';
 import {
   PromptAborted,
   PromptCompleted,
@@ -1202,6 +1208,7 @@ export class AgentLoopService extends Disposable implements IAgentLoopService {
       maxStepsError: undefined,
       abortReason: undefined,
       retryRequested: false,
+      outputEscalated: false,
       afterChain: Promise.resolve(),
       partials: [],
       forceContentPartBoundary: false,
@@ -2008,6 +2015,30 @@ export class AgentLoopService extends Disposable implements IAgentLoopService {
       await this.endTurn(turn, { type: 'failed', steps: turn.steps, error });
       return;
     }
+    if (
+      shouldContinueTruncatedTurn({
+        lastStopReason: turn.lastStopReason,
+        continued: turn.outputEscalated,
+        enabled: isOutputEscalationEnabled(),
+        stopRequested: turn.stopRequested,
+        outcome: outcome.outcome,
+      })
+    ) {
+      turn.outputEscalated = true;
+      const raised = this.llmRequester.escalateTurnOutput?.(turn.id);
+      void this.dispatcher.dispatch(
+        new WarningIssued({
+          agentId: this.scopeContext.agentId,
+          code: OUTPUT_ESCALATION_WARNING_CODE,
+          message:
+            raised !== undefined
+              ? `Model output was truncated by the completion budget; continuing the turn with the budget raised to ${String(raised)} (once per turn).`
+              : 'Model output was truncated by the completion budget; continuing the turn so the model can finish (once per turn).',
+        }),
+      );
+      this.machineEngine().notify(createUserEntry(EMPTY_MACHINE_PROMPT));
+      return;
+    }
     await this.endTurn(turn, this.machineCompletedResult(turn));
   }
 
@@ -2344,6 +2375,7 @@ interface ActiveTurn {
   maxStepsError: LoopError | undefined;
   abortReason: unknown;
   retryRequested: boolean;
+  outputEscalated: boolean;
   afterChain: Promise<void>;
   partials: ContentPart[];
   forceContentPartBoundary: boolean;

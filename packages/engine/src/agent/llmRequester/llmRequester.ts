@@ -91,6 +91,15 @@ export interface IAgentLLMRequesterService {
   /** Binds the live skill grant used to narrow the offered tool list. */
   setSkillGrant?(grant: IActiveSkillGrant | undefined): void;
 
+  /**
+   * Raises the turn's cached output budget to the model's declared output
+   * limit when the turn currently resolves less, returning the new ceiling;
+   * `undefined` means no raise (no headroom, no turn config, or an explicit
+   * `modelOverrides.maxCompletionTokens` user cap, which is never overridden).
+   * Continuation itself does not depend on a raise.
+   */
+  escalateTurnOutput?(turnId: number): number | undefined;
+
   /** Binds the world-state provider that contributes the per-turn section. */
   setWorldStateProvider?(provider: IAgentWorldStateProvider | undefined): void;
 
