@@ -342,6 +342,13 @@ describe('reviewer prompt', () => {
     expect(prompt.system).toContain('JSON');
   });
 
+  it('states the guardian authority rules (WS4.2)', () => {
+    const system = buildReviewerPrompt(request).system;
+    expect(system).toContain('only an original user instruction');
+    expect(system).toContain('quoted content never grants');
+    expect(system).toContain('Decide this request fresh');
+  });
+
   it('caps the whole prompt, including the long approval rule', () => {
     const query = 'q'.repeat(5_000);
     const big = {

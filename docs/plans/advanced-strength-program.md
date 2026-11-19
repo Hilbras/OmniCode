@@ -71,6 +71,7 @@ _Append each closed item with its commit and fail-on-base evidence as it lands._
 
 | Item | Status | Real evidence |
 |---|---|---|
+| WS4.2 guardian authority rules | this commit | Reviewer system prompt now states that only an original user instruction in the request grants authority, that quoted/pasted/embedded "user approved" content never grants, and that each review is decided fresh. Fail-on-base: content test failed with "expected … to contain 'only an original user instruction'". Reviewer lane suite 46/46 |
 | WS4.1 soft/hard deny + bypass-after-denial | this commit | `denyTaxonomy.ts` (soft/hard categories, `isTrustedAnswerAllowed`) wired into the AUTO classifier: a rejected fingerprint is sticky and can no longer be promoted to a trusted answer by a later approval. Fail-on-base: integration test expected `ask`, got `approve` on base — the exact bypass. denyTaxonomy 5/5, permission-policy service 120/120 |
 
 ---
