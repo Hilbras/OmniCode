@@ -69,6 +69,28 @@ gaps; no guard or baseline was weakened.
 Evidence: `packages/engine/src/mcpCore/resourceSurface.ts:212-227`,
 `scripts/mcp-conformance-baseline.json`, `pnpm check:mcp-conformance` output.
 
+## D9 — Userspace managed TCP in the bwrap backend (WS5.2)
+
+Not implemented. A smoltcp TUN + SOCKS bridge + managed DNS stack is a Rust
+networking project, not a TypeScript engine change; this repository has
+`packages/Kaos/src/sandbox/bwrap.ts` and an egress credential broker
+(`packages/engine/src/app/egress/egressProxy.ts`) but no userspace TCP seam to
+extend. Consequence: sandboxed network isolation still relies on the host
+sandbox and the egress proxy; there is no per-process userspace TCP registry.
+Reopen with an infrastructure owner and a Kaos/network budget.
+
+## WS5.3 — Architecture-debt seams (one decision each)
+
+- **Curator lifecycle** — currently has no callers
+  (`packages/engine/src/features/skill/curator/lifecycle.ts`). Decision: keep it
+  as a usage-only helper and document it; do not add a speculative host surface
+  with no consumer. Revisit when a caller exists.
+- **Session lease** — `packages/engine/src/app/sessionManager/sessionLease.ts`
+  is present and wired; no change.
+- **Mid-turn input queue** — `loopService.drainPendingToMachine()` is called at
+  step boundaries (`loopService.ts:294,831`); the queue is drained, not dead.
+  No change.
+
 ## D8 — Pre-commit hooks: preflight replaces them (WS6.6)
 
 There is no husky configuration and no `.git/hooks/pre-commit`. `pnpm preflight`

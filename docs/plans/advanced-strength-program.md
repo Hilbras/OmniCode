@@ -71,6 +71,7 @@ _Append each closed item with its commit and fail-on-base evidence as it lands._
 
 | Item | Status | Real evidence |
 |---|---|---|
+| WS5.2 / WS5.3 | decision record | Userspace TCP is out of scope for this TS repo (bwrap + egress broker exist; no smoltcp seam) — D9. Curator lifecycle kept as usage-only helper (no callers); session lease and the input queue are already wired (`sessionLease.ts`, `loopService.drainPendingToMachine` at :294/:831). Recorded in `decision-record.md` |
 | WS5.1 speculative compaction | this commit | Token-threshold planner compiles a summary at 70% of the ceiling (configurable ratio), installs on demand only when the compiled fingerprint matches the current context, and treats stale/empty artifacts as compile-again. Independent of the WS3.1 clock. 5/5 tests, fail-on-base module-not-found |
 
 ### WS6 — Product and governance — IN PROGRESS
