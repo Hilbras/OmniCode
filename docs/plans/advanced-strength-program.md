@@ -97,6 +97,8 @@ _Append each closed item with its commit and fail-on-base evidence as it lands._
 |---|---|---|
 | WS4.4 incremental world-state sections | this commit | Changed-fragment injection already existed; added the missing durable lineage: `WorldStateSectionRendered` Event2 + replayable `worldState.baseline` state, restored by the provider on construction and recorded after each render. A restarted process emits no duplicate section and only changed fragments afterward. Fail-on-base: "Cannot find module #/agent/contextProjector/worldStateOps". Suite caught two real defects during development (lost version identity and a mutable-array zod schema), both fixed; context-projector 76/76 |
 
+| WS4.10 agent residency | this commit | Pure residency decisions: a subagent stays resident while tools run, while mail is unread, or before the idle window; `unloadAgent` refuses an unsafe eviction and records the preserved mail count. 5/5 tests, fail-on-base module-not-found |
+
 | WS4.11 per-model prompt/policy tables | this commit | Typed `ModelPromptPolicy` table with most-specific-match resolution (exact > prefix > wildcard) and a validator that rejects duplicate ids, blank overlays, invalid matches and weakening flag combinations (parallel tools without verification). 4/4 tests, fail-on-base module-not-found |
 
 | WS4.9 Claude extension converter | this commit | Pure converter from Claude Code's declarative `hooks` config to native `HookDefConfig`, mapping supported events, clamping timeouts to 1–600 s, and reporting unsupported events/types/missing commands as diagnostics rather than dropping them (import path, not a second runtime). 5/5 tests, fail-on-base module-not-found |
