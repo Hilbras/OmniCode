@@ -1,4 +1,5 @@
 import { contextMemoryKey } from '#/agent/contextMemory/contextOps';
+import { contextMessageTimesKey } from '#/agent/contextMemory/contextMessageTimes';
 import {
   fullCompactionKey,
   fullCompactionWireRangesKey,
@@ -26,6 +27,7 @@ import type { ReplayableStateKey } from '#/state/state';
 
 export const BUILTIN_REPLAYABLE_STATE_KEYS: readonly ReplayableStateKey<any>[] = [
   contextMemoryKey,
+  contextMessageTimesKey,
   fullCompactionKey,
   fullCompactionWireRangesKey,
   interruptionReminderKey,

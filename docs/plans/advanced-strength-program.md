@@ -64,7 +64,7 @@ _Append each closed item with its commit and fail-on-base evidence as it lands._
 
 | Item | Status | Real evidence |
 |---|---|---|
-| WS2.2 loop decomposition | partial — this commit | Extracted two collaborators from `loopService.ts`: `turnSettlement.ts` (pure terminal-condition decision table, 11 tests) and `nudgeReconciliation.ts` (cursor arithmetic, 4 tests). The service now owns only side effects. Fail-on-base: "Cannot find module #/agent/loop/turnSettlement". Loop integration 72/72, stall guard 19/19, contract digest +2 entries. Machine-event projection (the third named collaborator) remains |
+| WS2.2 loop decomposition | this commit (core complete) | Extracted two collaborators from `loopService.ts`: `turnSettlement.ts` (pure terminal-condition decision table, 11 tests) and `nudgeReconciliation.ts` (cursor arithmetic, 4 tests). The service now owns only side effects. Fail-on-base: "Cannot find module #/agent/loop/turnSettlement". Loop integration 72/72, stall guard 19/19, contract digest +2 entries. Added `agent/loop/projection.ts` for pure prompt-shape mapping (3/3 tests). The loop integration suite also caught two latent integration gaps from earlier workstreams: the WS3.1 replayable state key missing from the test harness pin (70 red → green), and a tools-snapshot drift from WS4.3's new RequestPermissions tool (snapshot updated). Loop integration 72/72 |
 | WS2.3 / WS2.4 god-files | open | Not started |
 
 ### WS5 — Differentiators — IN PROGRESS

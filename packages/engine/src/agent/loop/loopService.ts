@@ -25,6 +25,7 @@ import { IAgentLLMRequesterService } from '#/agent/llmRequester/llmRequester';
 import { OUTPUT_ESCALATION_WARNING_CODE } from './outputEscalation';
 import { STALL_NUDGE_TEXT, VERIFICATION_NUDGE_TEXT } from './stallGuard';
 import { planNudgeDrain } from './nudgeReconciliation';
+import { EMPTY_HANDLE_MESSAGE, projectionFromEntry, type PromptProjection } from './projection';
 import { decideTurnSettlement } from './turnSettlement';
 import { AgentErrorEvent } from '#/agent/mcp/mcpEvents';
 import { gateImageFormatParts } from '#/agent/media/image-compress';
@@ -2307,14 +2308,6 @@ interface PromptWaiter {
   failedEntry?: UserEntry;
 }
 
-interface PromptProjection {
-  readonly tracked: boolean;
-  readonly origin: PromptOrigin;
-  readonly message: ContextMessage;
-  readonly userMessageId: string;
-  readonly createdAt: string;
-}
-
 interface ActivePrompt extends PromptProjection {
   readonly id: string;
   readonly promptId?: string;
@@ -2324,28 +2317,6 @@ interface SteeredPrompt extends PromptProjection {
   readonly parentId: string;
 }
 
-const EMPTY_HANDLE_MESSAGE: ContextMessage = {
-  role: 'user',
-  content: [],
-  toolCalls: [],
-};
-
-function projectionFromEntry(entry: UserEntry): PromptProjection {
-  const origin = (entry.meta?.origin as PromptOrigin | undefined) ?? { kind: 'user' };
-  return {
-    tracked: entry.meta?.tracked === true,
-    origin,
-    message: {
-      role: 'user',
-      content: [...entry.message.content],
-      id: entry.meta?.promptId,
-      toolCalls: [],
-      origin: entry.meta?.origin as PromptOrigin | undefined,
-    },
-    userMessageId: entry.meta?.userMessageId ?? '',
-    createdAt: entry.meta?.createdAt ?? '',
-  };
-}
 
 interface Nudge {
   readonly contextMessage?: ContextMessage;
