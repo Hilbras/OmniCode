@@ -114,13 +114,19 @@ reference has.
       Verify: 17 derivation + 5 writer + 2 persistence + 2 adapter tests;
       permission-policy suite 235/235; loops/bash integration 123/123;
       guards 11/11; lint 70/0.
-- [ ] S1.6 **Turn diff + `omnicode apply`.** Track net per-turn mutations from
-      the existing patch pre-image journal; render `/diff`; `omnicode apply`
-      git-applies the agent's last diff.
-      Reference: codex `core/src/turn_diff_tracker.rs` + Apply command.
-      Integration: `packages/Tools/src/patch/patchJournal.ts` + CLI command.
-      Verify: journal-driven diff test with a forced-fallback path;
-      `check:command-paths` after adding the script.
+- [x] S1.6 **Turn diff + `omnicode apply`.** The live `/diff` already existed
+      (`agent/turnDiff/` — the study's claim was half stale), so the gap closed
+      2026-11-19 as `4aef23ddd` was the *durable machine artifact*: the new
+      `AgentFileHistoryService.patch` renders the durable checkpoints as a
+      complete, uncapped git-apply-able unified diff (`patchRender.ts` —
+      binary/oversize excluded and reported, never faked), exposed through the
+      SDK (`Session.getFileHistoryPatch`) and driven by the new
+      `omnicode apply` subcommand (`--turn`, `--session`, `--reverse`,
+      `--stdout`, `--check`). Reference: codex `turn_diff_tracker.rs` + Apply.
+      Verify: 10 renderer tests including two **real `git apply` round-trips**
+      (one with a missing final newline); 6 service tests through the checkpoint
+      harness; 10 CLI tests; contract digest + SDK API report regenerated; the
+      stale `ApprovalResponse.scope` type test fixed to the truth.
 - [ ] S1.7 **MCP conformance gate.** Pin the official MCP conformance suite
       (three protocol generations, security baselines) against the built CLI;
       run as `check:mcp-conformance` beside `check:guards`.
