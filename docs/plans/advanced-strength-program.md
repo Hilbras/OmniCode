@@ -1,6 +1,7 @@
 # OmniCode Advanced Strength Program
 
-Status: proposed (execution-ready)
+Status: executing — **P0 (WS1.1–WS1.7) complete**; P1 started (WS2.1). See the
+inline execution log below for commits and real command output.
 Scope: the whole repository — engine loop/prompt/lifecycle, permission and
 trust systems, kernel packages, SDK/API/server, CLI/TUI and other surfaces,
 guards/CI, docs, and product decisions. Changes behavior, architecture, and
@@ -18,6 +19,39 @@ Relationship to existing plans:
   and [`architecture-debt-remediation-plan.md`](./architecture-debt-remediation-plan.md).
 - Unplanned bug fixes from the current cycle (goal restart pause, Telegram
   setup) are recorded in the competitive program's "Unplanned fixes" section.
+
+---
+
+## Execution log (live)
+
+### P0 — Stop the stalls: COMPLETE
+
+| Item | Commit | Real evidence |
+|---|---|---|
+| WS1.1 prompt directive | `6d109478d` | system.md + both golden prompts regenerated; `systemPromptGolden` behavior test |
+| WS1.2/WS1.3 stall guard + verification gate | `e160c19be` | `stallGuard.ts` (19 pure tests) + loop integration; fail-on-base 2 red; `OMNICODE_STALL_GUARD=0` opt-out |
+| WS1.4 goal no-progress streak | `dd27bffdd` | `goal.test.ts` 126/126 pass; 3 idle continuations → `Paused after 3 goal turns with no new evidence`; fail-on-base proven |
+| WS1.5 continuation prompt | `77a482593` | judge-previous-turn line reaches next LLM input; 126/126 goal tests; fail-on-base proven |
+| WS1.6 Stop-hook cap 8 | `5614d69cf` | `integration.test.ts` 30/30; 8th continuation works, 9th settles, counter resets; fail-on-base proven; contract hash regenerated |
+| WS1.7 headless awaiting-user | `d165f3707` | 41/41 (17 detector + 24 print); fail-on-base: harness "promise resolved undefined instead of rejecting", unit "Cannot find module #/cli/headless-awaiting-user" |
+
+**Integrity repair (this session):** WS1.4/WS1.5/WS1.6 were originally committed
+with tests only — the source implementations were left unstaged, so a fresh
+checkout of those commits would have failed their own tests. Local history was
+rebuilt (`dd27bffdd`, `77a482593`, `5614d69cf`) so each commit carries source +
+test together; no remote/upstream contained the originals. Rebuilt tree verified:
+goal 126/126, hooks 30/30, `pnpm check:guards` exit 0, `pnpm lint` exit 0
+(no-comments 283 files; kernel layering 24 packages, no cycles; oxlint 70 frozen
+findings / 0 new).
+
+P0 KPIs O1–O4 are green: intent-ack nudges are bounded at 2 with an env escape
+hatch; no-progress pauses after 3 evidence-free repeated continuations with an
+explicit reason; headless awaiting-user now fails loudly; the default system
+prompt carries the autonomy directive and the golden is byte-stable.
+
+### P1 — Clean the house: IN PROGRESS
+
+_Append each closed item with its commit and fail-on-base evidence as it lands._
 
 ---
 
@@ -198,7 +232,7 @@ In dependency order:
 
 | Phase | Work | Est. | Exit criterion |
 |---|---|---|---|
-| **P0 — Stop the stalls** | WS1.1–WS1.7 | 2–3 weeks | O1–O4 green; the user's task-completion symptom reproduced as a passing test |
+| **P0 — Stop the stalls** ✅ COMPLETE | WS1.1–WS1.7 | 2–3 weeks | O1–O4 green; the user's task-completion symptom reproduced as a passing test — see execution log |
 | **P1 — Clean the house** | WS2.1, WS2.5, WS6.4 | 2 weeks | Guard covers phantom deps; no god-file growth; eval gate in CI |
 | **P2 — Deepen safety & capability** | WS3, WS4.1–WS4.4 | 4–6 weeks | O6 partially green; MCP baseline shrinks |
 | **P3 — Differentiate** | WS4.5–WS4.11, WS5 | 4–8 weeks | O6 fully green; no-boundary regressions |
