@@ -1,3 +1,5 @@
+export * from '#/request-permissions/request-permissions';
+import '#/request-permissions/requestPermissionsTool';
 export * from '#/os/bash/bash';
 import '#/os/bash/bashTool';
 export * from '#/os/glob/glob';
