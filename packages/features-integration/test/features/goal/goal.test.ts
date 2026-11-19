@@ -560,6 +560,33 @@ describe('AgentGoalService', () => {
       });
       expect(goals.getGoal().goal?.status).toBe('active');
     });
+
+    it('auto-resumes a goal paused only because the agent closed', async () => {
+      await ctx.restorePersisted();
+      await goals.createGoal({ objective: 'finish the task' });
+      const paused = await goals.pauseGoal({ reason: 'Paused after agent closed' });
+      expect(paused?.status).toBe('paused');
+
+      ctx.get(IEventBus).publish(
+        new TurnStarted({ agentId: 'main', turnId: 91, origin: USER_PROMPT_ORIGIN }),
+      );
+
+      const resumed = goals.getGoal().goal;
+      expect({ status: resumed?.status, reason: resumed?.terminalReason }).toEqual({ status: 'active', reason: undefined });
+      expect(resumed?.terminalReason).toBeUndefined();
+    });
+
+    it('keeps an intentionally paused goal paused after a new turn', async () => {
+      await ctx.restorePersisted();
+      await goals.createGoal({ objective: 'finish the task' });
+      await goals.pauseGoal({ reason: 'waiting for the user' });
+
+      ctx.get(IEventBus).publish(
+        new TurnStarted({ agentId: 'main', turnId: 92, origin: USER_PROMPT_ORIGIN }),
+      );
+
+      expect(goals.getGoal().goal?.status).toBe('paused');
+    });
   });
 
   describe('AgentGoalService accounting and budgets', () => {

@@ -47,6 +47,35 @@ describe('AgentFileReadCacheService', () => {
     expect(await cache.verify('/workspace/new.ts')).toBeUndefined();
   });
 
+  it('refuses a write after the read result was evicted from context', async () => {
+    const { cache } = compose();
+    await cache.record('/workspace/a.ts');
+    cache.disarm('/workspace/a.ts');
+    expect(await cache.verify('/workspace/a.ts')).toContain('FILE_READ_EVICTED');
+  });
+
+  it('re-arms on a fresh read after eviction', async () => {
+    const { cache } = compose();
+    await cache.record('/workspace/a.ts');
+    cache.disarm('/workspace/a.ts');
+    await cache.record('/workspace/a.ts');
+    expect(await cache.verify('/workspace/a.ts')).toBeUndefined();
+  });
+
+  it('vetoes a write through the hook after eviction', async () => {
+    const { cache, before } = compose();
+    await cache.record('/workspace/a.ts');
+    cache.disarm('/workspace/a.ts');
+
+    const pending: (() => Promise<unknown>)[] = [];
+    before()?.({
+      execution: { accesses: [{ kind: 'file', operation: 'write', path: '/workspace/a.ts' }] },
+      waitUntil: (factory: () => Promise<unknown>) => pending.push(factory),
+    });
+    const decision = (await pending[0]?.()) as { veto?: { output?: string } } | undefined;
+    expect(decision?.veto?.output).toContain('FILE_READ_EVICTED');
+  });
+
   it('vetoes a stale write through the executor hook', async () => {
     const { cache, before, setStat } = compose();
     await cache.record('/workspace/a.ts');

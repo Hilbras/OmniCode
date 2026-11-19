@@ -7,6 +7,7 @@ import { IAgentToolExecutorService } from '#/agent/toolExecutor/toolExecutor';
 
 import {
   FILE_CHANGED_SINCE_READ,
+  FILE_READ_EVICTED,
   IAgentFileReadCacheService,
 } from './fileReadCache';
 
@@ -29,6 +30,7 @@ export class AgentFileReadCacheService
 {
   declare readonly _serviceBrand: undefined;
   private readonly reads = new Map<string, CachedRead>();
+  private readonly evictedReads = new Set<string>();
 
   constructor(
     @IHostFileSystem private readonly fs: IHostFileSystem,
@@ -68,12 +70,22 @@ export class AgentFileReadCacheService
       const stat = await this.fs.stat(path);
       if (!stat.isFile) return;
       this.reads.set(path, { mtimeMs: stat.mtimeMs ?? 0, size: stat.size });
+      // A fresh read puts the content back in the model's context — re-arm.
+      this.evictedReads.delete(path);
     } catch {
       this.reads.delete(path);
     }
   }
 
+  /** A Read result was evicted: block writes until the model reads the file again. */
+  disarm(path: string): void {
+    this.evictedReads.add(path);
+  }
+
   async verify(path: string): Promise<string | undefined> {
+    if (this.evictedReads.has(path)) {
+      return `${FILE_READ_EVICTED}: ${path} was read earlier but that result is no longer in your context. Read it again before writing.`;
+    }
     const cached = this.reads.get(path);
     if (cached === undefined) return undefined;
     let stat;

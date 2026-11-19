@@ -112,7 +112,7 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 
 ## Microcompaction
 
-`contextMemory/microcompaction.ts` evicts old tool results and media before full compaction. It preserves system messages, recent user messages, recent turns, and assistant/tool pairing. `loop/machine/history.ts` applies it before converting context to loop history.
+`contextMemory/microcompaction.ts` evicts old tool results and media before a request reaches the provider. `llmRequesterService.resolveRequest` applies it to turn requests (callers with explicit `messages` and isolated operations keep their own); the loop's retry-reset applies the same projection to the machine mirror. It preserves system messages, recent user messages, recent turns, and assistant/tool pairing. Evicted Read/ReadMediaFile results are reported as `evictedReads`, and the requester calls `IAgentFileReadCacheService.disarm(path)` for them: the placeholder carries a re-read hint, and a later write is refused until the model reads the file again (`FILE_READ_EVICTED`). A fresh `record()` re-arms. The age-gap trigger from the qwen reference is **not** implemented: the replay transcript has per-message times but the live context service does not, so it needs a state-shape change rather than a local option.
 
 
 ## Tool output budgets
@@ -201,3 +201,7 @@ implementations, UI code, a second agent loop, or direct provider SDK calls.
 ## Symlink-safe path guards
 
 `tool/path-access.ts` resolves physical targets with `physicalPathForGuard` (nearest existing ancestor for new paths), re-checks sensitive/workspace rules on the physical path, rejects escaping symlinks, and supports intentionally symlinked workspace roots via `physicalWorkspaceConfig`.
+
+## Goal continuation after agent close
+
+`features/goal/goalService.ts` pauses an active goal with reason `Paused after agent closed` when its agent scope closes — a lifecycle artifact, not a decision to stop. On the first real user turn after the session is reopened, `handleTurnLaunched` auto-resumes exactly that reason (`applyLifecycle(..., 'active', ..., 'runtime')`), so the normal turn-end continuation drives the task forward; an intentionally paused goal (any other reason) and goal-continuation turns are untouched. Without this, a task stalls after every restart until the user says "continue".

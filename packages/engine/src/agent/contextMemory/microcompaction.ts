@@ -16,6 +16,13 @@ export interface MicrocompactionResult {
   readonly evictedToolResults: number;
   readonly replacedMedia: number;
   readonly truncated: boolean;
+  /**
+   * Workspace paths whose Read tool results were evicted. The caller disarms
+   * the file-read cache for them: the model can no longer see the content, so
+   * a later write must be refused until it re-reads, instead of sailing
+   * through on a fingerprint for content it cannot inspect.
+   */
+  readonly evictedReads: readonly string[];
 }
 
 export const DEFAULT_MICROCOMPACTION_TRIGGER_TOKENS = 120_000;
@@ -48,10 +55,31 @@ export function microcompactContext(
       evictedToolResults: 0,
       replacedMedia: 0,
       truncated: false,
+      evictedReads: [],
     };
   }
 
   const protectedIndices = protectedMessageIndices(messages, keepRecent, keepRecentUserMessages);
+  // Resolve evicted tool results back to the call that produced them: the
+  // placeholder can then carry a refetch hint, and the caller can disarm the
+  // file-read cache for Read results the model can no longer see.
+  const toolInfo = new Map<string, { readonly name: string; readonly path?: string }>();
+  for (const message of messages) {
+    for (const call of message.toolCalls ?? []) {
+      let path: string | undefined;
+      try {
+        const parsed: unknown = JSON.parse(call.arguments ?? '');
+        if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const candidate = (parsed as Record<string, unknown>)['path'];
+          if (typeof candidate === 'string') path = candidate;
+        }
+      } catch {
+        /* a malformed argument string yields no refetch hint, not a failure */
+      }
+      toolInfo.set(call.id, path === undefined ? { name: call.name } : { name: call.name, path });
+    }
+  }
+  const evictedReads: string[] = [];
   const output = [...messages];
   let tokensAfter = tokensBefore;
   let evictedToolResults = 0;
@@ -60,7 +88,7 @@ export function microcompactContext(
   for (let index = 0; index < output.length && tokensAfter > targetTokens; index += 1) {
     if (protectedIndices.has(index)) continue;
     const message = output[index]!;
-    const messagesPart = evictMessageParts(message, placeholder);
+    const messagesPart = evictMessageParts(message, placeholder, toolInfo, evictedReads);
     if (messagesPart === undefined) continue;
     const delta = estimateContextTokens([message]) - estimateContextTokens([messagesPart.message]);
     if (delta <= 0) continue;
@@ -77,6 +105,7 @@ export function microcompactContext(
     evictedToolResults,
     replacedMedia,
     truncated: evictedToolResults > 0 || replacedMedia > 0,
+    evictedReads,
   };
 }
 
@@ -131,14 +160,24 @@ function protectedMessageIndices(
 function evictMessageParts(
   message: ContextMessage,
   placeholder: string,
+  toolInfo: ReadonlyMap<string, { readonly name: string; readonly path?: string }> | undefined,
+  evictedReads: string[],
 ): { readonly message: ContextMessage; readonly toolResults: number; readonly media: number } | undefined {
   if (message.role === 'tool') {
     const text = message.content
       .map((part) => (part.type === 'text' ? part.text : ''))
       .join('');
     if (text === placeholder) return undefined;
+    const info = message.toolCallId === undefined ? undefined : toolInfo?.get(message.toolCallId);
+    if (info !== undefined && info.path !== undefined && (info.name === 'Read' || info.name === 'ReadMediaFile')) {
+      evictedReads.push(info.path);
+    }
+    const body =
+      placeholder === DEFAULT_PLACEHOLDER && info !== undefined
+        ? `[older ${info.name} result evicted by microcompaction${info.path === undefined ? '' : `: re-read ${info.path} if needed`}]`
+        : placeholder;
     return {
-      message: { ...message, content: [{ type: 'text', text: placeholder }] },
+      message: { ...message, content: [{ type: 'text', text: body }] },
       toolResults: 1,
       media: 0,
     };

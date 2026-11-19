@@ -59,8 +59,50 @@ describe('microcompaction', () => {
     expect(result.tokensAfter).toBeLessThan(result.tokensBefore);
     expect(result.messages[1]).toBe(messages[1]);
     expect(result.messages[6]).toBe(messages[6]);
-    expect(result.messages[3]?.content[0]).toEqual({ type: 'text', text: '[older tool result evicted by microcompaction]' });
+    expect(result.messages[3]?.content[0]).toEqual({ type: 'text', text: '[older Read result evicted by microcompaction: re-read a.ts if needed]' });
     expect(result.messages[8]?.content[0]).toEqual({ type: 'text', text: 'recent result' });
+    expect(result.evictedReads).toEqual(['a.ts', 'a.ts']);
+  });
+
+  it('reports evicted Read paths but not other tools or media', () => {
+    const messages: ContextMessage[] = [
+      system(),
+      user('look'),
+      {
+        role: 'assistant',
+        content: [{ type: 'text', text: 'tools' }],
+        toolCalls: [
+          { type: 'function', id: 'read-1', name: 'Read', arguments: '{"path":"src/a.ts"}' },
+          { type: 'function', id: 'grep-1', name: 'Grep', arguments: '{"pattern":"x"}' },
+        ],
+      },
+      tool('read-1', big(80_000)),
+      tool('grep-1', big(80_000)),
+      user('latest'),
+    ];
+    const result = microcompactContext(messages, {
+      triggerTokens: 100,
+      targetTokens: 1,
+      keepRecentMessages: 0,
+    });
+    expect(result.evictedReads).toEqual(['src/a.ts']);
+    const grepPlaceholder = result.messages.find((message) => message.toolCallId === 'grep-1');
+    expect(grepPlaceholder?.content[0]).toEqual({
+      type: 'text',
+      text: '[older Grep result evicted by microcompaction]',
+    });
+  });
+
+  it('honors a custom placeholder without a refetch hint but still reports reads', () => {
+    const messages = [system(), user('look'), assistant('c1'), tool('c1', big(80_000)), user('latest')];
+    const result = microcompactContext(messages, {
+      triggerTokens: 100,
+      targetTokens: 1,
+      keepRecentMessages: 0,
+      placeholder: '[evicted]',
+    });
+    expect(result.messages[3]?.content[0]).toEqual({ type: 'text', text: '[evicted]' });
+    expect(result.evictedReads).toEqual(['a.ts']);
   });
 
   it('keeps assistant tool calls paired with placeholder tool results', () => {
@@ -106,6 +148,6 @@ describe('microcompaction', () => {
       { triggerTokens: 100, targetTokens: 1, keepRecentMessages: 0, keepRecentUserMessages: 1 },
     );
     expect(history[3]?.message).toMatchObject({ role: 'tool' });
-    expect(JSON.stringify(history[3]?.message.content)).toContain('older tool result evicted by microcompaction');
+    expect(JSON.stringify(history[3]?.message.content)).toContain('older Read result evicted by microcompaction');
   });
 });

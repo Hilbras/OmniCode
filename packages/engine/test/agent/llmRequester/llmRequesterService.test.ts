@@ -7,6 +7,7 @@ import { TestInstantiationService } from '@hilbras/omnicode-base/di/test';
 import { ILogService } from '@hilbras/omnicode-base/log/log';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
+import { IAgentFileReadCacheService } from '#/agent/fileReadCache/fileReadCache';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import {
   IAgentContextProjectorService,
@@ -234,6 +235,7 @@ function createService(
     readonly costGate?: Partial<IAgentCostGateService>;
     readonly modelOverrides?: { readonly maxCompletionTokens?: number };
     readonly profileMaxOutputSize?: number;
+    readonly fileReadCache?: { readonly disarm: (path: string) => void };
   } = {},
 ) {
   const ix = disposables.add(new TestInstantiationService());
@@ -328,6 +330,12 @@ function createService(
     });
   }
   ix.stub(ISessionTokenCountingService, tokenCounting);
+  ix.stub(IAgentFileReadCacheService, {
+    _serviceBrand: undefined,
+    record: async () => undefined,
+    verify: async () => undefined,
+    disarm: options.fileReadCache?.disarm ?? (() => undefined),
+  } as never);
   ix.stub(IAgentToolRegistryService, tools);
   ix.stub(IAgentProfileService, profile);
   ix.stub(ISessionUsageService, usage);
@@ -1970,5 +1978,80 @@ describe('AgentLLMRequesterService escalateTurnOutput', () => {
     expect(escalate(service, 7)).toBe(8_000);
     service.prepareTurnConfig(8);
     expect(escalate(service, 8)).toBe(8_000);
+  });
+});
+
+describe('per-request microcompaction', () => {
+  function largeContext(): Message[] {
+    return [
+      { role: 'user', content: [{ type: 'text', text: 'read the file' }], toolCalls: [] },
+      {
+        role: 'assistant',
+        content: [{ type: 'text', text: 'reading' }],
+        toolCalls: [{ type: 'function', id: 'read-1', name: 'Read', arguments: '{"path":"src/a.ts"}' }],
+      },
+      {
+        role: 'tool',
+        content: [{ type: 'text', text: 'x'.repeat(600_000) }],
+        toolCalls: [],
+        toolCallId: 'read-1',
+      } as Message,
+      // The default keep-recent window is 12 messages; the old result must be
+      // outside it to be eligible for eviction.
+      ...Array.from({ length: 14 }, (_, index) => ({
+        role: 'user' as const,
+        content: [{ type: 'text' as const, text: `filler ${String(index)}` }],
+        toolCalls: [],
+      })),
+      { role: 'user', content: [{ type: 'text', text: 'latest' }], toolCalls: [] },
+    ];
+  }
+
+  it('projects an over-trigger context and disarms the evicted read', async () => {
+    const calls = { value: 0 };
+    const captured: ModelRequestInput[] = [];
+    const disarm = vi.fn();
+    const { service } = createService(createRequester(calls, null, undefined, captured), undefined, {
+      contextMessages: largeContext(),
+      fileReadCache: { disarm },
+    });
+
+    await service.request();
+
+    expect(captured).toHaveLength(1);
+    const toolText = JSON.stringify(captured[0]!.messages);
+    expect(toolText).toContain('older Read result evicted by microcompaction: re-read src/a.ts');
+    expect(toolText).not.toContain('x'.repeat(600_000));
+    expect(disarm).toHaveBeenCalledWith('src/a.ts');
+  });
+
+  it('leaves a small context and the cache untouched', async () => {
+    const calls = { value: 0 };
+    const captured: ModelRequestInput[] = [];
+    const disarm = vi.fn();
+    const { service } = createService(createRequester(calls, null, undefined, captured), undefined, {
+      contextMessages: [{ role: 'user', content: [{ type: 'text', text: 'hello' }], toolCalls: [] }],
+      fileReadCache: { disarm },
+    });
+
+    await service.request();
+
+    expect(captured[0]!.messages).toHaveLength(1);
+    expect(disarm).not.toHaveBeenCalled();
+  });
+
+  it('does not project isolated operations even with a large shared context', async () => {
+    const calls = { value: 0 };
+    const captured: ModelRequestInput[] = [];
+    const disarm = vi.fn();
+    const { service } = createService(createRequester(calls, null, undefined, captured), undefined, {
+      contextMessages: largeContext(),
+      fileReadCache: { disarm },
+    });
+
+    await service.request({ isolated: true });
+
+    expect(JSON.stringify(captured[0]!.messages)).toContain('x'.repeat(600_000));
+    expect(disarm).not.toHaveBeenCalled();
   });
 });

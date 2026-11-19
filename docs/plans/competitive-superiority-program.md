@@ -81,13 +81,25 @@ reference has.
       requester suites green; features-integration agent suites 607/609 (the
       2 failures are the pre-existing offline-ripgrep Glob tests, proven to
       fail on the clean base).
-- [ ] S1.3 **Microcompaction refinements.** Evicting a tool result disarms
-      the matching `fileReadCache` entry; evicted memory bodies are
-      re-fetchable with a pointer; age-gap trigger beside the token trigger.
-      Reference: qwen `services/microcompaction/microcompact.ts`.
-      Integration: `agent/contextMemory/microcompaction.ts` + `fileReadCache/`.
-      Verify: eviction test proving a post-eviction Edit re-reads instead of
-      trusting a stale fingerprint; age-trigger test.
+- [ ] S1.3 **Microcompaction refinements** — **partially landed** 2026-11-19.
+      Investigation first found that `microcompactContext` had exactly one
+      production caller (the error-retry reset via `historyFromContext`), so
+      eviction never ran on a normal request. `llmRequesterService.resolveRequest`
+      now projects turn requests through microcompaction (callers with explicit
+      `messages` and isolated operations are untouched), and the loop's retry
+      reset still projects the machine mirror. `MicrocompactionResult.evictedReads`
+      names Read results that left the model's view; the requester calls
+      `IAgentFileReadCacheService.disarm(path)` and the placeholder carries a
+      re-read hint. The cache now refuses writes for disarmed paths
+      (`FILE_READ_EVICTED`) until a fresh `record()` re-arms it. Verified: 8
+      microcompaction tests (incl. refetchable placeholders and custom
+      placeholders), 7 cache tests, 3 requester tests — small and isolated
+      contexts are untouched; guards 11/11.
+      **Remaining**: the age-gap trigger. The replay transcript has per-message
+      times (`contextTranscript.times`) but the live `IAgentContextMemoryService`
+      stores only messages, so a trigger based on message staleness needs a
+      live per-message clock (state shape + fold + manifest regeneration), not
+      a local option. Deferred rather than faked with a turn-count proxy.
 - [x] S1.4 **Rule test vectors.** The loader half already existed
       (`loadExecPolicy` rejects examples that contradict their rule or are
       shadowed, both `matches` directions); the persistence half landed
@@ -316,3 +328,21 @@ section) and W1.5 (which builds on the landed rule persistence).
 | D3 | Nix + installers or record the distribution plan | restore installers only | S3.5 |
 | D4 | Reviewer retrieval surface (S2.2 second half) | session board read-only | S2.2 |
 | D5 | Escalation ceiling for S1.2 (per-turn cap) | one escalation per turn, config override | S1.2 |
+
+## Unplanned fixes from reported bugs (2026-11-19)
+
+- **Goal stalls after a session restart** — a goal was paused with
+  `Paused after agent closed` when the agent scope closed, so a resumed session
+  would not continue the task until the user said "continue". `handleTurnLaunched`
+  now auto-resumes exactly that reason on the first real user turn; intentional
+  pauses and goal-continuation turns are unaffected. Two tests (positive and
+  negative), fail-on-base proven. Persisted wire records supplied the evidence
+  (`goal.update` status `paused`, reason `Paused after agent closed`, actor
+  `runtime`).
+- **Telegram setup failed on a missing logo** — `findLogoPath()` resolved
+  `public/icon.png` against the process cwd (the user's workspace), and
+  `public/` was not in the npm `files` list; the cosmetic profile-photo step
+  aborted the whole connector setup. The asset is now resolved relative to the
+  module in both shipped layouts, shipped under `apps/omnicode-cli/public`, and
+  a failed/rejected photo upload is reported in the final status without
+  failing the setup. Six tests, five fail-on-base proven.

@@ -129,6 +129,8 @@ const GOAL_BUDGET_STOP_REMINDER = [
   'Write a brief final status message summarizing the progress so far.',
 ].join(' ');
 
+const GOAL_PAUSED_ON_CLOSE = 'Paused after agent closed';
+
 const GOAL_BUDGET_TOOLS_REJECTED_MESSAGE =
   'Goal budget exhausted; tool calls are rejected. Write your final message.';
 const GOAL_STALE_TOOL_RESULT =
@@ -522,6 +524,18 @@ function claimGoalTurn(context: GoalOperationContext, turnId: number, goalId: st
 
 function handleTurnLaunched(context: GoalOperationContext, turnId: number, origin: TurnStarted['origin']): void {
   context.effects.liveTurnId = turnId;
+  // A pause caused only by the agent closing is a lifecycle artifact, not a
+  // decision to stop the work. On the first real turn after the session is
+  // reopened, resume it so the normal turn-end continuation drives the task
+  // forward — the user should not have to say "continue" after every restart.
+  const paused = context.runtime.getState().goal;
+  if (
+    paused?.status === 'paused' &&
+    paused.terminalReason === GOAL_PAUSED_ON_CLOSE &&
+    !isGoalContinuationOrigin(origin)
+  ) {
+    applyLifecycle(context, paused, 'active', undefined, 'runtime');
+  }
   context.effects.goalTurnTargets.delete(turnId);
   context.effects.exhaustedTurnBudgetGoals.delete(turnId);
   const pending = context.effects.pendingContinuation;
@@ -1179,7 +1193,7 @@ function createGoalEffectHandlers(runtime: AgentActorContext<GoalRuntimeState>) 
       if (agent !== runtime.agent) return;
       const state = runtime.getState().goal;
       if (state === null || state.status !== 'active') return;
-      applyLifecycle(context, state, 'paused', 'Paused after agent closed', 'runtime');
+      applyLifecycle(context, state, 'paused', GOAL_PAUSED_ON_CLOSE, 'runtime');
     },
     turnStarted: (event: TurnStarted) => { handleTurnLaunched(context, event.turnId, event.origin); },
     usageRecorded: (usage: UsageRecordedContext) => {

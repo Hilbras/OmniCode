@@ -12,6 +12,8 @@ import {
 } from '@hilbras/omnicode-base/utils/retry';
 import type { AgentContext } from '#/agent/agentContext/agentContext';
 import { IAgentContextMemoryService } from '#/agent/contextMemory/contextMemory';
+import { microcompactContext } from '#/agent/contextMemory/microcompaction';
+import { IAgentFileReadCacheService } from '#/agent/fileReadCache/fileReadCache';
 import type { ContextMessage } from '#/agent/contextMemory/types';
 import {
   COMPACTION_SECTION,
@@ -217,6 +219,7 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
 
   constructor(
     @IAgentContextMemoryService private readonly context: IAgentContextMemoryService,
+    @IAgentFileReadCacheService private readonly fileReadCache: IAgentFileReadCacheService,
     @IAgentContextProjectorService private readonly projector: IAgentContextProjectorService,
     @ISessionTokenCountingService private readonly tokenCounting: ISessionTokenCountingService,
     @IAgentToolRegistryService private readonly tools: IAgentToolRegistryService,
@@ -1015,7 +1018,19 @@ export class AgentLLMRequesterService implements IAgentLLMRequesterService {
     const requester = this.modelCatalog.getRequester(resolved.modelAlias);
     const maxCompletionTokensCap =
       this.config.get<ModelOverrides>('modelOverrides')?.maxCompletionTokens;
-    const messages = overrides.messages ?? this.context.get();
+    // Turn requests project the conversation through microcompaction before
+    // it reaches the provider. Isolated operations keep their own messages
+    // (they must not consume the main conversation's state). When a Read
+    // result leaves the model's view, disarm the cache so a later write has
+    // to re-read instead of trusting content it can no longer inspect.
+    let messages: readonly Message[];
+    if (overrides.messages !== undefined || overrides.isolated === true) {
+      messages = overrides.messages ?? this.context.get();
+    } else {
+      const projected = microcompactContext(this.context.get());
+      messages = projected.messages;
+      for (const path of projected.evictedReads) this.fileReadCache.disarm(path);
+    }
     const systemPrompt =
       overrides.systemPrompt ?? turnConfig?.systemPrompt ?? this.profile.getSystemPrompt();
     const tools = [...(overrides.tools ?? this.defaultTools())];
