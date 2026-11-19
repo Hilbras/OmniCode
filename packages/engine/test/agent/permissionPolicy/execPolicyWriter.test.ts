@@ -4,6 +4,7 @@ import type { IConfigService } from '#/app/config/config';
 import type { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import type { IHostFileSystem } from '#/os/interface/hostFileSystem';
 import { ExecPolicyWriterService } from '#/agent/permissionPolicy/execPolicy/execPolicyWriter';
+import { loadExecPolicy } from '#/agent/permissionPolicy/execPolicy/execPolicy';
 import { ExecPolicyPersistenceService } from '#/agent/permissionPolicy/execPolicy/execPolicyPersistenceService';
 
 function compose(options: { path?: string; file?: string } = {}) {
@@ -32,6 +33,50 @@ describe('ExecPolicyWriterService', () => {
       prefix: ['git', 'status', '--short'],
       decision: 'allow',
     });
+  });
+
+  it('pins a match example and a not-match probe on every persisted rule', async () => {
+    const { service, written } = compose({ path: 'exec-policy.json' });
+    await service.appendAllowPrefix('git status');
+    const policy = JSON.parse(written()) as {
+      rules: { examples: { command: string; matches: boolean }[] }[];
+    };
+    expect(policy.rules.at(-1)?.examples).toEqual([
+      { command: 'git status', matches: true },
+      { command: 'git statusx', matches: false },
+    ]);
+  });
+
+  it('writes examples that survive load-time validation', async () => {
+    const { service, written } = compose({ path: 'exec-policy.json' });
+    await service.appendAllowPrefix('git status --short');
+    const file = JSON.parse(written()) as Parameters<typeof loadExecPolicy>[0];
+    expect(() => loadExecPolicy(file, 'exec-policy.json')).not.toThrow();
+  });
+
+  it('the not-match probe catches a later hand-broadened prefix at load', async () => {
+    const { service, written } = compose({ path: 'exec-policy.json' });
+    await service.appendAllowPrefix('git status');
+    const broadened = JSON.parse(written()) as {
+      rules: { prefix: string[] }[];
+    };
+    // A later hand-edit widens the approved rule from `git status` to `git`.
+    broadened.rules[broadened.rules.length - 1]!.prefix = ['git'];
+    expect(() => loadExecPolicy(broadened, 'exec-policy.json')).toThrow(/matches but is marked not-matching/);
+  });
+
+  it('pins examples for single-token prefixes without a not-match false positive', async () => {
+    const { service, written } = compose({ path: 'exec-policy.json' });
+    await service.appendAllowPrefix('rg');
+    const file = JSON.parse(written()) as Parameters<typeof loadExecPolicy>[0];
+    expect(() => loadExecPolicy(file, 'exec-policy.json')).not.toThrow();
+    const policy = JSON.parse(written()) as {
+      rules: { examples: { command: string; matches: boolean }[] }[];
+    };
+    expect(policy.rules.at(-1)?.examples).toEqual([
+      { command: 'rg', matches: true },
+      { command: 'rgx', matches: false },
+    ]);
   });
 
   it('unwraps a shell wrapper before writing the prefix', async () => {

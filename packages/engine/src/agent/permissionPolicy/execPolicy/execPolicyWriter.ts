@@ -7,7 +7,7 @@ import { ScopeActivation, registerScopedService } from '@hilbras/omnicode-base/d
 import { IHostFileSystem } from '#/os/interface/hostFileSystem';
 
 import { EXEC_POLICY_SECTION, type ExecPolicyConfig } from './configSection';
-import { loadExecPolicy, type ExecRuleSpec } from './execPolicy';
+import { loadExecPolicy, type ExecRuleExample, type ExecRuleSpec } from './execPolicy';
 import { resolveExecPolicyPath } from './execPolicyLoader';
 
 export type ExecPolicyWriteResult =
@@ -28,6 +28,23 @@ interface PolicyFile {
   version: 1;
   rules: ExecRuleSpec[];
   opaque?: string;
+}
+
+/**
+ * Examples pinned onto every persisted rule so the file validates its own
+ * intent on every load: the approved command must match, and the same command
+ * with a mutated last token must not. The not-match probe is what catches a
+ * later hand-broadening of the prefix (for example `git status` widened to
+ * `git`) — the loader rejects the file instead of silently allowing more than
+ * the user approved.
+ */
+function examplesFor(tokens: readonly string[]): readonly ExecRuleExample[] {
+  const last = tokens[tokens.length - 1] ?? '';
+  const mutated = [...tokens.slice(0, -1), `${last}x`];
+  return [
+    { command: tokens.join(' '), matches: true },
+    { command: mutated.join(' '), matches: false },
+  ];
 }
 
 export class ExecPolicyWriterService implements IExecPolicyWriterService {
@@ -76,7 +93,12 @@ export class ExecPolicyWriterService implements IExecPolicyWriterService {
       ...source,
       rules: [
         ...source.rules,
-        { prefix: tokens, decision: 'allow', note: 'approved by the user' },
+        {
+          prefix: tokens,
+          decision: 'allow',
+          note: 'approved by the user',
+          examples: examplesFor(tokens),
+        },
       ],
     };
     try {
