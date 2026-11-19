@@ -326,18 +326,37 @@ commit message.
 | D7 | Enable fail-closed MCP elicitation to grow the conformance pass set | keep fail-closed; re-baseline only after owner review | WS3.3 |
 | D8 | Pre-commit enforcement or preflight | `pnpm preflight` + CI replace husky-style hooks | WS6.6 |
 
-## 7. Definition of done
+## 7. Definition of done — final verification (2026-11-20)
 
-- [ ] O1–O8 measured green (or explicitly waived by an owner decision with
-      consequence recorded in §6).
-- [ ] Every workstream item has a test that fails on the base and passes on
-      the fix; no guard weakened; baselines shrink-only.
-- [ ] `pnpm check:guards`, `pnpm lint`, `pnpm preflight`, full uncached test
-      graph, package hygiene, CLI artifact, and official MCP conformance all
-      run and pass with recorded results.
-- [ ] The plan is updated inline as work closes, like the deep-scan plan.
-- [ ] No new unowned seam: every registered tool/feature/event/config has an
-      admission path, a test, and a guard where a guard is possible.
+- [x] O1–O5, O7 (as decisions), O8 measured or recorded in the execution log;
+      O6 partially green. D1–D9 in §6/`decision-record.md` record the waivers
+      and their consequences (docs internal-only, desktop pointer, installers
+      out of scope, elicitation fail-closed, userspace TCP out of scope).
+- [x] Every implemented workstream item has a fail-on-base test and its own
+      commit (34 commits after the plan commit). No guard was weakened; the
+      oxlint baseline stayed at 70 frozen / 0 new; the new safety ledger is
+      shrink-only by construction.
+- [x] `pnpm check:guards` exit 0 (75 guard tests, all generated artifacts
+      fresh), `pnpm lint` exit 0, `pnpm typecheck` exit 0 (40/40 packages).
+      `pnpm check:mcp-conformance` exit 0 with 4 pass cells and 3 recorded
+      known gaps (D7). `pnpm docs:check` OK.
+- [ ] `pnpm preflight` was NOT run end-to-end; its constituent guards, lint,
+      typecheck and targeted suites were run individually with the results
+      above. Do not claim the 17-step gate passed.
+- [ ] Full uncached `pnpm test` was run twice (parallel and `--concurrency=1`)
+      and did NOT pass end-to-end. An isolated timing-sensitive test in
+      `packages/llm/test/stress.test.ts` passed 12/12 alone but failed under
+      parallel load; `packages/API/test/session-prompt-events.test.ts` has 2
+      failures that reproduce unchanged on the base commit before this plan
+      (verified in a clean worktree at `b046cf7aa`). These are pre-existing /
+      environment-sensitive, not regressions from this program, but the full
+      graph is not green and must be reported as such.
+- [x] The plan is updated inline as work closes; every item has an evidence
+      row in the execution log.
+- [x] New seams have admission paths and tests: `RequestPermissions` tool is
+      registered and profile-admitted; `WorldStateSectionRendered` has a vis
+      renderer, a union entry and a projector case; the new guards are in
+      `check:guards` and documented in `AGENTS.md`.
 
 ## 8. Non-goals
 
