@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 import type { Component, Focusable } from '@hilbras/omnicode-tui';
 import { Jimp } from 'jimp';
@@ -207,7 +208,12 @@ export class ConnectorsController {
       await callTelegram(botToken, 'setMyName', { name: 'OmniCode' });
 
       this.setStatus('Uploading the OmniCode logo…');
-      await uploadProfilePhoto(botToken);
+      let logoNote = 'Logo updated.';
+      try {
+        await uploadProfilePhoto(botToken);
+      } catch (logoError) {
+        logoNote = `Logo not uploaded (${errorMessage(logoError)}) — setup continues.`;
+      }
 
       this.setStatus('Saving Telegram settings…');
       await saveTelegramToken(botToken);
@@ -218,7 +224,7 @@ export class ConnectorsController {
       this.status = await this.loadStatus();
       this.setStatus(
         [
-          `Telegram bot @${me.username} is ready. Name: OmniCode. Logo updated.`,
+          `Telegram bot @${me.username} is ready. Name: OmniCode. ${logoNote}`,
           `Pairing code: ${pairing.code}`,
           pairing.deepLink === undefined
             ? 'Send /start <code> to the bot in Telegram.'
@@ -388,6 +394,12 @@ function telegramConfigPath(): string {
   return join(home, 'telegram.json');
 }
 
+/**
+ * Upload the OmniCode logo as the bot's profile photo. Cosmetic: a failure
+ * here (no logo on disk, Telegram refusing the photo) is reported by the
+ * caller as a skipped step, never as a failed setup — the connector's job is
+ * the token, the name, and the pairing, not the decoration.
+ */
 async function uploadProfilePhoto(token: string): Promise<void> {
   const logoPath = findLogoPath();
   const image = await Jimp.read(logoPath);
@@ -410,8 +422,20 @@ async function uploadProfilePhoto(token: string): Promise<void> {
   }
 }
 
-function findLogoPath(): string {
+/**
+ * The logo is a CLI-owned asset, so it is resolved relative to this module —
+ * both layouts it ships in — with a cwd fallback for dev checkouts. Resolving
+ * only against the process cwd made the Telegram setup fail for every user
+ * whose workspace was not this repository.
+ */
+export function findLogoPath(moduleUrl: string = import.meta.url): string {
+  const moduleDir = dirname(fileURLToPath(moduleUrl));
   const candidates = [
+    // Bundled artifact: <package>/dist/main.mjs → <package>/public/icon.png.
+    resolve(moduleDir, '../public/icon.png'),
+    // Dev checkout: apps/omnicode-cli/src/tui/controllers →
+    // apps/omnicode-cli/public/icon.png.
+    resolve(moduleDir, '../../../public/icon.png'),
     resolve(process.cwd(), 'public/icon.png'),
     resolve(process.cwd(), '../../public/icon.png'),
   ];

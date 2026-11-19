@@ -28,6 +28,7 @@
     "dist",
     "dist-web",
     "native",
+    "public",
     "CHANGELOG.md",
     "LICENSE",
     "README.md",
