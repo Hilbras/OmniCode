@@ -2,18 +2,21 @@ import { CommandRegistry, type CommandCompletionItem, type CommandDefinition } f
 
 import { BUILTIN_SLASH_COMMANDS } from './registry';
 
-export function createFlexibleCommandRegistry(): CommandRegistry {
+export type FlexibleCommandSource = {
+  readonly name: string;
+  readonly aliases?: readonly string[];
+  readonly description: string;
+  readonly priority?: number;
+  readonly experimentalFlag?: string;
+  readonly availability?: CommandDefinition['availability'];
+  readonly completeArgs?: (prefix: string) => readonly CommandCompletionItem[] | null;
+};
+
+export function createFlexibleCommandRegistry(
+  commands: readonly FlexibleCommandSource[] = BUILTIN_SLASH_COMMANDS,
+): CommandRegistry {
   const registry = new CommandRegistry();
-  const legacyCommands = BUILTIN_SLASH_COMMANDS as readonly {
-    readonly name: string;
-    readonly aliases: readonly string[];
-    readonly description: string;
-    readonly priority?: number;
-    readonly experimentalFlag?: string;
-    readonly availability?: CommandDefinition['availability'];
-    readonly completeArgs?: (prefix: string) => readonly CommandCompletionItem[] | null;
-  }[];
-  for (const command of legacyCommands) {
+  for (const command of commands) {
     const definition: CommandDefinition = {
       name: command.name,
       aliases: command.aliases,

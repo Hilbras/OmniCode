@@ -55,6 +55,8 @@ prompt carries the autonomy directive and the golden is byte-stable.
 |---|---|---|
 | WS2.1 phantom-dependency guard | this commit | `scripts/check-phantom-deps.mjs` + `.d.mts` + shrink-only allowlist; 8 pure/fixture tests green; real bite proven by temporarily undeclaring `pathe` in `packages/base` → 3 phantom imports reported → restored → guard green; wired into `check:guards`; real tree 41 packages / 2677 source files |
 
+| WS2.5 CLI extraction closure | this commit | Landed `createFlexibleCommandRegistry` as the ordering/normalization source in `OmnicodeTUI.getSlashCommands()` (same priority/name order as the legacy sort); source made injectable so collisions are rejected. CLI registry suite 21/21; fail-on-base: injected-collision test "expected [Function] to throw an error" against base. `cli-commands` 8/8 and `cli-ui` 5/5 real Vitest suites replace `echo "no tests yet"`; both projects auto-discovered by the root Vitest globs |
+
 _Append each closed item with its commit and fail-on-base evidence as it lands._
 
 ---

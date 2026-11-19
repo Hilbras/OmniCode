@@ -62,11 +62,11 @@ import {
   goalObjectiveLengthWarning,
   isExperimentalFlagEnabled,
   setExperimentalFeatures,
-  sortSlashCommands,
   type OmnicodeSlashCommand,
   type SkillListSession,
 } from './commands';
 import * as slashCommands from './commands/dispatch';
+import { createFlexibleCommandRegistry } from './commands/flexible';
 import { BannerComponent } from './components/chrome/banner';
 import { DeviceCodeBoxComponent } from './components/chrome/device-code-box';
 import { GutterContainer } from './components/chrome/gutter-container';
@@ -571,9 +571,18 @@ export class OmnicodeTUI {
   // =========================================================================
 
   private getSlashCommands(): readonly OmnicodeSlashCommand[] {
-    const builtins = sortSlashCommands(BUILTIN_SLASH_COMMANDS).filter((command) =>
-      isExperimentalFlagEnabled(command.experimentalFlag),
+    const registry = createFlexibleCommandRegistry();
+    const byName = new Map<string, OmnicodeSlashCommand>(
+      (BUILTIN_SLASH_COMMANDS as readonly OmnicodeSlashCommand[]).map((command) => [
+        command.name,
+        command,
+      ]),
     );
+    const builtins = registry
+      .list()
+      .map((definition) => byName.get(definition.name))
+      .filter((command): command is OmnicodeSlashCommand => command !== undefined)
+      .filter((command) => isExperimentalFlagEnabled(command.experimentalFlag));
     return [...builtins, ...this.skillCommands, ...this.pluginCommands];
   }
 

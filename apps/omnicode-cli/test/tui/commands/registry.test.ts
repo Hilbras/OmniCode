@@ -11,6 +11,7 @@ import {
   towerArgumentCompletions,
   type OmnicodeSlashCommand,
 } from '#/tui/commands/index';
+import { createFlexibleCommandRegistry } from '#/tui/commands/flexible';
 
 describe('parseSlashInput', () => {
   it('parses command names and trimmed args', () => {
@@ -264,5 +265,29 @@ describe('built-in slash command registry', () => {
     expect(command).toBeDefined();
     expect((command as OmnicodeSlashCommand).experimentalFlag).toBeUndefined();
     expect(resolveSlashCommandAvailability(command!, '')).toBe('always');
+  });
+});
+
+describe('flexible command registry (WS2.5)', () => {
+  it('admits every built-in in the same order as the legacy sort', () => {
+    const registry = createFlexibleCommandRegistry();
+    expect(registry.list({ includeHidden: true, includeDisabled: true }).map((c) => c.name)).toEqual(
+      sortSlashCommands(BUILTIN_SLASH_COMMANDS).map((c) => c.name),
+    );
+  });
+
+  it('rejects duplicate names and aliases when built from an injected source', () => {
+    expect(() =>
+      createFlexibleCommandRegistry([
+        { name: 'model', description: 'first' },
+        { name: 'MODEL', description: 'collision' },
+      ]),
+    ).toThrow(/already registered/);
+    expect(() =>
+      createFlexibleCommandRegistry([
+        { name: 'model', aliases: ['m'], description: 'first' },
+        { name: 'other', aliases: ['/M'], description: 'alias collision' },
+      ]),
+    ).toThrow(/alias already registered/);
   });
 });
