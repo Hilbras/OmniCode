@@ -90,3 +90,21 @@ describe('Telegram setup flow', () => {
     expect(final).toContain('Logo updated.');
   });
 });
+
+describe('telegramSetupErrorMessage', () => {
+  it('turns a raw Telegram 429 into an actionable wait message', async () => {
+    const { telegramSetupErrorMessage } = await import('#/tui/controllers/connectors');
+    const message = telegramSetupErrorMessage(
+      new Error('Too Many Requests: retry after 25630'),
+    );
+    expect(message).toContain('Telegram rate limit');
+    expect(message).toContain('7h 7m');
+    expect(message).toContain('25630s');
+    expect(message).toContain('Repeated setup attempts extend the limit');
+  });
+
+  it('leaves other errors untouched', async () => {
+    const { telegramSetupErrorMessage } = await import('#/tui/controllers/connectors');
+    expect(telegramSetupErrorMessage(new Error('bot token invalid'))).toBe('bot token invalid');
+  });
+});

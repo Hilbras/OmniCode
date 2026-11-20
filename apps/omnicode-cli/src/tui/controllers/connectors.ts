@@ -233,7 +233,7 @@ export class ConnectorsController {
         ].join('\n'),
       );
     } catch (error) {
-      this.setStatus(`Telegram setup failed: ${errorMessage(error)}`);
+      this.setStatus(`Telegram setup failed: ${telegramSetupErrorMessage(error)}`);
     }
   }
 
@@ -253,7 +253,7 @@ export class ConnectorsController {
         ].join('\n'),
       );
     } catch (error) {
-      this.setStatus(`Pairing failed: ${errorMessage(error)}`);
+      this.setStatus(`Pairing failed: ${telegramSetupErrorMessage(error)}`);
     }
   }
 
@@ -263,7 +263,7 @@ export class ConnectorsController {
       await this.host.harness.startTelegramBot();
       await this.refreshStatus('Telegram bot started.');
     } catch (error) {
-      this.setStatus(`Could not start the bot: ${errorMessage(error)}`);
+      this.setStatus(`Could not start the bot: ${telegramSetupErrorMessage(error)}`);
     }
   }
 
@@ -273,7 +273,7 @@ export class ConnectorsController {
       await this.host.harness.stopTelegramBot();
       await this.refreshStatus('Telegram bot stopped.');
     } catch (error) {
-      this.setStatus(`Could not stop the bot: ${errorMessage(error)}`);
+      this.setStatus(`Could not stop the bot: ${telegramSetupErrorMessage(error)}`);
     }
   }
 
@@ -469,4 +469,21 @@ async function callTelegram<T>(
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
+}
+
+const TELEGRAM_RETRY_AFTER = /retry after\s+(\d+)/i;
+
+/** Turn Telegram's raw 429 text into an actionable wait-before-retry message. */
+export function telegramSetupErrorMessage(error: unknown): string {
+  const raw = errorMessage(error);
+  const match = TELEGRAM_RETRY_AFTER.exec(raw);
+  if (match === null) return raw;
+  const seconds = Number(match[1]);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const wait = hours > 0 ? `${String(hours)}h ${String(minutes)}m` : `${String(minutes)}m`;
+  return (
+    `Telegram rate limit: wait ${wait} (${String(seconds)}s) before retrying. ` +
+    'Repeated setup attempts extend the limit.'
+  );
 }

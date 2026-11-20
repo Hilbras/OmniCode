@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from '
 import { dirname, join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import { EVENT2_REGISTRY } from '../src/app/event/event2.ts';
+import { EVENT2_REGISTRY } from '../src/app/event/event2';
 
 import {
   asJsonSchema,
