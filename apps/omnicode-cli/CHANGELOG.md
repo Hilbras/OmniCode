@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.6.1
+
+### Patch Changes
+
+- Republish the 1.6.0 advanced-strength changes as 1.6.1. npm retained a staged 1.6.0 record from the first publish attempt, which blocks publishing that exact version; no code changed.
+
 ## 1.6.0
 
 ### Minor Changes
