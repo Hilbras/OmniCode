@@ -2,17 +2,11 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMessages, useSubmitPrompt, useAbortSession, useSessionStatus } from '../hooks/useSessions';
 import { useSessionEvents } from '../hooks/useSessionEvents';
+import { MessageCard } from '../components/MessageCard';
 import { ApprovalDialog } from '../components/ApprovalDialog';
 import { QuestionDialog } from '../components/QuestionDialog';
 import { ModeSelector } from '../components/ModeSelector';
 import type { AppMessage, AppMessageContent } from '../api';
-
-function contentToText(content: AppMessageContent[]): string {
-  return content
-    .map((c) => (c.type === 'text' ? c.text : c.type === 'thinking' ? '[thinking]' : c.type === 'toolUse' ? `[tool: ${c.toolName}]` : ''))
-    .filter(Boolean)
-    .join('\n');
-}
 
 export function SessionPage() {
   const { id } = useParams<{ id: string }>();
@@ -54,7 +48,7 @@ export function SessionPage() {
         )}
         {msgPending && <p className="text-center text-sm muted">Loading messages…</p>}
         {(messages ?? []).map((msg) => (
-          <MessageBubble key={msg.id} message={msg} />
+          <MessageCard key={msg.id} message={msg} />
         ))}
         {live.streamingText.length > 0 && (
           <div className="my-1 flex flex-col items-start">
@@ -121,23 +115,6 @@ export function SessionPage() {
           </div>
         </div>
       </form>
-    </div>
-  );
-}
-
-function MessageBubble({ message }: { message: AppMessage }) {
-  const isUser = message.role === 'user';
-  const text = contentToText(message.content);
-
-  return (
-    <div className={`my-1 flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
-      <span className="mono-label mb-1">{isUser ? 'You' : 'Assistant'}</span>
-      <div
-        className={`max-w-[85%] rounded-xl px-4 py-3 ${isUser ? 'panel' : 'node'}`}
-        style={isUser ? undefined : { borderColor: 'var(--line)' }}
-      >
-        <div className="whitespace-pre-wrap text-sm leading-relaxed">{text}</div>
-      </div>
     </div>
   );
 }
