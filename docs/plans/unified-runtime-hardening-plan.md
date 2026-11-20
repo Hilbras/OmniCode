@@ -118,47 +118,47 @@ D6. **`pnpm preflight` end-to-end** — run the 17-step local delivery gate and
 
 _Each item appends: commit hash, fail-on-base evidence, gates output._
 
-- **A1** — pending commit — 7/7 tests; fail-on-base module-not-found; engine
+- **A1** — `a783decfd` — 7/7 tests; fail-on-base module-not-found; engine
   typecheck exit 0, pnpm lint exit 0, check:guards exit 0 after contract digest
   regeneration.
-- **A2** — pending commit — 6/6 tests; fail-on-base module-not-found; engine
+- **A2** — `c569b58a1` — 6/6 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **A3** — pending commit — 5/5 tests; fail-on-base module-not-found; engine
+- **A3** — `aa3a7e7db` — 5/5 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **A4** — pending commit — 6/6 tests; fail-on-base module-not-found; engine
+- **A4** — `1ab492707` — 6/6 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **A5** — pending commit — 5/5 tests; fail-on-base module-not-found; engine
+- **A5** — `237fc8c54` — 5/5 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **B1** — pending commit — 5/5 tests; fail-on-base module-not-found; engine
+- **B1** — `a66cac9e7` — 5/5 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **B2** — pending commit — 5/5 tests; fail-on-base module-not-found; engine
+- **B2** — `9132bf350` — 5/5 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **B3** — pending commit — 3/3 tests; fail-on-base module-not-found; engine
+- **B3** — `2be5e70ae` — 3/3 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **B4** — pending commit — 5/5 tests; fail-on-base module-not-found; engine
+- **B4** — `40add3245` — 5/5 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **B5** — pending commit — 5/5 tests; fail-on-base module-not-found; engine
+- **B5** — `8330357db` — 5/5 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **C1** — pending commit — 3/3 tests; fail-on-base module-not-found; engine
+- **C1** — `271cf5502` — 3/3 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **C2** — pending commit — 4/4 tests; fail-on-base module-not-found; engine
+- **C2** — `886f85593` — 4/4 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **C3** — pending commit — 4/4 tests; fail-on-base module-not-found; engine
+- **C3** — `3fa254297` — 4/4 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **C4** — pending commit — 4/4 tests; fail-on-base module-not-found; engine
+- **C4** — `e44758527` — 4/4 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **C5** — pending commit — 3/3 tests; fail-on-base module-not-found; engine
+- **C5** — `9605e19e6` — 3/3 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
-- **D4** — pending commit — tool-registration suite 3/3; fail-on-base
+- **D4** — `86a0ad207` — tool-registration suite 3/3; fail-on-base
   "getBuiltinProfileToolNames is not a function"; engine typecheck, check:guards,
   pnpm lint green after digest regeneration.
-- **D1** — pending commit — Kaos exports `resolveCommandPath` with a PATH/cwd
+- **D1** — `092a97e25` — Kaos exports `resolveCommandPath` with a PATH/cwd
   planting test (3/3); fail-on-base module-not-found; Kaos typecheck,
   check:guards, pnpm lint green.
-- **D2/D3** — already wired, no change: `SessionLeaseService` is constructed in
+- **D2/D3** — verified (no commit needed) — already wired, no change: `SessionLeaseService` is constructed in
   `sessionManagerService.ts:31,63-74`; `loopService.drainPendingToMachine()` is
   called at `:295` and `:832`. Verified by source inspection.
-- **D5** — pending commit — the two API failures were stale expectations:
+- **D5** — `40e5cc645`, `95e81b923`, `31fc062c7`, `e9f9276f2` — the two API failures were stale expectations:
   background memory-writer calls were counted as agent turns, and tool removal
   after disabling notify_user was misread. API suite 18/18. The llm concurrency
   test now uses explicit gates instead of 10/20/30ms timers; 12/12.
@@ -173,6 +173,6 @@ _Each item appends: commit hash, fail-on-base evidence, gates output._
   installed the listener. Both repaired; CLI affected files 377/377.
   **D5 RESULT:** `pnpm test` → Tasks 37 successful / 37 total, CLI 4504 passed
   | 6 skipped, zero failing tests.
-- **D6** — `pnpm preflight` → `preflight: OK (17 steps)`, exit 0. The full gate
+- **D6** — `1130cbbc8` — `pnpm preflight` → `preflight: OK (17 steps)`, exit 0. The full gate
   ran workspace, guards, lint, full-graph typecheck, 14 targeted suites and
   the eval gate. All 22 plan items now have a commit and evidence above.
