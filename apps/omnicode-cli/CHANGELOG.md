@@ -1,5 +1,14 @@
 # @hilbras/omnicode
 
+## 1.7.1
+
+### Patch Changes
+
+- Show every MCP tool call as its own visible message in Telegram chats and in the
+  CLI transcript. Telegram notices include the qualified tool name and a redacted
+  argument preview; set `showMcpCalls: false` in `~/.omnicode/telegram.json` to
+  keep the previous quiet progress behavior.
+
 ## 1.7.0
 
 ### Minor Changes
