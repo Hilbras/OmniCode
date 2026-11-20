@@ -117,3 +117,7 @@ D6. **`pnpm preflight` end-to-end** — run the 17-step local delivery gate and
 ## Execution log
 
 _Each item appends: commit hash, fail-on-base evidence, gates output._
+
+- **A1** — pending commit — 7/7 tests; fail-on-base module-not-found; engine
+  typecheck exit 0, pnpm lint exit 0, check:guards exit 0 after contract digest
+  regeneration.
