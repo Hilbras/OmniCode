@@ -49,7 +49,15 @@ for (const token of paths) {
   const path = token.slice(1, -1).replace(/\/$/, '');
   if (path.includes('<') || path.includes('*')) continue;
   if (path === 'apps/omnicode') continue;
-  if (!existsSync(join(ROOT, path))) failures.push(`root AGENTS.md references missing path: ${path}`);
+  if (!existsSync(join(ROOT, path))) {
+    // A gitignored build artifact can have a committed `.d.ts` sibling that
+    // keeps the module type-resolvable on a fresh clone. That sibling satisfies
+    // the reference; the generated value is produced by the build.
+    const generatedDeclaration = path.replace(/\.ts$/, '.d.ts');
+    if (!existsSync(join(ROOT, generatedDeclaration))) {
+      failures.push(`root AGENTS.md references missing path: ${path}`);
+    }
+  }
 }
 
 // A guide that tells an agent to run `pnpm <script>` must name a script that exists,
