@@ -152,3 +152,9 @@ _Each item appends: commit hash, fail-on-base evidence, gates output._
 - **D4** — pending commit — tool-registration suite 3/3; fail-on-base
   "getBuiltinProfileToolNames is not a function"; engine typecheck, check:guards,
   pnpm lint green after digest regeneration.
+- **D1** — pending commit — Kaos exports `resolveCommandPath` with a PATH/cwd
+  planting test (3/3); fail-on-base module-not-found; Kaos typecheck,
+  check:guards, pnpm lint green.
+- **D2/D3** — already wired, no change: `SessionLeaseService` is constructed in
+  `sessionManagerService.ts:31,63-74`; `loopService.drainPendingToMachine()` is
+  called at `:295` and `:832`. Verified by source inspection.

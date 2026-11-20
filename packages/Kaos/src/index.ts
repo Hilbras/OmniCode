@@ -43,3 +43,8 @@ export {
   writeText,
 } from './current';
 export * from './sandbox/index';
+
+export {
+  isInsideCwd,
+  resolveCommandPath,
+} from './resolve-command-path';
