@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.6.4
+
+### Patch Changes
+
+- Publish the advanced-strength program as 1.6.4 through npm's staged-publish approval flow; earlier 1.6.x attempts were left staged by pnpm. No code changed since 1.6.3.
+
 ## 1.6.3
 
 ### Patch Changes
