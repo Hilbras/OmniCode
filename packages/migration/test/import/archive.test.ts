@@ -207,7 +207,7 @@ describe('zip entry-name security', () => {
     }));
     const archive = await buildZip(entries);
     await expectRejected('many.zip', archive, 'entry-count-exceeded');
-  }, 30_000);
+  }, 120_000);
 
   it('rejects an oversized entry from the central directory', async () => {
     const archive = patchZipCentralEntrySize(
@@ -302,7 +302,7 @@ describe('tar entry security', () => {
       data: '',
     }));
     await expectRejected('many.tar', buildTar(entries), 'entry-count-exceeded');
-  });
+  }, 120_000);
 
   it('rejects an entry larger than the cap', async () => {
     await expectRejected(

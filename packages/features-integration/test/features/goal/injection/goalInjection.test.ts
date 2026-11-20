@@ -353,7 +353,9 @@ describe('GoalInjection integration', () => {
 
       await ctx.rpc.prompt({ input: [{ type: 'text', text: 'Start.' }] });
       await ctx.untilTurnEnd();
-      await ctx.untilTurnEnd();
+      // Both turn ends may already be buffered; wait on the observable LLM
+      // count instead of a second snapshot wait that can hang on drained events.
+      await vi.waitFor(() => expect(ctx.llmCalls.length).toBeGreaterThanOrEqual(3), { timeout: 10_000 });
 
       expect(ctx.llmCalls).toHaveLength(3);
     });

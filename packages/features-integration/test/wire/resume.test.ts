@@ -200,7 +200,7 @@ describe('Agent resume', () => {
       expect(ctx.llmInputs()).toMatchInlineSnapshot(`
         call 1:
           system: <system-prompt>
-          tools: Agent, AgentSwarm, ApplyPatch, Arena, ArtifactRecord, AskUserQuestion, Bash, CreateGoal, CronCreate, CronDelete, CronList, Edit, EnterPlanMode, ExitPlanMode, FetchURL, GetGoal, Glob, Grep, Lsp, NotebookEdit, Read, SetGoalBudget, Skill, SourceRecord, TaskBoardCreate, TaskBoardList, TaskBoardUpdate, TaskList, TaskOutput, TaskStop, Team, TeamCreate, TeamJoin, TeamLeave, TeamList, TodoList, UpdateGoal, WaitFor, WorktreeCreate, WorktreeList, WorktreeRemove, Write
+          tools: Agent, AgentSwarm, ApplyPatch, Arena, ArtifactRecord, AskUserQuestion, Bash, CreateGoal, CronCreate, CronDelete, CronList, Edit, EnterPlanMode, ExitPlanMode, FetchURL, GetContextRemaining, GetGoal, Glob, Grep, Lsp, NewContextWindow, NotebookEdit, Read, RequestPermissions, SetGoalBudget, Skill, SourceRecord, TaskBoardCreate, TaskBoardList, TaskBoardUpdate, TaskList, TaskOutput, TaskStop, Team, TeamCreate, TeamJoin, TeamLeave, TeamList, TodoList, UpdateGoal, WaitFor, Workflow, WorktreeCreate, WorktreeList, WorktreeRemove, Write
           messages:
             user: text "Run lookup"
             assistant: []  calls call_open:Lookup { "query": "moon" }
@@ -560,7 +560,7 @@ describe('Agent resume', () => {
     expect(ctx.llmInputs()).toMatchInlineSnapshot(`
       call 1:
         system: <system-prompt>
-        tools: Agent, AgentSwarm, ApplyPatch, Arena, ArtifactRecord, AskUserQuestion, Bash, CreateGoal, CronCreate, CronDelete, CronList, Edit, EnterPlanMode, ExitPlanMode, FetchURL, GetGoal, Glob, Grep, Lsp, NotebookEdit, Read, SetGoalBudget, Skill, SourceRecord, TaskBoardCreate, TaskBoardList, TaskBoardUpdate, TaskList, TaskOutput, TaskStop, Team, TeamCreate, TeamJoin, TeamLeave, TeamList, TodoList, UpdateGoal, WaitFor, WorktreeCreate, WorktreeList, WorktreeRemove, Write
+        tools: Agent, AgentSwarm, ApplyPatch, Arena, ArtifactRecord, AskUserQuestion, Bash, CreateGoal, CronCreate, CronDelete, CronList, Edit, EnterPlanMode, ExitPlanMode, FetchURL, GetContextRemaining, GetGoal, Glob, Grep, Lsp, NewContextWindow, NotebookEdit, Read, RequestPermissions, SetGoalBudget, Skill, SourceRecord, TaskBoardCreate, TaskBoardList, TaskBoardUpdate, TaskList, TaskOutput, TaskStop, Team, TeamCreate, TeamJoin, TeamLeave, TeamList, TodoList, UpdateGoal, WaitFor, Workflow, WorktreeCreate, WorktreeList, WorktreeRemove, Write
         messages:
           user: text "Historical prompt before skill"
           assistant: []  calls call_resume_write:Write { "path": "result.txt" }, call_resume_skill:Skill { "skill": "review" }
