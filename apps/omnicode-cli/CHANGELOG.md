@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.6.3
+
+### Patch Changes
+
+- Publish the 1.6.0 advanced-strength changes as 1.6.3. Earlier attempts staged but never completed because `publishConfig.provenance` requires CI OIDC; no code changed.
+
 ## 1.6.2
 
 ### Patch Changes
