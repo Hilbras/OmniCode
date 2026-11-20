@@ -286,7 +286,6 @@ export class TelegramConnectorService implements ITelegramConnectorService {
         binding.sessionId,
         text.length > 0 ? text : 'Please analyze the attached content.',
         attachments,
-        binding.permission ?? 'manual',
         message.message_id,
       );
     } catch (error) {
@@ -590,7 +589,6 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     sessionId: string,
     text: string,
     attachments: readonly ContentPart[],
-    permission: string,
     replyToMessageId?: number,
   ): void {
     const alreadyRunning = this.chatQueues.has(chatId);
@@ -603,7 +601,6 @@ export class TelegramConnectorService implements ITelegramConnectorService {
           text,
           sessionId,
           attachments,
-          permission,
           replyToMessageId,
         ),
       )
@@ -690,7 +687,6 @@ export class TelegramConnectorService implements ITelegramConnectorService {
         binding.sessionId,
         text,
         attachments,
-        binding.permission ?? 'manual',
         group.messages[0]?.message_id,
       );
     } catch (error) {
@@ -1366,7 +1362,7 @@ export class TelegramConnectorService implements ITelegramConnectorService {
       }
       await this.bindChat(chatId, { ...binding, permission: mode, updatedAt: Date.now() });
       const agent = await this.mainAgentFor(binding.sessionId);
-      agent?.accessor.get(IAgentPermissionModeService).setMode(mode);
+      agent?.accessor.get(IAgentPermissionModeService).setModeAndBroadcast(mode);
       await this.audit('permission.changed', { chatId, mode });
       await answerCallbackQuery(token, callback.id, `Permission: ${mode}`);
       if (callback.message !== undefined) {
@@ -1473,7 +1469,6 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     text: string,
     sessionId: string,
     attachments: readonly ContentPart[] = [],
-    permission = 'manual',
     replyToMessageId?: number,
   ): Promise<void> {
     const agent = await this.mainAgentFor(sessionId);
@@ -1481,7 +1476,8 @@ export class TelegramConnectorService implements ITelegramConnectorService {
       await sendMessage(token, chatId, 'Main agent is not available for this session.');
       return;
     }
-    agent.accessor.get(IAgentPermissionModeService).setMode(normalizePermission(permission));
+    // The permission mode is global agent state set via /permission and the
+    // CLI; re-applying the binding's record here would fight other surfaces.
     const loop = agent.accessor.get(IAgentLoopService);
     const events = agent.accessor.get(IEventBus);
     let reply = '';
@@ -1812,6 +1808,10 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     if (text === '/status') {
       const status = await this.status();
       const binding = await this.bindingFor(chatId);
+      const liveAgent = binding === undefined ? undefined : await this.mainAgentFor(binding.sessionId);
+      const permission = binding === undefined
+        ? 'manual'
+        : liveAgent?.accessor.get(IAgentPermissionModeService).mode ?? binding.permission ?? 'manual';
       await sendMessage(
         token,
         chatId,
@@ -1820,7 +1820,7 @@ export class TelegramConnectorService implements ITelegramConnectorService {
           `Allowed chats: ${status.allowedChatIds.length}`,
           `Bound chats: ${status.boundChats ?? 0}`,
           binding === undefined ? 'Session: none' : `Session: ${binding.sessionId}`,
-          `Permission: ${binding?.permission ?? 'manual'}`,
+          `Permission: ${permission}`,
           `Uptime: ${status.uptimeMs === undefined ? 'n/a' : formatDuration(status.uptimeMs)}`,
           `Updates: ${status.metrics?.updates ?? 0} | Messages: ${status.metrics?.messages ?? 0} | Errors: ${status.metrics?.errors ?? 0}`,
         ].join('\n'),
@@ -1910,7 +1910,9 @@ export class TelegramConnectorService implements ITelegramConnectorService {
       }
       const next = text.split(/\s+/)[1];
       if (next === undefined) {
-        const current = binding.permission ?? 'manual';
+        const liveAgent = await this.mainAgentFor(binding.sessionId);
+        const current =
+          liveAgent?.accessor.get(IAgentPermissionModeService).mode ?? binding.permission ?? 'manual';
         await sendInlineKeyboard(
           token,
           chatId,
@@ -1935,7 +1937,7 @@ export class TelegramConnectorService implements ITelegramConnectorService {
         updatedAt: Date.now(),
       });
       const agent = await this.mainAgentFor(binding.sessionId);
-      agent?.accessor.get(IAgentPermissionModeService).setMode(next);
+      agent?.accessor.get(IAgentPermissionModeService).setModeAndBroadcast(next);
       await this.audit('permission.changed', { chatId, mode: next });
       await sendMessage(token, chatId, `Permission mode set to ${next}.`);
       return;
@@ -2181,10 +2183,6 @@ async function readProbeResponse(response: Response): Promise<TelegramProbe> {
       name: typeof bot['first_name'] === 'string' ? bot['first_name'] : '',
     },
   };
-}
-
-function normalizePermission(value: string): PermissionMode {
-  return value === 'auto' || value === 'yolo' ? value : 'manual';
 }
 
 function isPermissionMode(value: string): value is PermissionMode {

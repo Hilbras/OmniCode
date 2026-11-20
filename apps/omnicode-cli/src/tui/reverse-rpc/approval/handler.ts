@@ -10,6 +10,10 @@ export function createApprovalRequestHandler(
   return async (event): Promise<ApprovalResponse> => {
     try {
       const response = await controller.show(adaptApprovalRequest(event));
+      // The promise also settles when the interaction was answered on another
+      // surface (e.g. Telegram); the kernel no-ops the duplicate respond, and
+      // the local transcript entry would wrongly read "Cancelled".
+      if (controller.consumeExternalResolution() !== undefined) return response;
       onResponse?.(event, response);
       return response;
     } catch {

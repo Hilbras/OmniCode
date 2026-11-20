@@ -8,6 +8,9 @@ export function createQuestionAskHandler(controller: QuestionController): Questi
   return async (event): Promise<QuestionResult> => {
     try {
       const answers = await controller.show(adaptQuestionRequest(event));
+      // Answered on another surface: the kernel no-ops the duplicate respond,
+      // so hand back null without synthesizing a local answer.
+      if (controller.consumeExternalResolution() !== undefined) return null;
       return adaptQuestionAnswers(event, answers);
     } catch {
       return null;

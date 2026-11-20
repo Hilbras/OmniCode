@@ -1,5 +1,16 @@
 # @hilbras/omnicode
 
+## 1.7.4
+
+### Patch Changes
+
+- Fix two Telegram connector regressions: approving or answering from Telegram no
+  longer prints "Cancelled" in the CLI (the local panel skips its answer
+  bookkeeping when the interaction was resolved elsewhere), and the permission
+  mode chosen from Telegram now behaves like the CLI's: `/permission` broadcasts
+  to every agent, prompts no longer re-apply the chat binding's recorded mode, and
+  `/status` and the mode keyboard show the live agent mode.
+
 ## 1.7.3
 
 ### Patch Changes

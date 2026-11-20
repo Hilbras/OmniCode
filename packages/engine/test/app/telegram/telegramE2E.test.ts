@@ -162,6 +162,11 @@ describe('Telegram connector end-to-end', () => {
   let service: TelegramConnectorService;
   let api: FakeTelegramApi;
   let pairingCode = '';
+  let permissionMode: {
+    mode: 'manual' | 'auto' | 'yolo';
+    setMode: ReturnType<typeof vi.fn>;
+    setModeAndBroadcast: ReturnType<typeof vi.fn>;
+  };
   let lastSubmit: unknown;
   let interactionRequest:
     | { readonly id: string; readonly kind: string; readonly payload: unknown }
@@ -174,6 +179,13 @@ describe('Telegram connector end-to-end', () => {
   const listeners: ((event: unknown) => void)[] = [];
 
   beforeEach(async () => {
+    permissionMode = {
+      mode: 'manual',
+      setMode: vi.fn(),
+      setModeAndBroadcast: vi.fn((mode: 'manual' | 'auto' | 'yolo') => {
+        permissionMode.mode = mode;
+      }),
+    };
     homeDir = await mkdtemp(join(tmpdir(), 'omnicode-telegram-e2e-'));
     pairingCode = '';
     lastSubmit = undefined;
@@ -252,7 +264,7 @@ describe('Telegram connector end-to-end', () => {
                       };
                     }
                     if (inner === IAgentPermissionModeService) {
-                      return { setMode: vi.fn() };
+                      return permissionMode;
                     }
                     if (inner === IModelCatalog) {
                       return {
@@ -453,6 +465,34 @@ describe('Telegram connector end-to-end', () => {
       bindings?: Record<string, { sessionId?: string }>;
     };
     expect(config.bindings?.[String(CHAT_ID)]?.sessionId).toBe('session-1');
+  });
+
+  it('applies /permission yolo globally without re-applying it per prompt', async () => {
+    await pair();
+    api.push([
+      { update_id: 1, message: { chat: { id: CHAT_ID }, text: '/permission yolo' } },
+    ]);
+    api.push([
+      { update_id: 2, message: { message_id: 40, chat: { id: CHAT_ID }, text: 'hello' } },
+    ]);
+    await service.start();
+
+    await waitFor(() => api.sent.some((entry) => entry.text === 'Permission mode set to yolo.'));
+    expect(permissionMode.setModeAndBroadcast).toHaveBeenCalledWith('yolo');
+
+    await waitFor(
+      () =>
+        api.edited.some((entry) => entry.text === 'Hello from OmniCode') ||
+        api.sent.some((entry) => entry.text === 'Hello from OmniCode'),
+    );
+
+    expect(permissionMode.setMode).not.toHaveBeenCalled();
+    expect(permissionMode.mode).toBe('yolo');
+
+    const config = JSON.parse(await readFile(join(homeDir, 'telegram.json'), 'utf8')) as {
+      bindings?: Record<string, { permission?: string }>;
+    };
+    expect(config.bindings?.[String(CHAT_ID)]?.permission).toBe('yolo');
   });
 
   it('offers the session picker for an album in an unbound chat', async () => {

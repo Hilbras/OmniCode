@@ -23,6 +23,7 @@ export abstract class ReverseRpcController<TPayload, TResponse> {
   private uiHooks: ReverseRpcUIHooks<TPayload> | null = null;
   private current: Pending<TPayload, TResponse> | null = null;
   private queue: Array<Pending<TPayload, TResponse>> = [];
+  private externalResolution: TPayload | undefined;
 
   setUIHooks(hooks: ReverseRpcUIHooks<TPayload>): void {
     this.uiHooks = hooks;
@@ -93,11 +94,23 @@ export abstract class ReverseRpcController<TPayload, TResponse> {
       const entry = this.current;
       this.current = null;
       this.uiHooks?.hidePanel();
+      this.externalResolution = entry.payload;
       entry.resolve(cancelResponse);
       this.advanceOrHide();
       return entry.payload;
     }
     return undefined;
+  }
+
+  /**
+   * Returns the payload resolved by the most recent `resolveExternally` call
+   * and clears it. Handlers consult this to skip their local-answer
+   * bookkeeping (e.g. transcript entries) for answers made elsewhere.
+   */
+  consumeExternalResolution(): TPayload | undefined {
+    const payload = this.externalResolution;
+    this.externalResolution = undefined;
+    return payload;
   }
 
   private advanceOrHide(): void {
