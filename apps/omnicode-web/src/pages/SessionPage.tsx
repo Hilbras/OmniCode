@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMessages, useSubmitPrompt, useAbortSession, useSessionStatus } from '../hooks/useSessions';
+import { useSessionEvents } from '../hooks/useSessionEvents';
 import type { AppMessage, AppMessageContent } from '../api';
 
 function contentToText(content: AppMessageContent[]): string {
@@ -19,12 +20,14 @@ export function SessionPage() {
   const submitPrompt = useSubmitPrompt(id);
   const abortSession = useAbortSession(id);
   const { data: status } = useSessionStatus(id);
+  const live = useSessionEvents(id);
 
-  const isStreaming = submitPrompt.isPending || abortSession.isPending || (status?.contextUsage ?? 0) > 0;
+  const isStreaming =
+    submitPrompt.isPending || abortSession.isPending || live.busy || (status?.contextUsage ?? 0) > 0;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages?.length, isStreaming]);
+  }, [messages?.length, live.streamingText, isStreaming]);
 
   const handleSend = useCallback(
     (e: React.FormEvent) => {
@@ -44,6 +47,22 @@ export function SessionPage() {
         {(messages ?? []).map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
+        {live.streamingText.length > 0 && (
+          <div className="my-1 flex flex-col items-start">
+            <span className="mono-label mb-1">Assistant</span>
+            <div className="panel max-w-[85%] rounded-xl px-4 py-3">
+              <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                {live.streamingText}
+              </div>
+            </div>
+          </div>
+        )}
+        {isStreaming && live.streamingText.length === 0 && (
+          <div className="flex items-center gap-2 px-1">
+            <span className="eyebrow-dot soft-pulse" />
+            <span className="mono-label">thinking…</span>
+          </div>
+        )}
         <div ref={bottomRef} />
       </div>
 

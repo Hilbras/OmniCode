@@ -200,3 +200,11 @@ _Filled as phases land: commit hash, tests, gate output per item._
   toggle persisted, Geist loaded, regions present, daemon-error state renders.
   Tests 21/21 (design-token parity guard, theme helpers, route frames);
   `pnpm build` OK; `check:guards`, `lint` green.
+- **Phase B — live read path, landed.** `src/api/sessionEvents.ts` (pure live
+  turn reducer: assistantDelta accumulation, thinking indicator,
+  sessionWorkChanged busy/idle with refetch flag), `hooks/useSessionEvents.ts`
+  (one `connectEvents` connection per mounted session view, per-session
+  subscribe, query invalidation on persisted-data events), `SessionPage`
+  streams the in-flight assistant bubble and a thinking indicator. Tests 26/26
+  (live projection reducer + routes + tokens + theme); `pnpm build` OK;
+  `check:guards`, `lint` green.
