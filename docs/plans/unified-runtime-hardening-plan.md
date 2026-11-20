@@ -162,3 +162,9 @@ _Each item appends: commit hash, fail-on-base evidence, gates output._
   background memory-writer calls were counted as agent turns, and tool removal
   after disabling notify_user was misread. API suite 18/18. The llm concurrency
   test now uses explicit gates instead of 10/20/30ms timers; 12/12.
+  Full-graph reruns exposed 12 pre-existing features-integration failures
+  (stale tool-list snapshots, brittle token counts, buffered second turn-end,
+  truncated-summary escalation) and 3 engine failures (checkpoint exemption
+  for the append-only message clock, tower-worker missing four coder tools,
+  a load-sensitive import timeout). All repaired; features-integration
+  1705/1705, engine 21/21 on the affected files.

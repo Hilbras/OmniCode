@@ -12,6 +12,7 @@ import { TOWER_WORKER_PROFILE } from './tower';
 import TOWER_WORKER_ROLE_OVERLAY from './tower-worker-overlay.md?raw';
 
 const TOWER_WORKER_TOOLS = [
+  'RequestPermissions',
   'Bash',
   'TowerComplete',
   'TowerFinding',
@@ -63,6 +64,10 @@ const TOWER_WORKER_TOOLS = [
   'ArtifactRecord',
   'SourceRecord',
   'Team',
+  'GetContextRemaining',
+  'NewContextWindow',
+  'RestoreFile',
+  'Workflow',
 ] as const;
 
 const CODER_ROLE =

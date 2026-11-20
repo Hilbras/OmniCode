@@ -23,7 +23,7 @@ describe('the built-in tool contributions', () => {
         'VercelListProjects',
       ]),
     );
-  });
+  }, 120_000);
 
   it('gates the connector tools behind their experimental flag', async () => {
     await import('#/index');

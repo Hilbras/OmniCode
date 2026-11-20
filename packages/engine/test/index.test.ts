@@ -292,6 +292,8 @@ describe('conversation-time checkpoint registration', () => {
     'goalForkNotice',
     'turn',
     'fullCompaction.wireRanges',
+    // Append-only per-message wall clock: no undo semantics are needed.
+    'context.messageTimes',
   ]);
   const CONTEXT_OWNER_STATE = 'contextMemory';
   const CONTEXT_EVENTS: readonly Event2Class[] = [
