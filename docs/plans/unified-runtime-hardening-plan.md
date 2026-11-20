@@ -171,3 +171,8 @@ _Each item appends: commit hash, fail-on-base evidence, gates output._
   two CLI failures: a stale visible-subcommand list (apply was added) and a
   force-exit key test that checked before the awaited auxiliary-work flush
   installed the listener. Both repaired; CLI affected files 377/377.
+  **D5 RESULT:** `pnpm test` → Tasks 37 successful / 37 total, CLI 4504 passed
+  | 6 skipped, zero failing tests.
+- **D6** — `pnpm preflight` → `preflight: OK (17 steps)`, exit 0. The full gate
+  ran workspace, guards, lint, full-graph typecheck, 14 targeted suites and
+  the eval gate. All 22 plan items now have a commit and evidence above.
