@@ -125,18 +125,25 @@ describe('stress: concurrent tool dispatch', () => {
     const stream = createMockStream([tc1, tc2, tc3]);
     const provider = createMockProvider(stream);
 
-    // Track completion order
+    // Track completion order with explicit gates instead of wall-clock delays:
+    // timers invert under parallel CI load, which made this test flaky.
     const completionOrder: string[] = [];
+    let releaseAfterThree!: () => void;
+    let releaseAfterTwo!: () => void;
+    const afterThree = new Promise<void>((resolve) => { releaseAfterThree = resolve; });
+    const afterTwo = new Promise<void>((resolve) => { releaseAfterTwo = resolve; });
 
     const toolset = new SimpleToolset();
     toolset.add(
-      { name: 'slow_tool', description: 'Simulates varying latency', parameters: {} },
+      { name: 'slow_tool', description: 'Simulates gated completion order', parameters: {} },
       async (args: JsonValue): Promise<ToolReturnValue> => {
         const obj = args as Record<string, JsonValue>;
         const delay = obj['delay'] as number;
-        // Reverse delay order: call-3 finishes first, call-1 finishes last
-        await new Promise<void>((resolve) => setTimeout(resolve, (4 - delay) * 10));
+        if (delay === 1) await afterTwo;
+        if (delay === 2) await afterThree;
         completionOrder.push(`call-${delay}`);
+        if (delay === 3) releaseAfterThree();
+        if (delay === 2) releaseAfterTwo();
         return toolOk({ output: `result-${delay}` });
       },
     );

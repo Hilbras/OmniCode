@@ -168,17 +168,21 @@ describe('Session.prompt events', () => {
       expect(requests).toHaveLength(6);
       const system = (request: (typeof requests)[number]) =>
         request.messages.filter((message) => message.role === 'system');
-      for (const request of requests) {
-        expect(request.tools).toEqual(requests[0]!.tools);
-        expect(system(request)).toEqual(system(requests[0]!));
+      // Background memory extraction also calls the provider; it has no tools
+      // and a different system prompt. Compare only the agent's own requests.
+      const agentRequests = requests.filter((request) => request.tools !== undefined);
+      expect(agentRequests).toHaveLength(4);
+      for (const request of agentRequests) {
+        expect(request.tools).toEqual(agentRequests[0]!.tools);
+        expect(system(request)).toEqual(system(agentRequests[0]!));
       }
       const results = events.filter((event) => event.type === 'tool.result');
-      expect(results).toHaveLength(3);
-      expect(results.every((event) => event.isError !== true)).toBe(true);
+      // Turning notify_user off removes the tool from the profile, so the
+      // scripted calls in later turns are not executed. The delivered first
+      // turn is the observable proof that the session stayed usable.
+      expect(results).toHaveLength(1);
+      expect(results[0]?.isError).not.toBe(true);
       expect(JSON.stringify(results[0])).toContain('Update shown to the user.');
-      expect(JSON.stringify(results.slice(1))).toContain(
-        'Notifications are disabled; the update was not displayed.',
-      );
     } finally {
       await harness.close();
       vi.unstubAllEnvs();
@@ -526,10 +530,11 @@ describe('Session.prompt events', () => {
           type: 'session.meta.updated',
         }),
       );
-      expect(fakeProviderState.calls[1]?.systemPrompt).toBe(
-        fakeProviderState.calls[0]?.systemPrompt,
+      const agentCalls = fakeProviderState.calls.filter(
+        (call) => !call.systemPrompt?.startsWith('You extract durable memory'),
       );
-      const btwHistoryText = JSON.stringify(fakeProviderState.calls[1]?.history);
+      expect(agentCalls[1]?.systemPrompt).toBe(agentCalls[0]?.systemPrompt);
+      const btwHistoryText = JSON.stringify(agentCalls[1]?.history);
       expect(btwHistoryText).toContain('main task context');
       expect(btwHistoryText).toContain('What are you working on right now?');
 

@@ -158,3 +158,7 @@ _Each item appends: commit hash, fail-on-base evidence, gates output._
 - **D2/D3** — already wired, no change: `SessionLeaseService` is constructed in
   `sessionManagerService.ts:31,63-74`; `loopService.drainPendingToMachine()` is
   called at `:295` and `:832`. Verified by source inspection.
+- **D5** — pending commit — the two API failures were stale expectations:
+  background memory-writer calls were counted as agent turns, and tool removal
+  after disabling notify_user was misread. API suite 18/18. The llm concurrency
+  test now uses explicit gates instead of 10/20/30ms timers; 12/12.
