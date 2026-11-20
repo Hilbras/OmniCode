@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.6.2
+
+### Patch Changes
+
+- Republish the 1.6.0 advanced-strength changes as 1.6.2. npm retained staged 1.6.0/1.6.1 records because local publishing cannot supply the CI OIDC token required by provenance; no code changed.
+
 ## 1.6.1
 
 ### Patch Changes
