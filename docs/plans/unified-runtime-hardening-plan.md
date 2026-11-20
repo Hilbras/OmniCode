@@ -123,3 +123,5 @@ _Each item appends: commit hash, fail-on-base evidence, gates output._
   regeneration.
 - **A2** — pending commit — 6/6 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
+- **A3** — pending commit — 5/5 tests; fail-on-base module-not-found; engine
+  typecheck, check:guards, pnpm lint all exit 0.
