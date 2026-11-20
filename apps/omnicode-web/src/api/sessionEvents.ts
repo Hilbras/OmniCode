@@ -1,4 +1,4 @@
-import type { AppEvent } from '@hilbras/app-core/api';
+import type { AppApprovalRequest, AppEvent, AppQuestionRequest } from '@hilbras/app-core/api';
 
 /**
  * Live-turn projection for one open session: the streaming assistant text and
@@ -18,6 +18,10 @@ export interface LiveTurnState {
   readonly busy: boolean;
   /** Set when the event changes persisted data (messages, sessions). */
   readonly refetch: boolean;
+  /** Approval awaiting the user's decision, if any. */
+  readonly pendingApproval: AppApprovalRequest | null;
+  /** Question awaiting the user's answers, if any. */
+  readonly pendingQuestion: AppQuestionRequest | null;
 }
 
 export const idleLiveTurn: LiveTurnState = {
@@ -25,6 +29,8 @@ export const idleLiveTurn: LiveTurnState = {
   thinking: false,
   busy: false,
   refetch: false,
+  pendingApproval: null,
+  pendingQuestion: null,
 };
 
 export function reduceLiveTurn(
@@ -37,6 +43,7 @@ export function reduceLiveTurn(
       if (event.sessionId !== sessionId) return prev;
       const text = event.delta.text ?? '';
       return {
+        ...prev,
         streamingText: prev.streamingText + text,
         thinking: typeof event.delta.thinking === 'string' && event.delta.text === undefined,
         busy: true,
@@ -58,7 +65,7 @@ export function reduceLiveTurn(
       if (event.busy) return { ...prev, busy: true, refetch: false };
       // Turn over: the transcript will change once the final message lands;
       // refetch clears the streaming buffer on the next render pass.
-      return { streamingText: '', thinking: false, busy: false, refetch: true };
+      return { ...prev, streamingText: '', thinking: false, busy: false, refetch: true };
     }
     case 'sessionUpdated': {
       if (event.session.id !== sessionId) return prev;
@@ -67,6 +74,25 @@ export function reduceLiveTurn(
     case 'sessionMetaUpdated': {
       if (event.sessionId !== sessionId) return prev;
       return { ...prev, refetch: true };
+    }
+    case 'approvalRequested': {
+      if (event.approval.sessionId !== sessionId) return prev;
+      return { ...prev, pendingApproval: event.approval };
+    }
+    case 'approvalResolved':
+    case 'approvalExpired': {
+      if (prev.pendingApproval === null) return prev;
+      if (prev.pendingApproval.approvalId !== event.approvalId) return prev;
+      return { ...prev, pendingApproval: null };
+    }
+    case 'questionRequested': {
+      if (event.question.sessionId !== sessionId) return prev;
+      return { ...prev, pendingQuestion: event.question };
+    }
+    case 'questionAnswered': {
+      if (prev.pendingQuestion === null) return prev;
+      if (prev.pendingQuestion.questionId !== event.questionId) return prev;
+      return { ...prev, pendingQuestion: null };
     }
     default:
       return prev;

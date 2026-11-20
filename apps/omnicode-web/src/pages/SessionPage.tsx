@@ -2,6 +2,9 @@ import { useState, useCallback, useRef, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useMessages, useSubmitPrompt, useAbortSession, useSessionStatus } from '../hooks/useSessions';
 import { useSessionEvents } from '../hooks/useSessionEvents';
+import { ApprovalDialog } from '../components/ApprovalDialog';
+import { QuestionDialog } from '../components/QuestionDialog';
+import { ModeSelector } from '../components/ModeSelector';
 import type { AppMessage, AppMessageContent } from '../api';
 
 function contentToText(content: AppMessageContent[]): string {
@@ -43,6 +46,12 @@ export function SessionPage() {
   return (
     <div className="flex h-full min-w-0 flex-col">
       <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-4 py-4">
+        {live.pendingApproval !== null && id !== undefined && (
+          <ApprovalDialog sessionId={id} approval={live.pendingApproval} />
+        )}
+        {live.pendingQuestion !== null && id !== undefined && (
+          <QuestionDialog sessionId={id} question={live.pendingQuestion} />
+        )}
         {msgPending && <p className="text-center text-sm muted">Loading messages…</p>}
         {(messages ?? []).map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
@@ -92,6 +101,7 @@ export function SessionPage() {
             }}
           />
           <div className="flex items-center gap-2">
+            <ModeSelector sessionId={id ?? ''} mode={status?.permission} />
             <span className="mono-label flex-1">
               {isStreaming ? 'Agent is thinking…' : 'Ready'}
             </span>

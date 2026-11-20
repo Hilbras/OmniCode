@@ -58,6 +58,81 @@ describe('live turn projection', () => {
     expect(state.refetch).toBe(true);
   });
 
+  it('surfaces and clears a pending approval', () => {
+    const approval = {
+      approvalId: 'a1',
+      sessionId: SESSION,
+      toolCallId: 't1',
+      toolName: 'Bash',
+      action: 'run command',
+      display: {},
+      expiresAt: '',
+      createdAt: '',
+    };
+    let state = reduceLiveTurn(idleLiveTurn, {
+      type: 'approvalRequested',
+      sessionId: SESSION,
+      approval,
+    } as never, SESSION);
+    expect(state.pendingApproval?.approvalId).toBe('a1');
+
+    state = reduceLiveTurn(state, {
+      type: 'approvalResolved',
+      sessionId: SESSION,
+      approvalId: 'a1',
+      decision: 'approved',
+      resolvedAt: '',
+    } as never, SESSION);
+    expect(state.pendingApproval).toBeNull();
+  });
+
+  it('keeps the approval when a different one resolves', () => {
+    const approval = {
+      approvalId: 'a1',
+      sessionId: SESSION,
+      toolCallId: 't1',
+      toolName: 'Bash',
+      action: 'run command',
+      display: {},
+      expiresAt: '',
+      createdAt: '',
+    };
+    let state = reduceLiveTurn(idleLiveTurn, {
+      type: 'approvalRequested',
+      sessionId: SESSION,
+      approval,
+    } as never, SESSION);
+    state = reduceLiveTurn(state, {
+      type: 'approvalExpired',
+      sessionId: SESSION,
+      approvalId: 'other',
+    } as never, SESSION);
+    expect(state.pendingApproval?.approvalId).toBe('a1');
+  });
+
+  it('surfaces and clears a pending question', () => {
+    const question = {
+      questionId: 'q1',
+      sessionId: SESSION,
+      questions: [],
+      createdAt: '',
+    };
+    let state = reduceLiveTurn(idleLiveTurn, {
+      type: 'questionRequested',
+      sessionId: SESSION,
+      question,
+    } as never, SESSION);
+    expect(state.pendingQuestion?.questionId).toBe('q1');
+
+    state = reduceLiveTurn(state, {
+      type: 'questionAnswered',
+      sessionId: SESSION,
+      questionId: 'q1',
+      resolvedAt: '',
+    } as never, SESSION);
+    expect(state.pendingQuestion).toBeNull();
+  });
+
   it('marks busy without refetch on work start', () => {
     const state = reduceLiveTurn(idleLiveTurn, {
       type: 'sessionWorkChanged',

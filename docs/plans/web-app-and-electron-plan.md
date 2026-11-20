@@ -208,3 +208,10 @@ _Filled as phases land: commit hash, tests, gate output per item._
   streams the in-flight assistant bubble and a thinking indicator. Tests 26/26
   (live projection reducer + routes + tokens + theme); `pnpm build` OK;
   `check:guards`, `lint` green.
+- **Phase C — act, landed.** Live projection extended with pending
+  approvals/questions (`approvalRequested/Resolved/Expired`,
+  `questionRequested/Answered`); `ApprovalDialog` (approve/reject via
+  `respondApproval`), `QuestionDialog` (single/multi/other answers via
+  `respondQuestion`), `ModeSelector` (manual/auto/yolo via the session patch),
+  all pinned in the transcript pane. Tests 29/29 (interaction reducer cases);
+  `pnpm build` OK; `check:guards`, `lint` green.
