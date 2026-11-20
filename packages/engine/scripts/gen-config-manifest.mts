@@ -2,9 +2,9 @@ import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import type { ConfigSectionContribution } from '#/app/config/configSectionContributions';
-import { getConfigSectionContributions } from '#/app/config/configSectionContributions';
-import { camelToSnake } from '#/app/config/toml';
+import type { ConfigSectionContribution } from '../src/app/config/configSectionContributions.ts';
+import { getConfigSectionContributions } from '../src/app/config/configSectionContributions.ts';
+import { camelToSnake } from '../src/app/config/toml.ts';
 
 import {
   asJsonSchema,

@@ -17,8 +17,12 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      # check:guards includes generated-artifact freshness, which re-runs the
+      # engine manifest generators (they import the compiled raw-text loader)
+      # and expects the CLI's generated vis asset. Both are build outputs; on a
+      # fresh runner they do not exist until build has run. Build first.
+      - run: pnpm -r --if-present build
       - run: pnpm check:guards
       - run: pnpm check:audit
       - run: pnpm -r --if-present typecheck
-      - run: pnpm -r --if-present build
       - run: pnpm -r --if-present test
