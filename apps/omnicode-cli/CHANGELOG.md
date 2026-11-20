@@ -1,5 +1,14 @@
 # @hilbras/omnicode
 
+## 1.7.3
+
+### Patch Changes
+
+- Yolo mode now bypasses the sensitive-file-access and git-control-path approval
+  asks, matching the dangerous-command ask: those two policies previously outranked
+  the yolo bypass and kept prompting for `.env`, `.ssh` and `.git` path access
+  after `/permission yolo`.
+
 ## 1.7.2
 
 ### Patch Changes
