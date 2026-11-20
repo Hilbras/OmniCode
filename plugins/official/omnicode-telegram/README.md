@@ -105,11 +105,19 @@ own words rather than its plumbing:
 Now updating the tests to the new behaviour:
 ```
 
-Tool names, commands and step counts are deliberately left out — the point is to read what
-the agent says it is doing. The newest text frame of the turn is shown, escaped and cut to
-500 characters so a long paragraph cannot flood the chat. That same message is edited into
-the finish report when the turn ends, so a chat shows one entry per turn rather than
-silence followed by a wall of text. Reports too long for one message arrive as a summary
+Tool names, commands and step counts are deliberately left out of that progress message —
+the point is to read what the agent says it is doing. MCP tool calls are the exception: each
+one gets its own short message so you can see when the agent reaches an MCP server:
+
+```
+🔌 MCP call: mcp__github__search_issues {"query":"..."}
+```
+
+The newest text frame of the turn is shown, escaped and cut to 500 characters so a long
+paragraph cannot flood the chat. That same message is edited into the finish report when the
+turn ends, so a chat shows one entry per turn rather than silence followed by a wall of text.
+To turn MCP call messages off, set `"showMcpCalls": false` in `~/.omnicode/telegram.json`.
+Reports too long for one message arrive as a summary
 plus a `report.md` attachment.
 
 ## Images and videos

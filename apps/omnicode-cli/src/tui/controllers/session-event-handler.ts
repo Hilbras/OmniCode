@@ -736,6 +736,9 @@ export class SessionEventHandler {
   private handleToolCall(event: ToolCallStartedEvent): void {
     const { streamingUI } = this.host;
     this.host.surveyController.notifyToolCallStarted(event.toolCallId, event.name);
+    if (event.name.startsWith('mcp__')) {
+      this.host.showStatus(`🔌 MCP call: ${event.name}`);
+    }
     streamingUI.flushNow();
     const { turnId, step } = streamingUI.getTurnContext();
     const toolCall: ToolCallBlockData = {

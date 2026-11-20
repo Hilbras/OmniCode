@@ -54,4 +54,6 @@ export interface TelegramSettingsInput {
   readonly mode?: TelegramMode;
   readonly webhookUrl?: string;
   readonly webhookSecret?: string;
+  /** Post a short message for every MCP tool call. Defaults to true. */
+  readonly showMcpCalls?: boolean;
 }

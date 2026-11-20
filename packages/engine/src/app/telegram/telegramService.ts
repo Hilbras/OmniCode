@@ -178,6 +178,7 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     if (input.mode !== undefined) next['mode'] = input.mode;
     if (input.webhookUrl !== undefined) next['webhookUrl'] = input.webhookUrl;
     if (input.webhookSecret !== undefined) next['webhookSecret'] = input.webhookSecret;
+    if (input.showMcpCalls !== undefined) next['showMcpCalls'] = input.showMcpCalls;
     await writeJson(this.configPath, next);
     return this.status();
   }
@@ -1417,6 +1418,7 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     const progressId = await sendMessage(token, chatId, 'OmniCode is working…', {
       replyToMessageId,
     });
+    const showMcpCalls = ((await this.readSecureConfig())?.['showMcpCalls'] ?? true) !== false;
     let lastProgress = '';
     const progressTimer =
       progressId === undefined
@@ -1435,6 +1437,17 @@ export class TelegramConnectorService implements ITelegramConnectorService {
         typeof (event as unknown as { readonly delta?: unknown }).delta === 'string'
       ) {
         reply += (event as unknown as { readonly delta: string }).delta;
+        return;
+      }
+      if (event.type === 'tool.call.started' && showMcpCalls) {
+        const call = event as unknown as {
+          readonly agentId?: unknown;
+          readonly name?: unknown;
+          readonly args?: unknown;
+        };
+        if (call.agentId !== agent.id || typeof call.name !== 'string') return;
+        const notice = formatMcpCallNotice(call.name, call.args);
+        if (notice !== undefined) void sendMessage(token, chatId, notice).catch(() => undefined);
         return;
       }
       if (event.type === 'interaction.request') {
@@ -2704,6 +2717,27 @@ export function redactTelegramSecrets(value: string): string {
   return value
     .replaceAll(/\/bot\d+:[A-Za-z0-9_-]+/g, '/bot[redacted]')
     .replaceAll(/\b\d{6,}:[A-Za-z0-9_-]{20,}\b/g, '[redacted]');
+}
+
+const MCP_NAME_PREFIX = 'mcp__';
+
+export function isMcpToolName(name: string): boolean {
+  return name.startsWith(MCP_NAME_PREFIX);
+}
+
+export function formatMcpCallNotice(name: string, args: unknown): string | undefined {
+  if (!isMcpToolName(name)) return undefined;
+  const shownName = redactTelegramSecrets(name).slice(0, 120);
+  let detail = '';
+  try {
+    const serialized = JSON.stringify(args);
+    if (typeof serialized === 'string' && serialized !== '{}' && serialized !== '[]') {
+      detail = ` ${redactTelegramSecrets(serialized).slice(0, 200)}`;
+    }
+  } catch {
+    detail = '';
+  }
+  return `🔌 MCP call: ${shownName}${detail}`;
 }
 
 function secretsMatch(expected: string, candidate: string | undefined): boolean {

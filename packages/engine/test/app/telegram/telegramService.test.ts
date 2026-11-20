@@ -4,7 +4,12 @@ import { join } from 'node:path';
 
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { TelegramConnectorService, redactTelegramSecrets } from '#/app/telegram/telegramService';
+import {
+  TelegramConnectorService,
+  formatMcpCallNotice,
+  isMcpToolName,
+  redactTelegramSecrets,
+} from '#/app/telegram/telegramService';
 import type { IBootstrapService } from '#/app/bootstrap/bootstrap';
 import type { ISessionManager } from '#/app/sessionManager/sessionManager';
 import type { IWorkspaceService } from '#/app/workspace/workspace';
@@ -136,6 +141,32 @@ describe('TelegramConnectorService saveSettings', () => {
     expect(typeof config['botTokenEncrypted']).toBe('string');
     expect(config['botToken']).toBeUndefined();
     expect(config['allowedChatIds']).toEqual([7]);
+  });
+
+  it('persists the MCP call notice opt-out', async () => {
+    await writeConfig({ botToken: TOKEN });
+
+    await service.saveSettings({ showMcpCalls: false });
+
+    expect((await readConfig())['showMcpCalls']).toBe(false);
+  });
+});
+
+describe('formatMcpCallNotice', () => {
+  it('ignores built-in tools', () => {
+    expect(isMcpToolName('Bash')).toBe(false);
+    expect(formatMcpCallNotice('Bash', { command: 'ls' })).toBeUndefined();
+  });
+
+  it('formats an MCP call and redacts token-shaped arguments', () => {
+    expect(isMcpToolName('mcp__github__search')).toBe(true);
+    expect(formatMcpCallNotice('mcp__github__search', { token: '123456:ABCDEFGHIJKLMNOPQRSTUV' })).toBe(
+      '🔌 MCP call: mcp__github__search {"token":"[redacted]"}',
+    );
+  });
+
+  it('omits empty arguments', () => {
+    expect(formatMcpCallNotice('mcp__github__search', {})).toBe('🔌 MCP call: mcp__github__search');
   });
 });
 
