@@ -21,6 +21,7 @@ export class InteractionRequestEvent extends AgentEvent2<
   static override readonly schema = interactionRequestSchema;
 }
 export interface InteractionRequestEvent {
+  readonly type: 'interaction.request';
   readonly agentId: string;
   readonly id: string;
   readonly kind: InteractionKind;
@@ -39,9 +40,11 @@ export class InteractionResolvedEvent extends AgentEvent2<
 > {
   static override readonly type = 'interaction.resolved';
   static override readonly durable = true;
+  static override readonly observable = true;
   static override readonly schema = interactionResolvedSchema;
 }
 export interface InteractionResolvedEvent {
+  readonly type: 'interaction.resolved';
   readonly agentId: string;
   readonly id: string;
   readonly response: unknown;

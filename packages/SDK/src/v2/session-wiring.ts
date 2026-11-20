@@ -61,10 +61,10 @@ import { translateDomainEvent } from '#/v2/event-mapper';
 export interface SessionEventSink {
   receiveEvent(event: Event): void;
   requestApproval(
-    request: ApprovalRequest & { sessionId: string; agentId: string },
+    request: ApprovalRequest & { sessionId: string; agentId: string; interactionId?: string },
   ): Promise<ApprovalResponse>;
   requestQuestion(
-    request: QuestionRequest & { sessionId: string; agentId: string },
+    request: QuestionRequest & { sessionId: string; agentId: string; interactionId?: string },
   ): Promise<QuestionResult>;
   toolCall(request: ToolCallRequest): Promise<ToolCallResponse>;
 }
@@ -214,6 +214,7 @@ export class SessionEventWiring {
         toolName: payload.toolName,
         action: payload.action,
         display: payload.display,
+        interactionId: interaction.id,
         sessionId: this.session.id,
         agentId: payload.agentId ?? interactionAgentId(interaction) ?? MAIN_AGENT_ID,
       });
@@ -237,6 +238,7 @@ export class SessionEventWiring {
         turnId: payload.turnId,
         toolCallId: payload.toolCallId,
         questions: payload.questions,
+        interactionId: interaction.id,
         sessionId: this.session.id,
         agentId: interactionAgentId(interaction) ?? MAIN_AGENT_ID,
       });

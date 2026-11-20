@@ -55,7 +55,7 @@ const CONFIG_FILE = 'telegram.json';
 const STATE_FILE = 'telegram-state.json';
 const BOT_TOKEN_ENV = 'TELEGRAM_BOT_TOKEN';
 const HEARTBEAT_STALE_MS = 90_000;
-const PROBE_TIMEOUT_MS = 10_000;
+const PROBE_TIMEOUT_MS = 20_000;
 const PAIRING_TTL_MS = 10 * 60 * 1000;
 const UPDATE_TIMEOUT_SECONDS = 25;
 const RETRY_ATTEMPTS = 3;
@@ -87,6 +87,10 @@ export class TelegramConnectorService implements ITelegramConnectorService {
   private readonly handledInteractions = new Set<string>();
   private readonly questionFlows = new Map<string, TelegramQuestionFlow>();
   private readonly pendingTextReplies = new Map<number, TelegramPendingTextReply>();
+  private readonly pendingSessionPicks = new Map<
+    number,
+    { readonly message: NonNullable<TelegramUpdate['message']>; readonly at: number }
+  >();
   private readonly mediaGroups = new Map<
     string,
     {
@@ -196,7 +200,7 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     return this.status();
   }
 
-  private async bindChat(chatId: number, binding: TelegramChatBinding): Promise<void> {
+  async bindChat(chatId: number, binding: TelegramChatBinding): Promise<void> {
     const config = (await readJsonObject(this.configPath)) ?? {};
     const bindings = { ...readBindings(config['bindings']), [String(chatId)]: binding };
     await writeJson(this.configPath, { ...config, bindings });
@@ -223,22 +227,71 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     return best?.handle;
   }
 
-  private async sessionForChat(chatId: number): Promise<TelegramChatBinding> {
-    const existing = await this.bindingFor(chatId);
-    if (existing !== undefined) return existing;
-    const recent = await this.latestSession();
-    if (recent !== undefined) {
-      const context = recent.accessor.get(ISessionContext);
-      const binding: TelegramChatBinding = {
-        sessionId: context.sessionId,
-        workspaceRoot: context.cwd,
-        updatedAt: Date.now(),
-        permission: 'manual',
-      };
-      await this.bindChat(chatId, binding);
-      return binding;
+  private async sendSessionPicker(
+    token: string,
+    chatId: number,
+    headline: string,
+    emptyMessage: string,
+  ): Promise<void> {
+    const handles = this.sessions.list().slice(0, 10);
+    if (handles.length === 0) {
+      await sendMessage(token, chatId, emptyMessage);
+      return;
     }
-    return this.createSessionForChat(chatId);
+    const current = await this.bindingFor(chatId);
+    const rows: { text: string; callback_data: string }[][] = [];
+    for (const handle of handles) {
+      const context = handle.accessor.get(ISessionContext);
+      let title = context.sessionId;
+      try {
+        const meta = await handle.accessor.get(ISessionMetadata).read();
+        if (meta.title !== undefined && meta.title.trim().length > 0) title = meta.title;
+      } catch {
+        /* title is optional */
+      }
+      const marker = current?.sessionId === context.sessionId ? '✓ ' : '';
+      rows.push([
+        {
+          text: `${marker}${title}`.slice(0, 60),
+          callback_data: `s:${context.sessionId}`,
+        },
+      ]);
+    }
+    rows.push([{ text: '➕ Start new session', callback_data: 'n:new' }]);
+    await sendInlineKeyboard(token, chatId, headline, rows);
+  }
+
+  private takePendingPick(
+    chatId: number,
+  ): NonNullable<TelegramUpdate['message']> | undefined {
+    const pick = this.pendingSessionPicks.get(chatId);
+    this.pendingSessionPicks.delete(chatId);
+    if (pick === undefined) return undefined;
+    if (Date.now() - pick.at > PAIRING_TTL_MS) return undefined;
+    return pick.message;
+  }
+
+  private async routeBoundPrompt(
+    token: string,
+    chatId: number,
+    binding: TelegramChatBinding,
+    message: NonNullable<TelegramUpdate['message']>,
+  ): Promise<void> {
+    try {
+      const text = (message.text ?? message.caption ?? '').trim();
+      const attachments = await this.collectAttachments(token, chatId, message, binding.sessionId);
+      this.enqueuePrompt(
+        token,
+        chatId,
+        binding.sessionId,
+        text.length > 0 ? text : 'Please analyze the attached content.',
+        attachments,
+        binding.permission ?? 'manual',
+        message.message_id,
+      );
+    } catch (error) {
+      await sendMessage(token, chatId, `Session error: ${errorMessage(error)}`);
+    }
   }
 
   private async createSessionForChat(chatId: number): Promise<TelegramChatBinding> {
@@ -613,7 +666,16 @@ export class TelegramConnectorService implements ITelegramConnectorService {
   }): Promise<void> {
     try {
       if (!(await this.isAllowed(group.chatId))) return;
-      const binding = await this.sessionForChat(group.chatId);
+      const binding = await this.bindingFor(group.chatId);
+      if (binding === undefined) {
+        await this.sendSessionPicker(
+          group.token,
+          group.chatId,
+          'Pick a session to continue, or start a new one:',
+          'No sessions yet. Send /new to start one, then resend the files.',
+        );
+        return;
+      }
       const attachments: ContentPart[] = [];
       for (const message of group.messages) {
         attachments.push(...(await this.collectAttachments(group.token, group.chatId, message, binding.sessionId)));
@@ -1244,14 +1306,29 @@ export class TelegramConnectorService implements ITelegramConnectorService {
       }
       const existing = await this.bindingFor(chatId);
       const context = session.accessor.get(ISessionContext);
-      await this.bindChat(chatId, {
+      const binding: TelegramChatBinding = {
         sessionId: id,
         workspaceRoot: context.cwd,
         updatedAt: Date.now(),
         permission: existing?.permission ?? 'manual',
-      });
+      };
+      await this.bindChat(chatId, binding);
       await answerCallbackQuery(token, callback.id, `Switched to ${id.slice(0, 8)}`);
       await this.announceSessionSwitch(token, chatId, id, callback.message?.message_id);
+      const pick = this.takePendingPick(chatId);
+      if (pick !== undefined) {
+        await this.routeBoundPrompt(token, chatId, binding, pick);
+      }
+      return;
+    }
+    if (kind === 'n' && id === 'new') {
+      const binding = await this.createSessionForChat(chatId);
+      await answerCallbackQuery(token, callback.id, 'New session started');
+      await this.announceSessionSwitch(token, chatId, binding.sessionId, callback.message?.message_id);
+      const pick = this.takePendingPick(chatId);
+      if (pick !== undefined) {
+        await this.routeBoundPrompt(token, chatId, binding, pick);
+      }
       return;
     }
     if (kind === 'm') {
@@ -1639,7 +1716,7 @@ export class TelegramConnectorService implements ITelegramConnectorService {
         await sendMessage(
           token,
           chatId,
-          'Paired with OmniCode. Send a message to use the most recent session, or /new for a fresh one.',
+          'Connected. Send a message and OmniCode will ask which session to continue, or /new to start one.',
         );
       } else {
         await sendMessage(
@@ -1704,34 +1781,11 @@ export class TelegramConnectorService implements ITelegramConnectorService {
     }
     if (text === '/sessions') {
       const current = await this.bindingFor(chatId);
-      const handles = this.sessions.list().slice(0, 10);
-      if (handles.length === 0) {
-        await sendMessage(token, chatId, 'No sessions. Use /new to create one.');
-        return;
-      }
-      const rows: { text: string; callback_data: string }[][] = [];
-      for (const handle of handles) {
-        const context = handle.accessor.get(ISessionContext);
-        let title = context.sessionId;
-        try {
-          const meta = await handle.accessor.get(ISessionMetadata).read();
-          if (meta.title !== undefined && meta.title.trim().length > 0) title = meta.title;
-        } catch {
-          /* title is optional */
-        }
-        const marker = current?.sessionId === context.sessionId ? '✓ ' : '';
-        rows.push([
-          {
-            text: `${marker}${title}`.slice(0, 60),
-            callback_data: `s:${context.sessionId}`,
-          },
-        ]);
-      }
-      await sendInlineKeyboard(
+      await this.sendSessionPicker(
         token,
         chatId,
         current === undefined ? 'Choose a session' : `Current: ${current.sessionId}`,
-        rows,
+        'No sessions. Use /new to create one.',
       );
       return;
     }
@@ -1946,21 +2000,18 @@ export class TelegramConnectorService implements ITelegramConnectorService {
       }
       return;
     }
-    try {
-      const binding = await this.sessionForChat(chatId);
-      const attachments = await this.collectAttachments(token, chatId, message, binding.sessionId);
-      this.enqueuePrompt(
+    const binding = await this.bindingFor(chatId);
+    if (binding === undefined) {
+      this.pendingSessionPicks.set(chatId, { message, at: Date.now() });
+      await this.sendSessionPicker(
         token,
         chatId,
-        binding.sessionId,
-        text.length > 0 ? text : 'Please analyze the attached content.',
-        attachments,
-        binding.permission ?? 'manual',
-        message.message_id,
+        'Pick a session to continue, or start a new one:',
+        'No sessions yet. Send /new to start one.',
       );
-    } catch (error) {
-      await sendMessage(token, chatId, `Session error: ${errorMessage(error)}`);
+      return;
     }
+    await this.routeBoundPrompt(token, chatId, binding, message);
   }
 
   private async pairChat(code: string, chatId: number): Promise<boolean> {
@@ -2086,15 +2137,29 @@ function telegramApiBase(): string {
     : 'https://api.telegram.org';
 }
 
-async function probeBot(token: string): Promise<TelegramProbe> {
-  let response: Response;
-  try {
-    response = await fetch(`${telegramApiBase()}/bot${token}/getMe`, {
-      signal: AbortSignal.timeout(PROBE_TIMEOUT_MS),
-    });
-  } catch (error) {
-    return { error: redactTelegramSecrets(error instanceof Error ? error.message : String(error)) };
+async function probeBot(
+  token: string,
+  timeoutMs: number = PROBE_TIMEOUT_MS,
+): Promise<TelegramProbe> {
+  let lastError: string | undefined;
+  // One retry covers the transient network stall that surfaces as
+  // "The operation was aborted due to timeout" in the connector card.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let response: Response;
+    try {
+      response = await fetch(`${telegramApiBase()}/bot${token}/getMe`, {
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+      continue;
+    }
+    return await readProbeResponse(response);
   }
+  return { error: redactTelegramSecrets(lastError ?? 'probe failed') };
+}
+
+async function readProbeResponse(response: Response): Promise<TelegramProbe> {
   let payload: unknown;
   try {
     payload = await response.json();

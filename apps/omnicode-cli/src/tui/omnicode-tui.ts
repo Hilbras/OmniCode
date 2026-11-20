@@ -364,8 +364,8 @@ export class OmnicodeTUI {
   /** Staged prompt media lifecycle (daemon uploads + cache copies) — see StagingLeaseTracker. */
   private readonly staging: StagingLeaseTracker;
   private readonly steeringQueuedMessages = new Set<QueuedMessage>();
-  private readonly approvalController = new ApprovalController();
-  private readonly questionController = new QuestionController();
+  readonly approvalController = new ApprovalController();
+  readonly questionController = new QuestionController();
   private readonly reverseRpcDisposers: Array<() => void> = [];
   private skillCommands: readonly OmnicodeSlashCommand[] = [];
   readonly skillCommandMap = new Map<string, string>();

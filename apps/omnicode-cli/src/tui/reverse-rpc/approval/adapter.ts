@@ -31,6 +31,7 @@ export function adaptApprovalRequest(event: ApprovalRequest): ApprovalPanelData 
     description: resolved.description,
     display: resolved.blocks,
     choices: adaptChoices(event.toolName, event.display),
+    interaction_id: event.interactionId,
   };
 }
 

@@ -15,13 +15,16 @@ export function createQuestionAskHandler(controller: QuestionController): Questi
   };
 }
 
-export function adaptQuestionRequest(event: QuestionRequest): QuestionPanelData {
+export function adaptQuestionRequest(
+  event: QuestionRequest & { readonly interactionId?: string | undefined },
+): QuestionPanelData {
   const id =
     event.toolCallId ??
     (event.turnId === undefined ? 'question' : `question-${String(event.turnId)}`);
   return {
     id,
     tool_call_id: id,
+    interaction_id: event.interactionId,
     questions: event.questions.map((question) => ({
       question: question.question,
       header: question.header,

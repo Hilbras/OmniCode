@@ -53,6 +53,10 @@ export type {
   McpServerStatusEvent,
 } from '@hilbras/omnicode-engine/agent/toolExecutor/toolExecutorEvents';
 export type {
+  InteractionRequestEvent,
+  InteractionResolvedEvent,
+} from '@hilbras/omnicode-engine/agent/interaction/interactionOps';
+export type {
   ToolListUpdatedReason,
   McpServerStatusPayload,
 } from '@hilbras/omnicode-engine/agent/mcp/mcpEvents';
@@ -100,4 +104,6 @@ export type MaybePromise<T> = T | Promise<T>;
 
 export type ApprovalHandler = (request: ApprovalRequest) => MaybePromise<ApprovalResponse>;
 
-export type QuestionHandler = (request: QuestionRequest) => MaybePromise<QuestionResult>;
+export type QuestionHandler = (
+  request: QuestionRequest & { readonly interactionId?: string | undefined },
+) => MaybePromise<QuestionResult>;

@@ -13,6 +13,7 @@ import type {
   GoalChange,
   GoalUpdatedEvent,
   HookResultEvent,
+  InteractionResolvedEvent,
   LoopSignalDetectedEvent,
   Session,
   SessionMetaUpdatedEvent,
@@ -38,6 +39,9 @@ import { currentTheme } from '#/tui/theme';
 import type { ColorToken } from '#/tui/theme';
 import { openUrl } from '#/utils/open-url';
 import { SessionStats, type SessionStatsSnapshot } from '#/tui/utils/session-stats';
+import { summarizeInteractionResponse } from '#/tui/utils/interaction-summary';
+import type { ApprovalController } from '../reverse-rpc/approval/controller';
+import type { QuestionController } from '../reverse-rpc/question/controller';
 import { formatStepDebugTiming } from '#/utils/usage/debug-timing';
 
 import { createGoal as startGoalCommand } from '../commands/goal';
@@ -132,6 +136,8 @@ export interface SessionEventHost {
   readonly btwPanelController: BtwPanelController;
   readonly tasksBrowserController: TasksBrowserController;
   readonly surveyController: SurveyController;
+  readonly approvalController: ApprovalController;
+  readonly questionController: QuestionController;
 }
 
 export class SessionEventHandler {
@@ -328,6 +334,9 @@ export class SessionEventHandler {
         break;
       case 'thinking.delta':
         this.handleThinkingDelta(event);
+        break;
+      case 'interaction.resolved':
+        this.handleInteractionResolved(event);
         break;
       case 'tool.call.started':
         this.handleToolCall(event);
@@ -731,6 +740,22 @@ export class SessionEventHandler {
       pendingApproval: null,
       pendingQuestion: null,
     });
+  }
+
+  private handleInteractionResolved(event: InteractionResolvedEvent): void {
+    const matches = (
+      payload: { interaction_id?: string | undefined },
+    ): boolean => payload.interaction_id === event.id;
+    const approvalPayload = this.host.approvalController.resolveExternally(
+      matches,
+      'answered-elsewhere',
+    );
+    const questionPayload =
+      approvalPayload === undefined
+        ? this.host.questionController.resolveExternally(matches, 'answered-elsewhere')
+        : undefined;
+    if (approvalPayload === undefined && questionPayload === undefined) return;
+    this.host.showStatus(`Answered from Telegram: ${summarizeInteractionResponse(event.response)}`);
   }
 
   private handleToolCall(event: ToolCallStartedEvent): void {

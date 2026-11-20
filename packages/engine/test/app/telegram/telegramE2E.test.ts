@@ -328,13 +328,22 @@ describe('Telegram connector end-to-end', () => {
     await rm(homeDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 100 });
   });
 
-  async function pair(): Promise<void> {
+  async function pair(options: { bind?: boolean } = {}): Promise<void> {
     await service.saveSettings({ botToken: TOKEN });
     pairingCode = (await service.createPairingCode()).code;
+    if (options.bind === false) return;
+    // Most tests exercise bound-chat flows; bind the same way `/bind` does.
+    await service.addAllowedChat(CHAT_ID);
+    await service.bindChat(CHAT_ID, {
+      sessionId: 'session-1',
+      workspaceRoot: '/tmp/omnicode-e2e',
+      updatedAt: Date.now(),
+      permission: 'manual',
+    });
   }
 
-  it('pairs, binds a session, routes a message and delivers the assistant reply', async () => {
-    await pair();
+  it('pairs without binding, offers a session picker on the first message, then routes the pick', async () => {
+    await pair({ bind: false });
     api.push([
       { update_id: 1, message: { chat: { id: CHAT_ID }, text: `/start ${pairingCode}` } },
     ]);
@@ -343,11 +352,51 @@ describe('Telegram connector end-to-end', () => {
     ]);
     await service.start();
 
+    await waitFor(() => api.sent.some((entry) => entry.text.startsWith('Connected.')));
+    await waitFor(() =>
+      api.sent.some((entry) => entry.text.startsWith('Pick a session to continue')),
+    );
+
+    const config = JSON.parse(await readFile(join(homeDir, 'telegram.json'), 'utf8')) as {
+      allowedChatIds?: number[];
+      bindings?: Record<string, { sessionId?: string }>;
+    };
+    expect(config.allowedChatIds).toContain(CHAT_ID);
+    expect(config.bindings?.[String(CHAT_ID)]).toBeUndefined();
+
+    const picker = api.bodies.find((body) =>
+      String(body['text'] ?? '').startsWith('Pick a session to continue'),
+    );
+    const keyboard = (
+      picker?.['reply_markup'] as
+        | { inline_keyboard?: { callback_data: string }[][] }
+        | undefined
+    )?.inline_keyboard;
+    const options = (keyboard ?? []).flat().map((button) => button.callback_data);
+    expect(options).toContain('s:session-1');
+    expect(options).toContain('n:new');
+
+    api.push([
+      {
+        update_id: 3,
+        callback_query: {
+          id: 'cb1',
+          data: 's:session-1',
+          message: { message_id: 20, chat: { id: CHAT_ID } },
+        },
+      },
+    ]);
+
     await waitFor(
       () =>
         api.edited.some((entry) => entry.text === 'Hello from OmniCode') ||
         api.sent.some((entry) => entry.text === 'Hello from OmniCode'),
     );
+
+    const boundConfig = JSON.parse(
+      await readFile(join(homeDir, 'telegram.json'), 'utf8'),
+    ) as { bindings?: Record<string, { sessionId?: string }> };
+    expect(boundConfig.bindings?.[String(CHAT_ID)]?.sessionId).toBe('session-1');
 
     const progress = api.bodies.find((body) => body['text'] === 'OmniCode is working…');
     expect(progress?.['reply_parameters']).toEqual({
@@ -358,13 +407,6 @@ describe('Telegram connector end-to-end', () => {
     expect(api.reactions).toContain('👀');
     expect(api.reactions).toContain('👍');
 
-    const config = JSON.parse(await readFile(join(homeDir, 'telegram.json'), 'utf8')) as {
-      allowedChatIds?: number[];
-      bindings?: Record<string, { sessionId?: string }>;
-    };
-    expect(config.allowedChatIds).toContain(CHAT_ID);
-    expect(config.bindings?.[String(CHAT_ID)]?.sessionId).toBe('session-1');
-
     const reply = [...api.sent, ...api.edited].find(
       (entry) => entry.text === 'Hello from OmniCode',
     );
@@ -373,7 +415,72 @@ describe('Telegram connector end-to-end', () => {
     const state = JSON.parse(await readFile(join(homeDir, 'telegram-state.json'), 'utf8')) as {
       lastUpdateId?: number;
     };
-    expect(state.lastUpdateId).toBe(2);
+    expect(state.lastUpdateId).toBe(3);
+  });
+
+  it('starts a fresh session from the picker and routes the pending message', async () => {
+    await pair({ bind: false });
+    api.push([
+      { update_id: 1, message: { chat: { id: CHAT_ID }, text: `/start ${pairingCode}` } },
+    ]);
+    api.push([
+      { update_id: 2, message: { message_id: 11, chat: { id: CHAT_ID }, text: 'fresh start' } },
+    ]);
+    await service.start();
+
+    await waitFor(() =>
+      api.sent.some((entry) => entry.text.startsWith('Pick a session to continue')),
+    );
+
+    api.push([
+      {
+        update_id: 3,
+        callback_query: {
+          id: 'cb2',
+          data: 'n:new',
+          message: { message_id: 21, chat: { id: CHAT_ID } },
+        },
+      },
+    ]);
+
+    await waitFor(
+      () =>
+        api.edited.some((entry) => entry.text === 'Hello from OmniCode') ||
+        api.sent.some((entry) => entry.text === 'Hello from OmniCode'),
+    );
+
+    const config = JSON.parse(await readFile(join(homeDir, 'telegram.json'), 'utf8')) as {
+      bindings?: Record<string, { sessionId?: string }>;
+    };
+    expect(config.bindings?.[String(CHAT_ID)]?.sessionId).toBe('session-1');
+  });
+
+  it('offers the session picker for an album in an unbound chat', async () => {
+    await pair({ bind: false });
+    api.push([
+      { update_id: 1, message: { chat: { id: CHAT_ID }, text: `/start ${pairingCode}` } },
+    ]);
+    api.push([
+      {
+        update_id: 2,
+        message: {
+          message_id: 30,
+          chat: { id: CHAT_ID },
+          media_group_id: 'album-1',
+          photo: [{ file_id: 'f1', file_size: 100 }],
+        },
+      },
+    ]);
+    await service.start();
+
+    await waitFor(() =>
+      api.sent.some((entry) => entry.text.startsWith('Pick a session to continue')),
+    );
+
+    const config = JSON.parse(await readFile(join(homeDir, 'telegram.json'), 'utf8')) as {
+      bindings?: Record<string, unknown>;
+    };
+    expect(config.bindings?.[String(CHAT_ID)]).toBeUndefined();
   });
 
   it('ignores duplicate update ids', async () => {
@@ -386,11 +493,11 @@ describe('Telegram connector end-to-end', () => {
     api.push([start]);
     await service.start();
 
-    await waitFor(() => api.sent.some((entry) => entry.text.startsWith('Paired with OmniCode')));
+    await waitFor(() => api.sent.some((entry) => entry.text.startsWith('Connected.')));
     await waitFor(() => api.updateCalls >= 3);
     await new Promise((resolve) => setTimeout(resolve, 100));
 
-    const paired = api.sent.filter((entry) => entry.text.startsWith('Paired with OmniCode'));
+    const paired = api.sent.filter((entry) => entry.text.startsWith('Connected.'));
     expect(paired).toHaveLength(1);
     expect(api.sent.some((entry) => entry.text.includes('Pair this chat from OmniCode'))).toBe(
       false,
@@ -1057,7 +1164,7 @@ describe('Telegram connector end-to-end', () => {
     );
 
     expect(lastSubmit).toBeUndefined();
-    expect(await service.listBindings()).toEqual({});
+    expect((await service.listBindings())['424242']).toBeUndefined();
   });
 
   it('ignores an inline button press from a chat that is not paired', async () => {
@@ -1076,7 +1183,7 @@ describe('Telegram connector end-to-end', () => {
 
     await waitFor(() => api.answers.includes('This chat is not paired'));
 
-    expect(await service.listBindings()).toEqual({});
+    expect((await service.listBindings())['424242']).toBeUndefined();
   });
 
   it('delivers a pending question without the agent event bus', async () => {

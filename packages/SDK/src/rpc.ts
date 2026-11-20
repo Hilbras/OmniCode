@@ -622,7 +622,7 @@ export abstract class SDKRpcClientBase {
   }
 
   async requestApproval(
-    request: ApprovalRequest & { sessionId: string; agentId: string },
+    request: ApprovalRequest & { sessionId: string; agentId: string; interactionId?: string },
   ): Promise<ApprovalResponse> {
     const handler = this.approvalHandlers.get(request.sessionId);
     if (handler === undefined) {
@@ -649,7 +649,7 @@ export abstract class SDKRpcClientBase {
   }
 
   async requestQuestion(
-    request: QuestionRequest & { sessionId: string; agentId: string },
+    request: QuestionRequest & { sessionId: string; agentId: string; interactionId?: string },
   ): Promise<QuestionResult> {
     const handler = this.questionHandlers.get(request.sessionId);
     if (handler === undefined) return null;

@@ -17,6 +17,10 @@ import type { LoopSignalDetectedEvent } from '#/agent/loop/loopWatchEvents';
 import type { TurnEndedEvent } from '#/agent/loop/turnOps';
 import type { PluginCommandActivatedEvent } from '#/agent/pluginCommand/pluginCommand';
 import type {
+  InteractionRequestEvent,
+  InteractionResolvedEvent,
+} from '#/agent/interaction/interactionOps';
+import type {
   PromptAbortedEvent,
   PromptCompletedEvent,
   PromptSteeredEvent,
@@ -103,6 +107,8 @@ export type AgentEvent =
   | AssistantDeltaEvent
   | HookResultEvent
   | ThinkingDeltaEvent
+  | InteractionRequestEvent
+  | InteractionResolvedEvent
   | ToolCallDeltaEvent
   | ToolCallStartedEvent
   | ToolProgressEvent

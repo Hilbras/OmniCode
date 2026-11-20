@@ -118,6 +118,8 @@ export interface ApprovalPanelData {
   description: string;
   display: DisplayBlock[];
   choices: ApprovalPanelChoice[];
+  /** Kernel interaction id when the request came through the interaction bridge. */
+  interaction_id?: string | undefined;
 }
 
 export interface QuestionPanelItem {
@@ -134,6 +136,8 @@ export interface QuestionPanelData {
   id: string;
   tool_call_id: string;
   questions: QuestionPanelItem[];
+  /** Kernel interaction id when the request came through the interaction bridge. */
+  interaction_id?: string | undefined;
 }
 
 export type QuestionSubmissionMethod = QuestionAnswerMethod;

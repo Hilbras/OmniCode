@@ -23,6 +23,8 @@ export interface ApprovalRequest {
   readonly toolName: string;
   readonly action: string;
   readonly display: ToolInputDisplay;
+  /** Kernel interaction id; lets clients correlate remote resolutions. */
+  readonly interactionId?: string | undefined;
 }
 
 export interface ToolCallRequest {

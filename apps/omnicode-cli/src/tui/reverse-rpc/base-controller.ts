@@ -70,6 +70,36 @@ export abstract class ReverseRpcController<TPayload, TResponse> {
     return this.current !== null || this.queue.length > 0;
   }
 
+  /**
+   * Resolves the pending request matched by `matches` when it was answered on
+   * another surface (e.g. the Telegram connector). The pending promise gets
+   * `cancelResponse`; the kernel-side `respond` for an already-resolved
+   * interaction is a safe no-op. Returns the removed payload, or undefined
+   * when nothing matched.
+   */
+  resolveExternally(
+    matches: (payload: TPayload) => boolean,
+    reason: string,
+  ): TPayload | undefined {
+    const cancelResponse = this.createCancelResponse(reason);
+    const queuedIndex = this.queue.findIndex((entry) => matches(entry.payload));
+    if (queuedIndex >= 0) {
+      const entry = this.queue.splice(queuedIndex, 1)[0];
+      if (entry === undefined) return undefined;
+      entry.resolve(cancelResponse);
+      return entry.payload;
+    }
+    if (this.current !== null && matches(this.current.payload)) {
+      const entry = this.current;
+      this.current = null;
+      this.uiHooks?.hidePanel();
+      entry.resolve(cancelResponse);
+      this.advanceOrHide();
+      return entry.payload;
+    }
+    return undefined;
+  }
+
   private advanceOrHide(): void {
     const next = this.queue.shift();
     if (next === undefined) {

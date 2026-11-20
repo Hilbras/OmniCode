@@ -229,6 +229,27 @@ describe('TelegramConnectorService probe', () => {
     }
   });
 
+  it('retries the probe once after a transient network failure', async () => {
+    await writeConfig({ botToken: TOKEN, allowedChatIds: [42] });
+    const fetchMock = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('The operation was aborted due to timeout'))
+      .mockResolvedValue(
+        botResponse({ ok: true, result: { id: 7, username: 'bot', first_name: 'Bot' } }),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+
+    try {
+      const status = await service.status({ probe: true });
+
+      expect(status.error).toBeUndefined();
+      expect(status.bot?.username).toBe('bot');
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
   it('does not call Telegram without an explicit probe', async () => {
     await writeConfig({ botToken: TOKEN, allowedChatIds: [42] });
     const fetchMock = vi.fn(async () => botResponse({ ok: true, result: {} }));
