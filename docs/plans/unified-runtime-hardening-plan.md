@@ -176,3 +176,4 @@ _Each item appends: commit hash, fail-on-base evidence, gates output._
 - **D6** — `1130cbbc8` — `pnpm preflight` → `preflight: OK (17 steps)`, exit 0. The full gate
   ran workspace, guards, lint, full-graph typecheck, 14 targeted suites and
   the eval gate. All 22 plan items now have a commit and evidence above.
+- Release provenance: 1.7.0 was cut at commit `7a5eea60c` (pre-rewrite); after the owner-approved history cleanup the equivalent rewritten commit is `582637892`, with an identical source tree and no co-author credits.
