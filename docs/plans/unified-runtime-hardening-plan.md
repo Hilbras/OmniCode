@@ -147,3 +147,5 @@ _Each item appends: commit hash, fail-on-base evidence, gates output._
   typecheck, check:guards, pnpm lint all exit 0.
 - **C4** — pending commit — 4/4 tests; fail-on-base module-not-found; engine
   typecheck, check:guards, pnpm lint all exit 0.
+- **C5** — pending commit — 3/3 tests; fail-on-base module-not-found; engine
+  typecheck, check:guards, pnpm lint all exit 0.
