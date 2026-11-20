@@ -1,5 +1,19 @@
 # @hilbras/omnicode
 
+## 1.7.0
+
+### Minor Changes
+
+- Ship the unified runtime hardening program: in-flight turn suspension and
+  handoff, idle-judge orchestration, prepared compaction with structural
+  identity, trust-framed goal continuation, write-ahead execution claims,
+  managed policy tier, MCP grant ambiguity closure, fail-closed microcompaction
+  identity, approval floors with a liveness watchdog, declarative agent specs,
+  plugin marketplace manifests, a read-only transcript cursor, a delivery
+  obligation ledger, runaway reminders, cache-clock ordering with retained tool
+  outputs, and a pre-trust command resolver export. The full test graph and the
+  17-step preflight gate are green; no breaking API changes.
+
 ## 1.6.5
 
 ### Patch Changes
