@@ -201,11 +201,26 @@ export class ConnectorsController {
       return;
     }
     try {
+      const cooldown = (await readTelegramConfig())?.['rateLimitedUntil'];
+      if (typeof cooldown === 'number' && cooldown > Date.now()) {
+        const seconds = Math.ceil((cooldown - Date.now()) / 1000);
+        this.setStatus(
+          `Telegram is rate-limiting this bot. Wait ${formatWait(seconds)} ` +
+            `(${String(seconds)}s) before retrying setup — retrying now extends the limit.`,
+        );
+        return;
+      }
       this.setStatus('Checking the Telegram bot token…');
       const me = normalizeBot(await callTelegram<TelegramBot>(botToken, 'getMe'));
 
       this.setStatus(`Connected as @${me.username}. Setting bot name…`);
-      await callTelegram(botToken, 'setMyName', { name: 'OmniCode' });
+      let nameNote = 'Bot name set.';
+      try {
+        await callTelegram(botToken, 'setMyName', { name: 'OmniCode' });
+      } catch (nameError) {
+        // Cosmetic, like the logo: a rate limit here must not block pairing.
+        nameNote = `Bot name not set (${errorMessage(nameError)}) — setup continues.`;
+      }
 
       this.setStatus('Uploading the OmniCode logo…');
       let logoNote = 'Logo updated.';
@@ -224,7 +239,7 @@ export class ConnectorsController {
       this.status = await this.loadStatus();
       this.setStatus(
         [
-          `Telegram bot @${me.username} is ready. Name: OmniCode. ${logoNote}`,
+          `Telegram bot @${me.username} is ready. ${nameNote} ${logoNote}`,
           `Pairing code: ${pairing.code}`,
           pairing.deepLink === undefined
             ? 'Send /start <code> to the bot in Telegram.'
@@ -233,6 +248,10 @@ export class ConnectorsController {
         ].join('\n'),
       );
     } catch (error) {
+      const retryAfter = telegramRetryAfterSeconds(error);
+      if (retryAfter !== undefined) {
+        await rememberRateLimit(botToken, Date.now() + retryAfter * 1000);
+      }
       this.setStatus(`Telegram setup failed: ${telegramSetupErrorMessage(error)}`);
     }
   }
@@ -389,6 +408,14 @@ async function saveTelegramToken(token: string): Promise<void> {
   await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
 }
 
+async function rememberRateLimit(token: string, until: number): Promise<void> {
+  const path = telegramConfigPath();
+  const existing = (await readTelegramConfig()) ?? {};
+  const next: TelegramConfig = { ...existing, botToken: token, rateLimitedUntil: until };
+  await mkdir(dirname(path), { recursive: true });
+  await writeFile(path, `${JSON.stringify(next, null, 2)}\n`, { mode: 0o600 });
+}
+
 function telegramConfigPath(): string {
   const home = process.env['OMNICODE_HOME'] ?? join(homedir(), '.omnicode');
   return join(home, 'telegram.json');
@@ -473,17 +500,24 @@ function errorMessage(error: unknown): string {
 
 const TELEGRAM_RETRY_AFTER = /retry after\s+(\d+)/i;
 
-/** Turn Telegram's raw 429 text into an actionable wait-before-retry message. */
-export function telegramSetupErrorMessage(error: unknown): string {
-  const raw = errorMessage(error);
-  const match = TELEGRAM_RETRY_AFTER.exec(raw);
-  if (match === null) return raw;
-  const seconds = Number(match[1]);
+/** Telegram's retry_after in seconds, when the error carries one. */
+export function telegramRetryAfterSeconds(error: unknown): number | undefined {
+  const match = TELEGRAM_RETRY_AFTER.exec(errorMessage(error));
+  return match === null ? undefined : Number(match[1]);
+}
+
+function formatWait(seconds: number): string {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  const wait = hours > 0 ? `${String(hours)}h ${String(minutes)}m` : `${String(minutes)}m`;
+  return hours > 0 ? `${String(hours)}h ${String(minutes)}m` : `${String(minutes)}m`;
+}
+
+/** Turn Telegram's raw 429 text into an actionable wait-before-retry message. */
+export function telegramSetupErrorMessage(error: unknown): string {
+  const seconds = telegramRetryAfterSeconds(error);
+  if (seconds === undefined) return errorMessage(error);
   return (
-    `Telegram rate limit: wait ${wait} (${String(seconds)}s) before retrying. ` +
+    `Telegram rate limit: wait ${formatWait(seconds)} (${String(seconds)}s) before retrying. ` +
     'Repeated setup attempts extend the limit.'
   );
 }

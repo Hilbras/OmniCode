@@ -108,3 +108,11 @@ describe('telegramSetupErrorMessage', () => {
     expect(telegramSetupErrorMessage(new Error('bot token invalid'))).toBe('bot token invalid');
   });
 });
+
+describe('telegramRetryAfterSeconds', () => {
+  it('extracts retry_after from Telegram 429 text', async () => {
+    const { telegramRetryAfterSeconds } = await import('#/tui/controllers/connectors');
+    expect(telegramRetryAfterSeconds(new Error('Too Many Requests: retry after 9980'))).toBe(9980);
+    expect(telegramRetryAfterSeconds(new Error('bot token invalid'))).toBeUndefined();
+  });
+});
