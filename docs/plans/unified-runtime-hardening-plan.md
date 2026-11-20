@@ -167,4 +167,7 @@ _Each item appends: commit hash, fail-on-base evidence, gates output._
   truncated-summary escalation) and 3 engine failures (checkpoint exemption
   for the append-only message clock, tower-worker missing four coder tools,
   a load-sensitive import timeout). All repaired; features-integration
-  1705/1705, engine 21/21 on the affected files.
+  1705/1705, engine 21/21 on the affected files. A final full-graph run left
+  two CLI failures: a stale visible-subcommand list (apply was added) and a
+  force-exit key test that checked before the awaited auxiliary-work flush
+  installed the listener. Both repaired; CLI affected files 377/377.

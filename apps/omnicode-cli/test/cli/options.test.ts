@@ -597,6 +597,7 @@ describe('CLI options parsing', () => {
         'export',
         'import',
         'fork',
+        'apply',
         'provider',
         'mcp',
         'session',

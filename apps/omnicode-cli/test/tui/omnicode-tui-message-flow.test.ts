@@ -3585,7 +3585,8 @@ command = "vim"
     const stopped = (driver as unknown as { stop(): Promise<void> }).stop();
     stopped.catch(() => {});
 
-    expect(captured).toBeDefined();
+    // stop() drains auxiliary work before installing the force-exit listener.
+    await vi.waitFor(() => expect(captured).toBeDefined(), { timeout: 10_000 });
     expect(captured?.('\u0003')).toEqual({ consume: true });
     expect(captured?.('a')).toBeUndefined();
     expect(stopUiForExit).toHaveBeenCalledOnce();
