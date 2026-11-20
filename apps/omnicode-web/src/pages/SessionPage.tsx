@@ -1,18 +1,17 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useCallback, useRef, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import { useMessages, useSubmitPrompt, useAbortSession, useSessionStatus } from '../hooks/useSessions';
 import type { AppMessage, AppMessageContent } from '../api';
 
 function contentToText(content: AppMessageContent[]): string {
   return content
-    .map((c) => (c.type === 'text' ? c.text : c.type === 'thinking' ? `[thinking]` : c.type === 'toolUse' ? `[tool: ${c.toolName}]` : ''))
+    .map((c) => (c.type === 'text' ? c.text : c.type === 'thinking' ? '[thinking]' : c.type === 'toolUse' ? `[tool: ${c.toolName}]` : ''))
     .filter(Boolean)
     .join('\n');
 }
 
 export function SessionPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const [input, setInput] = useState('');
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -39,111 +38,58 @@ export function SessionPage() {
   );
 
   return (
-    <div className="flex h-full flex-col" style={{ background: 'var(--color-background)' }}>
-      <div
-        className="flex h-[44px] shrink-0 items-center gap-3 border-b px-4"
-        style={{
-          background: 'var(--color-header)',
-          borderColor: 'var(--color-border)',
-          borderBottomWidth: 1,
-        }}
-      >
-        <button
-          onClick={() => navigate('/')}
-          className="rounded-md px-2 py-1 text-xs font-medium transition-colors"
-          style={{
-            background: 'var(--color-surface-hover)',
-            color: 'var(--color-foreground-subtle)',
-            border: '1px solid var(--color-border)',
-            cursor: 'pointer',
-          }}
-        >
-          ← Sessions
-        </button>
-
-        <span className="min-w-0 flex-1 truncate text-sm font-medium" style={{ color: 'var(--color-foreground)' }}>
-          {id ? id.slice(0, 12) + '…' : ''}
-        </span>
-
-        {isStreaming && (
-          <button
-            onClick={() => abortSession.mutate()}
-            className="rounded-md px-3 py-1 text-xs font-medium transition-colors"
-            style={{
-              background: 'var(--color-destructive-surface)',
-              color: 'var(--color-destructive-surface-foreground)',
-              border: '1px solid var(--color-destructive)',
-              cursor: 'pointer',
-            }}
-          >
-            Stop
-          </button>
-        )}
-      </div>
-
-      <div
-        className="flex-1 overflow-y-auto px-4 py-4"
-        style={{ background: 'var(--color-background)' }}
-      >
-        {msgPending && (
-          <div className="text-center text-sm" style={{ color: 'var(--color-foreground-subtlest)' }}>
-            Loading messages…
-          </div>
-        )}
-
+    <div className="flex h-full min-w-0 flex-col">
+      <div className="flex flex-1 min-h-0 flex-col gap-3 overflow-y-auto px-4 py-4">
+        {msgPending && <p className="text-center text-sm muted">Loading messages…</p>}
         {(messages ?? []).map((msg) => (
           <MessageBubble key={msg.id} message={msg} />
         ))}
-
         <div ref={bottomRef} />
       </div>
 
-      <form
-        onSubmit={handleSend}
-        className="shrink-0 border-t p-3"
-        style={{
-          background: 'var(--color-panel)',
-          borderColor: 'var(--color-border)',
-          borderTopWidth: 1,
-        }}
-      >
-        <div className="flex gap-2">
-          <input
+      <form onSubmit={handleSend} className="shrink-0 px-3 pb-3">
+        <div className="panel flex flex-col gap-2 p-3">
+          <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Message…"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                const text = input.trim();
+                if (text !== '' && !isStreaming) {
+                  submitPrompt.mutate(text);
+                  setInput('');
+                }
+              }
+            }}
+            placeholder="Message the agent…"
             disabled={isStreaming}
-            className="flex-1 rounded-lg px-3 py-2 text-sm outline-none transition-colors"
+            rows={2}
+            className="w-full resize-none rounded-lg px-3 py-2 text-sm outline-none"
             style={{
-              background: 'var(--color-input)',
-              color: 'var(--color-foreground)',
-              border: `1px solid ${isStreaming ? 'var(--color-interaction-ask-foreground)' : 'var(--color-input-border)'}`,
+              background: 'var(--surface)',
+              color: 'var(--text)',
+              border: `1px solid ${isStreaming ? 'var(--gold)' : 'var(--line-strong)'}`,
             }}
           />
-          <button
-            type="submit"
-            disabled={!input.trim() || isStreaming}
-            className="rounded-lg px-4 py-2 text-sm font-medium transition-opacity disabled:opacity-40"
-            style={{
-              background: 'var(--color-interaction-ask-surface)',
-              color: 'var(--color-interaction-ask-foreground)',
-              border: '1px solid var(--color-interaction-ask-foreground)',
-              cursor: 'pointer',
-            }}
-          >
-            Send
-          </button>
-        </div>
-        <div className="mt-1.5 flex items-center gap-2">
-          <span className="text-[11px]" style={{ color: 'var(--color-foreground-subtlest)' }}>
-            {isStreaming ? 'Agent is thinking…' : 'Ready'}
-          </span>
-          {isStreaming && (
-            <span
-              className="h-1 w-1 rounded-full"
-              style={{ background: 'var(--color-trajectory-assistant)', animation: 'pulse 1.6s var(--wf-ease) infinite' }}
-            />
-          )}
+          <div className="flex items-center gap-2">
+            <span className="mono-label flex-1">
+              {isStreaming ? 'Agent is thinking…' : 'Ready'}
+            </span>
+            {isStreaming ? (
+              <button type="button" className="btn-ghost" onClick={() => abortSession.mutate()}>
+                Stop
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={input.trim() === ''}
+                className="btn-gold"
+              >
+                Send
+              </button>
+            )}
+          </div>
         </div>
       </form>
     </div>
@@ -155,24 +101,13 @@ function MessageBubble({ message }: { message: AppMessage }) {
   const text = contentToText(message.content);
 
   return (
-    <div
-      className={`my-2 max-w-[85%] rounded-xl px-4 py-3 ${isUser ? 'ml-auto' : 'mr-auto'}`}
-      style={{
-        background: isUser ? 'var(--color-user-message-bubble)' : 'var(--color-surface)',
-        border: `1px solid ${isUser ? 'var(--color-border)' : 'transparent'}`,
-        animation: 'stream-text-in 0.2s var(--wf-ease)',
-      }}
-    >
+    <div className={`my-1 flex flex-col ${isUser ? 'items-end' : 'items-start'}`}>
+      <span className="mono-label mb-1">{isUser ? 'You' : 'Assistant'}</span>
       <div
-        className="mb-1 text-[11px] font-semibold tracking-wide"
-        style={{
-          color: isUser ? 'var(--color-trajectory-user)' : 'var(--color-trajectory-assistant)',
-        }}
+        className={`max-w-[85%] rounded-xl px-4 py-3 ${isUser ? 'panel' : 'node'}`}
+        style={isUser ? undefined : { borderColor: 'var(--line)' }}
       >
-        {isUser ? 'YOU' : 'ASSISTANT'}
-      </div>
-      <div className="whitespace-pre-wrap text-sm leading-relaxed" style={{ color: 'var(--color-foreground)' }}>
-        {text}
+        <div className="whitespace-pre-wrap text-sm leading-relaxed">{text}</div>
       </div>
     </div>
   );

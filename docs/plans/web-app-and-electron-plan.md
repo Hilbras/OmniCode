@@ -182,3 +182,21 @@ typecheck + web tests green; affected server/SDK changes get fail-on-base tests.
 ## Execution log
 
 _Filled as phases land: commit hash, tests, gate output per item._
+
+- **Decision (2026-11-21):** the old repo (`/mnt/sda3/work/Hilbras/OmniCode.old`)
+  holds a mature Electron desktop shell (`apps/omnicode-desktop`: sidecar server
+  spawn, window chrome, updater, telegram bridge, `.deb` releases) and a rich
+  React vis frontend (`apps/omnicode-vis/web`, engine-internal data access).
+  Owner choice: **build the new frontend and mine the old assets** — vis-web
+  components get ported with their data calls adapted to the daemon API; the
+  Electron shell gets ported for Phase G.
+- **Phase A — foundation, landed.** `apps/omnicode-web`: Hilbras token family
+  + component classes + Geist fonts ported (`src/styles/tokens.css`,
+  `public/fonts/*.woff2`); ad-hoc zcode theme deleted; three-region
+  `Shell.tsx` (nav-blur topbar, session rail slot, drawer slot, mobile
+  slide-overs, skip link) with pre-paint theme init in `index.html`;
+  `design/theme.ts` helpers; `SessionsRail`; `HomePage`/`SessionPage`
+  restyled. Verified live in a browser: dark `#0c0b09` ↔ light `#faf9f5`
+  toggle persisted, Geist loaded, regions present, daemon-error state renders.
+  Tests 21/21 (design-token parity guard, theme helpers, route frames);
+  `pnpm build` OK; `check:guards`, `lint` green.

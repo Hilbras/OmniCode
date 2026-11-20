@@ -1,0 +1,418 @@
+@import "tailwindcss";
+
+/* ------------------------------------------------------------------ *
+ * Omnicode web app design tokens — ported verbatim from the Hilbras
+ * design family (hilbras site globals.css). Same token names carry the
+ * same values across the family; the app layout consumes them.
+ * ------------------------------------------------------------------ */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #faf9f5;
+  --bg-soft: #f3f0e7;
+  --surface: #ffffff;
+  --surface-2: #f7f4ec;
+  --text: #17150f;
+  --muted: #6f6857;
+  --line: #e7e1d1;
+  --line-strong: #d8d0bb;
+  --gold: #d4af37;
+  --gold-bright: #e9c963;
+  --gold-text: #7d620f;
+  --gold-mid: #a8820f;
+  --gold-ink: #1c1704;
+  --gold-soft: rgba(212, 175, 55, 0.14);
+  --glow: rgba(212, 175, 55, 0.35);
+  --gold-border: color-mix(in srgb, #d4af37 70%, #000 30%);
+  --success: #0f5c38;
+  --danger: #c23b31;
+  --shadow: 0 1px 2px rgba(30, 25, 5, 0.05), 0 12px 40px rgba(30, 25, 5, 0.07);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0c0b09;
+  --bg-soft: #12100c;
+  --surface: #15130e;
+  --surface-2: #1b1812;
+  --text: #f2efe6;
+  --muted: #9c9584;
+  --line: #262117;
+  --line-strong: #353021;
+  --gold: #e2bd52;
+  --gold-bright: #f3d789;
+  --gold-text: #e6c768;
+  --gold-mid: #f3d789;
+  --gold-ink: #1a1503;
+  --gold-soft: rgba(226, 189, 82, 0.12);
+  --glow: rgba(226, 189, 82, 0.25);
+  --gold-border: color-mix(in srgb, #e2bd52 70%, #000 30%);
+  --success: #6fdb9b;
+  --danger: #ff8a80;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-bg-soft: var(--bg-soft);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-gold: var(--gold);
+  --color-gold-bright: var(--gold-bright);
+  --color-gold-text: var(--gold-text);
+  --color-gold-ink: var(--gold-ink);
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --text-9: 0.5625rem;
+  --text-11: 0.6875rem;
+  --text-13: 0.8125rem;
+  --text-15: 0.9375rem;
+
+  --tracking-card: -0.02em;
+  --tracking-feature: -0.03em;
+  --tracking-label: 0.08em;
+  --tracking-claim: 0.12em;
+}
+
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url("/fonts/geist-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+2013-2014, U+2018-201A, U+201C-201E, U+2026;
+}
+
+@font-face {
+  font-family: "Geist";
+  font-style: normal;
+  font-weight: 300 800;
+  font-display: swap;
+  src: url("/fonts/geist-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("/fonts/geist-mono-latin.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+2013-2014, U+2018-201A, U+201C-201E, U+2026;
+}
+
+@font-face {
+  font-family: "Geist Mono";
+  font-style: normal;
+  font-weight: 400 500;
+  font-display: swap;
+  src: url("/fonts/geist-mono-latin-ext.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0;
+}
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: var(--line);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    min-width: 320px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  ::selection {
+    background: var(--glow);
+    color: var(--text);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    border: 2px solid var(--bg);
+    border-radius: 8px;
+    background: var(--line-strong);
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--gold);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--gold-text);
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .nav-blur {
+    background: color-mix(in srgb, var(--bg) 74%, transparent);
+    backdrop-filter: blur(16px) saturate(1.4);
+    -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  }
+
+  .btn-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--gold-border);
+    border-radius: 10px;
+    background: linear-gradient(135deg, var(--gold) 0%, var(--gold-bright) 55%, var(--gold) 100%);
+    box-shadow: 0 6px 24px var(--glow);
+    color: var(--gold-ink);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 650;
+    line-height: 1;
+    padding: 10px 17px;
+    transition: transform 150ms ease, box-shadow 150ms ease, filter 150ms ease;
+  }
+
+  .btn-gold:hover {
+    box-shadow: 0 10px 32px var(--glow);
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+
+  .btn-gold:active {
+    transform: translateY(0);
+  }
+
+  .btn-gold:disabled,
+  .btn-ghost:disabled,
+  .btn-quiet:disabled {
+    opacity: 0.45;
+    filter: saturate(0.5);
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
+  }
+
+  .btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 1px solid var(--line-strong);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 550;
+    line-height: 1;
+    padding: 10px 17px;
+    transition: border-color 150ms ease, background 150ms ease, transform 150ms ease;
+  }
+
+  .btn-ghost:hover {
+    border-color: var(--gold);
+    background: var(--gold-soft);
+    transform: translateY(-1px);
+  }
+
+  .btn-quiet {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: 8px;
+    color: var(--muted);
+    font-size: 14px;
+    font-weight: 550;
+    padding: 9px 10px;
+    transition: color 150ms ease, background 150ms ease;
+  }
+
+  .btn-quiet:hover {
+    background: var(--gold-soft);
+    color: var(--gold-text);
+  }
+
+  .theme-toggle {
+    border: 1px solid var(--line-strong);
+    background: var(--surface);
+    color: var(--gold-text);
+    transition: border-color 200ms ease, background 200ms ease, box-shadow 200ms ease;
+  }
+
+  .theme-toggle:hover {
+    border-color: var(--gold);
+    background: var(--gold-soft);
+  }
+
+  [data-theme="light"] .theme-toggle {
+    color: var(--text);
+  }
+
+  .card {
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+  }
+
+  .panel {
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  }
+
+  .eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid color-mix(in srgb, var(--gold) 40%, transparent);
+    border-radius: 999px;
+    background: var(--gold-soft);
+    color: var(--gold-text);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.11em;
+    line-height: 1;
+    padding: 7px 12px;
+    text-transform: uppercase;
+  }
+
+  .eyebrow-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--gold);
+    box-shadow: 0 0 0 4px var(--gold-soft);
+  }
+
+  .muted {
+    color: var(--muted);
+  }
+
+  .mono-label {
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+
+  .gold-text {
+    background: linear-gradient(100deg, var(--gold-text), var(--gold-mid) 45%, var(--gold-text) 90%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .hairline {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.55;
+  }
+
+  .node {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    transition: border-color 200ms ease, background 200ms ease, box-shadow 200ms ease, transform 200ms ease;
+  }
+
+  .node:hover {
+    border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+    background: color-mix(in srgb, var(--gold-soft) 55%, var(--surface));
+    box-shadow: 0 8px 24px var(--glow);
+    transform: translateY(-2px);
+  }
+
+  .node-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .skip-link {
+    position: fixed;
+    top: -64px;
+    left: 16px;
+    z-index: 300;
+    transition: top 150ms ease;
+  }
+
+  .skip-link:focus {
+    top: 12px;
+  }
+}
+
+/* ------------------------------------------------------------------ *
+ * Motion — the Hilbras reveal system, gated on reduced-motion AND
+ * html.has-js so the finished UI shows immediately otherwise.
+ * ------------------------------------------------------------------ */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --reveal-item-duration: 580ms;
+  --reveal-delay: 80ms;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.has-js .reveal {
+    opacity: 0;
+    transition:
+      opacity var(--reveal-item-duration) var(--ease-out),
+      translate var(--reveal-item-duration) var(--ease-out);
+    translate: 0 22px;
+  }
+
+  html.has-js .reveal.is-visible {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.92);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+.soft-pulse {
+  animation: soft-pulse 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .soft-pulse {
+    animation: none !important;
+  }
+}

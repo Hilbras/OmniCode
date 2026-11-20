@@ -13,6 +13,7 @@
   "dependencies": {
     "@hilbras/app-core": "workspace:^",
     "@tanstack/react-query": "^5.74.4",
+    "lucide-react": "^1.77.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "react-router-dom": "^7.5.2"

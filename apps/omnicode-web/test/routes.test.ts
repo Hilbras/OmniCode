@@ -3,12 +3,16 @@ import { describe, expect, it } from 'vitest';
 import { matchRoutes } from 'react-router-dom';
 
 import { routes } from '../src/App';
+import { Shell } from '../src/components/Shell';
 import { HomePage } from '../src/pages/HomePage';
 import { SessionPage } from '../src/pages/SessionPage';
 
-function matchedComponent(pathname: string): unknown {
+/** The route element is the Shell frame; the page rides in its children. */
+function matchedFrame(pathname: string): { frame: unknown; page: unknown } {
   const element = matchRoutes(routes, pathname)?.at(-1)?.route.element;
-  return isValidElement(element) ? element.type : undefined;
+  if (!isValidElement(element)) return { frame: undefined, page: undefined };
+  const props = element.props as { children?: { type?: unknown } };
+  return { frame: element.type, page: props.children?.type };
 }
 
 function matchedParams(pathname: string): Record<string, string | undefined> {
@@ -16,12 +20,16 @@ function matchedParams(pathname: string): Record<string, string | undefined> {
 }
 
 describe('route table', () => {
-  it('mounts HomePage at the index route', () => {
-    expect(matchedComponent('/')).toBe(HomePage);
+  it('mounts HomePage inside the Shell frame at the index route', () => {
+    const { frame, page } = matchedFrame('/');
+    expect(frame).toBe(Shell);
+    expect(page).toBe(HomePage);
   });
 
-  it('mounts SessionPage under /sessions/:id', () => {
-    expect(matchedComponent('/sessions/abc')).toBe(SessionPage);
+  it('mounts SessionPage inside the Shell frame under /sessions/:id', () => {
+    const { frame, page } = matchedFrame('/sessions/abc');
+    expect(frame).toBe(Shell);
+    expect(page).toBe(SessionPage);
   });
 
   it('binds the parameter SessionPage destructures as id', () => {
