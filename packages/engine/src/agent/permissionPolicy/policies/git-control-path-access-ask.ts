@@ -1,4 +1,5 @@
 import type { PermissionPolicy, PermissionPolicyResult } from '#/agent/permissionPolicy/types';
+import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import { IAgentRuntimeService } from '#/agent/runtimeBinding/agentRuntime';
 import type { ResolvedToolExecutionHookContext } from '#/agent/toolExecutor/toolHooks';
 import { IGitService } from '#/app/git/git';
@@ -15,11 +16,13 @@ export class GitControlPathAccessAskPermissionPolicyService implements Permissio
     @IAgentRuntimeService private readonly runtime: IAgentRuntimeService,
     @ISessionWorkspaceContext private readonly workspace: WorkspaceContext,
     @IGitService private readonly git: GitService,
+    @IAgentPermissionModeService private readonly modeService: IAgentPermissionModeService,
   ) {}
 
   async evaluate(
     context: ResolvedToolExecutionHookContext,
   ): Promise<PermissionPolicyResult | undefined> {
+    if (this.modeService.mode === 'yolo') return undefined;
     const cwd = this.workspace.workDir;
     if (cwd.length === 0) return undefined;
     const lease = this.runtime.acquire();

@@ -1,4 +1,5 @@
 import type { PermissionPolicy, PermissionPolicyResult } from '#/agent/permissionPolicy/types';
+import { IAgentPermissionModeService } from '#/agent/permissionMode/permissionMode';
 import type { ResolvedToolExecutionHookContext } from '#/agent/toolExecutor/toolHooks';
 import { IBashParserService } from '#/app/bashParser/bashParser';
 import { isSensitiveFile } from '#/tool/path-access';
@@ -29,9 +30,13 @@ function commandTouchesSensitivePath(command: string): boolean {
 export class SensitiveFileAccessAskPermissionPolicyService implements PermissionPolicy {
   readonly name = 'sensitive-file-access-ask';
 
-  constructor(@IBashParserService private readonly bashParser: IBashParserService) {}
+  constructor(
+    @IBashParserService private readonly bashParser: IBashParserService,
+    @IAgentPermissionModeService private readonly modeService: IAgentPermissionModeService,
+  ) {}
 
   evaluate(context: ResolvedToolExecutionHookContext): PermissionPolicyResult | undefined {
+    if (this.modeService.mode === 'yolo') return undefined;
     const access = fileAccesses(context).find((fileAccess) => isSensitiveFile(fileAccess.path));
     if (access !== undefined) return { kind: 'ask' };
     if (context.toolCall.name === 'Bash') {
