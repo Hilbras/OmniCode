@@ -1,5 +1,11 @@
 # @hilbras/omnicode
 
+## 1.6.5
+
+### Patch Changes
+
+- Telegram setup no longer fails the whole pairing when the cosmetic bot-name call is rate-limited, and refuses to retry while Telegram's retry_after cooldown is active so retries cannot extend the ban.
+
 ## 1.6.4
 
 ### Patch Changes
