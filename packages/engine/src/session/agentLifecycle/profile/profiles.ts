@@ -184,3 +184,8 @@ registerAgentProfile({
     }
   },
 });
+
+/** All tool names admitted by at least one built-in profile (visibility guard). */
+export function getBuiltinProfileToolNames(): readonly string[] {
+  return [...new Set([...AGENT_TOOLS, ...CODER_TOOLS, ...EXPLORE_TOOLS])];
+}

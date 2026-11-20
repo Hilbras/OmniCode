@@ -40,3 +40,18 @@ describe('the built-in tool contributions', () => {
     }
   });
 });
+
+describe('tool visibility across built-in profiles', () => {
+  it('admits every ungated built-in tool in at least one profile', async () => {
+    await import('#/index');
+    const { getBuiltinProfileToolNames } = await import(
+      '#/session/agentLifecycle/profile/profiles'
+    );
+    const admitted = new Set(getBuiltinProfileToolNames());
+    const ungated = getAgentToolContributions()
+      .filter((contribution) => contribution.options.when === undefined)
+      .map((contribution) => contribution.options.name);
+    const invisible = ungated.filter((name) => !admitted.has(name));
+    expect(invisible).toEqual([]);
+  });
+});
