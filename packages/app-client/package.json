@@ -12,7 +12,8 @@
     "./lib": "./src/lib/index.ts",
     "./lib/mediaPreview": "./src/lib/mediaPreview.ts",
     "./stores": "./src/stores/index.ts",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./panel": "./src/panel/index.ts"
   },
   "scripts": {
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
