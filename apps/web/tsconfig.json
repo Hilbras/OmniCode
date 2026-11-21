@@ -1,0 +1,171 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": [
+      "ES2023",
+      "DOM",
+      "DOM.Iterable"
+    ],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "moduleDetection": "force",
+    "noEmit": true,
+    "jsx": "preserve",
+    "strict": true,
+    "noFallthroughCasesInSwitch": true,
+    "types": [
+      "vite/client"
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@vendor/app-client": [
+        "vendor/app-client/src/index.ts"
+      ],
+      "@vendor/app-client/client": [
+        "vendor/app-client/src/client/index.ts"
+      ],
+      "@vendor/app-client/composables": [
+        "vendor/app-client/src/composables/index.ts"
+      ],
+      "@vendor/app-client/contracts": [
+        "vendor/app-client/src/contracts.ts"
+      ],
+      "@vendor/app-client/icons": [
+        "vendor/app-client/src/icons/icons.ts"
+      ],
+      "@vendor/app-client/lib": [
+        "vendor/app-client/src/lib/index.ts"
+      ],
+      "@vendor/app-client/panel": [
+        "vendor/app-client/src/panel/index.ts"
+      ],
+      "@vendor/app-client/stores": [
+        "vendor/app-client/src/stores/index.ts"
+      ],
+      "@vendor/app-client/testing": [
+        "vendor/app-client/src/testing/index.ts"
+      ],
+      "@vendor/app-client/trace": [
+        "vendor/app-client/src/lib/trace.ts"
+      ],
+      "@vendor/app-client/package.json": [
+        "vendor/app-client/package.json"
+      ],
+      "@vendor/app-components": [
+        "vendor/app-components/src/index.ts"
+      ],
+      "@vendor/app-components/support": [
+        "vendor/app-components/src/support.ts"
+      ],
+      "@vendor/app-composer": [
+        "vendor/app-composer/src/public.ts"
+      ],
+      "@vendor/app-composer/model": [
+        "vendor/app-composer/src/model/index.ts"
+      ],
+      "@vendor/app-composer/runtime": [
+        "vendor/app-composer/src/runtime/index.ts"
+      ],
+      "@vendor/app-composer/features/attachment": [
+        "vendor/app-composer/src/features/attachment/index.ts"
+      ],
+      "@vendor/app-composer/features/mention": [
+        "vendor/app-composer/src/features/mention/index.ts"
+      ],
+      "@vendor/app-composer/features/quote": [
+        "vendor/app-composer/src/features/quote/index.ts"
+      ],
+      "@vendor/app-composer/features/pasted-text": [
+        "vendor/app-composer/src/features/pasted-text/index.ts"
+      ],
+      "@vendor/app-composer/features/browser-reference": [
+        "vendor/app-composer/src/features/browser-reference/index.ts"
+      ],
+      "@vendor/app-composer/transcript": [
+        "vendor/app-composer/src/transcript/index.ts"
+      ],
+      "@vendor/app-core": [
+        "vendor/app-core/src/index.ts"
+      ],
+      "@vendor/app-core/api": [
+        "vendor/app-core/src/api/index.ts"
+      ],
+      "@vendor/app-core/client": [
+        "vendor/app-core/src/client/index.ts"
+      ],
+      "@vendor/app-core/client/types": [
+        "vendor/app-core/src/client/types.ts"
+      ],
+      "@vendor/app-core/contracts": [
+        "vendor/app-core/src/contracts.ts"
+      ],
+      "@vendor/app-core/conversation": [
+        "vendor/app-core/src/conversation/index.ts"
+      ],
+      "@vendor/app-core/lib": [
+        "vendor/app-core/src/lib/index.ts"
+      ],
+      "@vendor/app-core/preview": [
+        "vendor/app-core/src/lib/purePreview.ts"
+      ],
+      "@vendor/app-core/browser-panel-state": [
+        "vendor/app-core/src/client/browserPanelState.ts"
+      ],
+      "@vendor/app-core/native-menu": [
+        "vendor/app-core/src/nativeMenu.ts"
+      ],
+      "@vendor/app-core/browser-reference": [
+        "vendor/app-core/src/browserReference.ts"
+      ],
+      "@vendor/app-core/shortcut-keys": [
+        "vendor/app-core/src/lib/shortcutKeys.ts"
+      ],
+      "@vendor/app-i18n": [
+        "vendor/app-i18n/src/index.ts"
+      ],
+      "@vendor/app-i18n/browser": [
+        "vendor/app-i18n/src/browser.ts"
+      ],
+      "@vendor/app-markdown": [
+        "vendor/app-markdown/src/index.ts"
+      ],
+      "@vendor/app-markdown/codeScrollbars.css": [
+        "vendor/app-markdown/src/codeScrollbars.css"
+      ],
+      "@vendor/app-markdown/lib/codeScrollbars": [
+        "vendor/app-markdown/src/lib/codeScrollbars.ts"
+      ],
+      "@vendor/app-markdown/lib/filePathLinks": [
+        "vendor/app-markdown/src/lib/filePathLinks.ts"
+      ],
+      "@vendor/app-markdown/lib/tableWide": [
+        "vendor/app-markdown/src/lib/tableWide.ts"
+      ],
+      "@vendor/app-ui": [
+        "vendor/app-ui/src/index.ts"
+      ],
+      "@vendor/app-ui/style.css": [
+        "vendor/app-ui/src/style.css"
+      ],
+      "@shared/*": [
+        "shared/*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.vue"
+  ],
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "node_modules",
+    "dist",
+    "vendor/**/*.test.ts"
+  ]
+}

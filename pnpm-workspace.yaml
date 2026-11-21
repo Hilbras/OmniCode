@@ -15,6 +15,7 @@ minimumReleaseAge: 0
 
 allowBuilds:
   '@google/genai': true
+  canvas: set this to true or false
   cpu-features: true
   esbuild: true
   node-pty: true

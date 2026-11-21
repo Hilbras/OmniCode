@@ -8,6 +8,7 @@ export default defineConfig({
       'apps/omnicode-inspect',
       'apps/omnicode-vis/server',
       'apps/omnicode-vis/web',
+      'apps/web/vitest.config.ts',
     ],
     coverage: {
       provider: 'v8',

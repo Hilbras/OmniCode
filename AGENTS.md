@@ -240,6 +240,7 @@ constraints and decisions; do not narrate the diff.
 | `apps/omnicode-inspect` | Read-only inspector over the loopback `/api/v1/debug` service channels: services, DI graph, events, transcript, search, model catalog. |
 | `apps/omnicode-vis/server` | Hono visualisation daemon. |
 | `apps/omnicode-vis/web` | React 19 + Vite visualisation app. |
+| `apps/web` | Vue 3 + Vite web chat app (ported from the kimi-code Electron renderer); talks to the local daemon over REST/WS. |
 | `packages/base` | DI container, scopes, fibers, collections, logging. |
 | `packages/auth` | Authentication primitives. |
 | `packages/Kaos` | Execution environment: filesystem, processes, SSH, sandbox seams. |
