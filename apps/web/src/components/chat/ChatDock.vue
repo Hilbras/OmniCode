@@ -11,6 +11,7 @@ import type { AppGoal, AppModel, AppSkill, QuestionResponse, SessionPlan, Thinki
 import type { FileItem } from './MentionMenu.vue';
 import type { ManagedMembership, PromptAttachment } from '@hilbras/app-client/client';
 import Composer from './Composer.vue';
+import TerminalPanel from '../terminal/TerminalPanel.vue';
 import { GoalPanel } from '@hilbras/app-components';
 import { PlanPanel } from '@hilbras/app-components';
 import { QuestionCard } from '@hilbras/app-components';
@@ -64,7 +65,7 @@ const props = defineProps<{
       list can be trusted). */
   skillsLoaded?: boolean;
   goal?: AppGoal | null;
-  dockPanel: 'bash' | 'subagent' | 'todos' | 'goal' | 'plan' | null;
+  dockPanel: 'bash' | 'subagent' | 'todos' | 'goal' | 'plan' | 'terminal' | null;
   /** A modal/overlay layer is open above the dock (any dialog, sheet, or
       picker tracked by App's anyOverlayOpen) — it owns Escape, so the work
       panel's document capture stays quiet while it is open. */
@@ -112,7 +113,7 @@ const emit = defineEmits<{
   dismiss: [questionId: string];
   approval: [approvalId: string, response: { decision: 'approved' | 'rejected' | 'cancelled'; scope?: 'session'; feedback?: string; selectedLabel?: string }];
   cancelTask: [taskId: string];
-  'toggle-dock-panel': [panel: 'bash' | 'subagent' | 'todos' | 'goal' | 'plan'];
+  'toggle-dock-panel': [panel: 'bash' | 'subagent' | 'todos' | 'goal' | 'plan' | 'terminal'];
   'close-dock-panel': [];
   /** A background subagent chip was clicked — open its live detail panel. */
   openAgent: [taskId: string];
@@ -288,7 +289,10 @@ const compactPills = ref(false);
 // motion) — remember its x so the panel can scale from there.
 const panelOriginX = ref('50%');
 
-function onPillClick(panel: 'bash' | 'subagent' | 'todos' | 'goal' | 'plan', e: MouseEvent): void {
+function onPillClick(
+  panel: 'bash' | 'subagent' | 'todos' | 'goal' | 'plan' | 'terminal',
+  e: MouseEvent,
+): void {
   // A pending question takes the dock's full height budget (see
   // .chat-dock.has-question), so the work panel — anchored above the dock's
   // top edge — would open mostly off-screen. Keep it closed until the
@@ -592,6 +596,22 @@ defineExpose({ loadForEdit, insertQuote, hasInsertableComposer, loadAttachmentsF
               </IconButton>
             </template>
           </WorkPanelHead>
+          <WorkPanelHead
+            v-else-if="dockPanel === 'terminal'"
+            icon="terminal"
+            :title="t('status.terminalLabel')"
+          >
+            <template #actions>
+              <IconButton
+                size="sm"
+                :label="t('tasks.closePanel')"
+                :tooltip="t('tasks.closePanel')"
+                @click.stop="emit('close-dock-panel')"
+              >
+                <Icon name="close" size="md" />
+              </IconButton>
+            </template>
+          </WorkPanelHead>
         </div>
         <div ref="workBodyRef" class="dock-work-body" @scroll="onWorkBodyScroll">
           <TasksPane
@@ -623,11 +643,25 @@ defineExpose({ loadForEdit, insertQuote, hasInsertableComposer, loadAttachmentsF
             :plan-mode-on="planMode"
             :open-file="openFile"
           />
+          <TerminalPanel
+            v-else-if="dockPanel === 'terminal'"
+            :session-id="sessionId ?? ''"
+            embedded
+            @close="emit('close-dock-panel')"
+          />
         </div>
       </div>
     </Transition>
 
-    <div v-if="hasDockWork || planMode || latestPlan" class="dock-workbar">
+    <div v-if="hasDockWork || planMode || latestPlan || sessionId" class="dock-workbar">
+      <WorkPill
+        icon="terminal"
+        :label="t('status.terminalLabel')"
+        :active="dockPanel === 'terminal'"
+        @click="onPillClick('terminal', $event)"
+      >
+        {{ t('status.terminalLabel') }}
+      </WorkPill>
       <WorkPill
         v-if="goal"
         icon="target"
@@ -857,6 +891,14 @@ defineExpose({ loadForEdit, insertQuote, hasInsertableComposer, loadAttachmentsF
 .dock-work-panel.panel-bash {
   height: min(var(--p-dock-panel-h), 50vh);
 }
+.dock-work-panel.panel-terminal {
+  height: min(var(--p-dock-panel-h), 50vh);
+}
+.dock-work-panel.panel-terminal .dock-work-body {
+  margin-top: 0;
+  padding: 0;
+  overflow: hidden;
+}
 /* Todos, goal, subagent, and bash panels per the redesign: uniform 16px
    inset (the head tab's own padding is zeroed so its content lands exactly
    on it), no head hairline. */
@@ -895,6 +937,14 @@ defineExpose({ loadForEdit, insertQuote, hasInsertableComposer, loadAttachmentsF
 .dock-work-panel.panel-subagent,
 .dock-work-panel.panel-bash {
   height: min(var(--p-dock-panel-h), 50vh);
+}
+.dock-work-panel.panel-terminal {
+  height: min(var(--p-dock-panel-h), 50vh);
+}
+.dock-work-panel.panel-terminal .dock-work-body {
+  margin-top: 0;
+  padding: 0;
+  overflow: hidden;
 }
 .dock-work-tab.tab-progress {
   display: inline-flex;

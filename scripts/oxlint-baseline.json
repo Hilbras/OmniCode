@@ -1,6 +1,6 @@
 {
   "comment": "Pre-existing type-aware oxlint findings. Shrink-only: remove entries when fixed; never add. Regenerate with `node scripts/gen-oxlint-baseline.mjs`.",
-  "count": 70,
+  "count": 67,
   "findings": [
     "eslint(eqeqeq) packages/app-client/src/client/useOmnicodeWebClient.ts",
     "eslint(eqeqeq) packages/app-client/src/composables/useMainTranscripts.ts",
@@ -54,8 +54,6 @@
     "eslint-plugin-unicorn(no-useless-spread) packages/channels/src/adapters/base.ts",
     "eslint-plugin-unicorn(no-useless-spread) packages/engine/src/agent/team/forkedAgentContextCache.ts",
     "eslint-plugin-unicorn(no-useless-spread) packages/engine/src/agents/runtime/workflow/runner.ts",
-    "eslint-plugin-unicorn(prefer-node-protocol) apps/omnicode-mobile/metro.config.js",
-    "eslint-plugin-unicorn(prefer-string-starts-ends-with) apps/omnicode-mobile/src/components/Markdown.tsx",
     "typescript-eslint(no-base-to-string) packages/app-core/test/v2Sessions.test.ts",
     "typescript-eslint(no-base-to-string) packages/channels/src/adapters/base.ts",
     "typescript-eslint(no-base-to-string) packages/engine/src/app/telemetry/otlpAppender.ts",
@@ -66,7 +64,6 @@
     "typescript-eslint(no-base-to-string) packages/engine/test/app/telemetry/otlpAppender.test.ts",
     "typescript-eslint(no-base-to-string) packages/telemetry/test/otlpRuntime.test.ts",
     "typescript-eslint(no-meaningless-void-operator) apps/omnicode-cli/src/tui/commands/dispatch.ts",
-    "typescript-eslint(no-misused-promises) apps/omnicode-mobile/src/app/settings.tsx",
     "typescript-eslint(no-redundant-type-constituents) packages/engine/src/agent/contextProjector/contextProjectorService.ts",
     "typescript-eslint(no-redundant-type-constituents) packages/engine/src/features/skill/curator/curator.ts",
     "typescript-eslint(no-redundant-type-constituents) packages/engine/src/features/skill/curator/store.ts",

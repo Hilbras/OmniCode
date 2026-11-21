@@ -11,6 +11,7 @@ export default {
   permissionAutoDesc: '完全自主运行，智能体自己做决定，不再询问',
   permissionYoloDesc: '自动批准工具操作，但遇到关键问题仍会询问',
   // 计划模式
+  terminalLabel: '终端',
   planLabel: '计划',
   planOn: '开',
   planOff: '关',

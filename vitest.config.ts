@@ -6,7 +6,6 @@ export default defineConfig({
       'packages/*/vitest.config.ts',
       'apps/omnicode-cli/vitest.config.ts',
       'apps/omnicode-inspect',
-      'apps/omnicode-mobile',
       'apps/omnicode-vis/server',
       'apps/omnicode-vis/web',
       'apps/omnicode-web',

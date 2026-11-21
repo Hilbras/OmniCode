@@ -1,7 +1,4 @@
 {
-  "typescript": "apps/omnicode-mobile tracks the TypeScript range its Expo SDK expects (~6.0.3); the other ten packages pin 6.0.2 exactly. Collapses when the workspace takes a TypeScript patch bump.",
-  "react": "apps/omnicode-mobile pins 19.3.0 because Expo's SDK validates exact React versions; apps/omnicode-web and apps/omnicode-vis/web follow ^19.1.0.",
-  "react-dom": "Same reason as react: apps/omnicode-mobile pins the exact 19.3.0 that pairs with its React pin, the two web apps use ^19.1.0.",
   "@iconify-json/ri": "apps/web (the vendored code-app renderer) pins 1.2.10 exactly for reproducible renderer builds; other packages follow ^1.2.10. Collapses on the next icon-set bump.",
   "@iconify-json/tabler": "apps/web (the vendored code-app renderer) pins ^1.2.35 while later packages take ^1.2.46. Collapses on the next icon-set bump.",
   "markstream-vue": "apps/web (the vendored code-app renderer) pins 1.0.9-beta.1 as the version its streaming Markdown was validated against; packages/app-markdown takes 1.1.4. Collapses when apps/web validates the newer markstream release."

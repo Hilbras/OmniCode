@@ -14,9 +14,8 @@
 | 人群 | 入口与契约 | 对他们是破坏性变更 | 守卫 |
 |---|---|---|---|
 | CLI / TUI 用户 | `apps/omnicode-cli/src/tui`、`apps/omnicode-cli/src/cli`;命令行参数与子命令、`config.toml` 段、TUI 按键与 slash 命令 | 参数或子命令改名/消失、默认值翻转、按键绑定变化、`config.toml` 段或键名变化、终端输出契约(颜色、可打印性、恢复路径)变化 | `apps/omnicode-cli/test/tui`、`apps/omnicode-cli/test/e2e/pty-tui.e2e.test.ts` |
-| 移动端用户 | `apps/omnicode-mobile/src`;BYOK 配置、会话状态、on-device agent loop | 配置键改名、会话数据读写形态变化、loop 行为变化(当前 README 标注为 preview) | `apps/omnicode-mobile/test` |
 | web 会话可视化用户 | `apps/omnicode-vis/server/src`、`apps/omnicode-vis/web/src`;HTTP 路由与磁盘会话产物的读取形态 | 路由路径或响应字段变化、读取的会话产物格式变化(磁盘格式属于契约) | `apps/omnicode-vis/server/test/routes/context.test.ts`、`apps/omnicode-vis/web/test/api.test.ts` |
-| 随 CLI 发布的 web 面 | 发布物是 `apps/omnicode-cli/dist-web`,源码不在本仓库(`apps/omnicode-cli/scripts/check-web-assets.mjs`);内嵌资产由 `apps/omnicode-cli/scripts/build-vis-asset.mjs` 生成 | 同步逻辑失效、内嵌资产与当前 web 构建不一致(CLI 会发一个旧 UI) | `apps/omnicode-cli/scripts/build-vis-asset.mjs` 的 `--check`(即 `pnpm check:generated` 的 `gen:vis-asset`) |
+| web 前端用户 | `apps/web/src`(Vue 聊天前端,数据经 `@hilbras/app-core` 的 daemon API);随 CLI 发布的内嵌资产由 `apps/omnicode-cli/scripts/build-vis-asset.mjs` 生成 | 路由/页面增删、daemon 调用契约变化、内嵌资产与当前 web 构建不一致(CLI 会发一个旧 UI) | `apps/web/test`、`apps/omnicode-cli/scripts/build-vis-asset.mjs` 的 `--check`(即 `pnpm check:generated` 的 `gen:vis-asset`) |
 | HTTP / WS 客户端 | `packages/server/src/routes`、`packages/server/src/transport/ws`;HTTP/WS 路由、鉴权与 `packages/server` 的 API 表面 | 路由增删或改名、鉴权语义收紧或放宽、WS 路径或帧形态变化、响应字段变化 | `packages/server/test/apiSurface.snapshot.test.ts`、`packages/server/test/wsUpgradeAuth.test.ts` |
 | wire 契约消费方(Klient / 自研客户端) | `packages/client-contract/src/contract`(zod 表是源,供 API 与 ACP 共用);工件 `packages/API/docs/wire-contract.json`、`packages/API/docs/wire-contract.md` | 过程名或服务名变化、入参/出参 schema 变化、事件注册形态变化(契约文件是引信,改它等于改 API) | `packages/API/test/wireContract.test.ts`、`packages/API/test/wireContractConformance.test.ts` |
 | SDK 调用方 | `packages/SDK/src/index.ts` 是已发布 API;引信是 `packages/SDK/etc/omnicode-sdk.api.md` | 导出增删、签名变化、`ApprovalScope` 等跨界类型变化、config schema 变化 | `packages/SDK/test`、`pnpm --filter @hilbras/omnicode-sdk build:dts`(check 模式) |
@@ -48,7 +47,7 @@
 否则算漏项;找不到人群的改动进"待作者确认",而不是 finding。
 
 - 改 `apps/omnicode-cli/**` 的终端输出、按键、参数或 config 段 → CLI / TUI 用户。
-- 改 `apps/omnicode-cli/dist-web` 的同步逻辑或内嵌 web 资产 → 随 CLI 发布的 web 面。
+- 改 `apps/web/src` 的页面、daemon 调用或内嵌 web 资产 → web 前端用户。
 - 改 `packages/server/**` 的路由、鉴权、WS → HTTP / WS 客户端,同时核对 wire 契约行。
 - 改 `packages/client-contract/src/contract/**` → wire 契约消费方;这是引信,必须同时说明仓库外消费方。
 - 改 `packages/SDK/src/index.ts` 的导出或 `packages/SDK/src/config/schema.ts` → SDK 调用方,并重跑 `build:dts`。

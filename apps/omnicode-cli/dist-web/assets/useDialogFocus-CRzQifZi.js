@@ -1,1 +1,0 @@
-import{a as u,n as c,o as a}from"./index-DRkCgUH5.js";function s(t,o){let n=null;u(()=>{n=typeof document<"u"&&document.activeElement instanceof HTMLElement?document.activeElement:null,c(()=>{const e=o?.value??t.value;try{e?.focus()}catch{}})}),a(()=>{const e=n;if(n=null,!(!e||typeof document>"u"||!document.contains(e)))try{e.focus()}catch{}})}export{s as u};

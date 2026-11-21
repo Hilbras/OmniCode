@@ -476,10 +476,10 @@ const hasDockWork = computed(() =>
   subagentTasks.value.length > 0 ||
   (props.todos?.length ?? 0) > 0,
 );
-const dockPanel = ref<'bash' | 'subagent' | 'todos' | 'goal' | 'plan' | null>(null);
+const dockPanel = ref<'bash' | 'subagent' | 'todos' | 'goal' | 'plan' | 'terminal' | null>(null);
 const changesCount = computed(() => (props.gitInfo ? props.changes?.length ?? 0 : 0));
 
-function toggleDockPanel(panel: 'bash' | 'subagent' | 'todos' | 'goal' | 'plan'): void {
+function toggleDockPanel(panel: 'bash' | 'subagent' | 'todos' | 'goal' | 'plan' | 'terminal'): void {
   // A pending question takes the dock's full height budget, so the work
   // panel — anchored above the dock's top edge — would open mostly
   // off-screen. Refuse to open until the question resolves (ChatDock's pill
@@ -508,6 +508,8 @@ watch(
   () => {
     const panel = dockPanel.value;
     if (panel === null) return;
+    // The terminal dock is user-opened and always backed while visible.
+    if (panel === 'terminal') return;
     const backed =
       (panel === 'goal' && props.goal !== undefined && props.goal !== null) ||
       (panel === 'bash' && bashTasks.value.length > 0) ||

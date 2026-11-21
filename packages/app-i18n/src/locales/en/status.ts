@@ -11,6 +11,7 @@ export default {
   permissionAutoDesc: 'Fully autonomous — agent decides everything without asking',
   permissionYoloDesc: 'Auto-approve tool actions, but agent may still ask questions',
   // Plan mode pill
+  terminalLabel: 'Terminal',
   planLabel: 'Plan',
   planOn: 'on',
   planOff: 'off',
