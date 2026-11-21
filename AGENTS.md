@@ -27,7 +27,6 @@ Compatibility files point here. Do not fork rules into them.
 1. This file.
 2. Nearest `AGENTS.md`:
    - `apps/omnicode-cli/AGENTS.md`
-   - `apps/web/AGENTS.md`
    - `packages/memory/AGENTS.md`
    - `packages/minidb/AGENTS.md`
    - `packages/tui/AGENTS.md`
@@ -238,7 +237,6 @@ constraints and decisions; do not narrate the diff.
 | Path | Role |
 |---|---|
 | `apps/omnicode-cli` | CLI + TUI. Entry, commands, controllers, components, reverse-RPC. |
-| `apps/web` | The Omnicode web app (Vue 3 + Vite, vendored code-app frontend): chat UI over `app-core`'s daemon API. Its production build is synced into the CLI package's prebuilt web bundle via the code-app `sync:web` flow. |
 | `apps/omnicode-inspect` | Read-only inspector over the loopback `/api/v1/debug` service channels: services, DI graph, events, transcript, search, model catalog. |
 | `apps/omnicode-vis/server` | Hono visualisation daemon. |
 | `apps/omnicode-vis/web` | React 19 + Vite visualisation app. |

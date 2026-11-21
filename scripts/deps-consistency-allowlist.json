@@ -1,5 +1,1 @@
-{
-  "@iconify-json/ri": "apps/web (the vendored code-app renderer) pins 1.2.10 exactly for reproducible renderer builds; other packages follow ^1.2.10. Collapses on the next icon-set bump.",
-  "@iconify-json/tabler": "apps/web (the vendored code-app renderer) pins ^1.2.35 while later packages take ^1.2.46. Collapses on the next icon-set bump.",
-  "markstream-vue": "apps/web (the vendored code-app renderer) pins 1.0.9-beta.1 as the version its streaming Markdown was validated against; packages/app-markdown takes 1.1.4. Collapses when apps/web validates the newer markstream release."
-}
+{}
