@@ -39,6 +39,7 @@ export * from './sessionEmoji';
 export * from './sessionRecency';
 export * from './sessionRoute';
 export * from './sessionSearchShortcut';
+export * from './slashCommands';
 export * from './shellDanger';
 export * from './snapshotMessages';
 export * from './snapshotSync';

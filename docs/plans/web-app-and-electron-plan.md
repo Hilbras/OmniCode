@@ -208,6 +208,27 @@ _Filled as phases land: commit hash, tests, gate output per item._
   streams the in-flight assistant bubble and a thinking indicator. Tests 26/26
   (live projection reducer + routes + tokens + theme); `pnpm build` OK;
   `check:guards`, `lint` green.
+- **Full frontend port (2026-11-21, supersedes the React skeleton's direction).**
+  The old project's web frontend source was located at
+  `/mnt/sda3/work/Hilbras/.Hilbras.product/OmniCode-app/apps/web` (the "code-app"
+  the old AGENTS.md pointed at — 28 Vue components: Sidebar, ChatDock,
+  Composer, ConversationPane, ApprovalCard, TranscriptSearch, SettingsDialog,
+  onboarding, mobile sheets). It is vendored into this repo as `apps/web` and
+  consumes the maintained `packages/app-*` + `packages/vite-preset` (verified
+  near-identical; one `app-core` lib barrel export added). Version source in
+  `vite.config.ts` repointed from the code-app submodule to
+  `apps/omnicode-cli/package.json`; the code-app font-subset prebuild hook was
+  dropped (subset fonts already committed in `app-ui` assets). Two ported tests
+  adapted to the maintained packages' contracts (async-wrapped tool renderer
+  exports, async component prop defaults); four vendored `!= null` comparisons
+  rewritten strict for `eqeqeq`; three duplicate dep specifiers allowlisted in
+  `scripts/deps-consistency-allowlist.json` with reasons. Verified end-to-end
+  against a live daemon: boot screen, onboarding wizard (language/appearance),
+  session rail with real sessions, transcript with thinking sections. Gates:
+  web tests 432/432, `vue-tsc` clean, `vite build` OK, `check:guards`,
+  `check:tests` (1434 wired), `check:typecheck` (41 packages), `lint` green.
+  The React `apps/omnicode-web` skeleton coexists; removal is a follow-up
+  decision for the owner.
 - **Phase C — act, landed.** Live projection extended with pending
   approvals/questions (`approvalRequested/Resolved/Expired`,
   `questionRequested/Answered`); `ApprovalDialog` (approve/reject via

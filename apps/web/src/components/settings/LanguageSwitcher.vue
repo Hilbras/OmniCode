@@ -1,0 +1,26 @@
+<script setup lang="ts">
+import { useI18n } from 'vue-i18n';
+import { availableLocales, setLocale, type LocaleCode } from '../../i18n';
+import { SegmentedControl } from '@hilbras/app-ui';
+
+const { locale } = useI18n();
+
+withDefaults(
+  defineProps<{
+    /** Segmented control size — xs inside dense menus. */
+    size?: 'xs' | 'sm' | 'md';
+  }>(),
+  { size: 'md' },
+);
+
+const options = availableLocales.map((l) => ({ value: l.code, label: l.label }));
+
+function choose(code: string): void {
+  if (locale.value === code) return;
+  setLocale(code as LocaleCode);
+}
+</script>
+
+<template>
+  <SegmentedControl :model-value="locale" :options="options" :size="size" @update:model-value="choose" />
+</template>

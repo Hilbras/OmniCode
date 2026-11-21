@@ -1,0 +1,46 @@
+/* studio-theme: Hilbras Studio palette (warm neutrals, single gold accent) */
+:root{--studio-gold-300:#fcd670;--studio-gold-500:#da9a2e;--studio-gold-700:#91651c;--studio-glow-alpha:5%;
+--color-bg:#fafaf7;--color-surface:#f3f1ea;--color-surface-raised:#ffffff;--color-surface-overlay:#ffffff;--color-surface-sunken:#f3f1ea;--color-well:#f3f1ea;--color-surface-deep:#efe9d6;--color-inline-code-bg:rgba(28,26,22,.05);
+--color-text:#1c1a16;--color-text-strong:#0d0b08;--color-text-muted:#6b6860;--color-text-faint:#8c887d;--color-text-quaternary:rgba(28,26,22,.32);--color-text-on-accent:#ffffff;
+--color-line:#e6e3da;--color-subtle:rgba(28,26,22,.05);--color-line-strong:#d6d1c4;
+--color-selected:#efe9d6;--color-selected-hover:#e9e1c8;--color-hover:rgba(28,26,22,.04);
+--color-fill-1:rgba(28,26,22,.03);--color-fill-2:rgba(28,26,22,.05);--color-fill-4:rgba(28,26,22,.25);
+--color-sidebar-bg:#f6f4ee;--color-user-bubble-bg:#f3f1ea;--color-bg-translucent:rgba(250,250,247,.72);--color-menu-bg:rgba(255,255,255,.95);
+--color-accent:#b87f24;--color-accent-hover:#91651c;--color-accent-soft:#fff6d6;--color-accent-bd:rgba(184,127,36,.3);--color-info:#b87f24;
+--color-code-selection:rgba(218,154,46,.3);--p-selection:rgba(218,154,46,.3);
+--color-composer-bg:#ffffff;--color-composer-line:#e6e3da;--color-composer-focus-line:#c9a14a;
+--color-send-bg:#1c1a16;--color-send-bg-hover:#2a251c;--color-send-icon:#fafaf7;--color-send-bg-disabled:rgba(28,26,22,.05);--color-send-icon-disabled:rgba(28,26,22,.27);
+--panel-tab-selected-bg:#efe9d6;
+--bg:#fafaf7;--canvas:#f6f4ee;--panel:#f3f1ea;--panel2:rgba(28,26,22,.05);
+--blue:#b87f24;--blue2:#91651c;--soft:#fff6d6;--bd:rgba(184,127,36,.3);--logo:#b87f24;--bluebg:#fff6d6;--blueln:rgba(184,127,36,.3)}
+html[data-color-scheme=dark]{--studio-gold-300:#5e4a22;--studio-gold-500:#b88f3a;--studio-gold-700:#e5b94a;--studio-glow-alpha:7%;
+--color-bg:#0d0b08;--color-surface:#15120c;--color-surface-raised:#1b1812;--color-surface-overlay:rgba(243,239,227,.08);--color-surface-sunken:#0d0b08;--color-well:#15120c;--color-surface-deep:#090806;--color-inline-code-bg:rgba(243,239,227,.08);
+--color-text:rgba(243,239,227,.88);--color-text-strong:#f3efe3;--color-text-muted:#9a9380;--color-text-faint:rgba(154,147,128,.78);--color-text-quaternary:rgba(243,239,227,.26);--color-text-on-accent:#1c1a16;
+--color-line:#2a251c;--color-subtle:rgba(243,239,227,.05);--color-line-strong:#3a3326;
+--color-selected:#241e12;--color-selected-hover:#2e2617;--color-hover:rgba(243,239,227,.05);
+--color-fill-1:rgba(243,239,227,.05);--color-fill-2:rgba(243,239,227,.1);--color-fill-4:rgba(243,239,227,.25);
+--color-sidebar-bg:#100d09;--color-user-bubble-bg:#241e12;--color-bg-translucent:rgba(13,11,8,.72);--color-menu-bg:rgba(27,24,18,.96);
+--color-accent:#e5b94a;--color-accent-hover:#f0c96a;--color-accent-soft:rgba(229,185,74,.12);--color-accent-bd:rgba(229,185,74,.3);--color-info:#e5b94a;
+--color-code-selection:rgba(229,185,74,.27);--p-selection:rgba(229,185,74,.25);
+--color-composer-bg:#15120c;--color-composer-line:#2a251c;--color-composer-focus-line:rgba(229,185,74,.45);
+--color-send-bg:#f3efe3;--color-send-bg-hover:#fce9a8;--color-send-icon:#15120c;--color-send-bg-disabled:rgba(243,239,227,.1);--color-send-icon-disabled:rgba(243,239,227,.28);
+--panel-tab-selected-bg:#2e2617;
+--bg:#0d0b08;--canvas:#100d09;--panel:#15120c;--panel2:#0d0b08;
+--blue:#e5b94a;--blue2:#f0c96a;--soft:rgba(229,185,74,.12);--bd:rgba(229,185,74,.3);--logo:#e5b94a;--bluebg:#241e12;--blueln:rgba(243,239,227,.05)}
+@media(prefers-color-scheme:dark){html[data-color-scheme=system]{--studio-gold-300:#5e4a22;--studio-gold-500:#b88f3a;--studio-gold-700:#e5b94a;--studio-glow-alpha:7%;
+--color-bg:#0d0b08;--color-surface:#15120c;--color-surface-raised:#1b1812;--color-surface-overlay:rgba(243,239,227,.08);--color-surface-sunken:#0d0b08;--color-well:#15120c;--color-surface-deep:#090806;--color-inline-code-bg:rgba(243,239,227,.08);
+--color-text:rgba(243,239,227,.88);--color-text-strong:#f3efe3;--color-text-muted:#9a9380;--color-text-faint:rgba(154,147,128,.78);--color-text-quaternary:rgba(243,239,227,.26);--color-text-on-accent:#1c1a16;
+--color-line:#2a251c;--color-subtle:rgba(243,239,227,.05);--color-line-strong:#3a3326;
+--color-selected:#241e12;--color-selected-hover:#2e2617;--color-hover:rgba(243,239,227,.05);
+--color-fill-1:rgba(243,239,227,.05);--color-fill-2:rgba(243,239,227,.1);--color-fill-4:rgba(243,239,227,.25);
+--color-sidebar-bg:#100d09;--color-user-bubble-bg:#241e12;--color-bg-translucent:rgba(13,11,8,.72);--color-menu-bg:rgba(27,24,18,.96);
+--color-accent:#e5b94a;--color-accent-hover:#f0c96a;--color-accent-soft:rgba(229,185,74,.12);--color-accent-bd:rgba(229,185,74,.3);--color-info:#e5b94a;
+--color-code-selection:rgba(229,185,74,.27);--p-selection:rgba(229,185,74,.25);
+--color-composer-bg:#15120c;--color-composer-line:#2a251c;--color-composer-focus-line:rgba(229,185,74,.45);
+--color-send-bg:#f3efe3;--color-send-bg-hover:#fce9a8;--color-send-icon:#15120c;--color-send-bg-disabled:rgba(243,239,227,.1);--color-send-icon-disabled:rgba(243,239,227,.28);
+--panel-tab-selected-bg:#2e2617;
+--bg:#0d0b08;--canvas:#100d09;--panel:#15120c;--panel2:#0d0b08;
+--blue:#e5b94a;--blue2:#f0c96a;--soft:rgba(229,185,74,.12);--bd:rgba(229,185,74,.3);--logo:#e5b94a;--bluebg:#241e12;--blueln:rgba(243,239,227,.05)}}
+.gload-logo tspan:last-child,.wordmark tspan:last-child{fill:var(--color-accent)}
+#app::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:2147483647;background:radial-gradient(600px circle at calc(20% + 300px) calc(10% + 300px),color-mix(in srgb,var(--studio-gold-500) var(--studio-glow-alpha),transparent),transparent 70%),radial-gradient(400px circle at calc(70% + 200px) calc(60% + 200px),color-mix(in srgb,var(--studio-gold-700) var(--studio-glow-alpha),transparent),transparent 70%),radial-gradient(500px circle at calc(50% + 250px) calc(30% + 250px),color-mix(in srgb,var(--studio-gold-300) var(--studio-glow-alpha),transparent),transparent 70%)}
+.mascot-peek [fill="#1783FF"]{fill:var(--color-accent)}.mascot-peek [fill="#FFFFFF"]{fill:var(--color-text-on-accent)}

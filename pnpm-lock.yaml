@@ -628,6 +628,100 @@ importers:
         specifier: 4.1.4
         version: 4.1.4(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(vite@6.4.6(@types/node@22.20.5)(jiti@1.21.7)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
 
+  apps/web:
+    dependencies:
+      '@chenglou/pretext':
+        specifier: 0.0.8
+        version: 0.0.8
+      '@fontsource-variable/jetbrains-mono':
+        specifier: ^5.2.8
+        version: 5.3.0
+      '@hilbras/app-client':
+        specifier: workspace:*
+        version: link:../../packages/app-client
+      '@hilbras/app-components':
+        specifier: workspace:*
+        version: link:../../packages/app-components
+      '@hilbras/app-composer':
+        specifier: workspace:*
+        version: link:../../packages/app-composer
+      '@hilbras/app-core':
+        specifier: workspace:*
+        version: link:../../packages/app-core
+      '@hilbras/app-i18n':
+        specifier: workspace:*
+        version: link:../../packages/app-i18n
+      '@hilbras/app-markdown':
+        specifier: workspace:*
+        version: link:../../packages/app-markdown
+      '@hilbras/app-ui':
+        specifier: workspace:*
+        version: link:../../packages/app-ui
+      '@rive-app/canvas':
+        specifier: 2.38.5
+        version: 2.38.5
+      '@xterm/addon-fit':
+        specifier: ^0.11.0
+        version: 0.11.0
+      '@xterm/xterm':
+        specifier: ^6.0.0
+        version: 6.0.0
+      katex:
+        specifier: ^0.17.0
+        version: 0.17.0
+      markstream-vue:
+        specifier: 1.0.9-beta.1
+        version: 1.0.9-beta.1(katex@0.17.0)(mermaid@11.17.2)(stream-diffs@0.0.2(@shikijs/themes@4.6.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vue@3.5.45(typescript@6.0.2)))(stream-markdown@0.0.16(react@19.3.1)(shiki@4.6.0)(vue@3.5.45(typescript@6.0.2)))(stream-monaco@0.0.49(monaco-editor@0.55.1))(vue-i18n@11.4.18(vue@3.5.45(typescript@6.0.2)))(vue@3.5.45(typescript@6.0.2))
+      mermaid:
+        specifier: ^11.15.0
+        version: 11.17.2
+      photoswipe:
+        specifier: ^5.4.4
+        version: 5.4.4
+      shiki:
+        specifier: ^4.3.0
+        version: 4.6.0
+      stream-markdown:
+        specifier: 0.0.16
+        version: 0.0.16(react@19.3.1)(shiki@4.6.0)(vue@3.5.45(typescript@6.0.2))
+      vue:
+        specifier: ^3.5.35
+        version: 3.5.45(typescript@6.0.2)
+      vue-i18n:
+        specifier: ^11.4.5
+        version: 11.4.18(vue@3.5.45(typescript@6.0.2))
+    devDependencies:
+      '@hilbras/vite-preset':
+        specifier: workspace:*
+        version: link:../../packages/vite-preset
+      '@iconify-json/ri':
+        specifier: ^1.2.10
+        version: 1.2.10
+      '@iconify-json/tabler':
+        specifier: ^1.2.35
+        version: 1.2.46
+      '@vitejs/plugin-vue':
+        specifier: ^5.2.4
+        version: 5.2.4(vite@6.4.6(@types/node@22.20.5)(jiti@1.21.7)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))(vue@3.5.45(typescript@6.0.2))
+      typescript:
+        specifier: 6.0.2
+        version: 6.0.2
+      unplugin-icons:
+        specifier: ^23.0.0
+        version: 23.0.1(@vue/compiler-sfc@3.5.45)
+      vite:
+        specifier: ^6.3.3
+        version: 6.4.6(@types/node@22.20.5)(jiti@1.21.7)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1)
+      vitest:
+        specifier: 4.1.4
+        version: 4.1.4(@opentelemetry/api@1.10.0)(@types/node@22.20.5)(vite@6.4.6(@types/node@22.20.5)(jiti@1.21.7)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))
+      vue-tsc:
+        specifier: ~3.2.0
+        version: 3.2.9(typescript@6.0.2)
+      ws:
+        specifier: ^8.18.0
+        version: 8.22.2
+
   packages/ACP:
     dependencies:
       '@agentclientprotocol/sdk':
@@ -2730,6 +2824,9 @@ packages:
 
   '@floating-ui/utils@0.2.12':
     resolution: {integrity: sha512-HpCo8tmWzLVad5s2d19EhAz5zqrrQ6s69qd6moPMQvkOuSwDT1YgRfWSVuc4ennqrgv3OHppiOGMQ7oC13yIww==}
+
+  '@fontsource-variable/jetbrains-mono@5.3.0':
+    resolution: {integrity: sha512-F32xpS2NsGYoQi2ADSkKTgpJj7ozajsGgDJ8woTnqjmIB+dxDIqImjl4pXZVEExu8UFZ2ndhmX18EBS/hdz3Lw==}
 
   '@google/genai@1.52.0':
     resolution: {integrity: sha512-gwSvbpiN/17O9TbsqSsE/OzZcpv5Fo4RQjdngGgogtuB9RsyJ8ZHhX5KjHj1bp5N9snN2eK8LDGXSaWW2hof8Q==}
@@ -7230,6 +7327,9 @@ packages:
   markdown-it-mark@4.0.0:
     resolution: {integrity: sha512-YLhzaOsU9THO/cal0lUjfMjrqSMPjjyjChYM7oyj4DnyaXEzA8gnW6cVJeyCrCVeyesrY2PlEdUYJSPFYL4Nkg==}
 
+  markdown-it-sub@2.0.0:
+    resolution: {integrity: sha512-iCBKgwCkfQBRg2vApy9vx1C1Tu6D8XYo8NvevI3OlwzBRmiMtsJ2sXupBgEA7PPxiDwNni3qIUkhZ6j5wofDUA==}
+
   markdown-it-sup@2.0.0:
     resolution: {integrity: sha512-5VgmdKlkBd8sgXuoDoxMpiU+BiEt3I49GItBzzw7Mxq9CxvnhE/k09HFli09zgfFDRixDQDfDxi0mgBCXtaTvA==}
 
@@ -7276,6 +7376,36 @@ packages:
 
   markstream-core@1.0.3:
     resolution: {integrity: sha512-QXn+yERo1q+RD6YlGDW61zc/af65uhkQEH3K8YvEKkprHbgRJ/JIeBeEQjELCTyBnPoxqtKQ7I565rylY+PePg==}
+
+  markstream-vue@1.0.9-beta.1:
+    resolution: {integrity: sha512-JMv5XyX/Grpw45AuclbKRT42/dc0qYppLBLoZaJHCT/DVMjyVB7Vw5Z0i0qRKkd+LaUmELkoVNt7uMqtdS092A==}
+    peerDependencies:
+      '@antv/infographic': ^0.2.3
+      '@terrastruct/d2': '>=0.1.33'
+      katex: '>=0.16.22'
+      mermaid: '>=11'
+      stream-diffs: '>=0.0.2'
+      stream-markdown: '>=0.0.16'
+      stream-monaco: '>=0.0.48'
+      vue: '>=3.0.0'
+      vue-i18n: '>=9'
+    peerDependenciesMeta:
+      '@antv/infographic':
+        optional: true
+      '@terrastruct/d2':
+        optional: true
+      katex:
+        optional: true
+      mermaid:
+        optional: true
+      stream-diffs:
+        optional: true
+      stream-markdown:
+        optional: true
+      stream-monaco:
+        optional: true
+      vue-i18n:
+        optional: true
 
   markstream-vue@1.1.4:
     resolution: {integrity: sha512-CE9TAYi/8vOWrPOw8evGmGtJx+2zzGw8ffti3GRB/cZI+5pQqDPvNg/L05uGNKqzgHpxTUnudzfvyyzcxvT1xQ==}
@@ -8803,6 +8933,9 @@ packages:
       vue:
         optional: true
 
+  stream-markdown-parser@1.1.7:
+    resolution: {integrity: sha512-+0TE9Xcg6lh8xghVHlZiqU6vF5rK1Lqjb+IwgCsN+/gE4HjEQLGyhWJfz+gngUh6B7O4uaCSRvu8+ZYNOBmakw==}
+
   stream-markdown-parser@1.2.6:
     resolution: {integrity: sha512-jHDmJ4EG6B6oQpXPrgIpYt6QQjc9tqyQ0lCsTaNfx6RMZ0+GPFnS3j73EkItEofWj6uER87fER+TzvN95SCJMQ==}
 
@@ -10321,8 +10454,7 @@ snapshots:
 
   '@braidai/lang@1.1.2': {}
 
-  '@braintree/sanitize-url@7.1.2':
-    optional: true
+  '@braintree/sanitize-url@7.1.2': {}
 
   '@changesets/apply-release-plan@8.1.1':
     dependencies:
@@ -10430,8 +10562,7 @@ snapshots:
 
   '@chenglou/pretext@0.0.8': {}
 
-  '@chevrotain/types@11.1.2':
-    optional: true
+  '@chevrotain/types@11.1.2': {}
 
   '@clack/core@1.6.0':
     dependencies:
@@ -11092,6 +11223,8 @@ snapshots:
 
   '@floating-ui/utils@0.2.12': {}
 
+  '@fontsource-variable/jetbrains-mono@5.3.0': {}
+
   '@google/genai@1.52.0(@modelcontextprotocol/sdk@1.32.2(supports-color@7.2.0)(zod@4.6.6))(supports-color@7.2.0)':
     dependencies:
       google-auth-library: 10.9.1(supports-color@7.2.0)
@@ -11669,7 +11802,6 @@ snapshots:
   '@mermaid-js/parser@1.2.1':
     dependencies:
       '@chevrotain/types': 11.1.2
-    optional: true
 
   '@microsoft/api-extractor-model@7.33.16(@types/node@22.20.5)':
     dependencies:
@@ -12712,119 +12844,89 @@ snapshots:
       '@types/deep-eql': 4.0.2
       assertion-error: 2.0.1
 
-  '@types/d3-array@3.2.2':
-    optional: true
+  '@types/d3-array@3.2.2': {}
 
   '@types/d3-axis@3.0.6':
     dependencies:
       '@types/d3-selection': 3.0.12
-    optional: true
 
   '@types/d3-brush@3.0.6':
     dependencies:
       '@types/d3-selection': 3.0.12
-    optional: true
 
-  '@types/d3-chord@3.0.6':
-    optional: true
+  '@types/d3-chord@3.0.6': {}
 
-  '@types/d3-color@3.1.3':
-    optional: true
+  '@types/d3-color@3.1.3': {}
 
   '@types/d3-contour@3.0.6':
     dependencies:
       '@types/d3-array': 3.2.2
       '@types/geojson': 7946.0.16
-    optional: true
 
-  '@types/d3-delaunay@6.0.4':
-    optional: true
+  '@types/d3-delaunay@6.0.4': {}
 
-  '@types/d3-dispatch@3.0.7':
-    optional: true
+  '@types/d3-dispatch@3.0.7': {}
 
   '@types/d3-drag@3.0.7':
     dependencies:
       '@types/d3-selection': 3.0.12
-    optional: true
 
-  '@types/d3-dsv@3.0.7':
-    optional: true
+  '@types/d3-dsv@3.0.7': {}
 
-  '@types/d3-ease@3.0.2':
-    optional: true
+  '@types/d3-ease@3.0.2': {}
 
   '@types/d3-fetch@3.0.7':
     dependencies:
       '@types/d3-dsv': 3.0.7
-    optional: true
 
-  '@types/d3-force@3.0.10':
-    optional: true
+  '@types/d3-force@3.0.10': {}
 
-  '@types/d3-format@3.0.4':
-    optional: true
+  '@types/d3-format@3.0.4': {}
 
   '@types/d3-geo@3.1.1':
     dependencies:
       '@types/geojson': 7946.0.16
-    optional: true
 
-  '@types/d3-hierarchy@3.1.7':
-    optional: true
+  '@types/d3-hierarchy@3.1.7': {}
 
   '@types/d3-interpolate@3.0.4':
     dependencies:
       '@types/d3-color': 3.1.3
-    optional: true
 
-  '@types/d3-path@3.1.1':
-    optional: true
+  '@types/d3-path@3.1.1': {}
 
-  '@types/d3-polygon@3.0.2':
-    optional: true
+  '@types/d3-polygon@3.0.2': {}
 
-  '@types/d3-quadtree@3.0.6':
-    optional: true
+  '@types/d3-quadtree@3.0.6': {}
 
-  '@types/d3-random@3.0.4':
-    optional: true
+  '@types/d3-random@3.0.4': {}
 
-  '@types/d3-scale-chromatic@3.1.0':
-    optional: true
+  '@types/d3-scale-chromatic@3.1.0': {}
 
   '@types/d3-scale@4.0.9':
     dependencies:
       '@types/d3-time': 3.0.4
-    optional: true
 
-  '@types/d3-selection@3.0.12':
-    optional: true
+  '@types/d3-selection@3.0.12': {}
 
   '@types/d3-shape@3.2.0':
     dependencies:
       '@types/d3-path': 3.1.1
-    optional: true
 
-  '@types/d3-time-format@4.0.3':
-    optional: true
+  '@types/d3-time-format@4.0.3': {}
 
-  '@types/d3-time@3.0.4':
-    optional: true
+  '@types/d3-time@3.0.4': {}
 
-  '@types/d3-timer@3.0.2':
-    optional: true
+  '@types/d3-timer@3.0.2': {}
 
   '@types/d3-transition@3.0.9':
     dependencies:
       '@types/d3-selection': 3.0.12
-    optional: true
 
   '@types/d3-zoom@3.0.9':
     dependencies:
       '@types/d3-interpolate': 3.0.4
       '@types/d3-selection': 3.0.12
-    optional: true
 
   '@types/d3@7.4.3':
     dependencies:
@@ -12858,7 +12960,6 @@ snapshots:
       '@types/d3-timer': 3.0.2
       '@types/d3-transition': 3.0.9
       '@types/d3-zoom': 3.0.9
-    optional: true
 
   '@types/debug@4.1.13':
     dependencies:
@@ -12872,8 +12973,7 @@ snapshots:
 
   '@types/estree@1.0.10': {}
 
-  '@types/geojson@7946.0.16':
-    optional: true
+  '@types/geojson@7946.0.16': {}
 
   '@types/hast@3.0.5':
     dependencies:
@@ -13144,7 +13244,6 @@ snapshots:
     optionalDependencies:
       d3-selection: 3.0.1
       d3-transition: 3.0.2(d3-selection@3.0.1)
-    optional: true
 
   '@vitejs/plugin-react@4.7.0(supports-color@7.2.0)(vite@6.4.6(@types/node@22.20.5)(jiti@1.21.7)(lightningcss@1.33.0)(terser@5.51.2)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
@@ -13240,7 +13339,7 @@ snapshots:
 
   '@vue/compiler-core@3.5.45':
     dependencies:
-      '@babel/parser': 7.29.13
+      '@babel/parser': 7.29.14
       '@vue/shared': 3.5.45
       entities: 7.0.1
       estree-walker: 2.0.2
@@ -13253,7 +13352,7 @@ snapshots:
 
   '@vue/compiler-sfc@3.5.45':
     dependencies:
-      '@babel/parser': 7.29.13
+      '@babel/parser': 7.29.14
       '@vue/compiler-core': 3.5.45
       '@vue/compiler-dom': 3.5.45
       '@vue/compiler-ssr': 3.5.45
@@ -14010,12 +14109,10 @@ snapshots:
   cose-base@1.0.3:
     dependencies:
       layout-base: 1.0.2
-    optional: true
 
   cose-base@2.2.0:
     dependencies:
       layout-base: 2.0.1
-    optional: true
 
   cpu-features@0.0.10:
     dependencies:
@@ -14072,29 +14169,23 @@ snapshots:
     dependencies:
       cose-base: 1.0.3
       cytoscape: 3.35.0
-    optional: true
 
   cytoscape-fcose@2.2.0(cytoscape@3.35.0):
     dependencies:
       cose-base: 2.2.0
       cytoscape: 3.35.0
-    optional: true
 
-  cytoscape@3.35.0:
-    optional: true
+  cytoscape@3.35.0: {}
 
   d3-array@2.12.1:
     dependencies:
       internmap: 1.0.1
-    optional: true
 
   d3-array@3.2.5:
     dependencies:
       internmap: 2.0.3
-    optional: true
 
-  d3-axis@3.0.1:
-    optional: true
+  d3-axis@3.0.1: {}
 
   d3-brush@3.0.1:
     dependencies:
@@ -14103,100 +14194,78 @@ snapshots:
       d3-interpolate: 3.0.2
       d3-selection: 3.0.1
       d3-transition: 3.0.2(d3-selection@3.0.1)
-    optional: true
 
   d3-chord@3.0.2:
     dependencies:
       d3-path: 3.1.1
-    optional: true
 
-  d3-color@3.1.1:
-    optional: true
+  d3-color@3.1.1: {}
 
   d3-contour@4.0.3:
     dependencies:
       d3-array: 3.2.5
-    optional: true
 
   d3-delaunay@6.0.6:
     dependencies:
       delaunator: 5.1.0
-    optional: true
 
-  d3-dispatch@3.0.2:
-    optional: true
+  d3-dispatch@3.0.2: {}
 
   d3-drag@3.0.1:
     dependencies:
       d3-dispatch: 3.0.2
       d3-selection: 3.0.1
-    optional: true
 
   d3-dsv@3.0.2:
     dependencies:
       commander: 7.2.0
       iconv-lite: 0.6.3
       rw: 1.3.3
-    optional: true
 
-  d3-ease@3.0.2:
-    optional: true
+  d3-ease@3.0.2: {}
 
   d3-fetch@3.0.2:
     dependencies:
       d3-dsv: 3.0.2
-    optional: true
 
   d3-force@3.0.1:
     dependencies:
       d3-dispatch: 3.0.2
       d3-quadtree: 3.0.2
       d3-timer: 3.0.2
-    optional: true
 
-  d3-format@3.1.3:
-    optional: true
+  d3-format@3.1.3: {}
 
   d3-geo@3.1.2:
     dependencies:
       d3-array: 3.2.5
-    optional: true
 
-  d3-hierarchy@3.1.3:
-    optional: true
+  d3-hierarchy@3.1.3: {}
 
   d3-interpolate@3.0.2:
     dependencies:
       d3-color: 3.1.1
-    optional: true
 
-  d3-path@1.0.9:
-    optional: true
+  d3-path@1.0.9: {}
 
-  d3-path@3.1.1:
-    optional: true
+  d3-path@3.1.1: {}
 
-  d3-polygon@3.0.2:
-    optional: true
+  d3-polygon@3.0.2: {}
 
-  d3-quadtree@3.0.2:
-    optional: true
+  d3-quadtree@3.0.2: {}
 
-  d3-random@3.0.2:
-    optional: true
+  d3-random@3.0.2: {}
 
   d3-sankey@0.12.3:
     dependencies:
       d3-array: 2.12.1
       d3-shape: 1.3.7
-    optional: true
 
   d3-scale-chromatic@3.1.1:
     dependencies:
       d3-color: 3.1.1
       d3-interpolate: 3.0.2
       d3-scale: 4.0.3
-    optional: true
 
   d3-scale@4.0.3:
     dependencies:
@@ -14205,33 +14274,26 @@ snapshots:
       d3-interpolate: 3.0.2
       d3-time: 3.1.1
       d3-time-format: 4.1.1
-    optional: true
 
-  d3-selection@3.0.1:
-    optional: true
+  d3-selection@3.0.1: {}
 
   d3-shape@1.3.7:
     dependencies:
       d3-path: 1.0.9
-    optional: true
 
   d3-shape@3.2.1:
     dependencies:
       d3-path: 3.1.1
-    optional: true
 
   d3-time-format@4.1.1:
     dependencies:
       d3-time: 3.1.1
-    optional: true
 
   d3-time@3.1.1:
     dependencies:
       d3-array: 3.2.5
-    optional: true
 
-  d3-timer@3.0.2:
-    optional: true
+  d3-timer@3.0.2: {}
 
   d3-transition@3.0.2(d3-selection@3.0.1):
     dependencies:
@@ -14241,7 +14303,6 @@ snapshots:
       d3-interpolate: 3.0.2
       d3-selection: 3.0.1
       d3-timer: 3.0.2
-    optional: true
 
   d3-zoom@3.0.1:
     dependencies:
@@ -14250,7 +14311,6 @@ snapshots:
       d3-interpolate: 3.0.2
       d3-selection: 3.0.1
       d3-transition: 3.0.2(d3-selection@3.0.1)
-    optional: true
 
   d3@7.9.2:
     dependencies:
@@ -14284,13 +14344,11 @@ snapshots:
       d3-timer: 3.0.2
       d3-transition: 3.0.2(d3-selection@3.0.1)
       d3-zoom: 3.0.1
-    optional: true
 
   dagre-d3-es@7.0.14:
     dependencies:
       d3: 7.9.2
       lodash-es: 4.18.1
-    optional: true
 
   data-uri-to-buffer@4.0.1: {}
 
@@ -14312,8 +14370,7 @@ snapshots:
       es-errors: 1.3.0
       is-data-view: 1.0.2
 
-  dayjs@1.11.23:
-    optional: true
+  dayjs@1.11.23: {}
 
   debug@2.6.9(supports-color@7.2.0):
     dependencies:
@@ -14370,7 +14427,6 @@ snapshots:
   delaunator@5.1.0:
     dependencies:
       robust-predicates: 3.0.3
-    optional: true
 
   depd@2.0.0: {}
 
@@ -14594,8 +14650,7 @@ snapshots:
       is-date-object: 1.1.0
       is-symbol: 1.1.1
 
-  es-toolkit@1.53.2:
-    optional: true
+  es-toolkit@1.53.2: {}
 
   esbuild@0.25.12:
     optionalDependencies:
@@ -15226,7 +15281,6 @@ snapshots:
   fastdom@1.0.12:
     dependencies:
       strictdom: 1.0.1
-    optional: true
 
   fastify-plugin@6.0.1: {}
 
@@ -15537,8 +15591,7 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  hachure-fill@0.5.2:
-    optional: true
+  hachure-fill@0.5.2: {}
 
   harfbuzzjs@1.6.4: {}
 
@@ -15679,7 +15732,6 @@ snapshots:
   iconv-lite@0.6.3:
     dependencies:
       safer-buffer: 2.1.2
-    optional: true
 
   iconv-lite@0.7.3:
     dependencies:
@@ -15724,11 +15776,9 @@ snapshots:
       hasown: 2.0.4
       side-channel: 1.1.1
 
-  internmap@1.0.1:
-    optional: true
+  internmap@1.0.1: {}
 
-  internmap@2.0.3:
-    optional: true
+  internmap@2.0.3: {}
 
   invariant@2.2.4:
     dependencies:
@@ -16078,7 +16128,6 @@ snapshots:
   katex@0.16.47:
     dependencies:
       commander: 8.3.0
-    optional: true
 
   katex@0.17.0:
     dependencies:
@@ -16088,8 +16137,7 @@ snapshots:
     dependencies:
       json-buffer: 3.0.1
 
-  khroma@2.1.0:
-    optional: true
+  khroma@2.1.0: {}
 
   kleur@3.0.3: {}
 
@@ -16100,11 +16148,9 @@ snapshots:
       picocolors: 1.1.1
       shell-quote: 1.12.0
 
-  layout-base@1.0.2:
-    optional: true
+  layout-base@1.0.2: {}
 
-  layout-base@2.0.1:
-    optional: true
+  layout-base@2.0.1: {}
 
   leven@3.1.0: {}
 
@@ -16195,8 +16241,7 @@ snapshots:
     dependencies:
       p-locate: 5.0.0
 
-  lodash-es@4.18.1:
-    optional: true
+  lodash-es@4.18.1: {}
 
   lodash.debounce@4.0.8: {}
 
@@ -16262,6 +16307,8 @@ snapshots:
 
   markdown-it-mark@4.0.0: {}
 
+  markdown-it-sub@2.0.0: {}
+
   markdown-it-sup@2.0.0: {}
 
   markdown-it-task-checkbox@1.0.6: {}
@@ -16288,8 +16335,7 @@ snapshots:
 
   marked@14.0.0: {}
 
-  marked@16.4.2:
-    optional: true
+  marked@16.4.2: {}
 
   marked@18.0.11: {}
 
@@ -16298,6 +16344,21 @@ snapshots:
   marked@9.1.6: {}
 
   markstream-core@1.0.3: {}
+
+  markstream-vue@1.0.9-beta.1(katex@0.17.0)(mermaid@11.17.2)(stream-diffs@0.0.2(@shikijs/themes@4.6.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vue@3.5.45(typescript@6.0.2)))(stream-markdown@0.0.16(react@19.3.1)(shiki@4.6.0)(vue@3.5.45(typescript@6.0.2)))(stream-monaco@0.0.49(monaco-editor@0.55.1))(vue-i18n@11.4.18(vue@3.5.45(typescript@6.0.2)))(vue@3.5.45(typescript@6.0.2)):
+    dependencies:
+      '@chenglou/pretext': 0.0.8
+      '@floating-ui/dom': 1.8.0
+      markstream-core: 1.0.3
+      stream-markdown-parser: 1.1.7
+      vue: 3.5.45(typescript@6.0.2)
+    optionalDependencies:
+      katex: 0.17.0
+      mermaid: 11.17.2
+      stream-diffs: 0.0.2(@shikijs/themes@4.6.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vue@3.5.45(typescript@6.0.2))
+      stream-markdown: 0.0.16(react@19.3.1)(shiki@4.6.0)(vue@3.5.45(typescript@6.0.2))
+      stream-monaco: 0.0.49(monaco-editor@0.55.1)
+      vue-i18n: 11.4.18(vue@3.5.45(typescript@6.0.2))
 
   markstream-vue@1.1.4(katex@0.17.0)(mermaid@11.17.2)(stream-diffs@0.0.2(@shikijs/themes@4.6.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(vue@3.5.45(typescript@6.0.2)))(stream-markdown@0.0.16(react@19.3.1)(shiki@4.6.0)(vue@3.5.45(typescript@6.0.2)))(stream-monaco@0.0.49(monaco-editor@0.55.1))(vue-i18n@11.4.18(vue@3.5.45(typescript@6.0.2)))(vue@3.5.45(typescript@6.0.2)):
     dependencies:
@@ -16515,7 +16576,6 @@ snapshots:
       stylis: 4.4.0
       ts-dedent: 2.3.0
       uuid: 14.0.3
-    optional: true
 
   metro-babel-transformer@0.87.1(supports-color@7.2.0):
     dependencies:
@@ -17433,8 +17493,7 @@ snapshots:
 
   path-browserify@1.0.1: {}
 
-  path-data-parser@0.1.0:
-    optional: true
+  path-data-parser@0.1.0: {}
 
   path-exists@4.0.0: {}
 
@@ -17520,14 +17579,12 @@ snapshots:
 
   pngjs@7.0.0: {}
 
-  points-on-curve@0.2.0:
-    optional: true
+  points-on-curve@0.2.0: {}
 
   points-on-path@0.2.1:
     dependencies:
       path-data-parser: 0.1.0
       points-on-curve: 0.2.0
-    optional: true
 
   possible-typed-array-names@1.1.0: {}
 
@@ -18024,8 +18081,7 @@ snapshots:
 
   rfdc@1.4.1: {}
 
-  robust-predicates@3.0.3:
-    optional: true
+  robust-predicates@3.0.3: {}
 
   rolldown-plugin-dts@0.27.14(@volar/typescript@2.4.28(typescript@6.0.2))(rolldown@1.2.16)(typescript@6.0.2)(vue-tsc@3.2.9(typescript@6.0.2)):
     dependencies:
@@ -18104,7 +18160,6 @@ snapshots:
       path-data-parser: 0.1.0
       points-on-curve: 0.2.0
       points-on-path: 0.2.1
-    optional: true
 
   router@2.2.0(supports-color@7.2.0):
     dependencies:
@@ -18126,8 +18181,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  rw@1.3.3:
-    optional: true
+  rw@1.3.3: {}
 
   rxjs@7.8.2:
     dependencies:
@@ -18471,6 +18525,17 @@ snapshots:
       - react
       - react-dom
 
+  stream-markdown-parser@1.1.7:
+    dependencies:
+      markdown-it-container: 4.0.0
+      markdown-it-footnote: 4.0.0
+      markdown-it-ins: 4.0.0
+      markdown-it-mark: 4.0.0
+      markdown-it-sub: 2.0.0
+      markdown-it-sup: 2.0.0
+      markdown-it-task-checkbox: 1.0.6
+      markdown-it-ts: 1.1.3
+
   stream-markdown-parser@1.2.6:
     dependencies:
       markdown-it-container: 4.0.0
@@ -18497,8 +18562,7 @@ snapshots:
       monaco-editor: 0.55.1
       shiki: 3.23.0
 
-  strictdom@1.0.1:
-    optional: true
+  strictdom@1.0.1: {}
 
   string-argv@0.3.2: {}
 
@@ -18582,8 +18646,7 @@ snapshots:
 
   styleq@0.1.3: {}
 
-  stylis@4.4.0:
-    optional: true
+  stylis@4.4.0: {}
 
   subset-font@2.9.0:
     dependencies:
@@ -18705,8 +18768,7 @@ snapshots:
     dependencies:
       typescript: 6.0.3
 
-  ts-dedent@2.3.0:
-    optional: true
+  ts-dedent@2.3.0: {}
 
   ts-morph@28.0.0:
     dependencies:
@@ -18980,8 +19042,7 @@ snapshots:
 
   utils-merge@1.0.1: {}
 
-  uuid@14.0.3:
-    optional: true
+  uuid@14.0.3: {}
 
   validate-npm-package-name@5.0.1: {}
 
